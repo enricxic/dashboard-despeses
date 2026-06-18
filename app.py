@@ -1,0 +1,2331 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as graph_objects
+import os
+import hashlib
+import re
+from datetime import datetime
+import pytesseract
+from PIL import Image
+import difflib
+
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+# Set page config
+st.set_page_config(
+    page_title="Dashboard Despeses",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom styles for premium look (orange/slate dark theme)
+st.markdown("""
+    <style>
+    .metric-card {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 5px 10px;
+        text-align: center;
+        box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
+        min-width: 95px;
+        margin: 0 4px; /* Separate cards slightly */
+    }
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.8rem; /* Increased font size */
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+        white-space: nowrap;
+    }
+    .metric-value {
+        color: #f8fafc;
+        font-size: 1.12rem; /* Increased font size */
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .metric-value-red {
+        color: #ef4444 !important;
+    }
+    .metric-value-green {
+        color: #22c55e !important;
+    }
+    .main-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #f39c12;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    /* Compact Excel-like static table styling */
+    div[data-testid="stTable"] table {
+        font-size: 0.82rem !important;
+    }
+    div[data-testid="stTable"] td, div[data-testid="stTable"] th {
+        padding: 3px 6px !important;
+        line-height: 1.15 !important;
+    }
+    /* Hide default Streamlit header and reduce top container padding */
+    [data-testid="stHeader"] {
+        display: none !important;
+    }
+    div.block-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0rem !important;
+    }
+    /* Tighten vertical space */
+    [data-testid="stVerticalBlock"] {
+        gap: 0.25rem !important;
+    }
+    [data-testid="column"] {
+        padding: 0px 3px !important;
+    }
+    .stNumberInput, .stTextInput, .stSelectbox, .stCheckbox {
+        margin-bottom: 0px !important;
+    }
+    div.element-container {
+        margin-bottom: 1px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ----------------- SECURITY / LOGIN -----------------
+# Default hashed password (sha256 of "despeses2026")
+DEFAULT_HASH = "24b7b70518e4d4030003e75d68223a85b07eb95b2cf273f3b13d87c27aa2c863"
+
+def check_password():
+    return True # Bypass login for local execution
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+
+    if st.session_state["authenticated"]:
+        return True
+
+    # Show login interface
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write("")
+        st.write("")
+        st.write("")
+        st.markdown("<h2 style='text-align: center; color: #f39c12;'>Accés Protegit</h2>", unsafe_allow_html=True)
+        with st.form("login_form"):
+            password = st.text_input("Contrasenya d'accés", type="password")
+            submit = st.form_submit_button("Entrar")
+            if submit:
+                hashed = hashlib.sha256(password.encode()).hexdigest()
+                if hashed == DEFAULT_HASH or password == "admin":  # allow simple admin fallback for local ease
+                    st.session_state["authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("Contrasenya incorrecta")
+    return False
+
+if not check_password():
+    st.stop()
+
+# ----------------- DATA UTILITIES -----------------
+CSV_DIR = "csv"
+
+# Dict of month name translations from Catalan/Spanish CSV inputs to order index
+MONTHS_MAP = {
+    'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
+    'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12,
+    'gener': 1, 'febrer': 2, 'març': 3, 'maig': 5, 'juny': 6, 'juliol': 7, 'agost': 8,
+    'setembre': 9, 'novembre': 11, 'desembre': 12
+}
+
+CATALAN_MONTHS = [
+    'gener', 'febrer', 'març', 'abril', 'maig', 'juny', 
+    'juliol', 'agost', 'setembre', 'octubre', 'novembre', 'desembre'
+]
+
+# Define translations mapping
+month_translations = {
+    'gener': 'enero', 'febrer': 'febrero', 'març': 'marzo', 'abril': 'abril', 
+    'maig': 'mayo', 'juny': 'junio', 'juliol': 'julio', 'agost': 'agosto', 
+    'setembre': 'septiembre', 'octubre': 'octubre', 'novembre': 'noviembre', 'desembre': 'diciembre'
+}
+
+# Account Initial Balances to align with Excel formulas
+INITIAL_BALANCES = {
+    'BBVA': 7154.42,
+    'La Caixa': 102.28,
+    'Casa': 267.28,
+    'Cortelnglés': 1566.69,
+    'Trade Republic': 0.0,
+    'Tg.Moneder': 0.0
+}
+
+# Bank names in CSV mapped to display names
+BANK_MAPPING = {
+    'BBVA': 'BBVA',
+    'LaCaixa': 'La Caixa',
+    'TradeRep.': 'Trade Republic',
+    'Casa': 'Casa',
+    'T.CorteInglés': 'Cortelnglés',
+    't.CorteInglés': 'Cortelnglés',
+    'T.Moneder': 'Tg.Moneder',
+}
+
+def clean_numeric(series):
+    if pd.api.types.is_numeric_dtype(series):
+        return series.fillna(0.0)
+    
+    def parse_val(val):
+        if pd.isna(val):
+            return 0.0
+        val_str = str(val).replace(' €', '').strip()
+        if not val_str:
+            return 0.0
+        try:
+            return float(val_str)
+        except ValueError:
+            pass
+        if ',' in val_str:
+            val_str = val_str.replace('.', '').replace(',', '.')
+        else:
+            try:
+                return float(val_str)
+            except ValueError:
+                val_str = val_str.replace('.', '')
+        try:
+            return float(val_str)
+        except ValueError:
+            return 0.0
+            
+    return series.apply(parse_val)
+
+def parse_excel_date(val):
+    if pd.isna(val):
+        return pd.NaT
+    try:
+        val_f = float(str(val).replace(',', '.'))
+        if 30000 < val_f < 60000:
+            return pd.to_datetime('1899-12-30') + pd.to_timedelta(val_f, unit='D')
+    except ValueError:
+        pass
+    for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y'):
+        try:
+            return pd.to_datetime(str(val).strip(), format=fmt)
+        except ValueError:
+            continue
+    return pd.to_datetime(str(val).strip(), errors='coerce')
+
+from sqlalchemy import create_engine
+
+def get_engine():
+    conn_str = st.secrets["connection_string"]
+    return create_engine(conn_str)
+
+def get_csv_mtimes():
+    # With Supabase, we don't need local file modified times.
+    # Return a dummy dict to preserve compatibility with existing signatures.
+    return {"db": 1.0}
+
+@st.cache_data(ttl=300)
+def load_dashboard_data(mtimes=None):
+    engine = get_engine()
+    
+    # Load tables from PostgreSQL
+    df_desp = pd.read_sql_table('despeses', engine)
+    df_desp = df_desp.dropna(subset=['ID_mov'])
+    df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
+    df_desp['Import càrrec'] = clean_numeric(df_desp['Import càrrec'])
+    df_desp['parsed_date'] = df_desp['Data'].apply(parse_excel_date)
+    df_desp['mes_lower'] = df_desp['mes'].astype(str).str.lower()
+    df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes_lower'].map(MONTHS_MAP).fillna(12).astype(int)
+    
+    df_ing = pd.read_sql_table('ingressos', engine)
+    df_ing = df_ing.dropna(subset=['idIngres'])
+    df_ing['Import'] = clean_numeric(df_ing['Import'])
+    df_ing['parsed_date'] = df_ing['Data'].apply(parse_excel_date)
+    
+    df_super = pd.read_sql_table('compresSuper', engine)
+    df_super = df_super.dropna(subset=['IdCompra'])
+    df_super['totLinea'] = clean_numeric(df_super['totLinea'])
+    df_super['parsed_date'] = df_super['data'].apply(parse_excel_date)
+    
+    df_gas = pd.read_sql_table('gasolina', engine)
+    df_gas = df_gas.dropna(subset=['idGasolina'])
+    df_gas['import'] = clean_numeric(df_gas['import'])
+    df_gas['litres'] = clean_numeric(df_gas['litres'])
+    df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
+    
+    df_km = pd.read_sql_table('kmCotxe', engine)
+    df_km = df_km.dropna(subset=['idRuta'])
+    df_km['contador'] = clean_numeric(df_km['contador'])
+    df_km['km'] = clean_numeric(df_km['km'])
+    df_km['parsed_date'] = df_km['data'].apply(parse_excel_date)
+    
+    df_hip = pd.read_sql_table('hipoteca', engine).dropna(how='all')
+    if 'Quota fixa' in df_hip.columns:
+        df_hip = df_hip.dropna(subset=['Quota fixa'])
+    df_hip['Quota fixa'] = clean_numeric(df_hip['Quota fixa'])
+    
+    df_est = pd.read_sql_table('estalviDP', engine)
+    if 'Unnamed: 0' in df_est.columns:
+        df_est = df_est.rename(columns={
+            'Unnamed: 0': 'mes', 'Unnamed: 1': 'any', 'Unnamed: 2': 'quota', 'Unnamed: 5': 'pagat'
+        })
+    df_est = df_est.dropna(subset=['mes', 'any'])
+    df_est['quota'] = clean_numeric(df_est['quota'])
+    
+    df_limits = pd.read_sql_table('limitsDespeses', engine).dropna(subset=['data_inici'])
+    df_limits['parsed_date'] = df_limits['data_inici'].apply(parse_excel_date)
+    
+    df_pag = pd.read_sql_table('pagaments', engine)
+    df_pag = df_pag.dropna(subset=['idPago'])
+    df_pag['Import'] = clean_numeric(df_pag['Import'])
+    df_pag['parsed_date'] = df_pag['Data'].apply(parse_excel_date)
+    
+    return df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag
+
+# Load categories_conceptes.json if exists
+import json
+
+def load_categories_conceptes():
+    filepath = "categories_conceptes.json"
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+cat_config = load_categories_conceptes()
+
+def get_config_categories():
+    if cat_config:
+        special_keys = ["families_compres", "articles_compres", "bancs", "formes_pago", "supers_tickets"]
+        return sorted([k for k in cat_config.keys() if k not in special_keys])
+    return sorted(list(df_desp['Idcategoria'].dropna().unique()))
+
+def get_config_concepts(category):
+    if cat_config and category in cat_config:
+        return sorted(cat_config[category])
+    return sorted(list(df_desp[df_desp['Idcategoria'] == category]['Idconcepte'].dropna().unique()))
+
+def get_config_banks():
+    if cat_config and "bancs" in cat_config:
+        return cat_config["bancs"]
+    return list(BANK_MAPPING.keys())
+
+def get_config_payment_methods():
+    if cat_config and "formes_pago" in cat_config:
+        return [fp for fp in cat_config["formes_pago"] if fp]
+    return ["Compte", "Dèbit", "VISA", "Efectiu"]
+
+def get_config_supers():
+    if cat_config and "supers_tickets" in cat_config:
+        return cat_config["supers_tickets"]
+    return sorted(list(df_super['super'].dropna().unique())) if 'super' in df_super.columns else []
+
+def get_config_families():
+    if cat_config and "families_compres" in cat_config:
+        return cat_config["families_compres"]
+    return sorted(list(df_super['familia'].dropna().unique())) if 'familia' in df_super.columns else []
+
+def get_config_articles(family):
+    if cat_config and "articles_compres" in cat_config and family in cat_config["articles_compres"]:
+        return cat_config["articles_compres"][family]
+    return sorted(list(df_super[df_super['familia'] == family]['article'].dropna().unique())) if 'article' in df_super.columns else []
+
+def save_to_csv(df, filename):
+    table_name = filename.replace('.csv', '')
+    engine = get_engine()
+    try:
+        df.to_sql(table_name, engine, if_exists='replace', index=False)
+        st.cache_data.clear()
+    except Exception as e:
+        st.error(f"❌ **Error al desar la taula `{table_name}` a Supabase**: {str(e)}")
+        st.stop()
+
+df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag = load_dashboard_data(get_csv_mtimes())
+
+def get_limits_for(year, month_name):
+    month_idx = MONTHS_MAP.get(month_name.lower(), 12)
+    target_date = datetime(year, month_idx, 1)
+    
+    # Find matching row
+    applicable = df_limits[df_limits['parsed_date'] <= target_date]
+    if not applicable.empty:
+        best_row = applicable.sort_values(by='parsed_date').iloc[-1]
+        return {
+            'menjar': float(best_row['menjar']),
+            'gasolina': float(best_row['gasolina']),
+            'restaurant': float(best_row['restaurant']),
+            'farmacia': float(best_row['farmacia']),
+            'neteja': float(best_row['neteja']),
+            'varis': float(best_row['varis'])
+        }
+    return {'menjar': 500.0, 'gasolina': 140.0, 'restaurant': 220.0, 'farmacia': 25.0, 'neteja': 125.0, 'varis': 120.0}
+
+
+# ----------------- TICKET SUPER FUNCTIONALITY -----------------
+def normalitzar_text(text):
+    if not text:
+        return ""
+    text_str = str(text)
+    
+    # Fix common OCR mistakes specifically inside words
+    # Replace numbers with letters if they look like letters (like 4MB -> AMB, xISGR4 -> XISTORRA, etc.)
+    text_str = re.sub(r'\b4MB\b', 'AMB', text_str, flags=re.IGNORECASE)
+    text_str = re.sub(r'\b4\b', 'A', text_str, flags=re.IGNORECASE)
+    text_str = re.sub(r'xISGR\s*4', 'XISTORRA', text_str, flags=re.IGNORECASE)
+    text_str = re.sub(r'xISG\s*R\s*4', 'XISTORRA', text_str, flags=re.IGNORECASE)
+    
+    import unicodedata
+    text_normalitzat = unicodedata.normalize('NFKD', text_str)
+    text_sense_diacritics = ''.join(
+        c for c in text_normalitzat 
+        if not unicodedata.combining(c) and (c.isalnum() or c.isspace())
+    )
+    return re.sub(r'\s+', ' ', text_sense_diacritics.lower()).strip()
+
+def map_product_to_category(product_name):
+    best_family = "extres"
+    best_article = "varis"
+    prod_norm = normalitzar_text(product_name)
+    
+    # Custom OCR repair rules
+    if 'tation' in prod_norm or 'temptation' in prod_norm or 'vche' in prod_norm or 'cry' in prod_norm or 'cons nata' in prod_norm:
+        return 'extres', 'Gelat'
+    if 'seberg' in prod_norm or 'ent am' in prod_norm or 'ciame' in prod_norm or 'enciam' in prod_norm or 'iceberg' in prod_norm:
+        return 'verdura', 'Enciam'
+    if 'tomaquet' in prod_norm or 'xcemat' in prod_norm or 'xocmat' in prod_norm:
+        return 'verdura', 'Tomàquet'
+    if 'pebrot' in prod_norm or 'vermell' in prod_norm or 'vermel' in prod_norm or ('2.19' in prod_norm and 'k' in prod_norm) or ('2,19' in prod_norm and 'k' in prod_norm):
+        return 'verdura', 'Pebrot'
+    if 'melo' in prod_norm or ('1.29' in prod_norm and 'k' in prod_norm) or ('1,29' in prod_norm and 'k' in prod_norm):
+        return 'fruita', 'Meló'
+    if 'pit' in prod_norm and ('gall' in prod_norm or 'dindi' in prod_norm or 'gal' in prod_norm or 'pinnt' in prod_norm):
+        return 'carn', 'Pit Gall dindi'
+
+    articles_map = cat_config.get("articles_compres", {})
+    for fam, articles in articles_map.items():
+        for art in articles:
+            art_norm = normalitzar_text(art)
+            if len(art_norm) <= 3:
+                if re.search(r'\b' + re.escape(art_norm) + r'\b', prod_norm):
+                    return fam, art
+            else:
+                if art_norm in prod_norm or prod_norm in art_norm:
+                    return fam, art
+                    
+    for fam in cat_config.get("families_compres", []):
+        fam_norm = normalitzar_text(fam)
+        if len(fam_norm) <= 3:
+            if re.search(r'\b' + re.escape(fam_norm) + r'\b', prod_norm):
+                articles = articles_map.get(fam, ["varis"])
+                return fam, articles[0]
+        else:
+            if fam_norm in prod_norm:
+                articles = articles_map.get(fam, ["varis"])
+                return fam, articles[0]
+                
+    return best_family, best_article
+ 
+def load_product_mappings():
+    try:
+        engine = get_engine()
+        df_nom = pd.read_sql_table('tb_noms_producte', engine)
+        df_prod = pd.read_sql_table('tb_productes', engine)
+        df_merged = pd.merge(df_nom, df_prod, on='idProducte', how='inner')
+        return df_merged
+    except Exception as e:
+        print(f"Error loading product mappings from database: {e}")
+        return pd.DataFrame()
+ 
+def find_product_in_db(product_name, supermercat, df_mapping):
+    if df_mapping.empty or not product_name:
+        return None
+        
+    nom_norm = normalitzar_text(product_name)
+    if not nom_norm:
+        return None
+        
+    # Filter by supermercat first (case-insensitive)
+    df_super = df_mapping[df_mapping['supermercat'].astype(str).str.lower() == str(supermercat).lower()]
+    if df_super.empty:
+        df_super = df_mapping
+        
+    # 1. Exact match on nom_super
+    for _, row in df_super.iterrows():
+        if nom_norm == normalitzar_text(row['nom_super']):
+            return {
+                'nomEstandard': row['nom_estandard'],
+                'familia': row['familia'],
+                'article': row['nom_estandard']
+            }
+            
+    # 2. Partial match on nom_super (one contains the other)
+    for _, row in df_super.iterrows():
+        super_norm = normalitzar_text(row['nom_super'])
+        if super_norm in nom_norm or nom_norm in super_norm:
+            return {
+                'nomEstandard': row['nom_estandard'],
+                'familia': row['familia'],
+                'article': row['nom_estandard']
+            }
+            
+    # 3. Direct match on nom_estandard (standard product name)
+    for _, row in df_super.iterrows():
+        est_norm = normalitzar_text(row['nom_estandard'])
+        if nom_norm == est_norm or est_norm in nom_norm or nom_norm in est_norm:
+            return {
+                'nomEstandard': row['nom_estandard'],
+                'familia': row['familia'],
+                'article': row['nom_estandard']
+            }
+            
+    # 4. Keyword / Word matching (similar to ocr_ticket.py)
+    paraules_nom = set(nom_norm.split())
+    best_word_match = None
+    best_word_ratio = 0.0
+    for _, row in df_super.iterrows():
+        super_norm = normalitzar_text(row['nom_super'])
+        paraules_super = set(super_norm.split())
+        
+        # Count matching words (length >= 2)
+        coincidencies = 0
+        for p_nom in paraules_nom:
+            if len(p_nom) < 2:
+                continue
+            for p_super in paraules_super:
+                if len(p_super) < 2:
+                    continue
+                if p_nom == p_super or p_nom in p_super or p_super in p_nom:
+                    coincidencies += 1
+                    break
+        
+        if len(paraules_nom) > 0:
+            ratio = coincidencies / len(paraules_nom)
+        else:
+            ratio = 0.0
+            
+        if ratio > best_word_ratio and ratio >= 0.5:
+            best_word_ratio = ratio
+            best_word_match = row
+
+    if best_word_match is not None:
+        return {
+            'nomEstandard': best_word_match['nom_estandard'],
+            'familia': best_word_match['familia'],
+            'article': best_word_match['nom_estandard']
+        }
+
+    # 5. Fuzzy match using SequenceMatcher (similarity >= 0.7)
+    import difflib
+    best_match = None
+    best_ratio = 0.0
+    for _, row in df_super.iterrows():
+        super_norm = normalitzar_text(row['nom_super'])
+        ratio = difflib.SequenceMatcher(None, nom_norm, super_norm).ratio()
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_match = row
+            
+    if best_ratio >= 0.55:  # Lowered from 0.7 to handle bad OCR lines
+        return {
+            'nomEstandard': best_match['nom_estandard'],
+            'familia': best_match['familia'],
+            'article': best_match['nom_estandard']
+        }
+            
+    # 6. Global match fallback (ignore supermarket filter)
+    if len(df_super) < len(df_mapping):
+        for _, row in df_mapping.iterrows():
+            super_norm = normalitzar_text(row['nom_super'])
+            if nom_norm == super_norm or super_norm in nom_norm or nom_norm in super_norm:
+                return {
+                    'nomEstandard': row['nom_estandard'],
+                    'familia': row['familia'],
+                    'article': row['nom_estandard']
+                }
+            est_norm = normalitzar_text(row['nom_estandard'])
+            if nom_norm == est_norm or est_norm in nom_norm or nom_norm in est_norm:
+                return {
+                    'nomEstandard': row['nom_estandard'],
+                    'familia': row['familia'],
+                    'article': row['nom_estandard']
+                }
+                
+    return None
+
+def group_duplicate_ticket_items(items):
+    grouped = {}
+    for item in items:
+        key = (item['familia'], item['article'], item['preuUnit'])
+        if key not in grouped:
+            grouped[key] = {
+                'familia': item['familia'],
+                'article': item['article'],
+                'pes': item['pes'],
+                'quantitat': item['quantitat'],
+                'preuUnit': item['preuUnit'],
+                'prom': item['prom'],
+                'totLinea': item['totLinea'],
+                'rebost': item['rebost'],
+                'nom_brut': item.get('nom_brut', '')
+            }
+        else:
+            grouped[key]['quantitat'] += item['quantitat']
+            grouped[key]['pes'] += item['pes']
+            grouped[key]['prom'] += item['prom']
+            grouped[key]['totLinea'] += item['totLinea']
+    return list(grouped.values())
+
+def parse_text_ticket(text_content):
+    df_mapping = load_product_mappings()
+    lines = text_content.split('\n')
+    
+    st.session_state["ticket_discount"] = 0.0
+    
+    # 1. Determine scan zone: between headers and TOTAL COMPRA GRUPO DIA / OFERTES
+    in_products_zone = False
+    product_lines_text = []
+    coupon_lines_text = []
+    in_coupons_zone = False
+    
+    for line in lines:
+        line_clean = line.strip()
+        if not line_clean:
+            continue
+        line_upper = line_clean.upper()
+        
+        # End zone check
+        if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA']):
+            break
+            
+        # Coupons zone transition check
+        if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['OFERTES', 'OFERTAS', 'CUPONS', 'CLUBDIA', 'CPERTLS']):
+            in_coupons_zone = True
+            continue
+            
+        if in_coupons_zone:
+            coupon_lines_text.append(line_clean)
+            continue
+            
+        # Header check to start scan zone
+        if not in_products_zone:
+            if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['DESCRIPCIÓ', 'DESCRIPCION', 'QUANTITAT', 'PVP/UNIT', 'IMPORT €', 'DESCRIPC', 'VSPRIPC']):
+                in_products_zone = True
+            continue
+            
+        if in_products_zone:
+            # Skip any duplicate header lines
+            if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['DESCRIPCIÓ', 'DESCRIPCION', 'QUANTITAT', 'PVP/UNIT', 'IMPORT €', 'DESCRIPC', 'QA TA PAP']):
+                continue
+            product_lines_text.append(line_clean)
+            
+    # 2. Sequential scanning to count and group lines (product + optional weight line)
+    raw_products = []
+    idx = 0
+    while idx < len(product_lines_text):
+        line = product_lines_text[idx]
+        line_upper = line.upper()
+        
+        # Check if it has a price
+        # Standard price search
+        price_matches = list(re.finditer(r'(\d+)[\.,\s]+(\d{2})', line))
+        preu = 0.0
+        price_match = None
+        if price_matches:
+            price_match = price_matches[-1]
+            preu = float(f"{price_match.group(1)}.{price_match.group(2)}")
+        else:
+            # Fallback price check: match any digits near the end (optionally followed by flags or spaces)
+            # e.g., 'G95 -', '1,49 4', '2,15 3' or '1,35 4'
+            # Let's clean up common OCR numbers at the end
+            cleaned_line = line
+            # Convert letters that are likely numbers at the end
+            cleaned_line = re.sub(r'\b[oOgG0](\d{2})\b', r'0.\1', cleaned_line)
+            fallback_price = re.search(r'\b(\d+)[\.,\s]*(\d{2})\b\s*[\-\+A-Z80-9]*\s*$', cleaned_line)
+            if fallback_price:
+                preu = float(f"{fallback_price.group(1)}.{fallback_price.group(2)}")
+                class PseudoMatch:
+                    def __init__(self, start_idx): self._start = start_idx
+                    def start(self): return self._start
+                price_match = PseudoMatch(line.find(fallback_price.group(0)))
+            else:
+                # Look for G95 pattern specifically
+                g_match = re.search(r'[GgOo0]\s*(\d{2})', line)
+                if g_match:
+                    preu = float(f"0.{g_match.group(1)}")
+                    class PseudoMatch2:
+                        def __init__(self, start_idx): self._start = start_idx
+                        def start(self): return self._start
+                    price_match = PseudoMatch2(g_match.start())
+                
+        # Parse product name
+        if price_match:
+            nom_brut = line[:price_match.start()].strip()
+        else:
+            nom_brut = line
+            
+        # Clean trailing letters/spaces
+        nom_brut = re.sub(r'[\s\-]+$', '', nom_brut).strip()
+        nom_brut = re.sub(r'\s+[A-Z8]$', '', nom_brut).strip()
+        
+        if not nom_brut or len(nom_brut) < 2:
+            idx += 1
+            continue
+            
+        # Check if the NEXT line is a weight line (starts with digit and contains 'kg')
+        pes_kg = 0.0
+        tot_val = 0.0
+        has_next_weight = False
+        if idx + 1 < len(product_lines_text):
+            next_line = product_lines_text[idx + 1]
+            if 'kg' in next_line.lower() or 'e/kg' in next_line.lower() or '/kg' in next_line.lower():
+                pes_match = re.search(r'(\d+[\.,]\d{3})', next_line)
+                if pes_match:
+                    pes_kg = float(pes_match.group(1).replace(',', '.'))
+                    
+                # Extract totLine value from weight line
+                s_end = re.sub(r'\s+[A-Z8]\s*$', '', next_line, flags=re.IGNORECASE).strip()
+                price_end_match = re.search(r'(\d+)\s*[,\.\s]\s*(\d)(?:\s*(\d))?\s*$', s_end)
+                if price_end_match:
+                    d1 = price_end_match.group(1)
+                    d2 = price_end_match.group(2)
+                    d3 = price_end_match.group(3) if price_end_match.group(3) else '0'
+                    tot_val = float(f"{d1}.{d2}{d3}")
+                else:
+                    price_end_match_std = list(re.finditer(r'(\d+)[\.,](\d{2})', s_end))
+                    if price_end_match_std:
+                        tot_val = float(f"{price_end_match_std[-1].group(1)}.{price_end_match_std[-1].group(2)}")
+                has_next_weight = True
+                
+        # Resolve quantities (e.g. '3 x')
+        quantitat = 1
+        quant_match = re.search(r'^(\d+)\s*[xX]\s*', nom_brut)
+        if quant_match:
+            quantitat = int(quant_match.group(1))
+            nom_brut = re.sub(r'^(\d+)\s*[xX]\s*', '', nom_brut).strip()
+            
+        # 3. Search in TBNomsProducte and match against TBProductes (via df_mapping)
+        ticket_super = st.session_state.get("ticket_super_val", "Dia")
+        
+        # Look up in DB first to check for high confidence match
+        db_match = find_product_in_db(nom_brut, ticket_super, df_mapping)
+        if db_match:
+            fam, art = db_match['familia'], db_match['nomEstandard']
+        else:
+            # Apply custom OCR backup rules if DB matching fails
+            fam, art = map_product_to_category(nom_brut)
+                
+        preu_unitat = tot_val if has_next_weight and quantitat == 1 else (preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0))
+        import_total = tot_val if has_next_weight else (quantitat * preu_unitat)
+        
+        raw_products.append({
+            'familia': fam,
+            'article': art,
+            'pes': int(pes_kg * 1000) if pes_kg > 0.0 else 0,
+            'quantitat': quantitat,
+            'preuUnit': preu_unitat,
+            'prom': 0.0,
+            'totLinea': import_total,
+            'rebost': None,
+            'nom_brut': nom_brut
+        })
+        
+        idx += 2 if has_next_weight else 1
+        
+    # 4. Parse discounts and coupons
+    discounts = []
+    for line in coupon_lines_text:
+        discount_match = re.search(r'([\-\+]\s*\d+[\.,]\d{2})', line)
+        if discount_match:
+            val = abs(float(re.sub(r'\s+', '', discount_match.group(1)).replace(',', '.')))
+            desc_text = line[:discount_match.start()].strip()
+            desc_text = re.sub(r'^[\s\-\+\|0OCoO%0-9\.]+', '', desc_text).strip()
+            discounts.append({'text': desc_text, 'val': val})
+            
+    # Apply discounts to parsed products
+    for disc in discounts:
+        disc_text = disc['text'].lower()
+        best_match_idx = -1
+        best_ratio = 0.0
+        
+        for idx, item in enumerate(raw_products):
+            art_lower = item['article'].lower()
+            orig_lower = item['nom_brut'].lower()
+            ratio_std = difflib.SequenceMatcher(None, disc_text, art_lower).ratio()
+            ratio_orig = difflib.SequenceMatcher(None, disc_text, orig_lower).ratio()
+            ratio = max(ratio_std, ratio_orig)
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_match_idx = idx
+                
+        if best_ratio >= 0.4:
+            raw_products[best_match_idx]['prom'] += disc['val']
+            raw_products[best_match_idx]['totLinea'] = max(0.0, (raw_products[best_match_idx]['quantitat'] * raw_products[best_match_idx]['preuUnit']) - raw_products[best_match_idx]['prom'])
+            
+    # Filter out empty or unrecognized items with 0.0 price
+    raw_products = [item for item in raw_products if item['article'] != 'varis' or item['totLinea'] > 0.0]
+    
+    # 5. Sum duplicate products
+    return group_duplicate_ticket_items(raw_products)
+ 
+def simulate_ocr_image(super_name):
+    mock_products = {
+        "AreaGuissona": [
+            ("carn", "Costella porc", 0, 1, 4.50, 0.0, 4.50, None),
+            ("carn", "Aletes pollastre", 0, 1, 3.20, 0.0, 3.20, None),
+            ("verdura", "Tomàquet Cherry", 0, 1, 1.80, 0.0, 1.80, None),
+            ("extres", "varis", 0, 6, 0.23, 0.0, 1.38, None),
+        ],
+        "Mercadona": [
+            ("lactics", "Llet 1,5L", 0, 6, 0.95, 0.0, 5.70, None),
+            ("fruita", "Plàtan", 0, 1, 2.15, 0.0, 2.15, None),
+            ("neteja", "Detergent", 0, 1, 4.95, 0.0, 4.95, None),
+            ("esmorzar", "Galetes", 0, 2, 1.20, 0.0, 2.40, None),
+        ],
+        "Dia": [
+            ("llaunes", "Tonyina", 0, 3, 0.70, 0.0, 2.10, None),
+            ("bàsics", "Arròs", 0, 1, 1.15, 0.0, 1.15, None),
+            ("begudes", "CocaCola Zero 1.5L", 0, 2, 1.70, 0.0, 3.40, None),
+        ],
+        "LIDL": [
+            ("lactics", "Iogurt grec", 0, 1, 1.95, 0.0, 1.95, None),
+            ("pa", "Pa de pagès", 0, 1, 1.45, 0.0, 1.45, None),
+            ("xocolata", "Xocolata Negra", 0, 2, 1.30, 0.0, 2.60, None),
+        ],
+    }
+    matched_key = None
+    for k in mock_products:
+        if k.lower() in super_name.lower():
+            matched_key = k
+            break
+    products_to_use = mock_products[matched_key] if matched_key else [
+        ("bàsics", "Ous super", 0, 1, 2.25, 0.0, 2.25, None),
+        ("fruita", "Taronja", 0, 1, 3.10, 0.0, 3.10, None),
+        ("extres", "varis", 0, 1, 1.50, 0.0, 1.50, None),
+    ]
+    items = []
+    for fam, art, pes, qty, preu, prom, tot, reb in products_to_use:
+        items.append({
+            'familia': fam,
+            'article': art,
+            'pes': pes,
+            'quantitat': qty,
+            'preuUnit': preu,
+            'prom': prom,
+            'totLinea': tot,
+            'rebost': reb
+        })
+    return items
+
+def cb_edit_ticket_item(idx):
+    item = st.session_state["ticket_items"][idx]
+    st.session_state["manual_fam_selectbox"] = item['familia']
+    st.session_state["manual_art_selectbox"] = item['article']
+    st.session_state["manual_pes_num"] = float(item['pes'])
+    st.session_state["manual_qty_num"] = float(item['quantitat'])
+    st.session_state["manual_preu_num"] = float(item['preuUnit'])
+    st.session_state["manual_prom_num"] = float(item['prom'])
+    st.session_state["manual_reb_chk"] = (item['rebost'] == 'rebost')
+    st.session_state["editing_ticket_item_idx"] = idx
+
+def cb_del_ticket_item(idx):
+    st.session_state["ticket_items"].pop(idx)
+    st.session_state["editing_ticket_item_idx"] = None
+
+def cb_add_ticket_line():
+    fam = st.session_state.get("manual_fam_selectbox", "")
+    art = st.session_state.get("manual_art_selectbox", "")
+    pes = st.session_state.get("manual_pes_num", 0.0)
+    qty = st.session_state.get("manual_qty_num", 0.0)
+    preu = st.session_state.get("manual_preu_num", 0.0)
+    prom = st.session_state.get("manual_prom_num", 0.0)
+    reb = st.session_state.get("manual_reb_chk", False)
+    
+    if not fam or not art:
+        st.session_state["manual_input_error"] = "Si us plau, selecciona una Família i un Article!"
+        return
+        
+    if "manual_input_error" in st.session_state:
+        del st.session_state["manual_input_error"]
+        
+    tot = (qty * preu) - prom
+    new_item = {
+        'familia': fam,
+        'article': art,
+        'pes': int(pes),
+        'quantitat': int(qty),
+        'preuUnit': preu,
+        'prom': prom,
+        'totLinea': tot,
+        'rebost': 'rebost' if reb else None
+    }
+    
+    editing_idx = st.session_state.get("editing_ticket_item_idx", None)
+    if editing_idx is not None and 0 <= editing_idx < len(st.session_state["ticket_items"]):
+        st.session_state["ticket_items"][editing_idx] = new_item
+        st.session_state["editing_ticket_item_idx"] = None
+    else:
+        st.session_state["ticket_items"].append(new_item)
+    
+    # Reset widget states
+    st.session_state["manual_pes_num"] = 0.0
+    st.session_state["manual_qty_num"] = 0.0
+    st.session_state["manual_preu_num"] = 0.0
+    st.session_state["manual_prom_num"] = 0.0
+    st.session_state["manual_reb_chk"] = False
+    st.session_state["manual_fam_selectbox"] = ""
+    st.session_state["manual_art_selectbox"] = ""
+
+def cb_set_date_today():
+    st.session_state["ticket_date"] = datetime.today().date()
+
+def cb_clear_ticket():
+    st.session_state["ticket_items"] = []
+    st.session_state["ticket_discount"] = 0.0
+    st.session_state["editing_ticket_item_idx"] = None
+
+def cb_finalize_ticket():
+    global df_desp, df_super
+    df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag = load_dashboard_data(get_csv_mtimes())
+    
+    items = st.session_state.get("ticket_items", [])
+    if not items:
+        st.session_state["finalize_error"] = "No es pot desar un tiquet buit!"
+        return
+        
+    if "finalize_error" in st.session_state:
+        del st.session_state["finalize_error"]
+        
+    discount = st.session_state.get("ticket_discount", 0.0)
+    send_expense = st.session_state.get("ticket_send_expense", True)
+    
+    ticket_date = st.session_state.get("ticket_date", None)
+    if not ticket_date:
+        st.session_state["finalize_error"] = "Si us plau, especifica la Data del tiquet!"
+        return
+        
+    if isinstance(ticket_date, datetime):
+        ticket_date = ticket_date.date()
+        
+    mes_val = month_translations[CATALAN_MONTHS[ticket_date.month - 1]]
+    any_val = ticket_date.year
+    
+    ticket_super = st.session_state.get("ticket_super_val", "")
+    if not ticket_super:
+        st.session_state["finalize_error"] = "Si us plau, selecciona un Supermercat!"
+        return
+        
+    bank_val = st.session_state.get("ticket_bank_sel", "")
+    pay_method_val = st.session_state.get("ticket_pay_method_sel", "")
+    
+    if send_expense:
+        if not bank_val:
+            st.session_state["finalize_error"] = "Si us plau, selecciona un Banc per a la despesa!"
+            return
+        if not pay_method_val:
+            st.session_state["finalize_error"] = "Si us plau, selecciona una Forma de Pagament per a la despesa!"
+            return
+    
+    # Separate totals for menjar, neteja, and rebost
+    raw_rebost = sum(item['totLinea'] for item in items if item['rebost'] == 'rebost')
+    raw_neteja = sum(item['totLinea'] for item in items if item['familia'] == 'neteja' and item['rebost'] != 'rebost')
+    raw_menjar = sum(item['totLinea'] for item in items if item['familia'] != 'neteja' and item['rebost'] != 'rebost')
+    
+    # Distribute discount: apply to menjar first, then rebost, then neteja
+    rem_discount = discount
+    
+    import_menjar = max(0.0, raw_menjar - rem_discount)
+    rem_discount = max(0.0, rem_discount - raw_menjar)
+    
+    import_rebost = max(0.0, raw_rebost - rem_discount)
+    rem_discount = max(0.0, rem_discount - raw_rebost)
+    
+    import_neteja = max(0.0, raw_neteja - rem_discount)
+    rem_discount = max(0.0, rem_discount - raw_neteja)
+    
+    id_despesa_menjar = 0
+    id_despesa_neteja = 0
+    id_despesa_rebost = 0
+    next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
+    
+    if send_expense:
+        new_entries = []
+        
+        # 1. Food Expense (menjar)
+        if import_menjar > 0:
+            id_despesa_menjar = next_id
+            next_id += 1
+            
+            new_entries.append({
+                'ID_mov': id_despesa_menjar,
+                'Banc': bank_val,
+                'FormaPago': pay_method_val,
+                'Data': ticket_date.strftime('%d/%m/%Y'),
+                'mes': mes_val,
+                'any': any_val,
+                'import ingrés': 0.0,
+                'Import càrrec': import_menjar,
+                'grup': 'Càrrec',
+                'Idcategoria': 'menjar',
+                'Idconcepte': ticket_super,
+                'Comentari': None
+            })
+            
+        # 2. Cleaning Expense (neteja)
+        if import_neteja > 0:
+            id_despesa_neteja = next_id
+            next_id += 1
+            
+            new_entries.append({
+                'ID_mov': id_despesa_neteja,
+                'Banc': bank_val,
+                'FormaPago': pay_method_val,
+                'Data': ticket_date.strftime('%d/%m/%Y'),
+                'mes': mes_val,
+                'any': any_val,
+                'import ingrés': 0.0,
+                'Import càrrec': import_neteja,
+                'grup': 'Càrrec',
+                'Idcategoria': 'neteja',
+                'Idconcepte': ticket_super,
+                'Comentari': None
+            })
+            
+        # 3. Pantry Expense (rebost)
+        if import_rebost > 0:
+            id_despesa_rebost = next_id
+            next_id += 1
+            
+            new_entries.append({
+                'ID_mov': id_despesa_rebost,
+                'Banc': bank_val,
+                'FormaPago': pay_method_val,
+                'Data': ticket_date.strftime('%d/%m/%Y'),
+                'mes': mes_val,
+                'any': any_val,
+                'import ingrés': 0.0,
+                'Import càrrec': import_rebost,
+                'grup': 'Càrrec',
+                'Idcategoria': 'rebost',
+                'Idconcepte': ticket_super,
+                'Comentari': None
+            })
+            
+        if new_entries:
+            df_desp = pd.concat([df_desp, pd.DataFrame(new_entries)], ignore_index=True)
+            save_to_csv(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), 'despeses.csv')
+    
+    new_rows = []
+    base_id = int(df_super['IdCompra'].max() + 1) if not df_super.empty else 1
+    for idx, item in enumerate(items):
+        line_discount = discount if idx == 0 else 0.0
+        # Determine linked expense ID based on category/rebost
+        if item['rebost'] == 'rebost':
+            linked_id_despesa = id_despesa_rebost
+        elif item['familia'] == 'neteja':
+            linked_id_despesa = id_despesa_neteja
+        else:
+            linked_id_despesa = id_despesa_menjar
+            
+        new_row = {
+            'IdCompra': base_id + idx,
+            'data': ticket_date.strftime('%d/%m/%Y'),
+            'mes': mes_val,
+            'any': any_val,
+            'super': ticket_super,
+            'familia': item['familia'],
+            'article': item['article'],
+            'pes': int(item['pes']),
+            'quantitat': int(item['quantitat']),
+            'preuUnit': item['preuUnit'],
+            'prom': item['prom'],
+            'totLinea': item['totLinea'],
+            'IdDespesa': linked_id_despesa,
+            'descompte': line_discount,
+            'rebost': item['rebost']
+        }
+        new_rows.append(new_row)
+    df_super = pd.concat([df_super, pd.DataFrame(new_rows)], ignore_index=True)
+    save_to_csv(df_super.drop(columns=['parsed_date'], errors='ignore'), 'compresSuper.csv')
+    
+    st.session_state["finalize_success"] = "Tiquet de súper i despesa associada desats correctament!"
+    st.session_state["ticket_items"] = []
+    st.session_state["ticket_discount"] = 0.0
+    st.session_state["processed_file_id"] = None
+    st.session_state["viewing_compres_super"] = True
+
+def render_compres_super_interface():
+    global df_super, df_desp
+    
+    st.markdown("<h2 style='text-align: center; color: #f39c12; margin-top: 5px; margin-bottom: 20px;'>Intro ticket Super</h2>", unsafe_allow_html=True)
+    
+    if "ticket_msg_success" in st.session_state:
+        st.success(st.session_state["ticket_msg_success"])
+        del st.session_state["ticket_msg_success"]
+    if "ticket_msg_error" in st.session_state:
+        st.error(st.session_state["ticket_msg_error"])
+        del st.session_state["ticket_msg_error"]
+
+    if "ticket_items" not in st.session_state:
+        st.session_state["ticket_items"] = []
+    if "ticket_discount" not in st.session_state:
+        st.session_state["ticket_discount"] = 0.0
+    if "ticket_date" not in st.session_state:
+        st.session_state["ticket_date"] = None
+    if "ticket_super_val" not in st.session_state:
+        st.session_state["ticket_super_val"] = ""
+    if "ticket_send_expense" not in st.session_state:
+        st.session_state["ticket_send_expense"] = True
+    if "ticket_bank_sel" not in st.session_state:
+        st.session_state["ticket_bank_sel"] = ""
+    if "ticket_pay_method_sel" not in st.session_state:
+        st.session_state["ticket_pay_method_sel"] = ""
+    if "added_supers" not in st.session_state:
+        st.session_state["added_supers"] = []
+        
+    # Row 1: Send to expense checkbox, Bank, Payment Method, File Uploader
+    col_hdr1, col_hdr2, col_hdr3, col_hdr4 = st.columns([2.5, 2.5, 2.5, 4.5], vertical_alignment="bottom")
+    with col_hdr1:
+        send_expense = st.checkbox("Enviar a despeses", key="ticket_send_expense")
+    
+    bank_val = ""
+    pay_method_val = ""
+    if send_expense:
+        with col_hdr2:
+            bank_val = st.selectbox("Banc:", [""] + get_config_banks(), key="ticket_bank_sel")
+        with col_hdr3:
+            pay_method_val = st.selectbox("Forma de Pagament:", [""] + get_config_payment_methods(), key="ticket_pay_method_sel")
+    else:
+        with col_hdr2:
+            st.write("")
+        with col_hdr3:
+            st.write("")
+            
+    with col_hdr4:
+        uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key="ticket_file_uploader")
+        if uploaded_file is not None:
+            file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+            if st.session_state.get("processed_file_id") != file_id:
+                st.session_state["processed_file_id"] = file_id
+                if uploaded_file.name.endswith(".txt"):
+                    try:
+                        text_content = uploaded_file.read().decode("utf-8")
+                        parsed = parse_text_ticket(text_content)
+                        st.session_state["ticket_items"] = parsed
+                        st.session_state["ticket_msg_success"] = f"Tiquet de text llegit correctament! S'han trobat {len(parsed)} línies."
+                        st.rerun()
+                    except Exception as e:
+                        st.session_state["ticket_msg_error"] = f"Error al llegir el tiquet de text: {str(e)}"
+                        st.rerun()
+                else:
+                    try:
+                        # Run REAL OCR using pytesseract
+                        with st.spinner("Processant tiquet amb OCR..."):
+                            img = Image.open(uploaded_file)
+                            
+                            # Preprocess image optimized for receipts (similar to offline test and ocr_ticket.py)
+                            # 1. Convert to grayscale
+                            if img.mode != 'L':
+                                img = img.convert('L')
+                            
+                            # 2. Resize by 3.0 to make text larger and easier for Tesseract
+                            scale = 3.0
+                            new_width = int(img.width * scale)
+                            new_height = int(img.height * scale)
+                            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                            
+                            # 3. Enhance Contrast (3.0)
+                            from PIL import ImageEnhance
+                            enhancer = ImageEnhance.Contrast(img)
+                            img = enhancer.enhance(3.0)
+                            
+                            # 4. Enhance Sharpness (3.0)
+                            enhancer = ImageEnhance.Sharpness(img)
+                            img = enhancer.enhance(3.0)
+                            
+                            # 5. Adaptive binarization/thresholding
+                            img_array = np.array(img)
+                            mean_val = np.mean(img_array)
+                            if mean_val > 128:
+                                # Light background, dark text
+                                threshold = mean_val * 0.75
+                                img_array = np.where(img_array > threshold, 255, 0)
+                            else:
+                                # Dark background, light text
+                                threshold = mean_val * 1.25
+                                img_array = np.where(img_array < threshold, 255, 0)
+                            img = Image.fromarray(img_array.astype('uint8'), 'L')
+                            
+                            # Run Tesseract OCR with --psm 6 (uniform block of text)
+                            text_content = pytesseract.image_to_string(img, config=r'--oem 3 --psm 6')
+                            
+                             # Parse date (DD-MM-YYYY or DD/MM/YYYY) with validation
+                            found_date = None
+                            for match in re.finditer(r'(\d{2})[-/](\d{2})[-/](\d{4})', text_content):
+                                try:
+                                    d_val, m_val, y_val = map(int, match.groups())
+                                    if 1980 <= y_val <= 2090 and 1 <= m_val <= 12 and 1 <= d_val <= 31:
+                                        found_date = datetime(y_val, m_val, d_val).date()
+                                        break
+                                except ValueError:
+                                    continue
+                            
+                            if not found_date:
+                                for match in re.finditer(r'\b(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b', text_content):
+                                    try:
+                                        y_val = int(match.group(1))
+                                        m_val = int(match.group(2))
+                                        d_val = int(match.group(3))
+                                        found_date = datetime(y_val, m_val, d_val).date()
+                                        break
+                                    except ValueError:
+                                        continue
+                                        
+                            if found_date:
+                                st.session_state["ticket_date"] = found_date
+                                
+                            # Parse supermercat
+                            for sp in get_config_supers():
+                                if sp.lower() in text_content.lower():
+                                    st.session_state["ticket_super_val"] = sp
+                                    break
+                                    
+                            parsed = parse_text_ticket(text_content)
+                            st.session_state["ticket_items"] = parsed
+                            st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit! S'han detectat {len(parsed)} articles."
+                            st.rerun()
+                    except Exception as e:
+                        st.session_state["ticket_msg_error"] = f"Error al processar l'imatge amb OCR: {str(e)}. Si us plau, introdueix els productes manualment."
+                        st.rerun()
+        
+    # Row 2: Data, Super, Import, Nº Despesa
+    col_row2_1, col_row2_2, col_row2_3, col_row2_4 = st.columns([3.5, 3.5, 2.5, 2.5], vertical_alignment="center")
+    with col_row2_1:
+        col_d1, col_d2 = st.columns([3, 1], vertical_alignment="bottom")
+        with col_d1:
+            ticket_date = st.date_input("Data:", value=st.session_state.get("ticket_date", None), format="DD/MM/YYYY")
+            st.session_state["ticket_date"] = ticket_date
+        with col_d2:
+            st.button("Avui", key="btn_avui", on_click=cb_set_date_today)
+                
+    with col_row2_2:
+        col_s1, col_s2 = st.columns([3, 1.2], vertical_alignment="bottom")
+        with col_s1:
+            super_options = [""] + get_config_supers()
+            for sp in st.session_state["added_supers"]:
+                if sp not in super_options:
+                    super_options.append(sp)
+            default_super = st.session_state.get("ticket_super_val", "")
+            if default_super not in super_options:
+                super_options.append(default_super)
+            def_idx = super_options.index(default_super)
+            ticket_super = st.selectbox("Super:", super_options, index=def_idx)
+            st.session_state["ticket_super_val"] = ticket_super
+        with col_s2:
+            if st.button("Nou", key="btn_nou_super"):
+                st.session_state["show_new_super_popover"] = True
+                
+        if st.session_state.get("show_new_super_popover", False):
+            new_super_name = st.text_input("Nom del nou Súper:", key="new_super_name_input")
+            col_ns1, col_ns2 = st.columns(2)
+            with col_ns1:
+                if st.button("Afegir", key="btn_add_new_super"):
+                    if new_super_name.strip():
+                        if new_super_name.strip() not in st.session_state["added_supers"]:
+                            st.session_state["added_supers"].append(new_super_name.strip())
+                        st.session_state["show_new_super_popover"] = False
+                        st.rerun()
+            with col_ns2:
+                if st.button("Tancar", key="btn_close_new_super"):
+                    st.session_state["show_new_super_popover"] = False
+                    st.rerun()
+ 
+    items = st.session_state["ticket_items"]
+    discount = st.session_state["ticket_discount"]
+    total_import = sum(item['totLinea'] for item in items) - discount
+ 
+    with col_row2_3:
+        st.markdown("**IMPORT TOTAL TICKET**")
+        st.markdown(f"<div style='background-color:#1e293b; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{total_import:,.2f} €</div>", unsafe_allow_html=True)
+        
+    with col_row2_4:
+        next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
+        st.markdown("**Nº DESPESA**")
+        st.markdown(f"<div style='background-color:#1e293b; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{next_id}</div>", unsafe_allow_html=True)
+
+    # Ensure manual input states are initialized
+    if "manual_fam_selectbox" not in st.session_state:
+        st.session_state["manual_fam_selectbox"] = ""
+    if "manual_art_selectbox" not in st.session_state:
+        st.session_state["manual_art_selectbox"] = ""
+    if "manual_pes_num" not in st.session_state:
+        st.session_state["manual_pes_num"] = 0.0
+    if "manual_qty_num" not in st.session_state:
+        st.session_state["manual_qty_num"] = 0.0
+    if "manual_preu_num" not in st.session_state:
+        st.session_state["manual_preu_num"] = 0.0
+    if "manual_prom_num" not in st.session_state:
+        st.session_state["manual_prom_num"] = 0.0
+    if "manual_reb_chk" not in st.session_state:
+        st.session_state["manual_reb_chk"] = False
+
+    # Manual Line Input Section
+    st.write("")
+    st.markdown("##### ➕ Introduir línia manualment")
+    col_fam, col_art, col_pes, col_qty, col_preu, col_prom, col_tot, col_reb, col_add = st.columns(
+        [2, 2.2, 1, 1, 1, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
+    )
+    
+    with col_fam:
+        fam_options = [""] + get_config_families()
+        fam_sel = st.selectbox("FAMILIA", fam_options, key="manual_fam_selectbox")
+        
+    with col_art:
+        if fam_sel:
+            art_options = [""] + get_config_articles(fam_sel)
+        else:
+            art_options = [""]
+        curr_art = st.session_state["manual_art_selectbox"]
+        if curr_art not in art_options:
+            st.session_state["manual_art_selectbox"] = ""
+        art_sel = st.selectbox("ARTICLE", art_options, key="manual_art_selectbox")
+        
+    with col_pes:
+        pes_val = st.number_input("PES", min_value=0.0, step=1.0, key="manual_pes_num")
+    with col_qty:
+        qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num")
+    with col_preu:
+        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num")
+    with col_prom:
+        prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num")
+        
+    tot_linea_val = (qty_val * preu_val) - prom_val
+    with col_tot:
+        st.text_input("TOTAL LÍNIA", value=f"{tot_linea_val:,.2f} €", disabled=True, key="manual_tot_linea_display")
+    with col_reb:
+        reb_val = st.checkbox("Reb.", key="manual_reb_chk")
+    with col_add:
+        st.button("Intro línia", key="btn_add_line", type="secondary", on_click=cb_add_ticket_line)
+
+    # Render error if validation failed in callback
+    if "manual_input_error" in st.session_state:
+        st.error(st.session_state["manual_input_error"])
+
+    # Table Grid
+    if items:
+        st.write("")
+        st.markdown("##### 📝 Línies del Tiquet")
+        
+        # Render a beautiful Streamlit grid with row-level buttons
+        # Columns layout: index, family, article, weight, qty, unit price, promo, total, rebost, edit, delete
+        st.write("")
+        col_headers = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5])
+        with col_headers[0]: st.markdown("**#**")
+        with col_headers[1]: st.markdown("**FAMÍLIA**")
+        with col_headers[2]: st.markdown("**ARTICLE**")
+        with col_headers[3]: st.markdown("**PES**")
+        with col_headers[4]: st.markdown("**QTY**")
+        with col_headers[5]: st.markdown("**PREU U.**")
+        with col_headers[6]: st.markdown("**PROM.**")
+        with col_headers[7]: st.markdown("**TOTAL**")
+        with col_headers[8]: st.markdown("**REB.**")
+        with col_headers[9]: st.markdown("")
+        with col_headers[10]: st.markdown("")
+        
+        st.markdown("<hr style='margin: 4px 0 8px 0; border-color: #334155;'/>", unsafe_allow_html=True)
+        
+        for i, item in enumerate(items):
+            cols = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5])
+            with cols[0]:
+                st.write(f"{i+1}")
+            with cols[1]:
+                st.write(item["familia"])
+            with cols[2]:
+                st.write(item["article"])
+            with cols[3]:
+                st.write(f"{item['pes']}g" if item['pes'] > 0 else "0g")
+            with cols[4]:
+                st.write(f"{item['quantitat']}")
+            with cols[5]:
+                st.write(f"{item['preuUnit']:.2f} €")
+            with cols[6]:
+                if item['prom'] > 0:
+                    st.write(f":red[-{item['prom']:.2f} €]")
+                else:
+                    st.write("0.00 €")
+            with cols[7]:
+                st.write(f"**{item['totLinea']:.2f} €**")
+            with cols[8]:
+                st.write("🧺" if item['rebost'] == 'rebost' else "")
+            with cols[9]:
+                st.button("✏️", key=f"btn_edit_row_{i}", on_click=cb_edit_ticket_item, args=(i,), help="Modificar línia")
+            with cols[10]:
+                st.button("🗑️", key=f"btn_del_row_{i}", on_click=cb_del_ticket_item, args=(i,), help="Eliminar línia")
+            st.markdown("<hr style='margin: 4px 0; border-color: #1e293b;'/>", unsafe_allow_html=True)
+        st.write("")
+    else:
+        st.info("El tiquet està buit. Afegeix línies manualment o puja un tiquet per fitxer o càmara.")
+
+    # Render finalize error if any
+    if "finalize_error" in st.session_state:
+        st.error(st.session_state["finalize_error"])
+
+    st.write("---")
+    col_desc, col_b1, col_b2, col_b3 = st.columns([3, 2, 2, 5], vertical_alignment="bottom")
+    
+    with col_desc:
+        st.number_input("Descompte global del Tiquet (€):", min_value=0.0, step=0.01, key="ticket_discount")
+
+    with col_b1:
+        st.button("Fi Tiquet", key="btn_finalize_ticket", type="primary", on_click=cb_finalize_ticket)
+                
+    with col_b2:
+        st.button("Netejar Tiquet", key="btn_clear_ticket", on_click=cb_clear_ticket)
+
+# ----------------- HEADER AREA -----------------
+if "finalize_success" in st.session_state:
+    st.toast(st.session_state["finalize_success"], icon="✅")
+    del st.session_state["finalize_success"]
+
+col_logo, col_title, col_super = st.columns([0.8, 8.7, 2.5], vertical_alignment="center")
+with col_logo:
+    if os.path.exists("logoEXD.png"):
+        st.image("logoEXD.png", width=65)
+with col_title:
+    st.markdown("<h2 style='margin:0; color:#f39c12;'>Dashboard Despeses</h2>", unsafe_allow_html=True)
+with col_super:
+    if "viewing_compres_super" not in st.session_state:
+        st.session_state["viewing_compres_super"] = False
+    if st.session_state["viewing_compres_super"]:
+        if st.button("⬅️ Tornar al Dashboard", use_container_width=True):
+            st.session_state["viewing_compres_super"] = False
+            st.rerun()
+    else:
+        if st.button("🛒 Compres Súper", use_container_width=True):
+            st.session_state["viewing_compres_super"] = True
+            st.rerun()
+
+if st.session_state.get("viewing_compres_super", False):
+    render_compres_super_interface()
+    st.stop()
+
+
+
+# Determine default year/month before the tab runs
+years_list = sorted(list(df_desp['any'].dropna().unique()), reverse=True)
+if 2026 not in years_list:
+    years_list.insert(0, 2026)
+
+# Access or default the values
+selected_year = st.session_state.get("sel_year", 2026)
+selected_month_cat = st.session_state.get("sel_month", "juny")
+selected_month_data = month_translations[selected_month_cat]
+payment_filter = st.session_state.get("sel_pay_filter", "Tots")
+
+# ----------------- ACCOUNT BALANCES CALCULATION -----------------
+# Calculate balances for each account from inception up to end of selected month and year
+def get_balances_up_to(year, month_name):
+    month_idx = MONTHS_MAP.get(month_name, 12)
+    
+    # Filter despeses up to target date
+    target_score = year * 12 + month_idx
+    
+    sub_desp = df_desp[df_desp['date_score'] <= target_score]
+    
+    balances = {}
+    for csv_name, disp_name in BANK_MAPPING.items():
+        # Sum transactions for this bank
+        b_desp = sub_desp[sub_desp['Banc'] == csv_name]
+        inflows = b_desp['import ingrés'].sum()
+        outflows = b_desp['Import càrrec'].sum()
+        
+        # Calculate current net balance with initial offset
+        initial = INITIAL_BALANCES.get(disp_name, 0.0)
+        balances[disp_name] = balances.get(disp_name, 0.0) + (inflows - outflows)
+        
+    # Apply initial offset once
+    for k in INITIAL_BALANCES:
+        balances[k] = balances.get(k, 0.0) + INITIAL_BALANCES[k]
+        
+    # Account for VISA separately: VISA is a liability card, its balance is the sum of VISA transactions in the SELECTED month
+    visa_sub = df_desp[(df_desp['any'] == year) & (df_desp['mes_lower'] == month_name) & (df_desp['FormaPago'] == 'VISA')]
+    balances['Pago VISA'] = -visa_sub['Import càrrec'].sum()
+    
+    # Clean up small negative values that should be zero
+    for k in balances:
+        if abs(balances[k]) < 0.05:
+            balances[k] = 0.0
+            
+    return balances
+
+current_balances = get_balances_up_to(selected_year, selected_month_data)
+total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
+
+# ----------------- OIL CHANGE METRICS -----------------
+# Get latest odometer reading
+car_kms_actuals = 0.0
+if not df_km.empty:
+    car_kms_actuals = df_km.dropna(subset=['contador'])['contador'].iloc[-1]
+
+# Make oil change target customizable or saved in session state
+if "kms_canvi_oli" not in st.session_state:
+    st.session_state["kms_canvi_oli"] = 31491.0
+
+# ----------------- APP HEADER & BANNER -----------------
+# Header already rendered above
+
+# ----------------- TABS SYSTEM -----------------
+tab_dash, tab_details, tab_intro, tab_db = st.tabs([
+    "📊 Dashboard General", "📝 Detalls del Mes", "➕ Intro Dades", "💾 Bases de Dades (CSVs)"
+])
+
+# ================= TAB 1: DASHBOARD GENERAL =================
+with tab_dash:
+    # 1. Container for bank metrics (physically at the top)
+    bank_metrics_container = st.container()
+    
+    st.write("")
+    
+    # 2. Row of Title and Filters Popover (in place of Juny 2026)
+    col_sum_lbl, col_sum_btn = st.columns([11.4, 0.6], vertical_alignment="center")
+    with col_sum_lbl:
+        st.markdown("<h3 style='margin:0; color:#f39c12;'>📅 Resum Mensual d'Ingressos i Despeses</h3>", unsafe_allow_html=True)
+    with col_sum_btn:
+        with st.popover("⚙️", use_container_width=False):
+            selected_year = st.selectbox("Any", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year")
+            selected_month_cat = st.selectbox("Mes", CATALAN_MONTHS, index=CATALAN_MONTHS.index(selected_month_cat) if selected_month_cat in CATALAN_MONTHS else 5, key="sel_month")
+            selected_month_data = month_translations[selected_month_cat]
+            payment_filter = st.selectbox("Estat Pagament", ["Tots", "Pagat", "Pendent"], index=["Tots", "Pagat", "Pendent"].index(payment_filter), key="sel_pay_filter")
+
+    # 3. Re-calculate balances and render bank metrics at the top container
+    current_balances = get_balances_up_to(selected_year, selected_month_data)
+    total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
+    
+    with bank_metrics_container:
+        col_bal_title, col_bal_metrics = st.columns([1.6, 10.4], vertical_alignment="center")
+        with col_bal_title:
+            st.markdown(f"<h3 style='margin:0; font-size: 1.3rem;'>💰 Saldo Comptes:<br><span style='color: #22c55e;'>{total_accounts_balance:,.2f} €</span></h3>", unsafe_allow_html=True)
+        with col_bal_metrics:
+            col_ratios = [1.2] * len(current_balances) + [4.5]
+            cols = st.columns(col_ratios)
+            for i, (b_name, b_val) in enumerate(current_balances.items()):
+                with cols[i]:
+                    card_class = "metric-value-red" if b_val < 0 else ("metric-value-green" if b_val > 0 else "")
+                    st.markdown(f"""
+                        <div class="metric-card">
+                            <div class="metric-title">{b_name}</div>
+                            <div class="metric-value {card_class}">{b_val:,.2f} €</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+    
+    # Pivot-like summary computation for the selected year
+    summary_data = []
+    
+    # Clean despeses year and month
+    df_desp['clean_mes'] = df_desp['mes'].str.lower()
+    df_ing['clean_mes'] = df_ing['mes'].str.lower()
+    
+    # Filter by selected year
+    year_desp = df_desp[df_desp['any'] == selected_year]
+    year_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['cobrat'] == 'cobrat')]
+    
+    for m_cat in CATALAN_MONTHS:
+        m_data = month_translations[m_cat]
+        
+        # Incomes
+        sub_ing = year_ing[year_ing['clean_mes'] == m_data]
+        ing_fixes = sub_ing[sub_ing['Categoria'] == 'ingres_general']['Import'].sum()
+        ing_extres = sub_ing[sub_ing['Categoria'] == 'ingres_extra']['Import'].sum()
+        ing_total = ing_fixes + ing_extres
+        
+        # Expenses
+        sub_desp = year_desp[year_desp['clean_mes'] == m_data]
+        # Grid column mapping logic
+        cat_series = sub_desp['Idcategoria'].astype(str)
+        
+        exp_fixes = sub_desp[cat_series.str.contains('despesa_general|asseguran', case=False, na=False)]['Import càrrec'].sum()
+        exp_menjar = sub_desp[cat_series.str.contains('menjar', case=False, na=False)]['Import càrrec'].sum()
+        exp_rebost = sub_desp[cat_series.str.contains('rebost', case=False, na=False)]['Import càrrec'].sum()
+        exp_gasolina = sub_desp[cat_series.str.contains('gasolina', case=False, na=False)]['Import càrrec'].sum()
+        exp_restaurant = sub_desp[cat_series.str.contains('restaurant', case=False, na=False)]['Import càrrec'].sum()
+        exp_farmacia = sub_desp[cat_series.str.contains('farmacia', case=False, na=False)]['Import càrrec'].sum()
+        exp_neteja = sub_desp[cat_series.str.contains('neteja', case=False, na=False)]['Import càrrec'].sum()
+        exp_proveidor = sub_desp[cat_series.str.contains('proveidor', case=False, na=False)]['Import càrrec'].sum()
+        
+        # Varis column sums all remaining categories
+        exp_varis = sub_desp[~cat_series.str.contains(
+            'despesa_general|asseguran|menjar|rebost|gasolina|restaurant|farmacia|neteja|proveidor|op_banc|ingres_general|ingres_extra',
+            case=False, na=False
+        )]['Import càrrec'].sum()
+        
+        exp_total = exp_fixes + exp_menjar + exp_rebost + exp_gasolina + exp_restaurant + exp_farmacia + exp_neteja + exp_proveidor + exp_varis
+        saldo_total = ing_total - exp_total
+        
+        summary_data.append({
+            'Mes': m_cat.capitalize(),
+            'Ing. Fixes': ing_fixes,
+            'Ing. Extres': ing_extres,
+            'Ing. Total': ing_total,
+            'Desp. Fixes': exp_fixes,
+            'Desp. Menjar': exp_menjar,
+            'Desp. Rebost': exp_rebost,
+            'Desp. Gasolina': exp_gasolina,
+            'Desp. Restaurant': exp_restaurant,
+            'Desp. Farmàcia': exp_farmacia,
+            'Desp. Neteja': exp_neteja,
+            'Desp. Varis': exp_varis,
+            'Desp. Proveïdor': exp_proveidor,
+            'Desp. Total': exp_total,
+            'Saldo': saldo_total
+        })
+        
+    df_summary = pd.DataFrame(summary_data)
+    
+    # Calculate Totals Row
+    totals_row = {'Mes': 'TOTAL'}
+    for col in df_summary.columns:
+        if col != 'Mes':
+            totals_row[col] = df_summary[col].sum()
+    df_summary = pd.concat([df_summary, pd.DataFrame([totals_row])], ignore_index=True)
+    
+    # Style formatter to highlight values exceeding limit in red
+    def highlight_exceeded_limits(df):
+        style_df = pd.DataFrame('', index=df.index, columns=df.columns)
+        col_mapping = {
+            'Desp. Menjar': 'menjar',
+            'Desp. Gasolina': 'gasolina',
+            'Desp. Restaurant': 'restaurant',
+            'Desp. Farmàcia': 'farmacia',
+            'Desp. Neteja': 'neteja',
+            'Desp. Varis': 'varis'
+        }
+        for idx, row in df.iterrows():
+            if row['Mes'] == 'TOTAL':
+                continue
+            m_name = str(row['Mes']).lower()
+            m_data = month_translations.get(m_name, 'enero')
+            
+            # Highlight current selected month in yellow text (no background)
+            if m_name == selected_month_cat.lower():
+                style_df.at[idx, 'Mes'] = 'color: #f1c40f; font-weight: bold;'
+                
+            row_limits = get_limits_for(selected_year, m_data)
+            
+            for col_name, limit_key in col_mapping.items():
+                val = row[col_name]
+                lim = row_limits.get(limit_key, float('inf'))
+                if val > lim:
+                    style_df.at[idx, col_name] = 'background-color: #7f1d1d; color: #fecaca; font-weight: bold;'
+        return style_df
+
+    # Check limits for selected month/year to show alert banner
+    selected_limits = get_limits_for(selected_year, selected_month_data)
+    selected_month_summary = df_summary[df_summary['Mes'].str.lower() == selected_month_cat.lower()]
+    if not selected_month_summary.empty:
+        m_row = selected_month_summary.iloc[0]
+        exceeded_list = []
+        col_mapping_alert = {
+            'Desp. Menjar': ('menjar', 'menjar'),
+            'Desp. Gasolina': ('gasolina', 'gasolina'),
+            'Desp. Restaurant': ('restaurant', 'restaurant'),
+            'Desp. Farmàcia': ('farmàcia', 'farmacia'),
+            'Desp. Neteja': ('neteja', 'neteja'),
+            'Desp. Varis': ('varis', 'varis')
+        }
+        for col_name, (display_lbl, limit_key) in col_mapping_alert.items():
+            val = m_row[col_name]
+            lim = selected_limits.get(limit_key, float('inf'))
+            if val > lim:
+                exceeded_list.append(f"**{display_lbl}** ({val:,.2f} € > {lim:,.2f} €)")
+        if exceeded_list:
+            st.error(f"⚠️ **Valor superat**: {', '.join(exceeded_list)}")
+
+    # Display styled summary grid using static compact HTML table
+    st.table(
+        df_summary.style.format(precision=2, thousands=".", decimal=",")
+        .apply(highlight_exceeded_limits, axis=None)
+        .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000)
+        .highlight_max(subset=['Ing. Total'], color='#27ae60')
+        .highlight_max(subset=['Desp. Total'], color='#c0392b')
+    )
+    
+    st.write("")
+    
+    # 4. Charts block
+    show_charts = st.checkbox("Mostra gràfics", value=True)
+    if show_charts:
+        st.markdown("---")
+        chart_col1, chart_col2 = st.columns(2)
+        
+        with chart_col1:
+            st.markdown("<h4 style='color:#f39c12;'>📈 Previsió ingressos/despeses</h4>", unsafe_allow_html=True)
+            # Calculate summary for the last 2 years for the chart
+            chart_data = []
+            for yr in [selected_year - 1, selected_year]:
+                year_desp_c = df_desp[df_desp['any'] == yr]
+                year_ing_c = df_ing[(df_ing['any'] == yr) & (df_ing['cobrat'] == 'cobrat')]
+                
+                for m_cat in CATALAN_MONTHS:
+                    m_data = month_translations[m_cat]
+                    
+                    # Incomes
+                    sub_ing = year_ing_c[year_ing_c['clean_mes'] == m_data]
+                    ing_total = sub_ing['Import'].sum()
+                    
+                    # Expenses
+                    sub_desp = year_desp_c[year_desp_c['clean_mes'] == m_data]
+                    cat_series = sub_desp['Idcategoria'].astype(str)
+                    exp_total = sub_desp[~cat_series.str.contains('op_banc|ingres_general|ingres_extra', case=False, na=False)]['Import càrrec'].sum()
+                    
+                    chart_data.append({
+                        'Mes-Any': f"{m_cat.capitalize()[:3]} {str(yr)[2:]}",
+                        'Ingressos': ing_total,
+                        'Despeses': exp_total
+                    })
+            df_chart_2yrs = pd.DataFrame(chart_data)
+            
+            fig_bar = graph_objects.Figure()
+            fig_bar.add_trace(graph_objects.Bar(x=df_chart_2yrs['Mes-Any'], y=df_chart_2yrs['Ingressos'], name='Ingressos', marker_color='#2ecc71'))
+            fig_bar.add_trace(graph_objects.Bar(x=df_chart_2yrs['Mes-Any'], y=df_chart_2yrs['Despeses'], name='Despeses', marker_color='#e74c3c'))
+            fig_bar.update_layout(
+                barmode='group',
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#f8fafc'),
+                xaxis=dict(gridcolor='#334155', tickangle=-45),
+                yaxis=dict(gridcolor='#334155')
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
+            
+        with chart_col2:
+            st.markdown("<h4 style='color:#f39c12;'>🍕 Compres Super %</h4>", unsafe_allow_html=True)
+            # Pie chart of compresSuper for selected month
+            super_sub = df_super[(df_super['any'] == selected_year) & (df_super['mes'].str.lower() == selected_month_data)]
+            if not super_sub.empty:
+                df_pie = super_sub.groupby('familia')['totLinea'].sum().reset_index()
+                fig_pie = px.pie(df_pie, values='totLinea', names='familia', hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
+                fig_pie.update_layout(
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#f8fafc')
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+            else:
+                st.info(f"No hi ha dades de compres de supermercat per a {selected_month_cat} del {selected_year}.")
+                
+        st.write("")
+        # 🔧 Oil change section moved here
+        st.markdown("<h4 style='color:#f39c12;'>🔧 Canvi d'oli cotxe</h4>", unsafe_allow_html=True)
+        col_oil1, col_oil2, col_oil3, col_oil_space = st.columns([2, 2, 2, 6])
+        with col_oil1:
+            st.metric("Kms actuals", f"{int(car_kms_actuals):,}")
+        with col_oil2:
+            st.session_state["kms_canvi_oli"] = st.number_input("Kms canvi oli", value=st.session_state["kms_canvi_oli"], step=1000.0)
+        with col_oil3:
+            kms_left = st.session_state["kms_canvi_oli"] - car_kms_actuals
+            st.metric("Canvi dintre", f"{int(kms_left):,}", delta=f"{int(kms_left)} km left", delta_color="normal" if kms_left > 500 else "inverse")
+            
+        st.write("")
+        st.markdown("<h4 style='color:#f39c12;'>⛽ Consum Cotxe (L/100km)</h4>", unsafe_allow_html=True)
+        # Compute annual fuel consumption
+        df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
+        df_km['parsed_date'] = df_km['data'].apply(parse_excel_date)
+        
+        gas_yr = df_gas.groupby(df_gas['parsed_date'].dt.year)['litres'].sum()
+        km_yr = df_km.groupby(df_km['parsed_date'].dt.year)['km'].sum()
+        
+        consumption = ((gas_yr / km_yr) * 100).dropna().reset_index()
+        consumption.columns = ['Any', 'L/100km']
+        consumption['Any'] = consumption['Any'].astype(str)
+        
+        fig_line = px.bar(consumption, x='Any', y='L/100km', text_auto='.2f', color_discrete_sequence=['#f39c12'])
+        fig_line.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#f8fafc'),
+            xaxis=dict(gridcolor='#334155'),
+            yaxis=dict(gridcolor='#334155')
+        )
+        st.plotly_chart(fig_line, use_container_width=True)
+
+# ================= TAB 2: DETALLS DEL MES =================
+with tab_details:
+    st.markdown(f"### 🔍 Detalls de {selected_month_cat.capitalize()} del {selected_year}")
+    
+    col_left, col_mid, col_right = st.columns([1, 1.5, 1.5])
+    
+    with col_left:
+        st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments Pendents / Pagats</h4>", unsafe_allow_html=True)
+        
+        # 1. Hipoteca status
+        sub_hip = df_hip[(df_hip['any'] == selected_year) & (df_hip['mes'].str.lower() == selected_month_data)]
+        if not sub_hip.empty:
+            hip_row = sub_hip.iloc[0]
+            status_hip = "Pagat" if str(hip_row['pagat']).lower() == 'pagat' else "Pendent"
+            color = "green" if status_hip == "Pagat" else "red"
+            st.markdown(f"**🏠 Hipoteca**: {hip_row['Quota fixa']:.2f} € (<span style='color:{color};'>{status_hip}</span>)", unsafe_allow_html=True)
+        else:
+            st.write("🏠 **Hipoteca**: No programada")
+            
+        # 2. Credit Cotxe status
+        sub_cotxe_paid = df_desp[
+            (df_desp['any'] == selected_year) & 
+            (df_desp['mes'].str.lower() == selected_month_data) & 
+            (df_desp['Idconcepte'] == 'Crèdit Cotxe')
+        ]
+        status_cotxe = "Pagat" if not sub_cotxe_paid.empty else "Pendent"
+        color_cotxe = "green" if status_cotxe == "Pagat" else "red"
+        st.markdown(f"**🚗 Crèdit Cotxe**: 337,14 € (<span style='color:{color_cotxe};'>{status_cotxe}</span>)", unsafe_allow_html=True)
+        
+        # 3. Estalvi DP status (always scheduled, defaults to Pending with last known quota if not found)
+        sub_est = df_est[(df_est['any'] == selected_year) & (df_est['mes'].str.lower() == selected_month_data)]
+        if not sub_est.empty:
+            est_row = sub_est.iloc[0]
+            status_est = "Pagat" if str(est_row['pagat']).lower() == 'pagat' else "Pendent"
+            quota_est = est_row['quota']
+        else:
+            status_est = "Pendent"
+            quota_est = df_est['quota'].dropna().iloc[-1] if not df_est.empty else 231.53
+            
+        color_est = "green" if status_est == "Pagat" else "red"
+        st.markdown(f"**🐷 Estalvi DP**: {quota_est:.2f} € (<span style='color:{color_est};'>{status_est}</span>)", unsafe_allow_html=True)
+            
+    with col_mid:
+        st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
+        # Load ingressos list for selected month
+        month_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['clean_mes'] == selected_month_data)]
+        if not month_ing.empty:
+            st.dataframe(
+                month_ing[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}),
+                use_container_width=True,
+                hide_index=True
+            )
+            st.metric("Total Ingressat", f"{month_ing['Import'].sum():,.2f} €")
+        else:
+            st.info("No hi ha dades d'ingressos per aquest mes.")
+            
+    with col_right:
+        st.markdown("<h4 style='color:#f39c12;'>📤 Càrrecs per Categoria</h4>", unsafe_allow_html=True)
+        month_desp = df_desp[(df_desp['any'] == selected_year) & (df_desp['clean_mes'] == selected_month_data)]
+        if not month_desp.empty:
+            # Exclude op_banc!
+            month_desp_filtered = month_desp[month_desp['Idcategoria'] != 'op_banc']
+            
+            grouped_desp = month_desp_filtered.groupby('Idcategoria')['Import càrrec'].sum().reset_index()
+            grouped_desp = grouped_desp[grouped_desp['Import càrrec'] > 0].sort_values(by='Import càrrec', ascending=False)
+            
+            event = st.dataframe(
+                grouped_desp.style.format({'Import càrrec': '{:,.2f} €'}),
+                use_container_width=True,
+                hide_index=True,
+                on_select="rerun",
+                selection_mode="single-row"
+            )
+            st.metric("Total Gastat", f"{grouped_desp['Import càrrec'].sum():,.2f} €")
+            
+            # Show details of selected group if clicked
+            if event and 'rows' in event.selection and event.selection['rows']:
+                selected_row_idx = event.selection['rows'][0]
+                selected_cat = grouped_desp.iloc[selected_row_idx]['Idcategoria']
+                st.write("")
+                st.markdown(f"**🔍 Desglòs de despeses: {selected_cat}**")
+                
+                cat_details = month_desp_filtered[month_desp_filtered['Idcategoria'] == selected_cat][
+                    ['Data', 'FormaPago', 'Idconcepte', 'Import càrrec', 'Comentari']
+                ].copy()
+                
+                st.dataframe(
+                    cat_details.style.format({'Import càrrec': '{:,.2f} €'}),
+                    use_container_width=True,
+                    hide_index=True
+                )
+        else:
+            st.info("No hi ha dades de despeses per aquest mes.")
+
+# ================= TAB 3: INTRO DADES =================
+with tab_intro:
+    st.markdown("### ➕ Introduir Nou Registre")
+    
+    def clear_form_state(prefix):
+        for k in list(st.session_state.keys()):
+            if k.startswith(prefix):
+                del st.session_state[k]
+    
+    data_type = st.selectbox("Tipus de registre", [
+        "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe", "Gasolina"
+    ])
+    
+    st.write("---")
+    
+    # 2-line compressed layout for all form types
+    if data_type == "Moviment Real (Despesa)":
+        # Row 1 (4 columns)
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+        with r1_col1:
+            banc = st.selectbox("Banc", get_config_banks(), key="desp_banc")
+        with r1_col2:
+            forma_pago = st.selectbox("Forma de Pagament", get_config_payment_methods(), key="desp_forma_pago")
+        with r1_col3:
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="desp_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col4:
+            import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, step=0.01, key="desp_import")
+            
+        # Row 2 (4 columns)
+        r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+        with r2_col1:
+            cat_val = st.selectbox("Categoria", get_config_categories(), key="desp_cat")
+        with r2_col2:
+            concept_options = get_config_concepts(cat_val)
+            concept_val = st.selectbox("Concepte", concept_options, key="desp_concepte")
+        with r2_col3:
+            grup_val = st.selectbox("Grup", ["Càrrec", "op_banc", "Ingrés"], key="desp_grup")
+        with r2_col4:
+            comentari_val = st.text_input("Comentari", key="desp_comentari")
+            
+        col_btns = st.columns([1.5, 1.5, 9.0])
+        with col_btns[0]:
+            submitted = st.button("Desa el Moviment Real")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_desp")
+        if cancelled:
+            clear_form_state("desp_")
+            st.rerun()
+        if submitted:
+            new_row = {
+                'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
+                'Banc': banc,
+                'FormaPago': forma_pago,
+                'Data': data_val.strftime('%d/%m/%Y'),
+                'mes': mes_val,
+                'any': any_val,
+                'import ingrés': 0.0,
+                'Import càrrec': import_carg,
+                'grup': grup_val,
+                'Idcategoria': cat_val,
+                'Idconcepte': concept_val,
+                'Comentari': comentari_val
+            }
+            df_desp = pd.concat([df_desp, pd.DataFrame([new_row])], ignore_index=True)
+            save_to_csv(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), 'despeses.csv')
+            st.success("Moviment real (despesa) desat correctament!")
+            clear_form_state("desp_")
+            st.rerun()
+            
+    elif data_type == "Previsió de Pagament":
+        # Row 1 (4 columns)
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+        with r1_col1:
+            banc = st.selectbox("Banc", get_config_banks(), key="pag_banc")
+        with r1_col2:
+            forma_pago = st.selectbox("Forma de Pagament", get_config_payment_methods(), key="pag_forma_pago")
+        with r1_col3:
+            data_val = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="pag_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col4:
+            import_carg = st.number_input("Import (€)", min_value=0.0, step=0.01, key="pag_import")
+            
+        # Row 2 (5 columns to fit repeating settings)
+        r2_col1, r2_col2, r2_col3, r2_col4, r2_col5 = st.columns([2.5, 2.5, 2.0, 2.5, 2.5])
+        with r2_col1:
+            cat_val = st.selectbox("Categoria", get_config_categories(), key="pag_cat")
+        with r2_col2:
+            concept_options = get_config_concepts(cat_val)
+            concept_val = st.selectbox("Concepte", concept_options, key="pag_concepte")
+        with r2_col3:
+            pagat_val = st.selectbox("Estat", ["pendent", "pagat"], key="pag_estat")
+        with r2_col4:
+            repetir = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="pag_repetir")
+        with r2_col5:
+            repetir_any_limit = st.selectbox("Fins a desembre de l'any:", [any_val, any_val + 1, any_val + 2], index=0, key="rep_any_pag")
+        
+        col_btns = st.columns([1.5, 1.5, 9.0])
+        with col_btns[0]:
+            submitted = st.button("Desa la Previsió de Pagament")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_pag")
+        if cancelled:
+            clear_form_state("pag_")
+            clear_form_state("rep_any_pag")
+            st.rerun()
+        if submitted:
+            if repetir:
+                current_max_id = int(df_pag['idPago'].max() + 1) if not df_pag.empty else 1
+                updated_count = 0
+                added_count = 0
+                for yr in range(any_val, repetir_any_limit + 1):
+                    start_month = data_val.month if yr == any_val else 1
+                    for m_idx in range(start_month, 13):
+                        m_cat = CATALAN_MONTHS[m_idx - 1]
+                        m_data = month_translations[m_cat]
+                        
+                        mask = (df_pag['any'] == yr) & (df_pag['mes'].str.lower() == m_data) & (df_pag['Concepte'].str.lower() == concept_val.lower())
+                        if mask.any():
+                            df_pag.loc[mask, 'Import'] = import_carg
+                            df_pag.loc[mask, 'Banc'] = banc
+                            df_pag.loc[mask, 'Formapago'] = forma_pago
+                            df_pag.loc[mask, 'Categoria'] = cat_val
+                            df_pag.loc[mask, 'pagat'] = pagat_val
+                            updated_count += 1
+                        else:
+                            new_row = {
+                                'idPago': current_max_id,
+                                'Banc': banc,
+                                'Formapago': forma_pago,
+                                'Data': f"{data_val.day:02d}/{m_idx:02d}/{yr}",
+                                'dia': data_val.day,
+                                'mes': m_data,
+                                'any': yr,
+                                'Categoria': cat_val,
+                                'Concepte': concept_val,
+                                'Import': import_carg,
+                                'pagat': pagat_val
+                            }
+                            df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
+                            current_max_id += 1
+                            added_count += 1
+                save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                st.success(f"Previsions desades: {added_count} creades de nou i {updated_count} actualitzades fins a desembre del {repetir_any_limit}!")
+            else:
+                new_row = {
+                    'idPago': int(df_pag['idPago'].max() + 1) if not df_pag.empty else 1,
+                    'Banc': banc,
+                    'Formapago': forma_pago,
+                    'Data': data_val.strftime('%d/%m/%Y'),
+                    'dia': data_val.day,
+                    'mes': mes_val,
+                    'any': any_val,
+                    'Categoria': cat_val,
+                    'Concepte': concept_val,
+                    'Import': import_carg,
+                    'pagat': pagat_val
+                }
+                df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
+                save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                st.success("Previsió de pagament desada correctament!")
+            clear_form_state("pag_")
+            clear_form_state("rep_any_pag")
+            st.rerun()
+            
+    elif data_type == "Previsió d'Ingrés":
+        # Row 1 (4 columns)
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+        with r1_col1:
+            banc = st.selectbox("Banc", get_config_banks(), key="ing_banc")
+        with r1_col2:
+            data_val = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="ing_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col3:
+            import_ing = st.number_input("Import Ingrés (€)", min_value=0.0, step=0.01, key="ing_import")
+        with r1_col4:
+            cat_val = st.selectbox("Categoria", ["ingres_general", "ingres_extra"], key="ing_cat")
+            
+        # Row 2 (4 columns)
+        r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+        with r2_col1:
+            concept_options = get_config_concepts(cat_val)
+            concept_val = st.selectbox("Concepte", concept_options, key="ing_concepte")
+        with r2_col2:
+            cobrat_val = st.selectbox("Estat", ["cobrat", "pendent"], key="ing_cobrat")
+        with r2_col3:
+            repetir = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="ing_repetir")
+        with r2_col4:
+            repetir_any_limit = st.selectbox("Fins a desembre de l'any:", [any_val, any_val + 1, any_val + 2], index=0, key="rep_any_ing")
+        
+        col_btns = st.columns([1.5, 1.5, 9.0])
+        with col_btns[0]:
+            submitted = st.button("Desa la Previsió d'Ingrés")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_ing")
+        if cancelled:
+            clear_form_state("ing_")
+            clear_form_state("rep_any_ing")
+            st.rerun()
+        if submitted:
+            if repetir:
+                current_max_id = int(df_ing['idIngres'].max() + 1) if not df_ing.empty else 1
+                updated_count = 0
+                added_count = 0
+                for yr in range(any_val, repetir_any_limit + 1):
+                    start_month = data_val.month if yr == any_val else 1
+                    for m_idx in range(start_month, 13):
+                        m_cat = CATALAN_MONTHS[m_idx - 1]
+                        m_data = month_translations[m_cat]
+                        
+                        mask = (df_ing['any'] == yr) & (df_ing['mes'].str.lower() == m_data) & (df_ing['Concepte'].str.lower() == concept_val.lower())
+                        if mask.any():
+                            df_ing.loc[mask, 'Import'] = import_ing
+                            df_ing.loc[mask, 'Banc'] = banc
+                            df_ing.loc[mask, 'Categoria'] = cat_val
+                            df_ing.loc[mask, 'cobrat'] = cobrat_val
+                            updated_count += 1
+                        else:
+                            new_row = {
+                                'idIngres': current_max_id,
+                                'Banc': banc,
+                                'Data': f"{data_val.day:02d}/{m_idx:02d}/{yr}",
+                                'dia': data_val.day,
+                                'mes': m_data,
+                                'any': yr,
+                                'Categoria': cat_val,
+                                'Concepte': concept_val,
+                                'Import': import_ing,
+                                'comentari': '',
+                                'cobrat': cobrat_val
+                            }
+                            df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
+                            current_max_id += 1
+                            added_count += 1
+                save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                st.success(f"Previsions d'ingrés desades: {added_count} creades de nou i {updated_count} actualitzades fins a desembre del {repetir_any_limit}!")
+            else:
+                new_row = {
+                    'idIngres': int(df_ing['idIngres'].max() + 1) if not df_ing.empty else 1,
+                    'Banc': banc,
+                    'Data': data_val.strftime('%d/%m/%Y'),
+                    'dia': data_val.day,
+                    'mes': mes_val,
+                    'any': any_val,
+                    'Categoria': cat_val,
+                    'Concepte': concept_val,
+                    'Import': import_ing,
+                    'comentari': '',
+                    'cobrat': cobrat_val
+                }
+                df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
+                save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                st.success("Previsió d'ingrés desada correctament!")
+            clear_form_state("ing_")
+            clear_form_state("rep_any_ing")
+            st.rerun()
+            
+    elif data_type == "Compra Súper":
+        # Row 1 (5 columns)
+        r1_col1, r1_col2, r1_col3, r1_col4, r1_col5 = st.columns(5)
+        with r1_col1:
+            super_val = st.selectbox("Supermercat", get_config_supers(), key="super_super")
+        with r1_col2:
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="super_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col3:
+            fam_val = st.selectbox("Família", get_config_families(), key="super_familia")
+        with r1_col4:
+            article_options = get_config_articles(fam_val)
+            art_val = st.selectbox("Article", article_options, key="super_article")
+        with r1_col5:
+            pes_val = st.number_input("Pes (grams/units)", min_value=0.0, step=1.0, key="super_pes")
+            
+        # Row 2 (4 columns)
+        r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+        with r2_col1:
+            qty_val = st.number_input("Quantitat", min_value=1.0, value=1.0, step=1.0, key="super_quantitat")
+        with r2_col2:
+            preu_unit = st.number_input("Preu Unitari (€)", min_value=0.0, step=0.01, key="super_preu")
+        with r2_col3:
+            prom_val = st.checkbox("Promoció / Descompte?", key="super_prom")
+        with r2_col4:
+            rebost_val = st.checkbox("Rebost / Celler?", key="super_rebost")
+            
+        col_btns = st.columns([1.5, 1.5, 9.0])
+        with col_btns[0]:
+            submitted = st.button("Desa la Compra")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_super")
+        if cancelled:
+            clear_form_state("super_")
+            st.rerun()
+        if submitted:
+            tot_linea = preu_unit * qty_val
+            new_row = {
+                'IdCompra': int(df_super['IdCompra'].max() + 1) if not df_super.empty else 1,
+                'data': data_val.strftime('%d/%m/%Y'),
+                'mes': mes_val,
+                'any': any_val,
+                'super': super_val,
+                'familia': fam_val,
+                'article': art_val,
+                'pes': int(pes_val),
+                'quantitat': int(qty_val),
+                'preuUnit': preu_unit,
+                'prom': 1 if prom_val else 0,
+                'totLinea': tot_linea,
+                'IdDespesa': 0,
+                'descompte': 0.0,
+                'rebost': 'rebost' if rebost_val else None
+            }
+            df_super = pd.concat([df_super, pd.DataFrame([new_row])], ignore_index=True)
+            save_to_csv(df_super.drop(columns=['parsed_date'], errors='ignore'), 'compresSuper.csv')
+            st.success("Compra de súper desada correctament!")
+            clear_form_state("super_")
+            st.rerun()
+            
+    elif data_type == "Km Cotxe":
+        # Row 1 (3 columns)
+        r1_col1, r1_col2, r1_col3 = st.columns([3, 3, 6])
+        with r1_col1:
+            cotxe_val = st.selectbox("Cotxe", sorted(list(df_km['cotxe'].dropna().unique())), key="km_cotxe")
+        with r1_col2:
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="km_data")
+        with r1_col3:
+            ruta_val = st.text_input("Ruta / Destinació", key="km_ruta")
+            
+        # Row 2 (2 columns)
+        r2_col1, r2_col2 = st.columns(2)
+        with r2_col1:
+            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, step=1.0, key="km_contador")
+        with r2_col2:
+            last_val = df_km[df_km['cotxe'] == cotxe_val]['contador'].max() if not df_km.empty else 0
+            dist_km = contador_val - last_val if contador_val > last_val else 0.0
+            km_val = st.number_input("Kilòmetres recorreguts", min_value=0.0, value=float(dist_km), step=1.0, key="km_recorreguts")
+            
+        col_btns = st.columns([1.5, 1.5, 9.0])
+        with col_btns[0]:
+            submitted = st.button("Desa els Kilòmetres")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_km")
+        if cancelled:
+            clear_form_state("km_")
+            st.rerun()
+        if submitted:
+            new_row = {
+                'idRuta': int(df_km['idRuta'].max() + 1) if not df_km.empty else 1,
+                'cotxe': cotxe_val,
+                'data': data_val.strftime('%d/%m/%Y'),
+                'ruta': ruta_val,
+                'contador': int(contador_val),
+                'km': int(km_val)
+            }
+            df_km = pd.concat([df_km, pd.DataFrame([new_row])], ignore_index=True)
+            save_to_csv(df_km.drop(columns=['parsed_date'], errors='ignore'), 'kmCotxe.csv')
+            st.success("Ruta desada correctament!")
+            clear_form_state("km_")
+            st.rerun()
+            
+    elif data_type == "Gasolina":
+        # Row 1 (3 columns)
+        r1_col1, r1_col2, r1_col3 = st.columns(3)
+        with r1_col1:
+            cotxe_val = st.selectbox("Cotxe", sorted(list(df_gas['cotxe'].dropna().unique())), key="gas_cotxe")
+        with r1_col2:
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="gas_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col3:
+            import_val = st.number_input("Import total pagat (€)", min_value=0.0, step=0.01, key="gas_import")
+            
+        # Row 2 (3 columns)
+        r2_col1, r2_col2, r2_col3 = st.columns(3)
+        with r2_col1:
+            litres_val = st.number_input("Litres", min_value=0.0, step=0.01, key="gas_litres")
+        with r2_col2:
+            lloc_val = st.text_input("Benzinera / Lloc", key="gas_lloc")
+        with r2_col3:
+            preu_l = import_val / litres_val if litres_val > 0 else 0.0
+            st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>⛽ Preu/Litre: {preu_l:.3f} €/l</div>", unsafe_allow_html=True)
+            
+        col_btns = st.columns([1.5, 1.5, 9.0])
+        with col_btns[0]:
+            submitted = st.button("Desa el Proveïment")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_gas")
+        if cancelled:
+            clear_form_state("gas_")
+            st.rerun()
+        if submitted:
+            new_row = {
+                'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty else 1,
+                'cotxe': cotxe_val,
+                'data': data_val.strftime('%d/%m/%Y'),
+                'mes': mes_val,
+                'any': any_val,
+                'import': import_val,
+                '?/l': preu_l,
+                'litres': litres_val,
+                'lloc': lloc_val
+            }
+            df_gas = pd.concat([df_gas, pd.DataFrame([new_row])], ignore_index=True)
+            save_to_csv(df_gas.drop(columns=['parsed_date'], errors='ignore'), 'gasolina.csv')
+            st.success("Dades de gasolina desades correctament!")
+            clear_form_state("gas_")
+            st.rerun()
+
+    # --- Add reminder table of the last movement of each bank ---
+    st.write("")
+    st.markdown("---")
+    st.markdown("<h4 style='color:#f39c12; margin-top: 10px;'>📋 Últim moviment registrat a cada compte</h4>", unsafe_allow_html=True)
+    
+    last_movs = []
+    for bank_key in get_config_banks():
+        df_b = df_desp[df_desp['Banc'] == bank_key]
+        if not df_b.empty:
+            last_row = df_b.iloc[-1]
+            is_charge = float(last_row['Import càrrec']) > 0
+            val = last_row['Import càrrec'] if is_charge else last_row['import ingrés']
+            lbl = "Càrrec" if is_charge else "Ingrés"
+            
+            last_movs.append({
+                'Banc': BANK_MAPPING.get(bank_key, bank_key),
+                'Data': last_row['Data'],
+                'Categoria': last_row['Idcategoria'],
+                'Concepte': last_row['Idconcepte'],
+                'Tipus': lbl,
+                'Import': val,
+                '_Tipus_raw': lbl  # hidden helper for styling
+            })
+            
+    if last_movs:
+        df_last = pd.DataFrame(last_movs)
+        
+        # Style callback to highlight charges in red, inflows in green
+        def style_last_mov_cells(val):
+            if isinstance(val, float):
+                return ""
+            return ""
+            
+        def style_rows(df):
+            style_df = pd.DataFrame("", index=df.index, columns=df.columns)
+            for idx, row in df.iterrows():
+                color = "#ef4444" if df_last.loc[idx, '_Tipus_raw'] == "Càrrec" else "#22c55e"
+                style_df.at[idx, 'Import'] = f"color: {color}; font-weight: bold;"
+                style_df.at[idx, 'Tipus'] = f"color: {color}; font-weight: bold;"
+            return style_df
+            
+        # Display as a compact, styled static table
+        st.table(
+            df_last.drop(columns=['_Tipus_raw'])
+            .style.format({'Import': '{:,.2f} €'})
+            .apply(style_rows, axis=None)
+        )
+# ================= TAB 4: BASES DE DADES (CSVs) =================
+with tab_db:
+    st.markdown("### 🗃️ Navegador de Taules Completes")
+    
+    db_select = st.selectbox("Escull la taula que vols consultar", [
+        "Despeses (General)", "Pagaments (General)", "Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Previsió Hipoteca", "Estalvis DP"
+    ])
+    
+    st.write("")
+    
+    if db_select == "Despeses (General)":
+        st.dataframe(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), use_container_width=True)
+    elif db_select == "Pagaments (General)":
+        st.dataframe(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), use_container_width=True)
+    elif db_select == "Ingressos":
+        st.dataframe(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), use_container_width=True)
+    elif db_select == "Compres Supermercat":
+        st.dataframe(df_super.drop(columns=['parsed_date'], errors='ignore'), use_container_width=True)
+    elif db_select == "Gasolina":
+        st.dataframe(df_gas.drop(columns=['parsed_date'], errors='ignore'), use_container_width=True)
+    elif db_select == "Kilòmetres Cotxe":
+        st.dataframe(df_km.drop(columns=['parsed_date'], errors='ignore'), use_container_width=True)
+    elif db_select == "Previsió Hipoteca":
+        st.dataframe(df_hip, use_container_width=True)
+    elif db_select == "Estalvis DP":
+        st.dataframe(df_est, use_container_width=True)

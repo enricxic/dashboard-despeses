@@ -1,0 +1,13 @@
+# Streamlit / Python temp files
+__pycache__/
+*.pyc
+.streamlit/config.toml
+.streamlit/secrets.toml
+.env
+.DS_Store
+venv/
+.venv/
+node_modules/
+dist/
+build/
+*.log

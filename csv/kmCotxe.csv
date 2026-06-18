@@ -1,0 +1,603 @@
+idRuta;cotxe;data;ruta;contador;km
+1.0;ibiza;01/03/2021;Palam¢s(Pepe);184690.0;140.0
+2.0;ibiza;02/03/2021;Palam¢s(NN);184830.0;140.0
+3.0;ibiza;03/03/2021;Sta.Coloma (hort);184934.0;104.0
+4.0;ibiza;04/03/2021;Sta.Coloma (classe);185038.0;104.0
+5.0;ibiza;08/03/2021;Palam¢s(Pepe);185178.0;140.0
+6.0;ibiza;10/03/2021;Sta.Coloma (hort);185286.0;108.0
+7.0;ibiza;10/03/2021;Buscar llenya;185301.0;15.0
+8.0;ibiza;11/03/2021;Sta.Coloma (classe);185379.0;78.0
+9.0;ibiza;11/03/2021;Ma‡anet (firma);185448.0;69.0
+10.0;ibiza;12/03/2021;Palam¢s(NN);185588.0;140.0
+11.0;ibiza;16/03/2021;Buscar llenya;185603.0;15.0
+12.0;ibiza;17/03/2021;Sta.Coloma (hort);185707.0;104.0
+13.0;ibiza;18/03/2021;Sta.Coloma (classe);185815.0;108.0
+14.0;ibiza;23/03/2021;Girona (vacuna)+Sta.Col;185974.0;159.0
+15.0;ibiza;07/04/2021;Volta carrega bateria;185979.0;5.0
+16.0;ibiza;08/04/2021;Sta. Coloma;186083.0;104.0
+17.0;ibiza;10/04/2021;Palam¢s;186255.0;172.0
+18.0;ibiza;12/04/2021;Vacuna Isa Girona;186359.0;104.0
+19.0;ibiza;14/04/2021;Sta. Coloma (hort);186463.0;104.0
+20.0;ibiza;15/04/2021;Sta.Coloma(Classe);186568.0;105.0
+21.0;ibiza;20/04/2021;Platja d'Aro(metge);186711.0;143.0
+22.0;ibiza;21/04/2021;Sta. Coloma (hort);186764.0;53.0
+23.0;ibiza;22/04/2021;Sta.Coloma(Classe);186868.0;104.0
+24.0;ibiza;27/04/2021;Posar gasolina;186871.0;3.0
+25.0;ibiza;28/04/2021;Palam¢s(dentista Jordi);187011.0;140.0
+26.0;ibiza;29/04/2021;Sta.Coloma(Classe);187119.0;108.0
+27.0;ibiza;03/05/2021;Sta.Coloma (reuni¢);187175.0;56.0
+28.0;ibiza;05/05/2021;Sta. Coloma (hort);187279.0;104.0
+29.0;ibiza;06/05/2021;Sta.Coloma(Classe);187406.0;127.0
+30.0;ibiza;10/05/2021;Palam¢s (lidia);187561.0;155.0
+31.0;ibiza;11/05/2021;Buscar llenya;187580.0;19.0
+32.0;ibiza;12/05/2021;Sta. Coloma (hort);187686.0;106.0
+33.0;ibiza;13/05/2021;Sta.Coloma(Classe);187794.0;108.0
+34.0;ibiza;14/05/2021;Hisenda LaBisbal;187960.0;166.0
+35.0;ibiza;19/05/2021;Sta.Coloma(hort);188068.0;108.0
+36.0;ibiza;20/05/2021;Sta.Coloma(Classe);188172.0;104.0
+37.0;ibiza;22/05/2021;Girona(Hosp. Pepe);188295.0;123.0
+38.0;ibiza;23/05/2021;Com. Bujons;188438.0;143.0
+39.0;ibiza;26/05/2021;Sta.Coloma(hort);188544.0;106.0
+40.0;ibiza;27/05/2021;Sta.Coloma(Classe);188650.0;106.0
+41.0;ibiza;28/05/2021;Palam¢s(Dentista);188925.0;381.0
+42.0;ibiza;01/06/2021;Sta.Coloma (dilluns);189031.0;859.0
+43.0;ibiza;02/06/2021;Sta. Coloma + Trueta;189200.0;169.0
+44.0;ibiza;03/06/2021;Sta. Coloma (dimecres);189312.0;112.0
+45.0;ibiza;07/06/2021;Sta. Coloma;189419.0;107.0
+46.0;ibiza;08/06/2021;Sta. Coloma + Santi;189629.0;210.0
+47.0;ibiza;09/06/2021;Sta. Coloma+ Trueta;189801.0;172.0
+48.0;ibiza;14/06/2021;Sta.Coloma (dilluns);189904.0;103.0
+49.0;ibiza;15/06/2021;Sta.Coloma (dimarts);190010.0;106.0
+50.0;ibiza;16/06/2021;Sta. Coloma+ mamograf;190174.0;164.0
+51.0;ibiza;17/06/2021;?;190341.0;167.0
+52.0;ibiza;18/06/2021;reparto cartes Palam¢s;190527.0;186.0
+53.0;ibiza;21/06/2021;Vacuna Girona;190633.0;106.0
+54.0;ibiza;22/06/2021;Sta. Coloma(1 viatge);190691.0;58.0
+55.0;ibiza;25/06/2021;Trueta;190807.0;116.0
+56.0;ibiza;26/06/2021;Sopar Jordi;190819.0;12.0
+57.0;ibiza;28/06/2021;Sta.Coloma (dilluns);190926.0;107.0
+58.0;ibiza;29/06/2021;Sta.Coloma (dimarts);191030.0;104.0
+59.0;ibiza;30/06/2021;Sta. Coloma+ Trueta;191209.0;179.0
+60.0;ibiza;05/07/2021;Sta.Coloma (dilluns);191316.0;107.0
+61.0;ibiza;06/07/2021;Palam¢s;191494.0;178.0
+62.0;ibiza;12/07/2021;Sta.Coloma (dilluns);191603.0;109.0
+63.0;ibiza;13/07/2021;Sta.Coloma (dimarts);191711.0;108.0
+64.0;ibiza;14/07/2021;Sta. Coloma (dimecres);191818.0;107.0
+65.0;ibiza;14/07/2021;Argentona-Barcelona;192004.0;186.0
+66.0;ibiza;31/07/2021;Viatge El Pilar;193494.0;1490.0
+67.0;ibiza;04/08/2021;Palam¢s;193654.0;160.0
+68.0;ibiza;09/08/2021;Sta.Coloma (dilluns);193760.0;106.0
+69.0;ibiza;10/08/2021;Sta.Coloma (dimarts);193869.0;109.0
+70.0;ibiza;11/08/2021;Sta.Coloma (dimecres);193976.0;107.0
+71.0;ibiza;11/08/2021;Sta.Coloma (mores);194027.0;51.0
+72.0;ibiza;21/08/2021;Palam¢s;194270.0;243.0
+73.0;ibiza;30/08/2021;Sta.Coloma (dilluns);194377.0;107.0
+74.0;ibiza;31/08/2021;Sta.Coloma (dimarts);194483.0;106.0
+75.0;ibiza;01/09/2021;Sta.Coloma (dimecres);194593.0;110.0
+76.0;ibiza;06/09/2021;Sta.Coloma (dilluns);194700.0;107.0
+77.0;ibiza;07/09/2021;Sta.Coloma (dimarts);194806.0;106.0
+78.0;ibiza;09/09/2021;Sta.Coloma (dimecres);194914.0;108.0
+79.0;ibiza;09/09/2021;Generalitat Girona;195028.0;114.0
+80.0;ibiza;13/09/2021;Sta.Coloma (dilluns);195134.0;106.0
+81.0;ibiza;14/09/2021;Sta.Coloma (dimarts);195192.0;58.0
+82.0;ibiza;15/09/2021;Sta.Coloma (dimecres);195298.0;106.0
+83.0;ibiza;16/09/2021;Girona Vidres;195406.0;108.0
+84.0;ibiza;20/09/2021;Sta.Coloma (dilluns);195512.0;214.0
+85.0;ibiza;21/09/2021;Sta.Coloma (dimarts);195617.0;105.0
+86.0;ibiza;23/09/2021;Palam¢s(entrega M£sica);195760.0;143.0
+87.0;ibiza;27/08/2021;Sta.Coloma (dilluns);195870.0;110.0
+88.0;ibiza;28/09/2021;Sta.Coloma (dimarts);195980.0;110.0
+89.0;ibiza;29/09/2021;Sta.Coloma (dimecres);196086.0;106.0
+90.0;ibiza;30/09/2021;Pals+Palam¢s;196279.0;193.0
+91.0;ibiza;02/10/2021;Girona Compres;196382.0;103.0
+92.0;ibiza;05/10/2021;Sta.Coloma (dimarts);196442.0;60.0
+93.0;ibiza;06/10/2021;Sta.Coloma (dimecres);196546.0;104.0
+94.0;ibiza;07/08/2021;Pals;196725.0;179.0
+95.0;ibiza;13/08/2021;Sta.Coloma (dimecres);196833.0;108.0
+96.0;ibiza;18/10/2021;Sta.Coloma (dilluns);196942.0;109.0
+97.0;ibiza;18/10/2021;Mireia-Sants-BCN;197117.0;175.0
+98.0;ibiza;19/10/2021;Palam¢s (dentista);197317.0;200.0
+99.0;ibiza;26/10/2021;Palam¢s (dentista);197520.0;203.0
+100.0;ibiza;27/10/2021;Sta.Coloma (dimecres);197624.0;104.0
+101.0;ibiza;02/11/2021;Sta.Coloma (dimarts);197679.0;55.0
+102.0;ibiza;03/11/2021;Sta.Coloma (dimecres);197786.0;107.0
+103.0;ibiza;05/11/2021;Platja d'Aro(metge);197926.0;140.0
+104.0;ibiza;08/11/2021;Sta.Coloma (dilluns);198031.0;105.0
+105.0;ibiza;09/11/2021;Sta.Coloma (dimarts);198086.0;55.0
+106.0;ibiza;15/11/2021;Sta. Coloma + Salt;198212.0;126.0
+107.0;ibiza;16/11/2021;Sta.Coloma (dimarts);198269.0;57.0
+108.0;ibiza;17/11/2021;Sta.Coloma (dimecres);198374.0;105.0
+109.0;ibiza;19/11/2021;Palam¢s;198515.0;141.0
+110.0;ibiza;22/11/2021;Sta.Coloma (dilluns);198621.0;106.0
+111.0;ibiza;23/11/2021;Sta. Caterina;198719.0;98.0
+112.0;ibiza;24/11/2021;Sta.Coloma (dimecres);198824.0;105.0
+113.0;ibiza;26/11/2021;Sta. Caterina Isa;198930.0;106.0
+114.0;ibiza;28/11/2021;Dinar Morillas;199066.0;136.0
+115.0;ibiza;29/11/2021;Sta.Coloma+ Sta.Cater.;199183.0;117.0
+116.0;ibiza;30/11/2021;Sta.Coloma (dimarts)+ITV;199273.0;90.0
+117.0;ibiza;01/12/2021;Buscar llenya;199279.0;6.0
+118.0;ibiza;03/12/2021;Sta. Caterina;199382.0;103.0
+119.0;ibiza;10/12/2021;Sta. Caterina;199486.0;104.0
+120.0;ibiza;13/12/2021;Sta.Coloma (dilluns);199593.0;107.0
+121.0;ibiza;14/12/2021;Sta.Coloma (dimarts);199704.0;111.0
+122.0;ibiza;15/12/2021;Sta.Coloma (dimecres);199812.0;108.0
+123.0;ibiza;17/12/2021;Palam¢s;199963.0;151.0
+124.0;ibiza;18/12/2021;Dinar Vic;200038.0;75.0
+125.0;ibiza;20/12/2021;Sta.Coloma vacuna;200096.0;58.0
+126.0;ibiza;21/12/2021;Sta.Coloma (dimarts);200204.0;108.0
+127.0;ibiza;22/12/2021;Viatge Torre;200897.0;693.0
+128.0;ibiza;07/01/2022;tornar Pilar H.;201596.0;699.0
+129.0;ibiza;10/01/2022;Sta. Coloma (dilluns);201703.0;107.0
+130.0;ibiza;11/01/2022;Sta. Coloma (dimarts);201811.0;108.0
+131.0;ibiza;12/01/2022;Sta. Coloma (dimecres);201918.0;107.0
+132.0;ibiza;15/01/2022;Festa Lidia Cerrillo;202059.0;141.0
+133.0;ibiza;17/01/2022;Sta.Coloma + St.Hilari;202178.0;119.0
+134.0;ibiza;18/01/2022;Sta. Coloma (dimarts);202284.0;106.0
+135.0;ibiza;19/01/2022;Sta. Coloma (dimecres);202392.0;108.0
+136.0;ibiza;25/01/2022;Sta. Coloma (dimarts);202502.0;110.0
+137.0;ibiza;26/01/2022;Generalitat Girona;202609.0;107.0
+138.0;ibiza;31/01/2022;Sta. Coloma (dilluns);202717.0;215.0
+139.0;ibiza;07/02/2022;Sta. Coloma (dilluns);202827.0;110.0
+140.0;ibiza;08/02/2022;Girona+Sta.Coloma;202987.0;160.0
+141.0;ibiza;09/02/2022;Sta. Coloma (dimecres);203094.0;107.0
+142.0;ibiza;11/02/2022;Cas Joan Rotllan;203255.0;161.0
+143.0;ibiza;15/02/2022;Girona+Sta.Coloma;203360.0;105.0
+144.0;ibiza;16/04/2022;Sta. Coloma (dimecres);203473.0;113.0
+145.0;ibiza;22/02/2022;Sta. Coloma + Jane;203704.0;231.0
+146.0;ibiza;23/02/2022;Sta. Coloma (dimecres);203812.0;108.0
+147.0;ibiza;24/02/2022;Sta. Coloma (dijous);203917.0;105.0
+148.0;ibiza;26/02/2022;Carnaval Palam¢s;204111.0;194.0
+149.0;ibiza;01/03/2022;Sta. Coloma (dimarts);204219.0;108.0
+150.0;ibiza;02/03/2022;metge Platja d'Aro;204354.0;135.0
+151.0;ibiza;03/03/2022;Sta. Coloma (dijous);204461.0;107.0
+152.0;ibiza;06/03/2022;Breda cumple Isa;204498.0;37.0
+153.0;ibiza;08/03/2022;Sta. Coloma (dimarts);204608.0;110.0
+154.0;ibiza;09/03/2022;Sta. Coloma (dimecres);204707.0;99.0
+155.0;ibiza;10/03/2022;Sta. Coloma (dijous);204816.0;109.0
+156.0;ibiza;11/03/2022;Palam¢s Rotllan.Girona;205009.0;193.0
+157.0;ibiza;15/03/2022;Sta. Coloma (dimarts);205118.0;109.0
+158.0;ibiza;16/03/2022;Sta. Coloma (dimecres);205223.0;105.0
+159.0;ibiza;18/03/2022;Bon Preu. Arb£cies;205229.0;6.0
+160.0;ibiza;22/03/2022;Sta. Coloma (dimarts);205337.0;114.0
+161.0;ibiza;23/03/2022;Sta. Coloma (dimecres);205445.0;108.0
+162.0;ibiza;24/03/2022;Sta. Coloma (dijous);205558.0;113.0
+163.0;ibiza;25/03/2022;Palam¢s Rotllan.Lidia;205711.0;153.0
+164.0;ibiza;28/03/2022;Sta. Caterina.Girona;205813.0;102.0
+165.0;ibiza;29/04/2022;Sta. Coloma (dimarts);205919.0;106.0
+166.0;ibiza;30/04/2022;Sta. Coloma (dimecres);206028.0;109.0
+167.0;ibiza;05/04/2022;Sta. Coloma (dimarts);206135.0;107.0
+168.0;ibiza;06/04/2022;Sta. Coloma (dimecres);206241.0;106.0
+169.0;ibiza;07/04/2022;Sta. Coloma (dijous);206351.0;110.0
+170.0;ibiza;10/04/2022;Sushi Vic;206419.0;68.0
+171.0;ibiza;18/04/2022;Setmana Santa. Pals;206798.0;379.0
+172.0;ibiza;20/04/2022;Sta. Coloma (dimecres);206908.0;110.0
+173.0;ibiza;22/04/2022;teatre Barcelona;207105.0;197.0
+174.0;ibiza;26/04/2022;Sta. Coloma (dimarts);207212.0;107.0
+175.0;ibiza;27/04/2022;Sta. Coloma (dimecres);207319.0;107.0
+176.0;ibiza;28/04/2022;Sta. Coloma (dijous);207424.0;105.0
+177.0;ibiza;29/04/2022;Buscar llenya;207446.0;22.0
+178.0;ibiza;03/05/2022;Palam¢s . Dentista;207655.0;209.0
+179.0;ibiza;04/05/2022;Sta. Coloma (dimecres);207761.0;106.0
+180.0;ibiza;05/05/2022;Sta. Coloma (dijous);207871.0;110.0
+181.0;ibiza;09/05/2022;CorteMaderas.Terrassa;208025.0;154.0
+182.0;ibiza;10/05/2022;Sta. Coloma (dimarts);208130.0;105.0
+183.0;ibiza;11/05/2022;Dentista Palam¢s;208281.0;151.0
+184.0;ibiza;12/05/2022;Sta. Coloma (dijous);208386.0;105.0
+185.0;ibiza;14/05/2022;Comuni¢ Palam¢s;208529.0;143.0
+186.0;ibiza;17/05/2022;Sta. Coloma (dimarts);208635.0;106.0
+187.0;ibiza;19/05/2022;Dentista Palam¢s. Pals;208826.0;191.0
+188.0;ibiza;24/05/2022;Sta. Coloma (dimarts);208931.0;105.0
+189.0;ibiza;25/05/2022;Palam¢s . Dentista;209136.0;205.0
+190.0;ibiza;26/05/2022;Sta. Coloma (dijous);209242.0;106.0
+191.0;ibiza;31/05/2022;Sta. Coloma (dimarts);209354.0;112.0
+192.0;ibiza;01/06/2022;Sta. Coloma (dimecres);209457.0;103.0
+193.0;ibiza;02/06/2022;Sta. Coloma (dijous);209563.0;106.0
+194.0;ibiza;04/06/2022;palam¢s . Entrega com;209752.0;189.0
+195.0;ibiza;06/06/2022;Festa Santi;209878.0;126.0
+196.0;ibiza;07/06/2022;Sta. Coloma (dimarts);209982.0;104.0
+197.0;ibiza;08/06/2022;Sta. Coloma+Palam¢s;210148.0;166.0
+198.0;ibiza;09/06/2022;Sta. Coloma (dijous);210254.0;106.0
+199.0;ibiza;10/06/2022;Renovar Fam. Nombrosa;210358.0;104.0
+200.0;ibiza;14/06/2022;Sta. Coloma +Metge Pepe;210478.0;120.0
+201.0;ibiza;15/06/2022;Sta. Coloma (dimecres);210585.0;107.0
+202.0;ibiza;28/06/2022;Sta. Coloma+Palam¢s;210752.0;167.0
+203.0;ibiza;29/06/2022;Sta. Coloma (dimecres);210858.0;106.0
+204.0;ibiza;30/06/2022;Sta. Coloma (dijous);210966.0;108.0
+205.0;ibiza;01/07/2022;Metge platja d'Aro;211109.0;143.0
+206.0;ibiza;02/07/2022;Girona.sabates;211212.0;103.0
+207.0;ibiza;03/07/2022;Comuni¢ Nuria;211360.0;148.0
+208.0;ibiza;05/07/2022;Sta. Coloma (dimarts);211466.0;106.0
+209.0;ibiza;12/07/2022;Sta. Coloma (dimecres);211627.0;161.0
+210.0;ibiza;07/07/2022;Palam¢s;211801.0;174.0
+211.0;ibiza;09/07/2022;Dinar jubilats;211828.0;27.0
+212.0;ibiza;10/07/2022;Casament;211984.0;156.0
+213.0;ibiza;12/07/2022;Sta. Coloma (dimarts);212091.0;107.0
+214.0;ibiza;04/09/2022;Treball Xarrup;216276.0;4185.0
+215.0;ibiza;06/09/2022;Sta. Coloma (dimarts);216388.0;112.0
+216.0;ibiza;09/09/2022;SEPE Salt;216494.0;106.0
+217.0;ibiza;12/09/2022;Compres Girona;216549.0;55.0
+218.0;ibiza;13/09/2022;Buscar Bolets.Espinelves;216583.0;34.0
+219.0;ibiza;14/09/2022;Sta. Coloma (dimecres);216687.0;104.0
+220.0;ibiza;15/09/2022;Sta. Coloma (dijous);216792.0;105.0
+221.0;ibiza;18/09/2022;Mercat Tordera;216847.0;55.0
+222.0;ibiza;19/09/2022;Portar Jordi Girona;216951.0;104.0
+223.0;ibiza;23/09/2022;Recollir Jordi+Sushi Vic;217131.0;180.0
+224.0;ibiza;27/09/2022;Sta. Coloma (dimarts);217182.0;51.0
+225.0;ibiza;28/09/2022;Sta. Coloma (dimecres);217289.0;107.0
+226.0;ibiza;30/09/2022;Palam¢s;217442.0;153.0
+227.0;ibiza;04/10/2022;Sta. Coloma (dimarts);217549.0;107.0
+228.0;ibiza;05/10/2022;Sta. Coloma (dimecres);217654.0;105.0
+229.0;ibiza;06/10/2022;Sta. Coloma (dijous);217759.0;105.0
+230.0;ibiza;13/10/2022;Girona Jordi Exposici¢;217925.0;166.0
+231.0;ibiza;14/10/2022;Girona Jordi Exposici¢;218037.0;112.0
+232.0;ibiza;19/10/2022;Dentista Palam¢s;218183.0;146.0
+233.0;ibiza;24/10/2022;Aeroport BCN;218616.0;293.0
+234.0;ibiza;28/10/2022;Girona Compres;218761.0;140.0
+235.0;ibiza;30/10/2022;Palam¢s(Pepe);218761.0;145.0
+236.0;ibiza;01/11/2022;Excursi¢;218774.0;13.0
+237.0;ibiza;02/11/2022;Sta. Coloma (dimecres);218881.0;107.0
+238.0;ibiza;07/11/2022;Dentista Palam¢s;219069.0;188.0
+239.0;ibiza;08/11/2022;Sta. Coloma (dimarts);219176.0;107.0
+240.0;ibiza;09/11/2022;Sta. Coloma (dimecres);219284.0;108.0
+241.0;ibiza;11/11/2022;Barcelona;219473.0;189.0
+242.0;ibiza;12/11/2022;Festa Rosa Morillas;219544.0;71.0
+243.0;ibiza;14/11/2022;Girona Compres;219647.0;103.0
+244.0;ibiza;15/11/2022;Sta. Coloma (dimarts);219755.0;108.0
+245.0;ibiza;16/11/2022;Sta. Coloma (dimecres);219862.0;107.0
+246.0;ibiza;18/11/2022;Metge platja d'Aro;220003.0;141.0
+247.0;ibiza;19/11/2022;Metge platja d'Aro;220132.0;129.0
+248.0;ibiza;21/11/2022;Girona (dilluns);220216.0;84.0
+249.0;ibiza;22/11/2022;Sta. Coloma (dimarts);220324.0;108.0
+250.0;ibiza;23/11/2022;Sta. Coloma (dimecres);220432.0;108.0
+251.0;ibiza;24/11/2022;Recollir …lbum Matar¢;220567.0;135.0
+252.0;ibiza;29/11/2022;Sta. Coloma (dimarts);220674.0;107.0
+253.0;ibiza;30/11/2022;Sta. Coloma (dimecres);220780.0;106.0
+254.0;ibiza;02/12/2022;Barcelona;220957.0;177.0
+255.0;ibiza;03/12/2022;Palam¢s;221096.0;139.0
+256.0;ibiza;07/12/2022;Sta. Coloma (dimecres);221200.0;104.0
+257.0;ibiza;08/12/2022;Malgrat peix;221268.0;68.0
+258.0;ibiza;10/12/2022;Vic;221349.0;81.0
+259.0;ibiza;12/12/2022;Girona (dilluns);221521.0;172.0
+260.0;ibiza;13/12/2022;Sta. Coloma (dimarts);221628.0;107.0
+261.0;ibiza;14/12/2022;Sta. Caterina;221744.0;116.0
+262.0;ibiza;16/12/2022;Palam¢s;221942.0;198.0
+263.0;ibiza;17/12/2022;Vic;222021.0;79.0
+264.0;ibiza;19/12/2022;Girona (dilluns);222097.0;76.0
+265.0;ibiza;20/12/2022;Sta. Coloma (dimarts);222204.0;107.0
+266.0;ibiza;21/12/2022;Sta. Coloma (dimecres);222315.0;111.0
+267.0;ibiza;22/12/2022;Palam¢s(Pepe);222490.0;175.0
+268.0;ibiza;09/01/2023;Viatge La Torre;224078.0;1588.0
+269.0;ibiza;10/01/2023;Sta. Coloma (dimarts);224184.0;106.0
+270.0;ibiza;11/01/2023;Palam¢s(Pepe);224349.0;165.0
+271.0;ibiza;14/01/2023;Palam¢s;224473.0;124.0
+272.0;ibiza;16/01/2023;Girona (dilluns);224549.0;76.0
+273.0;ibiza;17/01/2023;Girona (dilluns);224649.0;100.0
+274.0;ibiza;18/01/2023;Sta. Coloma (dimecres);224756.0;107.0
+275.0;ibiza;20/01/2023;Dentista Palam¢s;224894.0;138.0
+276.0;ibiza;23/01/2023;Riudellots (dilluns);224970.0;76.0
+277.0;ibiza;24/01/2023;Sta. Coloma (dimarts);225078.0;108.0
+278.0;ibiza;25/01/2023;Sta. Coloma (dimecres);225183.0;105.0
+279.0;ibiza;27/01/2023;Sta. Caterina;225287.0;104.0
+280.0;ibiza;30/01/2023;Riudellots (dilluns);225363.0;76.0
+281.0;ibiza;31/01/2023;Palam¢s;225529.0;166.0
+282.0;ibiza;01/02/2023;Sta. Coloma (dimecres);225634.0;105.0
+283.0;ibiza;02/02/2023;Olot;225779.0;145.0
+284.0;ibiza;08/02/2023;Palam¢s;225931.0;152.0
+285.0;ibiza;16/02/2023;Vic;226019.0;88.0
+286.0;ibiza;20/02/2023;Carnaval Palam¢s;226156.0;137.0
+287.0;ibiza;04/03/2023;Malgrat peix;226305.0;149.0
+288.0;ibiza;06/03/2023;Girona Compres;226417.0;112.0
+289.0;ibiza;07/03/2023;Sta. Coloma (dimarts);226525.0;108.0
+290.0;ibiza;08/03/2023;Sta. Coloma (dimecres);226629.0;104.0
+291.0;ibiza;11/03/2023;Excursi¢;226711.0;82.0
+292.0;ibiza;14/03/2023;Sta. Coloma (dimarts);226815.0;122.0
+293.0;ibiza;15/03/2023;Sta. Coloma (dimecres);226937.0;104.0
+294.0;ibiza;17/03/2023;Palam¢s;227092.0;155.0
+295.0;ibiza;21/03/2023;Sta. Coloma (dimarts);227209.0;117.0
+296.0;ibiza;23/03/2023;Sta. Coloma (dimecres);227313.0;104.0
+297.0;ibiza;28/03/2023;Sta. Coloma (dimarts);227426.0;113.0
+298.0;ibiza;29/03/2023;Palam¢s;227598.0;172.0
+299.0;ibiza;05/04/2023;Sta. Coloma (dimecres);227674.0;76.0
+300.0;ibiza;06/04/2023;Excursi¢;227746.0;72.0
+301.0;ibiza;09/04/2023;Palam¢s;227884.0;138.0
+302.0;ibiza;18/04/2023;Sta. Coloma (dimarts);227992.0;108.0
+303.0;ibiza;23/04/2023;Girona Compres;228096.0;104.0
+304.0;ibiza;24/04/2023;Girona(Hosp. Pepe);228206.0;110.0
+305.0;ibiza;26/04/2023;Sta. Coloma (dimecres);228312.0;106.0
+306.0;ibiza;29/04/2023;Barcelona;228501.0;189.0
+307.0;ibiza;02/05/2023;Sta. Coloma (dimarts);228609.0;108.0
+308.0;ibiza;03/05/2023;Sta. Coloma (dimecres);228815.0;206.0
+309.0;ibiza;06/05/2023;Palam¢s;229005.0;190.0
+310.0;ibiza;18/05/2023;Barcelona;229364.0;359.0
+311.0;ibiza;27/05/2023;Girona Compres;229476.0;112.0
+312.0;ibiza;29/05/2023;Girona Compres;229570.0;94.0
+313.0;ibiza;31/05/2023;Dentista Palam¢s;229710.0;140.0
+314.0;ibiza;01/06/2023;Malgrat peix;229779.0;69.0
+315.0;ibiza;07/06/2023;Dentista Palam¢s;230091.0;156.0
+316.0;ibiza;15/06/2023;Dentista Palam¢s;230091.0;156.0
+317.0;ibiza;21/06/2023;Sta. Coloma (dimecres);230198.0;107.0
+318.0;ibiza;26/06/2023;Palam¢s;230371.0;173.0
+319.0;ibiza;27/06/2023;Sta. Coloma (dimarts);230476.0;105.0
+320.0;ibiza;01/07/2023;Vic;230558.0;82.0
+321.0;ibiza;04/07/2023;Sta. Coloma (dimarts);230608.0;50.0
+322.0;ibiza;05/07/2023;Sta. Coloma (dimecres);230711.0;103.0
+323.0;ibiza;08/07/2023;Blanes;230888.0;177.0
+324.0;ibiza;12/07/2023;Sta. Coloma (dimecres);230991.0;103.0
+325.0;ibiza;13/07/2023;Girona Compres;231097.0;106.0
+326.0;ibiza;16/07/2023;Palam¢s;231336.0;239.0
+327.0;ibiza;19/07/2023;Sta. Coloma (dimecres);231445.0;109.0
+328.0;ibiza;25/07/2023;Palam¢s;231631.0;186.0
+329.0;ibiza;26/07/2023;Sta. Coloma (dimecres);231746.0;115.0
+330.0;ibiza;10/08/2023;Viatge La Torre;233501.0;1755.0
+331.0;ibiza;12/08/2023;Palam¢s;233648.0;147.0
+332.0;ibiza;15/08/2023;Palam¢s;233789.0;141.0
+333.0;ibiza;18/08/2023;Sta. Caterina;233887.0;98.0
+334.0;ibiza;22/08/2023;Sta. Coloma (dimarts);234040.0;153.0
+335.0;ibiza;23/08/2023;Sta. Coloma (dimecres);234146.0;106.0
+336.0;ibiza;25/08/2023;Malgrat peix;234218.0;72.0
+337.0;ibiza;29/08/2023;Sta. Coloma (dimarts);234324.0;106.0
+338.0;ibiza;30/08/2023;Sta. Coloma (dimecres);234429.0;105.0
+339.0;ibiza;01/09/2023;Girona Compres;234530.0;101.0
+340.0;ibiza;05/09/2023;Sta. Coloma (dimarts);234641.0;111.0
+341.0;ibiza;05/09/2023;Dentista Palam¢s;234784.0;143.0
+342.0;ibiza;06/09/2023;Sta. Coloma (dimecres);234891.0;107.0
+343.0;ibiza;12/09/2023;Sta. Coloma (dimarts);235047.0;156.0
+344.0;ibiza;13/09/2023;Sta. Coloma (dimecres);235154.0;107.0
+345.0;ibiza;19/09/2023;Sta. Coloma (dimarts);235289.0;135.0
+346.0;ibiza;21/09/2023;Dentista Palam¢s;235426.0;137.0
+347.0;ibiza;23/09/2023;Girona Compres;235527.0;101.0
+348.0;ibiza;25/09/2023;Barcelona;235690.0;163.0
+349.0;ibiza;05/10/2023;Girona(Hosp. Pepe);235819.0;129.0
+350.0;ibiza;11/11/2023;Palam¢s;236110.0;291.0
+351.0;ibiza;15/11/2023;Sta. Coloma (dimecres);236228.0;118.0
+352.0;ibiza;18/11/2023;Pals;236429.0;201.0
+353.0;ibiza;22/11/2023;Sta. Coloma (dimecres);236539.0;110.0
+354.0;ibiza;28/11/2023;Sta. Coloma (dimarts);236647.0;108.0
+355.0;ibiza;29/11/2023;Sta. Coloma (dimecres);236752.0;105.0
+356.0;ibiza;01/12/2023;Metge platja d'Aro;236902.0;150.0
+357.0;ibiza;04/12/2023;ITV Cotxe;236960.0;58.0
+358.0;ibiza;12/12/2023;Sta. Coloma (dimarts);237065.0;105.0
+359.0;ibiza;13/12/2023;Girona Compres;237220.0;155.0
+360.0;ibiza;15/12/2023;Malgrat peix;237289.0;69.0
+361.0;ibiza;18/12/2023;Vic;237371.0;82.0
+362.0;ibiza;19/12/2023;Palam¢s;237517.0;146.0
+363.0;ibiza;20/12/2023;Sta. Coloma (dimecres);237633.0;116.0
+364.0;ibiza;20/12/2023;Aeroport BCN;237845.0;212.0
+365.0;ibiza;22/12/2023;Sta. Coloma (dimecres);238044.0;199.0
+366.0;ibiza;22/12/2023;Girona Compres;238147.0;103.0
+367.0;ibiza;23/12/2023;Excursi¢;238177.0;30.0
+368.0;ibiza;26/12/2023;Vic;238332.0;155.0
+369.0;ibiza;02/01/2024;Excursi¢;238667.0;335.0
+370.0;ibiza;03/01/2024;Barcelona;238873.0;206.0
+371.0;ibiza;04/01/2024;Figueres;239051.0;178.0
+372.0;ibiza;09/01/2024;Sta. Coloma (dimarts);239157.0;106.0
+373.0;ibiza;10/01/2024;Sta. Coloma (dimecres);239269.0;112.0
+374.0;ibiza;13/01/2024;Palam¢s;239390.0;121.0
+375.0;ibiza;16/01/2024;Sta. Coloma (dimarts);239499.0;109.0
+376.0;ibiza;24/01/2024;Sta. Coloma (dimecres);239605.0;106.0
+377.0;ibiza;26/01/2024;Sta. Coloma (dimecres);239661.0;56.0
+378.0;ibiza;30/01/2024;Sta. Coloma (dimarts);239715.0;54.0
+379.0;ibiza;03/02/2024;Palam¢s;239860.0;145.0
+380.0;ibiza;06/02/2024;Sta. Coloma (dimarts);239966.0;106.0
+381.0;ibiza;07/02/2024;Sta. Coloma (dimecres);240072.0;106.0
+382.0;ibiza;09/02/2024;Generalitat Girona;240175.0;103.0
+383.0;ibiza;11/02/2024;Carnaval Palam¢s;240321.0;146.0
+384.0;ibiza;13/02/2024;Barcelona;240485.0;164.0
+385.0;ibiza;14/02/2024;Dentista Palam¢s;240624.0;139.0
+386.0;ibiza;16/02/2024;Sta. Coloma (dimecres);240732.0;108.0
+387.0;ibiza;21/02/2024;Sta. Coloma (dimecres);240840.0;108.0
+388.0;ibiza;27/02/2024;Sta. Coloma (dimarts);240950.0;110.0
+389.0;ibiza;06/03/2024;Barcelona;241178.0;228.0
+390.0;ibiza;07/06/2024;Palam¢s;241337.0;159.0
+391.0;ibiza;08/06/2024;Sta. Caterina;241430.0;93.0
+392.0;ibiza;12/06/2024;Sta. Coloma (dimarts);241539.0;109.0
+393.0;ibiza;20/03/2024;Sta. Coloma (dimecres);241656.0;117.0
+394.0;ibiza;21/03/2024;Palam¢s;241828.0;172.0
+395.0;ibiza;26/03/2024;Sta. Coloma (dimarts);241917.0;89.0
+396.0;ibiza;27/03/2024;Palam¢s;242119.0;202.0
+397.0;ibiza;03/04/2024;Girona Compres;242367.0;248.0
+398.0;ibiza;09/04/2024;Sta. Caterina;242529.0;162.0
+399.0;ibiza;12/04/2024;;242717.0;188.0
+400.0;ibiza;19/04/2024;Sta. Coloma (dimecres);242843.0;126.0
+401.0;ibiza;21/04/2024;Breda;242868.0;25.0
+402.0;ibiza;22/04/2024;Palam¢s;243044.0;176.0
+403.0;ibiza;23/04/2024;Girona Compres;243147.0;103.0
+404.0;ibiza;26/04/2024;Sta. Caterina;243238.0;91.0
+405.0;ibiza;28/04/2024;Barcelona;243448.0;210.0
+406.0;ibiza;30/04/2024;Sta. Coloma (dimarts);243553.0;105.0
+407.0;ibiza;02/05/2024;Sta. Caterina;243657.0;104.0
+408.0;ibiza;08/05/2024;Metge platja d'Aro;243775.0;118.0
+409.0;ibiza;10/05/2024;Sta. Coloma (divendres);243880.0;105.0
+410.0;ibiza;11/05/2024;Blanes;243987.0;107.0
+411.0;ibiza;17/05/2024;St.Feliu G. SS;244165.0;178.0
+412.0;t¡voli;03/06/2024;Viatge La Torre;8.0;16.0
+413.0;t¡voli;05/06/2024;Viatge La Torre;857.0;849.0
+414.0;t¡voli;07/06/2024;Sta. Coloma (divendres);972.0;107.0
+415.0;t¡voli;09/06/2024;Palam¢s;1128.0;156.0
+416.0;t¡voli;14/06/2024;Sta. Coloma (divendres);1237.0;109.0
+417.0;t¡voli;19/06/2024;Sta. Caterina;1361.0;124.0
+418.0;t¡voli;21/06/2024;Sta. Coloma (divendres);1472.0;111.0
+419.0;t¡voli;23/06/2024;Palam¢s;1629.0;157.0
+420.0;t¡voli;25/06/2024;Palam¢s;1779.0;150.0
+421.0;t¡voli;28/06/2024;Sta. Coloma (divendres);1885.0;106.0
+422.0;t¡voli;04/07/2024;Girona Compres;2019.0;134.0
+423.0;t¡voli;12/07/2024;Sta. Coloma (divendres);2132.0;113.0
+424.0;t¡voli;13/07/2024;Palam¢s;2294.0;162.0
+425.0;t¡voli;19/07/2024;Sta. Coloma (divendres);2409.0;115.0
+426.0;t¡voli;26/07/2024;Generalitat Girona;2517.0;108.0
+427.0;t¡voli;29/07/2024;Palam¢s;2703.0;186.0
+428.0;t¡voli;11/08/2024;Viatge La Torre;4199.0;1496.0
+429.0;t¡voli;12/08/2024;Festa Lidia Cerrillo;4321.0;122.0
+430.0;t¡voli;14/08/2024;Palam¢s;4607.0;286.0
+431.0;t¡voli;16/08/2024;Sta. Coloma (divendres);4714.0;107.0
+432.0;t¡voli;23/08/2024;Palam¢s;4823.0;109.0
+433.0;t¡voli;24/08/2024;Palam¢s;4974.0;151.0
+434.0;t¡voli;26/08/2024;Girona Compres;5070.0;96.0
+435.0;t¡voli;30/08/2024;Sta. Coloma (divendres);5185.0;115.0
+436.0;t¡voli;06/09/2024;Sta. Coloma (divendres);5292.0;107.0
+437.0;t¡voli;13/09/2024;Sta. Coloma (divendres);5406.0;114.0
+438.0;t¡voli;14/09/2024;Palam¢s;5548.0;142.0
+439.0;t¡voli;20/09/2024;Viatge;7322.0;1774.0
+440.0;t¡voli;21/09/2024;Sant Celoni;7386.0;64.0
+441.0;t¡voli;25/09/2024;Blanes;7465.0;79.0
+442.0;t¡voli;25/09/2024;Hostalric;7496.0;31.0
+443.0;t¡voli;27/09/2024;Sta. Coloma (divendres);7607.0;111.0
+444.0;t¡voli;01/10/2024;Metge platja d'Aro;7754.0;147.0
+445.0;t¡voli;03/10/2024;Sta. Coloma (divendres);7861.0;107.0
+446.0;t¡voli;11/10/2024;Sta. Coloma (divendres);7976.0;115.0
+447.0;t¡voli;12/10/2024;Breda;8000.0;24.0
+448.0;t¡voli;13/10/2024;Breda;8024.0;24.0
+449.0;t¡voli;15/10/2024;Generalitat Girona;8151.0;127.0
+450.0;t¡voli;18/10/2024;Sta. Coloma (dimecres);8260.0;109.0
+451.0;t¡voli;23/10/2024;Sta. Caterina;8371.0;111.0
+452.0;t¡voli;25/10/2024;Sta. Coloma (divendres);8480.0;109.0
+453.0;t¡voli;05/11/2024;Sta. Caterina;8589.0;109.0
+454.0;t¡voli;08/11/2024;Sta. Coloma (divendres);8646.0;57.0
+455.0;t¡voli;12/11/2024;Palam¢s;8795.0;149.0
+456.0;t¡voli;15/11/2024;Sta. Coloma (divendres);8851.0;56.0
+457.0;t¡voli;21/11/2024;Palam¢s;8957.0;151.0
+458.0;t¡voli;22/11/2024;Sta. Coloma (divendres);9115.0;113.0
+459.0;t¡voli;23/11/2024;Barcelona;9297.0;182.0
+460.0;t¡voli;28/11/2024;St.Feliu G. ;9424.0;127.0
+461.0;t¡voli;29/11/2024;Sta. Coloma (divendres);9531.0;107.0
+462.0;t¡voli;02/12/2024;Dentista Palam¢s;9672.0;141.0
+463.0;t¡voli;03/12/2024;Espinelves;9706.0;34.0
+464.0;t¡voli;06/12/2024;Palam¢s;9875.0;169.0
+465.0;t¡voli;12/12/2024;Girona Compres;9962.0;87.0
+466.0;t¡voli;13/12/2024;Sta. Coloma (divendres);10016.0;54.0
+467.0;t¡voli;14/12/2024;Malgrat peix;10088.0;72.0
+468.0;t¡voli;15/12/2024;Girona Compres;10199.0;111.0
+469.0;t¡voli;18/12/2024;Girona Compres;10311.0;112.0
+470.0;t¡voli;19/12/2024;Palam¢s;10504.0;193.0
+471.0;t¡voli;03/01/2025;Viatge;12041.0;1537.0
+472.0;t¡voli;10/01/2025;Sta. Coloma (divendres);12160.0;119.0
+473.0;t¡voli;10/01/2025;Sant Hilari S.;12187.0;27.0
+474.0;t¡voli;11/01/2025;Barcelona;12360.0;173.0
+475.0;t¡voli;16/01/2025;St.Feliu G. ;12525.0;165.0
+476.0;t¡voli;21/01/2025;Excursi¢;12556.0;31.0
+477.0;t¡voli;22/01/2025;Sta. Caterina;12671.0;115.0
+478.0;t¡voli;31/01/2025;Girona Compres;12783.0;112.0
+479.0;t¡voli;07/02/2025;Sta. Coloma (divendres);12898.0;115.0
+480.0;t¡voli;08/02/2025;Girona Compres;13000.0;102.0
+481.0;t¡voli;14/02/2025;Sta. Coloma (divendres);13061.0;61.0
+482.0;t¡voli;15/02/2025;Girona Compres;13158.0;97.0
+483.0;t¡voli;18/02/2025;Viatge;13264.0;106.0
+484.0;t¡voli;21/02/2025;Sta. Coloma (divendres);13371.0;107.0
+485.0;t¡voli;28/02/2025;Sta. Caterina;13498.0;127.0
+486.0;t¡voli;02/03/2025;Palam¢s;13650.0;152.0
+487.0;t¡voli;07/03/2025;Sta. Coloma (divendres);13759.0;109.0
+488.0;t¡voli;12/03/2025;Girona Compres;13881.0;122.0
+489.0;t¡voli;14/03/2025;Sta. Coloma (divendres);13939.0;58.0
+490.0;t¡voli;15/03/2025;Girona Compres;14055.0;116.0
+491.0;t¡voli;21/03/2025;Girona Compres;14175.0;120.0
+492.0;t¡voli;25/03/2025;Sta. Coloma (dimarts);14283.0;108.0
+493.0;t¡voli;27/03/2025;Sta. Coloma (dijous);14345.0;62.0
+494.0;t¡voli;01/04/2025;Sta. Coloma (dimarts);14490.0;145.0
+495.0;t¡voli;02/04/2025;Metge platja d'Aro;14643.0;153.0
+496.0;t¡voli;03/04/2025;Sta. Coloma (dijous);14753.0;110.0
+497.0;t¡voli;04/04/2025;Palam¢s;14890.0;137.0
+498.0;t¡voli;10/04/2025;Sta. Coloma (dijous);14999.0;109.0
+499.0;t¡voli;15/04/2025;Girona Compres;15131.0;132.0
+500.0;t¡voli;18/04/2025;Malgrat peix;15200.0;69.0
+501.0;t¡voli;18/04/2025;Hostalric;15230.0;30.0
+502.0;t¡voli;20/04/2025;Palam¢s;15387.0;157.0
+503.0;t¡voli;23/04/2025;Barcelona;15558.0;171.0
+504.0;t¡voli;24/04/2025;Sta. Coloma (dijous);15667.0;109.0
+505.0;t¡voli;26/04/2025;Girona Compres;15773.0;106.0
+506.0;t¡voli;29/04/2025;Sta. Coloma (dimarts);15885.0;112.0
+507.0;t¡voli;06/05/2025;Sta. Coloma (dimarts);16007.0;122.0
+508.0;t¡voli;08/05/2025;Sta. Coloma (dijous);16061.0;54.0
+509.0;t¡voli;10/05/2025;Girona Compres;16158.0;97.0
+510.0;t¡voli;13/05/2025;Sta. Coloma (dimarts);16270.0;112.0
+511.0;t¡voli;15/05/2025;Sta. Coloma (dijous);16385.0;115.0
+512.0;t¡voli;16/05/2025;Sta. Coloma (divendres);16491.0;106.0
+513.0;t¡voli;19/05/2025;Girona Compres;16598.0;107.0
+514.0;t¡voli;23/05/2025;Girona Compres;16715.0;117.0
+515.0;t¡voli;04/07/2025;Sta. Caterina;17701.0;986.0
+516.0;t¡voli;16/07/2025;Sta. Caterina;17810.0;109.0
+517.0;t¡voli;17/07/2025;Sta. Coloma (dijous);17871.0;61.0
+518.0;t¡voli;23/07/2025;Recollir …lbum Matar¢;17932.0;61.0
+519.0;t¡voli;24/07/2025;Palam¢s;18095.0;163.0
+520.0;t¡voli;25/07/2025;Malgrat peix;18172.0;77.0
+521.0;t¡voli;26/07/2025;Girona Compres;18267.0;95.0
+522.0;t¡voli;28/07/2025;Malgrat peix;18343.0;76.0
+523.0;t¡voli;31/07/2025;Sta. Coloma (divendres);18404.0;61.0
+524.0;t¡voli;01/08/2025;Palam¢s;18603.0;199.0
+525.0;t¡voli;07/08/2025;Girona Compres;18716.0;113.0
+526.0;t¡voli;08/08/2025;Malgrat peix;18782.0;66.0
+527.0;t¡voli;11/08/2025;Sta. Caterina;18889.0;107.0
+528.0;t¡voli;23/08/2025;Viatge;20547.0;1658.0
+529.0;t¡voli;26/08/2025;Palam¢s;20797.0;250.0
+530.0;t¡voli;28/08/2025;Sta. Coloma (dijous);20861.0;64.0
+531.0;t¡voli;30/08/2025;Blanes;20933.0;72.0
+532.0;t¡voli;01/09/2025;Girona Compres;21107.0;174.0
+533.0;t¡voli;04/09/2025;Sta. Coloma (dijous);21163.0;56.0
+534.0;t¡voli;06/09/2025;Barcelona;21339.0;176.0
+535.0;t¡voli;12/09/2025;Sta. Caterina;21441.0;102.0
+536.0;t¡voli;18/09/2025;Sta. Coloma (dijous);21499.0;58.0
+537.0;t¡voli;20/09/2025;Malgrat peix;21588.0;89.0
+538.0;t¡voli;23/09/2025;Viatge;21788.0;200.0
+539.0;t¡voli;07/10/2025;Metge platja d'Aro;21923.0;135.0
+540.0;t¡voli;13/10/2025;Palam¢s;22071.0;148.0
+541.0;t¡voli;14/10/2025;Sta. Coloma (dimarts);22127.0;56.0
+542.0;t¡voli;20/10/2025;Sta. Coloma (dimarts);22237.0;110.0
+543.0;t¡voli;45958;Sta. Coloma (dimarts);22299.0;62.0
+544.0;t¡voli;45965;Sta. Coloma (dimarts);22355.0;56.0
+545.0;t¡voli;45972;Sta. Coloma (dimarts);22411.0;56.0
+546.0;t¡voli;45984;Excursi¢;22563.0;152.0
+547.0;t¡voli;45986;Sta. Coloma (dimarts);22617.0;54.0
+548.0;t¡voli;45990;Excursi¢;22641.0;24.0
+549.0;t¡voli;45993;Sta. Coloma (dimarts);22694.0;53.0
+550.0;t¡voli;45996;Malgrat peix;22761.0;67.0
+551.0;t¡voli;46001;Sant Celoni;22833.0;72.0
+552.0;t¡voli;46003;Dentista Palam¢s;22988.0;155.0
+553.0;t¡voli;46007;Sta. Coloma (dimarts);23095.0;107.0
+554.0;t¡voli;46009;Girona Compres;23273.0;178.0
+555.0;t¡voli;46028;Viatge;24842.0;785.0
+556.0;t¡voli;46028;Viatge;24842.0;784.0
+557.0;t¡voli;46032;Generalitat Girona;24970.0;128.0
+558.0;t¡voli;46035;Sta. Coloma (dimarts);25026.0;56.0
+559.0;t¡voli;46037;Palam¢s;25173.0;147.0
+560.0;t¡voli;46046;Palam¢s;25335.0;162.0
+561.0;t¡voli;46049;Sta. Coloma (dimarts);25445.0;110.0
+562.0;t¡voli;46056;Barcelona;25680.0;235.0
+563.0;t¡voli;46062;Generalitat Girona;25797.0;117.0
+564.0;t¡voli;46063;Sta. Coloma (dimarts);25853.0;56.0
+565.0;t¡voli;46064;Barcelona;26062.0;209.0
+566.0;t¡voli;46065;Vic;26147.0;85.0
+567.0;t¡voli;46068;Carnaval Palam¢s;26320.0;173.0
+568.0;t¡voli;46070;Sta. Caterina;26436.0;116.0
+569.0;t¡voli;46072;Vic;26523.0;87.0
+570.0;t¡voli;46077;Sta. Coloma (dimarts);26577.0;54.0
+571.0;t¡voli;46078;Sta. Caterina;26674.0;97.0
+572.0;t¡voli;46081;Riells Mercat;26718.0;44.0
+573.0;t¡voli;46084;Sta. Coloma (dimarts);26773.0;55.0
+574.0;t¡voli;46087;Excursi¢;26856.0;83.0
+575.0;t¡voli;46088;Palam¢s;27005.0;149.0
+576.0;t¡voli;46097;Aeroport BCN;27249.0;244.0
+577.0;t¡voli;46098;Sta. Coloma (dimarts);27308.0;59.0
+578.0;t¡voli;46099;Palam¢s;27457.0;149.0
+579.0;t¡voli;46105;Aeroport BCN;27717.0;260.0
+580.0;t¡voli;46111;;28086.0;369.0
+581.0;t¡voli;46114;Generalitat Girona;28201.0;115.0
+582.0;t¡voli;46115;Sant Hilari S.;28229.0;28.0
+583.0;t¡voli;46120;Metge platja d'Aro;28413.0;184.0
+584.0;t¡voli;46122;Girona Compres;28518.0;105.0
+585.0;t¡voli;46126;Sta. Coloma (dimarts);28625.0;107.0
+586.0;t¡voli;46128;Palam¢s;28793.0;168.0
+587.0;t¡voli;46130;Malgrat peix;28862.0;69.0
+588.0;t¡voli;46133;Sta. Coloma (dimarts);28931.0;69.0
+589.0;t¡voli;46135;Barcelona;29110.0;179.0
+590.0;t¡voli;46139;Palam¢s;29275.0;165.0
+591.0;t¡voli;46144;Sta. Coloma (divendres);29393.0;118.0
+592.0;t¡voli;46152;Excursi¢;29416.0;23.0
+593.0;t¡voli;46157;Girona Compres;29525.0;109.0
+594.0;t¡voli;46161;Sta. Coloma (dimarts);29592.0;67.0
+595.0;t¡voli;46165;Girona Compres;29694.0;102.0
+596.0;t¡voli;46166;Blanes;29763.0;69.0
+597.0;t¡voli;46168;Sta. Coloma (dimarts);29817.0;54.0
+598.0;t¡voli;46171;Girona Compres;29930.0;113.0
+599.0;t¡voli;46175;Sta. Coloma (dimarts);29985.0;55.0
+600.0;t¡voli;46178;Sta. Caterina;30082.0;97.0
+601.0;t¡voli;46182;Sta. Coloma (dimarts);30201.0;119.0
+602.0;t¡voli;46278;Palam¢s;30382.0;181.0

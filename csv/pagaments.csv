@@ -1,0 +1,727 @@
+idPago;Banc;Formapago;Data;dia;mes;any;Categoria;Concepte;Import;pagat
+1;BBVA;Compte;30/06/2022;30;junio;2022;despesa_general;Hipoteca;472.91;pagat
+2;BBVA;Compte;01/07/2022;1;julio;2022;proveidor;Hofmann;20.84;pagat
+3;BBVA;Compte;02/07/2022;2;julio;2022;despesa_general;Ocaso;22.14;pagat
+4;BBVA;Compte;04/07/2022;4;julio;2022;despesa_general;Piscina;56.0;pagat
+5;LaCaixa;Compte;05/07/2022;5;julio;2022;despesa_general;Ajunt. Arb£cies;54.13;pagat
+6;BBVA;Compte;05/07/2022;5;julio;2022;despesa_general;Endesa;34.75;pagat
+7;BBVA;Compte;07/07/2022;7;julio;2022;asseguranáa;DP MP Mireia;24.5;pagat
+8;BBVA;Compte;07/07/2022;7;julio;2022;asseguranáa;DP Especialistes Mireia;19.2;pagat
+9;BBVA;Compte;07/07/2022;7;julio;2022;asseguranáa;DP Morts Enric;12.79;pagat
+10;BBVA;Compte;07/07/2022;7;julio;2022;asseguranáa;BBVA Asseg. Casa;34.2;pagat
+11;BBVA;Compte;12/07/2022;12;julio;2022;asseguranáa;Gestoria BBVA;30.0;pagat
+12;BBVA;Compte;19/07/2022;19;julio;2022;despesa_general;Lowi;44.3;pagat
+13;BBVA;Compte;01/08/2022;1;agosto;2022;despesa_general;Endesa;35.52;pagat
+14;BBVA;Compte;02/08/2022;2;agosto;2022;despesa_general;Ocaso;22.14;pagat
+15;BBVA;Compte;02/08/2022;2;agosto;2022;asseguranáa;Gestoria BBVA;30.0;pagat
+16;BBVA;Compte;03/08/2022;3;agosto;2022;asseguranáa;DP MP Mireia;23.5;pagat
+17;BBVA;Compte;03/08/2022;3;agosto;2022;asseguranáa;DP Especialistes Mireia;19.2;pagat
+18;BBVA;Compte;03/08/2022;3;agosto;2022;asseguranáa;DP Morts Enric;12.57;pagat
+19;BBVA;Compte;04/08/2022;4;agosto;2022;despesa_general;Piscina;56.0;pagat
+20;BBVA;Compte;04/08/2022;4;agosto;2022;asseguranáa;BBVA Asseg. Casa;34.2;pagat
+21;LaCaixa;Compte;05/08/2022;5;agosto;2022;despesa_general;Ajunt. Arb£cies;54.13;pagat
+22;BBVA;Compte;08/08/2022;8;agosto;2022;despesa_general;Aigua;45.12;pagat
+23;BBVA;Compte;19/08/2022;19;agosto;2022;despesa_general;Lowi;44.72;pagat
+24;BBVA;Compte;31/08/2022;31;agosto;2022;despesa_general;Hipoteca;472.91;pagat
+25;BBVA;Compte;31/08/2022;31;agosto;2022;despesa_general;Hipoteca;472.91;pagat
+26;BBVA;Compte;02/09/2022;2;septiembre;2022;despesa_general;Ocaso;22.14;pagat
+27;BBVA;Compte;04/09/2022;4;septiembre;2022;despesa_general;Piscina;56.0;pagat
+28;LaCaixa;Compte;05/09/2022;5;septiembre;2022;despesa_general;Ajunt. Arb£cies;54.13;pagat
+29;BBVA;Compte;07/09/2022;7;septiembre;2022;asseguranáa;DP MP Mireia;23.5;pagat
+30;BBVA;Compte;07/09/2022;7;septiembre;2022;asseguranáa;DP Especialistes Mireia;19.79;pagat
+31;BBVA;Compte;07/09/2022;7;septiembre;2022;asseguranáa;DP Morts Enric;12.57;pagat
+32;BBVA;Compte;07/09/2022;7;septiembre;2022;asseguranáa;BBVA Asseg. Casa;34.2;pagat
+33;BBVA;Compte;12/09/2022;12;septiembre;2022;asseguranáa;Gestoria BBVA;30.0;pagat
+34;BBVA;Compte;19/09/2022;19;septiembre;2022;despesa_general;Lowi;43.8;pagat
+35;BBVA;Compte;24/09/2022;24;septiembre;2022;despesa_general;Endesa;11.61;pagat
+36;BBVA;Compte;30/09/2022;30;septiembre;2022;despesa_general;Hipoteca;472.91;pagat
+37;BBVA;Compte;01/10/2022;1;octubre;2022;despesa_general;Endesa;26.58;pagat
+38;BBVA;Compte;02/10/2022;2;octubre;2022;despesa_general;Ocaso;22.14;pagat
+39;BBVA;Compte;04/10/2022;4;octubre;2022;despesa_general;Piscina;56.0;pagat
+40;LaCaixa;Compte;05/10/2022;5;octubre;2022;despesa_general;Ajunt. Arb£cies;21.76;pagat
+41;BBVA;Compte;07/10/2022;7;octubre;2022;asseguranáa;DP MP Mireia;23.5;pagat
+42;BBVA;Compte;07/10/2022;7;octubre;2022;asseguranáa;DP Especialistes Mireia;19.79;pagat
+43;BBVA;Compte;07/10/2022;7;octubre;2022;asseguranáa;DP Morts Enric;12.57;pagat
+44;BBVA;Compte;07/10/2022;7;octubre;2022;asseguranáa;BBVA Asseg. Casa;34.2;pagat
+45;BBVA;Compte;12/10/2022;12;octubre;2022;asseguranáa;Gestoria BBVA;30.0;pagat
+46;BBVA;Compte;19/10/2022;19;octubre;2022;despesa_general;Lowi;45.94;pagat
+47;BBVA;Compte;31/10/2022;31;octubre;2022;proveidor;Hofmann;6.28;pagat
+48;BBVA;Compte;31/10/2022;31;octubre;2022;despesa_general;Hipoteca;472.91;pagat
+49;BBVA;Compte;31/10/2022;31;octubre;2022;proveidor;Hofmann;6.75;pagat
+50;BBVA;Compte;01/11/2022;1;noviembre;2022;despesa_general;Aigua;44.14;pagat
+51;BBVA;Compte;02/11/2022;2;noviembre;2022;despesa_general;Ocaso;22.14;pagat
+52;BBVA;Compte;04/11/2022;4;noviembre;2022;despesa_general;Piscina;56.0;pagat
+53;LaCaixa;Compte;05/11/2022;5;noviembre;2022;despesa_general;Ajunt. Arb£cies;21.77;pagat
+54;BBVA;Compte;07/11/2022;7;noviembre;2022;asseguranáa;DP MP Mireia;23.5;pagat
+55;BBVA;Compte;07/11/2022;7;noviembre;2022;asseguranáa;DP Especialistes Mireia;19.79;pagat
+56;BBVA;Compte;07/11/2022;7;noviembre;2022;asseguranáa;DP Morts Enric;12.57;pagat
+57;BBVA;Compte;07/11/2022;7;noviembre;2022;asseguranáa;BBVA Asseg. Casa;34.16;pagat
+58;Efectiu;;10/11/2022;10;noviembre;2022;proveidor;Mitatge;300.0;pagat
+59;BBVA;Compte;12/11/2022;12;noviembre;2022;asseguranáa;Gestoria BBVA;30.0;pagat
+60;BBVA;Compte;19/11/2022;19;noviembre;2022;despesa_general;Lowi;44.0;pagat
+61;BBVA;Compte;24/11/2022;24;noviembre;2022;despesa_general;Endesa;28.51;pagat
+62;Efectiu;;25/11/2022;25;noviembre;2022;proveidor;Mitatge;150.0;pagat
+63;T.CorteInglÇs;Compte;30/11/2022;30;noviembre;2022;menjar;El Corte InglÇs;63.08;pagat
+64;BBVA;Compte;30/11/2022;30;noviembre;2022;despesa_general;Hipoteca;472.91;pagat
+65;T.CorteInglÇs;;30/11/2022;30;noviembre;2022;menjar;El Corte InglÇs;25.85;pagat
+66;T.CorteInglÇs;;30/11/2022;30;noviembre;2022;mant_netej;El Corte InglÇs;12.0;pagat
+67;BBVA;Compte;01/12/2022;1;diciembre;2022;despesa_general;Endesa;17.28;pagat
+68;BBVA;Compte;02/12/2022;2;diciembre;2022;despesa_general;Ocaso;22.14;pagat
+69;BBVA;Compte;04/12/2022;4;diciembre;2022;despesa_general;Piscina;56.0;pagat
+70;BBVA;Däbit;04/12/2022;4;diciembre;2022;mant_netej;ITV Sant Celoni;38.79;pagat
+71;LaCaixa;Compte;05/12/2022;5;diciembre;2022;despesa_general;Ajunt. Arb£cies;21.76;pagat
+72;BBVA;Compte;05/12/2022;5;diciembre;2022;op_banc;Pago targeta VISA;101.42;pagat
+73;BBVA;Compte;07/12/2022;7;diciembre;2022;asseguranáa;DP MP Mireia;23.5;pagat
+74;BBVA;Compte;07/12/2022;7;diciembre;2022;asseguranáa;DP Especialistes Mireia;19.2;pagat
+75;BBVA;Compte;07/12/2022;7;diciembre;2022;asseguranáa;DP Morts Enric;12.79;pagat
+76;BBVA;Compte;07/12/2022;7;diciembre;2022;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+77;BBVA;Compte;12/12/2022;12;diciembre;2022;asseguranáa;Gestoria BBVA;31.8;pagat
+78;BBVA;Compte;19/12/2022;19;diciembre;2022;despesa_general;Lowi;43.9;pagat
+79;BBVA;Compte;31/12/2022;31;diciembre;2022;despesa_general;Hipoteca;472.91;pagat
+80;BBVA;Compte;01/01/2023;1;enero;2023;despesa_general;Endesa;31.2;pagat
+81;BBVA;Compte;02/01/2023;2;enero;2023;despesa_general;Ocaso;24.58;pagat
+82;T.CorteInglÇs;;02/01/2023;2;enero;2023;menjar;El Corte InglÇs;50.28;pagat
+83;BBVA;Compte;04/01/2023;4;enero;2023;despesa_general;Piscina;56.0;pagat
+84;LaCaixa;Compte;05/01/2023;5;enero;2023;despesa_general;Ajunt. Arb£cies;60.53;pagat
+85;BBVA;Compte;07/01/2023;7;enero;2023;asseguranáa;DP MP Mireia;19.79;pagat
+86;BBVA;Compte;07/01/2023;7;enero;2023;asseguranáa;DP Morts Enric;12.57;pagat
+87;BBVA;Compte;07/01/2023;7;enero;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+88;BBVA;Compte;19/01/2023;19;enero;2023;despesa_general;Lowi;43.9;pagat
+89;BBVA;Compte;31/01/2023;31;enero;2023;despesa_general;Hipoteca;472.91;pagat
+90;BBVA;Compte;31/01/2023;31;enero;2023;proveidor;Hofmann;6.02;pagat
+91;BBVA;Compte;01/02/2023;1;febrero;2023;despesa_general;Endesa;9.32;pagat
+92;BBVA;Compte;02/02/2023;2;febrero;2023;despesa_general;Ocaso;23.98;pagat
+93;BBVA;Compte;04/02/2023;4;febrero;2023;despesa_general;Piscina;56.0;pagat
+94;LaCaixa;Compte;05/02/2023;5;febrero;2023;despesa_general;Ajunt. Arb£cies;54.13;pagat
+95;BBVA;Compte;06/02/2023;6;febrero;2023;despesa_general;Aigua;44.14;pagat
+96;BBVA;Compte;07/02/2023;7;febrero;2023;asseguranáa;DP MP Mireia;19.79;pagat
+97;BBVA;Compte;07/02/2023;7;febrero;2023;asseguranáa;DP Morts Enric;13.79;pagat
+98;BBVA;Compte;07/02/2023;7;febrero;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+99;Efectiu;;17/02/2023;17;febrero;2023;varis;Llenya;182.0;pagat
+100;BBVA;Compte;19/02/2023;19;febrero;2023;despesa_general;Lowi;43.9;pagat
+101;BBVA;Compte;28/02/2023;28;febrero;2023;despesa_general;Hipoteca;472.91;pagat
+102;BBVA;Compte;28/02/2023;28;febrero;2023;proveidor;Hofmann;5.66;pagat
+103;BBVA;Compte;28/02/2023;28;febrero;2023;menjar;El Corte InglÇs;55.71;pagat
+104;BBVA;Compte;01/03/2023;1;marzo;2023;despesa_general;Endesa;31.15;pagat
+105;BBVA;Compte;02/03/2023;2;marzo;2023;despesa_general;Ocaso;23.98;pagat
+106;BBVA;Compte;04/03/2023;4;marzo;2023;despesa_general;Piscina;56.0;pagat
+107;LaCaixa;Compte;05/03/2023;5;marzo;2023;despesa_general;Ajunt. Arb£cies;54.13;pagat
+108;BBVA;Compte;07/03/2023;7;marzo;2023;asseguranáa;DP MP Mireia;19.79;pagat
+109;BBVA;Compte;07/03/2023;7;marzo;2023;asseguranáa;DP Morts Enric;13.47;pagat
+110;BBVA;Compte;07/03/2023;7;marzo;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+111;BBVA;Compte;19/03/2023;19;marzo;2023;despesa_general;Lowi;44.65;pagat
+112;BBVA;Compte;27/03/2023;27;marzo;2023;varis;Jubilats Isa;12.0;pagat
+113;BBVA;Compte;27/03/2023;27;marzo;2023;varis;Jubilats Enric;12.0;pagat
+114;BBVA;Compte;28/03/2023;28;marzo;2023;despesa_general;Hipoteca;472.91;pagat
+115;BBVA;Compte;01/04/2023;1;abril;2023;despesa_general;Endesa;23.85;pagat
+116;BBVA;Compte;02/04/2023;2;abril;2023;despesa_general;Ocaso;23.98;pagat
+117;BBVA;Compte;04/04/2023;4;abril;2023;despesa_general;Piscina;56.0;pagat
+118;LaCaixa;Compte;05/04/2023;5;abril;2023;despesa_general;Ajunt. Arb£cies;54.13;pagat
+119;BBVA;Compte;07/04/2023;7;abril;2023;asseguranáa;DP MP Mireia;21.01;pagat
+120;BBVA;Compte;07/04/2023;7;abril;2023;asseguranáa;DP Morts Enric;13.47;pagat
+121;BBVA;Compte;07/04/2023;7;abril;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+122;BBVA;Compte;07/04/2023;7;abril;2023;varis;Impost de circulaci¢;66.45;pagat
+123;BBVA;Compte;17/04/2023;17;abril;2023;despesa_general;Lowi;45.16;pagat
+124;BBVA;Compte;28/04/2023;28;abril;2023;despesa_general;Hipoteca;472.91;pagat
+125;BBVA;Compte;01/05/2023;1;mayo;2023;despesa_general;Endesa;14.88;pagat
+126;BBVA;Compte;02/05/2023;2;mayo;2023;despesa_general;Ocaso;23.98;pagat
+127;BBVA;Compte;04/05/2023;4;mayo;2023;despesa_general;Piscina;56.0;pagat
+128;LaCaixa;Compte;05/05/2023;5;mayo;2023;despesa_general;Ajunt. Arb£cies;54.13;pagat
+129;BBVA;Compte;07/05/2023;7;mayo;2023;asseguranáa;DP MP Mireia;20.38;pagat
+130;BBVA;Compte;07/05/2023;7;mayo;2023;asseguranáa;DP Morts Enric;13.47;pagat
+131;BBVA;Compte;07/05/2023;7;mayo;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+132;Efectiu;;11/05/2023;11;mayo;2023;proveidor;Prolab;52.0;pagat
+133;BBVA;Compte;12/05/2023;12;mayo;2023;despesa_general;Aigua;57.64;pagat
+134;BBVA;Compte;17/05/2023;17;mayo;2023;despesa_general;Lowi;43.8;pagat
+135;BBVA;Compte;17/05/2023;17;mayo;2023;asseguranáa;Asseguranáa Cotxe;156.07;pagat
+136;BBVA;Compte;28/05/2023;28;mayo;2023;despesa_general;Hipoteca;472.91;pagat
+137;BBVA;Compte;01/06/2023;1;junio;2023;despesa_general;Endesa;12.0;pagat
+138;BBVA;Compte;02/06/2023;2;junio;2023;despesa_general;Ocaso;23.98;pagat
+139;BBVA;Compte;04/06/2023;4;junio;2023;despesa_general;Piscina;56.0;pagat
+140;LaCaixa;Compte;05/06/2023;5;junio;2023;despesa_general;Ajunt. Arb£cies;54.13;pagat
+141;BBVA;Compte;07/06/2023;7;junio;2023;asseguranáa;DP MP Mireia;20.38;pagat
+142;BBVA;Compte;07/06/2023;7;junio;2023;asseguranáa;DP Morts Enric;13.47;pagat
+143;BBVA;Compte;07/06/2023;7;junio;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+144;BBVA;Compte;16/06/2023;16;junio;2023;despesa_general;Lowi;43.8;pagat
+145;BBVA;Compte;27/06/2023;27;junio;2023;varis;Oncolliga;12.0;pagat
+146;BBVA;Compte;28/06/2023;28;junio;2023;despesa_general;Hipoteca;472.91;pagat
+147;BBVA;Compte;01/07/2023;1;julio;2023;despesa_general;Endesa;15.44;pagat
+148;BBVA;Compte;02/07/2023;2;julio;2023;despesa_general;Ocaso;23.98;pagat
+149;Efectiu;;03/07/2023;3;julio;2023;proveidor;Trama;400.0;pagat
+150;BBVA;Compte;04/07/2023;4;julio;2023;despesa_general;Piscina;56.0;pagat
+151;LaCaixa;Compte;05/07/2023;5;julio;2023;despesa_general;Ajunt. Arb£cies;54.13;pagat
+152;BBVA;Compte;07/07/2023;7;julio;2023;asseguranáa;DP MP Mireia;20.38;pagat
+153;BBVA;Compte;07/07/2023;7;julio;2023;asseguranáa;DP Morts Enric;13.47;pagat
+154;BBVA;Compte;07/07/2023;7;julio;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+155;BBVA;Compte;17/07/2023;17;julio;2023;despesa_general;Lowi;45.28;pagat
+156;BBVA;Compte;28/07/2023;28;julio;2023;despesa_general;Hipoteca;472.91;pagat
+157;BBVA;Compte;01/08/2023;1;agosto;2023;despesa_general;Endesa;17.93;pagat
+158;BBVA;Compte;02/08/2023;2;agosto;2023;despesa_general;Ocaso;23.98;pagat
+159;BBVA;Compte;04/08/2023;4;agosto;2023;despesa_general;Piscina;56.0;pagat
+160;LaCaixa;Compte;05/08/2023;5;agosto;2023;despesa_general;Ajunt. Arb£cies;54.13;pagat
+161;BBVA;Compte;07/08/2023;7;agosto;2023;asseguranáa;DP MP Mireia;20.38;pagat
+162;BBVA;Compte;07/08/2023;7;agosto;2023;asseguranáa;DP Morts Enric;13.47;pagat
+163;BBVA;Compte;07/08/2023;7;agosto;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+164;BBVA;Compte;12/08/2023;12;agosto;2023;despesa_general;Aigua;48.03;pagat
+165;BBVA;Compte;17/08/2023;17;agosto;2023;despesa_general;Lowi;44.41;pagat
+166;BBVA;Compte;28/08/2023;28;agosto;2023;despesa_general;Hipoteca;472.91;pagat
+167;BBVA;Compte;01/09/2023;1;septiembre;2023;despesa_general;Endesa;11.7;pagat
+168;BBVA;Compte;02/09/2023;2;septiembre;2023;despesa_general;Ocaso;23.98;pagat
+169;BBVA;Compte;04/09/2023;4;septiembre;2023;despesa_general;Piscina;56.0;pagat
+170;LaCaixa;Compte;05/09/2023;5;septiembre;2023;despesa_general;Ajunt. Arb£cies;54.13;pagat
+171;BBVA;Compte;07/09/2023;7;septiembre;2023;asseguranáa;DP MP Mireia;20.38;pagat
+172;BBVA;Compte;07/09/2023;7;septiembre;2023;asseguranáa;DP Morts Enric;13.47;pagat
+173;BBVA;Compte;07/09/2023;7;septiembre;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+174;BBVA;Compte;15/09/2023;15;septiembre;2023;despesa_general;Lowi;43.9;pagat
+175;BBVA;Compte;28/09/2023;28;septiembre;2023;despesa_general;Hipoteca;472.91;pagat
+176;BBVA;Compte;01/10/2023;1;octubre;2023;despesa_general;Endesa;17.5;pagat
+177;BBVA;Compte;02/10/2023;2;octubre;2023;despesa_general;Ocaso;23.98;pagat
+178;BBVA;Compte;04/10/2023;4;octubre;2023;despesa_general;Piscina;56.0;pagat
+179;LaCaixa;Compte;05/10/2023;5;octubre;2023;despesa_general;Ajunt. Arb£cies;21.76;pagat
+328;BBVA;Compte;05/10/2023;5;octubre;2023;despesa_general;PJ Isabel;200.0;pagat
+180;BBVA;Compte;07/10/2023;7;octubre;2023;asseguranáa;DP MP Mireia;20.38;pagat
+181;BBVA;Compte;07/10/2023;7;octubre;2023;asseguranáa;DP Morts Enric;13.47;pagat
+182;BBVA;Compte;07/10/2023;7;octubre;2023;asseguranáa;BBVA Asseg. Casa;35.4;pagat
+326;Efectiu;;09/10/2023;9;octubre;2023;varis;Curs;50.0;pagat
+327;BBVA;Däbit;15/10/2023;15;octubre;2023;mant_netej;Reparacions cotxe;89.94;pagat
+183;BBVA;Compte;17/10/2023;17;octubre;2023;despesa_general;Lowi;44.59;pagat
+326;T.CorteInglÇs;;18/10/2023;18;octubre;2023;menjar;El Corte InglÇs;52.24;pagat
+184;BBVA;Compte;28/10/2023;28;octubre;2023;despesa_general;Hipoteca;472.91;pagat
+2;BBVA;Compte;30/10/2023;30;octubre;2023;proveidor;Hofmann;6.21;pagat
+185;BBVA;Compte;01/11/2023;1;noviembre;2023;despesa_general;Endesa;17.61;pagat
+186;BBVA;Compte;02/11/2023;2;noviembre;2023;despesa_general;Ocaso;23.98;pagat
+187;BBVA;Compte;04/11/2023;4;noviembre;2023;despesa_general;Piscina;56.0;pagat
+188;LaCaixa;Compte;05/11/2023;5;noviembre;2023;despesa_general;Ajunt. Arb£cies;21.77;pagat
+329;BBVA;Compte;05/11/2023;5;noviembre;2023;despesa_general;PJ Isabel;200.0;pagat
+189;BBVA;Compte;07/11/2023;7;noviembre;2023;asseguranáa;DP MP Mireia;20.38;pagat
+190;BBVA;Compte;07/11/2023;7;noviembre;2023;asseguranáa;DP Morts Enric;13.47;pagat
+191;BBVA;Compte;07/11/2023;7;noviembre;2023;asseguranáa;BBVA Asseg. Casa;35.34;pagat
+3;Efectiu;;10/11/2023;10;noviembre;2023;proveidor;Exaprint;225.0;pagat
+192;BBVA;Compte;12/11/2023;12;noviembre;2023;despesa_general;Aigua;55.24;pagat
+193;BBVA;Compte;17/11/2023;17;noviembre;2023;despesa_general;Lowi;43.8;pagat
+194;BBVA;Compte;28/11/2023;28;noviembre;2023;despesa_general;Hipoteca;472.91;pagat
+195;BBVA;Compte;01/12/2023;1;diciembre;2023;despesa_general;Endesa;14.53;pagat
+196;BBVA;Compte;02/12/2023;2;diciembre;2023;despesa_general;Ocaso;23.98;pagat
+197;BBVA;Compte;04/12/2023;4;diciembre;2023;despesa_general;Piscina;56.0;pagat
+198;LaCaixa;Compte;05/12/2023;5;diciembre;2023;despesa_general;Ajunt. Arb£cies;21.76;pagat
+330;BBVA;Compte;05/12/2023;5;diciembre;2023;despesa_general;PJ Isabel;200.0;pagat
+199;BBVA;Compte;07/12/2023;7;diciembre;2023;asseguranáa;DP MP Mireia;20.38;pagat
+200;BBVA;Compte;07/12/2023;7;diciembre;2023;asseguranáa;DP Morts Enric;13.47;pagat
+201;BBVA;Compte;07/12/2023;7;diciembre;2023;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+326;Efectiu;;14/12/2023;14;diciembre;2023;proveidor;Prolab;60.0;pagat
+202;BBVA;Compte;17/12/2023;17;diciembre;2023;despesa_general;Lowi;44.23;pagat
+203;BBVA;Compte;28/12/2023;28;diciembre;2023;despesa_general;Hipoteca;489.43;pagat
+204;BBVA;Compte;01/01/2024;1;enero;2024;despesa_general;Endesa;20.92;pagat
+205;BBVA;Compte;02/01/2024;2;enero;2024;despesa_general;Ocaso;26.2;pagat
+206;T.CorteInglÇs;;02/01/2024;2;enero;2024;menjar;El Corte InglÇs;0.0;pagat
+207;BBVA;Compte;04/01/2024;4;enero;2024;despesa_general;Piscina;61.6;pagat
+208;LaCaixa;Compte;05/01/2024;5;enero;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+331;BBVA;Compte;05/01/2024;5;enero;2024;despesa_general;PJ Isabel;200.0;pagat
+209;BBVA;Compte;07/01/2024;7;enero;2024;asseguranáa;DP MP Mireia;20.38;pagat
+210;BBVA;Compte;07/01/2024;7;enero;2024;asseguranáa;DP Morts Enric;13.47;pagat
+211;BBVA;Compte;07/01/2024;7;enero;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+212;BBVA;Compte;19/01/2024;19;enero;2024;despesa_general;Lowi;44.49;pagat
+213;BBVA;Compte;31/01/2024;31;enero;2024;despesa_general;Hipoteca;489.43;pagat
+214;BBVA;Compte;31/01/2024;31;enero;2024;proveidor;Hofmann;4.22;pagat
+215;BBVA;Compte;01/02/2024;1;febrero;2024;despesa_general;Endesa;62.33;pagat
+216;BBVA;Compte;02/02/2024;2;febrero;2024;despesa_general;Ocaso;25.75;pagat
+217;BBVA;Compte;04/02/2024;4;febrero;2024;despesa_general;Piscina;61.6;pagat
+218;LaCaixa;Compte;05/02/2024;5;febrero;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+332;BBVA;Compte;05/02/2024;5;febrero;2024;despesa_general;PJ Isabel;200.0;pagat
+219;BBVA;Compte;06/02/2024;6;febrero;2024;despesa_general;Aigua;60.04;pagat
+220;BBVA;Compte;07/02/2024;7;febrero;2024;asseguranáa;DP MP Mireia;20.38;pagat
+221;BBVA;Compte;07/02/2024;7;febrero;2024;asseguranáa;DP Morts Enric;14.92;pagat
+222;BBVA;Compte;07/02/2024;7;febrero;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+223;BBVA;Compte;19/02/2024;19;febrero;2024;despesa_general;Lowi;43.8;pagat
+224;BBVA;Compte;28/02/2024;28;febrero;2024;despesa_general;Hipoteca;489.43;pagat
+225;BBVA;Compte;28/02/2024;28;febrero;2024;proveidor;Hofmann;5.14;pagat
+227;BBVA;Compte;01/03/2024;1;marzo;2024;despesa_general;Endesa;61.38;pagat
+228;BBVA;Compte;02/03/2024;2;marzo;2024;despesa_general;Ocaso;25.75;pagat
+229;BBVA;Compte;04/03/2024;4;marzo;2024;despesa_general;Piscina;61.6;pagat
+230;LaCaixa;Compte;05/03/2024;5;marzo;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+333;BBVA;Compte;05/03/2024;5;marzo;2024;despesa_general;PJ Isabel;200.0;pagat
+231;BBVA;Compte;07/03/2024;7;marzo;2024;asseguranáa;DP MP Mireia;20.38;pagat
+232;BBVA;Compte;07/03/2024;7;marzo;2024;asseguranáa;DP Morts Enric;14.63;pagat
+233;BBVA;Compte;07/03/2024;7;marzo;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+235;BBVA;Compte;19/03/2024;19;marzo;2024;despesa_general;Lowi;44.0;pagat
+238;BBVA;Compte;28/03/2024;28;marzo;2024;despesa_general;Hipoteca;489.43;pagat
+239;BBVA;Compte;01/04/2024;1;abril;2024;despesa_general;Endesa;31.56;pagat
+240;BBVA;Compte;02/04/2024;2;abril;2024;despesa_general;Ocaso;25.75;pagat
+241;BBVA;Compte;04/04/2024;4;abril;2024;despesa_general;Piscina;61.6;pagat
+242;LaCaixa;Compte;05/04/2024;5;abril;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+334;BBVA;Compte;05/04/2024;5;abril;2024;despesa_general;PJ Isabel;200.0;pagat
+243;BBVA;Compte;07/04/2024;7;abril;2024;asseguranáa;DP MP Mireia;21.76;pagat
+244;BBVA;Compte;07/04/2024;7;abril;2024;asseguranáa;DP Morts Enric;14.63;pagat
+245;BBVA;Compte;07/04/2024;7;abril;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+246;BBVA;Compte;07/04/2024;7;abril;2024;varis;Impost de circulaci¢;66.45;pagat
+247;BBVA;Compte;17/04/2024;17;abril;2024;despesa_general;Lowi;43.8;pagat
+236;BBVA;Compte;27/04/2024;27;abril;2024;varis;Jubilats Isa;12.0;pagat
+237;BBVA;Compte;27/04/2024;27;abril;2024;varis;Jubilats Enric;12.0;pagat
+248;BBVA;Compte;28/04/2024;28;abril;2024;despesa_general;Hipoteca;489.43;pagat
+249;BBVA;Compte;01/05/2024;1;mayo;2024;despesa_general;Endesa;21.21;pagat
+250;BBVA;Compte;02/05/2024;2;mayo;2024;despesa_general;Ocaso;25.75;pagat
+251;BBVA;Compte;04/05/2024;4;mayo;2024;despesa_general;Piscina;61.6;pagat
+252;LaCaixa;Compte;05/05/2024;5;mayo;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+335;BBVA;Compte;05/05/2024;5;mayo;2024;despesa_general;PJ Isabel;200.0;pagat
+253;BBVA;Compte;07/05/2024;7;mayo;2024;asseguranáa;DP MP Mireia;20.98;pagat
+254;BBVA;Compte;07/05/2024;7;mayo;2024;asseguranáa;DP Morts Enric;14.63;pagat
+255;BBVA;Compte;07/05/2024;7;mayo;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+256;Efectiu;;11/05/2024;11;mayo;2023;proveidor;Prolab;0.0;pagat
+257;BBVA;Compte;12/05/2024;12;mayo;2024;despesa_general;Aigua;52.82;pagat
+258;BBVA;Compte;17/05/2024;17;mayo;2024;despesa_general;Lowi;43.97;pagat
+374;LaCaixa;Compte;27/05/2024;27;mayo;2024;proveidor;Ssangyong;18000.0;pagat
+375;BBVA;Compte;27/05/2024;27;mayo;2024;proveidor;Ssangyong;0.0;pagat
+260;BBVA;Compte;28/05/2024;28;mayo;2024;despesa_general;Hipoteca;489.43;pagat
+374;BBVA;Compte;31/05/2024;31;mayo;2024;despesa_general;Crädit Cotxe;19.54;pagat
+261;BBVA;Compte;01/06/2024;1;junio;2024;despesa_general;Endesa;21.21;pagat
+343;Efectiu;;01/06/2024;1;junio;2024;varis;Fianáa Parking;70.0;pagat
+374;Efectiu;;01/06/2024;1;junio;2024;despesa_general;Lloguer Parking;55.0;pagat
+262;BBVA;Compte;02/06/2024;2;junio;2024;despesa_general;Ocaso;25.75;pagat
+259;BBVA;Däbit;03/06/2024;3;junio;2024;asseguranáa;Asseguranáa Cotxe;432.85;pagat
+263;BBVA;Compte;04/06/2024;4;junio;2024;despesa_general;Piscina;61.6;pagat
+264;LaCaixa;Compte;05/06/2024;5;junio;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+336;BBVA;Compte;05/06/2024;5;junio;2024;despesa_general;PJ Isabel;200.0;pagat
+265;BBVA;Compte;07/06/2024;7;junio;2024;asseguranáa;DP MP Mireia;20.98;pagat
+266;BBVA;Compte;07/06/2024;7;junio;2024;asseguranáa;DP Morts Enric;14.63;pagat
+267;BBVA;Compte;07/06/2024;7;junio;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+268;BBVA;Compte;16/06/2024;16;junio;2024;despesa_general;Lowi;43.8;pagat
+269;BBVA;Compte;28/06/2024;28;junio;2024;despesa_general;Hipoteca;489.43;pagat
+378;BBVA;Compte;28/06/2024;28;junio;2024;despesa_general;Crädit Cotxe;337.14;pagat
+326;BBVA;Compte;30/06/2024;30;junio;2024;menjar;El Corte InglÇs;107.75;pagat
+270;BBVA;Compte;01/07/2024;1;julio;2024;despesa_general;Endesa;13.75;pagat
+344;Efectiu;;01/07/2024;1;julio;2024;despesa_general;Lloguer Parking;55.0;pagat
+271;BBVA;Compte;02/07/2024;2;julio;2024;despesa_general;Ocaso;25.75;pagat
+272;BBVA;Compte;04/07/2024;4;julio;2024;despesa_general;Piscina;61.6;pagat
+273;LaCaixa;Compte;05/07/2024;5;julio;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+337;BBVA;Compte;05/07/2024;5;julio;2024;despesa_general;PJ Isabel;200.0;pagat
+274;BBVA;Compte;07/07/2024;7;julio;2024;asseguranáa;DP MP Mireia;20.98;pagat
+275;BBVA;Compte;07/07/2024;7;julio;2024;asseguranáa;DP Morts Enric;14.63;pagat
+276;BBVA;Compte;07/07/2024;7;julio;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+277;BBVA;Compte;17/07/2024;17;julio;2024;despesa_general;Lowi;43.8;pagat
+278;BBVA;Compte;28/07/2024;28;julio;2024;despesa_general;Hipoteca;489.43;pagat
+378;BBVA;Compte;28/07/2024;28;julio;2024;despesa_general;Crädit Cotxe;337.14;pagat
+279;BBVA;Compte;01/08/2024;1;agosto;2024;despesa_general;Endesa;30.16;pagat
+345;Efectiu;;01/08/2024;1;agosto;2024;despesa_general;Lloguer Parking;55.0;pagat
+280;BBVA;Compte;02/08/2024;2;agosto;2024;despesa_general;Ocaso;25.75;pagat
+281;BBVA;Compte;04/08/2024;4;agosto;2024;despesa_general;Piscina;61.6;pagat
+282;LaCaixa;Compte;05/08/2024;5;agosto;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+338;BBVA;Compte;05/08/2024;5;agosto;2024;despesa_general;PJ Isabel;200.0;pagat
+283;BBVA;Compte;07/08/2024;7;agosto;2024;asseguranáa;DP MP Mireia;20.98;pagat
+284;BBVA;Compte;07/08/2024;7;agosto;2024;asseguranáa;DP Morts Enric;14.63;pagat
+285;BBVA;Compte;07/08/2024;7;agosto;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+286;BBVA;Compte;12/08/2024;12;agosto;2024;despesa_general;Aigua;50.42;pagat
+287;BBVA;Compte;17/08/2024;17;agosto;2024;despesa_general;Lowi;43.8;pagat
+288;BBVA;Compte;28/08/2024;28;agosto;2024;despesa_general;Hipoteca;489.43;pagat
+378;BBVA;Compte;28/08/2024;28;agosto;2024;despesa_general;Crädit Cotxe;337.14;pagat
+289;BBVA;Compte;01/09/2024;1;septiembre;2024;despesa_general;Endesa;13.73;pagat
+346;Efectiu;;01/09/2024;1;septiembre;2024;despesa_general;Lloguer Parking;55.0;pagat
+290;BBVA;Compte;02/09/2024;2;septiembre;2024;despesa_general;Ocaso;25.75;pagat
+291;BBVA;Compte;04/09/2024;4;septiembre;2024;despesa_general;Piscina;61.6;pagat
+292;LaCaixa;Compte;05/09/2024;5;septiembre;2024;despesa_general;Ajunt. Arb£cies;60.53;pagat
+339;BBVA;Compte;05/09/2024;5;septiembre;2024;despesa_general;PJ Isabel;200.0;pagat
+293;BBVA;Compte;07/09/2024;7;septiembre;2024;asseguranáa;DP MP Mireia;20.98;pagat
+294;BBVA;Compte;07/09/2024;7;septiembre;2024;asseguranáa;DP Morts Enric;14.63;pagat
+295;BBVA;Compte;07/09/2024;7;septiembre;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+296;BBVA;Compte;17/09/2024;17;septiembre;2024;despesa_general;Lowi;43.8;pagat
+297;BBVA;Compte;28/09/2024;28;septiembre;2024;despesa_general;Hipoteca;489.43;pagat
+378;BBVA;Compte;28/09/2024;28;septiembre;2024;despesa_general;Crädit Cotxe;337.14;pagat
+374;BBVA;Compte;30/09/2024;30;septiembre;2024;menjar;El Corte InglÇs;88.71;pagat
+298;BBVA;Compte;01/10/2024;1;octubre;2024;despesa_general;Endesa;16.1;pagat
+347;Efectiu;;01/10/2024;1;octubre;2024;despesa_general;Lloguer Parking;55.0;pagat
+299;BBVA;Compte;02/10/2024;2;octubre;2024;despesa_general;Ocaso;25.75;pagat
+300;BBVA;Compte;04/10/2024;4;octubre;2024;despesa_general;Piscina;61.6;pagat
+301;LaCaixa;Compte;05/10/2024;5;octubre;2024;despesa_general;Ajunt. Arb£cies;24.45;pagat
+340;BBVA;Compte;05/10/2024;5;octubre;2024;despesa_general;PJ Isabel;210.0;pagat
+302;BBVA;Compte;07/10/2024;7;octubre;2024;asseguranáa;DP MP Mireia;20.98;pagat
+303;BBVA;Compte;07/10/2024;7;octubre;2024;asseguranáa;DP Morts Enric;14.63;pagat
+304;BBVA;Compte;07/10/2024;7;octubre;2024;asseguranáa;BBVA Asseg. Casa;38.4;pagat
+305;BBVA;Compte;17/10/2024;17;octubre;2024;despesa_general;Lowi;39.05;pagat
+306;BBVA;Compte;28/10/2024;28;octubre;2024;despesa_general;Hipoteca;489.43;pagat
+378;BBVA;Compte;28/10/2024;28;octubre;2024;despesa_general;Crädit Cotxe;337.14;pagat
+307;BBVA;Compte;01/11/2024;1;noviembre;2024;despesa_general;Endesa;17.55;pagat
+348;Efectiu;;01/11/2024;1;noviembre;2024;despesa_general;Lloguer Parking;55.0;pagat
+308;BBVA;Compte;02/11/2024;2;noviembre;2024;despesa_general;Ocaso;25.75;pagat
+309;BBVA;Compte;04/11/2024;4;noviembre;2024;despesa_general;Piscina;61.6;pagat
+310;LaCaixa;Compte;05/11/2024;5;noviembre;2024;despesa_general;Ajunt. Arb£cies;24.45;pagat
+341;BBVA;Compte;05/11/2024;5;noviembre;2024;despesa_general;PJ Isabel;210.0;pagat
+311;BBVA;Compte;07/11/2024;7;noviembre;2024;asseguranáa;DP MP Mireia;20.98;pagat
+312;BBVA;Compte;07/11/2024;7;noviembre;2024;asseguranáa;DP Morts Enric;14.63;pagat
+313;BBVA;Compte;07/11/2024;7;noviembre;2024;asseguranáa;BBVA Asseg. Casa;38.45;pagat
+374;BBVA;VISA;11/11/2024;11;noviembre;2024;proveidor;Exaprint;178.79;pagat
+314;BBVA;Compte;12/11/2024;12;noviembre;2024;despesa_general;Aigua;50.42;pagat
+315;BBVA;Compte;17/11/2024;17;noviembre;2024;despesa_general;Lowi;38.85;pagat
+374;Efectiu;;25/11/2024;30;noviembre;2024;proveidor;Prolab;52.0;pagat
+316;BBVA;Compte;28/11/2024;28;noviembre;2024;despesa_general;Hipoteca;489.43;pagat
+378;BBVA;Compte;28/11/2024;28;noviembre;2024;despesa_general;Crädit Cotxe;337.14;pagat
+375;BBVA;Compte;30/11/2024;30;noviembre;2024;op_banc;Amortitzaci¢;0.0;pagat
+317;BBVA;Compte;01/12/2024;1;diciembre;2024;despesa_general;Endesa;58.95;pagat
+349;Efectiu;;01/12/2024;1;diciembre;2024;despesa_general;Lloguer Parking;55.0;pagat
+318;BBVA;Compte;02/12/2024;2;diciembre;2024;despesa_general;Ocaso;25.75;pagat
+319;BBVA;Compte;04/12/2024;4;diciembre;2024;despesa_general;Piscina;61.6;pagat
+320;LaCaixa;Compte;05/12/2024;5;diciembre;2024;despesa_general;Ajunt. Arb£cies;24.44;pagat
+342;BBVA;Compte;05/12/2024;5;diciembre;2024;despesa_general;PJ Isabel;210.0;pagat
+321;BBVA;Compte;07/12/2024;7;diciembre;2024;asseguranáa;DP MP Mireia;20.98;pagat
+322;BBVA;Compte;07/12/2024;7;diciembre;2024;asseguranáa;DP Morts Enric;14.63;pagat
+323;BBVA;Compte;07/12/2024;7;diciembre;2024;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+324;BBVA;Compte;17/12/2024;17;diciembre;2024;despesa_general;Lowi;39.19;pagat
+325;BBVA;Compte;28/12/2024;28;diciembre;2024;despesa_general;Hipoteca;489.43;pagat
+378;BBVA;Compte;28/12/2024;28;diciembre;2024;despesa_general;Crädit Cotxe;337.14;pagat
+350;Efectiu;;01/01/2025;1;enero;2025;despesa_general;Lloguer Parking;55.0;pagat
+375;BBVA;Compte;01/01/2025;1;enero;2025;despesa_general;Endesa;58.95;pagat
+376;BBVA;Compte;02/01/2025;2;enero;2025;despesa_general;Ocaso;28.03;pagat
+377;BBVA;Compte;04/01/2025;4;enero;2025;despesa_general;Piscina;61.6;pagat
+378;LaCaixa;Compte;05/01/2025;5;enero;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+379;BBVA;Compte;05/01/2025;5;enero;2025;despesa_general;PJ Isabel;210.0;pagat
+380;BBVA;Compte;07/01/2025;7;enero;2025;asseguranáa;DP MP Mireia;20.98;pagat
+381;BBVA;Compte;07/01/2025;7;enero;2025;asseguranáa;DP Morts Enric;14.63;pagat
+382;BBVA;Compte;07/01/2025;7;enero;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+383;BBVA;Compte;19/01/2025;19;enero;2025;despesa_general;Lowi;38.85;pagat
+378;BBVA;Compte;28/01/2025;28;enero;2025;despesa_general;Crädit Cotxe;337.14;pagat
+384;BBVA;Compte;31/01/2025;31;enero;2025;despesa_general;Hipoteca;489.43;pagat
+351;Efectiu;;01/02/2025;1;febrero;2025;despesa_general;Lloguer Parking;55.0;pagat
+385;BBVA;Compte;01/02/2025;1;febrero;2025;despesa_general;Endesa;85.62;pagat
+386;BBVA;Compte;02/02/2025;2;febrero;2025;despesa_general;Ocaso;27.54;pagat
+387;BBVA;Compte;04/02/2025;4;febrero;2025;despesa_general;Piscina;61.6;pagat
+388;LaCaixa;Compte;05/02/2025;5;febrero;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+389;BBVA;Compte;05/02/2025;5;febrero;2025;despesa_general;PJ Isabel;210.0;pagat
+390;BBVA;Compte;06/02/2025;6;febrero;2025;despesa_general;Aigua;52.21;pagat
+391;BBVA;Compte;07/02/2025;7;febrero;2025;asseguranáa;DP MP Mireia;20.98;pagat
+392;BBVA;Compte;07/02/2025;7;febrero;2025;asseguranáa;DP Morts Enric;16.34;pagat
+393;BBVA;Compte;07/02/2025;7;febrero;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+634;BBVA;Compte;11/02/2025;11;febrero;2025;despesa_general;Crädit Cotxe;2000.0;pagat
+394;BBVA;Compte;19/02/2025;19;febrero;2025;despesa_general;Lowi;38.95;pagat
+378;BBVA;Compte;28/02/2025;28;febrero;2025;despesa_general;Crädit Cotxe;337.14;pagat
+395;BBVA;Compte;28/02/2025;28;febrero;2025;despesa_general;Hipoteca;489.43;pagat
+352;Efectiu;;01/03/2025;1;marzo;2025;despesa_general;Lloguer Parking;55.0;pagat
+396;BBVA;Compte;01/03/2025;1;marzo;2025;despesa_general;Endesa;115.65;pagat
+397;BBVA;Compte;02/03/2025;2;marzo;2025;despesa_general;Ocaso;27.54;pagat
+398;BBVA;Compte;04/03/2025;4;marzo;2025;despesa_general;Piscina;61.6;pagat
+399;LaCaixa;Compte;05/03/2025;5;marzo;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+400;BBVA;Compte;05/03/2025;5;marzo;2025;despesa_general;PJ Isabel;210.0;pagat
+401;BBVA;Compte;07/03/2025;7;marzo;2025;asseguranáa;DP MP Mireia;20.98;pagat
+402;BBVA;Compte;07/03/2025;7;marzo;2025;asseguranáa;DP Morts Enric;16.0;pagat
+403;BBVA;Compte;07/03/2025;7;marzo;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+404;BBVA;Compte;19/03/2025;19;marzo;2025;despesa_general;Lowi;38.95;pagat
+378;BBVA;Compte;28/03/2025;28;marzo;2025;despesa_general;Crädit Cotxe;337.14;pagat
+405;BBVA;Compte;28/03/2025;28;marzo;2025;despesa_general;Hipoteca;489.43;pagat
+353;Efectiu;;01/04/2025;1;abril;2025;despesa_general;Lloguer Parking;55.0;pagat
+406;BBVA;Compte;01/04/2025;1;abril;2025;despesa_general;Endesa;72.01;pagat
+407;BBVA;Compte;02/04/2025;2;abril;2025;despesa_general;Ocaso;27.54;pagat
+408;BBVA;Compte;04/04/2025;4;abril;2025;despesa_general;Piscina;66.52;pagat
+409;LaCaixa;Compte;05/04/2025;5;abril;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+410;BBVA;Compte;05/04/2025;5;abril;2025;despesa_general;PJ Isabel;210.0;pagat
+411;BBVA;Compte;07/04/2025;7;abril;2025;asseguranáa;DP MP Mireia;22.29;pagat
+412;BBVA;Compte;07/04/2025;7;abril;2025;asseguranáa;DP Morts Enric;16.0;pagat
+413;BBVA;Compte;07/04/2025;7;abril;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+634;LaCaixa;Compte;11/04/2025;11;abril;2025;despesa_general;Ajunt. Arb£cies;-51.12;pagat
+414;BBVA;Compte;17/04/2025;17;abril;2025;despesa_general;Lowi;38.85;pagat
+415;BBVA;Compte;27/04/2025;27;abril;2025;varis;Jubilats Isa;12.0;pagat
+416;BBVA;Compte;27/04/2025;27;abril;2025;varis;Jubilats Enric;12.0;pagat
+378;BBVA;Compte;28/04/2025;28;abril;2025;despesa_general;Crädit Cotxe;337.14;pagat
+417;BBVA;Compte;28/04/2025;28;abril;2025;despesa_general;Hipoteca;489.43;pagat
+634;BBVA;Compte;30/04/2025;30;abril;2025;menjar;El Corte InglÇs;100.65;pagat
+354;Efectiu;;01/05/2025;1;mayo;2025;despesa_general;Lloguer Parking;55.0;pagat
+418;BBVA;Compte;01/05/2025;1;mayo;2025;despesa_general;Endesa;51.12;pagat
+419;BBVA;Compte;02/05/2025;2;mayo;2025;despesa_general;Ocaso;27.54;pagat
+420;BBVA;Compte;04/05/2025;4;mayo;2025;despesa_general;Piscina;66.52;pagat
+421;LaCaixa;Compte;05/05/2025;5;mayo;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+422;BBVA;Compte;05/05/2025;5;mayo;2025;despesa_general;PJ Isabel;210.0;pagat
+423;BBVA;Compte;07/05/2025;7;mayo;2025;asseguranáa;DP MP Mireia;21.62;pagat
+424;BBVA;Compte;07/05/2025;7;mayo;2025;asseguranáa;DP Morts Enric;16.0;pagat
+425;BBVA;Compte;07/05/2025;7;mayo;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+426;BBVA;Compte;12/05/2025;12;mayo;2025;despesa_general;Aigua;77.56;pagat
+637;BBVA;VISA;15/05/2025;15;mayo;2025;manteniment;Reparacions cotxe;283.2;pagat
+427;BBVA;Compte;17/05/2025;17;mayo;2025;despesa_general;Lowi;26.45;pagat
+378;BBVA;Compte;28/05/2025;28;mayo;2025;despesa_general;Crädit Cotxe;337.14;pagat
+429;BBVA;Compte;28/05/2025;28;mayo;2025;despesa_general;Hipoteca;489.43;pagat
+636;BBVA;Compte;30/05/2025;30;mayo;2025;Parallar;Compra mïbil;150.0;pagat
+430;BBVA;Compte;31/05/2025;31;mayo;2024;despesa_general;Crädit Cotxe;0.0;pagat
+634;Efectiu;;31/05/2025;31;mayo;2025;varis;Regal;600.0;pagat
+355;Efectiu;;01/06/2025;1;junio;2025;despesa_general;Lloguer Parking;55.0;pagat
+431;BBVA;Compte;01/06/2025;1;junio;2025;despesa_general;Endesa;23.33;pagat
+432;BBVA;Compte;02/06/2025;2;junio;2025;despesa_general;Ocaso;27.54;pagat
+428;BBVA;Däbit;03/06/2025;3;junio;2025;asseguranáa;Asseguranáa Cotxe;270.29;pagat
+433;BBVA;Compte;04/06/2025;4;junio;2025;despesa_general;Piscina;66.52;pagat
+434;LaCaixa;Compte;05/06/2025;5;junio;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+435;BBVA;Compte;05/06/2025;5;junio;2025;despesa_general;PJ Isabel;210.0;pagat
+436;BBVA;Compte;07/06/2025;7;junio;2025;asseguranáa;DP MP Mireia;21.62;pagat
+437;BBVA;Compte;07/06/2025;7;junio;2025;asseguranáa;DP Morts Enric;16.0;pagat
+438;BBVA;Compte;07/06/2025;7;junio;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+439;BBVA;Compte;16/06/2025;16;junio;2025;despesa_general;Lowi;39.4;pagat
+378;BBVA;Compte;28/06/2025;28;junio;2025;despesa_general;Crädit Cotxe;337.14;pagat
+440;BBVA;Compte;28/06/2025;28;junio;2025;despesa_general;Hipoteca;489.43;pagat
+376;BBVA;Compte;30/06/2025;30;junio;2025;op_banc;Amortitzaci¢;0.0;pagat
+635;BBVA;Compte;30/06/2025;30;junio;2025;roba;El Corte InglÇs;183.0;pagat
+356;Efectiu;;01/07/2025;1;julio;2025;despesa_general;Lloguer Parking;55.0;pagat
+441;BBVA;Compte;01/07/2025;1;julio;2025;despesa_general;Endesa;22.49;pagat
+442;BBVA;Compte;02/07/2025;2;julio;2025;despesa_general;Ocaso;27.54;pagat
+443;BBVA;Compte;04/07/2025;4;julio;2025;despesa_general;Piscina;90.28;pagat
+444;LaCaixa;Compte;05/07/2025;5;julio;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+445;BBVA;Compte;05/07/2025;5;julio;2025;despesa_general;PJ Isabel;210.0;pagat
+446;BBVA;Compte;07/07/2025;7;julio;2025;asseguranáa;DP MP Mireia;21.62;pagat
+447;BBVA;Compte;07/07/2025;7;julio;2025;asseguranáa;DP Morts Enric;16.0;pagat
+448;BBVA;Compte;07/07/2025;7;julio;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+449;BBVA;Compte;17/07/2025;17;julio;2025;despesa_general;Lowi;38.85;pagat
+634;Efectiu;;24/07/2025;24;julio;2025;proveidor;Prolab;52.0;pagat
+378;BBVA;Compte;28/07/2025;28;julio;2025;despesa_general;Crädit Cotxe;337.14;pagat
+450;BBVA;Compte;28/07/2025;28;julio;2025;despesa_general;Hipoteca;489.43;pagat
+357;Efectiu;;01/08/2025;1;agosto;2025;despesa_general;Lloguer Parking;55.0;pagat
+451;BBVA;Compte;01/08/2025;1;agosto;2025;despesa_general;Endesa;28.71;pagat
+452;BBVA;Compte;02/08/2025;2;agosto;2025;despesa_general;Ocaso;27.54;pagat
+453;BBVA;Compte;04/08/2025;4;agosto;2025;despesa_general;Piscina;90.28;pagat
+454;LaCaixa;Compte;05/08/2025;5;agosto;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+455;BBVA;Compte;05/08/2025;5;agosto;2025;despesa_general;PJ Isabel;210.0;pagat
+456;BBVA;Compte;07/08/2025;7;agosto;2025;asseguranáa;DP MP Mireia;21.62;pagat
+457;BBVA;Compte;07/08/2025;7;agosto;2025;asseguranáa;DP Morts Enric;16.0;pagat
+458;BBVA;Compte;07/08/2025;7;agosto;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+635;BBVA;VISA;07/08/2025;7;agosto;2025;varis;Certificat/registre;50.0;pagat
+459;BBVA;Compte;12/08/2025;12;agosto;2025;despesa_general;Aigua;70.76;pagat
+460;BBVA;Compte;17/08/2025;17;agosto;2025;despesa_general;Lowi;34.79;pagat
+378;BBVA;Compte;28/08/2025;28;agosto;2025;despesa_general;Crädit Cotxe;337.14;pagat
+461;BBVA;Compte;28/08/2025;28;agosto;2025;despesa_general;Hipoteca;489.43;pagat
+358;Efectiu;;01/09/2025;1;septiembre;2025;despesa_general;Lloguer Parking;55.0;pagat
+462;BBVA;Compte;01/09/2025;1;septiembre;2025;despesa_general;Endesa;29.91;pagat
+463;BBVA;Compte;02/09/2025;2;septiembre;2025;despesa_general;Ocaso;27.54;pagat
+464;BBVA;Compte;04/09/2025;4;septiembre;2025;despesa_general;Piscina;90.28;pagat
+465;LaCaixa;Compte;05/09/2025;5;septiembre;2025;despesa_general;Ajunt. Arb£cies;68.46;pagat
+466;BBVA;Compte;05/09/2025;5;septiembre;2025;despesa_general;PJ Isabel;210.0;pagat
+467;BBVA;Compte;07/09/2025;7;septiembre;2025;asseguranáa;DP MP Mireia;21.62;pagat
+468;BBVA;Compte;07/09/2025;7;septiembre;2025;asseguranáa;DP Morts Enric;16.0;pagat
+469;BBVA;Compte;07/09/2025;7;septiembre;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+470;BBVA;Compte;17/09/2025;17;septiembre;2025;despesa_general;Lowi;39.49;pagat
+378;BBVA;Compte;28/09/2025;28;septiembre;2025;despesa_general;Crädit Cotxe;337.14;pagat
+471;BBVA;Compte;28/09/2025;28;septiembre;2025;despesa_general;Hipoteca;489.43;pagat
+359;Efectiu;;01/10/2025;1;octubre;2025;despesa_general;Lloguer Parking;55.0;pagat
+634;BBVA;Compte;01/10/2025;1;octubre;2025;despesa_general;Endesa;27.5;pagat
+472;BBVA;Compte;02/10/2025;2;octubre;2025;despesa_general;Ocaso;27.54;pagat
+473;BBVA;Compte;04/10/2025;4;octubre;2025;despesa_general;Piscina;90.28;pagat
+474;LaCaixa;Compte;05/10/2025;5;octubre;2025;despesa_general;Ajunt. Arb£cies;29.23;pagat
+475;BBVA;Compte;05/10/2025;5;octubre;2025;despesa_general;PJ Isabel;220.5;pagat
+476;BBVA;Compte;07/10/2025;7;octubre;2025;asseguranáa;DP MP Mireia;21.62;pagat
+477;BBVA;Compte;07/10/2025;7;octubre;2025;asseguranáa;DP Morts Enric;16.0;pagat
+478;BBVA;Compte;07/10/2025;7;octubre;2025;asseguranáa;BBVA Asseg. Casa;40.52;pagat
+479;BBVA;Compte;17/10/2025;17;octubre;2025;despesa_general;Lowi;38.85;pagat
+378;BBVA;Compte;28/10/2025;28;octubre;2025;despesa_general;Crädit Cotxe;337.14;pagat
+480;BBVA;Compte;28/10/2025;28;octubre;2025;despesa_general;Hipoteca;489.43;pagat
+360;Efectiu;;01/11/2025;1;noviembre;2025;despesa_general;Lloguer Parking;55.0;pagat
+481;BBVA;Compte;01/11/2025;1;noviembre;2025;despesa_general;Endesa;38.27;pagat
+482;BBVA;Compte;02/11/2025;2;noviembre;2025;despesa_general;Ocaso;27.54;pagat
+483;BBVA;Compte;04/11/2025;4;noviembre;2025;despesa_general;Piscina;90.28;pagat
+484;LaCaixa;Compte;05/11/2025;5;noviembre;2025;despesa_general;Ajunt. Arb£cies;29.23;pagat
+485;BBVA;Compte;05/11/2025;5;noviembre;2025;despesa_general;PJ Isabel;220.5;pagat
+486;BBVA;Compte;07/11/2025;7;noviembre;2025;asseguranáa;DP MP Mireia;21.62;pagat
+487;BBVA;Compte;07/11/2025;7;noviembre;2025;asseguranáa;DP Morts Enric;16.0;pagat
+488;BBVA;Compte;07/11/2025;7;noviembre;2025;asseguranáa;BBVA Asseg. Casa;40.48;pagat
+489;BBVA;Compte;12/11/2025;12;noviembre;2025;despesa_general;Aigua;60.7;pagat
+490;BBVA;Compte;17/11/2025;17;noviembre;2025;despesa_general;Lowi;34.69;pagat
+379;BBVA;Compte;28/11/2025;28;noviembre;2025;despesa_general;Crädit Cotxe;337.14;pagat
+491;BBVA;Compte;28/11/2025;28;noviembre;2025;despesa_general;Hipoteca;489.43;pagat
+361;Efectiu;;01/12/2025;1;diciembre;2025;despesa_general;Lloguer Parking;55.0;pagat
+492;BBVA;Compte;01/12/2025;1;diciembre;2025;despesa_general;Endesa;37.35;pagat
+493;BBVA;Compte;02/12/2025;2;diciembre;2025;despesa_general;Ocaso;27.54;pagat
+494;BBVA;Compte;04/12/2025;4;diciembre;2025;despesa_general;Piscina;90.28;pagat
+495;LaCaixa;Compte;05/12/2025;5;diciembre;2025;despesa_general;Ajunt. Arb£cies;29.23;pagat
+496;BBVA;Compte;05/12/2025;5;diciembre;2025;despesa_general;PJ Isabel;220.5;pagat
+497;BBVA;Compte;07/12/2025;7;diciembre;2025;asseguranáa;DP MP Mireia;21.62;pagat
+498;BBVA;Compte;07/12/2025;7;diciembre;2025;asseguranáa;DP Morts Enric;16.3;pagat
+499;BBVA;Compte;07/12/2025;7;diciembre;2025;asseguranáa;BBVA Asseg. Casa;42.34;pagat
+500;BBVA;Compte;17/12/2025;17;diciembre;2025;despesa_general;Lowi;38.95;pagat
+380;BBVA;Compte;28/12/2025;28;diciembre;2025;despesa_general;Crädit Cotxe;337.14;pagat
+501;BBVA;Compte;28/12/2025;28;diciembre;2025;despesa_general;Hipoteca;489.43;pagat
+362;Efectiu;;01/01/2026;1;enero;2026;despesa_general;Lloguer Parking;55.0;pagat
+502;BBVA;Compte;01/01/2026;1;enero;2026;despesa_general;Endesa;65.88;pagat
+503;BBVA;Compte;02/01/2026;2;enero;2026;despesa_general;Ocaso;29.33;pagat
+504;BBVA;Compte;04/01/2026;4;enero;2026;despesa_general;Piscina;90.28;pagat
+505;LaCaixa;Compte;05/01/2026;5;enero;2026;despesa_general;Ajunt. Arb£cies;68.46;pagat
+506;BBVA;Compte;05/01/2026;5;enero;2026;despesa_general;PJ Isabel;220.5;pagat
+507;BBVA;Compte;07/01/2026;7;enero;2026;asseguranáa;DP MP Mireia;21.62;pagat
+508;BBVA;Compte;07/01/2026;7;enero;2026;asseguranáa;DP Morts Enric;16.0;pagat
+509;BBVA;Compte;07/01/2026;7;enero;2026;asseguranáa;BBVA Asseg. Casa;42.34;pagat
+377;BBVA;Compte;15/01/2026;15;enero;2026;op_banc;Amortitzaci¢;0.0;pagat
+510;BBVA;Compte;19/01/2026;19;enero;2026;despesa_general;Lowi;35.9;pagat
+511;BBVA;Compte;28/01/2026;28;enero;2026;despesa_general;Crädit Cotxe;337.14;pagat
+512;BBVA;Compte;31/01/2026;31;enero;2026;despesa_general;Hipoteca;489.43;pagat
+363;Efectiu;;01/02/2026;1;febrero;2026;despesa_general;Lloguer Parking;55.0;pagat
+513;BBVA;Compte;01/02/2026;1;febrero;2026;despesa_general;Endesa;90.46;pagat
+514;BBVA;Compte;02/02/2026;2;febrero;2026;despesa_general;Ocaso;28.89;pagat
+515;BBVA;Compte;04/02/2026;4;febrero;2026;despesa_general;Piscina;90.28;pagat
+516;LaCaixa;Compte;05/02/2026;5;febrero;2026;despesa_general;Ajunt. Arb£cies;68.46;pagat
+517;BBVA;Compte;05/02/2026;5;febrero;2026;despesa_general;PJ Isabel;220.5;pagat
+518;BBVA;Compte;07/02/2026;7;febrero;2026;asseguranáa;DP MP Mireia;21.62;pagat
+519;BBVA;Compte;07/02/2026;7;febrero;2026;asseguranáa;DP Morts Enric;17.96;pagat
+520;BBVA;Compte;07/02/2026;7;febrero;2026;asseguranáa;BBVA Asseg. Casa;42.34;pagat
+521;BBVA;Compte;19/02/2026;19;febrero;2026;despesa_general;Lowi;35.9;pagat
+522;BBVA;Compte;28/02/2026;28;febrero;2026;despesa_general;Crädit Cotxe;337.14;pagat
+523;BBVA;Compte;28/02/2026;28;febrero;2026;despesa_general;Hipoteca;489.43;pagat
+364;Efectiu;;01/03/2026;1;marzo;2026;despesa_general;Lloguer Parking;55.0;pagat
+524;BBVA;Compte;01/03/2026;1;marzo;2026;despesa_general;Endesa;80.24;pagat
+525;BBVA;Compte;02/03/2026;2;marzo;2026;despesa_general;Ocaso;28.89;pagat
+526;BBVA;Compte;04/03/2026;4;marzo;2026;despesa_general;Piscina;90.28;pagat
+527;LaCaixa;Compte;05/03/2026;5;marzo;2026;despesa_general;Ajunt. Arb£cies;68.46;pagat
+528;BBVA;Compte;05/03/2026;5;marzo;2026;despesa_general;PJ Isabel;220.5;pagat
+529;BBVA;Compte;07/03/2026;7;marzo;2026;asseguranáa;DP MP Mireia;21.62;pagat
+530;BBVA;Compte;07/03/2026;7;marzo;2026;asseguranáa;DP Morts Enric;9.88;pagat
+531;BBVA;Compte;07/03/2026;7;marzo;2026;asseguranáa;BBVA Asseg. Casa;42.34;pagat
+532;BBVA;Compte;19/03/2026;19;marzo;2026;despesa_general;Lowi;35.9;pagat
+533;BBVA;Compte;31/03/2026;31;marzo;2026;despesa_general;Crädit Cotxe;337.14;pagat
+534;BBVA;Compte;31/03/2026;31;marzo;2026;despesa_general;Hipoteca;489.43;pagat
+365;Efectiu;;01/04/2026;1;abril;2026;despesa_general;Lloguer Parking;55.0;pagat
+535;BBVA;Compte;01/04/2026;1;abril;2026;despesa_general;Endesa;111.5;pagat
+536;BBVA;Compte;02/04/2026;2;abril;2026;despesa_general;Ocaso;28.89;pagat
+537;BBVA;Compte;04/04/2026;4;abril;2026;despesa_general;Piscina;90.28;pagat
+538;LaCaixa;Compte;05/04/2026;5;abril;2026;despesa_general;Ajunt. Arb£cies;68.46;pagat
+539;BBVA;Compte;05/04/2026;5;abril;2026;despesa_general;PJ Isabel;220.5;pagat
+540;BBVA;Compte;07/04/2026;7;abril;2026;asseguranáa;DP MP Mireia;0.0;pagat
+541;BBVA;Compte;07/04/2026;7;abril;2026;asseguranáa;DP Morts Enric;9.72;pagat
+542;BBVA;Compte;07/04/2026;7;abril;2026;asseguranáa;BBVA Asseg. Casa;42.34;pagat
+543;BBVA;Compte;19/04/2026;19;abril;2026;despesa_general;Lowi;35.9;pagat
+544;BBVA;Compte;30/04/2026;30;abril;2026;despesa_general;Crädit Cotxe;337.14;pagat
+545;BBVA;Compte;30/04/2026;30;abril;2026;despesa_general;Hipoteca;489.43;pagat
+366;Efectiu;;01/05/2026;1;mayo;2026;despesa_general;Lloguer Parking;55.0;pagat
+546;BBVA;Compte;01/05/2026;1;mayo;2026;despesa_general;Endesa;63.42;pagat
+547;BBVA;Compte;02/05/2026;2;mayo;2026;despesa_general;Ocaso;28.89;pagat
+548;BBVA;Compte;04/05/2026;4;mayo;2026;despesa_general;Piscina;90.28;pagat
+549;LaCaixa;Compte;05/05/2026;5;mayo;2026;despesa_general;Ajunt. Arb£cies;68.46;pagat
+550;BBVA;Compte;05/05/2026;5;mayo;2026;despesa_general;PJ Isabel;220.5;pagat
+551;BBVA;Compte;07/05/2026;7;mayo;2026;asseguranáa;DP MP Mireia;0.0;pagat
+552;BBVA;Compte;07/05/2026;7;mayo;2026;asseguranáa;DP Morts Enric;14.12;pagat
+553;BBVA;Compte;07/05/2026;7;mayo;2026;asseguranáa;BBVA Asseg. Casa;42.34;pagat
+554;BBVA;Compte;19/05/2026;19;mayo;2026;despesa_general;Lowi;35.9;pagat
+555;BBVA;Compte;31/05/2026;31;mayo;2026;despesa_general;Crädit Cotxe;337.14;pagat
+556;BBVA;Compte;31/05/2026;31;mayo;2026;despesa_general;Hipoteca;489.43;pagat
+367;Efectiu;;01/06/2026;1;junio;2026;despesa_general;Lloguer Parking;55.0;pagat
+557;BBVA;Compte;01/06/2026;1;junio;2026;despesa_general;Endesa;34.79;pagat
+558;BBVA;Compte;02/06/2026;2;junio;2026;despesa_general;Ocaso;28.89;pagat
+634;BBVA;Däbit;03/06/2026;3;junio;2026;asseguranáa;Asseguranáa Cotxe;283.8;pagat
+559;BBVA;Compte;04/06/2026;4;junio;2026;despesa_general;Piscina;90.28;pagat
+560;LaCaixa;Compte;05/06/2026;5;junio;2026;despesa_general;Ajunt. Arb£cies;68.46;pagat
+561;BBVA;Compte;05/06/2026;5;junio;2026;despesa_general;PJ Isabel;220.5;pagat
+562;BBVA;Compte;07/06/2026;7;junio;2026;asseguranáa;DP MP Mireia;0.0;pagat
+563;BBVA;Compte;07/06/2026;7;junio;2026;asseguranáa;DP Morts Enric;14.04;pagat
+564;BBVA;Compte;07/06/2026;7;junio;2026;asseguranáa;BBVA Asseg. Casa;42.34;pagat
+565;BBVA;Compte;19/06/2026;19;junio;2026;despesa_general;Lowi;35.9;pagat
+566;BBVA;Compte;30/06/2026;30;junio;2026;despesa_general;Crädit Cotxe;337.14;pendent
+567;BBVA;Compte;30/06/2026;30;junio;2026;despesa_general;Hipoteca;489.43;pendent
+368;Efectiu;;01/07/2026;1;julio;2026;despesa_general;Lloguer Parking;55.0;pendent
+568;BBVA;Compte;01/07/2026;1;julio;2026;despesa_general;Endesa;25.0;pendent
+569;BBVA;Compte;02/07/2026;2;julio;2026;despesa_general;Ocaso;27.54;pendent
+570;BBVA;Compte;04/07/2026;4;julio;2026;despesa_general;Piscina;90.28;pendent
+571;LaCaixa;Compte;05/07/2026;5;julio;2026;despesa_general;Ajunt. Arb£cies;68.46;pendent
+572;BBVA;Compte;05/07/2026;5;julio;2026;despesa_general;PJ Isabel;220.5;pendent
+573;BBVA;Compte;07/07/2026;7;julio;2026;asseguranáa;DP MP Mireia;0.0;pagat
+574;BBVA;Compte;07/07/2026;7;julio;2026;asseguranáa;DP Morts Enric;14.04;pendent
+575;BBVA;Compte;07/07/2026;7;julio;2026;asseguranáa;BBVA Asseg. Casa;42.34;pendent
+576;BBVA;Compte;19/07/2026;19;julio;2026;despesa_general;Lowi;35.9;pendent
+577;BBVA;Compte;30/07/2026;30;julio;2026;despesa_general;Crädit Cotxe;337.14;pendent
+578;BBVA;Compte;30/07/2026;30;julio;2026;despesa_general;Hipoteca;489.43;pendent
+369;Efectiu;;01/08/2026;1;agosto;2026;despesa_general;Lloguer Parking;55.0;pendent
+579;BBVA;Compte;01/08/2026;1;agosto;2026;despesa_general;Endesa;25.0;pendent
+580;BBVA;Compte;02/08/2026;2;agosto;2026;despesa_general;Ocaso;27.54;pendent
+581;BBVA;Compte;04/08/2026;4;agosto;2026;despesa_general;Piscina;90.28;pendent
+582;LaCaixa;Compte;05/08/2026;5;agosto;2026;despesa_general;Ajunt. Arb£cies;68.46;pendent
+583;BBVA;Compte;05/08/2026;5;agosto;2026;despesa_general;PJ Isabel;220.5;pendent
+584;BBVA;Compte;07/08/2026;7;agosto;2026;asseguranáa;DP MP Mireia;0.0;pagat
+585;BBVA;Compte;07/08/2026;7;agosto;2026;asseguranáa;DP Morts Enric;14.04;pendent
+586;BBVA;Compte;07/08/2026;7;agosto;2026;asseguranáa;BBVA Asseg. Casa;42.34;pendent
+587;BBVA;Compte;19/08/2026;19;agosto;2026;despesa_general;Lowi;35.9;pendent
+588;BBVA;Compte;30/08/2026;30;agosto;2026;despesa_general;Crädit Cotxe;337.14;pendent
+589;BBVA;Compte;30/08/2026;30;agosto;2026;despesa_general;Hipoteca;489.43;pendent
+370;Efectiu;;01/09/2026;1;septiembre;2026;despesa_general;Lloguer Parking;55.0;pendent
+590;BBVA;Compte;01/09/2026;1;septiembre;2026;despesa_general;Endesa;25.0;pendent
+591;BBVA;Compte;02/09/2026;2;septiembre;2026;despesa_general;Ocaso;27.54;pendent
+592;BBVA;Compte;04/09/2026;4;septiembre;2026;despesa_general;Piscina;90.28;pendent
+593;LaCaixa;Compte;05/09/2026;5;septiembre;2026;despesa_general;Ajunt. Arb£cies;68.46;pendent
+594;BBVA;Compte;05/09/2026;5;septiembre;2026;despesa_general;PJ Isabel;220.5;pendent
+595;BBVA;Compte;07/09/2026;7;septiembre;2026;asseguranáa;DP MP Mireia;0.0;pagat
+596;BBVA;Compte;07/09/2026;7;septiembre;2026;asseguranáa;DP Morts Enric;14.04;pendent
+597;BBVA;Compte;07/09/2026;7;septiembre;2026;asseguranáa;BBVA Asseg. Casa;42.34;pendent
+598;BBVA;Compte;19/09/2026;19;septiembre;2026;despesa_general;Lowi;35.9;pendent
+599;BBVA;Compte;30/09/2026;30;septiembre;2026;despesa_general;Crädit Cotxe;337.14;pendent
+600;BBVA;Compte;30/09/2026;30;septiembre;2026;despesa_general;Hipoteca;489.43;pendent
+371;Efectiu;;01/10/2026;1;octubre;2026;despesa_general;Lloguer Parking;55.0;pendent
+601;BBVA;Compte;01/10/2026;1;octubre;2026;despesa_general;Endesa;25.0;pendent
+602;BBVA;Compte;02/10/2026;2;octubre;2026;despesa_general;Ocaso;27.54;pendent
+603;BBVA;Compte;04/10/2026;4;octubre;2026;despesa_general;Piscina;90.28;pendent
+604;LaCaixa;Compte;05/10/2026;5;octubre;2026;despesa_general;Ajunt. Arb£cies;68.46;pendent
+605;BBVA;Compte;05/10/2026;5;octubre;2026;despesa_general;PJ Isabel;231.53;pendent
+606;BBVA;Compte;07/10/2026;7;octubre;2026;asseguranáa;DP MP Mireia;0.0;pagat
+607;BBVA;Compte;07/10/2026;7;octubre;2026;asseguranáa;DP Morts Enric;14.04;pendent
+608;BBVA;Compte;07/10/2026;7;octubre;2026;asseguranáa;BBVA Asseg. Casa;42.34;pendent
+609;BBVA;Compte;19/10/2026;19;octubre;2026;despesa_general;Lowi;35.9;pendent
+610;BBVA;Compte;30/10/2026;30;octubre;2026;despesa_general;Crädit Cotxe;337.14;pendent
+611;BBVA;Compte;30/10/2026;30;octubre;2026;despesa_general;Hipoteca;489.43;pendent
+372;Efectiu;;01/11/2026;1;noviembre;2026;despesa_general;Lloguer Parking;55.0;pendent
+612;BBVA;Compte;01/11/2026;1;noviembre;2026;despesa_general;Endesa;25.0;pendent
+613;BBVA;Compte;02/11/2026;2;noviembre;2026;despesa_general;Ocaso;27.54;pendent
+614;BBVA;Compte;04/11/2026;4;noviembre;2026;despesa_general;Piscina;90.28;pendent
+615;LaCaixa;Compte;05/11/2026;5;noviembre;2026;despesa_general;Ajunt. Arb£cies;68.46;pendent
+616;BBVA;Compte;05/11/2026;5;noviembre;2026;despesa_general;PJ Isabel;231.53;pendent
+617;BBVA;Compte;07/11/2026;7;noviembre;2026;asseguranáa;DP MP Mireia;0.0;pagat
+618;BBVA;Compte;07/11/2026;7;noviembre;2026;asseguranáa;DP Morts Enric;14.04;pendent
+619;BBVA;Compte;07/11/2026;7;noviembre;2026;asseguranáa;BBVA Asseg. Casa;42.34;pendent
+620;BBVA;Compte;19/11/2026;19;noviembre;2026;despesa_general;Lowi;35.9;pendent
+621;BBVA;Compte;30/11/2026;30;noviembre;2026;despesa_general;Crädit Cotxe;337.14;pendent
+622;BBVA;Compte;30/11/2026;30;noviembre;2026;despesa_general;Hipoteca;489.43;pendent
+373;Efectiu;;01/12/2026;1;diciembre;2026;despesa_general;Lloguer Parking;55.0;pendent
+623;BBVA;Compte;01/12/2026;1;diciembre;2026;despesa_general;Endesa;25.0;pendent
+624;BBVA;Compte;02/12/2026;2;diciembre;2026;despesa_general;Ocaso;27.54;pendent
+625;BBVA;Compte;04/12/2026;4;diciembre;2026;despesa_general;Piscina;90.28;pendent
+626;LaCaixa;Compte;05/12/2026;5;diciembre;2026;despesa_general;Ajunt. Arb£cies;68.46;pendent
+627;BBVA;Compte;05/12/2026;5;diciembre;2026;despesa_general;PJ Isabel;231.53;pendent
+628;BBVA;Compte;07/12/2026;7;diciembre;2026;asseguranáa;DP MP Mireia;0.0;pagat
+629;BBVA;Compte;07/12/2026;7;diciembre;2026;asseguranáa;DP Morts Enric;14.04;pendent
+630;BBVA;Compte;07/12/2026;7;diciembre;2026;asseguranáa;BBVA Asseg. Casa;42.34;pendent
+631;BBVA;Compte;19/12/2026;19;diciembre;2026;despesa_general;Lowi;35.9;pendent
+632;BBVA;Compte;30/12/2026;30;diciembre;2026;despesa_general;Crädit Cotxe;337.14;pendent
+633;BBVA;Compte;30/12/2026;30;diciembre;2026;despesa_general;Hipoteca;489.43;pendent
+634;TradeRep.;Compte;02/01/2026;2;enero;2026;despesa_general;Accions S&P500;25.0;pagat
+635;TradeRep.;Compte;02/02/2026;2;febrero;2026;despesa_general;Accions S&P500;25.0;pagat
+636;TradeRep.;Compte;02/03/2026;2;marzo;2026;despesa_general;Accions S&P500;25.0;pagat
+637;TradeRep.;Compte;02/04/2026;2;abril;2026;despesa_general;Accions S&P500;25.0;pagat
+638;TradeRep.;Compte;02/05/2026;2;mayo;2026;despesa_general;Accions S&P500;25.0;pagat
+639;TradeRep.;Compte;02/06/2026;2;junio;2026;despesa_general;Accions S&P500;25.0;pagat
+640;TradeRep.;Compte;02/07/2026;2;julio;2026;despesa_general;Accions S&P500;25.0;pendent
+641;TradeRep.;Compte;02/08/2026;2;agosto;2026;despesa_general;Accions S&P500;25.0;pendent
+642;TradeRep.;Compte;02/09/2026;2;septiembre;2026;despesa_general;Accions S&P500;25.0;pendent
+643;TradeRep.;Compte;02/10/2026;2;octubre;2026;despesa_general;Accions S&P500;25.0;pendent
+644;TradeRep.;Compte;02/11/2026;2;noviembre;2026;despesa_general;Accions S&P500;25.0;pendent
+645;TradeRep.;Compte;02/12/2026;2;diciembre;2026;despesa_general;Accions S&P500;25.0;pendent
+646;TradeRep.;Compte;02/01/2026;2;enero;2026;despesa_general;Accions NVIDIA;25.0;pagat
+647;TradeRep.;Compte;02/02/2026;2;febrero;2026;despesa_general;Accions NVIDIA;25.0;pagat
+648;TradeRep.;Compte;02/03/2026;2;marzo;2026;despesa_general;Accions NVIDIA;25.0;pagat
+649;TradeRep.;Compte;02/04/2026;2;abril;2026;despesa_general;Accions NVIDIA;25.0;pagat
+650;TradeRep.;Compte;02/05/2026;2;mayo;2026;despesa_general;Accions NVIDIA;25.0;pagat
+651;TradeRep.;Compte;02/06/2026;2;junio;2026;despesa_general;Accions NVIDIA;25.0;pagat
+652;TradeRep.;Compte;02/07/2026;2;julio;2026;despesa_general;Accions NVIDIA;25.0;pendent
+653;TradeRep.;Compte;02/08/2026;2;agosto;2026;despesa_general;Accions NVIDIA;25.0;pendent
+654;TradeRep.;Compte;02/09/2026;2;septiembre;2026;despesa_general;Accions NVIDIA;25.0;pendent
+655;TradeRep.;Compte;02/10/2026;2;octubre;2026;despesa_general;Accions NVIDIA;25.0;pendent
+656;TradeRep.;Compte;02/11/2026;2;noviembre;2026;despesa_general;Accions NVIDIA;25.0;pendent
+657;TradeRep.;Compte;02/12/2026;2;diciembre;2026;despesa_general;Accions NVIDIA;25.0;pendent
+658;T.CorteInglÇs;Compte;28/02/2026;28;febrero;2026;menjar;El Corte InglÇs;74.45;pagat
+659;BBVA;Compte;05/02/2026;5;febrero;2026;despesa_general;Aigua;68.43;pagat
+660;BBVA;Compte;05/05/2026;5;mayo;2026;despesa_general;Aigua;90.94;pagat
+661;BBVA;Compte;05/08/2026;5;agosto;2026;despesa_general;Aigua;60.7;pendent
+662;BBVA;Compte;05/11/2026;5;noviembre;2026;despesa_general;Aigua;60.7;pendent
+663;BBVA;VISA;27/02/2026;27;febrero;2026;proveidor;Exaprint;204.25;pagat
+664;BBVA;Compte;08/04/2026;8;abril;2026;varis;Jubilats Isa;12.0;pagat
+665;BBVA;Compte;08/04/2026;8;abril;2026;varis;Jubilats Enric;12.0;pagat
+666;BBVA;Compte;15/06/2026;15;junio;2026;Parallar;Pagament per borrar;10.0;pendent
+667;BBVA;Compte;15/07/2026;15;julio;2026;Parallar;Pagament per borrar;10.0;pendent
+668;BBVA;Compte;15/08/2026;15;agosto;2026;Parallar;Pagament per borrar;10.0;pendent
+669;BBVA;Compte;15/09/2026;15;septiembre;2026;Parallar;Pagament per borrar;10.0;pendent
+670;BBVA;Compte;15/10/2026;15;octubre;2026;Parallar;Pagament per borrar;10.0;pendent
+671;BBVA;Compte;15/11/2026;15;noviembre;2026;Parallar;Pagament per borrar;10.0;pendent
+672;BBVA;Compte;15/12/2026;15;diciembre;2026;Parallar;Pagament per borrar;10.0;pendent
+673;BBVA;Compte;15/01/2027;15;enero;2027;Parallar;Pagament per borrar;10.0;pendent
+674;BBVA;Compte;15/02/2027;15;febrero;2027;Parallar;Pagament per borrar;10.0;pendent
+675;BBVA;Compte;15/03/2027;15;marzo;2027;Parallar;Pagament per borrar;10.0;pendent
+676;BBVA;Compte;15/04/2027;15;abril;2027;Parallar;Pagament per borrar;10.0;pendent
+677;BBVA;Compte;15/05/2027;15;mayo;2027;Parallar;Pagament per borrar;10.0;pendent
+678;BBVA;Compte;15/06/2027;15;junio;2027;Parallar;Pagament per borrar;10.0;pendent
+679;BBVA;Compte;15/07/2027;15;julio;2027;Parallar;Pagament per borrar;10.0;pendent
+680;BBVA;Compte;15/08/2027;15;agosto;2027;Parallar;Pagament per borrar;10.0;pendent
+681;BBVA;Compte;15/09/2027;15;septiembre;2027;Parallar;Pagament per borrar;10.0;pendent
+682;BBVA;Compte;15/10/2027;15;octubre;2027;Parallar;Pagament per borrar;10.0;pendent
+683;BBVA;Compte;15/11/2027;15;noviembre;2027;Parallar;Pagament per borrar;10.0;pendent
+684;BBVA;Compte;15/12/2027;15;diciembre;2027;Parallar;Pagament per borrar;10.0;pendent
