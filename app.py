@@ -1004,11 +1004,21 @@ def cb_add_ticket_line():
     # Reset widget states
     st.session_state["manual_pes_num"] = 0.0
     st.session_state["manual_qty_num"] = 0.0
+    st.session_state["manual_pct_num"] = 0.0
     st.session_state["manual_preu_num"] = 0.0
     st.session_state["manual_prom_num"] = 0.0
     st.session_state["manual_reb_chk"] = False
     st.session_state["manual_fam_selectbox"] = ""
     st.session_state["manual_art_selectbox"] = ""
+
+def cb_recalculate_manual_pct():
+    pct = st.session_state.get("manual_pct_num", 0.0)
+    preu_final = st.session_state.get("manual_preu_num", 0.0)
+    if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
+        base = round(preu_final / (1 - pct / 100.0), 2)
+        prom = round(base * (pct / 100.0), 2)
+        st.session_state["manual_preu_num"] = base
+        st.session_state["manual_prom_num"] = prom
 
 def cb_set_date_today():
     st.session_state["ticket_date"] = datetime.today().date()
@@ -1016,6 +1026,7 @@ def cb_set_date_today():
 def cb_clear_ticket():
     st.session_state["ticket_items"] = []
     st.session_state["ticket_discount"] = 0.0
+    st.session_state["manual_pct_num"] = 0.0
     st.session_state["editing_ticket_item_idx"] = None
     st.session_state["ticket_date"] = datetime.today().date()
     st.session_state["ticket_super_val"] = ""
@@ -1416,6 +1427,8 @@ def render_compres_super_interface():
         st.session_state["manual_pes_num"] = 0.0
     if "manual_qty_num" not in st.session_state:
         st.session_state["manual_qty_num"] = 0.0
+    if "manual_pct_num" not in st.session_state:
+        st.session_state["manual_pct_num"] = 0.0
     if "manual_preu_num" not in st.session_state:
         st.session_state["manual_preu_num"] = 0.0
     if "manual_prom_num" not in st.session_state:
@@ -1426,8 +1439,8 @@ def render_compres_super_interface():
     # Manual Line Input Section
     st.write("")
     st.markdown("##### ➕ Introduir línia manualment")
-    col_fam, col_art, col_pes, col_qty, col_preu, col_prom, col_tot, col_reb, col_add = st.columns(
-        [2, 2.2, 1, 1, 1, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
+    col_fam, col_art, col_pes, col_qty, col_pct, col_preu, col_prom, col_tot, col_reb, col_add = st.columns(
+        [2, 2.2, 1, 1, 0.8, 1, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
     )
     
     with col_fam:
@@ -1448,6 +1461,8 @@ def render_compres_super_interface():
         pes_val = st.number_input("PES", min_value=0.0, step=1.0, key="manual_pes_num")
     with col_qty:
         qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num")
+    with col_pct:
+        pct_val = st.number_input("%", min_value=0.0, max_value=100.0, step=1.0, key="manual_pct_num", on_change=cb_recalculate_manual_pct)
     with col_preu:
         preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num")
     with col_prom:
