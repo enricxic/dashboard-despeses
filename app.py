@@ -1203,9 +1203,18 @@ def cb_finalize_ticket():
     save_to_csv(df_super.drop(columns=['parsed_date'], errors='ignore'), 'compresSuper.csv')
     
     st.session_state["finalize_success"] = "Tiquet de súper i despesa associada desats correctament!"
+    # Clear all fields and files on successful finalize
     st.session_state["ticket_items"] = []
     st.session_state["ticket_discount"] = 0.0
+    st.session_state["manual_pct_num"] = 0.0
+    st.session_state["editing_ticket_item_idx"] = None
+    st.session_state["ticket_date"] = datetime.today().date()
+    st.session_state["ticket_super_val"] = ""
+    st.session_state["ticket_bank_sel"] = ""
+    st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
+    current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
+    st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
     st.session_state["viewing_compres_super"] = True
 
 def render_compres_super_interface():
