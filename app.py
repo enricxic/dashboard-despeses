@@ -1257,7 +1257,12 @@ def render_compres_super_interface():
         with col_hdr2:
             bank_val = st.selectbox("Banc:", [""] + get_config_banks(), key="ticket_bank_sel")
         with col_hdr3:
-            pay_method_val = st.selectbox("Forma de Pagament:", [""] + get_config_payment_methods(), key="ticket_pay_method_sel")
+            pay_methods = [""] + get_config_payment_methods()
+            if bank_val != "Efectiu":
+                pay_methods = [m for m in pay_methods if m != "Efectiu"]
+                if st.session_state.get("ticket_pay_method_sel") == "Efectiu":
+                    st.session_state["ticket_pay_method_sel"] = ""
+            pay_method_val = st.selectbox("Forma de Pagament:", pay_methods, key="ticket_pay_method_sel")
     else:
         with col_hdr2:
             st.write("")
