@@ -1310,7 +1310,7 @@ def render_compres_super_interface():
         with col_hdr3:
             st.write("")
             
-    if send_expense:
+    if send_expense and len(st.session_state.get("ticket_items", [])) > 0:
         b_val_str = str(bank_val).strip()
         p_val_str = str(pay_method_val).strip()
         if not b_val_str or b_val_str in ["None", "nan", "NaN", ""]:
