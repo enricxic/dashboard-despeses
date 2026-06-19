@@ -591,6 +591,17 @@ def group_duplicate_ticket_items(items):
     return list(grouped.values())
 
 def parse_text_ticket(text_content):
+    # Log Streamlit OCR text
+    try:
+        import os
+        os.makedirs("C:/Users/Usuari/.gemini/antigravity/brain/98896f4c-68da-443a-b920-acd856bccd79/scratch", exist_ok=True)
+        with open("C:/Users/Usuari/.gemini/antigravity/brain/98896f4c-68da-443a-b920-acd856bccd79/scratch/debug_ocr.log", "w", encoding="utf-8") as f_log:
+            f_log.write("--- NEW PARSE ---\n")
+            f_log.write(text_content)
+            f_log.write("\n-----------------\n")
+    except Exception as e_log:
+        pass
+        
     df_mapping = load_product_mappings()
     lines = text_content.split('\n')
     
@@ -630,6 +641,28 @@ def parse_text_ticket(text_content):
         if in_products_zone:
             # Skip duplicate headers
             if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['DESCRIPCIÓ', 'DESCRIPCION', 'QUANTITAT', 'PVP/UNIT', 'IMPORT €', 'DESCRIPC', 'QA TA PAP']):
+                continue
+            product_lines_text.append(line_clean)
+            
+    # Fallback: if header detection failed to capture any product lines, treat all lines before coupons/totals as products
+    if len(product_lines_text) == 0:
+        in_coupons_zone = False
+        coupon_lines_text = []
+        for line in lines:
+            line_clean = line.strip()
+            if not line_clean:
+                continue
+            line_upper = line_clean.upper()
+            if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA']):
+                break
+            if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['OFERTES', 'OFERTAS', 'CUPONS', 'CLUBDIA', 'CPERTLS']):
+                in_coupons_zone = True
+                continue
+            if in_coupons_zone:
+                coupon_lines_text.append(line_clean)
+                continue
+            # Skip typical header/metadata lines
+            if any(kw in line_upper for kw in ['GRUPO', 'OBRIM', 'HORARI', 'FACTURA', 'N.FACT', 'N.CAIXA', 'N.CATXA', 'TELF', 'TEL.']):
                 continue
             product_lines_text.append(line_clean)
             
@@ -765,7 +798,16 @@ def parse_text_ticket(text_content):
     raw_products = [item for item in raw_products if item['article'] != 'varis' or item['totLinea'] >= 0.0]
     
     # 5. Sum duplicate products
-    return group_duplicate_ticket_items(raw_products)
+    res = group_duplicate_ticket_items(raw_products)
+    try:
+        with open("C:/Users/Usuari/.gemini/antigravity/brain/98896f4c-68da-443a-b920-acd856bccd79/scratch/debug_ocr.log", "a", encoding="utf-8") as f_log:
+            f_log.write(f"\nCollected products zone lines: {len(product_lines_text)}\n")
+            f_log.write(f"Parsed items count: {len(res)}\n")
+            for p_item in res:
+                f_log.write(f"  - {p_item['article']} | preu: {p_item['preuUnit']} | tot: {p_item['totLinea']}\n")
+    except Exception:
+        pass
+    return res
  
 def simulate_ocr_image(super_name):
     mock_products = {
