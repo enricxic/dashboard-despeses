@@ -1185,12 +1185,13 @@ def render_compres_super_interface():
                             img = enhancer.enhance(1.2)
                             
                             # Run Tesseract OCR with multiple configurations to find the best result
+                            # We prefer PSM 6 (uniform block of text) and bilingual Spanish+Catalan first
                             configs_proves = [
+                                r'--oem 3 --psm 6 -l spa+cat',   # Bilingual structured
                                 r'--oem 3 --psm 6',              # Uniform block of text
+                                r'--oem 3 --psm 3',              # Fully automatic
                                 r'--oem 3 --psm 4',              # Single column of variable sizes
                                 r'--oem 3 --psm 11',             # Sparse text
-                                r'--oem 3 --psm 6 -l spa+cat',   # Bilingual
-                                r'--oem 3 --psm 3',              # Fully automatic
                             ]
                             
                             best_text = ""
@@ -1199,7 +1200,8 @@ def render_compres_super_interface():
                             for config in configs_proves:
                                 try:
                                     text = pytesseract.image_to_string(img, config=config)
-                                    lines_with_price = sum(1 for line in text.split('\n') if re.search(r'\b\d+[\.,\s]+\d{2}\b', line))
+                                    # Ensure the line contains both letters (product name) and price numbers to avoid column-split layouts
+                                    lines_with_price = sum(1 for line in text.split('\n') if re.search(r'[a-zA-Z]{3,}.*\b\d+[\.,\s]+\d{2}\b', line))
                                     if lines_with_price > best_lines_count:
                                         best_lines_count = lines_with_price
                                         best_text = text
