@@ -1310,6 +1310,14 @@ def render_compres_super_interface():
         with col_hdr3:
             st.write("")
             
+    if send_expense:
+        b_val_str = str(bank_val).strip()
+        p_val_str = str(pay_method_val).strip()
+        if not b_val_str or b_val_str in ["None", "nan", "NaN", ""]:
+            st.error("Si us plau, selecciona un Banc per a la despesa!")
+        if not p_val_str or p_val_str in ["None", "nan", "NaN", ""]:
+            st.error("Si us plau, selecciona una Forma de Pagament per a la despesa!")
+            
     with col_hdr4:
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
         uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
