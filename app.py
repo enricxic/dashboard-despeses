@@ -1149,6 +1149,7 @@ def render_compres_super_interface():
         with col_hdr3:
             st.write("")
             
+    with col_hdr4:
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
         uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
         if uploaded_file is not None:
