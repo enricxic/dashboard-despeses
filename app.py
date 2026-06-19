@@ -110,6 +110,19 @@ st.markdown("""
     div.element-container {
         margin-bottom: 1px !important;
     }
+    /* Hide step buttons inside number inputs */
+    div[data-testid="stNumberInput"] button {
+        display: none !important;
+    }
+    /* Disable default browser spin buttons */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
     </style>
 """, unsafe_allow_html=True)
 
