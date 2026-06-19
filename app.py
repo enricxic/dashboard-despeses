@@ -924,6 +924,13 @@ def cb_clear_ticket():
     st.session_state["ticket_items"] = []
     st.session_state["ticket_discount"] = 0.0
     st.session_state["editing_ticket_item_idx"] = None
+    st.session_state["ticket_date"] = datetime.today().date()
+    st.session_state["ticket_super_val"] = ""
+    st.session_state["ticket_bank_sel"] = ""
+    st.session_state["ticket_pay_method_sel"] = ""
+    st.session_state["processed_file_id"] = None
+    if "ticket_file_uploader" in st.session_state:
+        del st.session_state["ticket_file_uploader"]
 
 def cb_finalize_ticket():
     global df_desp, df_super
