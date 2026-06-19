@@ -1014,11 +1014,13 @@ def cb_add_ticket_line():
 def cb_recalculate_manual_pct():
     pct = st.session_state.get("manual_pct_num", 0.0)
     preu_final = st.session_state.get("manual_preu_num", 0.0)
+    existing_prom = st.session_state.get("manual_prom_num", 0.0)
     if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
         base = round(preu_final / (1 - pct / 100.0), 2)
-        prom = round(base * (pct / 100.0), 2)
+        prom_from_pct = round(base * (pct / 100.0), 2)
         st.session_state["manual_preu_num"] = base
-        st.session_state["manual_prom_num"] = prom
+        st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
+        st.session_state["manual_pct_num"] = 0.0
 
 def cb_set_date_today():
     st.session_state["ticket_date"] = datetime.today().date()
