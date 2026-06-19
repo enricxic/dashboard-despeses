@@ -972,6 +972,8 @@ def simulate_ocr_image(super_name):
     return items
 
 def cb_edit_ticket_item(idx):
+    if "finalize_error" in st.session_state:
+        del st.session_state["finalize_error"]
     item = st.session_state["ticket_items"][idx]
     st.session_state["manual_fam_selectbox"] = item['familia']
     st.session_state["manual_art_selectbox"] = item['article']
@@ -983,10 +985,14 @@ def cb_edit_ticket_item(idx):
     st.session_state["editing_ticket_item_idx"] = idx
 
 def cb_del_ticket_item(idx):
+    if "finalize_error" in st.session_state:
+        del st.session_state["finalize_error"]
     st.session_state["ticket_items"].pop(idx)
     st.session_state["editing_ticket_item_idx"] = None
 
 def cb_add_ticket_line():
+    if "finalize_error" in st.session_state:
+        del st.session_state["finalize_error"]
     fam = st.session_state.get("manual_fam_selectbox", "")
     art = st.session_state.get("manual_art_selectbox", "")
     pes = st.session_state.get("manual_pes_num", 0.0)
@@ -1055,6 +1061,8 @@ def cb_clear_ticket():
     st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
+    if "finalize_error" in st.session_state:
+        del st.session_state["finalize_error"]
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
 
@@ -1258,7 +1266,6 @@ def render_compres_super_interface():
         del st.session_state["ticket_msg_error"]
     if "finalize_error" in st.session_state:
         st.error(st.session_state["finalize_error"])
-        del st.session_state["finalize_error"]
 
     if "ticket_items" not in st.session_state:
         st.session_state["ticket_items"] = []
