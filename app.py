@@ -509,7 +509,7 @@ def find_product_in_db(product_name, supermercat, df_mapping):
             for p_super in paraules_super:
                 if len(p_super) < 2:
                     continue
-                if p_nom == p_super or p_nom in p_super or p_super in p_nom:
+                if p_nom == p_super or (len(p_nom) > 4 and len(p_super) > 4 and (p_nom in p_super or p_super in p_nom)):
                     coincidencies += 1
                     break
         
@@ -1189,9 +1189,6 @@ def render_compres_super_interface():
                             configs_proves = [
                                 r'--oem 3 --psm 6 -l spa+cat',   # Bilingual structured
                                 r'--oem 3 --psm 6',              # Uniform block of text
-                                r'--oem 3 --psm 3',              # Fully automatic
-                                r'--oem 3 --psm 4',              # Single column of variable sizes
-                                r'--oem 3 --psm 11',             # Sparse text
                             ]
                             
                             best_text = ""
