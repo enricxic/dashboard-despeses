@@ -929,8 +929,8 @@ def cb_clear_ticket():
     st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
-    if "ticket_file_uploader" in st.session_state:
-        del st.session_state["ticket_file_uploader"]
+    current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
+    st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
 
 def cb_finalize_ticket():
     global df_desp, df_super
@@ -1149,8 +1149,8 @@ def render_compres_super_interface():
         with col_hdr3:
             st.write("")
             
-    with col_hdr4:
-        uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key="ticket_file_uploader")
+        uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
+        uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
             if st.session_state.get("processed_file_id") != file_id:
