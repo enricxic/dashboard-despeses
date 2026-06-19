@@ -387,6 +387,23 @@ def normalitzar_text(text):
     )
     return re.sub(r'\s+', ' ', text_sense_diacritics.lower()).strip()
 
+def translate_spanish_to_catalan_for_matching(text):
+    text_lower = text.lower()
+    translations = {
+        'chocolate': 'xocolata',
+        'maiz': 'blat de moro',
+        'maíz': 'blat de moro',
+        'lavavaj': 'rentavaixella',
+        'pistacho': 'festuc',
+        'conservas': 'sardina',
+        'pasta': 'helixs',
+        'ocolate': 'xocolata',
+    }
+    for es, ca in translations.items():
+        if es in text_lower:
+            text_lower = text_lower.replace(es, ca)
+    return text_lower
+
 def map_product_to_category(product_name):
     best_family = "extres"
     best_article = "varis"
@@ -470,7 +487,8 @@ def find_product_in_db(product_name, supermercat, df_mapping):
             return {
                 'nomEstandard': row['nom_estandard'],
                 'familia': row['familia'],
-                'article': row['nom_estandard']
+                'article': row['nom_estandard'],
+                'nom_super': row['nom_super']
             }
             
     # 2. Partial match on nom_super (one contains the other)
@@ -480,7 +498,8 @@ def find_product_in_db(product_name, supermercat, df_mapping):
             return {
                 'nomEstandard': row['nom_estandard'],
                 'familia': row['familia'],
-                'article': row['nom_estandard']
+                'article': row['nom_estandard'],
+                'nom_super': row['nom_super']
             }
             
     # 3. Direct match on nom_estandard (standard product name)
@@ -490,7 +509,8 @@ def find_product_in_db(product_name, supermercat, df_mapping):
             return {
                 'nomEstandard': row['nom_estandard'],
                 'familia': row['familia'],
-                'article': row['nom_estandard']
+                'article': row['nom_estandard'],
+                'nom_super': row['nom_super']
             }
             
     # 4. Keyword / Word matching (similar to ocr_ticket.py)
@@ -526,7 +546,8 @@ def find_product_in_db(product_name, supermercat, df_mapping):
         return {
             'nomEstandard': best_word_match['nom_estandard'],
             'familia': best_word_match['familia'],
-            'article': best_word_match['nom_estandard']
+            'article': best_word_match['nom_estandard'],
+            'nom_super': best_word_match['nom_super']
         }
 
     # 5. Fuzzy match using SequenceMatcher (similarity >= 0.7)
@@ -544,7 +565,8 @@ def find_product_in_db(product_name, supermercat, df_mapping):
         return {
             'nomEstandard': best_match['nom_estandard'],
             'familia': best_match['familia'],
-            'article': best_match['nom_estandard']
+            'article': best_match['nom_estandard'],
+            'nom_super': best_match['nom_super']
         }
             
     # 6. Global match fallback (ignore supermarket filter)
@@ -555,14 +577,16 @@ def find_product_in_db(product_name, supermercat, df_mapping):
                 return {
                     'nomEstandard': row['nom_estandard'],
                     'familia': row['familia'],
-                    'article': row['nom_estandard']
+                    'article': row['nom_estandard'],
+                    'nom_super': row['nom_super']
                 }
             est_norm = normalitzar_text(row['nom_estandard'])
             if nom_norm == est_norm or est_norm in nom_norm or nom_norm in est_norm:
                 return {
                     'nomEstandard': row['nom_estandard'],
                     'familia': row['familia'],
-                    'article': row['nom_estandard']
+                    'article': row['nom_estandard'],
+                    'nom_super': row['nom_super']
                 }
                 
     return None
@@ -683,11 +707,17 @@ def parse_text_ticket(text_content):
             preu = float(f"{price_match_std.group(1)}.{price_match_std.group(2)}")
             price_match = price_match_std
         else:
-            # Fallback for letters like O/G/0 at start of cents (e.g. G95 -> 0.95, G95 - -> 0.95)
-            g_match = re.search(r'\b[GgOo0]\s*[\.,\s;:]*\s*(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
-            if g_match:
-                preu = float(f"0.{g_match.group(1)}")
-                price_match = g_match
+            # Fallback for three/four digits with missed separator, e.g. 222A -> 2.22
+            price_match_missed = re.search(r'\s+(\d+)(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
+            if price_match_missed:
+                preu = float(f"{price_match_missed.group(1)}.{price_match_missed.group(2)}")
+                price_match = price_match_missed
+            else:
+                # Fallback for letters like O/G/0 at start of cents (e.g. G95 -> 0.95, G95 - -> 0.95)
+                g_match = re.search(r'\b[GgOo0]\s*[\.,\s;:]*\s*(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
+                if g_match:
+                    preu = float(f"0.{g_match.group(1)}")
+                    price_match = g_match
                 
         # Parse product name
         if price_match:
@@ -741,13 +771,22 @@ def parse_text_ticket(text_content):
         
         # Look up in DB first to check for high confidence match
         db_match = find_product_in_db(nom_brut, ticket_super, df_mapping)
+        nom_super_val = ""
         if db_match:
             fam, art = db_match['familia'], db_match['nomEstandard']
+            nom_super_val = db_match.get('nom_super', '')
         else:
             # Apply custom OCR backup rules if DB matching fails
             fam, art = map_product_to_category(nom_brut)
                 
         preu_unitat = tot_val if has_next_weight and quantitat == 1 else (preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0))
+        
+        # Duplicate product price fallback
+        if preu_unitat == 0.0 and len(raw_products) > 0:
+            prev_item = raw_products[-1]
+            if prev_item['article'] == art and art != 'varis' and prev_item['preuUnit'] > 0.0:
+                preu_unitat = prev_item['preuUnit']
+                
         import_total = tot_val if has_next_weight else (quantitat * preu_unitat)
         
         raw_products.append({
@@ -759,7 +798,8 @@ def parse_text_ticket(text_content):
             'prom': 0.0,
             'totLinea': import_total,
             'rebost': None,
-            'nom_brut': nom_brut
+            'nom_brut': nom_brut,
+            'nom_super': nom_super_val
         })
         
         idx += 2 if has_next_weight else 1
@@ -777,15 +817,45 @@ def parse_text_ticket(text_content):
     # Apply discounts to parsed products
     for disc in discounts:
         disc_text = disc['text'].lower()
+        disc_text_ca = translate_spanish_to_catalan_for_matching(disc_text)
         best_match_idx = -1
         best_ratio = 0.0
         
         for idx, item in enumerate(raw_products):
             art_lower = item['article'].lower()
             orig_lower = item['nom_brut'].lower()
-            ratio_std = difflib.SequenceMatcher(None, disc_text, art_lower).ratio()
-            ratio_orig = difflib.SequenceMatcher(None, disc_text, orig_lower).ratio()
-            ratio = max(ratio_std, ratio_orig)
+            super_lower = item.get('nom_super', '').lower()
+            
+            ratio_std = max(
+                difflib.SequenceMatcher(None, disc_text, art_lower).ratio(),
+                difflib.SequenceMatcher(None, disc_text_ca, art_lower).ratio()
+            )
+            ratio_orig = max(
+                difflib.SequenceMatcher(None, disc_text, orig_lower).ratio(),
+                difflib.SequenceMatcher(None, disc_text_ca, orig_lower).ratio()
+            )
+            ratio_super = 0.0
+            if super_lower:
+                ratio_super = max(
+                    difflib.SequenceMatcher(None, disc_text, super_lower).ratio(),
+                    difflib.SequenceMatcher(None, disc_text_ca, super_lower).ratio()
+                )
+            
+            ratio = max(ratio_std, ratio_orig, ratio_super)
+            
+            # Substring bonus for words >= 4 characters
+            if len(disc_text) >= 4:
+                if (disc_text in art_lower or disc_text_ca in art_lower or 
+                    disc_text in orig_lower or disc_text_ca in orig_lower or
+                    (super_lower and (disc_text in super_lower or disc_text_ca in super_lower))):
+                    ratio = max(ratio, 0.95)
+                    
+            # Substring bonus for clean keywords of discount (e.g. split and check)
+            clean_words = [w for w in re.split(r'[^a-zA-Z0-9]', disc_text_ca) if len(w) >= 4]
+            for w in clean_words:
+                if w in art_lower or w in orig_lower or (super_lower and w in super_lower):
+                    ratio = max(ratio, 0.90)
+            
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_match_idx = idx
