@@ -1122,38 +1122,25 @@ def render_compres_super_interface():
                         with st.spinner("Processant tiquet amb OCR..."):
                             img = Image.open(uploaded_file)
                             
-                            # Preprocess image optimized for receipts (similar to offline test and ocr_ticket.py)
+                            # Preprocess image optimized for receipts (similar to offline test)
                             # 1. Convert to grayscale
                             if img.mode != 'L':
                                 img = img.convert('L')
-                            
+                             
                             # 2. Resize by 3.0 to make text larger and easier for Tesseract
                             scale = 3.0
                             new_width = int(img.width * scale)
                             new_height = int(img.height * scale)
                             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                            
-                            # 3. Enhance Contrast (3.0)
+                             
+                            # 3. Enhance Contrast moderately (1.2)
                             from PIL import ImageEnhance
                             enhancer = ImageEnhance.Contrast(img)
-                            img = enhancer.enhance(3.0)
-                            
-                            # 4. Enhance Sharpness (3.0)
+                            img = enhancer.enhance(1.2)
+                             
+                            # 4. Enhance Sharpness moderately (1.2)
                             enhancer = ImageEnhance.Sharpness(img)
-                            img = enhancer.enhance(3.0)
-                            
-                            # 5. Adaptive binarization/thresholding
-                            img_array = np.array(img)
-                            mean_val = np.mean(img_array)
-                            if mean_val > 128:
-                                # Light background, dark text
-                                threshold = mean_val * 0.75
-                                img_array = np.where(img_array > threshold, 255, 0)
-                            else:
-                                # Dark background, light text
-                                threshold = mean_val * 1.25
-                                img_array = np.where(img_array < threshold, 255, 0)
-                            img = Image.fromarray(img_array.astype('uint8'), 'L')
+                            img = enhancer.enhance(1.2)
                             
                             # Run Tesseract OCR with multiple configurations to find the best result
                             configs_proves = [
