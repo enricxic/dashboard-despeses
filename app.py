@@ -677,7 +677,7 @@ def parse_text_ticket(text_content):
         line_upper = line_clean.upper()
         
         # End zone check
-        if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA']):
+        if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA', 'TOTAL', 'TARGETA', 'TARGETA BANCÀRIA', 'TARJETA']):
             break
             
         # Coupons zone transition check
@@ -691,13 +691,13 @@ def parse_text_ticket(text_content):
             
         # Header check to start scan zone
         if not in_products_zone:
-            if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['DESCRIPCIÓ', 'DESCRIPCION', 'QUANTITAT', 'PVP/UNIT', 'IMPORT €', 'DESCRIPC', 'VSPRIPC']):
+            if any(kw in line_upper for kw in ['DESCRIPCIÓ', 'DESCRIPCION', 'QUANTITAT', 'PVP/UNIT', 'IMPORT €', 'DESCRIPC', 'DESCRIPCI', 'VSPRIPC', 'P.UNIT', 'IMP.']):
                 in_products_zone = True
             continue
             
         if in_products_zone:
             # Skip duplicate headers
-            if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['DESCRIPCIÓ', 'DESCRIPCION', 'QUANTITAT', 'PVP/UNIT', 'IMPORT €', 'DESCRIPC', 'QA TA PAP']):
+            if any(kw in line_upper for kw in ['DESCRIPCIÓ', 'DESCRIPCION', 'QUANTITAT', 'PVP/UNIT', 'IMPORT €', 'DESCRIPC', 'DESCRIPCI', 'QA TA PAP']):
                 continue
             product_lines_text.append(line_clean)
             
@@ -810,12 +810,23 @@ def parse_text_ticket(text_content):
                         tot_val = float(f"{price_end_match_std[-1].group(1)}.{price_end_match_std[-1].group(2)}")
                 has_next_weight = True
                 
-        # Resolve quantities (e.g. '3 x')
+        # Resolve quantities (e.g. '3 x' or just '3 ' at start of line for Mercadona)
         quantitat = 1
         quant_match = re.search(r'^(\d+)\s*[xX]\s*', nom_brut)
         if quant_match:
             quantitat = int(quant_match.group(1))
             nom_brut = re.sub(r'^(\d+)\s*[xX]\s*', '', nom_brut).strip()
+        else:
+            # Check for Mercadona style: starts with a number and then space, e.g., "1 PASTÍS TONYINA"
+            # We map 'l', 'i', 'I', '1' to 1
+            mercadona_quant_match = re.search(r'^([1liI]|\d+)\s+(?![gG]\b|[kK][gG]\b|[mM][lL]\b)([a-zA-Z].*)', nom_brut)
+            if mercadona_quant_match:
+                q_val = mercadona_quant_match.group(1)
+                if q_val in ['l', 'i', 'I', '1']:
+                    quantitat = 1
+                else:
+                    quantitat = int(q_val)
+                nom_brut = mercadona_quant_match.group(2).strip()
             
         # 3. Search in TBNomsProducte and match against TBProductes (via df_mapping)
         ticket_super = st.session_state.get("ticket_super_val", "Dia")
@@ -1355,6 +1366,47 @@ def render_compres_super_interface():
                             from PIL import ImageOps
                             img = Image.open(uploaded_file)
                             img = ImageOps.exif_transpose(img)
+                            
+                            # Detect orientation by testing crop rotations
+                            if img.mode != 'L':
+                                img_l = img.convert('L')
+                            else:
+                                img_l = img.copy()
+                            
+                            # Scale down for fast orientation check
+                            detect_scale = 1.5
+                            dw, dh = img_l.size
+                            img_detect = img_l.resize((int(dw * detect_scale), int(dh * detect_scale)), Image.Resampling.LANCZOS)
+                            
+                            best_angle = 0
+                            max_prices = -1
+                            
+                            for angle in [0, 90, 180, 270]:
+                                if angle == 0:
+                                    rotated_test = img_detect
+                                else:
+                                    rotated_test = img_detect.rotate(angle, expand=True)
+                                    
+                                r_w, r_h = rotated_test.size
+                                crop_w, crop_h = min(800, r_w), min(800, r_h)
+                                left = (r_w - crop_w) // 2
+                                top = (r_h - crop_h) // 2
+                                crop_img = rotated_test.crop((left, top, left + crop_w, top + crop_h))
+                                
+                                txt_test = pytesseract.image_to_string(crop_img, config=r'--oem 3 --psm 6 -l spa+cat')
+                                prices_found = len(re.findall(r'\b\d+[\.,]\d{2}\b', txt_test))
+                                
+                                if prices_found > max_prices:
+                                    max_prices = prices_found
+                                    best_angle = angle
+                                    
+                                # If we find many prices, it's likely oriented correctly
+                                if prices_found > 10:
+                                    best_angle = angle
+                                    break
+                                    
+                            if best_angle != 0:
+                                img = img.rotate(best_angle, expand=True)
                             
                             # Preprocess image optimized for receipts (similar to offline test)
                             # 1. Convert to grayscale
