@@ -730,6 +730,24 @@ def parse_text_ticket(text_content):
         nom_brut = re.sub(r'\s+[A-Z834]$', '', nom_brut).strip()
         nom_brut = re.sub(r'\s+[a-zA-Z]$', '', nom_brut).strip() # strip single trailing letter representing IVA if any left
         
+        # Check if the line is a void/annulment (starts with ANUL. or has negative price)
+        is_void = False
+        if 'ANUL.' in line_upper or 'ANULACIO' in line_upper:
+            is_void = True
+            nom_brut = re.sub(r'^\s*ANUL\b\.?\s*', '', nom_brut, flags=re.IGNORECASE).strip()
+            nom_brut = re.sub(r'^\s*ANULACIO\b\.?\s*', '', nom_brut, flags=re.IGNORECASE).strip()
+            
+        if price_match:
+            prefix = line[:price_match.start()].strip()
+            if prefix.endswith('-'):
+                is_void = True
+                nom_brut = re.sub(r'\s*\-$', '', nom_brut).strip()
+                
+        # Skip typical "Import linia: 2,98" metadata lines
+        if 'IMPORT LIN' in nom_brut.upper():
+            idx += 1
+            continue
+            
         if not nom_brut or len(nom_brut) < 2:
             idx += 1
             continue
@@ -788,6 +806,10 @@ def parse_text_ticket(text_content):
                 preu_unitat = prev_item['preuUnit']
                 
         import_total = tot_val if has_next_weight else (quantitat * preu_unitat)
+        
+        if is_void:
+            quantitat = -quantitat
+            import_total = -import_total
         
         raw_products.append({
             'familia': fam,
@@ -869,6 +891,7 @@ def parse_text_ticket(text_content):
     
     # 5. Sum duplicate products
     res = group_duplicate_ticket_items(raw_products)
+    res = [item for item in res if item['quantitat'] > 0]
     try:
         with open("C:/Users/Usuari/.gemini/antigravity/brain/98896f4c-68da-443a-b920-acd856bccd79/scratch/debug_ocr.log", "a", encoding="utf-8") as f_log:
             f_log.write(f"\nCollected products zone lines: {len(product_lines_text)}\n")
@@ -1240,7 +1263,9 @@ def render_compres_super_interface():
                     try:
                         # Run REAL OCR using pytesseract
                         with st.spinner("Processant tiquet amb OCR..."):
+                            from PIL import ImageOps
                             img = Image.open(uploaded_file)
+                            img = ImageOps.exif_transpose(img)
                             
                             # Preprocess image optimized for receipts (similar to offline test)
                             # 1. Convert to grayscale
