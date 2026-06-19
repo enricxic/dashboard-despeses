@@ -21,8 +21,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Prevent browser from proposing page translation
-st.markdown('<meta name="google" content="notranslate">', unsafe_allow_html=True)
+# Prevent browser from proposing page translation by modifying the parent window document
+import streamlit.components.v1 as components
+components.html(
+    """
+    <script>
+        const doc = window.parent.document;
+        doc.documentElement.classList.add("notranslate");
+        doc.body.classList.add("notranslate");
+        if (!doc.querySelector('meta[name="google"][content="notranslate"]')) {
+            const meta = doc.createElement('meta');
+            meta.name = 'google';
+            meta.content = 'notranslate';
+            doc.head.appendChild(meta);
+        }
+    </script>
+    """,
+    height=0,
+    width=0
+)
 
 # Custom styles for premium look (orange/slate dark theme)
 st.markdown("""
