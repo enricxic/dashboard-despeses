@@ -21,6 +21,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Prevent browser from proposing page translation
+st.markdown('<meta name="google" content="notranslate">', unsafe_allow_html=True)
+
 # Custom styles for premium look (orange/slate dark theme)
 st.markdown("""
     <style>
