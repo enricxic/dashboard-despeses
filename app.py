@@ -540,7 +540,7 @@ def find_product_in_db(product_name, supermercat, df_mapping):
             best_ratio = ratio
             best_match = row
             
-    if best_ratio >= 0.45:  # Lowered from 0.55/0.7 to handle bad OCR lines
+    if best_ratio >= 0.60:  # Set to a robust 0.60 since the new preprocessing is very clean
         return {
             'nomEstandard': best_match['nom_estandard'],
             'familia': best_match['familia'],
