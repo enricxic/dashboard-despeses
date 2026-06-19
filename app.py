@@ -1256,6 +1256,9 @@ def render_compres_super_interface():
     if "ticket_msg_error" in st.session_state:
         st.error(st.session_state["ticket_msg_error"])
         del st.session_state["ticket_msg_error"]
+    if "finalize_error" in st.session_state:
+        st.error(st.session_state["finalize_error"])
+        del st.session_state["finalize_error"]
 
     if "ticket_items" not in st.session_state:
         st.session_state["ticket_items"] = []
@@ -1582,9 +1585,7 @@ def render_compres_super_interface():
     else:
         st.info("El tiquet està buit. Afegeix línies manualment o puja un tiquet per fitxer o càmara.")
 
-    # Render finalize error if any
-    if "finalize_error" in st.session_state:
-        st.error(st.session_state["finalize_error"])
+
 
     st.write("---")
     col_desc, col_b1, col_b2, col_b3 = st.columns([3, 2, 2, 5], vertical_alignment="bottom")
