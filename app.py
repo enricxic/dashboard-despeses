@@ -1092,11 +1092,19 @@ def cb_finalize_ticket():
     bank_val = st.session_state.get("ticket_bank_sel", "")
     pay_method_val = st.session_state.get("ticket_pay_method_sel", "")
     
+    if bank_val is None:
+        bank_val = ""
+    if pay_method_val is None:
+        pay_method_val = ""
+        
+    bank_val_str = str(bank_val).strip()
+    pay_method_val_str = str(pay_method_val).strip()
+    
     if send_expense:
-        if not bank_val:
+        if not bank_val_str or bank_val_str in ["None", "nan", "NaN", ""]:
             st.session_state["finalize_error"] = "Si us plau, selecciona un Banc per a la despesa!"
             return
-        if not pay_method_val:
+        if not pay_method_val_str or pay_method_val_str in ["None", "nan", "NaN", ""]:
             st.session_state["finalize_error"] = "Si us plau, selecciona una Forma de Pagament per a la despesa!"
             return
     
@@ -1278,7 +1286,10 @@ def render_compres_super_interface():
             bank_val = st.selectbox("Banc:", [""] + get_config_banks(), key="ticket_bank_sel")
         with col_hdr3:
             pay_methods = [""] + get_config_payment_methods()
-            if bank_val != "Efectiu":
+            if bank_val == "Efectiu":
+                pay_methods = ["Efectiu"]
+                st.session_state["ticket_pay_method_sel"] = "Efectiu"
+            else:
                 pay_methods = [m for m in pay_methods if m != "Efectiu"]
                 if st.session_state.get("ticket_pay_method_sel") == "Efectiu":
                     st.session_state["ticket_pay_method_sel"] = ""
