@@ -676,7 +676,7 @@ def parse_text_ticket(text_content):
         # Check if it has a price
         # Dia tickets have a price followed by IVA letter (A, B, C). OCR sometimes reads A as 4 or 4/A, B as 8 or 3, etc.
         # Price check with optional trailing IVA character and optional dashes/spaces
-        price_match_std = re.search(r'(\d+)\s*[\.,\s]\s*(\d{2})(?:\s*[A-Z834\-]+)?\s*$', line.strip())
+        price_match_std = re.search(r'(\d+)\s*[\.,\s;:]\s*(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
         preu = 0.0
         price_match = None
         if price_match_std:
@@ -684,7 +684,7 @@ def parse_text_ticket(text_content):
             price_match = price_match_std
         else:
             # Fallback for letters like O/G/0 at start of cents (e.g. G95 -> 0.95, G95 - -> 0.95)
-            g_match = re.search(r'\b[GgOo0]\s*[\.,\s]*\s*(\d{2})(?:\s*[A-Z834\-]+)?\s*$', line.strip())
+            g_match = re.search(r'\b[GgOo0]\s*[\.,\s;:]*\s*(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
             if g_match:
                 preu = float(f"0.{g_match.group(1)}")
                 price_match = g_match
