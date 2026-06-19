@@ -405,6 +405,16 @@ def map_product_to_category(product_name):
         return 'fruita', 'Meló'
     if 'pit' in prod_norm and ('gall' in prod_norm or 'dindi' in prod_norm or 'gal' in prod_norm or 'pinnt' in prod_norm):
         return 'carn', 'Pit Gall dindi'
+    if 'trol' in prod_norm or 'truita' in prod_norm or 'tntegral' in prod_norm:
+        return 'verdura', 'Amanida' # Maps to the standard family for Truita/Amanida if not exact
+    if 'suetatl' in prod_norm or 'lleixiu' in prod_norm:
+        return 'neteja', 'Leixiu'
+    if 'sunder' in prod_norm or 'sindria' in prod_norm:
+        return 'fruita', 'Xindria'
+    if 'mantogs' in prod_norm or 'mantega' in prod_norm:
+        return 'lactics', 'Mantega'
+    if 'rmse' in prod_norm or 'formatge' in prod_norm or 'untar' in prod_norm:
+        return 'lactics', 'Formatge'
 
     articles_map = cat_config.get("articles_compres", {})
     for fam, articles in articles_map.items():
@@ -530,7 +540,7 @@ def find_product_in_db(product_name, supermercat, df_mapping):
             best_ratio = ratio
             best_match = row
             
-    if best_ratio >= 0.55:  # Lowered from 0.7 to handle bad OCR lines
+    if best_ratio >= 0.45:  # Lowered from 0.55/0.7 to handle bad OCR lines
         return {
             'nomEstandard': best_match['nom_estandard'],
             'familia': best_match['familia'],
@@ -618,7 +628,7 @@ def parse_text_ticket(text_content):
             continue
             
         if in_products_zone:
-            # Skip any duplicate header lines
+            # Skip duplicate headers
             if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['DESCRIPCIÓ', 'DESCRIPCION', 'QUANTITAT', 'PVP/UNIT', 'IMPORT €', 'DESCRIPC', 'QA TA PAP']):
                 continue
             product_lines_text.append(line_clean)
@@ -631,36 +641,20 @@ def parse_text_ticket(text_content):
         line_upper = line.upper()
         
         # Check if it has a price
-        # Standard price search
-        price_matches = list(re.finditer(r'(\d+)[\.,\s]+(\d{2})', line))
+        # Dia tickets have a price followed by IVA letter (A, B, C). OCR sometimes reads A as 4 or 4/A, B as 8 or 3, etc.
+        # Price check with optional trailing IVA character and optional dashes/spaces
+        price_match_std = re.search(r'(\d+)\s*[\.,\s]\s*(\d{2})(?:\s*[A-Z834\-]+)?\s*$', line.strip())
         preu = 0.0
         price_match = None
-        if price_matches:
-            price_match = price_matches[-1]
-            preu = float(f"{price_match.group(1)}.{price_match.group(2)}")
+        if price_match_std:
+            preu = float(f"{price_match_std.group(1)}.{price_match_std.group(2)}")
+            price_match = price_match_std
         else:
-            # Fallback price check: match any digits near the end (optionally followed by flags or spaces)
-            # e.g., 'G95 -', '1,49 4', '2,15 3' or '1,35 4'
-            # Let's clean up common OCR numbers at the end
-            cleaned_line = line
-            # Convert letters that are likely numbers at the end
-            cleaned_line = re.sub(r'\b[oOgG0](\d{2})\b', r'0.\1', cleaned_line)
-            fallback_price = re.search(r'\b(\d+)[\.,\s]*(\d{2})\b\s*[\-\+A-Z80-9]*\s*$', cleaned_line)
-            if fallback_price:
-                preu = float(f"{fallback_price.group(1)}.{fallback_price.group(2)}")
-                class PseudoMatch:
-                    def __init__(self, start_idx): self._start = start_idx
-                    def start(self): return self._start
-                price_match = PseudoMatch(line.find(fallback_price.group(0)))
-            else:
-                # Look for G95 pattern specifically
-                g_match = re.search(r'[GgOo0]\s*(\d{2})', line)
-                if g_match:
-                    preu = float(f"0.{g_match.group(1)}")
-                    class PseudoMatch2:
-                        def __init__(self, start_idx): self._start = start_idx
-                        def start(self): return self._start
-                    price_match = PseudoMatch2(g_match.start())
+            # Fallback for letters like O/G/0 at start of cents (e.g. G95 -> 0.95, G95 - -> 0.95)
+            g_match = re.search(r'\b[GgOo0]\s*[\.,\s]*\s*(\d{2})(?:\s*[A-Z834\-]+)?\s*$', line.strip())
+            if g_match:
+                preu = float(f"0.{g_match.group(1)}")
+                price_match = g_match
                 
         # Parse product name
         if price_match:
@@ -668,9 +662,10 @@ def parse_text_ticket(text_content):
         else:
             nom_brut = line
             
-        # Clean trailing letters/spaces
-        nom_brut = re.sub(r'[\s\-]+$', '', nom_brut).strip()
-        nom_brut = re.sub(r'\s+[A-Z8]$', '', nom_brut).strip()
+        # Clean trailing letters/spaces/noise and specifically Dia IVA trailing characters/garbage
+        nom_brut = re.sub(r'[\s\-\+\|0-9]+$', '', nom_brut).strip()
+        nom_brut = re.sub(r'\s+[A-Z834]$', '', nom_brut).strip()
+        nom_brut = re.sub(r'\s+[a-zA-Z]$', '', nom_brut).strip() # strip single trailing letter representing IVA if any left
         
         if not nom_brut or len(nom_brut) < 2:
             idx += 1
@@ -766,8 +761,8 @@ def parse_text_ticket(text_content):
             raw_products[best_match_idx]['prom'] += disc['val']
             raw_products[best_match_idx]['totLinea'] = max(0.0, (raw_products[best_match_idx]['quantitat'] * raw_products[best_match_idx]['preuUnit']) - raw_products[best_match_idx]['prom'])
             
-    # Filter out empty or unrecognized items with 0.0 price
-    raw_products = [item for item in raw_products if item['article'] != 'varis' or item['totLinea'] > 0.0]
+    # Keep all items, even those with 0.0 price so they can be edited manually in the UI
+    raw_products = [item for item in raw_products if item['article'] != 'varis' or item['totLinea'] >= 0.0]
     
     # 5. Sum duplicate products
     return group_duplicate_ticket_items(raw_products)
@@ -1160,8 +1155,32 @@ def render_compres_super_interface():
                                 img_array = np.where(img_array < threshold, 255, 0)
                             img = Image.fromarray(img_array.astype('uint8'), 'L')
                             
-                            # Run Tesseract OCR with --psm 6 (uniform block of text)
-                            text_content = pytesseract.image_to_string(img, config=r'--oem 3 --psm 6')
+                            # Run Tesseract OCR with multiple configurations to find the best result
+                            configs_proves = [
+                                r'--oem 3 --psm 6',              # Uniform block of text
+                                r'--oem 3 --psm 4',              # Single column of variable sizes
+                                r'--oem 3 --psm 11',             # Sparse text
+                                r'--oem 3 --psm 6 -l spa+cat',   # Bilingual
+                                r'--oem 3 --psm 3',              # Fully automatic
+                            ]
+                            
+                            best_text = ""
+                            best_lines_count = -1
+                            
+                            for config in configs_proves:
+                                try:
+                                    text = pytesseract.image_to_string(img, config=config)
+                                    lines_with_price = sum(1 for line in text.split('\n') if re.search(r'\b\d+[\.,\s]+\d{2}\b', line))
+                                    if lines_with_price > best_lines_count:
+                                        best_lines_count = lines_with_price
+                                        best_text = text
+                                except Exception:
+                                    continue
+                                    
+                            if best_text:
+                                text_content = best_text
+                            else:
+                                text_content = pytesseract.image_to_string(img, config=r'--oem 3 --psm 6')
                             
                              # Parse date (DD-MM-YYYY or DD/MM/YYYY) with validation
                             found_date = None
