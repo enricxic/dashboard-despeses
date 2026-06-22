@@ -387,7 +387,23 @@ def delete_db_row(table_name, id_col, id_val):
     try:
         with engine.begin() as conn:
             conn.execute(text(f'DELETE FROM "{table_name}" WHERE "{id_col}" = :id_val'), {"id_val": id_val})
-        st.cache_data.clear()
+        
+        # Update in-memory session state for instantaneous response
+        state_key = {
+            "despeses": "df_desp",
+            "pagaments": "df_pag",
+            "ingressos": "df_ing",
+            "compresSuper": "df_super",
+            "gasolina": "df_gas",
+            "kmCotxe": "df_km",
+            "hipoteca": "df_hip",
+            "estalviDP": "df_est"
+        }.get(table_name)
+        if state_key and state_key in st.session_state:
+            df = st.session_state[state_key]
+            st.session_state[state_key] = df[df[id_col] != id_val]
+            
+        load_dashboard_data.clear()
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (DELETE)**: {str(e)}")
@@ -402,14 +418,56 @@ def update_db_row(table_name, id_col, id_val, new_data):
     try:
         with engine.begin() as conn:
             conn.execute(text(f'UPDATE "{table_name}" SET {set_clause} WHERE "{id_col}" = :id_val'), params)
-        st.cache_data.clear()
+        
+        # Update in-memory session state for instantaneous response
+        state_key = {
+            "despeses": "df_desp",
+            "pagaments": "df_pag",
+            "ingressos": "df_ing",
+            "compresSuper": "df_super",
+            "gasolina": "df_gas",
+            "kmCotxe": "df_km",
+            "hipoteca": "df_hip",
+            "estalviDP": "df_est"
+        }.get(table_name)
+        if state_key and state_key in st.session_state:
+            df = st.session_state[state_key]
+            idx = df[df[id_col] == id_val].index
+            if not idx.empty:
+                for k, v in new_data.items():
+                    if k in df.columns:
+                        df.at[idx[0], k] = v
+                st.session_state[state_key] = df
+                
+        load_dashboard_data.clear()
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (UPDATE)**: {str(e)}")
         return False
 
 
-df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag = load_dashboard_data(get_csv_mtimes())
+if "dfs_initialized" not in st.session_state:
+    dfs = load_dashboard_data(get_csv_mtimes())
+    st.session_state["df_desp"] = dfs[0]
+    st.session_state["df_ing"] = dfs[1]
+    st.session_state["df_super"] = dfs[2]
+    st.session_state["df_gas"] = dfs[3]
+    st.session_state["df_km"] = dfs[4]
+    st.session_state["df_hip"] = dfs[5]
+    st.session_state["df_est"] = dfs[6]
+    st.session_state["df_limits"] = dfs[7]
+    st.session_state["df_pag"] = dfs[8]
+    st.session_state["dfs_initialized"] = True
+
+df_desp = st.session_state["df_desp"]
+df_ing = st.session_state["df_ing"]
+df_super = st.session_state["df_super"]
+df_gas = st.session_state["df_gas"]
+df_km = st.session_state["df_km"]
+df_hip = st.session_state["df_hip"]
+df_est = st.session_state["df_est"]
+df_limits = st.session_state["df_limits"]
+df_pag = st.session_state["df_pag"]
 
 def get_limits_for(year, month_name):
     month_idx = MONTHS_MAP.get(month_name.lower(), 12)
