@@ -2953,15 +2953,17 @@ with tab_db:
     for col in df_page.columns:
         col_lower = col.lower()
         if any(x in col_lower for x in ["comentari", "descrip", "motiu", "ruta", "observac", "detall"]):
-            col_configs[col] = st.column_config.TextColumn(width="large")
+            col_configs[col] = st.column_config.TextColumn(width=300)
         elif any(x in col_lower for x in ["id_", "idpago", "idingres", "idcompra", "idgasolina", "idruta"]):
-            col_configs[col] = st.column_config.Column(width="small")
-        elif any(x in col_lower for x in ["data", "fecha", "any", "mes", "dia", "forma"]):
-            col_configs[col] = st.column_config.Column(width="small")
+            col_configs[col] = st.column_config.Column(width=70)
+        elif any(x in col_lower for x in ["data", "fecha", "any", "mes", "dia"]):
+            col_configs[col] = st.column_config.Column(width=90)
+        elif "forma" in col_lower:
+            col_configs[col] = st.column_config.Column(width=95)
         elif any(x in col_lower for x in ["import", "quantitat", "preu", "valor"]):
-            col_configs[col] = st.column_config.Column(width="medium")
+            col_configs[col] = st.column_config.Column(width=90)
         elif any(x in col_lower for x in ["categoria", "concepte", "banc", "compte"]):
-            col_configs[col] = st.column_config.TextColumn(width="medium")
+            col_configs[col] = st.column_config.TextColumn(width=140)
             
     with col_table:
         # Interactive dataframe with row selection enabled
