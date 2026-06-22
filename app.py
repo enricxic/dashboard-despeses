@@ -2839,7 +2839,8 @@ with tab_db:
     # Slicing
     start_idx = st.session_state[page_key] * page_size
     end_idx = min(start_idx + page_size, total_rows)
-    df_page = df_filtered.iloc[start_idx:end_idx]
+    df_page = df_filtered.iloc[start_idx:end_idx].copy()
+    df_page['Accions'] = '✏️   ❌'
     
     if total_rows > 0:
         st.markdown(f"Mostrant registres **{start_idx + 1}** a **{end_idx}** de **{total_rows}** filtrats (Total taula: **{len(df_to_show)}**)")
@@ -2885,47 +2886,19 @@ with tab_db:
             else:
                 id_val = str(id_val)
                 
-        # Premium representation of the selected row with icons at the end
-        st.markdown("<h4 style='color:#f39c12; margin-bottom: 5px;'>📋 Registre Seleccionat:</h4>", unsafe_allow_html=True)
+        # Action Confirmation Row
+        st.markdown("<h4 style='color:#f39c12; margin-top:10px;'>⚡ Confirmació d'Acció:</h4>", unsafe_allow_html=True)
+        # Show a summary description of the row so they verify they are on the right line
+        summary_info = " | ".join([f"**{col}**: {val}" for col, val in current_row_data.items() if not pd.isna(val) and col not in ['ID_mov', 'idPago', 'idIngres', 'IdCompra', 'idGasolina', 'idRuta']][:4])
+        st.info(f"👉 **Has seleccionat la línia:** {summary_info}")
         
-        # Configure columns to display
-        key_cols_map = {
-            "Despeses (General)": ['Data', 'Banc', 'Import càrrec', 'import ingrés', 'Idcategoria', 'Idconcepte', 'Comentari'],
-            "Pagaments (General)": ['Data', 'Banc', 'Import', 'Descripció'],
-            "Ingressos": ['Data', 'Banc', 'Import', 'Categoria', 'Concepte'],
-            "Compres Supermercat": ['data', 'supermercat', 'producte', 'totLinea'],
-            "Gasolina": ['data', 'banc', 'import', 'litres', 'km_actuals'],
-            "Kilòmetres Cotxe": ['data', 'motiu', 'km'],
-            "Previsió Hipoteca": ['any', 'mes', 'Quota fixa'],
-            "Estalvis DP": ['any', 'mes', 'quota', 'pagat']
-        }
-        
-        cols_to_show = [c for c in key_cols_map.get(db_select, df_to_show.columns) if c in df_to_show.columns]
-        
-        # Horizontal box design
-        n_cols = len(cols_to_show)
-        # We reserve the first column for actions and the rest for fields
-        ui_cols = st.columns([1.5] + [1.0] * n_cols)
-        
-        with ui_cols[0]:
-            st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase;'>Accions</div>", unsafe_allow_html=True)
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button("✏️", help="Modificar registre", key=f"btn_mod_call_{db_select}_{row_idx}", use_container_width=True):
-                    show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
-            with btn_col2:
-                if st.button("❌", help="Esborrar registre", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
-                    show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
-                    
-        for idx_c, col_name in enumerate(cols_to_show):
-            with ui_cols[idx_c + 1]:
-                st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase;'>{col_name}</div>", unsafe_allow_html=True)
-                val_repr = current_row_data[col_name]
-                if pd.isna(val_repr):
-                    val_repr = "-"
-                elif isinstance(val_repr, float):
-                    val_repr = f"{val_repr:,.2f}"
-                st.markdown(f"<div style='font-size:0.92rem; font-weight:bold; color:#f8fafc; padding-top:2px;'>{val_repr}</div>", unsafe_allow_html=True)
+        col_actions = st.columns([3, 3, 6])
+        with col_actions[0]:
+            if st.button("✏️ Modificar aquest registre", key=f"btn_mod_call_{db_select}_{row_idx}", use_container_width=True):
+                show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
+        with col_actions[1]:
+            if st.button("❌ Esborrar aquest registre", type="primary", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
+                show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
     else:
         st.info("💡 **Com fer modificacions o esborrar:** Selecciona un registre fent clic directament a sobre d'una fila de la taula superior.")
 
