@@ -253,9 +253,10 @@ def parse_excel_date(val):
 
 from sqlalchemy import create_engine
 
+@st.cache_resource
 def get_engine():
     conn_str = st.secrets["connection_string"]
-    return create_engine(conn_str)
+    return create_engine(conn_str, pool_size=3, max_overflow=5, pool_pre_ping=True)
 
 def get_csv_mtimes():
     # With Supabase, we don't need local file modified times.
