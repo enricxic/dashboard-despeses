@@ -2948,6 +2948,21 @@ with tab_db:
         
     col_table, col_sidebar_actions = st.columns([12, 1])
     
+    # Configurem dinàmicament l'amplada de les columnes per donar més espai als comentaris
+    col_configs = {}
+    for col in df_page.columns:
+        col_lower = col.lower()
+        if any(x in col_lower for x in ["comentari", "descrip", "motiu", "ruta", "observac", "detall"]):
+            col_configs[col] = st.column_config.TextColumn(width="large")
+        elif any(x in col_lower for x in ["id_", "idpago", "idingres", "idcompra", "idgasolina", "idruta"]):
+            col_configs[col] = st.column_config.Column(width="small")
+        elif any(x in col_lower for x in ["data", "fecha", "any", "mes", "dia"]):
+            col_configs[col] = st.column_config.Column(width="small")
+        elif any(x in col_lower for x in ["import", "quantitat", "preu", "valor"]):
+            col_configs[col] = st.column_config.Column(width="small")
+        elif any(x in col_lower for x in ["categoria", "concepte", "banc", "compte", "forma"]):
+            col_configs[col] = st.column_config.TextColumn(width="medium")
+            
     with col_table:
         # Interactive dataframe with row selection enabled
         selection_event = st.dataframe(
@@ -2955,6 +2970,7 @@ with tab_db:
             use_container_width=True,
             on_select="rerun",
             selection_mode="single-row",
+            column_config=col_configs,
             key=f"df_select_{db_select}_{st.session_state[page_key]}_{st.session_state.get('df_key_counter', 0)}"
         )
     
