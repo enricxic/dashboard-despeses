@@ -2904,19 +2904,10 @@ with tab_db:
         
         # Horizontal box design
         n_cols = len(cols_to_show)
-        # We reserve columns for fields + 1 wider column for the two buttons
-        ui_cols = st.columns(n_cols + 1)
-        for idx_c, col_name in enumerate(cols_to_show):
-            with ui_cols[idx_c]:
-                st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase;'>{col_name}</div>", unsafe_allow_html=True)
-                val_repr = current_row_data[col_name]
-                if pd.isna(val_repr):
-                    val_repr = "-"
-                elif isinstance(val_repr, float):
-                    val_repr = f"{val_repr:,.2f}"
-                st.markdown(f"<div style='font-size:0.92rem; font-weight:bold; color:#f8fafc; padding-top:2px;'>{val_repr}</div>", unsafe_allow_html=True)
-                
-        with ui_cols[-1]:
+        # We reserve the first column for actions and the rest for fields
+        ui_cols = st.columns([1.5] + [1.0] * n_cols)
+        
+        with ui_cols[0]:
             st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase;'>Accions</div>", unsafe_allow_html=True)
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
@@ -2925,6 +2916,16 @@ with tab_db:
             with btn_col2:
                 if st.button("❌", help="Esborrar registre", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
                     show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
+                    
+        for idx_c, col_name in enumerate(cols_to_show):
+            with ui_cols[idx_c + 1]:
+                st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase;'>{col_name}</div>", unsafe_allow_html=True)
+                val_repr = current_row_data[col_name]
+                if pd.isna(val_repr):
+                    val_repr = "-"
+                elif isinstance(val_repr, float):
+                    val_repr = f"{val_repr:,.2f}"
+                st.markdown(f"<div style='font-size:0.92rem; font-weight:bold; color:#f8fafc; padding-top:2px;'>{val_repr}</div>", unsafe_allow_html=True)
     else:
         st.info("💡 **Com fer modificacions o esborrar:** Selecciona un registre fent clic directament a sobre d'una fila de la taula superior.")
 
