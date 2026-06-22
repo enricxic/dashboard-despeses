@@ -412,9 +412,19 @@ def delete_db_row(table_name, id_col, id_val):
 def update_db_row(table_name, id_col, id_val, new_data):
     engine = get_engine()
     from sqlalchemy import text
-    # Exclude non-existent database columns if any helper fields sneaked in
-    set_clause = ", ".join([f'"{col}" = :{col}' for col in new_data.keys() if col != id_col])
-    params = {**new_data, "id_val": id_val}
+    
+    # We construct parameter names as p0, p1, p2... to avoid any issues with spaces or accentuation in column names
+    set_clauses = []
+    params = {"id_val": id_val}
+    
+    for idx, (col, val) in enumerate(new_data.items()):
+        if col == id_col:
+            continue
+        param_name = f"p{idx}"
+        set_clauses.append(f'"{col}" = :{param_name}')
+        params[param_name] = val
+        
+    set_clause = ", ".join(set_clauses)
     try:
         with engine.begin() as conn:
             conn.execute(text(f'UPDATE "{table_name}" SET {set_clause} WHERE "{id_col}" = :id_val'), params)
