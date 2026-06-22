@@ -2856,25 +2856,22 @@ with tab_db:
     else:
         st.markdown("No s'ha trobat cap registre amb els criteris seleccionats.")
         
-    # Interactive dataframe with cell selection enabled
+    # Interactive dataframe with row selection enabled
     selection_event = st.dataframe(
         df_page, 
         use_container_width=True,
         on_select="rerun",
-        selection_mode="single-cell",
+        selection_mode="single-row",
         key=f"df_select_{db_select}_{st.session_state[page_key]}_{st.session_state.get('df_key_counter', 0)}"
     )
     
     # 4. Modify / Delete Section
     st.write("")
     
-    selected_cells = selection_event.selection.get("cells", [])
+    selected_rows = selection_event.selection.get("rows", [])
     
-    if selected_cells:
-        cell = selected_cells[0]
-        row_idx_page = cell["row"]
-        col_name = cell["column_id"]
-        
+    if selected_rows:
+        row_idx_page = selected_rows[0]
         row_idx = df_page.index[row_idx_page]
         current_row_data = df_to_show.loc[row_idx]
         
@@ -2898,14 +2895,18 @@ with tab_db:
             else:
                 id_val = str(id_val)
                 
-        if col_name == "Modificar":
-            show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
-        elif col_name == "Esborrar":
-            show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
-        else:
-            # Clear selection if another cell was clicked
-            st.session_state["df_key_counter"] = st.session_state.get("df_key_counter", 0) + 1
-            st.rerun()
+        # Action Confirmation Row
+        st.markdown("<h4 style='color:#f39c12; margin-top:10px;'>⚡ Confirmació d'Acció:</h4>", unsafe_allow_html=True)
+        summary_info = " | ".join([f"**{col}**: {val}" for col, val in current_row_data.items() if not pd.isna(val) and col not in ['ID_mov', 'idPago', 'idIngres', 'IdCompra', 'idGasolina', 'idRuta']][:4])
+        st.info(f"👉 **Has seleccionat la línia:** {summary_info}")
+        
+        col_actions = st.columns([3, 3, 6])
+        with col_actions[0]:
+            if st.button("✏️ Modificar aquest registre", key=f"btn_mod_call_{db_select}_{row_idx}", use_container_width=True):
+                show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
+        with col_actions[1]:
+            if st.button("❌ Esborrar aquest registre", type="primary", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
+                show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
 
 
 
