@@ -401,7 +401,10 @@ def delete_db_row(table_name, id_col, id_val):
         }.get(table_name)
         if state_key and state_key in st.session_state:
             df = st.session_state[state_key]
-            st.session_state[state_key] = df[df[id_col] != id_val]
+            try:
+                st.session_state[state_key] = df[df[id_col].astype(float) != float(id_val)]
+            except (ValueError, TypeError):
+                st.session_state[state_key] = df[df[id_col].astype(str) != str(id_val)]
             
         load_dashboard_data.clear()
         return True
@@ -442,7 +445,10 @@ def update_db_row(table_name, id_col, id_val, new_data):
         }.get(table_name)
         if state_key and state_key in st.session_state:
             df = st.session_state[state_key]
-            idx = df[df[id_col] == id_val].index
+            try:
+                idx = df[df[id_col].astype(float) == float(id_val)].index
+            except (ValueError, TypeError):
+                idx = df[df[id_col].astype(str) == str(id_val)].index
             if not idx.empty:
                 for k, v in new_data.items():
                     if k in df.columns:
@@ -2960,9 +2966,12 @@ with tab_db:
         id_val = None
         if id_col:
             id_val = current_row_data[id_col]
-            if isinstance(id_val, (int, np.integer)):
-                id_val = int(id_val)
-            else:
+            try:
+                if float(id_val).is_integer():
+                    id_val = int(float(id_val))
+                else:
+                    id_val = float(id_val)
+            except (ValueError, TypeError):
                 id_val = str(id_val)
                 
         # Calculate dynamic margin-top to align buttons with the selected row
