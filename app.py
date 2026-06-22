@@ -1789,7 +1789,7 @@ if "kms_canvi_oli" not in st.session_state:
 
 # ----------------- TABS SYSTEM -----------------
 tab_dash, tab_details, tab_intro, tab_db = st.tabs([
-    "📊 Dashboard General", "📝 Detalls del Mes", "➕ Intro Dades", "💾 Bases de Dades (CSVs)"
+    "📊 Dashboard General", "📝 Detalls del Mes", "➕ Intro Dades", "💾 Bases de Dades (Supabase)"
 ])
 
 # ================= TAB 1: DASHBOARD GENERAL =================
@@ -2612,9 +2612,9 @@ with tab_intro:
             .style.format({'Import': '{:,.2f} €'})
             .apply(style_rows, axis=None)
         )
-# ================= TAB 4: BASES DE DADES (CSVs) =================
+# ================= TAB 4: BASES DE DADES (Supabase) =================
 with tab_db:
-    st.markdown("### 🗃️ Navegador de Taules Completes")
+    st.markdown("### 🗃️ Navegador de Taules (Supabase)")
     
     db_select = st.selectbox("Escull la taula que vols consultar", [
         "Despeses (General)", "Pagaments (General)", "Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Previsió Hipoteca", "Estalvis DP"
@@ -2622,19 +2622,107 @@ with tab_db:
     
     st.write("")
     
+    # 1. Select the base dataframe
     if db_select == "Despeses (General)":
-        st.dataframe(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), use_container_width=True)
+        df_to_show = df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore')
     elif db_select == "Pagaments (General)":
-        st.dataframe(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), use_container_width=True)
+        df_to_show = df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
     elif db_select == "Ingressos":
-        st.dataframe(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), use_container_width=True)
+        df_to_show = df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
     elif db_select == "Compres Supermercat":
-        st.dataframe(df_super.drop(columns=['parsed_date'], errors='ignore'), use_container_width=True)
+        df_to_show = df_super.drop(columns=['parsed_date'], errors='ignore')
     elif db_select == "Gasolina":
-        st.dataframe(df_gas.drop(columns=['parsed_date'], errors='ignore'), use_container_width=True)
+        df_to_show = df_gas.drop(columns=['parsed_date'], errors='ignore')
     elif db_select == "Kilòmetres Cotxe":
-        st.dataframe(df_km.drop(columns=['parsed_date'], errors='ignore'), use_container_width=True)
+        df_to_show = df_km.drop(columns=['parsed_date'], errors='ignore')
     elif db_select == "Previsió Hipoteca":
-        st.dataframe(df_hip, use_container_width=True)
+        df_to_show = df_hip
     elif db_select == "Estalvis DP":
-        st.dataframe(df_est, use_container_width=True)
+        df_to_show = df_est
+        
+    df_filtered = df_to_show.copy()
+    
+    # 2. Add Filters Section
+    col_f1, col_f2 = st.columns([7, 3])
+    with col_f1:
+        search_query = st.text_input("🔍 Cerca global (qualsevol columna)", value="", key=f"search_{db_select}")
+    with col_f2:
+        page_size = st.selectbox("Registres per pàgina", [20, 50, 100, 200, 500, 1000], index=2, key=f"size_{db_select}")
+        
+    # Column filters
+    with st.expander("⚙️ Filtres de columna", expanded=False):
+        filterable_cols = []
+        for col in df_to_show.columns:
+            unique_vals = df_to_show[col].dropna().unique()
+            if 1 < len(unique_vals) <= 30:
+                filterable_cols.append((col, sorted(list(unique_vals))))
+        
+        if filterable_cols:
+            cols_layout = st.columns(min(4, len(filterable_cols)))
+            for idx, (col_name, vals) in enumerate(filterable_cols):
+                col_idx = idx % len(cols_layout)
+                with cols_layout[col_idx]:
+                    selected_val = st.selectbox(f"Filtra per {col_name}", ["Tots"] + [str(v) for v in vals], key=f"filter_{db_select}_{col_name}")
+                    if selected_val != "Tots":
+                        df_filtered = df_filtered[df_filtered[col_name].astype(str) == selected_val]
+                        
+    # Sort order
+    sort_desc = st.checkbox("Veure primer els més recents (Invertir ordre de la taula)", value=True, key=f"sort_{db_select}")
+    if sort_desc:
+        df_filtered = df_filtered.iloc[::-1]
+        
+    # Text search
+    if search_query:
+        mask = df_filtered.astype(str).apply(lambda x: x.str.contains(search_query, case=False, na=False)).any(axis=1)
+        df_filtered = df_filtered[mask]
+        
+    # 3. Pagination logic
+    filter_hash = f"{search_query}_{len(df_filtered)}_{sort_desc}"
+    hash_key = f"hash_{db_select}"
+    page_key = f"page_{db_select}"
+    
+    if hash_key not in st.session_state or st.session_state[hash_key] != filter_hash:
+        st.session_state[hash_key] = filter_hash
+        st.session_state[page_key] = 0
+        
+    if page_key not in st.session_state:
+        st.session_state[page_key] = 0
+        
+    total_rows = len(df_filtered)
+    total_pages = max(1, int(np.ceil(total_rows / page_size)))
+    st.session_state[page_key] = max(0, min(st.session_state[page_key], total_pages - 1))
+    
+    # Navigation buttons
+    st.write("")
+    col_nav_1, col_nav_2, col_nav_3, col_nav_4, col_nav_5 = st.columns([1.5, 1.5, 3, 1.5, 1.5])
+    with col_nav_1:
+        if st.button("⏮️ Primer", disabled=(st.session_state[page_key] == 0), key=f"first_{db_select}", use_container_width=True):
+            st.session_state[page_key] = 0
+            st.rerun()
+    with col_nav_2:
+        if st.button("◀️ Anterior", disabled=(st.session_state[page_key] == 0), key=f"prev_{db_select}", use_container_width=True):
+            st.session_state[page_key] -= 1
+            st.rerun()
+    with col_nav_3:
+        st.markdown(f"<div style='text-align: center; margin-top: 6px; font-weight: bold;'>Pàgina {st.session_state[page_key] + 1} de {total_pages}</div>", unsafe_allow_html=True)
+    with col_nav_4:
+        if st.button("Següent ▶️", disabled=(st.session_state[page_key] >= total_pages - 1), key=f"next_{db_select}", use_container_width=True):
+            st.session_state[page_key] += 1
+            st.rerun()
+    with col_nav_5:
+        if st.button("Últim ⏭️", disabled=(st.session_state[page_key] >= total_pages - 1), key=f"last_{db_select}", use_container_width=True):
+            st.session_state[page_key] = total_pages - 1
+            st.rerun()
+            
+    # Slicing and Displaying
+    start_idx = st.session_state[page_key] * page_size
+    end_idx = min(start_idx + page_size, total_rows)
+    df_page = df_filtered.iloc[start_idx:end_idx]
+    
+    if total_rows > 0:
+        st.markdown(f"Mostrant registres **{start_idx + 1}** a **{end_idx}** de **{total_rows}** filtrats (Total taula: **{len(df_to_show)}**)")
+    else:
+        st.markdown("No s'ha trobat cap registre amb els criteris seleccionats.")
+        
+    st.dataframe(df_page, use_container_width=True)
+
