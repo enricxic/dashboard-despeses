@@ -2955,15 +2955,27 @@ with tab_db:
         if any(x in col_lower for x in ["comentari", "descrip", "motiu", "ruta", "observac", "detall"]):
             col_configs[col] = st.column_config.TextColumn(width=300)
         elif any(x in col_lower for x in ["id_", "idpago", "idingres", "idcompra", "idgasolina", "idruta"]):
-            col_configs[col] = st.column_config.Column(width=70)
-        elif any(x in col_lower for x in ["data", "fecha", "any", "mes", "dia"]):
-            col_configs[col] = st.column_config.Column(width=90)
+            col_configs[col] = st.column_config.Column(width=60)
+        elif any(x in col_lower for x in ["data", "fecha"]):
+            col_configs[col] = st.column_config.Column(width=85)
+        elif "any" in col_lower:
+            col_configs[col] = st.column_config.Column(width=55)
+        elif "mes" in col_lower:
+            col_configs[col] = st.column_config.Column(width=65)
+        elif "dia" in col_lower:
+            col_configs[col] = st.column_config.Column(width=50)
         elif "forma" in col_lower:
-            col_configs[col] = st.column_config.Column(width=95)
+            col_configs[col] = st.column_config.Column(width=80)
         elif any(x in col_lower for x in ["import", "quantitat", "preu", "valor"]):
-            col_configs[col] = st.column_config.Column(width=90)
-        elif any(x in col_lower for x in ["categoria", "concepte", "banc", "compte"]):
-            col_configs[col] = st.column_config.TextColumn(width=140)
+            col_configs[col] = st.column_config.Column(width=85)
+        elif "grup" in col_lower:
+            col_configs[col] = st.column_config.Column(width=70)
+        elif "categoria" in col_lower:
+            col_configs[col] = st.column_config.TextColumn(width=95)
+        elif "concepte" in col_lower:
+            col_configs[col] = st.column_config.TextColumn(width=110)
+        elif any(x in col_lower for x in ["banc", "compte"]):
+            col_configs[col] = st.column_config.TextColumn(width=80)
             
     with col_table:
         # Interactive dataframe with row selection enabled
