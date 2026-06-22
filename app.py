@@ -2857,14 +2857,17 @@ with tab_db:
     else:
         st.markdown("No s'ha trobat cap registre amb els criteris seleccionats.")
         
-    # Interactive dataframe with row selection enabled
-    selection_event = st.dataframe(
-        df_page, 
-        use_container_width=True,
-        on_select="rerun",
-        selection_mode="single-row",
-        key=f"df_select_{db_select}_{st.session_state[page_key]}_{st.session_state.get('df_key_counter', 0)}"
-    )
+    col_table, col_sidebar_actions = st.columns([12, 1])
+    
+    with col_table:
+        # Interactive dataframe with row selection enabled
+        selection_event = st.dataframe(
+            df_page, 
+            use_container_width=True,
+            on_select="rerun",
+            selection_mode="single-row",
+            key=f"df_select_{db_select}_{st.session_state[page_key]}_{st.session_state.get('df_key_counter', 0)}"
+        )
     
     # 4. Modify / Delete Section
     st.write("")
@@ -2896,18 +2899,20 @@ with tab_db:
             else:
                 id_val = str(id_val)
                 
-        # Action Confirmation Row
-        st.markdown("<h4 style='color:#f39c12; margin-top:10px;'>⚡ Confirmació d'Acció:</h4>", unsafe_allow_html=True)
-        summary_info = " | ".join([f"**{col}**: {val}" for col, val in current_row_data.items() if not pd.isna(val) and col not in ['ID_mov', 'idPago', 'idIngres', 'IdCompra', 'idGasolina', 'idRuta']][:4])
-        st.info(f"👉 **Has seleccionat la línia:** {summary_info}")
+        # Calculate dynamic margin-top to align buttons with the selected row
+        # 36px for the header, 35px per row.
+        margin_top = 36 + row_idx_page * 35
         
-        col_actions = st.columns([3, 3, 6])
-        with col_actions[0]:
-            if st.button("✏️ Modificar aquest registre", key=f"btn_mod_call_{db_select}_{row_idx}", use_container_width=True):
-                show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
-        with col_actions[1]:
-            if st.button("❌ Esborrar aquest registre", type="primary", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
-                show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
+        with col_sidebar_actions:
+            # Spacer to push the buttons down to the selected row's height
+            st.markdown(f"<div style='margin-top: {margin_top}px;'></div>", unsafe_allow_html=True)
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                if st.button("✏️", help="Modificar registre", key=f"btn_mod_call_{db_select}_{row_idx}", use_container_width=True):
+                    show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
+            with btn_col2:
+                if st.button("❌", help="Esborrar registre", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
+                    show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
 
 
 
