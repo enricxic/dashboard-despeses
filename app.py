@@ -253,6 +253,16 @@ def parse_excel_date(val):
 
 from sqlalchemy import create_engine
 
+class DBTracker:
+    def __init__(self):
+        self.last_update = datetime.now()
+    def update(self):
+        self.last_update = datetime.now()
+
+@st.cache_resource
+def get_db_tracker():
+    return DBTracker()
+
 @st.cache_resource
 def get_engine():
     conn_str = st.secrets["connection_string"]
@@ -406,6 +416,7 @@ def delete_db_row(table_name, id_col, id_val):
             except (ValueError, TypeError):
                 st.session_state[state_key] = df[df[id_col].astype(str) != str(id_val)]
             
+        get_db_tracker().update()
         load_dashboard_data.clear()
         return True
     except Exception as e:
@@ -455,6 +466,7 @@ def update_db_row(table_name, id_col, id_val, new_data):
                         df.at[idx[0], k] = v
                 st.session_state[state_key] = df
                 
+        get_db_tracker().update()
         load_dashboard_data.clear()
         return True
     except Exception as e:
@@ -462,7 +474,11 @@ def update_db_row(table_name, id_col, id_val, new_data):
         return False
 
 
-if "dfs_initialized" not in st.session_state:
+tracker = get_db_tracker()
+if "last_synced_time" not in st.session_state or st.session_state["last_synced_time"] < tracker.last_update:
+    st.session_state["dfs_initialized"] = False
+
+if "dfs_initialized" not in st.session_state or not st.session_state["dfs_initialized"]:
     dfs = load_dashboard_data(get_csv_mtimes())
     st.session_state["df_desp"] = dfs[0]
     st.session_state["df_ing"] = dfs[1]
@@ -474,6 +490,7 @@ if "dfs_initialized" not in st.session_state:
     st.session_state["df_limits"] = dfs[7]
     st.session_state["df_pag"] = dfs[8]
     st.session_state["dfs_initialized"] = True
+    st.session_state["last_synced_time"] = tracker.last_update
 
 df_desp = st.session_state["df_desp"]
 df_ing = st.session_state["df_ing"]
