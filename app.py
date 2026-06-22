@@ -2926,7 +2926,7 @@ with tab_db:
             st.session_state[page_key] -= 1
             st.rerun()
     with col_nav_3:
-        st.markdown(f"<div style='text-align: center; margin-top: -5px;'><span style='font-size: 0.82rem; color: #94a3b8; font-weight: bold; text-transform: uppercase;'>{db_select}</span><br><span style='font-weight: bold; font-size: 1.05rem; color: #f8fafc;'>Pàgina {st.session_state[page_key] + 1} de {total_pages}</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: center; margin-top: -10px;'><span style='font-size: 1.3rem; color: #000000; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;'>{db_select}</span><br><span style='font-weight: 700; font-size: 1.15rem; color: #000000;'>Pàgina {st.session_state[page_key] + 1} de {total_pages}</span></div>", unsafe_allow_html=True)
     with col_nav_4:
         if st.button("Següent ▶️", disabled=(st.session_state[page_key] >= total_pages - 1), key=f"next_{db_select}", use_container_width=True):
             st.session_state[page_key] += 1
