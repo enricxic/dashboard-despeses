@@ -2712,10 +2712,10 @@ def show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, 
     st.warning("⚠️ **Atenció:** Aquesta acció no es pot desfer. El registre s'esborrarà definitivament.")
     
     st.markdown("**Detalls del registre a eliminar:**")
-    details_html = "<div style='background-color:#1e293b; padding:10px; border-radius:5px; margin-bottom:15px; border:1px solid #334155;'>"
+    details_html = "<div style='background-color:#1e293b; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #475569; color:#f8fafc; font-size:0.95rem;'>"
     for col, val in current_row_data.items():
-        if col not in ['ID_mov', 'idPago', 'idIngres', 'IdCompra', 'idGasolina', 'idRuta'] and not pd.isna(val):
-            details_html += f"<div style='margin-bottom:3px;'><strong>{col}</strong>: {val}</div>"
+        if col not in ['ID_mov', 'idPago', 'idIngres', 'IdCompra', 'idGasolina', 'idRuta', 'mes_lower', 'parsed_date', 'clean_mes', 'date_score'] and not pd.isna(val):
+            details_html += f"<div style='margin-bottom:6px; border-bottom:1px solid #334155; padding-bottom:4px;'><span style='color:#94a3b8; font-weight:600;'>{col}:</span> <span style='font-weight:700; color:#f8fafc;'>{val}</span></div>"
     details_html += "</div>"
     st.markdown(details_html, unsafe_allow_html=True)
     
@@ -2849,8 +2849,6 @@ with tab_db:
     start_idx = st.session_state[page_key] * page_size
     end_idx = min(start_idx + page_size, total_rows)
     df_page = df_filtered.iloc[start_idx:end_idx].copy()
-    df_page['Modificar'] = '✏️'
-    df_page['Esborrar'] = '❌'
     
     if total_rows > 0:
         st.markdown(f"Mostrant registres **{start_idx + 1}** a **{end_idx}** de **{total_rows}** filtrats (Total taula: **{len(df_to_show)}**)")
