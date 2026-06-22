@@ -11,7 +11,9 @@ import pytesseract
 from PIL import Image
 import difflib
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+import platform
+if platform.system() == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 # Set page config
 st.set_page_config(
@@ -131,7 +133,8 @@ st.markdown("""
 DEFAULT_HASH = "24b7b70518e4d4030003e75d68223a85b07eb95b2cf273f3b13d87c27aa2c863"
 
 def check_password():
-    return True # Bypass login for local execution
+    if platform.system() == "Windows":
+        return True # Bypass login for local execution on Windows PC
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
@@ -662,7 +665,10 @@ def parse_text_ticket(text_content):
     df_mapping = load_product_mappings()
     lines = text_content.split('\n')
     
-    st.session_state["ticket_discount"] = 0.0
+    try:
+        st.session_state["ticket_discount"] = 0.0
+    except Exception:
+        pass
     
     # 1. Determine scan zone: between headers and TOTAL COMPRA GRUPO DIA / OFERTES
     in_products_zone = False
@@ -677,7 +683,17 @@ def parse_text_ticket(text_content):
         line_upper = line_clean.upper()
         
         # End zone check
-        if any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in ['TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA', 'TOTAL', 'TARGETA', 'TARGETA BANCÀRIA', 'TARJETA']):
+        if (any(kw in line_upper for kw in [
+            'TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 
+            'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA', 'TOTAL', 
+            'TARGETA', 'TARGETA BANCÀRIA', 'TARJETA', 'TUTAL', 'TAROETA', 
+            'BANCARTA', 'BANCARIA', 'BASE IMPOSABLE', 'IVA BASE', 'VISA', 
+            'DEBIT', 'DEBITE', 'IMPORT:'
+        ]) or any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in [
+            'TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 
+            'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA', 'TOTAL', 
+            'TARGETA', 'TARGETA BANCÀRIA', 'TARJETA'
+        ])):
             break
             
         # Coupons zone transition check
@@ -930,8 +946,8 @@ def parse_text_ticket(text_content):
             raw_products[best_match_idx]['prom'] += disc['val']
             raw_products[best_match_idx]['totLinea'] = max(0.0, (raw_products[best_match_idx]['quantitat'] * raw_products[best_match_idx]['preuUnit']) - raw_products[best_match_idx]['prom'])
             
-    # Keep all items, even those with 0.0 price so they can be edited manually in the UI
-    raw_products = [item for item in raw_products if item['article'] != 'varis' or item['totLinea'] >= 0.0]
+    # Keep recognized items even with 0.0 price, but discard 'varis' with 0.0 or negative price (typically garbage lines)
+    raw_products = [item for item in raw_products if item['article'] != 'varis' or item['totLinea'] > 0.0]
     
     # 5. Sum duplicate products
     res = group_duplicate_ticket_items(raw_products)
