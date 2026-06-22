@@ -2725,4 +2725,123 @@ with tab_db:
         st.markdown("No s'ha trobat cap registre amb els criteris seleccionats.")
         
     st.dataframe(df_page, use_container_width=True)
+    
+    # 4. Modify / Delete Section
+    st.write("")
+    st.markdown("---")
+    st.markdown("<h4 style='color:#f39c12;'>✏️ Modificar / ❌ Esborrar un registre</h4>", unsafe_allow_html=True)
+    
+    # Generate human-readable labels for the dropdown
+    row_options = []
+    for idx, row in df_filtered.iterrows():
+        # Try to find a date, description/concept, and amount
+        date_val = ""
+        for date_col in ['Data', 'data', 'data_inici']:
+            if date_col in row:
+                date_val = f" {row[date_col]}"
+                break
+                
+        desc_val = ""
+        for desc_col in ['Concepte', 'Idconcepte', 'article', 'ruta', 'concepte', 'mes']:
+            if desc_col in row:
+                desc_val = f" | {row[desc_col]}"
+                break
+                
+        amt_val = ""
+        for amt_col in ['Import càrrec', 'import ingrés', 'Import', 'totLinea', 'import', 'quota']:
+            if amt_col in row and float(row[amt_col]) > 0:
+                amt_val = f" | {row[amt_col]} €"
+                break
+                
+        label = f"Index: {idx}{date_val}{desc_val}{amt_val}"
+        row_options.append((idx, label))
+        
+    if row_options:
+        selected_row_option = st.selectbox(
+            "Selecciona el registre que vols gestionar (de la llista filtrada de dalt):",
+            options=row_options,
+            format_func=lambda x: x[1],
+            key=f"select_row_{db_select}"
+        )
+        
+        if selected_row_option:
+            row_idx = selected_row_option[0]
+            current_row_data = df_to_show.loc[row_idx]
+            
+            col_actions = st.columns([3, 9])
+            with col_actions[0]:
+                action = st.radio("Acció a realitzar", ["Modificar", "Esborrar"], horizontal=True, key=f"action_{db_select}_{row_idx}")
+                
+            if action == "Modificar":
+                st.markdown("**Modifica els camps del registre:**")
+                # Build form dynamically
+                with st.form(key=f"edit_form_{db_select}_{row_idx}"):
+                    new_values = {}
+                    # We can use columns to place input fields nicely
+                    form_cols = st.columns(3)
+                    for col_num, col_name in enumerate(df_to_show.columns):
+                        col_idx = col_num % 3
+                        val = current_row_data[col_name]
+                        
+                        with form_cols[col_idx]:
+                            # Determine type of input
+                            if isinstance(val, (int, np.integer)):
+                                new_values[col_name] = st.number_input(f"{col_name}", value=int(val), step=1)
+                            elif isinstance(val, (float, np.floating)):
+                                new_values[col_name] = st.number_input(f"{col_name}", value=float(val), step=0.01)
+                            elif isinstance(val, bool):
+                                new_values[col_name] = st.checkbox(f"{col_name}", value=val)
+                            else:
+                                new_values[col_name] = st.text_input(f"{col_name}", value=str(val) if not pd.isna(val) else "")
+                                
+                    save_changes = st.form_submit_button("💾 Desa els canvis")
+                    if save_changes:
+                        # Map table name to filename
+                        tbl_filename = {
+                            "Despeses (General)": "despeses.csv",
+                            "Pagaments (General)": "pagaments.csv",
+                            "Ingressos": "ingressos.csv",
+                            "Compres Supermercat": "compresSuper.csv",
+                            "Gasolina": "gasolina.csv",
+                            "Kilòmetres Cotxe": "kmCotxe.csv",
+                            "Previsió Hipoteca": "hipoteca.csv",
+                            "Estalvis DP": "estalviDP.csv"
+                        }.get(db_select)
+                        
+                        if tbl_filename:
+                            # Update the dataframe
+                            for k, v in new_values.items():
+                                df_to_show.at[row_idx, k] = v
+                                
+                            save_to_csv(df_to_show, tbl_filename)
+                            st.success("Registre modificat correctament a Supabase!")
+                            st.rerun()
+                            
+            elif action == "Esborrar":
+                st.warning("⚠️ **Atenció:** Aquesta acció no es pot desfer.")
+                confirm_delete = st.checkbox("Estic segur que vull esborrar aquest registre definitivament.", value=False, key=f"confirm_del_{db_select}_{row_idx}")
+                
+                if confirm_delete:
+                    delete_btn = st.button("❌ Esborra el registre ara", type="primary", key=f"del_btn_{db_select}_{row_idx}")
+                    if delete_btn:
+                        tbl_filename = {
+                            "Despeses (General)": "despeses.csv",
+                            "Pagaments (General)": "pagaments.csv",
+                            "Ingressos": "ingressos.csv",
+                            "Compres Supermercat": "compresSuper.csv",
+                            "Gasolina": "gasolina.csv",
+                            "Kilòmetres Cotxe": "kmCotxe.csv",
+                            "Previsió Hipoteca": "hipoteca.csv",
+                            "Estalvis DP": "estalviDP.csv"
+                        }.get(db_select)
+                        
+                        if tbl_filename:
+                            # Drop the row
+                            df_updated = df_to_show.drop(row_idx)
+                            save_to_csv(df_updated, tbl_filename)
+                            st.success("Registre esborrat correctament de Supabase!")
+                            st.rerun()
+    else:
+        st.info("No hi ha cap registre filtrat per seleccionar.")
+
 
