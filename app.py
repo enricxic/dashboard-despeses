@@ -272,8 +272,7 @@ def load_dashboard_data(mtimes=None):
     df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
     df_desp['Import càrrec'] = clean_numeric(df_desp['Import càrrec'])
     df_desp['parsed_date'] = df_desp['Data'].apply(parse_excel_date)
-    df_desp['mes_lower'] = df_desp['mes'].astype(str).str.lower()
-    df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes_lower'].map(MONTHS_MAP).fillna(12).astype(int)
+    df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes'].astype(str).str.lower().map(MONTHS_MAP).fillna(12).astype(int)
     
     df_ing = pd.read_sql_table('ingressos', engine)
     df_ing = df_ing.dropna(subset=['idIngres'])
@@ -1789,7 +1788,7 @@ def get_balances_up_to(year, month_name):
         balances[k] = balances.get(k, 0.0) + INITIAL_BALANCES[k]
         
     # Account for VISA separately: VISA is a liability card, its balance is the sum of VISA transactions in the SELECTED month
-    visa_sub = df_desp[(df_desp['any'] == year) & (df_desp['mes_lower'] == month_name) & (df_desp['FormaPago'] == 'VISA')]
+    visa_sub = df_desp[(df_desp['any'] == year) & (df_desp['mes'].astype(str).str.lower() == month_name) & (df_desp['FormaPago'] == 'VISA')]
     balances['Pago VISA'] = -visa_sub['Import càrrec'].sum()
     
     # Clean up small negative values that should be zero
@@ -2640,19 +2639,114 @@ with tab_intro:
             .style.format({'Import': '{:,.2f} €'})
             .apply(style_rows, axis=None)
         )
+# ----------------- DIALOGS FOR MODIFY / DELETE -----------------
+@st.dialog("✏️ Modificar Registre")
+def show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx):
+    st.markdown(f"Modificant el registre seleccionat de la taula **{db_select}**.")
+    with st.form(key=f"dialog_edit_form_{db_select}_{row_idx}"):
+        new_values = {}
+        form_cols = st.columns(2)
+        # Drop columns we don't want to edit directly
+        editable_cols = [c for c in df_to_show.columns if c not in ['ID_mov', 'idPago', 'idIngres', 'IdCompra', 'idGasolina', 'idRuta', 'mes_lower', 'parsed_date', 'clean_mes', 'date_score']]
+        
+        for col_num, col_name in enumerate(editable_cols):
+            col_idx = col_num % 2
+            val = current_row_data[col_name]
+            
+            with form_cols[col_idx]:
+                if isinstance(val, (int, np.integer)):
+                    new_values[col_name] = st.number_input(f"{col_name}", value=int(val), step=1)
+                elif isinstance(val, (float, np.floating)):
+                    new_values[col_name] = st.number_input(f"{col_name}", value=float(val), step=0.01)
+                elif isinstance(val, bool):
+                    new_values[col_name] = st.checkbox(f"{col_name}", value=val)
+                else:
+                    new_values[col_name] = st.text_input(f"{col_name}", value=str(val) if not pd.isna(val) else "")
+                    
+        st.write("")
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            submit = st.form_submit_button("💾 Desa els canvis", use_container_width=True)
+        with col_btn2:
+            cancel = st.form_submit_button("Cancel·la", use_container_width=True)
+            
+        if submit:
+            typed_values = {}
+            for k, v in new_values.items():
+                orig_val = current_row_data[k]
+                if pd.isna(orig_val):
+                    typed_values[k] = v
+                elif isinstance(orig_val, (int, np.integer)):
+                    typed_values[k] = int(v) if v != "" else None
+                elif isinstance(orig_val, (float, np.floating)):
+                    typed_values[k] = float(v) if v != "" else None
+                elif isinstance(orig_val, bool):
+                    typed_values[k] = bool(v)
+                else:
+                    typed_values[k] = str(v)
+            
+            if id_col:
+                if update_db_row(table_name, id_col, id_val, typed_values):
+                    st.success("Registre modificat correctament!")
+                    st.rerun()
+            else:
+                tbl_filename = {
+                    "Previsió Hipoteca": "hipoteca.csv",
+                    "Estalvis DP": "estalviDP.csv"
+                }.get(db_select)
+                if tbl_filename:
+                    for k, v in typed_values.items():
+                        df_to_show.at[row_idx, k] = v
+                    save_to_csv(df_to_show, tbl_filename)
+                    st.success("Registre modificat correctament!")
+                    st.rerun()
+
+@st.dialog("❌ Confirmar Eliminació")
+def show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx):
+    st.warning("⚠️ **Atenció:** Aquesta acció no es pot desfer. El registre s'esborrarà definitivament.")
+    
+    st.markdown("**Detalls del registre a eliminar:**")
+    details_html = "<div style='background-color:#1e293b; padding:10px; border-radius:5px; margin-bottom:15px; border:1px solid #334155;'>"
+    for col, val in current_row_data.items():
+        if col not in ['ID_mov', 'idPago', 'idIngres', 'IdCompra', 'idGasolina', 'idRuta'] and not pd.isna(val):
+            details_html += f"<div style='margin-bottom:3px;'><strong>{col}</strong>: {val}</div>"
+    details_html += "</div>"
+    st.markdown(details_html, unsafe_allow_html=True)
+    
+    col_del1, col_del2 = st.columns(2)
+    with col_del1:
+        if st.button("❌ Sí, esborra definitivament", type="primary", use_container_width=True):
+            if id_col:
+                if delete_db_row(table_name, id_col, id_val):
+                    st.success("Registre esborrat correctament!")
+                    st.rerun()
+            else:
+                tbl_filename = {
+                    "Previsió Hipoteca": "hipoteca.csv",
+                    "Estalvis DP": "estalviDP.csv"
+                }.get(db_select)
+                if tbl_filename:
+                    df_updated = df_to_show.drop(row_idx)
+                    save_to_csv(df_updated, tbl_filename)
+                    st.success("Registre esborrat correctament!")
+                    st.rerun()
+    with col_del2:
+        if st.button("Cancel·la", use_container_width=True):
+            st.rerun()
+
 # ================= TAB 4: BASES DE DADES (Supabase) =================
 with tab_db:
     st.markdown("### 🗃️ Navegador de Taules (Supabase)")
     
     db_select = st.selectbox("Escull la taula que vols consultar", [
         "Despeses (General)", "Pagaments (General)", "Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Previsió Hipoteca", "Estalvis DP"
-    ])
+    ], key="db_select_box")
     
     st.write("")
     
     # 1. Select the base dataframe
     if db_select == "Despeses (General)":
-        df_to_show = df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore')
+        df_to_show = df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score', 'mes_lower'], errors='ignore')
     elif db_select == "Pagaments (General)":
         df_to_show = df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
     elif db_select == "Ingressos":
@@ -2742,7 +2836,7 @@ with tab_db:
             st.session_state[page_key] = total_pages - 1
             st.rerun()
             
-    # Slicing and Displaying
+    # Slicing
     start_idx = st.session_state[page_key] * page_size
     end_idx = min(start_idx + page_size, total_rows)
     df_page = df_filtered.iloc[start_idx:end_idx]
@@ -2752,51 +2846,25 @@ with tab_db:
     else:
         st.markdown("No s'ha trobat cap registre amb els criteris seleccionats.")
         
-    st.dataframe(df_page, use_container_width=True)
+    # Interactive dataframe with row selection enabled
+    selection_event = st.dataframe(
+        df_page, 
+        use_container_width=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        key=f"df_select_{db_select}_{st.session_state[page_key]}"
+    )
     
     # 4. Modify / Delete Section
     st.write("")
-    st.markdown("---")
-    st.markdown("<h4 style='color:#f39c12;'>✏️ Modificar / ❌ Esborrar un registre</h4>", unsafe_allow_html=True)
     
-    # Generate human-readable labels for the dropdown, starting with a safe placeholder
-    row_options = [(-1, "🔍 Tria un registre de la llista...")]
-    for idx, row in df_filtered.iterrows():
-        # Try to find a date, description/concept, and amount
-        date_val = ""
-        for date_col in ['Data', 'data', 'data_inici']:
-            if date_col in row:
-                date_val = f" {row[date_col]}"
-                break
-                
-        desc_val = ""
-        for desc_col in ['Concepte', 'Idconcepte', 'article', 'ruta', 'concepte', 'mes']:
-            if desc_col in row:
-                desc_val = f" | {row[desc_col]}"
-                break
-                
-        amt_val = ""
-        for amt_col in ['Import càrrec', 'import ingrés', 'Import', 'totLinea', 'import', 'quota']:
-            if amt_col in row and float(row[amt_col]) > 0:
-                amt_val = f" | {row[amt_col]} €"
-                break
-                
-        label = f"Index: {idx}{date_val}{desc_val}{amt_val}"
-        row_options.append((idx, label))
-        
-    selected_row_option = st.selectbox(
-        "Selecciona el registre que vols gestionar (de la llista filtrada de dalt):",
-        options=row_options,
-        format_func=lambda x: x[1],
-        index=0,  # Default to "Tria un registre..." placeholder for safety!
-        key=f"select_row_{db_select}"
-    )
+    selected_rows = selection_event.selection.get("rows", [])
     
-    if selected_row_option and selected_row_option[0] != -1:
-        row_idx = selected_row_option[0]
+    if selected_rows:
+        row_idx_page = selected_rows[0]
+        row_idx = df_page.index[row_idx_page]
         current_row_data = df_to_show.loc[row_idx]
         
-        # Mapping table name to Postgres table name and ID column for SQL operations
         db_table_info = {
             "Despeses (General)": ("despeses", "ID_mov"),
             "Pagaments (General)": ("pagaments", "idPago"),
@@ -2808,104 +2876,58 @@ with tab_db:
             "Estalvis DP": ("estalviDP", None)
         }.get(db_select)
         
-        col_actions = st.columns([3, 9])
-        with col_actions[0]:
-            action = st.radio("Acció a realitzar", ["Modificar", "Esborrar"], horizontal=True, key=f"action_{db_select}_{row_idx}")
-            
-        if action == "Modificar":
-            st.markdown("**Modifica els camps del registre:**")
-            # Build form dynamically
-            with st.form(key=f"edit_form_{db_select}_{row_idx}"):
-                new_values = {}
-                # We can use columns to place input fields nicely
-                form_cols = st.columns(3)
-                for col_num, col_name in enumerate(df_to_show.columns):
-                    col_idx = col_num % 3
-                    val = current_row_data[col_name]
-                    
-                    with form_cols[col_idx]:
-                        # Determine type of input
-                        if isinstance(val, (int, np.integer)):
-                            new_values[col_name] = st.number_input(f"{col_name}", value=int(val), step=1)
-                        elif isinstance(val, (float, np.floating)):
-                            new_values[col_name] = st.number_input(f"{col_name}", value=float(val), step=0.01)
-                        elif isinstance(val, bool):
-                            new_values[col_name] = st.checkbox(f"{col_name}", value=val)
-                        else:
-                            new_values[col_name] = st.text_input(f"{col_name}", value=str(val) if not pd.isna(val) else "")
-                            
-                save_changes = st.form_submit_button("💾 Desa els canvis")
-                if save_changes:
-                    table_name, id_col = db_table_info
-                    
-                    # Convert input values to match database column data types
-                    typed_values = {}
-                    for k, v in new_values.items():
-                        orig_val = current_row_data[k]
-                        if pd.isna(orig_val):
-                            typed_values[k] = v
-                        elif isinstance(orig_val, (int, np.integer)):
-                            typed_values[k] = int(v) if v != "" else None
-                        elif isinstance(orig_val, (float, np.floating)):
-                            typed_values[k] = float(v) if v != "" else None
-                        elif isinstance(orig_val, bool):
-                            typed_values[k] = bool(v)
-                        else:
-                            typed_values[k] = str(v)
-                            
-                    if id_col:
-                        id_val = current_row_data[id_col]
-                        if isinstance(id_val, (int, np.integer)):
-                            id_val = int(id_val)
-                        else:
-                            id_val = str(id_val)
-                            
-                        if update_db_row(table_name, id_col, id_val, typed_values):
-                            st.success("Registre modificat correctament a Supabase!")
-                            st.rerun()
-                    else:
-                        # Fallback for tables without id (hipoteca / estalviDP)
-                        tbl_filename = {
-                            "Previsió Hipoteca": "hipoteca.csv",
-                            "Estalvis DP": "estalviDP.csv"
-                        }.get(db_select)
-                        if tbl_filename:
-                            for k, v in typed_values.items():
-                                df_to_show.at[row_idx, k] = v
-                            save_to_csv(df_to_show, tbl_filename)
-                            st.success("Registre modificat correctament a Supabase!")
-                            st.rerun()
-                        
-        elif action == "Esborrar":
-            st.warning("⚠️ **Atenció:** Aquesta acció no es pot desfer.")
-            confirm_delete = st.checkbox("Estic segur que vull esborrar aquest registre definitivament.", value=False, key=f"confirm_del_{db_select}_{row_idx}")
-            
-            if confirm_delete:
-                delete_btn = st.button("❌ Esborra el registre ara", type="primary", key=f"del_btn_{db_select}_{row_idx}")
-                if delete_btn:
-                    table_name, id_col = db_table_info
-                    if id_col:
-                        id_val = current_row_data[id_col]
-                        if isinstance(id_val, (int, np.integer)):
-                            id_val = int(id_val)
-                        else:
-                            id_val = str(id_val)
-                            
-                        if delete_db_row(table_name, id_col, id_val):
-                            st.success("Registre esborrat correctament de Supabase!")
-                            st.rerun()
-                    else:
-                        tbl_filename = {
-                            "Previsió Hipoteca": "hipoteca.csv",
-                            "Estalvis DP": "estalviDP.csv"
-                        }.get(db_select)
-                        if tbl_filename:
-                            df_updated = df_to_show.drop(row_idx)
-                            save_to_csv(df_updated, tbl_filename)
-                            st.success("Registre esborrat correctament de Supabase!")
-                            st.rerun()
+        table_name, id_col = db_table_info
+        id_val = None
+        if id_col:
+            id_val = current_row_data[id_col]
+            if isinstance(id_val, (int, np.integer)):
+                id_val = int(id_val)
+            else:
+                id_val = str(id_val)
+                
+        # Premium representation of the selected row with icons at the end
+        st.markdown("<h4 style='color:#f39c12; margin-bottom: 5px;'>📋 Registre Seleccionat:</h4>", unsafe_allow_html=True)
+        
+        # Configure columns to display
+        key_cols_map = {
+            "Despeses (General)": ['Data', 'Banc', 'Import càrrec', 'import ingrés', 'Idcategoria', 'Idconcepte', 'Comentari'],
+            "Pagaments (General)": ['Data', 'Banc', 'Import', 'Descripció'],
+            "Ingressos": ['Data', 'Banc', 'Import', 'Categoria', 'Concepte'],
+            "Compres Supermercat": ['data', 'supermercat', 'producte', 'totLinea'],
+            "Gasolina": ['data', 'banc', 'import', 'litres', 'km_actuals'],
+            "Kilòmetres Cotxe": ['data', 'motiu', 'km'],
+            "Previsió Hipoteca": ['any', 'mes', 'Quota fixa'],
+            "Estalvis DP": ['any', 'mes', 'quota', 'pagat']
+        }
+        
+        cols_to_show = [c for c in key_cols_map.get(db_select, df_to_show.columns) if c in df_to_show.columns]
+        
+        # Horizontal box design
+        n_cols = len(cols_to_show)
+        # We reserve columns for fields + 1 wider column for the two buttons
+        ui_cols = st.columns(n_cols + 1)
+        for idx_c, col_name in enumerate(cols_to_show):
+            with ui_cols[idx_c]:
+                st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase;'>{col_name}</div>", unsafe_allow_html=True)
+                val_repr = current_row_data[col_name]
+                if pd.isna(val_repr):
+                    val_repr = "-"
+                elif isinstance(val_repr, float):
+                    val_repr = f"{val_repr:,.2f}"
+                st.markdown(f"<div style='font-size:0.92rem; font-weight:bold; color:#f8fafc; padding-top:2px;'>{val_repr}</div>", unsafe_allow_html=True)
+                
+        with ui_cols[-1]:
+            st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase;'>Accions</div>", unsafe_allow_html=True)
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                if st.button("✏️", help="Modificar registre", key=f"btn_mod_call_{db_select}_{row_idx}", use_container_width=True):
+                    show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
+            with btn_col2:
+                if st.button("❌", help="Esborrar registre", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
+                    show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
     else:
-        st.info("💡 Selecciona un registre de la llista de dalt per poder modificar-lo o esborrar-lo.")
+        st.info("💡 **Com fer modificacions o esborrar:** Selecciona un registre fent clic directament a sobre d'una fila de la taula superior.")
+
 
 
 
