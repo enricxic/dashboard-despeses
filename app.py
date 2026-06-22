@@ -2956,11 +2956,11 @@ with tab_db:
             col_configs[col] = st.column_config.TextColumn(width="large")
         elif any(x in col_lower for x in ["id_", "idpago", "idingres", "idcompra", "idgasolina", "idruta"]):
             col_configs[col] = st.column_config.Column(width="small")
-        elif any(x in col_lower for x in ["data", "fecha", "any", "mes", "dia"]):
+        elif any(x in col_lower for x in ["data", "fecha", "any", "mes", "dia", "forma"]):
             col_configs[col] = st.column_config.Column(width="small")
         elif any(x in col_lower for x in ["import", "quantitat", "preu", "valor"]):
-            col_configs[col] = st.column_config.Column(width="small")
-        elif any(x in col_lower for x in ["categoria", "concepte", "banc", "compte", "forma"]):
+            col_configs[col] = st.column_config.Column(width="medium")
+        elif any(x in col_lower for x in ["categoria", "concepte", "banc", "compte"]):
             col_configs[col] = st.column_config.TextColumn(width="medium")
             
     with col_table:
