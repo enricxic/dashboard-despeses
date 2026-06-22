@@ -2840,7 +2840,8 @@ with tab_db:
     start_idx = st.session_state[page_key] * page_size
     end_idx = min(start_idx + page_size, total_rows)
     df_page = df_filtered.iloc[start_idx:end_idx].copy()
-    df_page['Accions'] = '✏️   ❌'
+    df_page['Modificar'] = '✏️'
+    df_page['Esborrar'] = '❌'
     
     if total_rows > 0:
         st.markdown(f"Mostrant registres **{start_idx + 1}** a **{end_idx}** de **{total_rows}** filtrats (Total taula: **{len(df_to_show)}**)")
