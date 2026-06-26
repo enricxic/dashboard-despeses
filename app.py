@@ -467,13 +467,13 @@ def get_config_articles(family):
     if cat_config and "articles_compres" in cat_config and family in cat_config["articles_compres"]:
         return cat_config["articles_compres"][family]
     return sorted(list(df_super[df_super['familia'] == family]['article'].dropna().unique())) if 'article' in df_super.columns else []
-
 def save_to_csv(df, filename):
     table_name = filename.replace('.csv', '')
     engine = get_engine()
     try:
         df.to_sql(table_name, engine, if_exists='replace', index=False)
         st.cache_data.clear()
+        get_db_tracker().update()
     except Exception as e:
         st.error(f"❌ **Error al desar la taula `{table_name}` a Supabase**: {str(e)}")
         st.stop()
@@ -2432,18 +2432,19 @@ with tab_intro:
             st.markdown("<h5 style='color:#f39c12; margin-top:5px; margin-bottom:5px;'>⛽ Paràmetres del proveïment de gasolina</h5>", unsafe_allow_html=True)
             gas_col1, gas_col2, gas_col3, gas_col4 = st.columns(4)
             with gas_col1:
-                gas_cotxe = st.selectbox("Cotxe", sorted(list(df_gas['cotxe'].dropna().unique())), key="desp_gas_cotxe")
+                cars_list = sorted(list(df_gas['cotxe'].dropna().unique()))
+                if "tívoli" not in cars_list:
+                    cars_list = ["tívoli"] + cars_list
+                default_car_idx = cars_list.index("tívoli") if "tívoli" in cars_list else 0
+                gas_cotxe = st.selectbox("Cotxe", cars_list, index=default_car_idx, key="desp_gas_cotxe")
             with gas_col2:
-                gas_litres = st.number_input("Litres", min_value=0.0, value=st.session_state.get("desp_litres", 0.0), step=0.01, key="desp_litres_input")
-                # Sync session state
-                st.session_state["desp_litres"] = gas_litres
+                gas_preu_l = st.number_input("Preu per litre (€/l)", min_value=0.0, value=1.214, step=0.001, format="%.3f", key="desp_gas_preu_l")
             with gas_col3:
-                gas_preu_l = import_carg / gas_litres if gas_litres > 0 else 0.0
-                st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>Preu/Litre: {gas_preu_l:.3f} €/l</div>", unsafe_allow_html=True)
+                calculated_litres = import_carg / gas_preu_l if gas_preu_l > 0 else 0.0
+                st.session_state["desp_litres"] = calculated_litres
+                st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>Litres: {calculated_litres:.2f} l</div>", unsafe_allow_html=True)
             with gas_col4:
                 st.write("")
-                if st.button("🖩 Calculadora Preu/Litre", key="btn_calc_gas_in_desp", use_container_width=True):
-                    show_gasoline_calculator_in_desp()
             
         col_btns = st.columns([1.5, 1.5, 9.0])
         with col_btns[0]:
@@ -2457,7 +2458,7 @@ with tab_intro:
             if not banc or not forma_pago or not cat_val or not concept_val or not grup_val:
                 st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts.")
             elif is_gas_cat and st.session_state.get("desp_litres", 0.0) <= 0.0:
-                st.error("⚠️ Heu d'introduir un número vàlid de litres per a la gasolina (més gran que 0).")
+                st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
             else:
                 # 1. Save to despeses
                 new_row_desp = {
@@ -2476,11 +2477,12 @@ with tab_intro:
                 }
                 df_desp = pd.concat([df_desp, pd.DataFrame([new_row_desp])], ignore_index=True)
                 save_to_csv(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), 'despeses.csv')
+                st.session_state["df_desp"] = df_desp
                 
                 # 2. Save to gasolina if category is gasolina
                 if is_gas_cat:
-                    litres_saved = st.session_state.get("desp_litres", 0.0)
-                    preu_l_saved = import_carg / litres_saved if litres_saved > 0 else 0.0
+                    preu_l_saved = st.session_state.get("desp_gas_preu_l", 1.214)
+                    litres_saved = import_carg / preu_l_saved if preu_l_saved > 0 else 0.0
                     new_row_gas = {
                         'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty else 1,
                         'cotxe': st.session_state.get("desp_gas_cotxe"),
@@ -2492,11 +2494,12 @@ with tab_intro:
                         'litres': litres_saved,
                         'lloc': concept_val # Concept acts as fuel station / place
                     }
-                    # We need to reload df_gas first to verify no overlap, then append
                     df_gas = pd.concat([df_gas, pd.DataFrame([new_row_gas])], ignore_index=True)
                     save_to_csv(df_gas.drop(columns=['parsed_date'], errors='ignore'), 'gasolina.csv')
+                    st.session_state["df_gas"] = df_gas
                     
                 st.success("Moviment real i proveïment de gasolina desats correctament!")
+                get_db_tracker().update()
                 clear_form_state("desp_")
                 st.rerun()
             
