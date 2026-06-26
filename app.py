@@ -2482,7 +2482,7 @@ with tab_intro:
                 # 2. Save to gasolina if category is gasolina
                 if is_gas_cat:
                     preu_l_saved = st.session_state.get("desp_gas_preu_l", 1.214)
-                    litres_saved = import_carg / preu_l_saved if preu_l_saved > 0 else 0.0
+                    litres_saved = round(import_carg / preu_l_saved, 2) if preu_l_saved > 0 else 0.0
                     new_row_gas = {
                         'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty else 1,
                         'cotxe': st.session_state.get("desp_gas_cotxe"),
