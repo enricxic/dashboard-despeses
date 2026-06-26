@@ -23,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Prevent browser from proposing page translation by modifying the parent window document
+# Prevent browser from proposing page translation and hide streamlit developer badges
 import streamlit.components.v1 as components
 components.html(
     """
@@ -36,6 +36,27 @@ components.html(
             meta.name = 'google';
             meta.content = 'notranslate';
             doc.head.appendChild(meta);
+        }
+        
+        // Hide Manage App floating element dynamically
+        const style = doc.createElement('style');
+        style.innerHTML = `
+            footer { display: none !important; }
+            [data-testid="stAppDeployButton"] { display: none !important; }
+            .viewerBadge_container__1QS1h, .viewerBadge_link__29513 { display: none !important; }
+            iframe[title="streamlit.components.v1.html-component"] { display: none !important; }
+            div[class^="viewerBadge_"] { display: none !important; }
+        `;
+        doc.head.appendChild(style);
+        
+        // Detect if client is a desktop computer and set a session cookie to bypass login
+        const ua = navigator.userAgent;
+        const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+        if (!isMobile) {
+            // Set cookie to indicate desktop client
+            doc.cookie = "client_device_type=desktop; path=/";
+        } else {
+            doc.cookie = "client_device_type=mobile; path=/";
         }
     </script>
     """,
@@ -125,17 +146,30 @@ st.markdown("""
     input[type=number] {
         -moz-appearance: textfield;
     }
-    /* Hide Streamlit default viewer footer and manage app button */
-    footer, [data-testid="stAppDeployButton"] {
+    
+    /* Hide Streamlit default viewer elements, deploy button and Manage App footer */
+    div[data-testid="stAppDeployButton"] {
         display: none !important;
     }
-    iframe[title="streamlit.components.v1.html-component"] {
+    footer {
         display: none !important;
     }
-    /* Make error/alert banner (valor superat) narrower */
-    div[data-testid="stNotification"] {
-        max-width: 600px !important;
-        margin: 0 auto 10px auto !important;
+    .viewerBadge_container__1QS1h, .viewerBadge_link__29513 {
+        display: none !important;
+    }
+    #MainMenu {
+        display: none !important;
+    }
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    
+    /* CSS logic to target st.error container to make it narrower */
+    div[data-testid="stAlert"] {
+        max-width: 620px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding: 6px 12px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -148,11 +182,17 @@ def check_password():
     if platform.system() == "Windows":
         return True # Bypass login for local execution on Windows PC
         
-    # Check if request is from a desktop PC (non-mobile user agent)
+    # Check if request is from a desktop PC (non-mobile user agent or cookie)
     try:
         from streamlit.web.server.websocket_headers import _get_websocket_headers
         headers = _get_websocket_headers()
         if headers:
+            # 1. Check via Cookie header set by client script
+            cookies = headers.get("Cookie", "")
+            if "client_device_type=desktop" in cookies:
+                return True
+            
+            # 2. Check via direct User-Agent
             ua = headers.get("User-Agent", "")
             # If it doesn't contain common mobile indicators, treat it as a PC
             if "Mobi" not in ua and "Android" not in ua and "iPhone" not in ua and "iPad" not in ua:
