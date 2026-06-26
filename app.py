@@ -125,6 +125,18 @@ st.markdown("""
     input[type=number] {
         -moz-appearance: textfield;
     }
+    /* Hide Streamlit default viewer footer and manage app button */
+    footer, [data-testid="stAppDeployButton"] {
+        display: none !important;
+    }
+    iframe[title="streamlit.components.v1.html-component"] {
+        display: none !important;
+    }
+    /* Make error/alert banner (valor superat) narrower */
+    div[data-testid="stNotification"] {
+        max-width: 600px !important;
+        margin: 0 auto 10px auto !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -135,6 +147,16 @@ DEFAULT_HASH = "24b7b70518e4d4030003e75d68223a85b07eb95b2cf273f3b13d87c27aa2c863
 def check_password():
     if platform.system() == "Windows":
         return True # Bypass login for local execution on Windows PC
+        
+    # Check if request is from a desktop PC (non-mobile user agent)
+    from streamlit.web.server.websocket_headers import _get_websocket_headers
+    headers = _get_websocket_headers()
+    if headers:
+        ua = headers.get("User-Agent", "")
+        # If it doesn't contain common mobile indicators, treat it as a PC
+        if "Mobi" not in ua and "Android" not in ua and "iPhone" not in ua and "iPad" not in ua:
+            return True
+
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
@@ -191,8 +213,8 @@ INITIAL_BALANCES = {
     'BBVA': 7510.73,
     'La Caixa': 102.28,
     'Casa': 267.28,
-    'Cortelnglés': 1566.69,
-    'Trade Republic': 0.0,
+    'CORTEINGLÉS': 1566.69,
+    'TRADE REPUB.': 0.0,
     'Tg.Moneder': 0.0
 }
 
@@ -200,12 +222,12 @@ INITIAL_BALANCES = {
 BANK_MAPPING = {
     'BBVA': 'BBVA',
     'LaCaixa': 'La Caixa',
-    'TradeRep.': 'Trade Republic',
+    'TradeRep.': 'TRADE REPUB.',
     'Casa': 'Casa',
-    'T.CorteInglés': 'Cortelnglés',
-    't.CorteInglés': 'Cortelnglés',
-    'T.CorteIngles': 'Cortelnglés',
-    't.CorteIngles': 'Cortelnglés',
+    'T.CorteInglés': 'CORTEINGLÉS',
+    't.CorteInglés': 'CORTEINGLÉS',
+    'T.CorteIngles': 'CORTEINGLÉS',
+    't.CorteIngles': 'CORTEINGLÉS',
     'T.Moneder': 'Tg.Moneder',
 }
 
@@ -1852,9 +1874,10 @@ if 2026 not in years_list:
 
 # Access or default the values
 selected_year = st.session_state.get("sel_year", 2026)
-selected_month_cat = st.session_state.get("sel_month", "juny")
-selected_month_data = month_translations[selected_month_cat]
-payment_filter = st.session_state.get("sel_pay_filter", "Tots")
+# Default month is always current month (June) or last month with data
+selected_month_cat = "juny"
+selected_month_data = "junio"
+payment_filter = "Tots"
 
 # ----------------- ACCOUNT BALANCES CALCULATION -----------------
 # Calculate balances for each account from inception up to end of selected month and year
@@ -1923,13 +1946,10 @@ with tab_dash:
     # 2. Row of Title and Filters Popover (in place of Juny 2026)
     col_sum_lbl, col_sum_btn = st.columns([11.4, 0.6], vertical_alignment="center")
     with col_sum_lbl:
-        st.markdown("<h3 style='margin:0; color:#f39c12;'>📅 Resum Mensual d'Ingressos i Despeses</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='margin:0; color:#f39c12;'>📅 Resum Mensual d'Ingressos i Despeses {selected_year}</h3>", unsafe_allow_html=True)
     with col_sum_btn:
         with st.popover("⚙️", use_container_width=False):
             selected_year = st.selectbox("Any", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year")
-            selected_month_cat = st.selectbox("Mes", CATALAN_MONTHS, index=CATALAN_MONTHS.index(selected_month_cat) if selected_month_cat in CATALAN_MONTHS else 5, key="sel_month")
-            selected_month_data = month_translations[selected_month_cat]
-            payment_filter = st.selectbox("Estat Pagament", ["Tots", "Pagat", "Pendent"], index=["Tots", "Pagat", "Pendent"].index(payment_filter), key="sel_pay_filter")
 
     # 3. Re-calculate balances and render bank metrics at the top container
     current_balances = get_balances_up_to(selected_year, selected_month_data)
