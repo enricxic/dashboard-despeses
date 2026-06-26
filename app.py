@@ -2700,11 +2700,9 @@ with tab_intro:
         # Row 2 (2 columns)
         r2_col1, r2_col2 = st.columns(2)
         with r2_col1:
-            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, step=1.0, key="km_contador")
+            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=0.0, step=1.0, key="km_contador")
         with r2_col2:
-            last_val = df_km[df_km['cotxe'] == cotxe_val]['contador'].max() if not df_km.empty else 0
-            dist_km = contador_val - last_val if contador_val > last_val else 0.0
-            km_val = st.number_input("Kilòmetres recorreguts", min_value=0.0, value=float(dist_km), step=1.0, key="km_recorreguts")
+            km_val = st.number_input("Kilòmetres recorreguts", min_value=0.0, value=0.0, step=1.0, key="km_recorreguts")
             
         col_btns = st.columns([1.5, 1.5, 9.0])
         with col_btns[0]:
@@ -2730,6 +2728,21 @@ with tab_intro:
             st.rerun()
             
     elif data_type == "Gasolina":
+        # Dialog calculator helper for Gasolina price per litre
+        @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
+        def show_gasoline_calculator():
+            st.markdown("Introdueix l'import pagat i el preu per litre per calcular els litres automàticament.")
+            calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get("gas_import", 0.0), step=0.01)
+            calc_preu_l = st.number_input("Preu per litre (€/l):", min_value=0.001, value=1.500, step=0.001, format="%.3f")
+            
+            calc_litres = calc_import / calc_preu_l if calc_preu_l > 0 else 0.0
+            st.markdown(f"**Litres estimats**: `{calc_litres:.2f} l` (`{calc_import:.2f} € / {calc_preu_l:.3f} €/l`)")
+            
+            if st.button("Aplicar al formulari"):
+                st.session_state["gas_import"] = calc_import
+                st.session_state["gas_litres"] = calc_litres
+                st.rerun()
+
         # Row 1 (3 columns)
         r1_col1, r1_col2, r1_col3 = st.columns(3)
         with r1_col1:
@@ -2749,7 +2762,9 @@ with tab_intro:
             lloc_val = st.text_input("Benzinera / Lloc", key="gas_lloc")
         with r2_col3:
             preu_l = import_val / litres_val if litres_val > 0 else 0.0
-            st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>⛽ Preu/Litre: {preu_l:.3f} €/l</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='margin-top:5px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>⛽ Preu/Litre: {preu_l:.3f} €/l</div>", unsafe_allow_html=True)
+            if st.button("🖩 Calculadora Preu/Litre", use_container_width=True):
+                show_gasoline_calculator()
             
         col_btns = st.columns([1.5, 1.5, 9.0])
         with col_btns[0]:
