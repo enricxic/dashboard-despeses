@@ -6723,7 +6723,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6734;TradeRep.;Dèbit;11/06/2026;junio;2026;0.0;4.4;Càrrec;menjar;Pa i pastisseria;
 6735;Efectiu;;10/06/2026;junio;2026;0.0;10.0;Càrrec;personal;Jordi;
 6736;Efectiu;;10/06/2026;junio;2026;0.0;4.0;Càrrec;menjar;Pa i pastisseria;
-6737;TradeRep.;Dèbit;11/06/2026;junio;2026;0.0;6.0;Càrrec;menjar;Dia;
+6737;TradeRep.;Dèbit;11/06/2026;junio;2026;0.0;6.03;Càrrec;menjar;Dia;
 6738;TradeRep.;Dèbit;11/06/2026;junio;2026;0.0;0.95;Càrrec;neteja;Dia;
 6739;TradeRep.;Dèbit;12/06/2026;junio;2026;0.0;19.32;Càrrec;menjar;AreaGuissona;
 6740;BBVA;Compte;12/06/2026;junio;2026;0.0;35.9;Càrrec;despesa_general;Lowi;
