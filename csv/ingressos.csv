@@ -540,4 +540,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 506.0;BBVA;18/12/2025;18;diciembre;2025.0;ingres_extra;Feina Foto;18;Felicitacions Nat…lia Bonilla;cobrat
 507.0;BBVA;19/12/2025;19;diciembre;2025.0;ingres_extra;Feina Foto;55;Calendaris Paqui Moreno;cobrat
 508.0;Efectiu;15/04/2025;15/01/1900;abril;2026.0;ingres_extra;Feina Horeca;365;Estovalles Xarrup 3000;cobrat
-509.0;BBVA;30/04/2026;30;abril;2026.0;ingres_extra;Devoluci¢ Hisenda;133,53;;cobrat
+509.0;BBVA;30/04/2026;30;abril;2026.0;ingres_extra;Devoluci¢ Hisenda;133,53;;cobrat;
+510.0;Efectiu;30/06/26;30;junio;2026.0;ingres_extra;Feina Horeca;805,65;Cartes L'Olivera;pendent
+
