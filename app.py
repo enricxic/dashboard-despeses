@@ -2271,15 +2271,18 @@ with tab_details:
     col_left, col_mid, col_right = st.columns([1, 1.5, 1.5])
     
     with col_left:
-        st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments Pendents / Pagats</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments Pendents</h4>", unsafe_allow_html=True)
+        
+        has_pending = False
         
         # 1. Hipoteca status
         sub_hip = df_hip[(df_hip['any'] == selected_year) & (df_hip['mes'].str.lower() == selected_month_data)]
         if not sub_hip.empty:
             hip_row = sub_hip.iloc[0]
             status_hip = "Pagat" if str(hip_row['pagat']).lower() == 'pagat' else "Pendent"
-            color = "green" if status_hip == "Pagat" else "red"
-            st.markdown(f"**🏠 Hipoteca**: {hip_row['Quota fixa']:.2f} € (<span style='color:{color};'>{status_hip}</span>)", unsafe_allow_html=True)
+            if status_hip == "Pendent":
+                st.markdown(f"**🏠 Hipoteca**: {hip_row['Quota fixa']:.2f} € (<span style='color:red;'>{status_hip}</span>)", unsafe_allow_html=True)
+                has_pending = True
         else:
             st.write("🏠 **Hipoteca**: No programada")
             
@@ -2290,8 +2293,9 @@ with tab_details:
             (df_desp['Idconcepte'] == 'Crèdit Cotxe')
         ]
         status_cotxe = "Pagat" if not sub_cotxe_paid.empty else "Pendent"
-        color_cotxe = "green" if status_cotxe == "Pagat" else "red"
-        st.markdown(f"**🚗 Crèdit Cotxe**: 337,14 € (<span style='color:{color_cotxe};'>{status_cotxe}</span>)", unsafe_allow_html=True)
+        if status_cotxe == "Pendent":
+            st.markdown(f"**🚗 Crèdit Cotxe**: 337,14 € (<span style='color:red;'>{status_cotxe}</span>)", unsafe_allow_html=True)
+            has_pending = True
         
         # 3. Estalvi DP status (always scheduled, defaults to Pending with last known quota if not found)
         sub_est = df_est[(df_est['any'] == selected_year) & (df_est['mes'].str.lower() == selected_month_data)]
@@ -2303,8 +2307,12 @@ with tab_details:
             status_est = "Pendent"
             quota_est = df_est['quota'].dropna().iloc[-1] if not df_est.empty else 231.53
             
-        color_est = "green" if status_est == "Pagat" else "red"
-        st.markdown(f"**🐷 Estalvi DP**: {quota_est:.2f} € (<span style='color:{color_est};'>{status_est}</span>)", unsafe_allow_html=True)
+        if status_est == "Pendent":
+            st.markdown(f"**🐷 Estalvi DP**: {quota_est:.2f} € (<span style='color:red;'>{status_est}</span>)", unsafe_allow_html=True)
+            has_pending = True
+            
+        if not has_pending:
+            st.info("No hi ha cap pagament pendent aquest mes.")
             
     with col_mid:
         st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
