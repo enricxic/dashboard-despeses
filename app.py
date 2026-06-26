@@ -404,6 +404,7 @@ def load_dashboard_data(mtimes=None):
             'Unnamed: 0': 'mes', 'Unnamed: 1': 'any', 'Unnamed: 2': 'quota', 'Unnamed: 5': 'pagat'
         })
     df_est = df_est.dropna(subset=['mes', 'any'])
+    df_est['any'] = pd.to_numeric(df_est['any'], errors='coerce')
     df_est['quota'] = clean_numeric(df_est['quota'])
     
     df_limits = pd.read_sql_table('limitsDespeses', engine).dropna(subset=['data_inici'])
