@@ -508,6 +508,31 @@ def insert_db_row(table_name, new_row_dict):
         st.error(f"❌ **Error a la base de dades (INSERT)**: {str(e)}")
         return False
 
+def append_to_db(df_new, table_name, state_key):
+    engine = get_engine()
+    try:
+        df_new.to_sql(table_name, engine, if_exists='append', index=False)
+        if state_key and state_key in st.session_state:
+            df = st.session_state[state_key]
+            st.session_state[state_key] = pd.concat([df, df_new], ignore_index=True)
+        get_db_tracker().update()
+        st.cache_data.clear()
+        load_dashboard_data.clear()
+        return True
+    except Exception as e:
+        st.error(f"❌ **Error a la base de dades (APPEND {table_name})**: {str(e)}")
+        return False
+
+def save_categories_conceptes(config):
+    filepath = "categories_conceptes.json"
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+        return True
+    except Exception:
+        return False
+
+
 def delete_db_row(table_name, id_col, id_val):
     engine = get_engine()
     from sqlalchemy import text
@@ -1253,7 +1278,7 @@ def cb_edit_ticket_item(idx):
     item = st.session_state["ticket_items"][idx]
     st.session_state["manual_fam_selectbox"] = item['familia']
     st.session_state["manual_art_selectbox"] = item['article']
-    st.session_state["manual_pes_num"] = float(item['pes'])
+    st.session_state["manual_pes_num"] = str(int(item['pes']))
     st.session_state["manual_qty_num"] = float(item['quantitat'])
     st.session_state["manual_preu_num"] = float(item['preuUnit'])
     st.session_state["manual_prom_num"] = float(item['prom'])
@@ -1271,7 +1296,7 @@ def cb_add_ticket_line():
         del st.session_state["finalize_error"]
     fam = st.session_state.get("manual_fam_selectbox", "")
     art = st.session_state.get("manual_art_selectbox", "")
-    pes = st.session_state.get("manual_pes_num", 0.0)
+    pes_raw = st.session_state.get("manual_pes_num", "0")
     qty = st.session_state.get("manual_qty_num", 0.0)
     preu = st.session_state.get("manual_preu_num", 0.0)
     prom = st.session_state.get("manual_prom_num", 0.0)
@@ -1284,6 +1309,13 @@ def cb_add_ticket_line():
     if "manual_input_error" in st.session_state:
         del st.session_state["manual_input_error"]
         
+    # Safe parse pes from text
+    try:
+        pes_digits = "".join([c for c in str(pes_raw) if c.isdigit()])
+        pes = int(pes_digits) if pes_digits else 0
+    except Exception:
+        pes = 0
+
     tot = (qty * preu) - prom
     new_item = {
         'familia': fam,
@@ -1304,7 +1336,7 @@ def cb_add_ticket_line():
         st.session_state["ticket_items"].append(new_item)
     
     # Reset widget states
-    st.session_state["manual_pes_num"] = 0.0
+    st.session_state["manual_pes_num"] = "0"
     st.session_state["manual_qty_num"] = 0.0
     st.session_state["manual_pct_num"] = 0.0
     st.session_state["manual_preu_num"] = 0.0
@@ -1478,8 +1510,7 @@ def cb_finalize_ticket():
             })
             
         if new_entries:
-            df_desp = pd.concat([df_desp, pd.DataFrame(new_entries)], ignore_index=True)
-            save_to_csv(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), 'despeses.csv')
+            append_to_db(pd.DataFrame(new_entries), 'despeses', 'df_desp')
     
     new_rows = []
     base_id = int(df_super['IdCompra'].max() + 1) if not df_super.empty else 1
@@ -1511,8 +1542,7 @@ def cb_finalize_ticket():
             'rebost': item['rebost']
         }
         new_rows.append(new_row)
-    df_super = pd.concat([df_super, pd.DataFrame(new_rows)], ignore_index=True)
-    save_to_csv(df_super.drop(columns=['parsed_date'], errors='ignore'), 'compresSuper.csv')
+    append_to_db(pd.DataFrame(new_rows), 'compresSuper', 'df_super')
     
     st.session_state["finalize_success"] = "Tiquet de súper i despesa associada desats correctament!"
     # Clear all fields and files on successful finalize
@@ -1793,12 +1823,12 @@ def render_compres_super_interface():
  
     with col_row2_3:
         st.markdown("**IMPORT TOTAL TICKET**")
-        st.markdown(f"<div style='background-color:#1e293b; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{total_import:,.2f} €</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{total_import:,.2f} €</div>", unsafe_allow_html=True)
         
     with col_row2_4:
         next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
         st.markdown("**Nº DESPESA**")
-        st.markdown(f"<div style='background-color:#1e293b; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{next_id}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{next_id}</div>", unsafe_allow_html=True)
 
     # Ensure manual input states are initialized
     if "manual_fam_selectbox" not in st.session_state:
@@ -1806,7 +1836,7 @@ def render_compres_super_interface():
     if "manual_art_selectbox" not in st.session_state:
         st.session_state["manual_art_selectbox"] = ""
     if "manual_pes_num" not in st.session_state:
-        st.session_state["manual_pes_num"] = 0.0
+        st.session_state["manual_pes_num"] = "0"
     if "manual_qty_num" not in st.session_state:
         st.session_state["manual_qty_num"] = 0.0
     if "manual_pct_num" not in st.session_state:
@@ -1838,9 +1868,27 @@ def render_compres_super_interface():
         if curr_art not in art_options:
             st.session_state["manual_art_selectbox"] = ""
         art_sel = st.selectbox("ARTICLE", art_options, key="manual_art_selectbox")
+        if fam_sel:
+            with st.popover("➕ Afegir article", use_container_width=True):
+                new_art_name = st.text_input("Nom del nou article:", key="new_article_name_input")
+                if st.button("Guardar article", key="btn_save_new_article", use_container_width=True):
+                    if new_art_name.strip():
+                        new_art = new_art_name.strip()
+                        global cat_config
+                        if "articles_compres" not in cat_config:
+                            cat_config["articles_compres"] = {}
+                        if fam_sel not in cat_config["articles_compres"]:
+                            cat_config["articles_compres"][fam_sel] = []
+                        if new_art not in cat_config["articles_compres"][fam_sel]:
+                            cat_config["articles_compres"][fam_sel].append(new_art)
+                            cat_config["articles_compres"][fam_sel].sort()
+                            save_categories_conceptes(cat_config)
+                            st.session_state["manual_art_selectbox"] = new_art
+                            st.toast(f"Article '{new_art}' afegit correctament a la família '{fam_sel}'!")
+                            st.rerun()
         
     with col_pes:
-        pes_val = st.number_input("PES", min_value=0.0, step=1.0, key="manual_pes_num")
+        pes_val = st.text_input("PES", key="manual_pes_num")
     with col_qty:
         qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num")
     with col_pct:
