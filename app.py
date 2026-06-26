@@ -38,7 +38,15 @@ components.html(
             doc.head.appendChild(meta);
         }
         
-        // Hide Manage App floating element dynamically
+        // Hide Manage App floating element dynamically and continuously
+        const hideBadges = () => {
+            const badges = doc.querySelectorAll('div[class^="viewerBadge_"], .viewerBadge_container__1QS1h, .viewerBadge_link__29513, footer, [data-testid="stAppDeployButton"]');
+            badges.forEach(b => b.style.display = 'none');
+        };
+        hideBadges();
+        setInterval(hideBadges, 500);
+        
+        // Target style tag injection in parent
         const style = doc.createElement('style');
         style.innerHTML = `
             footer { display: none !important; }
@@ -52,11 +60,27 @@ components.html(
         // Detect if client is a desktop computer and set a session cookie to bypass login
         const ua = navigator.userAgent;
         const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+        
+        // Parse current cookies
+        const getCookie = (name) => {
+            const value = `; ${doc.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        };
+        
         if (!isMobile) {
-            // Set cookie to indicate desktop client
-            doc.cookie = "client_device_type=desktop; path=/";
+            const currentType = getCookie("client_device_type");
+            if (currentType !== "desktop") {
+                doc.cookie = "client_device_type=desktop; path=/; max-age=31536000";
+                // Rerun or reload client side to send the cookie immediately to the server
+                window.parent.location.reload();
+            }
         } else {
-            doc.cookie = "client_device_type=mobile; path=/";
+            const currentType = getCookie("client_device_type");
+            if (currentType !== "mobile") {
+                doc.cookie = "client_device_type=mobile; path=/; max-age=31536000";
+            }
         }
     </script>
     """,
@@ -164,12 +188,14 @@ st.markdown("""
         display: none !important;
     }
     
-    /* CSS logic to target st.error container to make it narrower */
+    /* CSS logic to target st.error container to reduce occupied height/rows */
     div[data-testid="stAlert"] {
-        max-width: 620px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        padding: 6px 12px !important;
+        padding: 2px 10px !important;
+        margin: 2px auto !important;
+    }
+    div[data-testid="stAlert"] p {
+        margin: 0 !important;
+        line-height: 1.2 !important;
     }
     </style>
 """, unsafe_allow_html=True)
