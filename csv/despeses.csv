@@ -6741,25 +6741,13 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6752;TradeRep.;Dèbit;12/06/2026;junio;2026;0.0;75.2;Càrrec;restaurant;Restaurant;Por Babor. Palamós
 6753;Efectiu;;15/06/2026;junio;2026;0.0;79.5;Càrrec;restaurant;Restaurant;El Pla. Palamós
 6754;TradeRep.;Dèbit;13/06/2026;junio;2026;0.0;3.8;Càrrec;restaurant;Bar;Can Jordi. Palamós
-6743;BBVA;Compte;12/06/2026;junio;2026;300.0;;op_banc;op_banc;Traspas comptes;
-6744;TradeRep.;Compte;12/06/2026;junio;2026;;100.0;op_banc;op_banc;Traspas comptes;
-6745;TradeRep.;Debit;12/06/2026;junio;2026;;14.6;Carrec;restaurant;Bar;Esmorzar Jordi Bayes
-6746;LaCaixa;Compte;10/06/2026;junio;2026;;68.46;Carrec;despesa_general;Ajunt. Arbucies;
-6747;LaCaixa;Compte;12/06/2026;junio;2026;;300.0;op_banc;op_banc;Traspas comptes;
-6748;BBVA;Compte;12/06/2026;junio;2026;;200.0;op_banc;op_banc;Traspas comptes;Trade R.
-6749;BBVA;Compte;15/06/2026;junio;2026;;50.0;op_banc;op_banc;Traspas comptes;
-6750;TradeRep.;Compte;12/06/2026;junio;2026;200.0;;op_banc;op_banc;Traspas comptes;
-6751;TradeRep.;Debit;12/06/2026;junio;2026;;41.35;Carrec;gasolina;GasolinaAreaGuissona;
-6752;TradeRep.;Debit;12/06/2026;junio;2026;;75.2;Carrec;restaurant;Restaurant;Por Babor. Palam¾s
-6753;Efectiu;;15/06/2026;junio;2026;;79.5;Carrec;restaurant;Restaurant;El Pla. Palam¾s
-6754;TradeRep.;Debit;13/06/2026;junio;2026;;3.8;Carrec;restaurant;Bar;Can Jordi. Palam¾s
 6755;BBVA;Compte;19/06/2026;junio;2026;50.0;;Ingres;ingres_general;Hisenda 50 1;
 6756;BBVA;Compte;19/06/2026;junio;2026;100.0;;Ingres;ingres_general;Hisenda 100;
 6757;BBVA;Compte;19/06/2026;junio;2026;50.0;;Ingres;ingres_general;Hisenda 50 2;
 6758;BBVA;Compte;19/06/2026;junio;2026;;200.0;op_banc;op_banc;Traspas comptes;
 6759;BBVA;VISA;17/06/2026;junio;2026;;343.64;Carrec;proveidor;ImprentaRapidaOnline;Cartes wire-o L'Olivera
 6760;TradeRep.;Debit;15/06/2026;junio;2026;;19.17;Carrec;menjar;AreaGuissona;
-6761;TradeRep.;Debit;16/06/2026;junio;2026;;6.3;Carrec;restaurant;Bar;Desig. Palam¾s
+6761;TradeRep.;Debit;16/06/2026;junio;2026;;6.3;Carrec;restaurant;Bar;Desig. Palam¥s
 6762;TradeRep.;Debit;16/06/2026;junio;2026;;29.85;Carrec;menjar;LIDL;
 6763;TradeRep.;Debit;17/06/2026;junio;2026;;10.97;Carrec;menjar;Fruiterra;
 6764;TradeRep.;Debit;17/06/2026;junio;2026;;18.35;Carrec;menjar;La Sirena;
@@ -6772,5 +6760,5 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6772;TradeRep.;Debit;19/06/2026;junio;2026;;5.98;Carrec;neteja;Novavenda;
 6773;TradeRep.;Debit;20/06/2026;junio;2026;;3.21;Carrec;menjar;Fruiterra;
 6774;Efectiu;;21/06/2026;junio;2026;;4.4;Carrec;menjar;Pa i pastisseria;
-6775;Efectiu;;21/06/2026;junio;2026;;10.4;Carrec;menjar;Plaþa;
-6776;Efectiu;;21/06/2026;junio;2026;;20.0;Carrec;restaurant;Restaurant;Arr¾s. El Celler
+6775;Efectiu;;21/06/2026;junio;2026;;10.4;Carrec;menjar;Pla■a;
+6776;Efectiu;;21/06/2026;junio;2026;;20.0;Carrec;restaurant;Restaurant;Arr¥s. El Celler
