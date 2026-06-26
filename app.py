@@ -42,44 +42,33 @@ components.html(
         const hideBadges = () => {
             const badges = doc.querySelectorAll('div[class^="viewerBadge_"], .viewerBadge_container__1QS1h, .viewerBadge_link__29513, footer, [data-testid="stAppDeployButton"]');
             badges.forEach(b => b.style.display = 'none');
+            
+            // Also search in parent window
+            const pBadges = window.parent.document.querySelectorAll('div[class^="viewerBadge_"], .viewerBadge_container__1QS1h, .viewerBadge_link__29513, footer, [data-testid="stAppDeployButton"]');
+            pBadges.forEach(b => b.style.display = 'none');
         };
         hideBadges();
-        setInterval(hideBadges, 500);
+        setInterval(hideBadges, 300);
         
-        // Target style tag injection in parent
+        // Target style tag injection in parent (ensures elements are hidden immediately if they are rendered)
         const style = doc.createElement('style');
         style.innerHTML = `
-            footer { display: none !important; }
-            [data-testid="stAppDeployButton"] { display: none !important; }
+            footer { display: none !important; visibility: hidden !important; height: 0 !important; }
+            [data-testid="stAppDeployButton"] { display: none !important; visibility: hidden !important; }
             .viewerBadge_container__1QS1h, .viewerBadge_link__29513 { display: none !important; }
-            iframe[title="streamlit.components.v1.html-component"] { display: none !important; }
+            iframe[title="streamlit.components.v1.html-component"] { display: none !important; height: 0 !important; }
             div[class^="viewerBadge_"] { display: none !important; }
         `;
         doc.head.appendChild(style);
         
-        // Detect if client is a desktop computer and set a session cookie to bypass login
+        // Detect if client is a desktop computer and redirect with a parameter to bypass login without stealing focus
         const ua = navigator.userAgent;
         const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
-        
-        // Parse current cookies
-        const getCookie = (name) => {
-            const value = `; ${doc.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return null;
-        };
-        
         if (!isMobile) {
-            const currentType = getCookie("client_device_type");
-            if (currentType !== "desktop") {
-                doc.cookie = "client_device_type=desktop; path=/; max-age=31536000";
-                // Rerun or reload client side to send the cookie immediately to the server
-                window.parent.location.reload();
-            }
-        } else {
-            const currentType = getCookie("client_device_type");
-            if (currentType !== "mobile") {
-                doc.cookie = "client_device_type=mobile; path=/; max-age=31536000";
+            const params = new URLSearchParams(window.parent.location.search);
+            if (!params.has("device") || params.get("device") !== "desktop") {
+                params.set("device", "desktop");
+                window.parent.location.search = params.toString();
             }
         }
     </script>
@@ -208,7 +197,10 @@ def check_password():
     if platform.system() == "Windows":
         return True # Bypass login for local execution on Windows PC
         
-    # Check if request is from a desktop PC (non-mobile user agent or cookie)
+    # Check if request is from a desktop PC (via query params, user agent or cookie)
+    if st.query_params.get("device") == "desktop":
+        return True
+
     try:
         from streamlit.web.server.websocket_headers import _get_websocket_headers
         headers = _get_websocket_headers()
