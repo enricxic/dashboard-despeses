@@ -149,13 +149,17 @@ def check_password():
         return True # Bypass login for local execution on Windows PC
         
     # Check if request is from a desktop PC (non-mobile user agent)
-    from streamlit.web.server.websocket_headers import _get_websocket_headers
-    headers = _get_websocket_headers()
-    if headers:
-        ua = headers.get("User-Agent", "")
-        # If it doesn't contain common mobile indicators, treat it as a PC
-        if "Mobi" not in ua and "Android" not in ua and "iPhone" not in ua and "iPad" not in ua:
-            return True
+    try:
+        from streamlit.web.server.websocket_headers import _get_websocket_headers
+        headers = _get_websocket_headers()
+        if headers:
+            ua = headers.get("User-Agent", "")
+            # If it doesn't contain common mobile indicators, treat it as a PC
+            if "Mobi" not in ua and "Android" not in ua and "iPhone" not in ua and "iPad" not in ua:
+                return True
+    except (ImportError, Exception):
+        # Fallback if internal streamlit headers API changed or fails
+        pass
 
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
