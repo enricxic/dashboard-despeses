@@ -906,7 +906,12 @@ def group_duplicate_ticket_items(items):
             }
         else:
             grouped[key]['quantitat'] += item['quantitat']
-            grouped[key]['pes'] += item['pes']
+            try:
+                grouped[key]['pes'] = float(grouped[key]['pes']) + float(item['pes'])
+            except Exception:
+                val1 = str(grouped[key]['pes'])
+                val2 = str(item['pes'])
+                grouped[key]['pes'] = val1 if val1 == val2 else f"{val1}, {val2}"
             grouped[key]['prom'] += item['prom']
             grouped[key]['totLinea'] += item['totLinea']
     return list(grouped.values())
@@ -1278,7 +1283,7 @@ def cb_edit_ticket_item(idx):
     item = st.session_state["ticket_items"][idx]
     st.session_state["manual_fam_selectbox"] = item['familia']
     st.session_state["manual_art_selectbox"] = item['article']
-    st.session_state["manual_pes_num"] = str(int(item['pes']))
+    st.session_state["manual_pes_num"] = str(item['pes'])
     st.session_state["manual_qty_num"] = float(item['quantitat'])
     st.session_state["manual_preu_num"] = float(item['preuUnit'])
     st.session_state["manual_prom_num"] = float(item['prom'])
@@ -1309,18 +1314,13 @@ def cb_add_ticket_line():
     if "manual_input_error" in st.session_state:
         del st.session_state["manual_input_error"]
         
-    # Safe parse pes from text
-    try:
-        pes_digits = "".join([c for c in str(pes_raw) if c.isdigit()])
-        pes = int(pes_digits) if pes_digits else 0
-    except Exception:
-        pes = 0
+    pes = str(pes_raw).strip()
 
     tot = (qty * preu) - prom
     new_item = {
         'familia': fam,
         'article': art,
-        'pes': int(pes),
+        'pes': pes,
         'quantitat': int(qty),
         'preuUnit': preu,
         'prom': prom,
@@ -1532,7 +1532,7 @@ def cb_finalize_ticket():
             'super': ticket_super,
             'familia': item['familia'],
             'article': item['article'],
-            'pes': int(item['pes']),
+            'pes': str(item['pes']),
             'quantitat': int(item['quantitat']),
             'preuUnit': item['preuUnit'],
             'prom': item['prom'],
@@ -1942,7 +1942,11 @@ def render_compres_super_interface():
             with cols[2]:
                 st.write(item["article"])
             with cols[3]:
-                st.write(f"{item['pes']}g" if item['pes'] > 0 else "0g")
+                p_str = str(item['pes']).strip()
+                if p_str.replace('.', '', 1).isdigit() and float(p_str) > 0:
+                    st.write(f"{p_str}g")
+                else:
+                    st.write(p_str if p_str else "0g")
             with cols[4]:
                 st.write(f"{item['quantitat']}")
             with cols[5]:
