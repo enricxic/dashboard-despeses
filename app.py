@@ -2386,27 +2386,30 @@ with tab_intro:
         # Row 1 (4 columns)
         r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
         with r1_col1:
-            banc = st.selectbox("Banc", get_config_banks(), key="desp_banc")
+            banks_opt = [""] + get_config_banks()
+            banc = st.selectbox("Banc", banks_opt, index=0, key="desp_banc")
         with r1_col2:
-            forma_pago = st.selectbox("Forma de Pagament", get_config_payment_methods(), key="desp_forma_pago")
+            pay_methods_opt = [""] + get_config_payment_methods()
+            forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, index=0, key="desp_forma_pago")
         with r1_col3:
             data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="desp_data")
             mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
             any_val = data_val.year
         with r1_col4:
-            import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, step=0.01, key="desp_import")
+            import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key="desp_import")
             
         # Row 2 (4 columns)
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
         with r2_col1:
-            cat_val = st.selectbox("Categoria", get_config_categories(), key="desp_cat")
+            categories_opt = [""] + get_config_categories()
+            cat_val = st.selectbox("Categoria", categories_opt, index=0, key="desp_cat")
         with r2_col2:
-            concept_options = get_config_concepts(cat_val)
-            concept_val = st.selectbox("Concepte", concept_options, key="desp_concepte")
+            concept_options = [""] + get_config_concepts(cat_val) if cat_val else [""]
+            concept_val = st.selectbox("Concepte", concept_options, index=0, key="desp_concepte")
         with r2_col3:
-            grup_val = st.selectbox("Grup", ["Càrrec", "op_banc", "Ingrés"], key="desp_grup")
+            grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key="desp_grup")
         with r2_col4:
-            comentari_val = st.text_input("Comentari", key="desp_comentari")
+            comentari_val = st.text_input("Comentari", value="", key="desp_comentari")
             
         col_btns = st.columns([1.5, 1.5, 9.0])
         with col_btns[0]:
@@ -2417,25 +2420,28 @@ with tab_intro:
             clear_form_state("desp_")
             st.rerun()
         if submitted:
-            new_row = {
-                'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
-                'Banc': banc,
-                'FormaPago': forma_pago,
-                'Data': data_val.strftime('%d/%m/%Y'),
-                'mes': mes_val,
-                'any': any_val,
-                'import ingrés': 0.0,
-                'Import càrrec': import_carg,
-                'grup': grup_val,
-                'Idcategoria': cat_val,
-                'Idconcepte': concept_val,
-                'Comentari': comentari_val
-            }
-            df_desp = pd.concat([df_desp, pd.DataFrame([new_row])], ignore_index=True)
-            save_to_csv(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), 'despeses.csv')
-            st.success("Moviment real (despesa) desat correctament!")
-            clear_form_state("desp_")
-            st.rerun()
+            if not banc or not forma_pago or not cat_val or not concept_val or not grup_val:
+                st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts.")
+            else:
+                new_row = {
+                    'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
+                    'Banc': banc,
+                    'FormaPago': forma_pago,
+                    'Data': data_val.strftime('%d/%m/%Y'),
+                    'mes': mes_val,
+                    'any': any_val,
+                    'import ingrés': 0.0,
+                    'Import càrrec': import_carg,
+                    'grup': grup_val,
+                    'Idcategoria': cat_val,
+                    'Idconcepte': concept_val,
+                    'Comentari': comentari_val
+                }
+                df_desp = pd.concat([df_desp, pd.DataFrame([new_row])], ignore_index=True)
+                save_to_csv(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), 'despeses.csv')
+                st.success("Moviment real (despesa) desat correctament!")
+                clear_form_state("desp_")
+                st.rerun()
             
     elif data_type == "Previsió de Pagament":
         # Row 1 (4 columns)
