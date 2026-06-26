@@ -478,6 +478,36 @@ def save_to_csv(df, filename):
         st.error(f"❌ **Error al desar la taula `{table_name}` a Supabase**: {str(e)}")
         st.stop()
 
+def insert_db_row(table_name, new_row_dict):
+    engine = get_engine()
+    from sqlalchemy import text
+    columns = ", ".join([f'"{col}"' for col in new_row_dict.keys()])
+    placeholders = ", ".join([f":{col}" for col in new_row_dict.keys()])
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(f'INSERT INTO "{table_name}" ({columns}) VALUES ({placeholders})'), new_row_dict)
+        state_key = {
+            "despeses": "df_desp",
+            "pagaments": "df_pag",
+            "ingressos": "df_ing",
+            "compresSuper": "df_super",
+            "gasolina": "df_gas",
+            "kmCotxe": "df_km",
+            "hipoteca": "df_hip",
+            "estalviDP": "df_est"
+        }.get(table_name)
+        if state_key and state_key in st.session_state:
+            df = st.session_state[state_key]
+            new_df = pd.DataFrame([new_row_dict])
+            st.session_state[state_key] = pd.concat([df, new_df], ignore_index=True)
+        get_db_tracker().update()
+        st.cache_data.clear()
+        load_dashboard_data.clear()
+        return True
+    except Exception as e:
+        st.error(f"❌ **Error a la base de dades (INSERT)**: {str(e)}")
+        return False
+
 def delete_db_row(table_name, id_col, id_val):
     engine = get_engine()
     from sqlalchemy import text
@@ -2371,9 +2401,21 @@ with tab_intro:
     st.markdown("### ➕ Introduir Nou Registre")
     
     def clear_form_state(prefix):
-        for k in list(st.session_state.keys()):
-            if k.startswith(prefix):
-                del st.session_state[k]
+        if prefix == "desp_":
+            st.session_state["desp_banc"] = ""
+            st.session_state["desp_forma_pago"] = ""
+            st.session_state["desp_data"] = datetime.today()
+            st.session_state["desp_import"] = 0.0
+            st.session_state["desp_cat"] = ""
+            st.session_state["desp_concepte"] = ""
+            st.session_state["desp_grup"] = ""
+            st.session_state["desp_comentari"] = ""
+            st.session_state["desp_gas_preu_l"] = 1.214
+            st.session_state["desp_litres"] = 0.0
+        else:
+            for k in list(st.session_state.keys()):
+                if k.startswith(prefix):
+                    del st.session_state[k]
     
     data_type = st.selectbox("Tipus de registre", [
         "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe"
@@ -2475,9 +2517,7 @@ with tab_intro:
                     'Idconcepte': concept_val,
                     'Comentari': comentari_val
                 }
-                df_desp = pd.concat([df_desp, pd.DataFrame([new_row_desp])], ignore_index=True)
-                save_to_csv(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), 'despeses.csv')
-                st.session_state["df_desp"] = df_desp
+                insert_db_row('despeses', new_row_desp)
                 
                 # 2. Save to gasolina if category is gasolina
                 if is_gas_cat:
@@ -2494,12 +2534,9 @@ with tab_intro:
                         'litres': litres_saved,
                         'lloc': concept_val # Concept acts as fuel station / place
                     }
-                    df_gas = pd.concat([df_gas, pd.DataFrame([new_row_gas])], ignore_index=True)
-                    save_to_csv(df_gas.drop(columns=['parsed_date'], errors='ignore'), 'gasolina.csv')
-                    st.session_state["df_gas"] = df_gas
+                    insert_db_row('gasolina', new_row_gas)
                     
                 st.success("Moviment real i proveïment de gasolina desats correctament!")
-                get_db_tracker().update()
                 clear_form_state("desp_")
                 st.rerun()
             
