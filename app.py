@@ -204,6 +204,8 @@ BANK_MAPPING = {
     'Casa': 'Casa',
     'T.CorteInglés': 'Cortelnglés',
     't.CorteInglés': 'Cortelnglés',
+    'T.CorteIngles': 'Cortelnglés',
+    't.CorteIngles': 'Cortelnglés',
     'T.Moneder': 'Tg.Moneder',
 }
 
