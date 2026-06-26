@@ -2376,7 +2376,7 @@ with tab_intro:
                 del st.session_state[k]
     
     data_type = st.selectbox("Tipus de registre", [
-        "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe", "Gasolina"
+        "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe"
     ])
     
     st.write("---")
@@ -2398,6 +2398,21 @@ with tab_intro:
         with r1_col4:
             import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key="desp_import")
             
+        # Dialog calculator helper for Gasolina price per litre
+        @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
+        def show_gasoline_calculator_in_desp():
+            st.markdown("Introdueix l'import pagat i el preu per litre per calcular els litres automàticament.")
+            calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get("desp_import", 0.0), step=0.01)
+            calc_preu_l = st.number_input("Preu per litre (€/l):", min_value=0.001, value=1.500, step=0.001, format="%.3f")
+            
+            calc_litres = calc_import / calc_preu_l if calc_preu_l > 0 else 0.0
+            st.markdown(f"**Litres estimats**: `{calc_litres:.2f} l` (`{calc_import:.2f} € / {calc_preu_l:.3f} €/l`)")
+            
+            if st.button("Aplicar al formulari"):
+                st.session_state["desp_import"] = calc_import
+                st.session_state["desp_litres"] = calc_litres
+                st.rerun()
+
         # Row 2 (4 columns)
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
         with r2_col1:
@@ -2410,6 +2425,25 @@ with tab_intro:
             grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key="desp_grup")
         with r2_col4:
             comentari_val = st.text_input("Comentari", value="", key="desp_comentari")
+
+        # Dynamic extra fields for Gasolina category inside Moviment Real form
+        is_gas_cat = (str(cat_val).lower() == "gasolina")
+        if is_gas_cat:
+            st.markdown("<h5 style='color:#f39c12; margin-top:5px; margin-bottom:5px;'>⛽ Paràmetres del proveïment de gasolina</h5>", unsafe_allow_html=True)
+            gas_col1, gas_col2, gas_col3, gas_col4 = st.columns(4)
+            with gas_col1:
+                gas_cotxe = st.selectbox("Cotxe", sorted(list(df_gas['cotxe'].dropna().unique())), key="desp_gas_cotxe")
+            with gas_col2:
+                gas_litres = st.number_input("Litres", min_value=0.0, value=st.session_state.get("desp_litres", 0.0), step=0.01, key="desp_litres_input")
+                # Sync session state
+                st.session_state["desp_litres"] = gas_litres
+            with gas_col3:
+                gas_preu_l = import_carg / gas_litres if gas_litres > 0 else 0.0
+                st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>Preu/Litre: {gas_preu_l:.3f} €/l</div>", unsafe_allow_html=True)
+            with gas_col4:
+                st.write("")
+                if st.button("🖩 Calculadora Preu/Litre", key="btn_calc_gas_in_desp", use_container_width=True):
+                    show_gasoline_calculator_in_desp()
             
         col_btns = st.columns([1.5, 1.5, 9.0])
         with col_btns[0]:
@@ -2422,8 +2456,11 @@ with tab_intro:
         if submitted:
             if not banc or not forma_pago or not cat_val or not concept_val or not grup_val:
                 st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts.")
+            elif is_gas_cat and st.session_state.get("desp_litres", 0.0) <= 0.0:
+                st.error("⚠️ Heu d'introduir un número vàlid de litres per a la gasolina (més gran que 0).")
             else:
-                new_row = {
+                # 1. Save to despeses
+                new_row_desp = {
                     'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
                     'Banc': banc,
                     'FormaPago': forma_pago,
@@ -2437,9 +2474,29 @@ with tab_intro:
                     'Idconcepte': concept_val,
                     'Comentari': comentari_val
                 }
-                df_desp = pd.concat([df_desp, pd.DataFrame([new_row])], ignore_index=True)
+                df_desp = pd.concat([df_desp, pd.DataFrame([new_row_desp])], ignore_index=True)
                 save_to_csv(df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score'], errors='ignore'), 'despeses.csv')
-                st.success("Moviment real (despesa) desat correctament!")
+                
+                # 2. Save to gasolina if category is gasolina
+                if is_gas_cat:
+                    litres_saved = st.session_state.get("desp_litres", 0.0)
+                    preu_l_saved = import_carg / litres_saved if litres_saved > 0 else 0.0
+                    new_row_gas = {
+                        'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty else 1,
+                        'cotxe': st.session_state.get("desp_gas_cotxe"),
+                        'data': data_val.strftime('%d/%m/%Y'),
+                        'mes': mes_val,
+                        'any': any_val,
+                        'import': import_carg,
+                        '?/l': preu_l_saved,
+                        'litres': litres_saved,
+                        'lloc': concept_val # Concept acts as fuel station / place
+                    }
+                    # We need to reload df_gas first to verify no overlap, then append
+                    df_gas = pd.concat([df_gas, pd.DataFrame([new_row_gas])], ignore_index=True)
+                    save_to_csv(df_gas.drop(columns=['parsed_date'], errors='ignore'), 'gasolina.csv')
+                    
+                st.success("Moviment real i proveïment de gasolina desats correctament!")
                 clear_form_state("desp_")
                 st.rerun()
             
@@ -2733,71 +2790,6 @@ with tab_intro:
             clear_form_state("km_")
             st.rerun()
             
-    elif data_type == "Gasolina":
-        # Dialog calculator helper for Gasolina price per litre
-        @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
-        def show_gasoline_calculator():
-            st.markdown("Introdueix l'import pagat i el preu per litre per calcular els litres automàticament.")
-            calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get("gas_import", 0.0), step=0.01)
-            calc_preu_l = st.number_input("Preu per litre (€/l):", min_value=0.001, value=1.500, step=0.001, format="%.3f")
-            
-            calc_litres = calc_import / calc_preu_l if calc_preu_l > 0 else 0.0
-            st.markdown(f"**Litres estimats**: `{calc_litres:.2f} l` (`{calc_import:.2f} € / {calc_preu_l:.3f} €/l`)")
-            
-            if st.button("Aplicar al formulari"):
-                st.session_state["gas_import"] = calc_import
-                st.session_state["gas_litres"] = calc_litres
-                st.rerun()
-
-        # Row 1 (3 columns)
-        r1_col1, r1_col2, r1_col3 = st.columns(3)
-        with r1_col1:
-            cotxe_val = st.selectbox("Cotxe", sorted(list(df_gas['cotxe'].dropna().unique())), key="gas_cotxe")
-        with r1_col2:
-            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="gas_data")
-            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
-            any_val = data_val.year
-        with r1_col3:
-            import_val = st.number_input("Import total pagat (€)", min_value=0.0, step=0.01, key="gas_import")
-            
-        # Row 2 (3 columns)
-        r2_col1, r2_col2, r2_col3 = st.columns(3)
-        with r2_col1:
-            litres_val = st.number_input("Litres", min_value=0.0, step=0.01, key="gas_litres")
-        with r2_col2:
-            lloc_val = st.text_input("Benzinera / Lloc", key="gas_lloc")
-        with r2_col3:
-            preu_l = import_val / litres_val if litres_val > 0 else 0.0
-            st.markdown(f"<div style='margin-top:5px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>⛽ Preu/Litre: {preu_l:.3f} €/l</div>", unsafe_allow_html=True)
-            if st.button("🖩 Calculadora Preu/Litre", use_container_width=True):
-                show_gasoline_calculator()
-            
-        col_btns = st.columns([1.5, 1.5, 9.0])
-        with col_btns[0]:
-            submitted = st.button("Desa el Proveïment")
-        with col_btns[1]:
-            cancelled = st.button("Cancel·lar", key="cancel_gas")
-        if cancelled:
-            clear_form_state("gas_")
-            st.rerun()
-        if submitted:
-            new_row = {
-                'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty else 1,
-                'cotxe': cotxe_val,
-                'data': data_val.strftime('%d/%m/%Y'),
-                'mes': mes_val,
-                'any': any_val,
-                'import': import_val,
-                '?/l': preu_l,
-                'litres': litres_val,
-                'lloc': lloc_val
-            }
-            df_gas = pd.concat([df_gas, pd.DataFrame([new_row])], ignore_index=True)
-            save_to_csv(df_gas.drop(columns=['parsed_date'], errors='ignore'), 'gasolina.csv')
-            st.success("Dades de gasolina desades correctament!")
-            clear_form_state("gas_")
-            st.rerun()
-
     # --- Add reminder table of the last movement of each bank ---
     st.write("")
     st.markdown("---")
