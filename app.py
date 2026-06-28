@@ -2666,11 +2666,15 @@ with tab_intro:
         # Row 2 (4 columns)
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
         with r2_col1:
+            grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key=f"desp_grup_{version}")
+        with r2_col2:
             categories_opt = [""] + get_config_categories()
             cat_val = st.selectbox("Categoria", categories_opt, index=0, key=f"desp_cat_{version}")
-        with r2_col2:
+        with r2_col3:
             concept_options = [""] + get_config_concepts(cat_val) + ["➕ Afegir nou..."] if cat_val else [""]
             concept_val = st.selectbox("Concepte", concept_options, index=0, key=f"desp_concepte_{version}")
+        with r2_col4:
+            comentari_val = st.text_input("Comentari", value="", key=f"desp_comentari_{version}")
         
         # If adding a new concept, show custom inputs
         if concept_val == "➕ Afegir nou...":
@@ -2680,10 +2684,6 @@ with tab_intro:
             with custom_col2:
                 st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
                 save_new_concept = st.checkbox("Desar a la llista permanent?", value=True, key=f"desp_save_new_concept_{version}")
-        with r2_col3:
-            grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key=f"desp_grup_{version}")
-        with r2_col4:
-            comentari_val = st.text_input("Comentari", value="", key=f"desp_comentari_{version}")
 
         # Dynamic extra fields for Gasolina category inside Moviment Real form
         is_gas_cat = (str(cat_val).lower() == "gasolina")
@@ -2705,11 +2705,11 @@ with tab_intro:
             with gas_col4:
                 st.write("")
             
-        col_btns = st.columns([1.5, 2.0, 8.5])
+        col_btns = st.columns([1.8, 1.8, 8.4])
         with col_btns[0]:
-            submitted = st.button("Desar")
+            submitted = st.button("Desar", use_container_width=True)
         with col_btns[1]:
-            cancelled = st.button("Cancel·lar", key="cancel_desp")
+            cancelled = st.button("Cancel·lar", key="cancel_desp", use_container_width=True)
         if cancelled:
             clear_form_state("desp_")
             st.rerun()
