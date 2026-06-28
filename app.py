@@ -499,11 +499,24 @@ def insert_db_row(table_name, new_row_dict):
         }.get(table_name)
         if state_key and state_key in st.session_state:
             df = st.session_state[state_key]
-            new_df = pd.DataFrame([new_row_dict])
+            
+            # Copy and add calculated fields
+            row_to_append = new_row_dict.copy()
+            if table_name == 'despeses':
+                row_to_append['parsed_date'] = pd.to_datetime(row_to_append['Data'], format='%d/%m/%Y', errors='coerce')
+                row_to_append['date_score'] = int(row_to_append['any']) * 12 + MONTHS_MAP.get(str(row_to_append['mes']).lower(), 12)
+            elif table_name in ['ingressos', 'pagaments']:
+                row_to_append['parsed_date'] = pd.to_datetime(row_to_append['Data'], format='%d/%m/%Y', errors='coerce')
+            elif table_name in ['compresSuper', 'gasolina']:
+                row_to_append['parsed_date'] = pd.to_datetime(row_to_append['data'], format='%d/%m/%Y', errors='coerce')
+                
+            new_df = pd.DataFrame([row_to_append])
             st.session_state[state_key] = pd.concat([df, new_df], ignore_index=True)
-        get_db_tracker().update()
-        st.cache_data.clear()
-        load_dashboard_data.clear()
+            
+        # Update db_tracker and keep local last_synced_time updated to avoid slow DB reload
+        new_time = get_db_tracker().update()
+        st.session_state["last_synced_time"] = new_time
+        
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (INSERT)**: {str(e)}")
@@ -2478,7 +2491,10 @@ with tab_intro:
     )
 
 
+    version = st.session_state.get("desp_version", 0)
     def clear_form_state(prefix):
+        if prefix == "desp_":
+            st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
         for k in list(st.session_state.keys()):
             if k.startswith(prefix):
                 del st.session_state[k]
@@ -2496,44 +2512,44 @@ with tab_intro:
         r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
         with r1_col1:
             banks_opt = [""] + get_config_banks()
-            banc = st.selectbox("Banc", banks_opt, index=0, key="desp_banc")
+            banc = st.selectbox("Banc", banks_opt, index=0, key=f"desp_banc_{version}")
         with r1_col2:
             pay_methods_opt = [""] + get_config_payment_methods()
-            forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, index=0, key="desp_forma_pago")
+            forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, index=0, key=f"desp_forma_pago_{version}")
         with r1_col3:
-            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="desp_data")
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"desp_data_{version}")
             mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
             any_val = data_val.year
         with r1_col4:
-            import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key="desp_import")
+            import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key=f"desp_import_{version}")
             
         # Dialog calculator helper for Gasolina price per litre
         @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
         def show_gasoline_calculator_in_desp():
             st.markdown("Introdueix l'import pagat i el preu per litre per calcular els litres automàticament.")
-            calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get("desp_import", 0.0), step=0.01)
+            calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get(f"desp_import_{version}", 0.0), step=0.01)
             calc_preu_l = st.number_input("Preu per litre (€/l):", min_value=0.001, value=1.500, step=0.001, format="%.3f")
             
             calc_litres = calc_import / calc_preu_l if calc_preu_l > 0 else 0.0
             st.markdown(f"**Litres estimats**: `{calc_litres:.2f} l` (`{calc_import:.2f} € / {calc_preu_l:.3f} €/l`)")
             
             if st.button("Aplicar al formulari"):
-                st.session_state["desp_import"] = calc_import
-                st.session_state["desp_litres"] = calc_litres
+                st.session_state[f"desp_import_{version}"] = calc_import
+                st.session_state[f"desp_litres_{version}"] = calc_litres
                 st.rerun()
 
         # Row 2 (4 columns)
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
         with r2_col1:
             categories_opt = [""] + get_config_categories()
-            cat_val = st.selectbox("Categoria", categories_opt, index=0, key="desp_cat")
+            cat_val = st.selectbox("Categoria", categories_opt, index=0, key=f"desp_cat_{version}")
         with r2_col2:
             concept_options = [""] + get_config_concepts(cat_val) if cat_val else [""]
-            concept_val = st.selectbox("Concepte", concept_options, index=0, key="desp_concepte")
+            concept_val = st.selectbox("Concepte", concept_options, index=0, key=f"desp_concepte_{version}")
         with r2_col3:
-            grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key="desp_grup")
+            grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key=f"desp_grup_{version}")
         with r2_col4:
-            comentari_val = st.text_input("Comentari", value="", key="desp_comentari")
+            comentari_val = st.text_input("Comentari", value="", key=f"desp_comentari_{version}")
 
         # Dynamic extra fields for Gasolina category inside Moviment Real form
         is_gas_cat = (str(cat_val).lower() == "gasolina")
@@ -2545,12 +2561,12 @@ with tab_intro:
                 if "tívoli" not in cars_list:
                     cars_list = ["tívoli"] + cars_list
                 default_car_idx = cars_list.index("tívoli") if "tívoli" in cars_list else 0
-                gas_cotxe = st.selectbox("Cotxe", cars_list, index=default_car_idx, key="desp_gas_cotxe")
+                gas_cotxe = st.selectbox("Cotxe", cars_list, index=default_car_idx, key=f"desp_gas_cotxe_{version}")
             with gas_col2:
-                gas_preu_l = st.number_input("Preu per litre (€/l)", min_value=0.0, value=1.214, step=0.001, format="%.3f", key="desp_gas_preu_l")
+                gas_preu_l = st.number_input("Preu per litre (€/l)", min_value=0.0, value=1.214, step=0.001, format="%.3f", key=f"desp_gas_preu_l_{version}")
             with gas_col3:
                 calculated_litres = import_carg / gas_preu_l if gas_preu_l > 0 else 0.0
-                st.session_state["desp_litres"] = calculated_litres
+                st.session_state[f"desp_litres_{version}"] = calculated_litres
                 st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>Litres: {calculated_litres:.2f} l</div>", unsafe_allow_html=True)
             with gas_col4:
                 st.write("")
@@ -2566,7 +2582,7 @@ with tab_intro:
         if submitted:
             if not banc or (banc != "Efectiu" and not forma_pago) or not cat_val or not concept_val or not grup_val:
                 st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu).")
-            elif is_gas_cat and st.session_state.get("desp_litres", 0.0) <= 0.0:
+            elif is_gas_cat and st.session_state.get(f"desp_litres_{version}", 0.0) <= 0.0:
                 st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
             else:
                 # 1. Save to despeses
@@ -2588,11 +2604,11 @@ with tab_intro:
                 
                 # 2. Save to gasolina if category is gasolina
                 if is_gas_cat:
-                    preu_l_saved = st.session_state.get("desp_gas_preu_l", 1.214)
+                    preu_l_saved = st.session_state.get(f"desp_gas_preu_l_{version}", 1.214)
                     litres_saved = round(import_carg / preu_l_saved, 2) if preu_l_saved > 0 else 0.0
                     new_row_gas = {
                         'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty else 1,
-                        'cotxe': st.session_state.get("desp_gas_cotxe"),
+                        'cotxe': st.session_state.get(f"desp_gas_cotxe_{version}"),
                         'data': data_val.strftime('%d/%m/%Y'),
                         'mes': mes_val,
                         'any': any_val,
