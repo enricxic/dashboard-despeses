@@ -2479,21 +2479,9 @@ with tab_intro:
 
 
     def clear_form_state(prefix):
-        if prefix == "desp_":
-            st.session_state["desp_banc"] = ""
-            st.session_state["desp_forma_pago"] = ""
-            st.session_state["desp_data"] = datetime.today()
-            st.session_state["desp_import"] = 0.0
-            st.session_state["desp_cat"] = ""
-            st.session_state["desp_concepte"] = ""
-            st.session_state["desp_grup"] = ""
-            st.session_state["desp_comentari"] = ""
-            st.session_state["desp_gas_preu_l"] = 1.214
-            st.session_state["desp_litres"] = 0.0
-        else:
-            for k in list(st.session_state.keys()):
-                if k.startswith(prefix):
-                    del st.session_state[k]
+        for k in list(st.session_state.keys()):
+            if k.startswith(prefix):
+                del st.session_state[k]
     
     data_type = st.selectbox("Tipus de registre", [
         "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe"
