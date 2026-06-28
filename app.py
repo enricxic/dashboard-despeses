@@ -2476,7 +2476,6 @@ with tab_intro:
         width=0
     )
 
-    intro_col_left, intro_col_right = st.columns([7, 5], gap="medium")
 
     def clear_form_state(prefix):
         if prefix == "desp_":
@@ -2495,478 +2494,477 @@ with tab_intro:
                 if k.startswith(prefix):
                     del st.session_state[k]
     
-    with intro_col_left:
-        data_type = st.selectbox("Tipus de registre", [
-            "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe"
-        ])
-        st.markdown(f"### ➕ Introduir Nou Registre: {data_type}")
-        
-        st.write("---")
-        
-        # 2-line compressed layout for all form types
-        if data_type == "Moviment Real (Despesa)":
-            # Row 1 (4 columns)
-            r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
-            with r1_col1:
-                banks_opt = [""] + get_config_banks()
-                banc = st.selectbox("Banc", banks_opt, index=0, key="desp_banc")
-            with r1_col2:
-                pay_methods_opt = [""] + get_config_payment_methods()
-                forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, index=0, key="desp_forma_pago")
-            with r1_col3:
-                data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="desp_data")
-                mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
-                any_val = data_val.year
-            with r1_col4:
-                import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key="desp_import")
-                
-            # Dialog calculator helper for Gasolina price per litre
-            @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
-            def show_gasoline_calculator_in_desp():
-                st.markdown("Introdueix l'import pagat i el preu per litre per calcular els litres automàticament.")
-                calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get("desp_import", 0.0), step=0.01)
-                calc_preu_l = st.number_input("Preu per litre (€/l):", min_value=0.001, value=1.500, step=0.001, format="%.3f")
-                
-                calc_litres = calc_import / calc_preu_l if calc_preu_l > 0 else 0.0
-                st.markdown(f"**Litres estimats**: `{calc_litres:.2f} l` (`{calc_import:.2f} € / {calc_preu_l:.3f} €/l`)")
-                
-                if st.button("Aplicar al formulari"):
-                    st.session_state["desp_import"] = calc_import
-                    st.session_state["desp_litres"] = calc_litres
-                    st.rerun()
+    data_type = st.selectbox("Tipus de registre", [
+        "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe"
+    ])
+    st.markdown(f"### ➕ Introduir Nou Registre: {data_type}")
     
-            # Row 2 (4 columns)
-            r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
-            with r2_col1:
-                categories_opt = [""] + get_config_categories()
-                cat_val = st.selectbox("Categoria", categories_opt, index=0, key="desp_cat")
-            with r2_col2:
-                concept_options = [""] + get_config_concepts(cat_val) if cat_val else [""]
-                concept_val = st.selectbox("Concepte", concept_options, index=0, key="desp_concepte")
-            with r2_col3:
-                grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key="desp_grup")
-            with r2_col4:
-                comentari_val = st.text_input("Comentari", value="", key="desp_comentari")
+    st.write("---")
     
-            # Dynamic extra fields for Gasolina category inside Moviment Real form
-            is_gas_cat = (str(cat_val).lower() == "gasolina")
-            if is_gas_cat:
-                st.markdown("<h5 style='color:#f39c12; margin-top:5px; margin-bottom:5px;'>⛽ Paràmetres del proveïment de gasolina</h5>", unsafe_allow_html=True)
-                gas_col1, gas_col2, gas_col3, gas_col4 = st.columns(4)
-                with gas_col1:
-                    cars_list = sorted(list(df_gas['cotxe'].dropna().unique()))
-                    if "tívoli" not in cars_list:
-                        cars_list = ["tívoli"] + cars_list
-                    default_car_idx = cars_list.index("tívoli") if "tívoli" in cars_list else 0
-                    gas_cotxe = st.selectbox("Cotxe", cars_list, index=default_car_idx, key="desp_gas_cotxe")
-                with gas_col2:
-                    gas_preu_l = st.number_input("Preu per litre (€/l)", min_value=0.0, value=1.214, step=0.001, format="%.3f", key="desp_gas_preu_l")
-                with gas_col3:
-                    calculated_litres = import_carg / gas_preu_l if gas_preu_l > 0 else 0.0
-                    st.session_state["desp_litres"] = calculated_litres
-                    st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>Litres: {calculated_litres:.2f} l</div>", unsafe_allow_html=True)
-                with gas_col4:
-                    st.write("")
-                
-            col_btns = st.columns([1.5, 1.5, 9.0])
-            with col_btns[0]:
-                submitted = st.button("Desa el Moviment Real")
-            with col_btns[1]:
-                cancelled = st.button("Cancel·lar", key="cancel_desp")
-            if cancelled:
-                clear_form_state("desp_")
-                st.rerun()
-            if submitted:
-                if not banc or not forma_pago or not cat_val or not concept_val or not grup_val:
-                    st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts.")
-                elif is_gas_cat and st.session_state.get("desp_litres", 0.0) <= 0.0:
-                    st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
-                else:
-                    # 1. Save to despeses
-                    new_row_desp = {
-                        'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
-                        'Banc': banc,
-                        'FormaPago': forma_pago,
-                        'Data': data_val.strftime('%d/%m/%Y'),
-                        'mes': mes_val,
-                        'any': any_val,
-                        'import ingrés': 0.0,
-                        'Import càrrec': import_carg,
-                        'grup': grup_val,
-                        'Idcategoria': cat_val,
-                        'Idconcepte': concept_val,
-                        'Comentari': comentari_val
-                    }
-                    insert_db_row('despeses', new_row_desp)
-                    
-                    # 2. Save to gasolina if category is gasolina
-                    if is_gas_cat:
-                        preu_l_saved = st.session_state.get("desp_gas_preu_l", 1.214)
-                        litres_saved = round(import_carg / preu_l_saved, 2) if preu_l_saved > 0 else 0.0
-                        new_row_gas = {
-                            'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty else 1,
-                            'cotxe': st.session_state.get("desp_gas_cotxe"),
-                            'data': data_val.strftime('%d/%m/%Y'),
-                            'mes': mes_val,
-                            'any': any_val,
-                            'import': import_carg,
-                            '?/l': preu_l_saved,
-                            'litres': litres_saved,
-                            'lloc': concept_val # Concept acts as fuel station / place
-                        }
-                        insert_db_row('gasolina', new_row_gas)
-    
-                    # 3. Auto-mark Previsió Hipoteca as paid if concept is hipoteca
-                    if str(concept_val).lower() == "hipoteca" or str(cat_val).lower() == "hipoteca":
-                        df_hip.loc[(df_hip['any'] == any_val) & (df_hip['mes'].str.lower() == mes_val.lower()), 'pagat'] = "pagat"
-                        save_to_csv(df_hip, 'hipoteca.csv')
-                        st.session_state["df_hip"] = df_hip
-                        
-                    # 4. Auto-mark Estalvis DP as paid if concept is PJ Isabel
-                    if str(concept_val).lower() == "pj isabel":
-                        df_est.loc[(df_est['any'] == any_val) & (df_est['mes'].str.lower() == mes_val.lower()), 'pagat'] = "pagat"
-                        save_to_csv(df_est, 'estalviDP.csv')
-                        st.session_state["df_est"] = df_est
-                        
-                    st.success("Moviment real i estats associats desats correctament!")
-                    clear_form_state("desp_")
-                    st.rerun()
-                
-        elif data_type == "Previsió de Pagament":
-            # Row 1 (4 columns)
-            r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
-            with r1_col1:
-                banc = st.selectbox("Banc", get_config_banks(), key="pag_banc")
-            with r1_col2:
-                forma_pago = st.selectbox("Forma de Pagament", get_config_payment_methods(), key="pag_forma_pago")
-            with r1_col3:
-                data_val = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="pag_data")
-                mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
-                any_val = data_val.year
-            with r1_col4:
-                import_carg = st.number_input("Import (€)", min_value=0.0, step=0.01, key="pag_import")
-                
-            # Row 2 (5 columns to fit repeating settings)
-            r2_col1, r2_col2, r2_col3, r2_col4, r2_col5 = st.columns([2.5, 2.5, 2.0, 2.5, 2.5])
-            with r2_col1:
-                cat_val = st.selectbox("Categoria", get_config_categories(), key="pag_cat")
-            with r2_col2:
-                concept_options = get_config_concepts(cat_val)
-                concept_val = st.selectbox("Concepte", concept_options, key="pag_concepte")
-            with r2_col3:
-                pagat_val = st.selectbox("Estat", ["pendent", "pagat"], key="pag_estat")
-            with r2_col4:
-                repetir = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="pag_repetir")
-            with r2_col5:
-                repetir_any_limit = st.selectbox("Fins a desembre de l'any:", [any_val, any_val + 1, any_val + 2], index=0, key="rep_any_pag")
+    # 2-line compressed layout for all form types
+    if data_type == "Moviment Real (Despesa)":
+        # Row 1 (4 columns)
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+        with r1_col1:
+            banks_opt = [""] + get_config_banks()
+            banc = st.selectbox("Banc", banks_opt, index=0, key="desp_banc")
+        with r1_col2:
+            pay_methods_opt = [""] + get_config_payment_methods()
+            forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, index=0, key="desp_forma_pago")
+        with r1_col3:
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="desp_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col4:
+            import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key="desp_import")
             
-            col_btns = st.columns([1.5, 1.5, 9.0])
-            with col_btns[0]:
-                submitted = st.button("Desa la Previsió de Pagament")
-            with col_btns[1]:
-                cancelled = st.button("Cancel·lar", key="cancel_pag")
-            if cancelled:
-                clear_form_state("pag_")
-                clear_form_state("rep_any_pag")
-                st.rerun()
-            if submitted:
-                if repetir:
-                    current_max_id = int(df_pag['idPago'].max() + 1) if not df_pag.empty else 1
-                    updated_count = 0
-                    added_count = 0
-                    for yr in range(any_val, repetir_any_limit + 1):
-                        start_month = data_val.month if yr == any_val else 1
-                        for m_idx in range(start_month, 13):
-                            m_cat = CATALAN_MONTHS[m_idx - 1]
-                            m_data = month_translations[m_cat]
-                            
-                            mask = (df_pag['any'] == yr) & (df_pag['mes'].str.lower() == m_data) & (df_pag['Concepte'].str.lower() == concept_val.lower())
-                            if mask.any():
-                                df_pag.loc[mask, 'Import'] = import_carg
-                                df_pag.loc[mask, 'Banc'] = banc
-                                df_pag.loc[mask, 'Formapago'] = forma_pago
-                                df_pag.loc[mask, 'Categoria'] = cat_val
-                                df_pag.loc[mask, 'pagat'] = pagat_val
-                                updated_count += 1
-                            else:
-                                new_row = {
-                                    'idPago': current_max_id,
-                                    'Banc': banc,
-                                    'Formapago': forma_pago,
-                                    'Data': f"{data_val.day:02d}/{m_idx:02d}/{yr}",
-                                    'dia': data_val.day,
-                                    'mes': m_data,
-                                    'any': yr,
-                                    'Categoria': cat_val,
-                                    'Concepte': concept_val,
-                                    'Import': import_carg,
-                                    'pagat': pagat_val
-                                }
-                                df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
-                                current_max_id += 1
-                                added_count += 1
-                    save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
-                    st.success(f"Previsions desades: {added_count} creades de nou i {updated_count} actualitzades fins a desembre del {repetir_any_limit}!")
-                else:
-                    new_row = {
-                        'idPago': int(df_pag['idPago'].max() + 1) if not df_pag.empty else 1,
-                        'Banc': banc,
-                        'Formapago': forma_pago,
-                        'Data': data_val.strftime('%d/%m/%Y'),
-                        'dia': data_val.day,
-                        'mes': mes_val,
-                        'any': any_val,
-                        'Categoria': cat_val,
-                        'Concepte': concept_val,
-                        'Import': import_carg,
-                        'pagat': pagat_val
-                    }
-                    df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
-                    save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
-                    st.success("Previsió de pagament desada correctament!")
-                clear_form_state("pag_")
-                clear_form_state("rep_any_pag")
-                st.rerun()
-                
-        elif data_type == "Previsió d'Ingrés":
-            # Row 1 (4 columns)
-            r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
-            with r1_col1:
-                banc = st.selectbox("Banc", get_config_banks(), key="ing_banc")
-            with r1_col2:
-                data_val = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="ing_data")
-                mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
-                any_val = data_val.year
-            with r1_col3:
-                import_ing = st.number_input("Import Ingrés (€)", min_value=0.0, step=0.01, key="ing_import")
-            with r1_col4:
-                cat_val = st.selectbox("Categoria", ["ingres_general", "ingres_extra"], key="ing_cat")
-                
-            # Row 2 (4 columns)
-            r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
-            with r2_col1:
-                concept_options = get_config_concepts(cat_val)
-                concept_val = st.selectbox("Concepte", concept_options, key="ing_concepte")
-            with r2_col2:
-                cobrat_val = st.selectbox("Estat", ["cobrat", "pendent"], key="ing_cobrat")
-            with r2_col3:
-                repetir = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="ing_repetir")
-            with r2_col4:
-                repetir_any_limit = st.selectbox("Fins a desembre de l'any:", [any_val, any_val + 1, any_val + 2], index=0, key="rep_any_ing")
+        # Dialog calculator helper for Gasolina price per litre
+        @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
+        def show_gasoline_calculator_in_desp():
+            st.markdown("Introdueix l'import pagat i el preu per litre per calcular els litres automàticament.")
+            calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get("desp_import", 0.0), step=0.01)
+            calc_preu_l = st.number_input("Preu per litre (€/l):", min_value=0.001, value=1.500, step=0.001, format="%.3f")
             
-            col_btns = st.columns([1.5, 1.5, 9.0])
-            with col_btns[0]:
-                submitted = st.button("Desa la Previsió d'Ingrés")
-            with col_btns[1]:
-                cancelled = st.button("Cancel·lar", key="cancel_ing")
-            if cancelled:
-                clear_form_state("ing_")
-                clear_form_state("rep_any_ing")
+            calc_litres = calc_import / calc_preu_l if calc_preu_l > 0 else 0.0
+            st.markdown(f"**Litres estimats**: `{calc_litres:.2f} l` (`{calc_import:.2f} € / {calc_preu_l:.3f} €/l`)")
+            
+            if st.button("Aplicar al formulari"):
+                st.session_state["desp_import"] = calc_import
+                st.session_state["desp_litres"] = calc_litres
                 st.rerun()
-            if submitted:
-                if repetir:
-                    current_max_id = int(df_ing['idIngres'].max() + 1) if not df_ing.empty else 1
-                    updated_count = 0
-                    added_count = 0
-                    for yr in range(any_val, repetir_any_limit + 1):
-                        start_month = data_val.month if yr == any_val else 1
-                        for m_idx in range(start_month, 13):
-                            m_cat = CATALAN_MONTHS[m_idx - 1]
-                            m_data = month_translations[m_cat]
-                            
-                            mask = (df_ing['any'] == yr) & (df_ing['mes'].str.lower() == m_data) & (df_ing['Concepte'].str.lower() == concept_val.lower())
-                            if mask.any():
-                                df_ing.loc[mask, 'Import'] = import_ing
-                                df_ing.loc[mask, 'Banc'] = banc
-                                df_ing.loc[mask, 'Categoria'] = cat_val
-                                df_ing.loc[mask, 'cobrat'] = cobrat_val
-                                updated_count += 1
-                            else:
-                                new_row = {
-                                    'idIngres': current_max_id,
-                                    'Banc': banc,
-                                    'Data': f"{data_val.day:02d}/{m_idx:02d}/{yr}",
-                                    'dia': data_val.day,
-                                    'mes': m_data,
-                                    'any': yr,
-                                    'Categoria': cat_val,
-                                    'Concepte': concept_val,
-                                    'Import': import_ing,
-                                    'comentari': '',
-                                    'cobrat': cobrat_val
-                                }
-                                df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
-                                current_max_id += 1
-                                added_count += 1
-                    save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
-                    st.success(f"Previsions d'ingrés desades: {added_count} creades de nou i {updated_count} actualitzades fins a desembre del {repetir_any_limit}!")
-                else:
-                    new_row = {
-                        'idIngres': int(df_ing['idIngres'].max() + 1) if not df_ing.empty else 1,
-                        'Banc': banc,
-                        'Data': data_val.strftime('%d/%m/%Y'),
-                        'dia': data_val.day,
-                        'mes': mes_val,
-                        'any': any_val,
-                        'Categoria': cat_val,
-                        'Concepte': concept_val,
-                        'Import': import_ing,
-                        'comentari': '',
-                        'cobrat': cobrat_val
-                    }
-                    df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
-                    save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
-                    st.success("Previsió d'ingrés desada correctament!")
-                clear_form_state("ing_")
-                clear_form_state("rep_any_ing")
-                st.rerun()
-                
-        elif data_type == "Compra Súper":
-            # Row 1 (5 columns)
-            r1_col1, r1_col2, r1_col3, r1_col4, r1_col5 = st.columns(5)
-            with r1_col1:
-                super_val = st.selectbox("Supermercat", get_config_supers(), key="super_super")
-            with r1_col2:
-                data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="super_data")
-                mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
-                any_val = data_val.year
-            with r1_col3:
-                fam_val = st.selectbox("Família", get_config_families(), key="super_familia")
-            with r1_col4:
-                article_options = get_config_articles(fam_val)
-                art_val = st.selectbox("Article", article_options, key="super_article")
-            with r1_col5:
-                pes_val = st.number_input("Pes (grams/units)", min_value=0.0, step=1.0, key="super_pes")
-                
-            # Row 2 (4 columns)
-            r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
-            with r2_col1:
-                qty_val = st.number_input("Quantitat", min_value=1.0, value=1.0, step=1.0, key="super_quantitat")
-            with r2_col2:
-                preu_unit = st.number_input("Preu Unitari (€)", min_value=0.0, step=0.01, key="super_preu")
-            with r2_col3:
-                prom_val = st.checkbox("Promoció / Descompte?", key="super_prom")
-            with r2_col4:
-                rebost_val = st.checkbox("Rebost / Celler?", key="super_rebost")
-                
-            col_btns = st.columns([1.5, 1.5, 9.0])
-            with col_btns[0]:
-                submitted = st.button("Desa la Compra")
-            with col_btns[1]:
-                cancelled = st.button("Cancel·lar", key="cancel_super")
-            if cancelled:
-                clear_form_state("super_")
-                st.rerun()
-            if submitted:
-                tot_linea = preu_unit * qty_val
-                new_row = {
-                    'IdCompra': int(df_super['IdCompra'].max() + 1) if not df_super.empty else 1,
-                    'data': data_val.strftime('%d/%m/%Y'),
+
+        # Row 2 (4 columns)
+        r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+        with r2_col1:
+            categories_opt = [""] + get_config_categories()
+            cat_val = st.selectbox("Categoria", categories_opt, index=0, key="desp_cat")
+        with r2_col2:
+            concept_options = [""] + get_config_concepts(cat_val) if cat_val else [""]
+            concept_val = st.selectbox("Concepte", concept_options, index=0, key="desp_concepte")
+        with r2_col3:
+            grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key="desp_grup")
+        with r2_col4:
+            comentari_val = st.text_input("Comentari", value="", key="desp_comentari")
+
+        # Dynamic extra fields for Gasolina category inside Moviment Real form
+        is_gas_cat = (str(cat_val).lower() == "gasolina")
+        if is_gas_cat:
+            st.markdown("<h5 style='color:#f39c12; margin-top:5px; margin-bottom:5px;'>⛽ Paràmetres del proveïment de gasolina</h5>", unsafe_allow_html=True)
+            gas_col1, gas_col2, gas_col3, gas_col4 = st.columns(4)
+            with gas_col1:
+                cars_list = sorted(list(df_gas['cotxe'].dropna().unique()))
+                if "tívoli" not in cars_list:
+                    cars_list = ["tívoli"] + cars_list
+                default_car_idx = cars_list.index("tívoli") if "tívoli" in cars_list else 0
+                gas_cotxe = st.selectbox("Cotxe", cars_list, index=default_car_idx, key="desp_gas_cotxe")
+            with gas_col2:
+                gas_preu_l = st.number_input("Preu per litre (€/l)", min_value=0.0, value=1.214, step=0.001, format="%.3f", key="desp_gas_preu_l")
+            with gas_col3:
+                calculated_litres = import_carg / gas_preu_l if gas_preu_l > 0 else 0.0
+                st.session_state["desp_litres"] = calculated_litres
+                st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>Litres: {calculated_litres:.2f} l</div>", unsafe_allow_html=True)
+            with gas_col4:
+                st.write("")
+            
+        col_btns = st.columns([1.5, 2.0, 8.5])
+        with col_btns[0]:
+            submitted = st.button("Desar")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_desp")
+        if cancelled:
+            clear_form_state("desp_")
+            st.rerun()
+        if submitted:
+            if not banc or not forma_pago or not cat_val or not concept_val or not grup_val:
+                st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts.")
+            elif is_gas_cat and st.session_state.get("desp_litres", 0.0) <= 0.0:
+                st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
+            else:
+                # 1. Save to despeses
+                new_row_desp = {
+                    'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
+                    'Banc': banc,
+                    'FormaPago': forma_pago,
+                    'Data': data_val.strftime('%d/%m/%Y'),
                     'mes': mes_val,
                     'any': any_val,
-                    'super': super_val,
-                    'familia': fam_val,
-                    'article': art_val,
-                    'pes': int(pes_val),
-                    'quantitat': int(qty_val),
-                    'preuUnit': preu_unit,
-                    'prom': 1 if prom_val else 0,
-                    'totLinea': tot_linea,
-                    'IdDespesa': 0,
-                    'descompte': 0.0,
-                    'rebost': 'rebost' if rebost_val else None
+                    'import ingrés': 0.0,
+                    'Import càrrec': import_carg,
+                    'grup': grup_val,
+                    'Idcategoria': cat_val,
+                    'Idconcepte': concept_val,
+                    'Comentari': comentari_val
                 }
-                df_super = pd.concat([df_super, pd.DataFrame([new_row])], ignore_index=True)
-                save_to_csv(df_super.drop(columns=['parsed_date'], errors='ignore'), 'compresSuper.csv')
-                st.success("Compra de súper desada correctament!")
-                clear_form_state("super_")
+                insert_db_row('despeses', new_row_desp)
+                
+                # 2. Save to gasolina if category is gasolina
+                if is_gas_cat:
+                    preu_l_saved = st.session_state.get("desp_gas_preu_l", 1.214)
+                    litres_saved = round(import_carg / preu_l_saved, 2) if preu_l_saved > 0 else 0.0
+                    new_row_gas = {
+                        'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty else 1,
+                        'cotxe': st.session_state.get("desp_gas_cotxe"),
+                        'data': data_val.strftime('%d/%m/%Y'),
+                        'mes': mes_val,
+                        'any': any_val,
+                        'import': import_carg,
+                        '?/l': preu_l_saved,
+                        'litres': litres_saved,
+                        'lloc': concept_val # Concept acts as fuel station / place
+                    }
+                    insert_db_row('gasolina', new_row_gas)
+
+                # 3. Auto-mark Previsió Hipoteca as paid if concept is hipoteca
+                if str(concept_val).lower() == "hipoteca" or str(cat_val).lower() == "hipoteca":
+                    df_hip.loc[(df_hip['any'] == any_val) & (df_hip['mes'].str.lower() == mes_val.lower()), 'pagat'] = "pagat"
+                    save_to_csv(df_hip, 'hipoteca.csv')
+                    st.session_state["df_hip"] = df_hip
+                    
+                # 4. Auto-mark Estalvis DP as paid if concept is PJ Isabel
+                if str(concept_val).lower() == "pj isabel":
+                    df_est.loc[(df_est['any'] == any_val) & (df_est['mes'].str.lower() == mes_val.lower()), 'pagat'] = "pagat"
+                    save_to_csv(df_est, 'estalviDP.csv')
+                    st.session_state["df_est"] = df_est
+                    
+                st.success("Moviment real i estats associats desats correctament!")
+                clear_form_state("desp_")
                 st.rerun()
-                
-        elif data_type == "Km Cotxe":
-            # Row 1 (3 columns)
-            r1_col1, r1_col2, r1_col3 = st.columns([3, 3, 6])
-            with r1_col1:
-                cotxe_val = st.selectbox("Cotxe", sorted(list(df_km['cotxe'].dropna().unique())), key="km_cotxe")
-            with r1_col2:
-                data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="km_data")
-            with r1_col3:
-                ruta_val = st.text_input("Ruta / Destinació", key="km_ruta")
-                
-            # Row 2 (2 columns)
-            r2_col1, r2_col2 = st.columns(2)
-            with r2_col1:
-                contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=0.0, step=1.0, key="km_contador")
-            with r2_col2:
-                km_val = st.number_input("Kilòmetres recorreguts", min_value=0.0, value=0.0, step=1.0, key="km_recorreguts")
-                
-            col_btns = st.columns([1.5, 1.5, 9.0])
-            with col_btns[0]:
-                submitted = st.button("Desa els Kilòmetres")
-            with col_btns[1]:
-                cancelled = st.button("Cancel·lar", key="cancel_km")
-            if cancelled:
-                clear_form_state("km_")
-                st.rerun()
-            if submitted:
-                new_row = {
-                    'idRuta': int(df_km['idRuta'].max() + 1) if not df_km.empty else 1,
-                    'cotxe': cotxe_val,
-                    'data': data_val.strftime('%d/%m/%Y'),
-                    'ruta': ruta_val,
-                    'contador': int(contador_val),
-                    'km': int(km_val)
-                }
-                df_km = pd.concat([df_km, pd.DataFrame([new_row])], ignore_index=True)
-                save_to_csv(df_km.drop(columns=['parsed_date'], errors='ignore'), 'kmCotxe.csv')
-                st.success("Ruta desada correctament!")
-                clear_form_state("km_")
-                st.rerun()
-                
-    with intro_col_right:
-        st.markdown("<h4 style='color:#f39c12; margin-top: 0px;'>📋 Últims moviments</h4>", unsafe_allow_html=True)
-        
-        last_movs = []
-        for bank_key in get_config_banks():
-            df_b = df_desp[df_desp['Banc'] == bank_key]
-            if not df_b.empty:
-                last_row = df_b.iloc[-1]
-                is_charge = float(last_row['Import càrrec']) > 0
-                val = last_row['Import càrrec'] if is_charge else last_row['import ingrés']
-                lbl = "Càrrec" if is_charge else "Ingrés"
-                
-                last_movs.append({
-                    'Banc': BANK_MAPPING.get(bank_key, bank_key),
-                    'Data': last_row['Data'],
-                    'Categoria': last_row['Idcategoria'],
-                    'Concepte': last_row['Idconcepte'],
-                    'Tipus': lbl,
-                    'Import': val,
-                    '_Tipus_raw': lbl  # hidden helper for styling
-                })
-                
-        if last_movs:
-            df_last = pd.DataFrame(last_movs)
             
-            # Style callback to highlight charges in red, inflows in green
-            def style_last_mov_cells(val):
-                if isinstance(val, float):
-                    return ""
+    elif data_type == "Previsió de Pagament":
+        # Row 1 (4 columns)
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+        with r1_col1:
+            banc = st.selectbox("Banc", get_config_banks(), key="pag_banc")
+        with r1_col2:
+            forma_pago = st.selectbox("Forma de Pagament", get_config_payment_methods(), key="pag_forma_pago")
+        with r1_col3:
+            data_val = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="pag_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col4:
+            import_carg = st.number_input("Import (€)", min_value=0.0, step=0.01, key="pag_import")
+            
+        # Row 2 (5 columns to fit repeating settings)
+        r2_col1, r2_col2, r2_col3, r2_col4, r2_col5 = st.columns([2.5, 2.5, 2.0, 2.5, 2.5])
+        with r2_col1:
+            cat_val = st.selectbox("Categoria", get_config_categories(), key="pag_cat")
+        with r2_col2:
+            concept_options = get_config_concepts(cat_val)
+            concept_val = st.selectbox("Concepte", concept_options, key="pag_concepte")
+        with r2_col3:
+            pagat_val = st.selectbox("Estat", ["pendent", "pagat"], key="pag_estat")
+        with r2_col4:
+            repetir = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="pag_repetir")
+        with r2_col5:
+            repetir_any_limit = st.selectbox("Fins a desembre de l'any:", [any_val, any_val + 1, any_val + 2], index=0, key="rep_any_pag")
+        
+        col_btns = st.columns([3.5, 2.0, 6.5])
+        with col_btns[0]:
+            submitted = st.button("Desa la Previsió de Pagament")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_pag")
+        if cancelled:
+            clear_form_state("pag_")
+            clear_form_state("rep_any_pag")
+            st.rerun()
+        if submitted:
+            if repetir:
+                current_max_id = int(df_pag['idPago'].max() + 1) if not df_pag.empty else 1
+                updated_count = 0
+                added_count = 0
+                for yr in range(any_val, repetir_any_limit + 1):
+                    start_month = data_val.month if yr == any_val else 1
+                    for m_idx in range(start_month, 13):
+                        m_cat = CATALAN_MONTHS[m_idx - 1]
+                        m_data = month_translations[m_cat]
+                        
+                        mask = (df_pag['any'] == yr) & (df_pag['mes'].str.lower() == m_data) & (df_pag['Concepte'].str.lower() == concept_val.lower())
+                        if mask.any():
+                            df_pag.loc[mask, 'Import'] = import_carg
+                            df_pag.loc[mask, 'Banc'] = banc
+                            df_pag.loc[mask, 'Formapago'] = forma_pago
+                            df_pag.loc[mask, 'Categoria'] = cat_val
+                            df_pag.loc[mask, 'pagat'] = pagat_val
+                            updated_count += 1
+                        else:
+                            new_row = {
+                                'idPago': current_max_id,
+                                'Banc': banc,
+                                'Formapago': forma_pago,
+                                'Data': f"{data_val.day:02d}/{m_idx:02d}/{yr}",
+                                'dia': data_val.day,
+                                'mes': m_data,
+                                'any': yr,
+                                'Categoria': cat_val,
+                                'Concepte': concept_val,
+                                'Import': import_carg,
+                                'pagat': pagat_val
+                            }
+                            df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
+                            current_max_id += 1
+                            added_count += 1
+                save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                st.success(f"Previsions desades: {added_count} creades de nou i {updated_count} actualitzades fins a desembre del {repetir_any_limit}!")
+            else:
+                new_row = {
+                    'idPago': int(df_pag['idPago'].max() + 1) if not df_pag.empty else 1,
+                    'Banc': banc,
+                    'Formapago': forma_pago,
+                    'Data': data_val.strftime('%d/%m/%Y'),
+                    'dia': data_val.day,
+                    'mes': mes_val,
+                    'any': any_val,
+                    'Categoria': cat_val,
+                    'Concepte': concept_val,
+                    'Import': import_carg,
+                    'pagat': pagat_val
+                }
+                df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
+                save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                st.success("Previsió de pagament desada correctament!")
+            clear_form_state("pag_")
+            clear_form_state("rep_any_pag")
+            st.rerun()
+            
+    elif data_type == "Previsió d'Ingrés":
+        # Row 1 (4 columns)
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+        with r1_col1:
+            banc = st.selectbox("Banc", get_config_banks(), key="ing_banc")
+        with r1_col2:
+            data_val = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="ing_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col3:
+            import_ing = st.number_input("Import Ingrés (€)", min_value=0.0, step=0.01, key="ing_import")
+        with r1_col4:
+            cat_val = st.selectbox("Categoria", ["ingres_general", "ingres_extra"], key="ing_cat")
+            
+        # Row 2 (4 columns)
+        r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+        with r2_col1:
+            concept_options = get_config_concepts(cat_val)
+            concept_val = st.selectbox("Concepte", concept_options, key="ing_concepte")
+        with r2_col2:
+            cobrat_val = st.selectbox("Estat", ["cobrat", "pendent"], key="ing_cobrat")
+        with r2_col3:
+            repetir = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="ing_repetir")
+        with r2_col4:
+            repetir_any_limit = st.selectbox("Fins a desembre de l'any:", [any_val, any_val + 1, any_val + 2], index=0, key="rep_any_ing")
+        
+        col_btns = st.columns([3.5, 2.0, 6.5])
+        with col_btns[0]:
+            submitted = st.button("Desa la Previsió d'Ingrés")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_ing")
+        if cancelled:
+            clear_form_state("ing_")
+            clear_form_state("rep_any_ing")
+            st.rerun()
+        if submitted:
+            if repetir:
+                current_max_id = int(df_ing['idIngres'].max() + 1) if not df_ing.empty else 1
+                updated_count = 0
+                added_count = 0
+                for yr in range(any_val, repetir_any_limit + 1):
+                    start_month = data_val.month if yr == any_val else 1
+                    for m_idx in range(start_month, 13):
+                        m_cat = CATALAN_MONTHS[m_idx - 1]
+                        m_data = month_translations[m_cat]
+                        
+                        mask = (df_ing['any'] == yr) & (df_ing['mes'].str.lower() == m_data) & (df_ing['Concepte'].str.lower() == concept_val.lower())
+                        if mask.any():
+                            df_ing.loc[mask, 'Import'] = import_ing
+                            df_ing.loc[mask, 'Banc'] = banc
+                            df_ing.loc[mask, 'Categoria'] = cat_val
+                            df_ing.loc[mask, 'cobrat'] = cobrat_val
+                            updated_count += 1
+                        else:
+                            new_row = {
+                                'idIngres': current_max_id,
+                                'Banc': banc,
+                                'Data': f"{data_val.day:02d}/{m_idx:02d}/{yr}",
+                                'dia': data_val.day,
+                                'mes': m_data,
+                                'any': yr,
+                                'Categoria': cat_val,
+                                'Concepte': concept_val,
+                                'Import': import_ing,
+                                'comentari': '',
+                                'cobrat': cobrat_val
+                            }
+                            df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
+                            current_max_id += 1
+                            added_count += 1
+                save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                st.success(f"Previsions d'ingrés desades: {added_count} creades de nou i {updated_count} actualitzades fins a desembre del {repetir_any_limit}!")
+            else:
+                new_row = {
+                    'idIngres': int(df_ing['idIngres'].max() + 1) if not df_ing.empty else 1,
+                    'Banc': banc,
+                    'Data': data_val.strftime('%d/%m/%Y'),
+                    'dia': data_val.day,
+                    'mes': mes_val,
+                    'any': any_val,
+                    'Categoria': cat_val,
+                    'Concepte': concept_val,
+                    'Import': import_ing,
+                    'comentari': '',
+                    'cobrat': cobrat_val
+                }
+                df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
+                save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                st.success("Previsió d'ingrés desada correctament!")
+            clear_form_state("ing_")
+            clear_form_state("rep_any_ing")
+            st.rerun()
+            
+    elif data_type == "Compra Súper":
+        # Row 1 (5 columns)
+        r1_col1, r1_col2, r1_col3, r1_col4, r1_col5 = st.columns(5)
+        with r1_col1:
+            super_val = st.selectbox("Supermercat", get_config_supers(), key="super_super")
+        with r1_col2:
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="super_data")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col3:
+            fam_val = st.selectbox("Família", get_config_families(), key="super_familia")
+        with r1_col4:
+            article_options = get_config_articles(fam_val)
+            art_val = st.selectbox("Article", article_options, key="super_article")
+        with r1_col5:
+            pes_val = st.number_input("Pes (grams/units)", min_value=0.0, step=1.0, key="super_pes")
+            
+        # Row 2 (4 columns)
+        r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+        with r2_col1:
+            qty_val = st.number_input("Quantitat", min_value=1.0, value=1.0, step=1.0, key="super_quantitat")
+        with r2_col2:
+            preu_unit = st.number_input("Preu Unitari (€)", min_value=0.0, step=0.01, key="super_preu")
+        with r2_col3:
+            prom_val = st.checkbox("Promoció / Descompte?", key="super_prom")
+        with r2_col4:
+            rebost_val = st.checkbox("Rebost / Celler?", key="super_rebost")
+            
+        col_btns = st.columns([2.5, 2.0, 7.5])
+        with col_btns[0]:
+            submitted = st.button("Desa la Compra")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_super")
+        if cancelled:
+            clear_form_state("super_")
+            st.rerun()
+        if submitted:
+            tot_linea = preu_unit * qty_val
+            new_row = {
+                'IdCompra': int(df_super['IdCompra'].max() + 1) if not df_super.empty else 1,
+                'data': data_val.strftime('%d/%m/%Y'),
+                'mes': mes_val,
+                'any': any_val,
+                'super': super_val,
+                'familia': fam_val,
+                'article': art_val,
+                'pes': int(pes_val),
+                'quantitat': int(qty_val),
+                'preuUnit': preu_unit,
+                'prom': 1 if prom_val else 0,
+                'totLinea': tot_linea,
+                'IdDespesa': 0,
+                'descompte': 0.0,
+                'rebost': 'rebost' if rebost_val else None
+            }
+            df_super = pd.concat([df_super, pd.DataFrame([new_row])], ignore_index=True)
+            save_to_csv(df_super.drop(columns=['parsed_date'], errors='ignore'), 'compresSuper.csv')
+            st.success("Compra de súper desada correctament!")
+            clear_form_state("super_")
+            st.rerun()
+            
+    elif data_type == "Km Cotxe":
+        # Row 1 (3 columns)
+        r1_col1, r1_col2, r1_col3 = st.columns([3, 3, 6])
+        with r1_col1:
+            cotxe_val = st.selectbox("Cotxe", sorted(list(df_km['cotxe'].dropna().unique())), key="km_cotxe")
+        with r1_col2:
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="km_data")
+        with r1_col3:
+            ruta_val = st.text_input("Ruta / Destinació", key="km_ruta")
+            
+        # Row 2 (2 columns)
+        r2_col1, r2_col2 = st.columns(2)
+        with r2_col1:
+            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=0.0, step=1.0, key="km_contador")
+        with r2_col2:
+            km_val = st.number_input("Kilòmetres recorreguts", min_value=0.0, value=0.0, step=1.0, key="km_recorreguts")
+            
+        col_btns = st.columns([2.5, 2.0, 7.5])
+        with col_btns[0]:
+            submitted = st.button("Desa els Kilòmetres")
+        with col_btns[1]:
+            cancelled = st.button("Cancel·lar", key="cancel_km")
+        if cancelled:
+            clear_form_state("km_")
+            st.rerun()
+        if submitted:
+            new_row = {
+                'idRuta': int(df_km['idRuta'].max() + 1) if not df_km.empty else 1,
+                'cotxe': cotxe_val,
+                'data': data_val.strftime('%d/%m/%Y'),
+                'ruta': ruta_val,
+                'contador': int(contador_val),
+                'km': int(km_val)
+            }
+            df_km = pd.concat([df_km, pd.DataFrame([new_row])], ignore_index=True)
+            save_to_csv(df_km.drop(columns=['parsed_date'], errors='ignore'), 'kmCotxe.csv')
+            st.success("Ruta desada correctament!")
+            clear_form_state("km_")
+            st.rerun()
+            
+    st.markdown("<h5 style='color:#f39c12; margin-top: 20px; margin-bottom: 5px;'>📋 Últims moviments (Lletra petita)</h5>", unsafe_allow_html=True)
+    
+    last_movs = []
+    for bank_key in get_config_banks():
+        df_b = df_desp[df_desp['Banc'] == bank_key]
+        if not df_b.empty:
+            last_row = df_b.iloc[-1]
+            is_charge = float(last_row['Import càrrec']) > 0
+            val = last_row['Import càrrec'] if is_charge else last_row['import ingrés']
+            lbl = "Càrrec" if is_charge else "Ingrés"
+            
+            last_movs.append({
+                'Banc': BANK_MAPPING.get(bank_key, bank_key),
+                'Data': last_row['Data'],
+                'Categoria': last_row['Idcategoria'],
+                'Concepte': last_row['Idconcepte'],
+                'Tipus': lbl,
+                'Import': val,
+                '_Tipus_raw': lbl  # hidden helper for styling
+            })
+            
+    if last_movs:
+        df_last = pd.DataFrame(last_movs)
+        
+        # Style callback to highlight charges in red, inflows in green
+        def style_last_mov_cells(val):
+            if isinstance(val, float):
                 return ""
-                
-            def style_rows(df):
-                style_df = pd.DataFrame("", index=df.index, columns=df.columns)
-                for idx, row in df.iterrows():
-                    color = "#ef4444" if df_last.loc[idx, '_Tipus_raw'] == "Càrrec" else "#22c55e"
-                    style_df.at[idx, 'Import'] = f"color: {color}; font-weight: bold;"
-                    style_df.at[idx, 'Tipus'] = f"color: {color}; font-weight: bold;"
-                return style_df
-                
-            # Display as a compact, styled static table
-            st.table(
-                df_last.drop(columns=['_Tipus_raw'])
-                .style.format({'Import': '{:,.2f} €'})
-                .apply(style_rows, axis=None)
-            )
+            return ""
+            
+        def style_rows(df):
+            style_df = pd.DataFrame("", index=df.index, columns=df.columns)
+            for idx, row in df.iterrows():
+                color = "#ef4444" if df_last.loc[idx, '_Tipus_raw'] == "Càrrec" else "#22c55e"
+                style_df.at[idx, 'Import'] = f"color: {color}; font-weight: bold;"
+                style_df.at[idx, 'Tipus'] = f"color: {color}; font-weight: bold;"
+            return style_df
+            
+        # Display as a compact, styled static table
+        st.table(
+            df_last.drop(columns=['_Tipus_raw'])
+            .style.format({'Import': '{:,.2f} €'})
+            .apply(style_rows, axis=None)
+            .set_properties(**{'font-size': '11px', 'padding': '3px'})
+        )
 # ----------------- DIALOGS FOR MODIFY / DELETE -----------------
 @st.dialog("✏️ Modificar Registre")
 def show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx):
