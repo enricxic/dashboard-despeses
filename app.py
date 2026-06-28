@@ -2642,22 +2642,24 @@ with tab_intro:
             mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
             any_val = data_val.year
         with r1_col4:
-            is_ingres = (st.session_state.get(f"desp_grup_{version}", "") == "Ingrés")
-            label_import = "Import Ingrés (€)" if is_ingres else "Import Càrrec (€)"
-            import_carg = st.number_input(label_import, min_value=0.0, value=0.0, step=0.01, key=f"desp_import_{version}")
+            sub_col1, sub_col2 = st.columns(2)
+            with sub_col1:
+                import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key=f"desp_import_carg_{version}")
+            with sub_col2:
+                import_ing = st.number_input("Import Ingrés (€)", min_value=0.0, value=0.0, step=0.01, key=f"desp_import_ing_{version}")
             
         # Dialog calculator helper for Gasolina price per litre
         @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
         def show_gasoline_calculator_in_desp():
             st.markdown("Introdueix l'import pagat i el preu per litre per calcular els litres automàticament.")
-            calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get(f"desp_import_{version}", 0.0), step=0.01)
+            calc_import = st.number_input("Import total pagat (€):", min_value=0.0, value=st.session_state.get(f"desp_import_carg_{version}", 0.0), step=0.01)
             calc_preu_l = st.number_input("Preu per litre (€/l):", min_value=0.001, value=1.500, step=0.001, format="%.3f")
             
             calc_litres = calc_import / calc_preu_l if calc_preu_l > 0 else 0.0
             st.markdown(f"**Litres estimats**: `{calc_litres:.2f} l` (`{calc_import:.2f} € / {calc_preu_l:.3f} €/l`)")
             
             if st.button("Aplicar al formulari"):
-                st.session_state[f"desp_import_{version}"] = calc_import
+                st.session_state[f"desp_import_carg_{version}"] = calc_import
                 st.session_state[f"desp_litres_{version}"] = calc_litres
                 st.rerun()
 
@@ -2725,7 +2727,18 @@ with tab_intro:
                 # Keep error message trigger
                 pass
                 
-            if not banc or (banc != "Efectiu" and not forma_pago) or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
+            # Perform group vs import criteria checks
+            if grup_val == "Càrrec" and import_ing > 0.0:
+                st.error("⚠️ El grup és Càrrec, per tant l'Import Ingrés ha de ser 0.")
+            elif grup_val == "Ingrés" and import_carg > 0.0:
+                st.error("⚠️ El grup és Ingrés, per tant l'Import Càrrec ha de ser 0.")
+            elif grup_val == "op_banc" and import_carg > 0.0 and import_ing > 0.0:
+                st.error("⚠️ Per a op_banc s'ha d'emplenar només un dels dos imports (Càrrec o Ingrés), no tots dos.")
+            elif grup_val == "op_banc" and import_carg == 0.0 and import_ing == 0.0:
+                st.error("⚠️ Per a op_banc s'ha d'introduir un import (Càrrec o Ingrés).")
+            elif import_carg == 0.0 and import_ing == 0.0:
+                st.error("⚠️ S'ha d'introduir un import vàlid (Càrrec o Ingrés).")
+            elif not banc or (banc != "Efectiu" and not forma_pago) or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
                 st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu).")
             elif is_gas_cat and st.session_state.get(f"desp_litres_{version}", 0.0) <= 0.0:
                 st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
@@ -2735,7 +2748,6 @@ with tab_intro:
                     add_concept_to_config(cat_val, actual_concept)
                     
                 # 1. Save to despeses
-                is_actual_ingres = (grup_val == "Ingrés")
                 new_row_desp = {
                     'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
                     'Banc': banc,
@@ -2743,8 +2755,8 @@ with tab_intro:
                     'Data': data_val.strftime('%d/%m/%Y'),
                     'mes': mes_val,
                     'any': any_val,
-                    'import ingrés': import_carg if is_actual_ingres else 0.0,
-                    'Import càrrec': 0.0 if is_actual_ingres else import_carg,
+                    'import ingrés': import_ing,
+                    'Import càrrec': import_carg,
                     'grup': grup_val,
                     'Idcategoria': cat_val,
                     'Idconcepte': actual_concept,
