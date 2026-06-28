@@ -517,7 +517,7 @@ def insert_db_row(table_name, new_row_dict):
         tracker_obj = get_db_tracker()
         tracker_obj.update()
         st.session_state["last_synced_time"] = tracker_obj.last_update
-        
+        load_dashboard_data.clear()
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (INSERT)**: {str(e)}")
@@ -542,6 +542,7 @@ def append_to_db(df_new, table_name, state_key):
         tracker_obj = get_db_tracker()
         tracker_obj.update()
         st.session_state["last_synced_time"] = tracker_obj.last_update
+        load_dashboard_data.clear()
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (APPEND {table_name})**: {str(e)}")
@@ -2171,8 +2172,11 @@ def get_balances_up_to(year, month_name):
     
     balances = {}
     for csv_name, disp_name in BANK_MAPPING.items():
-        # Sum transactions for this bank, excluding VISA payments (handling NaN values correctly)
-        b_desp = sub_desp[(sub_desp['Banc'] == csv_name) & (sub_desp['FormaPago'].fillna('') != 'VISA')]
+        # Sum transactions for this bank, excluding VISA payments of the target month ONLY (handling NaN values correctly)
+        b_desp = sub_desp[
+            (sub_desp['Banc'] == csv_name) & 
+            ~((sub_desp['date_score'] == target_score) & (sub_desp['FormaPago'].fillna('') == 'VISA'))
+        ]
         inflows = b_desp['import ingrés'].sum()
         outflows = b_desp['Import càrrec'].sum()
         
