@@ -514,8 +514,9 @@ def insert_db_row(table_name, new_row_dict):
             st.session_state[state_key] = pd.concat([df, new_df], ignore_index=True)
             
         # Update db_tracker and keep local last_synced_time updated to avoid slow DB reload
-        new_time = get_db_tracker().update()
-        st.session_state["last_synced_time"] = new_time
+        tracker_obj = get_db_tracker()
+        tracker_obj.update()
+        st.session_state["last_synced_time"] = tracker_obj.last_update
         
         return True
     except Exception as e:
@@ -631,7 +632,7 @@ def update_db_row(table_name, id_col, id_val, new_data):
 
 
 tracker = get_db_tracker()
-if "last_synced_time" not in st.session_state or st.session_state["last_synced_time"] < tracker.last_update:
+if "last_synced_time" not in st.session_state or not isinstance(st.session_state["last_synced_time"], datetime) or st.session_state["last_synced_time"] < tracker.last_update:
     st.session_state["dfs_initialized"] = False
 
 if "dfs_initialized" not in st.session_state or not st.session_state["dfs_initialized"]:
