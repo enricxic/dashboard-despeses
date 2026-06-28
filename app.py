@@ -2575,8 +2575,8 @@ with tab_intro:
             clear_form_state("desp_")
             st.rerun()
         if submitted:
-            if not banc or not forma_pago or not cat_val or not concept_val or not grup_val:
-                st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts.")
+            if not banc or (banc != "Efectiu" and not forma_pago) or not cat_val or not concept_val or not grup_val:
+                st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu).")
             elif is_gas_cat and st.session_state.get("desp_litres", 0.0) <= 0.0:
                 st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
             else:
