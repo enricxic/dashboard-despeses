@@ -526,13 +526,22 @@ def insert_db_row(table_name, new_row_dict):
 def append_to_db(df_new, table_name, state_key):
     engine = get_engine()
     try:
-        df_new.to_sql(table_name, engine, if_exists='append', index=False)
+        df_new.to_sql(table_name, engine, if_exists='append', index=False, method='multi')
         if state_key and state_key in st.session_state:
             df = st.session_state[state_key]
-            st.session_state[state_key] = pd.concat([df, df_new], ignore_index=True)
-        get_db_tracker().update()
-        st.cache_data.clear()
-        load_dashboard_data.clear()
+            df_new_local = df_new.copy()
+            if table_name == 'despeses':
+                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['Data'], format='%d/%m/%Y', errors='coerce')
+                df_new_local['date_score'] = df_new_local['any'].astype(int) * 12 + df_new_local['mes'].map(lambda x: MONTHS_MAP.get(str(x).lower(), 12))
+            elif table_name in ['ingressos', 'pagaments']:
+                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['Data'], format='%d/%m/%Y', errors='coerce')
+            elif table_name in ['compresSuper', 'gasolina']:
+                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['data'], format='%d/%m/%Y', errors='coerce')
+            st.session_state[state_key] = pd.concat([df, df_new_local], ignore_index=True)
+            
+        tracker_obj = get_db_tracker()
+        tracker_obj.update()
+        st.session_state["last_synced_time"] = tracker_obj.last_update
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (APPEND {table_name})**: {str(e)}")
@@ -1411,7 +1420,8 @@ def cb_clear_ticket():
 
 def cb_finalize_ticket():
     global df_desp, df_super
-    df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag = load_dashboard_data(get_csv_mtimes())
+    df_desp = st.session_state["df_desp"]
+    df_super = st.session_state["df_super"]
     
     items = st.session_state.get("ticket_items", [])
     if not items:
