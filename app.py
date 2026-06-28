@@ -538,6 +538,17 @@ def append_to_db(df_new, table_name, state_key):
         st.error(f"❌ **Error a la base de dades (APPEND {table_name})**: {str(e)}")
         return False
 
+def add_concept_to_config(category, concept):
+    global cat_config
+    if cat_config is None:
+        cat_config = {}
+    if category not in cat_config:
+        cat_config[category] = []
+    if concept not in cat_config[category]:
+        cat_config[category].append(concept)
+        cat_config[category].sort()
+        save_categories_conceptes(cat_config)
+
 def save_categories_conceptes(config):
     filepath = "categories_conceptes.json"
     try:
@@ -2545,8 +2556,17 @@ with tab_intro:
             categories_opt = [""] + get_config_categories()
             cat_val = st.selectbox("Categoria", categories_opt, index=0, key=f"desp_cat_{version}")
         with r2_col2:
-            concept_options = [""] + get_config_concepts(cat_val) if cat_val else [""]
+            concept_options = [""] + get_config_concepts(cat_val) + ["➕ Afegir nou..."] if cat_val else [""]
             concept_val = st.selectbox("Concepte", concept_options, index=0, key=f"desp_concepte_{version}")
+        
+        # If adding a new concept, show custom inputs
+        if concept_val == "➕ Afegir nou...":
+            custom_col1, custom_col2, custom_col3 = st.columns([4, 4, 4])
+            with custom_col1:
+                custom_concept = st.text_input("Nou Concepte (escriu el nom):", key=f"desp_custom_concept_{version}")
+            with custom_col2:
+                st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                save_new_concept = st.checkbox("Desar a la llista permanent?", value=True, key=f"desp_save_new_concept_{version}")
         with r2_col3:
             grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key=f"desp_grup_{version}")
         with r2_col4:
@@ -2581,11 +2601,28 @@ with tab_intro:
             clear_form_state("desp_")
             st.rerun()
         if submitted:
-            if not banc or (banc != "Efectiu" and not forma_pago) or not cat_val or not concept_val or not grup_val:
+            # Determine actual concept to save
+            actual_concept = concept_val
+            if concept_val == "➕ Afegir nou...":
+                custom_concept_val = st.session_state.get(f"desp_custom_concept_{version}", "").strip()
+                if not custom_concept_val:
+                    st.error("⚠️ Heu d'escriure el nom del nou concepte.")
+                else:
+                    actual_concept = custom_concept_val
+            
+            if not actual_concept or actual_concept == "➕ Afegir nou...":
+                # Keep error message trigger
+                pass
+                
+            if not banc or (banc != "Efectiu" and not forma_pago) or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
                 st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu).")
             elif is_gas_cat and st.session_state.get(f"desp_litres_{version}", 0.0) <= 0.0:
                 st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
             else:
+                # If "➕ Afegir nou..." was selected and checkmark is true, save it permanently
+                if concept_val == "➕ Afegir nou..." and st.session_state.get(f"desp_save_new_concept_{version}", True):
+                    add_concept_to_config(cat_val, actual_concept)
+                    
                 # 1. Save to despeses
                 new_row_desp = {
                     'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
@@ -2598,7 +2635,7 @@ with tab_intro:
                     'Import càrrec': import_carg,
                     'grup': grup_val,
                     'Idcategoria': cat_val,
-                    'Idconcepte': concept_val,
+                    'Idconcepte': actual_concept,
                     'Comentari': comentari_val
                 }
                 insert_db_row('despeses', new_row_desp)
@@ -2616,7 +2653,7 @@ with tab_intro:
                         'import': import_carg,
                         '?/l': preu_l_saved,
                         'litres': litres_saved,
-                        'lloc': concept_val # Concept acts as fuel station / place
+                        'lloc': actual_concept # Concept acts as fuel station / place
                     }
                     insert_db_row('gasolina', new_row_gas)
 
