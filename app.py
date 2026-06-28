@@ -87,7 +87,7 @@ st.markdown("""
         padding: 5px 10px;
         text-align: center;
         box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
-        min-width: 95px;
+        min-width: 125px; /* Increased min-width to support up to 7 digits + € */
         margin: 0 4px; /* Separate cards slightly */
     }
     .metric-title {
@@ -2244,7 +2244,8 @@ with tab_dash:
         with col_bal_title:
             st.markdown(f"<h3 style='margin:0; font-size: 1.3rem;'>💰 Saldo Comptes:<br><span style='color: #22c55e;'>{total_accounts_balance:,.2f} €</span></h3>", unsafe_allow_html=True)
         with col_bal_metrics:
-            col_ratios = [1.2] * len(current_balances) + [4.5]
+            # col_ratios updated to 1.6 for wider balance cards (1.6 * 7 = 11.2 plus 0.8 trailing space)
+            col_ratios = [1.6] * len(current_balances) + [0.8]
             cols = st.columns(col_ratios)
             for i, (b_name, b_val) in enumerate(current_balances.items()):
                 with cols[i]:
@@ -2270,10 +2271,24 @@ with tab_dash:
     for m_cat in CATALAN_MONTHS:
         m_data = month_translations[m_cat]
         
-        # Incomes
+        # Incomes from ingressos table (only collected/cobrat)
         sub_ing = year_ing[year_ing['clean_mes'] == m_data]
-        ing_fixes = sub_ing[sub_ing['Categoria'] == 'ingres_general']['Import'].sum()
-        ing_extres = sub_ing[sub_ing['Categoria'] == 'ingres_extra']['Import'].sum()
+        ing_fixes_table = sub_ing[sub_ing['Categoria'] == 'ingres_general']['Import'].sum()
+        ing_extres_table = sub_ing[sub_ing['Categoria'] == 'ingres_extra']['Import'].sum()
+        
+        # Incomes from despeses table (which are real/collected transactions by definition)
+        sub_desp = year_desp[year_desp['clean_mes'] == m_data]
+        sub_desp_inflows = sub_desp[sub_desp['Idcategoria'] != 'op_banc']
+        ing_fixes_desp = sub_desp_inflows[sub_desp_inflows['Idcategoria'] == 'ingres_general']['import ingrés'].sum()
+        ing_extres_desp = sub_desp_inflows[sub_desp_inflows['Idcategoria'] == 'ingres_extra']['import ingrés'].sum()
+        
+        # Any other category inflow in despeses that is not op_banc or general/extra is counted as extra income
+        ing_other_desp = sub_desp_inflows[
+            ~sub_desp_inflows['Idcategoria'].isin(['ingres_general', 'ingres_extra'])
+        ]['import ingrés'].sum()
+        
+        ing_fixes = ing_fixes_table + ing_fixes_desp
+        ing_extres = ing_extres_table + ing_extres_desp + ing_other_desp
         ing_total = ing_fixes + ing_extres
         
         # Expenses
