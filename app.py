@@ -1395,6 +1395,15 @@ def cb_clear_ticket():
     st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
+    # Reset manual inputs
+    st.session_state["manual_pes_num"] = "0"
+    st.session_state["manual_qty_num"] = 1.0
+    st.session_state["manual_pct_num"] = 0.0
+    st.session_state["manual_preu_num"] = 0.0
+    st.session_state["manual_prom_num"] = 0.0
+    st.session_state["manual_reb_chk"] = False
+    st.session_state["manual_fam_selectbox"] = ""
+    st.session_state["manual_art_selectbox"] = ""
     if "finalize_error" in st.session_state:
         del st.session_state["finalize_error"]
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
@@ -1581,6 +1590,15 @@ def cb_finalize_ticket():
     st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
+    # Reset manual inputs
+    st.session_state["manual_pes_num"] = "0"
+    st.session_state["manual_qty_num"] = 1.0
+    st.session_state["manual_pct_num"] = 0.0
+    st.session_state["manual_preu_num"] = 0.0
+    st.session_state["manual_prom_num"] = 0.0
+    st.session_state["manual_reb_chk"] = False
+    st.session_state["manual_fam_selectbox"] = ""
+    st.session_state["manual_art_selectbox"] = ""
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
     st.session_state["viewing_compres_super"] = True
