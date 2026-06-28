@@ -1588,6 +1588,30 @@ def cb_finalize_ticket():
 def render_compres_super_interface():
     global df_super, df_desp
     
+    st.components.v1.html(
+        """
+        <script>
+        const doc = window.parent.document;
+        doc.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const target = e.target;
+                if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
+                    const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
+                    const index = inputs.indexOf(target);
+                    if (index > -1 && index < inputs.length - 1) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        inputs[index + 1].focus();
+                    }
+                }
+            }
+        }, true);
+        </script>
+        """,
+        height=0,
+        width=0
+    )
+    
     st.markdown("<h2 style='text-align: center; color: #f39c12; margin-top: 5px; margin-bottom: 20px;'>Intro ticket Super</h2>", unsafe_allow_html=True)
     
     if "ticket_msg_success" in st.session_state:
@@ -1916,11 +1940,11 @@ def render_compres_super_interface():
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
     with col_qty:
-        qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num")
+        qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num", on_change=cb_recalculate_manual_pct)
     with col_pct:
         pct_val = st.number_input("%", min_value=0.0, max_value=100.0, step=1.0, key="manual_pct_num", on_change=cb_recalculate_manual_pct)
     with col_preu:
-        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num")
+        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", on_change=cb_recalculate_manual_pct)
     with col_prom:
         prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num")
         
