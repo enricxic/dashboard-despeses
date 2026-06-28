@@ -2497,7 +2497,7 @@ with tab_intro:
         if prefix == "desp_":
             st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
         for k in list(st.session_state.keys()):
-            if k.startswith(prefix):
+            if k.startswith(prefix) and k != "desp_version":
                 del st.session_state[k]
     
     data_type = st.selectbox("Tipus de registre", [
