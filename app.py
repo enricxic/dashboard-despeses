@@ -1910,6 +1910,28 @@ def render_compres_super_interface():
         fam_sel = st.selectbox("FAMILIA", fam_options, key="manual_fam_selectbox")
         
     with col_art:
+        @st.dialog("➕ Afegir nou article")
+        def show_add_article_dialog(family):
+            st.markdown(f"Introduïu el nom del nou article per a la família **{family}**:")
+            new_art_name = st.text_input("Nom de l'article:", key="new_article_name_input_dialog")
+            if st.button("Guardar article", key="btn_save_dialog_article", use_container_width=True):
+                if new_art_name.strip():
+                    new_art = new_art_name.strip()
+                    global cat_config
+                    if "articles_compres" not in cat_config:
+                        cat_config["articles_compres"] = {}
+                    if family not in cat_config["articles_compres"]:
+                        cat_config["articles_compres"][family] = []
+                    if new_art not in cat_config["articles_compres"][family]:
+                        cat_config["articles_compres"][family].append(new_art)
+                        cat_config["articles_compres"][family].sort()
+                        save_categories_conceptes(cat_config)
+                        st.session_state["manual_art_selectbox"] = new_art
+                        st.toast(f"Article '{new_art}' afegit correctament!")
+                        st.rerun()
+                else:
+                    st.error("El nom de l'article no pot estar buit.")
+
         if fam_sel:
             art_options = [""] + get_config_articles(fam_sel)
         else:
@@ -1917,25 +1939,19 @@ def render_compres_super_interface():
         curr_art = st.session_state["manual_art_selectbox"]
         if curr_art not in art_options:
             st.session_state["manual_art_selectbox"] = ""
-        art_sel = st.selectbox("ARTICLE", art_options, key="manual_art_selectbox")
-        if fam_sel:
-            with st.popover("➕ Afegir article", use_container_width=True):
-                new_art_name = st.text_input("Nom del nou article:", key="new_article_name_input")
-                if st.button("Guardar article", key="btn_save_new_article", use_container_width=True):
-                    if new_art_name.strip():
-                        new_art = new_art_name.strip()
-                        global cat_config
-                        if "articles_compres" not in cat_config:
-                            cat_config["articles_compres"] = {}
-                        if fam_sel not in cat_config["articles_compres"]:
-                            cat_config["articles_compres"][fam_sel] = []
-                        if new_art not in cat_config["articles_compres"][fam_sel]:
-                            cat_config["articles_compres"][fam_sel].append(new_art)
-                            cat_config["articles_compres"][fam_sel].sort()
-                            save_categories_conceptes(cat_config)
-                            st.session_state["manual_art_selectbox"] = new_art
-                            st.toast(f"Article '{new_art}' afegit correctament a la família '{fam_sel}'!")
-                            st.rerun()
+            
+        # Draw custom header with label and small + button
+        art_hdr_cols = st.columns([7, 3])
+        with art_hdr_cols[0]:
+            st.markdown("<div style='font-size:0.8rem; font-weight:bold; color:var(--text-color); margin-top:2px;'>ARTICLE</div>", unsafe_allow_html=True)
+        with art_hdr_cols[1]:
+            if fam_sel:
+                if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article"):
+                    show_add_article_dialog(fam_sel)
+            else:
+                st.write("")
+                
+        art_sel = st.selectbox("ARTICLE", art_options, label_visibility="collapsed", key="manual_art_selectbox")
         
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
