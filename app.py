@@ -1610,7 +1610,7 @@ def render_compres_super_interface():
         """
         <script>
         const doc = window.parent.document;
-        doc.addEventListener('keydown', function(e) {
+                doc.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 const target = e.target;
                 if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
@@ -1621,6 +1621,18 @@ def render_compres_super_interface():
                         e.stopPropagation();
                         inputs[index + 1].focus();
                     }
+                }
+            }
+        }, true);
+        
+        doc.addEventListener('focusin', function(e) {
+            const target = e.target;
+            if (target.tagName === 'INPUT') {
+                const val = target.value.trim();
+                if (val === '0' || val === '0,00' || val === '0.00' || val === '0.0' || val === '0,0') {
+                    setTimeout(() => {
+                        target.select();
+                    }, 50);
                 }
             }
         }, true);
@@ -2012,7 +2024,7 @@ def render_compres_super_interface():
         
     tot_linea_val = (qty_val * preu_val) - prom_val
     with col_tot:
-        st.text_input("TOTAL LÍNIA", value=f"{tot_linea_val:,.2f} €", disabled=True, key="manual_tot_linea_display")
+        st.text_input("TOTAL LÍNIA", value=f"{tot_linea_val:,.2f} €", disabled=True)
     with col_reb:
         reb_val = st.checkbox("Reb.", key="manual_reb_chk")
     with col_add:
