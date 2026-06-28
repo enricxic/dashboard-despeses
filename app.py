@@ -1897,6 +1897,19 @@ def render_compres_super_interface():
         st.session_state["manual_prom_num"] = 0.0
     if "manual_reb_chk" not in st.session_state:
         st.session_state["manual_reb_chk"] = False
+    # Dynamic recalculation for manual ticket lines if pct (%) is entered
+    pct = st.session_state.get("manual_pct_num", 0.0)
+    preu_final = st.session_state.get("manual_preu_num", 0.0)
+    qty = st.session_state.get("manual_qty_num", 1.0)
+    if qty <= 0.0:
+        qty = 1.0
+    if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
+        base = round(preu_final / (1 - pct / 100.0), 2)
+        prom_from_pct = round(base * (pct / 100.0) * qty, 2)
+        st.session_state["manual_preu_num"] = base
+        st.session_state["manual_prom_num"] = prom_from_pct
+        st.session_state["manual_pct_num"] = 0.0 # reset pct
+        st.rerun()
 
     # Manual Line Input Section
     st.write("")
@@ -1946,8 +1959,27 @@ def render_compres_super_interface():
             st.markdown("<div style='font-size:0.8rem; font-weight:bold; color:var(--text-color); margin-top:2px;'>ARTICLE</div>", unsafe_allow_html=True)
         with art_hdr_cols[1]:
             if fam_sel:
+                st.markdown(
+                    """
+                    <style>
+                    .small-add-btn button {
+                        padding: 0px !important;
+                        font-size: 10px !important;
+                        height: 20px !important;
+                        width: 20px !important;
+                        min-height: 20px !important;
+                        line-height: 20px !important;
+                        margin-top: 2px !important;
+                        border-radius: 4px !important;
+                    }
+                    </style>
+                    <div class="small-add-btn">
+                    """,
+                    unsafe_allow_html=True
+                )
                 if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article"):
                     show_add_article_dialog(fam_sel)
+                st.markdown("</div>", unsafe_allow_html=True)
             else:
                 st.write("")
                 
