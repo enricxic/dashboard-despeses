@@ -529,10 +529,19 @@ def append_to_db(df_new, table_name, state_key):
         df_new.to_sql(table_name, engine, if_exists='append', index=False)
         if state_key and state_key in st.session_state:
             df = st.session_state[state_key]
-            st.session_state[state_key] = pd.concat([df, df_new], ignore_index=True)
-        get_db_tracker().update()
-        st.cache_data.clear()
-        load_dashboard_data.clear()
+            df_new_local = df_new.copy()
+            if table_name == 'despeses':
+                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['Data'], format='%d/%m/%Y', errors='coerce')
+                df_new_local['date_score'] = df_new_local['any'].astype(int) * 12 + df_new_local['mes'].map(lambda x: MONTHS_MAP.get(str(x).lower(), 12))
+            elif table_name in ['ingressos', 'pagaments']:
+                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['Data'], format='%d/%m/%Y', errors='coerce')
+            elif table_name in ['compresSuper', 'gasolina']:
+                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['data'], format='%d/%m/%Y', errors='coerce')
+            st.session_state[state_key] = pd.concat([df, df_new_local], ignore_index=True)
+            
+        tracker_obj = get_db_tracker()
+        tracker_obj.update()
+        st.session_state["last_synced_time"] = tracker_obj.last_update
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (APPEND {table_name})**: {str(e)}")
@@ -1411,7 +1420,8 @@ def cb_clear_ticket():
 
 def cb_finalize_ticket():
     global df_desp, df_super
-    df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag = load_dashboard_data(get_csv_mtimes())
+    df_desp = st.session_state["df_desp"]
+    df_super = st.session_state["df_super"]
     
     items = st.session_state.get("ticket_items", [])
     if not items:
@@ -1941,18 +1951,25 @@ def render_compres_super_interface():
         st.session_state["manual_pct_num"] = 0.0 # reset pct
         st.rerun()
 
-    # Manual Line Input Section
-    st.write("")
-    st.markdown("##### ➕ Introduir línia manualment")
-    col_fam, col_art, col_pes, col_qty, col_pct, col_preu, col_prom, col_tot, col_reb, col_add = st.columns(
-        [2, 2.2, 1, 1, 0.8, 1, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
-    )
+    # Side-by-side columns: Left column (manual input form), Right column (ticket lines list)
+    split_col_left, split_col_right = st.columns([5, 7])
     
-    with col_fam:
+    with split_col_left:
+        st.markdown("##### ➕ Introduir línia manualment")
+        
+        # 1. Familia Selectbox
         fam_options = [""] + get_config_families()
         fam_sel = st.selectbox("FAMILIA", fam_options, key="manual_fam_selectbox")
         
-    with col_art:
+        # 2. Article Selectbox and ➕ button side-by-side
+        if fam_sel:
+            art_options = [""] + get_config_articles(fam_sel)
+        else:
+            art_options = [""]
+        curr_art = st.session_state["manual_art_selectbox"]
+        if curr_art not in art_options:
+            st.session_state["manual_art_selectbox"] = ""
+            
         @st.dialog("➕ Afegir nou article")
         def show_add_article_dialog(family):
             st.markdown(f"Introduïu el nom del nou article per a la família **{family}**:")
@@ -1975,15 +1992,6 @@ def render_compres_super_interface():
                 else:
                     st.error("El nom de l'article no pot estar buit.")
 
-        if fam_sel:
-            art_options = [""] + get_config_articles(fam_sel)
-        else:
-            art_options = [""]
-        curr_art = st.session_state["manual_art_selectbox"]
-        if curr_art not in art_options:
-            st.session_state["manual_art_selectbox"] = ""
-            
-        # Draw side-by-side columns: 85% selectbox, 15% small + button
         art_input_cols = st.columns([8, 2])
         with art_input_cols[0]:
             art_sel = st.selectbox("ARTICLE", art_options, key="manual_art_selectbox")
@@ -2010,88 +2018,91 @@ def render_compres_super_interface():
                 if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article"):
                     show_add_article_dialog(fam_sel)
                 st.markdown("</div>", unsafe_allow_html=True)
-        
-    with col_pes:
+
+        # 3. PES text input (taking full width of form column)
         pes_val = st.text_input("PES", key="manual_pes_num")
-    with col_qty:
-        qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num", on_change=cb_recalculate_manual_pct)
-    with col_pct:
-        pct_val = st.number_input("%", min_value=0.0, max_value=100.0, step=1.0, key="manual_pct_num", on_change=cb_recalculate_manual_pct)
-    with col_preu:
-        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", on_change=cb_recalculate_manual_pct)
-    with col_prom:
-        prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num")
         
-    tot_linea_val = (qty_val * preu_val) - prom_val
-    with col_tot:
+        # 4. QUANTITAT & % side-by-side
+        qty_pct_cols = st.columns(2)
+        with qty_pct_cols[0]:
+            qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num", on_change=cb_recalculate_manual_pct)
+        with qty_pct_cols[1]:
+            pct_val = st.number_input("%", min_value=0.0, max_value=100.0, step=1.0, key="manual_pct_num", on_change=cb_recalculate_manual_pct)
+            
+        # 5. PREU UNIT. & PROMOCIÓ side-by-side
+        preu_prom_cols = st.columns(2)
+        with preu_prom_cols[0]:
+            preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", on_change=cb_recalculate_manual_pct)
+        with preu_prom_cols[1]:
+            prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num")
+            
+        # 6. TOTAL LÍNIA
+        tot_linea_val = (qty_val * preu_val) - prom_val
         st.text_input("TOTAL LÍNIA", value=f"{tot_linea_val:,.2f} €", disabled=True)
-    with col_reb:
-        reb_val = st.checkbox("Reb.", key="manual_reb_chk")
-    with col_add:
-        st.button("Intro línia", key="btn_add_line", type="secondary", on_click=cb_add_ticket_line)
+        
+        # 7. Rebost & Intro línia button side-by-side
+        reb_add_cols = st.columns([4, 6])
+        with reb_add_cols[0]:
+            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+            reb_val = st.checkbox("Reb.", key="manual_reb_chk")
+        with reb_add_cols[1]:
+            st.button("Intro línia", key="btn_add_line", type="secondary", use_container_width=True, on_click=cb_add_ticket_line)
+            
+        if "manual_input_error" in st.session_state:
+            st.error(st.session_state["manual_input_error"])
 
-    # Render error if validation failed in callback
-    if "manual_input_error" in st.session_state:
-        st.error(st.session_state["manual_input_error"])
-
-    # Table Grid
-    if items:
-        st.write("")
+    with split_col_right:
         st.markdown("##### 📝 Línies del Tiquet")
-        
-        # Render a beautiful Streamlit grid with row-level buttons
-        # Columns layout: index, family, article, weight, qty, unit price, promo, total, rebost, edit, delete
-        st.write("")
-        col_headers = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5])
-        with col_headers[0]: st.markdown("**#**")
-        with col_headers[1]: st.markdown("**FAMÍLIA**")
-        with col_headers[2]: st.markdown("**ARTICLE**")
-        with col_headers[3]: st.markdown("**PES**")
-        with col_headers[4]: st.markdown("**QTY**")
-        with col_headers[5]: st.markdown("**PREU U.**")
-        with col_headers[6]: st.markdown("**PROM.**")
-        with col_headers[7]: st.markdown("**TOTAL**")
-        with col_headers[8]: st.markdown("**REB.**")
-        with col_headers[9]: st.markdown("")
-        with col_headers[10]: st.markdown("")
-        
-        st.markdown("<hr style='margin: 4px 0 8px 0; border-color: #334155;'/>", unsafe_allow_html=True)
-        
-        for i, item in enumerate(items):
-            cols = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5])
-            with cols[0]:
-                st.write(f"{i+1}")
-            with cols[1]:
-                st.write(item["familia"])
-            with cols[2]:
-                st.write(item["article"])
-            with cols[3]:
-                p_str = str(item['pes']).strip()
-                if p_str.replace('.', '', 1).isdigit() and float(p_str) > 0:
-                    st.write(f"{p_str}g")
-                else:
-                    st.write(p_str if p_str else "0g")
-            with cols[4]:
-                st.write(f"{item['quantitat']}")
-            with cols[5]:
-                st.write(f"{item['preuUnit']:.2f} €")
-            with cols[6]:
-                if item['prom'] > 0:
-                    st.write(f":red[-{item['prom']:.2f} €]")
-                else:
-                    st.write("0.00 €")
-            with cols[7]:
-                st.write(f"**{item['totLinea']:.2f} €**")
-            with cols[8]:
-                st.write("🧺" if item['rebost'] == 'rebost' else "")
-            with cols[9]:
-                st.button("✏️", key=f"btn_edit_row_{i}", on_click=cb_edit_ticket_item, args=(i,), help="Modificar línia")
-            with cols[10]:
-                st.button("🗑️", key=f"btn_del_row_{i}", on_click=cb_del_ticket_item, args=(i,), help="Eliminar línia")
-            st.markdown("<hr style='margin: 4px 0; border-color: #1e293b;'/>", unsafe_allow_html=True)
-        st.write("")
-    else:
-        st.info("El tiquet està buit. Afegeix línies manualment o puja un tiquet per fitxer o càmara.")
+        if items:
+            col_headers = st.columns([0.5, 1.8, 2.2, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 1.0])
+            with col_headers[0]: st.markdown("**#**")
+            with col_headers[1]: st.markdown("**FAMÍLIA**")
+            with col_headers[2]: st.markdown("**ARTICLE**")
+            with col_headers[3]: st.markdown("**PES**")
+            with col_headers[4]: st.markdown("**QTY**")
+            with col_headers[5]: st.markdown("**PREU U.**")
+            with col_headers[6]: st.markdown("**PROM.**")
+            with col_headers[7]: st.markdown("**TOTAL**")
+            with col_headers[8]: st.markdown("**REB.**")
+            with col_headers[9]: st.markdown("**ACCIONS**")
+            st.markdown("<hr style='margin: 4px 0 8px 0; border-color: #334155;'/>", unsafe_allow_html=True)
+            
+            for i, item in enumerate(items):
+                cols = st.columns([0.5, 1.8, 2.2, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 1.0])
+                with cols[0]:
+                    st.write(f"{i+1}")
+                with cols[1]:
+                    st.write(item["familia"])
+                with cols[2]:
+                    st.write(item["article"])
+                with cols[3]:
+                    p_str = str(item['pes']).strip()
+                    if p_str.replace('.', '', 1).isdigit() and float(p_str) > 0:
+                        st.write(f"{p_str}g")
+                    else:
+                        st.write(p_str if p_str else "0g")
+                with cols[4]:
+                    st.write(f"{item['quantitat']}")
+                with cols[5]:
+                    st.write(f"{item['preuUnit']:.2f} €")
+                with cols[6]:
+                    if item['prom'] > 0:
+                        st.write(f":red[-{item['prom']:.2f} €]")
+                    else:
+                        st.write("0.00 €")
+                with cols[7]:
+                    st.write(f"**{item['totLinea']:.2f} €**")
+                with cols[8]:
+                    st.write("🧺" if item['rebost'] == 'rebost' else "")
+                with cols[9]:
+                    btn_edit_col, btn_del_col = st.columns(2)
+                    with btn_edit_col:
+                        st.button("✏️", key=f"btn_edit_row_{i}", on_click=cb_edit_ticket_item, args=(i,), help="Modificar línia")
+                    with btn_del_col:
+                        st.button("🗑️", key=f"btn_del_row_{i}", on_click=cb_del_ticket_item, args=(i,), help="Eliminar línia")
+                st.markdown("<hr style='margin: 4px 0; border-color: #1e293b;'/>", unsafe_allow_html=True)
+        else:
+            st.info("El tiquet està buit. Afegeix línies manualment o puja un tiquet per fitxer o càmara.")
 
 
 
