@@ -2925,7 +2925,7 @@ with tab_intro:
             clear_form_state("km_")
             st.rerun()
             
-    st.markdown("<h5 style='color:#f39c12; margin-top: 20px; margin-bottom: 5px;'>📋 Últims moviments (Lletra petita)</h5>", unsafe_allow_html=True)
+    st.markdown("<h5 style='color:#f39c12; margin-top: 20px; margin-bottom: 5px;'>📋 Últims moviments</h5>", unsafe_allow_html=True)
     
     last_movs = []
     for bank_key in get_config_banks():
