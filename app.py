@@ -2496,10 +2496,10 @@ with tab_intro:
                     del st.session_state[k]
     
     with intro_col_left:
-        st.markdown(f"### ➕ Introduir Nou Registre: {data_type}")
         data_type = st.selectbox("Tipus de registre", [
             "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe"
         ])
+        st.markdown(f"### ➕ Introduir Nou Registre: {data_type}")
         
         st.write("---")
         
