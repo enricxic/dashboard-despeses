@@ -2642,7 +2642,9 @@ with tab_intro:
             mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
             any_val = data_val.year
         with r1_col4:
-            import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key=f"desp_import_{version}")
+            is_ingres = (st.session_state.get(f"desp_grup_{version}", "") == "Ingrés")
+            label_import = "Import Ingrés (€)" if is_ingres else "Import Càrrec (€)"
+            import_carg = st.number_input(label_import, min_value=0.0, value=0.0, step=0.01, key=f"desp_import_{version}")
             
         # Dialog calculator helper for Gasolina price per litre
         @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
@@ -2733,6 +2735,7 @@ with tab_intro:
                     add_concept_to_config(cat_val, actual_concept)
                     
                 # 1. Save to despeses
+                is_actual_ingres = (grup_val == "Ingrés")
                 new_row_desp = {
                     'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
                     'Banc': banc,
@@ -2740,8 +2743,8 @@ with tab_intro:
                     'Data': data_val.strftime('%d/%m/%Y'),
                     'mes': mes_val,
                     'any': any_val,
-                    'import ingrés': 0.0,
-                    'Import càrrec': import_carg,
+                    'import ingrés': import_carg if is_actual_ingres else 0.0,
+                    'Import càrrec': 0.0 if is_actual_ingres else import_carg,
                     'grup': grup_val,
                     'Idcategoria': cat_val,
                     'Idconcepte': actual_concept,
