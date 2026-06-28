@@ -1363,7 +1363,7 @@ def cb_add_ticket_line():
     
     # Reset widget states
     st.session_state["manual_pes_num"] = "0"
-    st.session_state["manual_qty_num"] = 0.0
+    st.session_state["manual_qty_num"] = 1.0
     st.session_state["manual_pct_num"] = 0.0
     st.session_state["manual_preu_num"] = 0.0
     st.session_state["manual_prom_num"] = 0.0
@@ -1888,7 +1888,7 @@ def render_compres_super_interface():
     if "manual_pes_num" not in st.session_state:
         st.session_state["manual_pes_num"] = "0"
     if "manual_qty_num" not in st.session_state:
-        st.session_state["manual_qty_num"] = 0.0
+        st.session_state["manual_qty_num"] = 1.0
     if "manual_pct_num" not in st.session_state:
         st.session_state["manual_pct_num"] = 0.0
     if "manual_preu_num" not in st.session_state:
@@ -1953,23 +1953,23 @@ def render_compres_super_interface():
         if curr_art not in art_options:
             st.session_state["manual_art_selectbox"] = ""
             
-        # Draw custom header with label and small + button
-        art_hdr_cols = st.columns([7, 3])
-        with art_hdr_cols[0]:
-            st.markdown("<div style='font-size:0.8rem; font-weight:bold; color:var(--text-color); margin-top:2px;'>ARTICLE</div>", unsafe_allow_html=True)
-        with art_hdr_cols[1]:
+        # Draw side-by-side columns: 85% selectbox, 15% small + button
+        art_input_cols = st.columns([8, 2])
+        with art_input_cols[0]:
+            art_sel = st.selectbox("ARTICLE", art_options, key="manual_art_selectbox")
+        with art_input_cols[1]:
+            st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
             if fam_sel:
                 st.markdown(
                     """
                     <style>
                     .small-add-btn button {
                         padding: 0px !important;
-                        font-size: 10px !important;
-                        height: 20px !important;
-                        width: 20px !important;
-                        min-height: 20px !important;
-                        line-height: 20px !important;
-                        margin-top: 2px !important;
+                        font-size: 12px !important;
+                        height: 28px !important;
+                        width: 28px !important;
+                        min-height: 28px !important;
+                        line-height: 28px !important;
                         border-radius: 4px !important;
                     }
                     </style>
@@ -1980,10 +1980,6 @@ def render_compres_super_interface():
                 if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article"):
                     show_add_article_dialog(fam_sel)
                 st.markdown("</div>", unsafe_allow_html=True)
-            else:
-                st.write("")
-                
-        art_sel = st.selectbox("ARTICLE", art_options, label_visibility="collapsed", key="manual_art_selectbox")
         
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
