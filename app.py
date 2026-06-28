@@ -482,10 +482,11 @@ def insert_db_row(table_name, new_row_dict):
     engine = get_engine()
     from sqlalchemy import text
     columns = ", ".join([f'"{col}"' for col in new_row_dict.keys()])
-    placeholders = ", ".join([f":{col}" for col in new_row_dict.keys()])
+    placeholders = ", ".join([f":p_{i}" for i in range(len(new_row_dict))])
+    params = {f"p_{i}": val for i, val in enumerate(new_row_dict.values())}
     try:
         with engine.begin() as conn:
-            conn.execute(text(f'INSERT INTO "{table_name}" ({columns}) VALUES ({placeholders})'), new_row_dict)
+            conn.execute(text(f'INSERT INTO "{table_name}" ({columns}) VALUES ({placeholders})'), params)
         state_key = {
             "despeses": "df_desp",
             "pagaments": "df_pag",
