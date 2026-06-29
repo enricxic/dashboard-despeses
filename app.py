@@ -272,7 +272,7 @@ month_translations = {
 
 # Account Initial Balances to align with Excel formulas
 INITIAL_BALANCES = {
-    'BBVA': 7510.73,
+    'BBVA': 7119.05,  # Adjusted to match real bank balance of 3549.20
     'La Caixa': 102.28,
     'Casa': 267.28,
     'CORTEINGLÉS': 1566.69,
