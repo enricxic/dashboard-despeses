@@ -359,35 +359,52 @@ def get_csv_mtimes():
     # Return a dummy dict to preserve compatibility with existing signatures.
     return {"db": 1.0}
 
+def fix_mojibake(val):
+    if isinstance(val, str):
+        try:
+            return val.encode('cp850').decode('utf-8')
+        except:
+            pass
+        try:
+            return val.encode('latin1').decode('utf-8')
+        except:
+            pass
+    return val
+
+def fix_mojibake_df(df):
+    for col in df.select_dtypes(include=['object']).columns:
+        df[col] = df[col].apply(fix_mojibake)
+    return df
+
 @st.cache_data(ttl=300)
 def load_dashboard_data(mtimes=None):
     engine = get_engine()
     
     # Load tables from PostgreSQL
-    df_desp = pd.read_sql_table('despeses', engine)
+    df_desp = fix_mojibake_df(pd.read_sql_table('despeses', engine))
     df_desp = df_desp.dropna(subset=['ID_mov'])
     df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
     df_desp['Import càrrec'] = clean_numeric(df_desp['Import càrrec'])
     df_desp['parsed_date'] = df_desp['Data'].apply(parse_excel_date)
     df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes'].astype(str).str.lower().map(MONTHS_MAP).fillna(12).astype(int)
     
-    df_ing = pd.read_sql_table('ingressos', engine)
+    df_ing = fix_mojibake_df(pd.read_sql_table('ingressos', engine))
     df_ing = df_ing.dropna(subset=['idIngres'])
     df_ing['Import'] = clean_numeric(df_ing['Import'])
     df_ing['parsed_date'] = df_ing['Data'].apply(parse_excel_date)
     
-    df_super = pd.read_sql_table('compresSuper', engine)
+    df_super = fix_mojibake_df(pd.read_sql_table('compresSuper', engine))
     df_super = df_super.dropna(subset=['IdCompra'])
     df_super['totLinea'] = clean_numeric(df_super['totLinea'])
     df_super['parsed_date'] = df_super['data'].apply(parse_excel_date)
     
-    df_gas = pd.read_sql_table('gasolina', engine)
+    df_gas = fix_mojibake_df(pd.read_sql_table('gasolina', engine))
     df_gas = df_gas.dropna(subset=['idGasolina'])
     df_gas['import'] = clean_numeric(df_gas['import'])
     df_gas['litres'] = clean_numeric(df_gas['litres'])
     df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
     
-    df_km = pd.read_sql_table('kmCotxe', engine)
+    df_km = fix_mojibake_df(pd.read_sql_table('kmCotxe', engine))
     df_km = df_km.dropna(subset=['idRuta'])
     df_km['contador'] = clean_numeric(df_km['contador'])
     df_km['km'] = clean_numeric(df_km['km'])
@@ -2162,7 +2179,7 @@ payment_filter = "Tots"
 
 # ----------------- ACCOUNT BALANCES CALCULATION -----------------
 # Calculate balances for each account from inception up to end of selected month and year
-def show_bank_extract_modal(bank_display_name, selected_year):
+def show_bank_extract_modal(bank_display_name, selected_year, month_name):
     @st.dialog(f"📋 Extracte {bank_display_name}", width="large")
     def _modal_inner():
         df_desp = st.session_state["df_desp"]
@@ -2177,7 +2194,10 @@ def show_bank_extract_modal(bank_display_name, selected_year):
         else:
             b_desp = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['any'] == selected_year)].copy()
             if bank_display_name == 'BBVA':
-                b_desp = b_desp[b_desp['FormaPago'] != 'VISA']
+                target_score = selected_year * 12 + MONTHS_MAP.get(month_name, 12)
+                b_desp = b_desp[
+                    ~((b_desp['date_score'] == target_score) & (b_desp['FormaPago'].fillna('') == 'VISA'))
+                ]
                 
         # Calculate running balance
         prev_bals = get_balances_up_to(selected_year - 1, 'desembre')
@@ -2328,10 +2348,16 @@ with tab_dash:
             cols = st.columns(col_ratios, gap="small")
             for i, (b_name, b_val) in enumerate(current_balances.items()):
                 with cols[i]:
-                    color = "red" if b_val < 0 else "green" if b_val > 0 else "gray"
-                    label = f"**{b_name}**\n\n:{color}[**{b_val:,.2f} €**]"
+                    if b_val < -0.05:
+                        val_str = f":red[**{b_val:,.2f} €**]"
+                    elif b_val > 0.05:
+                        val_str = f":green[**{b_val:,.2f} €**]"
+                    else:
+                        val_str = f"**{b_val:,.2f} €**"
+                    
+                    label = f"**{b_name}**\n\n{val_str}"
                     if st.button(label, key=f"btn_bank_{b_name}", use_container_width=True):
-                        show_bank_extract_modal(b_name, selected_year)
+                        show_bank_extract_modal(b_name, selected_year, selected_month_data)
     
     # Pivot-like summary computation for the selected year
     summary_data = []
