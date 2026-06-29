@@ -2163,6 +2163,34 @@ payment_filter = "Tots"
 
 # ----------------- ACCOUNT BALANCES CALCULATION -----------------
 # Calculate balances for each account from inception up to end of selected month and year
+@st.dialog("📋 Extracte de l'Entitat", width="large")
+def show_bank_extract_modal(bank_display_name, selected_year):
+    df_desp = st.session_state["df_desp"]
+    
+    csv_names = [k for k, v in BANK_MAPPING.items() if v == bank_display_name]
+    csv_name = csv_names[0] if csv_names else bank_display_name
+    
+    st.markdown(f"### Moviments de {bank_display_name} ({selected_year})")
+    
+    if bank_display_name == 'Pago VISA':
+        b_desp = df_desp[(df_desp['FormaPago'] == 'VISA') & (df_desp['any'] == selected_year)].copy()
+    else:
+        b_desp = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['any'] == selected_year)].copy()
+        
+    b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
+    
+    cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrès', 'Import càrrec', 'Comentari']
+    if bank_display_name != 'Pago VISA':
+        cols_to_show.append('FormaPago')
+        
+    b_desp = b_desp[cols_to_show]
+    
+    st.dataframe(
+        b_desp,
+        use_container_width=True,
+        hide_index=True
+    )
+
 def get_balances_up_to(year, month_name):
     month_idx = MONTHS_MAP.get(month_name, 12)
     
