@@ -2189,11 +2189,6 @@ def get_balances_up_to(year, month_name):
     visa_sub = df_desp[(df_desp['any'] == year) & (df_desp['mes'].astype(str).str.lower() == month_name) & (df_desp['FormaPago'] == 'VISA')]
     balances['Pago VISA'] = -visa_sub['Import càrrec'].sum()
     
-    # User requested EXACT BBVA balance for June 2026
-    if year == 2026 and month_name == 'junio':
-        balances['BBVA'] = 3549.20
-
-    
     # Clean up small negative values that should be zero
     for k in balances:
         if abs(balances[k]) < 0.05:
