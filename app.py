@@ -2199,9 +2199,10 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
                     ~((b_desp['date_score'] == target_score) & (b_desp['FormaPago'].fillna('') == 'VISA'))
                 ]
                 
-        # Calculate running balance
-        prev_bals = get_balances_up_to(selected_year - 1, 'desembre')
-        start_bal = prev_bals.get(bank_display_name, 0.0)
+        # Calculate starting balance by including EVERYTHING up to Dec 31 of previous year
+        prev_target = (selected_year - 1) * 12 + 12
+        sub_desp_prev = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['date_score'] <= prev_target)]
+        start_bal = INITIAL_BALANCES.get(bank_display_name, 0.0) + sub_desp_prev['import ingrés'].fillna(0).sum() - sub_desp_prev['Import càrrec'].fillna(0).sum()
         
         b_desp = b_desp.sort_values(by='parsed_date', ascending=True)
         inflows = b_desp['import ingrés'].fillna(0)
@@ -2213,6 +2214,7 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
         else:
             b_desp['Saldo'] = start_bal + (inflows - outflows).cumsum()
             
+        b_desp['Saldo'] = b_desp['Saldo'].round(2)
         b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
         
         cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Saldo', 'Comentari']
@@ -2355,7 +2357,7 @@ with tab_dash:
                     else:
                         val_str = f"**{b_val:,.2f} €**"
                     
-                    label = f"**{b_name}**\n\n{val_str}"
+                    label = f"{b_name}\n\n{val_str}"
                     if st.button(label, key=f"btn_bank_{b_name}", use_container_width=True):
                         show_bank_extract_modal(b_name, selected_year, selected_month_data)
     
