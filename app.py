@@ -2244,6 +2244,7 @@ with tab_dash:
         col_bal_title, col_bal_metrics = st.columns([1.6, 10.4], vertical_alignment="center")
         with col_bal_title:
             st.markdown(f"<h3 style='margin:0; font-size: 1.3rem;'>💰 Saldo Comptes:<br><span style='color: #22c55e;'>{total_accounts_balance:,.2f} €</span></h3>", unsafe_allow_html=True)
+        with col_bal_metrics:
             # Apply custom styling to the nested horizontal block (the one containing the buttons)
             st.markdown("""
                 <style>
