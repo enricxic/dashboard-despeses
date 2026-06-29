@@ -2706,6 +2706,83 @@ with tab_details:
             st.info("No hi ha dades de despeses per aquest mes.")
 
 # ================= TAB 3: INTRO DADES =================
+
+@st.dialog("⚠️ Avís: Diferència amb la Previsió")
+def show_mismatch_dialog(target_table_name, scheduled_import, input_import, idx, status_col, new_row_desp, is_gas_cat, new_row_gas, is_hipoteca, is_estalvis, df_to_update, csv_filename):
+    st.markdown(f"Hi ha una previsió pendent per aquest concepte per valor de **{scheduled_import:,.2f} €**.")
+    st.markdown(f"Has introduït **{input_import:,.2f} €**.")
+    
+    st.write("Què vols fer?")
+    
+    if st.button(f"✅ Acceptar import previsió ({scheduled_import:,.2f} €)", use_container_width=True):
+        if target_table_name == 'pagaments':
+            new_row_desp['Import càrrec'] = scheduled_import
+        else:
+            new_row_desp['import ingrés'] = scheduled_import
+            
+        df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'Cobrat'
+        save_to_csv(df_to_update.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
+        
+        if target_table_name == 'pagaments':
+            st.session_state["df_pag"] = df_to_update
+        else:
+            st.session_state["df_ing"] = df_to_update
+            
+        insert_db_row('despeses', new_row_desp)
+        if is_gas_cat:
+            insert_db_row('gasolina', new_row_gas)
+            
+        if is_hipoteca:
+            df_hip_local = st.session_state["df_hip"]
+            df_hip_local.loc[(df_hip_local['any'] == new_row_desp['any']) & (df_hip_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
+            save_to_csv(df_hip_local, 'hipoteca.csv')
+            st.session_state["df_hip"] = df_hip_local
+            
+        if is_estalvis:
+            df_est_local = st.session_state["df_est"]
+            df_est_local.loc[(df_est_local['any'] == new_row_desp['any']) & (df_est_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
+            save_to_csv(df_est_local, 'estalviDP.csv')
+            st.session_state["df_est"] = df_est_local
+            
+        st.success("Desat correctament aplicant la previsió!")
+        st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
+        st.rerun()
+
+    if st.button(f"✏️ Modificar previsió a {input_import:,.2f} €", use_container_width=True):
+        df_to_update.loc[idx, 'Import'] = input_import
+        df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'Cobrat'
+        save_to_csv(df_to_update.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
+        
+        if target_table_name == 'pagaments':
+            st.session_state["df_pag"] = df_to_update
+        else:
+            st.session_state["df_ing"] = df_to_update
+            
+        insert_db_row('despeses', new_row_desp)
+        if is_gas_cat:
+            insert_db_row('gasolina', new_row_gas)
+            
+        if is_hipoteca:
+            df_hip_local = st.session_state["df_hip"]
+            df_hip_local.loc[(df_hip_local['any'] == new_row_desp['any']) & (df_hip_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
+            save_to_csv(df_hip_local, 'hipoteca.csv')
+            st.session_state["df_hip"] = df_hip_local
+            
+        if is_estalvis:
+            df_est_local = st.session_state["df_est"]
+            df_est_local.loc[(df_est_local['any'] == new_row_desp['any']) & (df_est_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
+            save_to_csv(df_est_local, 'estalviDP.csv')
+            st.session_state["df_est"] = df_est_local
+            
+        st.success("Desat correctament modificant la previsió!")
+        st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
+        st.rerun()
+
+    if st.button("❌ Denegar (Cancel·lar inserció)", use_container_width=True):
+        # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
+        st.rerun()
+
+
 with tab_intro:
     
     # Inject JavaScript to focus the next input when pressing Enter
@@ -2766,9 +2843,9 @@ with tab_intro:
         with r1_col4:
             sub_col1, sub_col2 = st.columns(2)
             with sub_col1:
-                import_carg = st.number_input("Import Càrrec (€)", min_value=0.0, value=0.0, step=0.01, key=f"desp_import_carg_{version}")
+                import_carg = st.number_input("Import Càrrec (€)", value=0.0, step=0.01, key=f"desp_import_carg_{version}")
             with sub_col2:
-                import_ing = st.number_input("Import Ingrés (€)", min_value=0.0, value=0.0, step=0.01, key=f"desp_import_ing_{version}")
+                import_ing = st.number_input("Import Ingrés (€)", value=0.0, step=0.01, key=f"desp_import_ing_{version}")
             
         # Dialog calculator helper for Gasolina price per litre
         @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
@@ -2850,11 +2927,11 @@ with tab_intro:
                 pass
                 
             # Perform group vs import criteria checks
-            if grup_val == "Càrrec" and import_ing > 0.0:
+            if grup_val == "Càrrec" and import_ing != 0.0:
                 st.error("⚠️ El grup és Càrrec, per tant l'Import Ingrés ha de ser 0.")
-            elif grup_val == "Ingrés" and import_carg > 0.0:
+            elif grup_val == "Ingrés" and import_carg != 0.0:
                 st.error("⚠️ El grup és Ingrés, per tant l'Import Càrrec ha de ser 0.")
-            elif grup_val == "op_banc" and import_carg > 0.0 and import_ing > 0.0:
+            elif grup_val == "op_banc" and import_carg != 0.0 and import_ing != 0.0:
                 st.error("⚠️ Per a op_banc s'ha d'emplenar només un dels dos imports (Càrrec o Ingrés), no tots dos.")
             elif grup_val == "op_banc" and import_carg == 0.0 and import_ing == 0.0:
                 st.error("⚠️ Per a op_banc s'ha d'introduir un import (Càrrec o Ingrés).")
@@ -2869,7 +2946,7 @@ with tab_intro:
                 if concept_val == "➕ Afegir nou..." and st.session_state.get(f"desp_save_new_concept_{version}", True):
                     add_concept_to_config(cat_val, actual_concept)
                     
-                # 1. Save to despeses
+                # Prepare objects to save
                 new_row_desp = {
                     'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
                     'Banc': banc,
@@ -2884,9 +2961,8 @@ with tab_intro:
                     'Idconcepte': actual_concept,
                     'Comentari': comentari_val
                 }
-                insert_db_row('despeses', new_row_desp)
                 
-                # 2. Save to gasolina if category is gasolina
+                new_row_gas = {}
                 if is_gas_cat:
                     preu_l_saved = st.session_state.get(f"desp_gas_preu_l_{version}", 1.214)
                     litres_saved = round(import_carg / preu_l_saved, 2) if preu_l_saved > 0 else 0.0
@@ -2897,27 +2973,75 @@ with tab_intro:
                         'mes': mes_val,
                         'any': any_val,
                         'import': import_carg,
-                        '?/l': preu_l_saved,
+                        '€/l': preu_l_saved,
                         'litres': litres_saved,
-                        'lloc': actual_concept # Concept acts as fuel station / place
+                        'lloc': actual_concept
                     }
-                    insert_db_row('gasolina', new_row_gas)
 
-                # 3. Auto-mark Previsió Hipoteca as paid if concept is hipoteca
-                if str(concept_val).lower() == "hipoteca" or str(cat_val).lower() == "hipoteca":
-                    df_hip.loc[(df_hip['any'] == any_val) & (df_hip['mes'].str.lower() == mes_val.lower()), 'pagat'] = "pagat"
-                    save_to_csv(df_hip, 'hipoteca.csv')
-                    st.session_state["df_hip"] = df_hip
+                is_hipoteca = (str(concept_val).lower() == "hipoteca" or str(cat_val).lower() == "hipoteca")
+                is_estalvis = (str(concept_val).lower() == "pj isabel")
+
+                # Define a helper function to save directly
+                def do_save_direct():
+                    insert_db_row('despeses', new_row_desp)
+                    if is_gas_cat:
+                        insert_db_row('gasolina', new_row_gas)
+                    if is_hipoteca:
+                        df_hip.loc[(df_hip['any'] == any_val) & (df_hip['mes'].str.lower() == mes_val.lower()), 'pagat'] = "pagat"
+                        save_to_csv(df_hip, 'hipoteca.csv')
+                        st.session_state["df_hip"] = df_hip
+                    if is_estalvis:
+                        df_est.loc[(df_est['any'] == any_val) & (df_est['mes'].str.lower() == mes_val.lower()), 'pagat'] = "pagat"
+                        save_to_csv(df_est, 'estalviDP.csv')
+                        st.session_state["df_est"] = df_est
                     
-                # 4. Auto-mark Estalvis DP as paid if concept is PJ Isabel
-                if str(concept_val).lower() == "pj isabel":
-                    df_est.loc[(df_est['any'] == any_val) & (df_est['mes'].str.lower() == mes_val.lower()), 'pagat'] = "pagat"
-                    save_to_csv(df_est, 'estalviDP.csv')
-                    st.session_state["df_est"] = df_est
-                    
-                st.success("Moviment real i estats associats desats correctament!")
-                clear_form_state("desp_")
-                st.rerun()
+                    st.success("Moviment real i estats associats desats correctament!")
+                    clear_form_state("desp_")
+                    st.rerun()
+
+                # Check if it matches any scheduled pagament/ingrés
+                mask = None
+                target_df = None
+                table_name = None
+                target_status_col = None
+                input_import = 0.0
+                csv_filename = None
+
+                if import_carg != 0.0:
+                    target_df = df_pag
+                    table_name = 'pagaments'
+                    target_status_col = 'pagat'
+                    input_import = import_carg
+                    csv_filename = 'pagaments.csv'
+                    if not target_df.empty:
+                        mask = (target_df['any'] == any_val) & (target_df['mes'].str.lower() == mes_val.lower()) & (target_df['Concepte'].str.lower() == actual_concept.lower()) & (target_df[target_status_col].str.lower() != 'pagat')
+                elif import_ing != 0.0:
+                    target_df = df_ing
+                    table_name = 'ingressos'
+                    target_status_col = 'cobrat'
+                    input_import = import_ing
+                    csv_filename = 'ingressos.csv'
+                    if not target_df.empty:
+                        mask = (target_df['any'] == any_val) & (target_df['mes'].str.lower() == mes_val.lower()) & (target_df['Concepte'].str.lower() == actual_concept.lower()) & (target_df[target_status_col].str.lower() != 'cobrat')
+
+                if mask is not None and mask.any():
+                    idx = target_df[mask].index[0]
+                    scheduled_import = target_df.loc[idx, 'Import']
+                    if abs(float(scheduled_import) - float(input_import)) < 0.01:
+                        # Exact match
+                        target_df.loc[idx, target_status_col] = 'Pagat' if table_name == 'pagaments' else 'Cobrat'
+                        save_to_csv(target_df.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
+                        if table_name == 'pagaments':
+                            st.session_state["df_pag"] = target_df
+                        else:
+                            st.session_state["df_ing"] = target_df
+                        do_save_direct()
+                    else:
+                        # Mismatch
+                        show_mismatch_dialog(table_name, float(scheduled_import), float(input_import), idx, target_status_col, new_row_desp, is_gas_cat, new_row_gas, is_hipoteca, is_estalvis, target_df, csv_filename)
+                else:
+                    do_save_direct()
+
             
     elif data_type == "Previsió de Pagament":
         # Row 1 (4 columns)
