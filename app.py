@@ -2018,7 +2018,6 @@ def render_compres_super_interface():
                     """,
                     unsafe_allow_html=True
                 )
-
                 if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article"):
                     show_add_article_dialog(fam_sel)
                 st.markdown("</div>", unsafe_allow_html=True)
@@ -2180,9 +2179,23 @@ def show_bank_extract_modal(bank_display_name, selected_year):
             if bank_display_name == 'BBVA':
                 b_desp = b_desp[b_desp['FormaPago'] != 'VISA']
                 
+        # Calculate running balance
+        prev_bals = get_balances_up_to(selected_year - 1, 'desembre')
+        start_bal = prev_bals.get(bank_display_name, 0.0)
+        
+        b_desp = b_desp.sort_values(by='parsed_date', ascending=True)
+        inflows = b_desp['import ingrés'].fillna(0)
+        outflows = b_desp['Import càrrec'].fillna(0)
+        if bank_display_name == 'Pago VISA':
+            # For VISA, operations are liabilities (charges increase the debt, inflows decrease it)
+            # Actually, standard balances: we just want to see the debt grow
+            b_desp['Saldo'] = start_bal + (inflows - outflows).cumsum()
+        else:
+            b_desp['Saldo'] = start_bal + (inflows - outflows).cumsum()
+            
         b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
         
-        cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Comentari']
+        cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Saldo', 'Comentari']
         if bank_display_name != 'Pago VISA':
             cols_to_show.append('FormaPago')
             
@@ -2281,12 +2294,12 @@ with tab_dash:
             st.markdown("""
                 <style>
                 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
-                    background-color: #1e293b !important;
+                    background-color: #0f172a !important;
                     border: 1px solid #334155 !important;
                     border-radius: 8px !important;
                     min-height: 65px !important;
                     min-width: 130px !important;
-                    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1) !important;
+                    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3) !important;
                     height: 100% !important;
                     padding: 5px !important;
                 }
@@ -2295,16 +2308,18 @@ with tab_dash:
                 }
                 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p {
                     text-transform: uppercase;
-                    font-size: 0.8rem;
-                    color: #94a3b8;
+                    font-size: 0.85rem;
+                    color: #f1f5f9;
+                    font-weight: 600;
                     line-height: 1.4;
                     margin: 0;
                     white-space: nowrap !important;
                 }
                 /* Make the green/red value larger */
                 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span {
-                    font-size: 1.1rem;
+                    font-size: 1.15rem;
                     text-transform: none;
+                    font-weight: bold;
                 }
                 </style>
             """, unsafe_allow_html=True)
@@ -3211,36 +3226,7 @@ with tab_intro:
             .apply(style_rows, axis=None)
             .set_properties(**{'font-size': '11px', 'padding': '3px'})
         )
-
 # ----------------- DIALOGS FOR MODIFY / DELETE -----------------
-@st.dialog("📋 Extracte de l'Entitat", width="large")
-def show_bank_extract_modal(bank_display_name, selected_year):
-    df_desp = st.session_state["df_desp"]
-    
-    csv_names = [k for k, v in BANK_MAPPING.items() if v == bank_display_name]
-    csv_name = csv_names[0] if csv_names else bank_display_name
-    
-    st.markdown(f"### Moviments de {bank_display_name} ({selected_year})")
-    
-    if bank_display_name == 'Pago VISA':
-        b_desp = df_desp[(df_desp['FormaPago'] == 'VISA') & (df_desp['any'] == selected_year)].copy()
-    else:
-        b_desp = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['any'] == selected_year)].copy()
-        
-    b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
-    
-    cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Comentari']
-    if bank_display_name != 'Pago VISA':
-        cols_to_show.append('FormaPago')
-        
-    b_desp = b_desp[cols_to_show]
-    
-    st.dataframe(
-        b_desp,
-        use_container_width=True,
-        hide_index=True
-    )
-
 @st.dialog("✏️ Modificar Registre")
 def show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx):
     st.markdown(f"Modificant el registre seleccionat de la taula **{db_select}**.")
