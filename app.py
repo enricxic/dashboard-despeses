@@ -2247,9 +2247,6 @@ with tab_dash:
             # Apply custom styling to the nested horizontal block (the one containing the buttons)
             st.markdown("""
                 <style>
-                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {
-                    gap: 4px !important;
-                }
                 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
                     background-color: #1e293b !important;
                     border: 1px solid #334155 !important;
@@ -2278,7 +2275,7 @@ with tab_dash:
             """, unsafe_allow_html=True)
 
             col_ratios = [1] * len(current_balances)
-            cols = st.columns(col_ratios)
+            cols = st.columns(col_ratios, gap="small")
             for i, (b_name, b_val) in enumerate(current_balances.items()):
                 with cols[i]:
                     color = "red" if b_val < 0 else "green" if b_val > 0 else "gray"
