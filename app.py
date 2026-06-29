@@ -2255,22 +2255,6 @@ with tab_dash:
                     gap: 4px;
                     align-items: center;
                 }
-                .bank-balance-item {
-                    position: relative;
-                }
-                .bank-balance-item .stButton {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    opacity: 0;
-                    z-index: 10;
-                }
-                .bank-balance-item .stButton button {
-                    width: 100%;
-                    height: 100%;
-                }
                 .metric-card-custom {
                     background-color: #1e293b;
                     border: 1px solid #334155;
@@ -2285,12 +2269,26 @@ with tab_dash:
             
             st.markdown('<div class="bank-balances-wrapper">', unsafe_allow_html=True)
             
-            # Since Streamlit elements can't easily be placed inside raw HTML flexbox properly natively,
-            # we actually use st.columns with gap="small" but we inject a style to override gap to 4px
             st.markdown("""
                 <style>
                 div[data-testid="stHorizontalBlock"]:has(.metric-card-custom) {
                     gap: 4px !important;
+                }
+                div[data-testid="column"]:has(.metric-card-custom) {
+                    position: relative !important;
+                }
+                div[data-testid="column"]:has(.metric-card-custom) div[data-testid="stButton"] {
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    z-index: 10 !important;
+                    opacity: 0 !important;
+                }
+                div[data-testid="column"]:has(.metric-card-custom) div[data-testid="stButton"] button {
+                    width: 100% !important;
+                    height: 100% !important;
                 }
                 </style>
             """, unsafe_allow_html=True)
@@ -2299,7 +2297,6 @@ with tab_dash:
             cols = st.columns(col_ratios)
             for i, (b_name, b_val) in enumerate(current_balances.items()):
                 with cols[i]:
-                    st.markdown('<div class="bank-balance-item">', unsafe_allow_html=True)
                     card_class = "metric-value-red" if b_val < 0 else ("metric-value-green" if b_val > 0 else "")
                     st.markdown(f"""
                         <div class="metric-card-custom metric-card">
@@ -2308,8 +2305,7 @@ with tab_dash:
                         </div>
                     """, unsafe_allow_html=True)
                     if st.button(" ", key=f"btn_bank_{b_name}", use_container_width=True):
-                        show_bank_extract_modal(b_name, {'df_desp': df_desp}, selected_year)
-                    st.markdown('</div>', unsafe_allow_html=True)
+                        show_bank_extract_modal(b_name, selected_year)
             
             st.markdown('</div>', unsafe_allow_html=True)
     
@@ -3209,8 +3205,8 @@ with tab_intro:
 
 # ----------------- DIALOGS FOR MODIFY / DELETE -----------------
 @st.dialog("📋 Extracte de l'Entitat", width="large")
-def show_bank_extract_modal(bank_display_name, dfs, selected_year):
-    df_desp = dfs['df_desp']
+def show_bank_extract_modal(bank_display_name, selected_year):
+    df_desp = st.session_state["df_desp"]
     
     csv_names = [k for k, v in BANK_MAPPING.items() if v == bank_display_name]
     csv_name = csv_names[0] if csv_names else bank_display_name
