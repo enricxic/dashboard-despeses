@@ -2244,51 +2244,35 @@ with tab_dash:
         col_bal_title, col_bal_metrics = st.columns([1.6, 10.4], vertical_alignment="center")
         with col_bal_title:
             st.markdown(f"<h3 style='margin:0; font-size: 1.3rem;'>💰 Saldo Comptes:<br><span style='color: #22c55e;'>{total_accounts_balance:,.2f} €</span></h3>", unsafe_allow_html=True)
-        with col_bal_metrics:
-            # Container for bank balances with 4px gap and overlapping invisible buttons
+            # Apply custom styling to the nested horizontal block (the one containing the buttons)
             st.markdown("""
                 <style>
-                .bank-balances-wrapper {
-                    display: flex;
-                    flex-direction: row;
-                    flex-wrap: wrap;
-                    gap: 4px;
-                    align-items: center;
-                }
-                .metric-card-custom {
-                    background-color: #1e293b;
-                    border: 1px solid #334155;
-                    border-radius: 8px;
-                    padding: 5px 10px;
-                    text-align: center;
-                    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
-                    min-width: 125px;
-                }
-                </style>
-            """, unsafe_allow_html=True)
-            
-            st.markdown('<div class="bank-balances-wrapper">', unsafe_allow_html=True)
-            
-            st.markdown("""
-                <style>
-                div[data-testid="stHorizontalBlock"]:has(.metric-card-custom) {
+                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {
                     gap: 4px !important;
                 }
-                div[data-testid="column"]:has(.metric-card-custom) {
-                    position: relative !important;
-                }
-                div[data-testid="column"]:has(.metric-card-custom) div[data-testid="stButton"] {
-                    position: absolute !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100% !important;
+                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
+                    background-color: #1e293b !important;
+                    border: 1px solid #334155 !important;
+                    border-radius: 8px !important;
+                    min-height: 65px !important;
+                    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1) !important;
                     height: 100% !important;
-                    z-index: 10 !important;
-                    opacity: 0 !important;
+                    padding: 5px !important;
                 }
-                div[data-testid="column"]:has(.metric-card-custom) div[data-testid="stButton"] button {
-                    width: 100% !important;
-                    height: 100% !important;
+                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button:hover {
+                    border-color: #f39c12 !important;
+                }
+                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p {
+                    text-transform: uppercase;
+                    font-size: 0.8rem;
+                    color: #94a3b8;
+                    line-height: 1.4;
+                    margin: 0;
+                }
+                /* Make the green/red value larger */
+                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span {
+                    font-size: 1.1rem;
+                    text-transform: none;
                 }
                 </style>
             """, unsafe_allow_html=True)
@@ -2297,17 +2281,10 @@ with tab_dash:
             cols = st.columns(col_ratios)
             for i, (b_name, b_val) in enumerate(current_balances.items()):
                 with cols[i]:
-                    card_class = "metric-value-red" if b_val < 0 else ("metric-value-green" if b_val > 0 else "")
-                    st.markdown(f"""
-                        <div class="metric-card-custom metric-card">
-                            <div class="metric-title">{b_name}</div>
-                            <div class="metric-value {card_class}">{b_val:,.2f} €</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    if st.button(" ", key=f"btn_bank_{b_name}", use_container_width=True):
+                    color = "red" if b_val < 0 else "green" if b_val > 0 else "gray"
+                    label = f"**{b_name}**\n\n:{color}[**{b_val:,.2f} €**]"
+                    if st.button(label, key=f"btn_bank_{b_name}", use_container_width=True):
                         show_bank_extract_modal(b_name, selected_year)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
     
     # Pivot-like summary computation for the selected year
     summary_data = []
