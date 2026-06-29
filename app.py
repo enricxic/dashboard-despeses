@@ -2172,8 +2172,8 @@ def get_balances_up_to(year, month_name):
     
     balances = {}
     for csv_name, disp_name in BANK_MAPPING.items():
-        # Sum transactions for this bank (Option A: including VISA payments directly as in Excel)
-        b_desp = sub_desp[sub_desp['Banc'] == csv_name]
+        # Sum transactions for this bank (Excluding VISA payments as they are charged later as a single receipt)
+        b_desp = sub_desp[(sub_desp['Banc'] == csv_name) & (sub_desp['FormaPago'].fillna('') != 'VISA')]
         inflows = b_desp['import ingrés'].sum()
         outflows = b_desp['Import càrrec'].sum()
         
