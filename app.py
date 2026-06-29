@@ -2177,7 +2177,9 @@ def show_bank_extract_modal(bank_display_name, selected_year):
             b_desp = df_desp[(df_desp['FormaPago'] == 'VISA') & (df_desp['any'] == selected_year)].copy()
         else:
             b_desp = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['any'] == selected_year)].copy()
-            
+            if bank_display_name == 'BBVA':
+                b_desp = b_desp[b_desp['FormaPago'] != 'VISA']
+                
         b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
         
         cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Comentari']
