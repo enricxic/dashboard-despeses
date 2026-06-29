@@ -2018,6 +2018,7 @@ def render_compres_super_interface():
                     """,
                     unsafe_allow_html=True
                 )
+
                 if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article"):
                     show_add_article_dialog(fam_sel)
                 st.markdown("</div>", unsafe_allow_html=True)
@@ -2244,18 +2245,73 @@ with tab_dash:
         with col_bal_title:
             st.markdown(f"<h3 style='margin:0; font-size: 1.3rem;'>💰 Saldo Comptes:<br><span style='color: #22c55e;'>{total_accounts_balance:,.2f} €</span></h3>", unsafe_allow_html=True)
         with col_bal_metrics:
-            # col_ratios updated to 1.6 for wider balance cards (1.6 * 7 = 11.2 plus 0.8 trailing space)
-            col_ratios = [1.6] * len(current_balances) + [0.8]
+            # Container for bank balances with 4px gap and overlapping invisible buttons
+            st.markdown("""
+                <style>
+                .bank-balances-wrapper {
+                    display: flex;
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    gap: 4px;
+                    align-items: center;
+                }
+                .bank-balance-item {
+                    position: relative;
+                }
+                .bank-balance-item .stButton {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    opacity: 0;
+                    z-index: 10;
+                }
+                .bank-balance-item .stButton button {
+                    width: 100%;
+                    height: 100%;
+                }
+                .metric-card-custom {
+                    background-color: #1e293b;
+                    border: 1px solid #334155;
+                    border-radius: 8px;
+                    padding: 5px 10px;
+                    text-align: center;
+                    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
+                    min-width: 125px;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+            
+            st.markdown('<div class="bank-balances-wrapper">', unsafe_allow_html=True)
+            
+            # Since Streamlit elements can't easily be placed inside raw HTML flexbox properly natively,
+            # we actually use st.columns with gap="small" but we inject a style to override gap to 4px
+            st.markdown("""
+                <style>
+                div[data-testid="stHorizontalBlock"]:has(.metric-card-custom) {
+                    gap: 4px !important;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+
+            col_ratios = [1] * len(current_balances)
             cols = st.columns(col_ratios)
             for i, (b_name, b_val) in enumerate(current_balances.items()):
                 with cols[i]:
+                    st.markdown('<div class="bank-balance-item">', unsafe_allow_html=True)
                     card_class = "metric-value-red" if b_val < 0 else ("metric-value-green" if b_val > 0 else "")
                     st.markdown(f"""
-                        <div class="metric-card">
+                        <div class="metric-card-custom metric-card">
                             <div class="metric-title">{b_name}</div>
                             <div class="metric-value {card_class}">{b_val:,.2f} €</div>
                         </div>
                     """, unsafe_allow_html=True)
+                    if st.button(" ", key=f"btn_bank_{b_name}", use_container_width=True):
+                        show_bank_extract_modal(b_name, {'df_desp': df_desp}, selected_year)
+                    st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
     
     # Pivot-like summary computation for the selected year
     summary_data = []
@@ -3150,7 +3206,36 @@ with tab_intro:
             .apply(style_rows, axis=None)
             .set_properties(**{'font-size': '11px', 'padding': '3px'})
         )
+
 # ----------------- DIALOGS FOR MODIFY / DELETE -----------------
+@st.dialog("📋 Extracte de l'Entitat", width="large")
+def show_bank_extract_modal(bank_display_name, dfs, selected_year):
+    df_desp = dfs['df_desp']
+    
+    csv_names = [k for k, v in BANK_MAPPING.items() if v == bank_display_name]
+    csv_name = csv_names[0] if csv_names else bank_display_name
+    
+    st.markdown(f"### Moviments de {bank_display_name} ({selected_year})")
+    
+    if bank_display_name == 'Pago VISA':
+        b_desp = df_desp[(df_desp['FormaPago'] == 'VISA') & (df_desp['any'] == selected_year)].copy()
+    else:
+        b_desp = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['any'] == selected_year)].copy()
+        
+    b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
+    
+    cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Comentari']
+    if bank_display_name != 'Pago VISA':
+        cols_to_show.append('FormaPago')
+        
+    b_desp = b_desp[cols_to_show]
+    
+    st.dataframe(
+        b_desp,
+        use_container_width=True,
+        hide_index=True
+    )
+
 @st.dialog("✏️ Modificar Registre")
 def show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx):
     st.markdown(f"Modificant el registre seleccionat de la taula **{db_select}**.")
