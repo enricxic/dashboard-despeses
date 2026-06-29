@@ -2252,6 +2252,7 @@ with tab_dash:
                     border: 1px solid #334155 !important;
                     border-radius: 8px !important;
                     min-height: 65px !important;
+                    min-width: 130px !important;
                     box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1) !important;
                     height: 100% !important;
                     padding: 5px !important;
@@ -2265,6 +2266,7 @@ with tab_dash:
                     color: #94a3b8;
                     line-height: 1.4;
                     margin: 0;
+                    white-space: nowrap !important;
                 }
                 /* Make the green/red value larger */
                 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span {
