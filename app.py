@@ -3576,6 +3576,13 @@ with tab_db:
             df_to_show = df_to_show[cols]
     elif db_select == "Compres Supermercat":
         df_to_show = df_super.drop(columns=['parsed_date'], errors='ignore')
+        
+        # Reordenar per posar rebost en una posició visible (p. ex., just després d'article)
+        cols = list(df_to_show.columns)
+        if 'rebost' in cols and 'article' in cols:
+            cols.remove('rebost')
+            cols.insert(cols.index('article') + 1, 'rebost')
+            df_to_show = df_to_show[cols]
     elif db_select == "Gasolina":
         df_to_show = df_gas.drop(columns=['parsed_date'], errors='ignore')
     elif db_select == "Kilòmetres Cotxe":
