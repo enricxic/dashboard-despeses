@@ -324,7 +324,7 @@ INITIAL_BALANCES = {
     'BBVA': -2157.00,  # Adjusted to match real bank balance of 2178.86 (after removing VISA duplicates)
     'La Caixa': 102.28,
     'Casa': 267.28,
-    'CORTEINGLÉS': 1566.69,
+    'CORTEINGLÉS': 1560.89,
     'TRADE REPUB.': 0.0,
     'Tg.Moneder': 0.0,
     'Pago VISA': -2309.71  # Offset to ensure current balance is exactly 0 after historical discrepancies
