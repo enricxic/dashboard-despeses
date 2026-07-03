@@ -3727,12 +3727,12 @@ with tab_db:
         with col_sidebar_actions:
             # Spacer to push the buttons down to the selected row's height
             st.markdown(f"<div style='margin-top: {margin_top}px;'></div>", unsafe_allow_html=True)
-            btn_col1, btn_col2 = st.columns(2)
+            btn_col_filler, btn_col1, btn_col2 = st.columns([10, 1, 1])
             with btn_col1:
-                if st.button("✏️", help="Modificar registre", key=f"btn_mod_call_{db_select}_{row_idx}", use_container_width=True):
+                if st.button("📝", help="Modificar registre", key=f"btn_mod_call_{db_select}_{row_idx}"):
                     show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
             with btn_col2:
-                if st.button("❌", help="Esborrar registre", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
+                if st.button("❌", help="Esborrar registre", key=f"btn_del_call_{db_select}_{row_idx}"):
                     show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
 
 
