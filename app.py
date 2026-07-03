@@ -3676,29 +3676,29 @@ with tab_db:
     for col in df_page.columns:
         col_lower = col.lower()
         if any(x in col_lower for x in ["comentari", "descrip", "motiu", "ruta", "observac", "detall"]):
-            col_configs[col] = st.column_config.TextColumn(width=300)
+            col_configs[col] = st.column_config.TextColumn(width=220)
         elif any(x in col_lower for x in ["id_", "idpago", "idingres", "idcompra", "idgasolina", "idruta"]):
-            col_configs[col] = st.column_config.Column(width=60)
+            col_configs[col] = st.column_config.Column(width=45)
         elif any(x in col_lower for x in ["data", "fecha"]):
-            col_configs[col] = st.column_config.Column(width=85)
-        elif "any" in col_lower:
-            col_configs[col] = st.column_config.Column(width=55)
-        elif "mes" in col_lower:
-            col_configs[col] = st.column_config.Column(width=65)
-        elif "dia" in col_lower:
-            col_configs[col] = st.column_config.Column(width=50)
-        elif "forma" in col_lower:
-            col_configs[col] = st.column_config.Column(width=80)
-        elif any(x in col_lower for x in ["import", "quantitat", "preu", "valor"]):
-            col_configs[col] = st.column_config.Column(width=85)
-        elif "grup" in col_lower:
             col_configs[col] = st.column_config.Column(width=70)
-        elif "categoria" in col_lower:
-            col_configs[col] = st.column_config.TextColumn(width=95)
-        elif "concepte" in col_lower:
-            col_configs[col] = st.column_config.TextColumn(width=110)
+        elif "any" in col_lower:
+            col_configs[col] = st.column_config.Column(width=40)
+        elif "mes" in col_lower:
+            col_configs[col] = st.column_config.Column(width=45)
+        elif "dia" in col_lower:
+            col_configs[col] = st.column_config.Column(width=35)
+        elif "forma" in col_lower:
+            col_configs[col] = st.column_config.Column(width=70)
+        elif any(x in col_lower for x in ["import", "quantitat", "preu", "valor", "totlinea", "pes", "prom", "descompte"]):
+            col_configs[col] = st.column_config.Column(width=60)
+        elif "grup" in col_lower:
+            col_configs[col] = st.column_config.Column(width=60)
+        elif any(x in col_lower for x in ["categoria", "super", "familia", "rebost"]):
+            col_configs[col] = st.column_config.TextColumn(width=75)
+        elif "concepte" in col_lower or "article" in col_lower:
+            col_configs[col] = st.column_config.TextColumn(width=100)
         elif any(x in col_lower for x in ["banc", "compte"]):
-            col_configs[col] = st.column_config.TextColumn(width=80)
+            col_configs[col] = st.column_config.TextColumn(width=75)
             
     with col_table:
         # Interactive dataframe with row selection enabled
