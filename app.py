@@ -261,8 +261,8 @@ def check_password():
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "admin"
                     st.rerun()
-                # Check for guest (DEFAULT_HASH is the old general password as fallback)
-                elif hashed == DEFAULT_HASH or hashed in guest_hashes:
+                # Check for guest
+                elif hashed in guest_hashes:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "guest"
                     st.rerun()
@@ -274,15 +274,14 @@ if not check_password():
     st.stop()
 
 # --- Role Indicator ---
-role_display = "Administrador 👑" if st.session_state.get("role") == "admin" else "Convidat 👤"
+role_icon = "👑" if st.session_state.get("role") == "admin" else "👤"
+role_title = "Administrador" if st.session_state.get("role") == "admin" else "Convidat"
 st.markdown(
     f"""
-    <div style='position: fixed; top: 3.5rem; right: 2rem; z-index: 9999; 
-                background-color: rgba(255, 255, 255, 0.1); 
-                padding: 5px 10px; border-radius: 5px; 
-                border: 1px solid rgba(128, 128, 128, 0.2);
-                font-size: 0.8rem; font-weight: bold;'>
-        Rol: {role_display}
+    <div title="Rol: {role_title}" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
+                font-size: 1.8rem; cursor: help; 
+                text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
+        {role_icon}
     </div>
     """, 
     unsafe_allow_html=True
