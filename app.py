@@ -324,7 +324,7 @@ INITIAL_BALANCES = {
     'BBVA': -2157.00,  # Adjusted to match real bank balance of 2178.86 (after removing VISA duplicates)
     'La Caixa': 102.28,
     'Casa': 267.28,
-    'CORTEINGLÉS': 1560.89,
+    'CORTEINGLÉS': 1566.69,
     'TRADE REPUB.': 0.0,
     'Tg.Moneder': 0.0,
     'Pago VISA': -2309.71  # Offset to ensure current balance is exactly 0 after historical discrepancies
@@ -2199,7 +2199,8 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
         df_desp = st.session_state["df_desp"]
         
         csv_names = [k for k, v in BANK_MAPPING.items() if v == bank_display_name]
-        csv_name = csv_names[0] if csv_names else bank_display_name
+        if not csv_names:
+            csv_names = [bank_display_name]
         
         st.markdown(f"### Moviments de {bank_display_name} ({selected_year})")
         
@@ -2212,7 +2213,7 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             b_desp.loc[is_payment, 'import ingrés'] = b_desp.loc[is_payment, 'import ingrés'].fillna(0) + b_desp.loc[is_payment, 'Import càrrec'].fillna(0)
             b_desp.loc[is_payment, 'Import càrrec'] = 0.0
         else:
-            b_desp = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['any'] == selected_year)].copy()
+            b_desp = df_desp[(df_desp['Banc'].isin(csv_names)) & (df_desp['any'] == selected_year)].copy()
             # Exclude VISA payments entirely since the bank settlement covers it
             b_desp = b_desp[b_desp['FormaPago'].fillna('') != 'VISA']
                 
@@ -2226,7 +2227,7 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             sub_desp_prev.loc[is_payment, 'import ingrés'] = sub_desp_prev.loc[is_payment, 'import ingrés'].fillna(0) + sub_desp_prev.loc[is_payment, 'Import càrrec'].fillna(0)
             sub_desp_prev.loc[is_payment, 'Import càrrec'] = 0.0
         else:
-            sub_desp_prev = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['date_score'] <= prev_target)]
+            sub_desp_prev = df_desp[(df_desp['Banc'].isin(csv_names)) & (df_desp['date_score'] <= prev_target)]
             sub_desp_prev = sub_desp_prev[sub_desp_prev['FormaPago'].fillna('') != 'VISA']
             
         start_bal = INITIAL_BALANCES.get(bank_display_name, 0.0) + sub_desp_prev['import ingrés'].fillna(0).sum() - sub_desp_prev['Import càrrec'].fillna(0).sum()
