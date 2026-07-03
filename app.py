@@ -2691,7 +2691,7 @@ with tab_details:
             st.info("No hi ha cap pagament pendent aquest mes.")
         else:
             st.markdown("---")
-            st.markdown(f"<div style='text-align:right;'><strong style='font-size:1.15em;'>Total: <span style='color:#ef4444;'>{total_pendent:,.2f} €</span></strong></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align:left; font-size:2.2rem; color:#ef4444; padding-top:0.5rem; line-height:1.2;'>{total_pendent:,.2f} €</div>", unsafe_allow_html=True)
             
     with col_mid:
         st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
