@@ -3617,7 +3617,7 @@ with tab_db:
     else:
         st.markdown("No s'ha trobat cap registre amb els criteris seleccionats.")
         
-    col_table, col_sidebar_actions = st.columns([12, 1])
+    col_table, col_sidebar_actions = st.columns([10, 2])
     
     # Configurem dinàmicament l'amplada de les columnes per donar més espai als comentaris
     col_configs = {}
@@ -3650,10 +3650,11 @@ with tab_db:
             
     with col_table:
         # Interactive dataframe with row selection enabled
+        dynamic_height = 38 + len(df_page) * 35.5
         selection_event = st.dataframe(
             df_page, 
             use_container_width=True,
-            height=700,
+            height=int(dynamic_height),
             on_select="rerun",
             selection_mode="single-row",
             column_config=col_configs,
@@ -3695,12 +3696,12 @@ with tab_db:
                 
         # Calculate dynamic margin-top to align buttons with the selected row
         # 36px for the header, 35px per row.
-        margin_top = 36 + row_idx_page * 35
+        margin_top = 40 + row_idx_page * 35.5
         
         with col_sidebar_actions:
             # Spacer to push the buttons down to the selected row's height
             st.markdown(f"<div style='margin-top: {margin_top}px;'></div>", unsafe_allow_html=True)
-            btn_col_filler, btn_col1, btn_col2 = st.columns([10, 1, 1])
+            btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
                 if st.button("✏️", help="Modificar registre", key=f"btn_mod_call_{db_select}_{row_idx}"):
                     show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
