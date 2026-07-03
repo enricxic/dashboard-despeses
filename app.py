@@ -3561,7 +3561,7 @@ with tab_db:
                     if selected_val != "Tots":
                         df_filtered = df_filtered[df_filtered[col_name].astype(str) == selected_val]
                         
-    if sort_desc:
+    if not sort_desc:
         df_filtered = df_filtered.iloc[::-1]
         
     # Text search
