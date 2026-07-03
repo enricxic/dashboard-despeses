@@ -2288,9 +2288,10 @@ def get_balances_up_to(year, month_name):
     mask_visa_exp = (df_desp['FormaPago'] == 'VISA')
     mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
     
-    visa_expenses = sub_desp[mask_visa_exp]['Import càrrec'].sum()
-    visa_payments = sub_desp[mask_visa_pay]['Import càrrec'].sum() + sub_desp[mask_visa_pay]['import ingrés'].fillna(0).sum()
-    balances['Pago VISA'] = INITIAL_BALANCES.get('Pago VISA', 0.0) + visa_payments - visa_expenses
+    visa_expenses_charges = sub_desp[mask_visa_exp]['Import càrrec'].fillna(0).sum()
+    visa_expenses_refunds = sub_desp[mask_visa_exp]['import ingrés'].fillna(0).sum()
+    visa_payments = sub_desp[mask_visa_pay]['Import càrrec'].fillna(0).sum() + sub_desp[mask_visa_pay]['import ingrés'].fillna(0).sum()
+    balances['Pago VISA'] = INITIAL_BALANCES.get('Pago VISA', 0.0) + visa_payments + visa_expenses_refunds - visa_expenses_charges
     
     # Clean up small negative values that should be zero
     for k in balances:
