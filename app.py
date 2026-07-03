@@ -3617,7 +3617,7 @@ with tab_db:
     else:
         st.markdown("No s'ha trobat cap registre amb els criteris seleccionats.")
         
-    
+    col_table, col_sidebar_actions = st.columns([12, 1])
     
     # Configurem dinàmicament l'amplada de les columnes per donar més espai als comentaris
     col_configs = {}
@@ -3648,7 +3648,7 @@ with tab_db:
         elif any(x in col_lower for x in ["banc", "compte"]):
             col_configs[col] = st.column_config.TextColumn(width=80)
             
-    if True:
+    with col_table:
         # Interactive dataframe with row selection enabled
         selection_event = st.dataframe(
             df_page, 
@@ -3693,16 +3693,20 @@ with tab_db:
             except (ValueError, TypeError):
                 id_val = str(id_val)
                 
-        st.markdown("---")
-        st.markdown(f"**Registre seleccionat:** (Índex: {row_idx})")
+        # Calculate dynamic margin-top to align buttons with the selected row
+        # 36px for the header, 35px per row.
+        margin_top = 36 + row_idx_page * 35
         
-        b_col1, b_col2, _ = st.columns([2, 2, 8])
-        with b_col1:
-            if st.button("✏️ Modificar registre", key=f"btn_mod_call_{db_select}_{row_idx}", use_container_width=True):
-                show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
-        with b_col2:
-            if st.button("❌ Esborrar registre", key=f"btn_del_call_{db_select}_{row_idx}", use_container_width=True):
-                show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
+        with col_sidebar_actions:
+            # Spacer to push the buttons down to the selected row's height
+            st.markdown(f"<div style='margin-top: {margin_top}px;'></div>", unsafe_allow_html=True)
+            btn_col_filler, btn_col1, btn_col2 = st.columns([10, 1, 1])
+            with btn_col1:
+                if st.button("📝", help="Modificar registre", key=f"btn_mod_call_{db_select}_{row_idx}"):
+                    show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
+            with btn_col2:
+                if st.button("❌", help="Esborrar registre", key=f"btn_del_call_{db_select}_{row_idx}"):
+                    show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx)
 
 
 
