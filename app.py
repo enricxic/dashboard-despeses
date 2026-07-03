@@ -2203,7 +2203,13 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
         st.markdown(f"### Moviments de {bank_display_name} ({selected_year})")
         
         if bank_display_name == 'Pago VISA':
-            b_desp = df_desp[(df_desp['FormaPago'] == 'VISA') & (df_desp['any'] == selected_year)].copy()
+            mask_visa_exp = (df_desp['FormaPago'] == 'VISA')
+            mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
+            b_desp = df_desp[(mask_visa_exp | mask_visa_pay) & (df_desp['any'] == selected_year)].copy()
+            # Convert payment's Import càrrec to import ingrés so it reduces the debt!
+            is_payment = b_desp['Idcategoria'] == 'op_banc'
+            b_desp.loc[is_payment, 'import ingrés'] = b_desp.loc[is_payment, 'Import càrrec']
+            b_desp.loc[is_payment, 'Import càrrec'] = 0.0
         else:
             b_desp = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['any'] == selected_year)].copy()
             # Exclude VISA payments entirely since the bank settlement covers it
@@ -2211,9 +2217,15 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
                 
         # Calculate starting balance by including EVERYTHING up to Dec 31 of previous year
         prev_target = (selected_year - 1) * 12 + 12
-        sub_desp_prev = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['date_score'] <= prev_target)]
-        
-        if bank_display_name != 'Pago VISA':
+        if bank_display_name == 'Pago VISA':
+            mask_visa_exp = (df_desp['FormaPago'] == 'VISA')
+            mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
+            sub_desp_prev = df_desp[(mask_visa_exp | mask_visa_pay) & (df_desp['date_score'] <= prev_target)].copy()
+            is_payment = sub_desp_prev['Idcategoria'] == 'op_banc'
+            sub_desp_prev.loc[is_payment, 'import ingrés'] = sub_desp_prev.loc[is_payment, 'Import càrrec']
+            sub_desp_prev.loc[is_payment, 'Import càrrec'] = 0.0
+        else:
+            sub_desp_prev = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['date_score'] <= prev_target)]
             sub_desp_prev = sub_desp_prev[sub_desp_prev['FormaPago'].fillna('') != 'VISA']
             
         start_bal = INITIAL_BALANCES.get(bank_display_name, 0.0) + sub_desp_prev['import ingrés'].fillna(0).sum() - sub_desp_prev['Import càrrec'].fillna(0).sum()
@@ -2270,9 +2282,14 @@ def get_balances_up_to(year, month_name):
     for k in INITIAL_BALANCES:
         balances[k] = balances.get(k, 0.0) + INITIAL_BALANCES[k]
         
-    # Account for VISA separately: VISA is a liability card, its balance is the sum of VISA transactions in the SELECTED month
-    visa_sub = df_desp[(df_desp['any'] == year) & (df_desp['mes'].astype(str).str.lower() == month_name) & (df_desp['FormaPago'] == 'VISA')]
-    balances['Pago VISA'] = -visa_sub['Import càrrec'].sum()
+    # Account for VISA separately: VISA is a liability card, its balance is cumulative.
+    # The debt increases with VISA expenses, and decreases when the bank settlement is recorded (Idconcepte == 'Pago VISA')
+    mask_visa_exp = (df_desp['FormaPago'] == 'VISA')
+    mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
+    
+    visa_expenses = sub_desp[mask_visa_exp]['Import càrrec'].sum()
+    visa_payments = sub_desp[mask_visa_pay]['Import càrrec'].sum()
+    balances['Pago VISA'] = visa_payments - visa_expenses
     
     # Clean up small negative values that should be zero
     for k in balances:
