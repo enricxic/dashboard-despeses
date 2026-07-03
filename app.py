@@ -327,7 +327,7 @@ INITIAL_BALANCES = {
     'CORTEINGLÉS': 1566.69,
     'TRADE REPUB.': 0.0,
     'Tg.Moneder': 0.0,
-    'Pago VISA': -3226.61  # Offset to ensure current balance is exactly 0 after historical discrepancies
+    'Pago VISA': -2309.71  # Offset to ensure current balance is exactly 0 after historical discrepancies
 }
 
 # Bank names in CSV mapped to display names
@@ -2208,7 +2208,7 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
             b_desp = df_desp[(mask_visa_exp | mask_visa_pay) & (df_desp['any'] == selected_year)].copy()
             # Convert payment's Import càrrec to import ingrés so it reduces the debt!
-            is_payment = b_desp['Idcategoria'] == 'op_banc'
+            is_payment = (b_desp['Idcategoria'] == 'op_banc') & (b_desp['Idconcepte'] == 'Pago VISA')
             b_desp.loc[is_payment, 'import ingrés'] = b_desp.loc[is_payment, 'import ingrés'].fillna(0) + b_desp.loc[is_payment, 'Import càrrec'].fillna(0)
             b_desp.loc[is_payment, 'Import càrrec'] = 0.0
         else:
@@ -2222,7 +2222,7 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             mask_visa_exp = (df_desp['FormaPago'] == 'VISA')
             mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
             sub_desp_prev = df_desp[(mask_visa_exp | mask_visa_pay) & (df_desp['date_score'] <= prev_target)].copy()
-            is_payment = sub_desp_prev['Idcategoria'] == 'op_banc'
+            is_payment = (sub_desp_prev['Idcategoria'] == 'op_banc') & (sub_desp_prev['Idconcepte'] == 'Pago VISA')
             sub_desp_prev.loc[is_payment, 'import ingrés'] = sub_desp_prev.loc[is_payment, 'import ingrés'].fillna(0) + sub_desp_prev.loc[is_payment, 'Import càrrec'].fillna(0)
             sub_desp_prev.loc[is_payment, 'Import càrrec'] = 0.0
         else:
