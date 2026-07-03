@@ -447,6 +447,7 @@ def load_dashboard_data(mtimes=None):
     
     # Load tables from PostgreSQL
     df_desp = fix_mojibake_df(fetch_all_supabase(supabase, 'despeses'))
+    df_desp['ID_mov'] = pd.to_numeric(df_desp['ID_mov'], errors='coerce')
     df_desp = df_desp.dropna(subset=['ID_mov']).sort_values(by='ID_mov', ascending=False).reset_index(drop=True)
     df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
     df_desp['Import càrrec'] = clean_numeric(df_desp['Import càrrec'])
@@ -454,22 +455,26 @@ def load_dashboard_data(mtimes=None):
     df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes'].astype(str).str.lower().map(MONTHS_MAP).fillna(12).astype(int)
     
     df_ing = fix_mojibake_df(fetch_all_supabase(supabase, 'ingressos'))
+    df_ing['idIngres'] = pd.to_numeric(df_ing['idIngres'], errors='coerce')
     df_ing = df_ing.dropna(subset=['idIngres']).sort_values(by='idIngres', ascending=False).reset_index(drop=True)
     df_ing['Import'] = clean_numeric(df_ing['Import'])
     df_ing['parsed_date'] = df_ing['Data'].apply(parse_excel_date)
     
     df_super = fix_mojibake_df(fetch_all_supabase(supabase, 'compresSuper'))
+    df_super['IdCompra'] = pd.to_numeric(df_super['IdCompra'], errors='coerce')
     df_super = df_super.dropna(subset=['IdCompra']).sort_values(by='IdCompra', ascending=False).reset_index(drop=True)
     df_super['totLinea'] = clean_numeric(df_super['totLinea'])
     df_super['parsed_date'] = df_super['data'].apply(parse_excel_date)
     
     df_gas = fix_mojibake_df(fetch_all_supabase(supabase, 'gasolina'))
+    df_gas['idGasolina'] = pd.to_numeric(df_gas['idGasolina'], errors='coerce')
     df_gas = df_gas.dropna(subset=['idGasolina']).sort_values(by='idGasolina', ascending=False).reset_index(drop=True)
     df_gas['import'] = clean_numeric(df_gas['import'])
     df_gas['litres'] = clean_numeric(df_gas['litres'])
     df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
     
     df_km = fix_mojibake_df(fetch_all_supabase(supabase, 'kmCotxe'))
+    df_km['idRuta'] = pd.to_numeric(df_km['idRuta'], errors='coerce')
     df_km = df_km.dropna(subset=['idRuta']).sort_values(by='idRuta', ascending=False).reset_index(drop=True)
     df_km['contador'] = clean_numeric(df_km['contador'])
     df_km['km'] = clean_numeric(df_km['km'])
