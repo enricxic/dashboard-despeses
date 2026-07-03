@@ -3554,11 +3554,26 @@ with tab_db:
         mask_pendent = df_to_show['pagat'].astype(str).str.lower() != 'pagat'
         mask_mes_actual = (df_to_show['any'] == selected_year) & (df_to_show['mes'].astype(str).str.lower() == selected_month_data.lower())
         df_to_show = df_to_show[mask_pendent | mask_mes_actual]
+        
+        # Reordenar per assegurar que l'estat es veu clarament
+        cols = list(df_to_show.columns)
+        if 'pagat' in cols and 'Import' in cols:
+            cols.remove('pagat')
+            cols.insert(cols.index('Import') + 1, 'pagat')
+            df_to_show = df_to_show[cols]
+            
     elif db_select == "Previsió d'Ingressos":
         df_to_show = df_ing.sort_values(by='parsed_date', ascending=False).drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
         mask_pendent = df_to_show['cobrat'].astype(str).str.lower() != 'cobrat'
         mask_mes_actual = (df_to_show['any'] == selected_year) & (df_to_show['mes'].astype(str).str.lower() == selected_month_data.lower())
         df_to_show = df_to_show[mask_pendent | mask_mes_actual]
+        
+        # Reordenar per assegurar que l'estat es veu clarament
+        cols = list(df_to_show.columns)
+        if 'cobrat' in cols and 'Import' in cols:
+            cols.remove('cobrat')
+            cols.insert(cols.index('Import') + 1, 'cobrat')
+            df_to_show = df_to_show[cols]
     elif db_select == "Compres Supermercat":
         df_to_show = df_super.drop(columns=['parsed_date'], errors='ignore')
     elif db_select == "Gasolina":
