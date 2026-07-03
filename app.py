@@ -595,18 +595,9 @@ def insert_db_row(table_name, new_row_dict):
         supabase.table(table_name).insert(new_row_dict).execute()
         log_action(table_name, 'INSERT', new_row_dict)
         
-        state_key = {
-            "despeses": "df_desp",
-            "pagaments": "df_pag",
-            "ingressos": "df_ing",
-            "compresSuper": "df_super",
-            "gasolina": "df_gas",
-            "kmCotxe": "df_km"
-        }
-        if table_name in state_key:
-            st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
-        
+        st.cache_data.clear()
         get_db_tracker().update()
+        st.session_state["dfs_initialized"] = False
         return True
     except Exception as e:
         st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
@@ -664,18 +655,9 @@ def delete_db_row(table_name, id_col, id_val):
         supabase.table(table_name).delete().eq(id_col, id_val).execute()
         log_action(table_name, 'DELETE', {'id_col': id_col, 'id_val': id_val})
         
-        state_key = {
-            "despeses": "df_desp",
-            "pagaments": "df_pag",
-            "ingressos": "df_ing",
-            "compresSuper": "df_super",
-            "gasolina": "df_gas",
-            "kmCotxe": "df_km"
-        }
-        if table_name in state_key:
-            st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
-            
+        st.cache_data.clear()
         get_db_tracker().update()
+        st.session_state["dfs_initialized"] = False
         return True
     except Exception as e:
         st.error(f"❌ Error a l'esborrar de Supabase ({table_name}): {str(e)}")
@@ -689,18 +671,9 @@ def update_db_row(table_name, id_col, id_val, new_data):
         supabase.table(table_name).update(update_payload).eq(id_col, id_val).execute()
         log_action(table_name, 'UPDATE', {'id_col': id_col, 'id_val': id_val, 'changes': update_payload})
         
-        state_key = {
-            "despeses": "df_desp",
-            "pagaments": "df_pag",
-            "ingressos": "df_ing",
-            "compresSuper": "df_super",
-            "gasolina": "df_gas",
-            "kmCotxe": "df_km"
-        }
-        if table_name in state_key:
-            st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
-            
+        st.cache_data.clear()
         get_db_tracker().update()
+        st.session_state["dfs_initialized"] = False
         return True
     except Exception as e:
         st.error(f"❌ Error a l'actualitzar Supabase ({table_name}): {str(e)}")
