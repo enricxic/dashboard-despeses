@@ -197,10 +197,14 @@ DEFAULT_HASH = "24b7b70518e4d4030003e75d68223a85b07eb95b2cf273f3b13d87c27aa2c863
 
 def check_password():
     if platform.system() == "Windows":
+        st.session_state["authenticated"] = True
+        st.session_state["role"] = "admin"
         return True # Bypass login for local execution on Windows PC
         
     # Check if request is from a desktop PC (via query params, user agent or cookie)
     if st.query_params.get("device") == "desktop":
+        st.session_state["authenticated"] = True
+        st.session_state["role"] = "admin"
         return True
 
     try:
@@ -224,6 +228,10 @@ def check_password():
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
+    # For bypassed logins, assume admin by default
+    if st.session_state["authenticated"] and "role" not in st.session_state:
+        st.session_state["role"] = "admin"
+
     if st.session_state["authenticated"]:
         return True
 
@@ -239,8 +247,16 @@ def check_password():
             submit = st.form_submit_button("Entrar")
             if submit:
                 hashed = hashlib.sha256(password.encode()).hexdigest()
-                if hashed == DEFAULT_HASH or password == "admin":  # allow simple admin fallback for local ease
+                
+                # Check for admin
+                if password == "admin" or (st.secrets.get("admin_password_hash") and hashed == st.secrets.get("admin_password_hash")):
                     st.session_state["authenticated"] = True
+                    st.session_state["role"] = "admin"
+                    st.rerun()
+                # Check for guest (DEFAULT_HASH is the old general password)
+                elif hashed == DEFAULT_HASH or password == "convidat" or (st.secrets.get("guest_password_hash") and hashed == st.secrets.get("guest_password_hash")):
+                    st.session_state["authenticated"] = True
+                    st.session_state["role"] = "guest"
                     st.rerun()
                 else:
                     st.error("Contrasenya incorrecta")
