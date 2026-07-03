@@ -486,13 +486,15 @@ def load_dashboard_data(mtimes=None):
     df_hip['Quota fixa'] = clean_numeric(df_hip['Quota fixa'])
     
     df_est = fetch_all_supabase(supabase, 'estalviDP')
-    if 'Unnamed: 0' in df_est.columns:
-        df_est = df_est.rename(columns={
-            'Unnamed: 0': 'mes', 'Unnamed: 1': 'any', 'Unnamed: 2': 'quota', 'Unnamed: 5': 'pagat'
-        })
     df_est = df_est.dropna(subset=['mes', 'any'])
     df_est['any'] = pd.to_numeric(df_est['any'], errors='coerce')
     df_est['quota'] = clean_numeric(df_est['quota'])
+    if 'aportació' in df_est.columns:
+        df_est['aportació'] = clean_numeric(df_est['aportació'])
+    if 'rescat' in df_est.columns:
+        df_est['rescat'] = clean_numeric(df_est['rescat'])
+    if 'pérdua' in df_est.columns:
+        df_est['pérdua'] = clean_numeric(df_est['pérdua'])
     
     df_limits = fetch_all_supabase(supabase, 'limitsDespeses').dropna(subset=['data_inici'])
     df_limits['parsed_date'] = df_limits['data_inici'].apply(parse_excel_date)
@@ -3592,6 +3594,13 @@ with tab_db:
     elif db_select == "Estalvis DP":
         df_to_show = df_est
         
+        # Reordenar les columnes per l'ordre clàssic de l'usuari i assegurar que id està al principi o final
+        desired_order = ['id', 'mes', 'any', 'quota', 'aportació', 'rescat', 'pérdua', 'pagat']
+        available_cols = [c for c in desired_order if c in df_to_show.columns]
+        # Si hi ha altres columnes (no hauria), les posem al final
+        other_cols = [c for c in df_to_show.columns if c not in desired_order]
+        df_to_show = df_to_show[available_cols + other_cols]
+        
     df_filtered = df_to_show.copy()
     
     # 2. Column filters
@@ -3689,7 +3698,7 @@ with tab_db:
             col_configs[col] = st.column_config.Column(width=35)
         elif "forma" in col_lower:
             col_configs[col] = st.column_config.Column(width=70)
-        elif any(x in col_lower for x in ["import", "quantitat", "preu", "valor", "totlinea", "pes", "prom", "descompte"]):
+        elif any(x in col_lower for x in ["import", "quantitat", "preu", "valor", "totlinea", "pes", "prom", "descompte", "quota", "aportació", "rescat", "pérdua"]):
             col_configs[col] = st.column_config.Column(width=60)
         elif "grup" in col_lower:
             col_configs[col] = st.column_config.Column(width=60)
