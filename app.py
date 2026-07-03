@@ -243,31 +243,34 @@ def check_password():
         st.write("")
         st.markdown("<h2 style='text-align: center; color: #f39c12;'>Accés Protegit</h2>", unsafe_allow_html=True)
         with st.form("login_form"):
+            username = st.text_input("El teu nom / Àlies")
             password = st.text_input("Contrasenya d'accés", type="password")
             submit = st.form_submit_button("Entrar")
             if submit:
-                hashed = hashlib.sha256(password.encode()).hexdigest()
-                
-                # Retrieve configured hashes from secrets (lists or strings)
-                admin_hashes = st.secrets.get("admin_password_hashes", [])
-                guest_hashes = st.secrets.get("guest_password_hashes", [])
-                
-                # Convert to lists if they are strings
-                if isinstance(admin_hashes, str): admin_hashes = [admin_hashes]
-                if isinstance(guest_hashes, str): guest_hashes = [guest_hashes]
-                
-                # Check for admin
-                if hashed in admin_hashes:
-                    st.session_state["authenticated"] = True
-                    st.session_state["role"] = "admin"
-                    st.rerun()
-                # Check for guest
-                elif hashed in guest_hashes:
-                    st.session_state["authenticated"] = True
-                    st.session_state["role"] = "guest"
-                    st.rerun()
+                if not username.strip():
+                    st.error("Si us plau, introdueix el teu nom.")
                 else:
-                    st.error("Contrasenya incorrecta")
+                    hashed = hashlib.sha256(password.encode()).hexdigest()
+                    
+                    # Retrieve configured hashes from secrets (lists or strings)
+                    admin_hashes = st.secrets.get("admin_password_hashes", [])
+                    guest_hashes = st.secrets.get("guest_password_hashes", [])
+                    
+                    if isinstance(admin_hashes, str): admin_hashes = [admin_hashes]
+                    if isinstance(guest_hashes, str): guest_hashes = [guest_hashes]
+                    
+                    if hashed in admin_hashes:
+                        st.session_state["authenticated"] = True
+                        st.session_state["role"] = "admin"
+                        st.session_state["username"] = username.strip()
+                        st.rerun()
+                    elif hashed in guest_hashes:
+                        st.session_state["authenticated"] = True
+                        st.session_state["role"] = "guest"
+                        st.session_state["username"] = username.strip()
+                        st.rerun()
+                    else:
+                        st.error("Contrasenya incorrecta")
     return False
 
 if not check_password():
@@ -276,9 +279,11 @@ if not check_password():
 # --- Role Indicator ---
 role_icon = "👑" if st.session_state.get("role") == "admin" else "👤"
 role_title = "Administrador" if st.session_state.get("role") == "admin" else "Convidat"
+username_disp = st.session_state.get("username", "Local")
+
 st.markdown(
     f"""
-    <div title="Rol: {role_title}" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
+    <div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
                 font-size: 1.8rem; cursor: help; 
                 text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
         {role_icon}
@@ -559,10 +564,27 @@ def save_to_csv(df, filename):
         st.error(f"❌ **Error al desar la taula `{table_name}` a Supabase**: {str(e)}")
         st.stop()
 
+def log_action(table_name, tipus_accio, detalls):
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    try:
+        log_payload = {
+            "usuari": st.session_state.get("username", "Desconegut"),
+            "rol": st.session_state.get("role", "guest"),
+            "taula_afectada": table_name,
+            "tipus_accio": tipus_accio,
+            "detalls": detalls
+        }
+        # Log unrestrictedly using anonymous push or admin push (handled by RLS policies)
+        supabase.table("registre_accions").insert(log_payload).execute()
+    except Exception as e:
+        # Silently fail if logging fails
+        pass
+
 def insert_db_row(table_name, new_row_dict):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         supabase.table(table_name).insert(new_row_dict).execute()
+        log_action(table_name, 'INSERT', new_row_dict)
         
         state_key = {
             "despeses": "df_desp",
@@ -583,6 +605,7 @@ def append_to_db(df_new, table_name, state_key):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         supabase.table(table_name).insert(json.loads(df_new.to_json(orient='records', date_format='iso'))).execute()
+        log_action(table_name, 'INSERT_BULK', {'count': len(df_new)})
         if state_key and state_key in st.session_state:
             df = st.session_state[state_key]
             df_new_local = df_new.copy()
@@ -629,6 +652,7 @@ def delete_db_row(table_name, id_col, id_val):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         supabase.table(table_name).delete().eq(id_col, id_val).execute()
+        log_action(table_name, 'DELETE', {'id_col': id_col, 'id_val': id_val})
         
         state_key = {
             "despeses": "df_desp",
@@ -652,6 +676,7 @@ def update_db_row(table_name, id_col, id_val, new_data):
         if id_col in update_payload:
             del update_payload[id_col]
         supabase.table(table_name).update(update_payload).eq(id_col, id_val).execute()
+        log_action(table_name, 'UPDATE', {'id_col': id_col, 'id_val': id_val, 'changes': update_payload})
         
         state_key = {
             "despeses": "df_desp",
@@ -2283,9 +2308,19 @@ if "kms_canvi_oli" not in st.session_state:
 # Header already rendered above
 
 # ----------------- TABS SYSTEM -----------------
-tab_dash, tab_details, tab_intro, tab_db = st.tabs([
-    "📊 Dashboard General", "📝 Detalls del Mes", "➕ Intro Dades", "💾 Bases de Dades (Supabase)"
-])
+tabs_list = [
+        "📊 Dashboard General", "🔍 Detalls del Mes", "✍️ Intro Dades", "🗃️ Bases de Dades (Supabase)"
+    ]
+if st.session_state.get("role") == "admin":
+    tabs_list.append("📜 Registre d'Accions")
+    
+tabs = st.tabs(tabs_list)
+tab_dash = tabs[0]
+tab_details = tabs[1]
+tab_intro = tabs[2]
+tab_db = tabs[3]
+if st.session_state.get("role") == "admin":
+    tab_log = tabs[4]
 
 # ================= TAB 1: DASHBOARD GENERAL =================
 with tab_dash:
@@ -3685,3 +3720,24 @@ with tab_db:
 
 
 
+
+
+# ================= TAB 5: REGISTRE D'ACCIONS (ONLY ADMIN) =================
+if st.session_state.get("role") == "admin":
+    with tab_log:
+        st.markdown("<h3 style='color:#f39c12;'>📜 Registre d'Activitats i Accions</h3>", unsafe_allow_html=True)
+        st.write("Aquesta pestanya només és visible per als administradors. Aquí es mostren els canvis fets a la base de dades.")
+        if st.button("🔄 Refrescar Registre"):
+            st.rerun()
+            
+        try:
+            supabase = get_supabase_client("admin")
+            logs_response = supabase.table("registre_accions").select("*").order("data_hora", desc=True).limit(200).execute()
+            if logs_response.data:
+                df_logs = pd.DataFrame(logs_response.data)
+                df_logs['data_hora'] = pd.to_datetime(df_logs['data_hora']).dt.strftime('%d/%m/%Y %H:%M:%S')
+                st.dataframe(df_logs[['data_hora', 'usuari', 'rol', 'tipus_accio', 'taula_afectada', 'detalls']], use_container_width=True, hide_index=True)
+            else:
+                st.info("Encara no hi ha cap registre d'accions.")
+        except Exception as e:
+            st.error(f"Error llegint el registre: {e}")
