@@ -2230,6 +2230,10 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
         b_desp['Saldo'] = b_desp['Saldo'].round(2)
         b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
         
+        # Ocultem els apunts de VISA de l'extracte del BBVA visualment
+        if bank_display_name == 'BBVA':
+            b_desp = b_desp[b_desp['FormaPago'].fillna('') != 'VISA']
+        
         cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Saldo', 'Comentari']
         if bank_display_name != 'Pago VISA':
             cols_to_show.append('FormaPago')
