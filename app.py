@@ -199,12 +199,14 @@ def check_password():
     if platform.system() == "Windows":
         st.session_state["authenticated"] = True
         st.session_state["role"] = "admin"
+        st.session_state["username"] = "Admin Local"
         return True # Bypass login for local execution on Windows PC
         
     # Check if request is from a desktop PC (via query params, user agent or cookie)
     if st.query_params.get("device") == "desktop":
         st.session_state["authenticated"] = True
         st.session_state["role"] = "admin"
+        st.session_state["username"] = "Admin Local"
         return True
 
     try:
@@ -243,34 +245,35 @@ def check_password():
         st.write("")
         st.markdown("<h2 style='text-align: center; color: #f39c12;'>Accés Protegit</h2>", unsafe_allow_html=True)
         with st.form("login_form"):
-            username = st.text_input("El teu nom / Àlies")
             password = st.text_input("Contrasenya d'accés", type="password")
             submit = st.form_submit_button("Entrar")
             if submit:
-                if not username.strip():
-                    st.error("Si us plau, introdueix el teu nom.")
+                hashed = hashlib.sha256(password.encode()).hexdigest()
+                
+                # Retrieve configured hashes from secrets (lists or strings)
+                admin_hashes = st.secrets.get("admin_password_hashes", [])
+                guest_hashes = st.secrets.get("guest_password_hashes", [])
+                
+                # Retrieve names dictionary
+                mapped_names = st.secrets.get("noms_usuaris", {})
+                
+                if isinstance(admin_hashes, str): admin_hashes = [admin_hashes]
+                if isinstance(guest_hashes, str): guest_hashes = [guest_hashes]
+                
+                assigned_name = mapped_names.get(hashed, "Anònim")
+                
+                if hashed in admin_hashes:
+                    st.session_state["authenticated"] = True
+                    st.session_state["role"] = "admin"
+                    st.session_state["username"] = assigned_name
+                    st.rerun()
+                elif hashed in guest_hashes:
+                    st.session_state["authenticated"] = True
+                    st.session_state["role"] = "guest"
+                    st.session_state["username"] = assigned_name
+                    st.rerun()
                 else:
-                    hashed = hashlib.sha256(password.encode()).hexdigest()
-                    
-                    # Retrieve configured hashes from secrets (lists or strings)
-                    admin_hashes = st.secrets.get("admin_password_hashes", [])
-                    guest_hashes = st.secrets.get("guest_password_hashes", [])
-                    
-                    if isinstance(admin_hashes, str): admin_hashes = [admin_hashes]
-                    if isinstance(guest_hashes, str): guest_hashes = [guest_hashes]
-                    
-                    if hashed in admin_hashes:
-                        st.session_state["authenticated"] = True
-                        st.session_state["role"] = "admin"
-                        st.session_state["username"] = username.strip()
-                        st.rerun()
-                    elif hashed in guest_hashes:
-                        st.session_state["authenticated"] = True
-                        st.session_state["role"] = "guest"
-                        st.session_state["username"] = username.strip()
-                        st.rerun()
-                    else:
-                        st.error("Contrasenya incorrecta")
+                    st.error("Contrasenya incorrecta")
     return False
 
 if not check_password():
