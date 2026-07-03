@@ -2663,27 +2663,29 @@ with tab_details:
             if concept_lower in shown_concepts:
                 continue
                 
-            icon = "🚗" if "cotxe" in concept_lower else ("🏠" if "hipoteca" in concept_lower else "💸")
+            # Assignem icones segons el concepte
+            if any(k in concept_lower for k in ["hipoteca", "ajunt", "bbva asseg", "casa"]):
+                icon = "🏠"
+            elif any(k in concept_lower for k in ["cotxe", "lloguer parking"]):
+                icon = "🚗"
+            elif "piscina" in concept_lower:
+                icon = "🏊‍♂️"
+            elif "pj isabel" in concept_lower:
+                icon = "🐷"
+            elif any(k in concept_lower for k in ["lowi", "telefon", "mòbil"]):
+                icon = "📱"
+            elif "accions" in concept_lower:
+                icon = "💸"
+            elif any(k in concept_lower for k in ["morts", "ocaso"]):
+                icon = "✝️"
+            else:
+                icon = "💸"
+                
             amt = float(p_row['Import'])
             st.markdown(f"**{icon} {p_row['Concepte']}**: {amt:.2f} € (<span style='color:red;'>Pendent</span>)", unsafe_allow_html=True)
             has_pending = True
             total_pendent += amt
             shown_concepts.add(concept_lower)
-        
-        # 3. Estalvi DP status (always scheduled, defaults to Pending with last known quota if not found)
-        sub_est = df_est[(df_est['any'] == selected_year) & (df_est['mes'].str.lower() == selected_month_data)]
-        if not sub_est.empty:
-            est_row = sub_est.iloc[0]
-            status_est = "Pagat" if str(est_row['pagat']).lower() == 'pagat' else "Pendent"
-            quota_est = est_row['quota']
-        else:
-            status_est = "Pendent"
-            quota_est = df_est['quota'].dropna().iloc[-1] if not df_est.empty else 231.53
-            
-        if status_est == "Pendent" and "estalvi dp" not in shown_concepts:
-            st.markdown(f"**🐷 Estalvi DP**: {quota_est:.2f} € (<span style='color:red;'>{status_est}</span>)", unsafe_allow_html=True)
-            has_pending = True
-            total_pendent += float(quota_est)
             
         if not has_pending:
             st.info("No hi ha cap pagament pendent aquest mes.")
