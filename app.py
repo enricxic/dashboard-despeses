@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import json
+from supabase import create_client, Client
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as graph_objects
@@ -337,7 +339,7 @@ def parse_excel_date(val):
             continue
     return pd.to_datetime(str(val).strip(), errors='coerce')
 
-from sqlalchemy import create_engine
+
 
 class DBTracker:
     def __init__(self):
@@ -350,9 +352,25 @@ def get_db_tracker():
     return DBTracker()
 
 @st.cache_resource
-def get_engine():
-    conn_str = st.secrets["connection_string"]
-    return create_engine(conn_str, pool_size=3, max_overflow=5, pool_pre_ping=True)
+def get_supabase_client(role: str) -> Client:
+    url = st.secrets["SUPABASE_URL"]
+    if role == "admin":
+        key = st.secrets["SUPABASE_KEY_SECRET"]
+    else:
+        key = st.secrets["SUPABASE_KEY_PUBLISHABLE"]
+    return create_client(url, key)
+
+def fetch_all_supabase(client, table_name):
+    data = []
+    count = 1000
+    start = 0
+    while True:
+        response = client.table(table_name).select("*").range(start, start + count - 1).execute()
+        data.extend(response.data)
+        if len(response.data) < count:
+            break
+        start += count
+    return pd.DataFrame(data)
 
 def get_csv_mtimes():
     # With Supabase, we don't need local file modified times.
@@ -378,44 +396,44 @@ def fix_mojibake_df(df):
 
 @st.cache_data(ttl=300)
 def load_dashboard_data(mtimes=None):
-    engine = get_engine()
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
     
     # Load tables from PostgreSQL
-    df_desp = fix_mojibake_df(pd.read_sql_table('despeses', engine))
+    df_desp = fix_mojibake_df(fetch_all_supabase(supabase, 'despeses'))
     df_desp = df_desp.dropna(subset=['ID_mov'])
     df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
     df_desp['Import càrrec'] = clean_numeric(df_desp['Import càrrec'])
     df_desp['parsed_date'] = df_desp['Data'].apply(parse_excel_date)
     df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes'].astype(str).str.lower().map(MONTHS_MAP).fillna(12).astype(int)
     
-    df_ing = fix_mojibake_df(pd.read_sql_table('ingressos', engine))
+    df_ing = fix_mojibake_df(fetch_all_supabase(supabase, 'ingressos'))
     df_ing = df_ing.dropna(subset=['idIngres'])
     df_ing['Import'] = clean_numeric(df_ing['Import'])
     df_ing['parsed_date'] = df_ing['Data'].apply(parse_excel_date)
     
-    df_super = fix_mojibake_df(pd.read_sql_table('compresSuper', engine))
+    df_super = fix_mojibake_df(fetch_all_supabase(supabase, 'compresSuper'))
     df_super = df_super.dropna(subset=['IdCompra'])
     df_super['totLinea'] = clean_numeric(df_super['totLinea'])
     df_super['parsed_date'] = df_super['data'].apply(parse_excel_date)
     
-    df_gas = fix_mojibake_df(pd.read_sql_table('gasolina', engine))
+    df_gas = fix_mojibake_df(fetch_all_supabase(supabase, 'gasolina'))
     df_gas = df_gas.dropna(subset=['idGasolina'])
     df_gas['import'] = clean_numeric(df_gas['import'])
     df_gas['litres'] = clean_numeric(df_gas['litres'])
     df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
     
-    df_km = fix_mojibake_df(pd.read_sql_table('kmCotxe', engine))
+    df_km = fix_mojibake_df(fetch_all_supabase(supabase, 'kmCotxe'))
     df_km = df_km.dropna(subset=['idRuta'])
     df_km['contador'] = clean_numeric(df_km['contador'])
     df_km['km'] = clean_numeric(df_km['km'])
     df_km['parsed_date'] = df_km['data'].apply(parse_excel_date)
     
-    df_hip = pd.read_sql_table('hipoteca', engine).dropna(how='all')
+    df_hip = fetch_all_supabase(supabase, 'hipoteca').dropna(how='all')
     if 'Quota fixa' in df_hip.columns:
         df_hip = df_hip.dropna(subset=['Quota fixa'])
     df_hip['Quota fixa'] = clean_numeric(df_hip['Quota fixa'])
     
-    df_est = pd.read_sql_table('estalviDP', engine)
+    df_est = fetch_all_supabase(supabase, 'estalviDP')
     if 'Unnamed: 0' in df_est.columns:
         df_est = df_est.rename(columns={
             'Unnamed: 0': 'mes', 'Unnamed: 1': 'any', 'Unnamed: 2': 'quota', 'Unnamed: 5': 'pagat'
@@ -424,10 +442,10 @@ def load_dashboard_data(mtimes=None):
     df_est['any'] = pd.to_numeric(df_est['any'], errors='coerce')
     df_est['quota'] = clean_numeric(df_est['quota'])
     
-    df_limits = pd.read_sql_table('limitsDespeses', engine).dropna(subset=['data_inici'])
+    df_limits = fetch_all_supabase(supabase, 'limitsDespeses').dropna(subset=['data_inici'])
     df_limits['parsed_date'] = df_limits['data_inici'].apply(parse_excel_date)
     
-    df_pag = pd.read_sql_table('pagaments', engine)
+    df_pag = fetch_all_supabase(supabase, 'pagaments')
     df_pag = df_pag.dropna(subset=['idPago'])
     df_pag['Import'] = clean_numeric(df_pag['Import'])
     df_pag['parsed_date'] = df_pag['Data'].apply(parse_excel_date)
@@ -485,10 +503,17 @@ def get_config_articles(family):
         return cat_config["articles_compres"][family]
     return sorted(list(df_super[df_super['familia'] == family]['article'].dropna().unique())) if 'article' in df_super.columns else []
 def save_to_csv(df, filename):
+    import numpy as np
     table_name = filename.replace('.csv', '')
-    engine = get_engine()
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
-        df.to_sql(table_name, engine, if_exists='replace', index=False)
+        df_clean = df.replace({np.nan: None})
+        records = json.loads(df_clean.to_json(orient='records', date_format='iso'))
+        chunk_size = 500
+        for i in range(0, len(records), chunk_size):
+            chunk = records[i:i+chunk_size]
+            supabase.table(table_name).upsert(chunk).execute()
+            
         st.cache_data.clear()
         get_db_tracker().update()
     except Exception as e:
@@ -496,54 +521,29 @@ def save_to_csv(df, filename):
         st.stop()
 
 def insert_db_row(table_name, new_row_dict):
-    engine = get_engine()
-    from sqlalchemy import text
-    columns = ", ".join([f'"{col}"' for col in new_row_dict.keys()])
-    placeholders = ", ".join([f":p_{i}" for i in range(len(new_row_dict))])
-    params = {f"p_{i}": val for i, val in enumerate(new_row_dict.values())}
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
-        with engine.begin() as conn:
-            conn.execute(text(f'INSERT INTO "{table_name}" ({columns}) VALUES ({placeholders})'), params)
+        supabase.table(table_name).insert(new_row_dict).execute()
+        
         state_key = {
             "despeses": "df_desp",
             "pagaments": "df_pag",
             "ingressos": "df_ing",
             "compresSuper": "df_super",
             "gasolina": "df_gas",
-            "kmCotxe": "df_km",
-            "hipoteca": "df_hip",
-            "estalviDP": "df_est"
-        }.get(table_name)
-        if state_key and state_key in st.session_state:
-            df = st.session_state[state_key]
-            
-            # Copy and add calculated fields
-            row_to_append = new_row_dict.copy()
-            if table_name == 'despeses':
-                row_to_append['parsed_date'] = pd.to_datetime(row_to_append['Data'], format='%d/%m/%Y', errors='coerce')
-                row_to_append['date_score'] = int(row_to_append['any']) * 12 + MONTHS_MAP.get(str(row_to_append['mes']).lower(), 12)
-            elif table_name in ['ingressos', 'pagaments']:
-                row_to_append['parsed_date'] = pd.to_datetime(row_to_append['Data'], format='%d/%m/%Y', errors='coerce')
-            elif table_name in ['compresSuper', 'gasolina']:
-                row_to_append['parsed_date'] = pd.to_datetime(row_to_append['data'], format='%d/%m/%Y', errors='coerce')
-                
-            new_df = pd.DataFrame([row_to_append])
-            st.session_state[state_key] = pd.concat([df, new_df], ignore_index=True)
-            
-        # Update db_tracker and keep local last_synced_time updated to avoid slow DB reload
-        tracker_obj = get_db_tracker()
-        tracker_obj.update()
-        st.session_state["last_synced_time"] = tracker_obj.last_update
-        load_dashboard_data.clear()
-        return True
+            "kmCotxe": "df_km"
+        }
+        if table_name in state_key:
+            st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
+        
+        get_db_tracker().update()
     except Exception as e:
-        st.error(f"❌ **Error a la base de dades (INSERT)**: {str(e)}")
-        return False
+        st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
 
 def append_to_db(df_new, table_name, state_key):
-    engine = get_engine()
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
-        df_new.to_sql(table_name, engine, if_exists='append', index=False, method='multi')
+        supabase.table(table_name).insert(json.loads(df_new.to_json(orient='records', date_format='iso'))).execute()
         if state_key and state_key in st.session_state:
             df = st.session_state[state_key]
             df_new_local = df_new.copy()
@@ -587,87 +587,47 @@ def save_categories_conceptes(config):
 
 
 def delete_db_row(table_name, id_col, id_val):
-    engine = get_engine()
-    from sqlalchemy import text
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
-        with engine.begin() as conn:
-            conn.execute(text(f'DELETE FROM "{table_name}" WHERE "{id_col}" = :id_val'), {"id_val": id_val})
+        supabase.table(table_name).delete().eq(id_col, id_val).execute()
         
-        # Update in-memory session state for instantaneous response
         state_key = {
             "despeses": "df_desp",
             "pagaments": "df_pag",
             "ingressos": "df_ing",
             "compresSuper": "df_super",
             "gasolina": "df_gas",
-            "kmCotxe": "df_km",
-            "hipoteca": "df_hip",
-            "estalviDP": "df_est"
-        }.get(table_name)
-        if state_key and state_key in st.session_state:
-            df = st.session_state[state_key]
-            try:
-                st.session_state[state_key] = df[df[id_col].astype(float) != float(id_val)]
-            except (ValueError, TypeError):
-                st.session_state[state_key] = df[df[id_col].astype(str) != str(id_val)]
+            "kmCotxe": "df_km"
+        }
+        if table_name in state_key:
+            st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
             
         get_db_tracker().update()
-        load_dashboard_data.clear()
-        return True
     except Exception as e:
-        st.error(f"❌ **Error a la base de dades (DELETE)**: {str(e)}")
-        return False
+        st.error(f"❌ Error a l'esborrar de Supabase ({table_name}): {str(e)}")
 
 def update_db_row(table_name, id_col, id_val, new_data):
-    engine = get_engine()
-    from sqlalchemy import text
-    
-    # We construct parameter names as p0, p1, p2... to avoid any issues with spaces or accentuation in column names
-    set_clauses = []
-    params = {"id_val": id_val}
-    
-    for idx, (col, val) in enumerate(new_data.items()):
-        if col == id_col:
-            continue
-        param_name = f"p{idx}"
-        set_clauses.append(f'"{col}" = :{param_name}')
-        params[param_name] = val
-        
-    set_clause = ", ".join(set_clauses)
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
-        with engine.begin() as conn:
-            conn.execute(text(f'UPDATE "{table_name}" SET {set_clause} WHERE "{id_col}" = :id_val'), params)
+        update_payload = new_data.copy()
+        if id_col in update_payload:
+            del update_payload[id_col]
+        supabase.table(table_name).update(update_payload).eq(id_col, id_val).execute()
         
-        # Update in-memory session state for instantaneous response
         state_key = {
             "despeses": "df_desp",
             "pagaments": "df_pag",
             "ingressos": "df_ing",
             "compresSuper": "df_super",
             "gasolina": "df_gas",
-            "kmCotxe": "df_km",
-            "hipoteca": "df_hip",
-            "estalviDP": "df_est"
-        }.get(table_name)
-        if state_key and state_key in st.session_state:
-            df = st.session_state[state_key]
-            try:
-                idx = df[df[id_col].astype(float) == float(id_val)].index
-            except (ValueError, TypeError):
-                idx = df[df[id_col].astype(str) == str(id_val)].index
-            if not idx.empty:
-                for k, v in new_data.items():
-                    if k in df.columns:
-                        df.at[idx[0], k] = v
-                st.session_state[state_key] = df
-                
+            "kmCotxe": "df_km"
+        }
+        if table_name in state_key:
+            st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
+            
         get_db_tracker().update()
-        load_dashboard_data.clear()
-        return True
     except Exception as e:
-        st.error(f"❌ **Error a la base de dades (UPDATE)**: {str(e)}")
-        return False
-
+        st.error(f"❌ Error a l'actualitzar Supabase ({table_name}): {str(e)}")
 
 tracker = get_db_tracker()
 if "last_synced_time" not in st.session_state or not isinstance(st.session_state["last_synced_time"], datetime) or st.session_state["last_synced_time"] < tracker.last_update:
@@ -809,9 +769,9 @@ def map_product_to_category(product_name):
  
 def load_product_mappings():
     try:
-        engine = get_engine()
-        df_nom = pd.read_sql_table('tb_noms_producte', engine)
-        df_prod = pd.read_sql_table('tb_productes', engine)
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        df_nom = fetch_all_supabase(supabase, 'tb_noms_producte')
+        df_prod = fetch_all_supabase(supabase, 'tb_productes')
         df_merged = pd.merge(df_nom, df_prod, on='idProducte', how='inner')
         return df_merged
     except Exception as e:

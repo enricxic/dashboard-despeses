@@ -6,3 +6,4 @@ pytesseract
 Pillow
 sqlalchemy
 psycopg2-binary
+supabase>=2.0.0
