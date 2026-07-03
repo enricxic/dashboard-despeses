@@ -248,13 +248,21 @@ def check_password():
             if submit:
                 hashed = hashlib.sha256(password.encode()).hexdigest()
                 
+                # Retrieve configured hashes from secrets (lists or strings)
+                admin_hashes = st.secrets.get("admin_password_hashes", [])
+                guest_hashes = st.secrets.get("guest_password_hashes", [])
+                
+                # Convert to lists if they are strings
+                if isinstance(admin_hashes, str): admin_hashes = [admin_hashes]
+                if isinstance(guest_hashes, str): guest_hashes = [guest_hashes]
+                
                 # Check for admin
-                if password == "admin" or (st.secrets.get("admin_password_hash") and hashed == st.secrets.get("admin_password_hash")):
+                if hashed in admin_hashes:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "admin"
                     st.rerun()
-                # Check for guest (DEFAULT_HASH is the old general password)
-                elif hashed == DEFAULT_HASH or password == "convidat" or (st.secrets.get("guest_password_hash") and hashed == st.secrets.get("guest_password_hash")):
+                # Check for guest (DEFAULT_HASH is the old general password as fallback)
+                elif hashed == DEFAULT_HASH or hashed in guest_hashes:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "guest"
                     st.rerun()
@@ -264,6 +272,22 @@ def check_password():
 
 if not check_password():
     st.stop()
+
+# --- Role Indicator ---
+role_display = "Administrador 👑" if st.session_state.get("role") == "admin" else "Convidat 👤"
+st.markdown(
+    f"""
+    <div style='position: fixed; top: 3.5rem; right: 2rem; z-index: 9999; 
+                background-color: rgba(255, 255, 255, 0.1); 
+                padding: 5px 10px; border-radius: 5px; 
+                border: 1px solid rgba(128, 128, 128, 0.2);
+                font-size: 0.8rem; font-weight: bold;'>
+        Rol: {role_display}
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
 
 # ----------------- DATA UTILITIES -----------------
 CSV_DIR = "csv"
