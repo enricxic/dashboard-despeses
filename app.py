@@ -3453,7 +3453,7 @@ def show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, 
                     st.rerun()
             else:
                 tbl_filename = {
-                    "Previsió Hipoteca": "hipoteca.csv",
+                    "Pagament Hipoteca": "hipoteca.csv",
                     "Estalvis DP": "estalviDP.csv"
                 }.get(db_select)
                 if tbl_filename:
@@ -3486,7 +3486,7 @@ def show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, 
                     st.rerun()
             else:
                 tbl_filename = {
-                    "Previsió Hipoteca": "hipoteca.csv",
+                    "Pagament Hipoteca": "hipoteca.csv",
                     "Estalvis DP": "estalviDP.csv"
                 }.get(db_select)
                 if tbl_filename:
@@ -3506,7 +3506,7 @@ with tab_db:
     col_sel, col_search, col_size = st.columns([3, 5, 2], vertical_alignment="bottom")
     with col_sel:
         db_select = st.selectbox("Taula", [
-            "Despeses (General)", "Pagaments (General)", "Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Previsió Hipoteca", "Estalvis DP"
+            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP"
         ], key="db_select_box")
     with col_search:
         search_query = st.text_input("🔍 Cerca global", value="", key=f"search_{db_select}")
@@ -3525,9 +3525,9 @@ with tab_db:
     # 1. Select the base dataframe
     if db_select == "Despeses (General)":
         df_to_show = df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score', 'mes_lower'], errors='ignore')
-    elif db_select == "Pagaments (General)":
+    elif db_select == "Previsió de Pagaments":
         df_to_show = df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
-    elif db_select == "Ingressos":
+    elif db_select == "Previsió d'Ingressos":
         df_to_show = df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
     elif db_select == "Compres Supermercat":
         df_to_show = df_super.drop(columns=['parsed_date'], errors='ignore')
@@ -3535,7 +3535,7 @@ with tab_db:
         df_to_show = df_gas.drop(columns=['parsed_date'], errors='ignore')
     elif db_select == "Kilòmetres Cotxe":
         df_to_show = df_km.drop(columns=['parsed_date'], errors='ignore')
-    elif db_select == "Previsió Hipoteca":
+    elif db_select == "Pagament Hipoteca":
         df_to_show = df_hip
     elif db_select == "Estalvis DP":
         df_to_show = df_est
@@ -3673,12 +3673,12 @@ with tab_db:
         
         db_table_info = {
             "Despeses (General)": ("despeses", "ID_mov"),
-            "Pagaments (General)": ("pagaments", "idPago"),
-            "Ingressos": ("ingressos", "idIngres"),
+            "Previsió de Pagaments": ("pagaments", "idPago"),
+            "Previsió d'Ingressos": ("ingressos", "idIngres"),
             "Compres Supermercat": ("compresSuper", "IdCompra"),
             "Gasolina": ("gasolina", "idGasolina"),
             "Kilòmetres Cotxe": ("kmCotxe", "idRuta"),
-            "Previsió Hipoteca": ("hipoteca", None),
+            "Pagament Hipoteca": ("hipoteca", None),
             "Estalvis DP": ("estalviDP", None)
         }.get(db_select)
         
