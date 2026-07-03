@@ -3526,12 +3526,12 @@ with tab_db:
     if db_select == "Despeses (General)":
         df_to_show = df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score', 'mes_lower'], errors='ignore')
     elif db_select == "Previsió de Pagaments":
-        df_to_show = df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
+        df_to_show = df_pag.sort_values(by='parsed_date', ascending=False).drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
         mask_pendent = df_to_show['pagat'].astype(str).str.lower() != 'pagat'
         mask_mes_actual = (df_to_show['any'] == selected_year) & (df_to_show['mes'].astype(str).str.lower() == selected_month_data.lower())
         df_to_show = df_to_show[mask_pendent | mask_mes_actual]
     elif db_select == "Previsió d'Ingressos":
-        df_to_show = df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
+        df_to_show = df_ing.sort_values(by='parsed_date', ascending=False).drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
         mask_pendent = df_to_show['cobrat'].astype(str).str.lower() != 'cobrat'
         mask_mes_actual = (df_to_show['any'] == selected_year) & (df_to_show['mes'].astype(str).str.lower() == selected_month_data.lower())
         df_to_show = df_to_show[mask_pendent | mask_mes_actual]
