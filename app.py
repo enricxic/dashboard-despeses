@@ -2206,15 +2206,16 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             b_desp = df_desp[(df_desp['FormaPago'] == 'VISA') & (df_desp['any'] == selected_year)].copy()
         else:
             b_desp = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['any'] == selected_year)].copy()
-            if bank_display_name == 'BBVA':
-                target_score = selected_year * 12 + MONTHS_MAP.get(month_name, 12)
-                b_desp = b_desp[
-                    ~((b_desp['date_score'] == target_score) & (b_desp['FormaPago'].fillna('') == 'VISA'))
-                ]
+            # Exclude VISA payments entirely since the bank settlement covers it
+            b_desp = b_desp[b_desp['FormaPago'].fillna('') != 'VISA']
                 
         # Calculate starting balance by including EVERYTHING up to Dec 31 of previous year
         prev_target = (selected_year - 1) * 12 + 12
         sub_desp_prev = df_desp[(df_desp['Banc'] == csv_name) & (df_desp['date_score'] <= prev_target)]
+        
+        if bank_display_name != 'Pago VISA':
+            sub_desp_prev = sub_desp_prev[sub_desp_prev['FormaPago'].fillna('') != 'VISA']
+            
         start_bal = INITIAL_BALANCES.get(bank_display_name, 0.0) + sub_desp_prev['import ingrés'].fillna(0).sum() - sub_desp_prev['Import càrrec'].fillna(0).sum()
         
         b_desp = b_desp.sort_values(by='parsed_date', ascending=True)
@@ -2229,10 +2230,6 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             
         b_desp['Saldo'] = b_desp['Saldo'].round(2)
         b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
-        
-        # Ocultem els apunts de VISA de l'extracte del BBVA visualment
-        if bank_display_name == 'BBVA':
-            b_desp = b_desp[b_desp['FormaPago'].fillna('') != 'VISA']
         
         cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Saldo', 'Comentari']
         if bank_display_name != 'Pago VISA':
@@ -2257,10 +2254,10 @@ def get_balances_up_to(year, month_name):
     
     balances = {}
     for csv_name, disp_name in BANK_MAPPING.items():
-        # Sum transactions for this bank (Exclude VISA payments ONLY for the selected month since historical receipts are not logged)
+        # Exclude ALL VISA payments since the total bank settlement is logged manually (e.g. op_banc)
         b_desp = sub_desp[
             (sub_desp['Banc'] == csv_name) & 
-            ~((sub_desp['date_score'] == target_score) & (sub_desp['FormaPago'].fillna('') == 'VISA'))
+            (sub_desp['FormaPago'].fillna('') != 'VISA')
         ]
         inflows = b_desp['import ingrés'].sum()
         outflows = b_desp['Import càrrec'].sum()
