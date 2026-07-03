@@ -2646,15 +2646,16 @@ with tab_details:
         else:
             st.write("🏠 **Hipoteca**: No programada")
             
-        # 2. Credit Cotxe status
-        sub_cotxe_paid = df_desp[
-            (df_desp['any'] == selected_year) & 
-            (df_desp['mes'].str.lower() == selected_month_data) & 
-            (df_desp['Idconcepte'] == 'Crèdit Cotxe')
+        # 2. Pagaments de la taula Previsió de Pagaments
+        sub_pag = df_pag[
+            (df_pag['any'] == selected_year) & 
+            (df_pag['mes'].astype(str).str.lower().str.strip() == selected_month_data.lower().strip()) & 
+            (df_pag['pagat'].astype(str).str.lower().str.strip() != 'pagat')
         ]
-        status_cotxe = "Pagat" if not sub_cotxe_paid.empty else "Pendent"
-        if status_cotxe == "Pendent":
-            st.markdown(f"**🚗 Crèdit Cotxe**: 337,14 € (<span style='color:red;'>{status_cotxe}</span>)", unsafe_allow_html=True)
+        
+        for _, p_row in sub_pag.iterrows():
+            icon = "🚗" if "cotxe" in str(p_row['Concepte']).lower() else "💸"
+            st.markdown(f"**{icon} {p_row['Concepte']}**: {float(p_row['Import']):.2f} € (<span style='color:red;'>Pendent</span>)", unsafe_allow_html=True)
             has_pending = True
         
         # 3. Estalvi DP status (always scheduled, defaults to Pending with last known quota if not found)
