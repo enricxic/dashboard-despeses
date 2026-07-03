@@ -568,6 +568,7 @@ def save_to_csv(df, filename):
             
         st.cache_data.clear()
         get_db_tracker().update()
+        return True
     except Exception as e:
         st.error(f"❌ **Error al desar la taula `{table_name}` a Supabase**: {str(e)}")
         st.stop()
@@ -606,6 +607,7 @@ def insert_db_row(table_name, new_row_dict):
             st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
         
         get_db_tracker().update()
+        return True
     except Exception as e:
         st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
 
@@ -674,6 +676,7 @@ def delete_db_row(table_name, id_col, id_val):
             st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
             
         get_db_tracker().update()
+        return True
     except Exception as e:
         st.error(f"❌ Error a l'esborrar de Supabase ({table_name}): {str(e)}")
 
@@ -698,6 +701,7 @@ def update_db_row(table_name, id_col, id_val, new_data):
             st.session_state[state_key[table_name]] = fix_mojibake_df(fetch_all_supabase(supabase, table_name))
             
         get_db_tracker().update()
+        return True
     except Exception as e:
         st.error(f"❌ Error a l'actualitzar Supabase ({table_name}): {str(e)}")
 
