@@ -2634,6 +2634,8 @@ with tab_details:
         st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments Pendents</h4>", unsafe_allow_html=True)
         
         has_pending = False
+        total_pendent = 0.0
+        shown_concepts = set()
         
         # 1. Hipoteca status
         sub_hip = df_hip[(df_hip['any'] == selected_year) & (df_hip['mes'].str.lower() == selected_month_data)]
@@ -2641,8 +2643,11 @@ with tab_details:
             hip_row = sub_hip.iloc[0]
             status_hip = "Pagat" if str(hip_row['pagat']).lower() == 'pagat' else "Pendent"
             if status_hip == "Pendent":
-                st.markdown(f"**🏠 Hipoteca**: {hip_row['Quota fixa']:.2f} € (<span style='color:red;'>{status_hip}</span>)", unsafe_allow_html=True)
+                amt = hip_row['Quota fixa']
+                st.markdown(f"**🏠 Hipoteca**: {amt:.2f} € (<span style='color:red;'>{status_hip}</span>)", unsafe_allow_html=True)
                 has_pending = True
+                total_pendent += float(amt)
+                shown_concepts.add('hipoteca')
         else:
             st.write("🏠 **Hipoteca**: No programada")
             
@@ -2654,9 +2659,16 @@ with tab_details:
         ]
         
         for _, p_row in sub_pag.iterrows():
-            icon = "🚗" if "cotxe" in str(p_row['Concepte']).lower() else "💸"
-            st.markdown(f"**{icon} {p_row['Concepte']}**: {float(p_row['Import']):.2f} € (<span style='color:red;'>Pendent</span>)", unsafe_allow_html=True)
+            concept_lower = str(p_row['Concepte']).lower().strip()
+            if concept_lower in shown_concepts:
+                continue
+                
+            icon = "🚗" if "cotxe" in concept_lower else ("🏠" if "hipoteca" in concept_lower else "💸")
+            amt = float(p_row['Import'])
+            st.markdown(f"**{icon} {p_row['Concepte']}**: {amt:.2f} € (<span style='color:red;'>Pendent</span>)", unsafe_allow_html=True)
             has_pending = True
+            total_pendent += amt
+            shown_concepts.add(concept_lower)
         
         # 3. Estalvi DP status (always scheduled, defaults to Pending with last known quota if not found)
         sub_est = df_est[(df_est['any'] == selected_year) & (df_est['mes'].str.lower() == selected_month_data)]
@@ -2668,12 +2680,16 @@ with tab_details:
             status_est = "Pendent"
             quota_est = df_est['quota'].dropna().iloc[-1] if not df_est.empty else 231.53
             
-        if status_est == "Pendent":
+        if status_est == "Pendent" and "estalvi dp" not in shown_concepts:
             st.markdown(f"**🐷 Estalvi DP**: {quota_est:.2f} € (<span style='color:red;'>{status_est}</span>)", unsafe_allow_html=True)
             has_pending = True
+            total_pendent += float(quota_est)
             
         if not has_pending:
             st.info("No hi ha cap pagament pendent aquest mes.")
+        else:
+            st.markdown("---")
+            st.markdown(f"<div style='text-align:right;'><strong style='font-size:1.15em;'>Total: <span style='color:#ef4444;'>{total_pendent:,.2f} €</span></strong></div>", unsafe_allow_html=True)
             
     with col_mid:
         st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
