@@ -2285,8 +2285,8 @@ def get_balances_up_to(year, month_name):
         
     # Account for VISA separately: VISA is a liability card, its balance is cumulative.
     # The debt increases with VISA expenses, and decreases when the bank settlement is recorded (Idconcepte == 'Pago VISA')
-    mask_visa_exp = (df_desp['FormaPago'] == 'VISA')
-    mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
+    mask_visa_exp = (sub_desp['FormaPago'] == 'VISA')
+    mask_visa_pay = (sub_desp['Idcategoria'] == 'op_banc') & (sub_desp['Idconcepte'] == 'Pago VISA')
     
     visa_expenses_charges = sub_desp[mask_visa_exp]['Import càrrec'].fillna(0).sum()
     visa_expenses_refunds = sub_desp[mask_visa_exp]['import ingrés'].fillna(0).sum()
