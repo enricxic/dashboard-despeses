@@ -2180,10 +2180,12 @@ if 2026 not in years_list:
     years_list.insert(0, 2026)
 
 # Access or default the values
-selected_year = st.session_state.get("sel_year", 2026)
-# Default month is always current month (June) or last month with data
-selected_month_cat = "juny"
-selected_month_data = "junio"
+selected_year = st.session_state.get("sel_year", datetime.today().year)
+
+# Default month is always current month
+current_month_index = datetime.today().month - 1
+selected_month_cat = CATALAN_MONTHS[current_month_index]
+selected_month_data = month_translations[selected_month_cat]
 payment_filter = "Tots"
 
 # ----------------- ACCOUNT BALANCES CALCULATION -----------------
@@ -3033,7 +3035,7 @@ with tab_intro:
                     input_import = import_carg
                     csv_filename = 'pagaments.csv'
                     if not target_df.empty:
-                        mask = (target_df['any'] == any_val) & (target_df['mes'].str.lower() == mes_val.lower()) & (target_df['Concepte'].str.lower() == actual_concept.lower()) & (target_df[target_status_col].str.lower() != 'pagat')
+                        mask = (target_df['any'].astype(int) == int(any_val)) & (target_df['mes'].astype(str).str.lower().str.strip() == str(mes_val).lower().strip()) & (target_df['Concepte'].astype(str).str.lower().str.strip() == str(actual_concept).lower().strip()) & (target_df[target_status_col].astype(str).str.lower().str.strip() != 'pagat')
                 elif import_ing != 0.0:
                     target_df = df_ing
                     table_name = 'ingressos'
@@ -3041,7 +3043,7 @@ with tab_intro:
                     input_import = import_ing
                     csv_filename = 'ingressos.csv'
                     if not target_df.empty:
-                        mask = (target_df['any'] == any_val) & (target_df['mes'].str.lower() == mes_val.lower()) & (target_df['Concepte'].str.lower() == actual_concept.lower()) & (target_df[target_status_col].str.lower() != 'cobrat')
+                        mask = (target_df['any'].astype(int) == int(any_val)) & (target_df['mes'].astype(str).str.lower().str.strip() == str(mes_val).lower().strip()) & (target_df['Concepte'].astype(str).str.lower().str.strip() == str(actual_concept).lower().strip()) & (target_df[target_status_col].astype(str).str.lower().str.strip() != 'cobrat')
 
                 if mask is not None and mask.any():
                     idx = target_df[mask].index[0]
@@ -3518,7 +3520,10 @@ with tab_db:
     with col_title:
         st.markdown(f"<h3 style='margin:0; color:#f39c12; text-transform:uppercase;'>🗃️ {db_select}</h3>", unsafe_allow_html=True)
     with col_check:
-        sort_desc = st.checkbox("Veure primer els més recents", value=True, key=f"sort_{db_select}")
+        if db_select in ["Previsió de Pagaments", "Previsió d'Ingressos"]:
+            sort_desc = False
+        else:
+            sort_desc = st.checkbox("Veure primer els més recents", value=True, key=f"sort_{db_select}")
         
     st.write("")
     
