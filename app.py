@@ -3525,12 +3525,24 @@ def show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, 
 
 # ================= TAB 4: BASES DE DADES (Supabase) =================
 with tab_db:
-    st.markdown("### 🗃️ Navegador de Taules (Supabase)")
-    
-    db_select = st.selectbox("Escull la taula que vols consultar", [
-        "Despeses (General)", "Pagaments (General)", "Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Previsió Hipoteca", "Estalvis DP"
-    ], key="db_select_box")
-    
+    st.write("")
+    col_sel, col_search, col_size = st.columns([3, 5, 2], vertical_alignment="bottom")
+    with col_sel:
+        db_select = st.selectbox("Taula", [
+            "Despeses (General)", "Pagaments (General)", "Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Previsió Hipoteca", "Estalvis DP"
+        ], key="db_select_box")
+    with col_search:
+        search_query = st.text_input("🔍 Cerca global", value="", key=f"search_{db_select}")
+    with col_size:
+        page_size = st.selectbox("Registres/pàgina", [20, 50, 100, 200, 500, 1000], index=2, key=f"size_{db_select}")
+        
+    st.write("")
+    col_title, col_check = st.columns([7, 3], vertical_alignment="bottom")
+    with col_title:
+        st.markdown(f"<h3 style='margin:0; color:#f39c12; text-transform:uppercase;'>🗃️ {db_select}</h3>", unsafe_allow_html=True)
+    with col_check:
+        sort_desc = st.checkbox("Veure primer els més recents", value=True, key=f"sort_{db_select}")
+        
     st.write("")
     
     # 1. Select the base dataframe
@@ -3553,12 +3565,7 @@ with tab_db:
         
     df_filtered = df_to_show.copy()
     
-    # 2. Add Filters Section
-    col_f1, col_f2 = st.columns([7, 3])
-    with col_f1:
-        search_query = st.text_input("🔍 Cerca global (qualsevol columna)", value="", key=f"search_{db_select}")
-    with col_f2:
-        page_size = st.selectbox("Registres per pàgina", [20, 50, 100, 200, 500, 1000], index=2, key=f"size_{db_select}")
+    # 2. Column filters
         
     # Column filters
     with st.expander("⚙️ Filtres de columna", expanded=False):
@@ -3577,8 +3584,6 @@ with tab_db:
                     if selected_val != "Tots":
                         df_filtered = df_filtered[df_filtered[col_name].astype(str) == selected_val]
                         
-    # Sort order
-    sort_desc = st.checkbox("Veure primer els més recents (Invertir ordre de la taula)", value=True, key=f"sort_{db_select}")
     if sort_desc:
         df_filtered = df_filtered.iloc[::-1]
         
@@ -3671,6 +3676,7 @@ with tab_db:
         selection_event = st.dataframe(
             df_page, 
             use_container_width=True,
+            height=700,
             on_select="rerun",
             selection_mode="single-row",
             column_config=col_configs,
