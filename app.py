@@ -2348,18 +2348,20 @@ if "kms_canvi_oli" not in st.session_state:
 
 # ----------------- TABS SYSTEM -----------------
 tabs_list = [
-        "📊 Dashboard General", "🔍 Detalls del Mes", "✍️ Intro Dades", "🗃️ Bases de Dades (Supabase)", "📈 Anàlisi"
+        "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades"
     ]
 if st.session_state.get("role") == "admin":
-    tabs_list.append("📜 Registre d'Accions")
+    tabs_list.extend(["🗄️ Bases de Dades (Supabase)", "📈 Anàlisi", "🛠️ Registre d'Accions"])
     
 tabs = st.tabs(tabs_list)
 tab_dash = tabs[0]
 tab_details = tabs[1]
 tab_intro = tabs[2]
-tab_db = tabs[3]
+
 if st.session_state.get("role") == "admin":
-    tab_log = tabs[4]
+    tab_db = tabs[3]
+    tab_analisi = tabs[4]
+    tab_log = tabs[5]
 
 # ================= TAB 1: DASHBOARD GENERAL =================
 with tab_dash:
@@ -3977,9 +3979,10 @@ with tab_db:
 
 
 # ================= TAB 5: ANÀLISI =================
-with tab_analisi:
-    st.markdown("<h3 style='color:#f39c12;'>📈 Anàlisi i TR Cartera</h3>", unsafe_allow_html=True)
-    st.info("Pestanya en construcció. Aquí s'inclourà el saldo de TR Cartera i altres gràfics analítics.")
+if st.session_state.get('role') == 'admin':
+    with tab_analisi:
+        st.markdown("<h3 style='color:#f39c12;'>📈 Anàlisi i TR Cartera</h3>", unsafe_allow_html=True)
+        st.info("Pestanya en construcció. Aquí s'inclourà el saldo de TR Cartera i altres gràfics analítics.")
 
 # ================= TAB 6: REGISTRE D'ACCIONS (ONLY ADMIN) =================
 if st.session_state.get("role") == "admin":
