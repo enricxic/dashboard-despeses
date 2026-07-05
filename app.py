@@ -2903,7 +2903,10 @@ with tab_intro:
             banc = st.selectbox("Banc", banks_opt, index=0, key=f"desp_banc_{version}")
         with r1_col2:
             pay_methods_opt = [""] + get_config_payment_methods()
-            forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, index=0, key=f"desp_forma_pago_{version}")
+            fp_index = 0
+            if banc == "TR Cartera" and "Compte" in pay_methods_opt:
+                fp_index = pay_methods_opt.index("Compte")
+            forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, index=fp_index, key=f"desp_forma_pago_{version}")
         with r1_col3:
             data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"desp_data_{version}")
             mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
@@ -2981,7 +2984,7 @@ with tab_intro:
             
         col_btns = st.columns([1.8, 1.8, 8.4])
         with col_btns[0]:
-            submitted = st.button("Desar", use_container_width=True)
+            submitted = st.button("Desar", type="primary", use_container_width=True)
         with col_btns[1]:
             cancelled = st.button("Cancel·lar", key="cancel_desp", use_container_width=True)
         if cancelled:
@@ -3951,4 +3954,21 @@ components.html(
     </script>
     ''',
     height=0, width=0
+)
+
+
+import streamlit.components.v1 as components
+components.html(
+    """
+    <script>
+    const doc = window.parent.document;
+    doc.addEventListener('focusin', function(e) {
+        if (e.target && (e.target.type === 'number' || e.target.type === 'text')) {
+            e.target.select();
+        }
+    });
+    </script>
+    """,
+    height=0,
+    width=0,
 )
