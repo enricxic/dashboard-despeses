@@ -477,6 +477,13 @@ def load_dashboard_data(mtimes=None):
         df_hip = df_hip.dropna(subset=['Quota fixa'])
     df_hip['Quota fixa'] = clean_numeric(df_hip['Quota fixa'])
     
+    df_cartera = fix_mojibake_df(fetch_all_supabase(supabase, 'tr_cartera'))
+    df_cartera['idTRCartera'] = pd.to_numeric(df_cartera.get('idTRCartera', df_cartera.index), errors='coerce')
+    df_cartera = df_cartera.dropna(subset=['idTRCartera']).sort_values(by='idTRCartera', ascending=False).reset_index(drop=True)
+    df_cartera['COMPRA'] = clean_numeric(df_cartera.get('COMPRA', 0))
+    df_cartera['VENDA'] = clean_numeric(df_cartera.get('VENDA', 0))
+    df_cartera['parsed_date'] = df_cartera.get('DATA', pd.Series(dtype=object)).apply(parse_excel_date)
+    
     df_est = fetch_all_supabase(supabase, 'estalviDP')
     df_est = df_est.dropna(subset=['mes', 'any'])
     df_est['any'] = pd.to_numeric(df_est['any'], errors='coerce')
@@ -694,6 +701,8 @@ if "dfs_initialized" not in st.session_state or not st.session_state["dfs_initia
     st.session_state["df_est"] = dfs[6]
     st.session_state["df_limits"] = dfs[7]
     st.session_state["df_pag"] = dfs[8]
+    if len(dfs) > 9:
+        st.session_state["df_cartera"] = dfs[9]
     st.session_state["dfs_initialized"] = True
     st.session_state["last_synced_time"] = tracker.last_update
 
