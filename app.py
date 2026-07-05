@@ -127,10 +127,7 @@ st.markdown("""
         padding: 3px 6px !important;
         line-height: 1.15 !important;
     }
-    /* Hide default Streamlit header and reduce top container padding */
-    [data-testid="stHeader"] {
-        display: none !important;
-    }
+    
     div.block-container {
         padding-top: 0.5rem !important;
         padding-bottom: 0rem !important;
@@ -170,12 +167,6 @@ st.markdown("""
         display: none !important;
     }
     .viewerBadge_container__1QS1h, .viewerBadge_link__29513 {
-        display: none !important;
-    }
-    #MainMenu {
-        display: none !important;
-    }
-    header[data-testid="stHeader"] {
         display: none !important;
     }
     
@@ -671,6 +662,12 @@ def update_db_row(table_name, id_col, id_val, new_data):
         update_payload = new_data.copy()
         if id_col in update_payload:
             del update_payload[id_col]
+            
+        import pandas as pd
+        for k, v in update_payload.items():
+            if pd.isna(v):
+                update_payload[k] = None
+                
         supabase.table(table_name).update(update_payload).eq(id_col, id_val).execute()
         log_action(table_name, 'UPDATE', {'id_col': id_col, 'id_val': id_val, 'changes': update_payload})
         
@@ -679,6 +676,7 @@ def update_db_row(table_name, id_col, id_val, new_data):
         st.session_state["dfs_initialized"] = False
         return True
     except Exception as e:
+        print(f"FAILED PAYLOAD FOR {table_name}:", update_payload)
         st.error(f"❌ Error a l'actualitzar Supabase ({table_name}): {str(e)}")
 
 tracker = get_db_tracker()
@@ -2421,22 +2419,16 @@ with tab_dash:
     for m_cat in CATALAN_MONTHS:
         m_data = month_translations[m_cat]
         
-        # Incomes from ingressos table (only collected/cobrat)
-        sub_ing = year_ing[year_ing['clean_mes'] == m_data]
-        ing_fixes_table = sub_ing[sub_ing['Categoria'] == 'ingres_general']['Import'].sum()
-        ing_extres_table = sub_ing[sub_ing['Categoria'] == 'ingres_extra']['Import'].sum()
-        
-        # Incomes from despeses table (only other inflows, not general/extra which are already in ingressos)
+        # Incomes are calculated EXCLUSIVELY from the despeses (bank) table
         sub_desp = year_desp[year_desp['clean_mes'] == m_data]
         sub_desp_inflows = sub_desp[sub_desp['Idcategoria'] != 'op_banc']
         
-        # Only add inflows that are NOT already categorized as ingres_general or ingres_extra to avoid double counting
-        ing_other_desp = sub_desp_inflows[
-            ~sub_desp_inflows['Idcategoria'].isin(['ingres_general', 'ingres_extra'])
-        ]['import ingrés'].sum()
+        # Fixed incomes = anything categorized as 'ingres_general'
+        ing_fixes = sub_desp_inflows[sub_desp_inflows['Idcategoria'] == 'ingres_general']['import ingrés'].sum()
         
-        ing_fixes = ing_fixes_table
-        ing_extres = ing_extres_table + ing_other_desp
+        # Extra incomes = anything NOT categorized as 'ingres_general'
+        ing_extres = sub_desp_inflows[~sub_desp_inflows['Idcategoria'].isin(['ingres_general'])]['import ingrés'].sum()
+        
         ing_total = ing_fixes + ing_extres
 
         
@@ -2930,9 +2922,16 @@ with tab_intro:
         # Row 2 (4 columns)
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
         with r2_col1:
-            grup_val = st.selectbox("Grup", ["", "Càrrec", "op_banc", "Ingrés"], index=0, key=f"desp_grup_{version}")
+            if banc == "TR Cartera":
+                grup_options = ["op_banc"]
+            else:
+                grup_options = ["", "Càrrec", "op_banc", "Ingrés"]
+            grup_val = st.selectbox("Grup", grup_options, index=0, key=f"desp_grup_{version}")
         with r2_col2:
-            categories_opt = [""] + get_config_categories()
+            if banc == "TR Cartera":
+                categories_opt = ["op_banc"]
+            else:
+                categories_opt = [""] + get_config_categories()
             cat_val = st.selectbox("Categoria", categories_opt, index=0, key=f"desp_cat_{version}")
         with r2_col3:
             concept_options = [""] + get_config_concepts(cat_val) + ["➕ Afegir nou..."] if cat_val else [""]
@@ -3461,6 +3460,10 @@ def show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, 
                     new_values[col_name] = st.number_input(f"{col_name}", value=int(val), step=1)
                 elif isinstance(val, (float, np.floating)):
                     new_values[col_name] = st.number_input(f"{col_name}", value=float(val), step=0.01)
+                elif col_name == 'cobrat' and db_select == "Previsió d'Ingressos":
+                    new_values[col_name] = st.selectbox(f"{col_name}", ["pendent", "cobrat"], index=1 if str(val).lower() == "cobrat" else 0)
+                elif col_name == 'pagat' and db_select == "Previsió de Pagaments":
+                    new_values[col_name] = st.selectbox(f"{col_name}", ["pendent", "pagat"], index=1 if str(val).lower() == "pagat" else 0)
                 elif isinstance(val, bool):
                     new_values[col_name] = st.checkbox(f"{col_name}", value=val)
                 else:
@@ -3564,8 +3567,10 @@ with tab_db:
     with col_title:
         st.markdown(f"<h3 style='margin:0; color:#f39c12; text-transform:uppercase;'>🗃️ {db_select}</h3>", unsafe_allow_html=True)
     with col_check:
+        show_all_prev = False
         if db_select in ["Previsió de Pagaments", "Previsió d'Ingressos"]:
             sort_desc = False
+            show_all_prev = st.checkbox("Veure tots els registres", value=False, key=f"show_all_{db_select}")
         else:
             sort_desc = st.checkbox("Veure primer els més recents", value=True, key=f"sort_{db_select}")
         
@@ -3576,9 +3581,10 @@ with tab_db:
         df_to_show = df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score', 'mes_lower'], errors='ignore')
     elif db_select == "Previsió de Pagaments":
         df_to_show = df_pag.sort_values(by='parsed_date', ascending=False).drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
-        mask_pendent = df_to_show['pagat'].astype(str).str.lower() != 'pagat'
-        mask_mes_actual = (df_to_show['any'] == selected_year) & (df_to_show['mes'].astype(str).str.lower() == selected_month_data.lower())
-        df_to_show = df_to_show[mask_pendent | mask_mes_actual]
+        if not show_all_prev:
+            mask_pendent = df_to_show['pagat'].astype(str).str.lower() != 'pagat'
+            mask_mes_actual = (df_to_show['any'] == selected_year) & (df_to_show['mes'].astype(str).str.lower() == selected_month_data.lower())
+            df_to_show = df_to_show[mask_pendent | mask_mes_actual]
         
         # Reordenar per assegurar que l'estat es veu clarament
         cols = list(df_to_show.columns)
@@ -3589,9 +3595,10 @@ with tab_db:
             
     elif db_select == "Previsió d'Ingressos":
         df_to_show = df_ing.sort_values(by='parsed_date', ascending=False).drop(columns=['parsed_date', 'clean_mes'], errors='ignore')
-        mask_pendent = df_to_show['cobrat'].astype(str).str.lower() != 'cobrat'
-        mask_mes_actual = (df_to_show['any'] == selected_year) & (df_to_show['mes'].astype(str).str.lower() == selected_month_data.lower())
-        df_to_show = df_to_show[mask_pendent | mask_mes_actual]
+        if not show_all_prev:
+            mask_pendent = df_to_show['cobrat'].astype(str).str.lower() != 'cobrat'
+            mask_mes_actual = (df_to_show['any'] == selected_year) & (df_to_show['mes'].astype(str).str.lower() == selected_month_data.lower())
+            df_to_show = df_to_show[mask_pendent | mask_mes_actual]
         
         # Reordenar per assegurar que l'estat es veu clarament
         cols = list(df_to_show.columns)
