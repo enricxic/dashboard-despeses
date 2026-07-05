@@ -2903,10 +2903,9 @@ with tab_intro:
             banc = st.selectbox("Banc", banks_opt, index=0, key=f"desp_banc_{version}")
         with r1_col2:
             pay_methods_opt = [""] + get_config_payment_methods()
-            fp_index = 0
             if banc == "TR Cartera" and "Compte" in pay_methods_opt:
-                fp_index = pay_methods_opt.index("Compte")
-            forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, index=fp_index, key=f"desp_forma_pago_{version}")
+                st.session_state[f"desp_forma_pago_{version}"] = "Compte"
+            forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, key=f"desp_forma_pago_{version}")
         with r1_col3:
             data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"desp_data_{version}")
             mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
@@ -3068,6 +3067,7 @@ with tab_intro:
                         row1['Banc'] = 'TradeRep.'
                         
                         row2 = new_row_desp.copy()
+                        row2['ID_mov'] = row1['ID_mov'] + 1
                         row2['Banc'] = 'TR Cartera'
                         row2['Import càrrec'] = new_row_desp['import ingrés']
                         row2['import ingrés'] = new_row_desp['Import càrrec']
