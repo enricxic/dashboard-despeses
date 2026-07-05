@@ -4019,7 +4019,7 @@ if st.session_state.get('role') == 'admin':
                 
                 with st.spinner("L'assistent està pensant..."):
                     try:
-                        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                        model = genai.GenerativeModel('gemini-pro')
                         
                         # Prepare context
                         context = "Tens les següents taules de dades financeres en format CSV:\n\n"
