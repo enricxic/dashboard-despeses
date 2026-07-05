@@ -3065,12 +3065,12 @@ with tab_intro:
                         
                         row1 = new_row_desp.copy()
                         row1['Banc'] = 'TradeRep.'
+                        row1['Import càrrec'] = new_row_desp['import ingrés']
+                        row1['import ingrés'] = new_row_desp['Import càrrec']
                         
                         row2 = new_row_desp.copy()
                         row2['ID_mov'] = row1['ID_mov'] + 1
                         row2['Banc'] = 'TR Cartera'
-                        row2['Import càrrec'] = new_row_desp['import ingrés']
-                        row2['import ingrés'] = new_row_desp['Import càrrec']
                         
                         insert_db_row('despeses', row1)
                         insert_db_row('despeses', row2)
