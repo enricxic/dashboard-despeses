@@ -2348,7 +2348,7 @@ if "kms_canvi_oli" not in st.session_state:
 
 # ----------------- TABS SYSTEM -----------------
 tabs_list = [
-        "📊 Dashboard General", "🔍 Detalls del Mes", "✍️ Intro Dades", "🗃️ Bases de Dades (Supabase)"
+        "📊 Dashboard General", "🔍 Detalls del Mes", "✍️ Intro Dades", "🗃️ Bases de Dades (Supabase)", "📈 Anàlisi"
     ]
 if st.session_state.get("role") == "admin":
     tabs_list.append("📜 Registre d'Accions")
@@ -2378,6 +2378,9 @@ with tab_dash:
 
     # 3. Re-calculate balances and render bank metrics at the top container
     current_balances = get_balances_up_to(selected_year, selected_month_data)
+    # Remove TR Cartera from Dashboard General balances as requested
+    current_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera'}
+    
     total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
     
     with bank_metrics_container:
@@ -3973,7 +3976,12 @@ with tab_db:
 
 
 
-# ================= TAB 5: REGISTRE D'ACCIONS (ONLY ADMIN) =================
+# ================= TAB 5: ANÀLISI =================
+with tab_analisi:
+    st.markdown("<h3 style='color:#f39c12;'>📈 Anàlisi i TR Cartera</h3>", unsafe_allow_html=True)
+    st.info("Pestanya en construcció. Aquí s'inclourà el saldo de TR Cartera i altres gràfics analítics.")
+
+# ================= TAB 6: REGISTRE D'ACCIONS (ONLY ADMIN) =================
 if st.session_state.get("role") == "admin":
     with tab_log:
         st.markdown("<h3 style='color:#f39c12;'>📜 Registre d'Activitats i Accions</h3>", unsafe_allow_html=True)
