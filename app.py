@@ -2232,7 +2232,7 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             
         start_bal = INITIAL_BALANCES.get(bank_display_name, 0.0) + sub_desp_prev['import ingrés'].fillna(0).sum() - sub_desp_prev['Import càrrec'].fillna(0).sum()
         
-        b_desp = b_desp.sort_values(by='parsed_date', ascending=True)
+        b_desp = b_desp.sort_values(by=['parsed_date', 'ID_mov'], ascending=[True, True])
         inflows = b_desp['import ingrés'].fillna(0)
         outflows = b_desp['Import càrrec'].fillna(0)
         if bank_display_name == 'Pago VISA':
@@ -2243,7 +2243,7 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             b_desp['Saldo'] = start_bal + (inflows - outflows).cumsum()
             
         b_desp['Saldo'] = b_desp['Saldo'].round(2)
-        b_desp = b_desp.sort_values(by='parsed_date', ascending=False)
+        b_desp = b_desp.sort_values(by=['parsed_date', 'ID_mov'], ascending=[False, False])
         
         cols_to_show = ['Data', 'Idcategoria', 'Idconcepte', 'import ingrés', 'Import càrrec', 'Saldo', 'Comentari']
         if bank_display_name != 'Pago VISA':
