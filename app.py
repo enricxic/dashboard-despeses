@@ -3086,6 +3086,7 @@ with tab_intro:
                         tr_concepte = "Compra" if new_row_desp.get('Import càrrec', 0) > 0 else "Venda"
                         if "cashback" in concept_lower:
                             tr_concepte = "CashBack"
+                            cartera_val = "S&P500"
                         elif "promo" in concept_lower:
                             tr_concepte = "Promoció"
                             
