@@ -3063,17 +3063,24 @@ with tab_intro:
                     if new_row_desp['Banc'] == 'TR Cartera':
                         new_row_desp['FormaPago'] = 'Compte'
                         
-                        row1 = new_row_desp.copy()
-                        row1['Banc'] = 'TradeRep.'
-                        row1['Import càrrec'] = new_row_desp['import ingrés']
-                        row1['import ingrés'] = new_row_desp['Import càrrec']
+                        concept_lower = str(new_row_desp.get('Idconcepte', '')).lower()
+                        is_cashback = 'cashback' in concept_lower
                         
-                        row2 = new_row_desp.copy()
-                        row2['ID_mov'] = row1['ID_mov'] + 1
-                        row2['Banc'] = 'TR Cartera'
-                        
-                        insert_db_row('despeses', row1)
-                        insert_db_row('despeses', row2)
+                        if is_cashback:
+                            # Only one entry for TR Cartera
+                            insert_db_row('despeses', new_row_desp)
+                        else:
+                            row1 = new_row_desp.copy()
+                            row1['Banc'] = 'TradeRep.'
+                            row1['Import càrrec'] = new_row_desp['import ingrés']
+                            row1['import ingrés'] = new_row_desp['Import càrrec']
+                            
+                            row2 = new_row_desp.copy()
+                            row2['ID_mov'] = row1['ID_mov'] + 1
+                            row2['Banc'] = 'TR Cartera'
+                            
+                            insert_db_row('despeses', row1)
+                            insert_db_row('despeses', row2)
                         
                         # Sync to tr_cartera
                         cartera_val = ""
