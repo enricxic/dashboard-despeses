@@ -3058,7 +3058,22 @@ with tab_intro:
 
                 # Define a helper function to save directly
                 def do_save_direct():
-                    insert_db_row('despeses', new_row_desp)
+                    if new_row_desp['Banc'] == 'TR Cartera':
+                        new_row_desp['FormaPago'] = 'Compte'
+                        
+                        row1 = new_row_desp.copy()
+                        row1['Banc'] = 'TradeRep.'
+                        
+                        row2 = new_row_desp.copy()
+                        row2['Banc'] = 'TR Cartera'
+                        row2['Import càrrec'] = new_row_desp['import ingrés']
+                        row2['import ingrés'] = new_row_desp['Import càrrec']
+                        
+                        insert_db_row('despeses', row1)
+                        insert_db_row('despeses', row2)
+                    else:
+                        insert_db_row('despeses', new_row_desp)
+                        
                     if is_gas_cat:
                         insert_db_row('gasolina', new_row_gas)
                     if is_hipoteca:
@@ -3163,11 +3178,11 @@ with tab_intro:
                     import_carg = tr_import if tr_concepte == "Compra" else 0.0
                     import_ing = tr_import if tr_concepte != "Compra" else 0.0
                     
-                    new_desp_row = {
+                    row_traderep = {
                         'Data': data_val.strftime('%Y-%m-%d'),
                         'mes': mes_val,
                         'any': any_val,
-                        'Banc': 'TR Cartera',
+                        'Banc': 'TradeRep.',
                         'FormaPago': 'Compte',
                         'Import càrrec': import_carg,
                         'import ingrés': import_ing,
@@ -3178,7 +3193,22 @@ with tab_intro:
                         'litres': 0.0,
                         'Revisat': True
                     }
-                    supabase.table("despeses").insert([new_desp_row]).execute()
+                    row_trcartera = {
+                        'Data': data_val.strftime('%Y-%m-%d'),
+                        'mes': mes_val,
+                        'any': any_val,
+                        'Banc': 'TR Cartera',
+                        'FormaPago': 'Compte',
+                        'Import càrrec': import_ing,
+                        'import ingrés': import_carg,
+                        'grup': 'op_banc',
+                        'Idcategoria': 'op_banc',
+                        'Concepte': tr_concepte,
+                        'Descripcio': f"[{cartera_val}] {tr_comentari}".strip(),
+                        'litres': 0.0,
+                        'Revisat': True
+                    }
+                    supabase.table("despeses").insert([row_traderep, row_trcartera]).execute()
                     
                     st.success("Moviment TR Cartera desat correctament!")
                     clear_form_state("tr_")
