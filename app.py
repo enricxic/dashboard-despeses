@@ -325,7 +325,8 @@ INITIAL_BALANCES = {
 BANK_MAPPING = {
     'BBVA': 'BBVA',
     'LaCaixa': 'La Caixa',
-    'TradeRep.': 'TRADE REPUB.',
+    'TR Cartera': 'TR Cartera',
+    'TRADE REPUB.': 'TRADE REPUB.',
     'Casa': 'Casa',
     'T.CorteInglés': 'CORTEINGLÉS',
     't.CorteInglés': 'CORTEINGLÉS',
@@ -3698,7 +3699,7 @@ with tab_db:
     elif db_select == "Pagament Hipoteca":
         df_to_show = df_hip
     elif db_select == "TR Cartera":
-        df_to_show = df_cartera
+        df_to_show = df_cartera.drop(columns=['parsed_date'], errors='ignore')
     elif db_select == "Estalvis DP":
         df_to_show = df_est
         
