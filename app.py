@@ -4027,12 +4027,19 @@ if st.session_state.get('role') == 'admin':
                         context += "TAULA INGRESSOS:\n" + df_ing.to_csv(index=False) + "\n\n"
                         context += "TAULA TR CARTERA:\n" + df_cartera.to_csv(index=False) + "\n\n"
                         
-                        sys_prompt = "Ets un assistent financer expert. Respon a les preguntes de l'usuari únicament basant-te en els dades proporcionats. Respon sempre en català de forma clara i concisa."
+                        sys_prompt = "Ets un assistent financer expert. Respon a les preguntes de l'usuari únicament basant-te en les dades proporcionades. Respon sempre en català de forma clara i concisa. IMPORTANT: Respon exclusivament amb text normal, no utilitzis cap eina ni function call ni codi."
                         
                         # Generate response
                         response = model.generate_content([sys_prompt, context, prompt])
                         
-                        response_text = response.text
+                        try:
+                            response_text = response.text
+                        except ValueError:
+                            # Safely extract parts if it threw an error
+                            parts = response.candidates[0].content.parts
+                            response_text = "".join([p.text for p in parts if hasattr(p, 'text')])
+                            if not response_text:
+                                response_text = "L'assistent ha intentat executar codi però aquesta funció no està habilitada. Si us plau, torna a fer la pregunta."
                     except Exception as e:
                         response_text = f"❌ Error de l'API: {str(e)}"
                         
