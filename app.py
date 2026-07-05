@@ -3077,7 +3077,7 @@ with tab_intro:
                         
                         # Sync to tr_cartera
                         cartera_val = ""
-                        concept_lower = str(new_row_desp.get('Concepte', '')).lower()
+                        concept_lower = str(new_row_desp.get('Idconcepte', '')).lower()
                         if "nvidia" in concept_lower:
                             cartera_val = "NVIDIA"
                         elif "500" in concept_lower or "sp" in concept_lower:
@@ -3097,7 +3097,7 @@ with tab_intro:
                             'VENDA': new_row_desp.get('import ingrés', 0),
                             'CARTERA': cartera_val,
                             'CONCEPTE': tr_concepte,
-                            'COMENTARI': new_row_desp.get('Descripcio', '')
+                            'COMENTARI': new_row_desp.get('Comentari', '')
                         }
                         try:
                             supabase = get_supabase_client(st.session_state.get("role", "guest"))
