@@ -326,7 +326,7 @@ BANK_MAPPING = {
     'BBVA': 'BBVA',
     'LaCaixa': 'La Caixa',
     'TR Cartera': 'TR Cartera',
-    'TRADE REPUB.': 'TRADE REPUB.',
+    'TradeRep.': 'TRADE REPUB.',
     'Casa': 'Casa',
     'T.CorteInglés': 'CORTEINGLÉS',
     't.CorteInglés': 'CORTEINGLÉS',
