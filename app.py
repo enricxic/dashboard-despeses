@@ -3074,6 +3074,36 @@ with tab_intro:
                         
                         insert_db_row('despeses', row1)
                         insert_db_row('despeses', row2)
+                        
+                        # Sync to tr_cartera
+                        cartera_val = ""
+                        concept_lower = str(new_row_desp.get('Concepte', '')).lower()
+                        if "nvidia" in concept_lower:
+                            cartera_val = "NVIDIA"
+                        elif "500" in concept_lower or "sp" in concept_lower:
+                            cartera_val = "S&P500"
+                            
+                        tr_concepte = "Compra" if new_row_desp.get('Import càrrec', 0) > 0 else "Venda"
+                        if "cashback" in concept_lower:
+                            tr_concepte = "CashBack"
+                        elif "promo" in concept_lower:
+                            tr_concepte = "Promoció"
+                            
+                        new_tr_row = {
+                            'DATA': new_row_desp.get('Data', ''),
+                            'mes': new_row_desp.get('mes', ''),
+                            'any': new_row_desp.get('any', 2026),
+                            'COMPRA': new_row_desp.get('Import càrrec', 0),
+                            'VENDA': new_row_desp.get('import ingrés', 0),
+                            'CARTERA': cartera_val,
+                            'CONCEPTE': tr_concepte,
+                            'COMENTARI': new_row_desp.get('Descripcio', '')
+                        }
+                        try:
+                            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                            supabase.table("tr_cartera").insert([new_tr_row]).execute()
+                        except Exception as e:
+                            st.error(f"Error inserint a TR Cartera: {e}")
                     else:
                         insert_db_row('despeses', new_row_desp)
                         
