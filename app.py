@@ -3824,3 +3824,22 @@ if st.session_state.get("role") == "admin":
                 st.info("Encara no hi ha cap registre d'accions.")
         except Exception as e:
             st.error(f"Error llegint el registre: {e}")
+
+# Auto-select text on focus for number inputs
+import streamlit.components.v1 as components
+components.html(
+    '''
+    <script>
+    const parent = window.parent.document;
+    if (!parent.window.hasOwnProperty('autoSelectAdded')) {
+        parent.window.autoSelectAdded = true;
+        parent.body.addEventListener('focusin', function(e) {
+            if (e.target && e.target.tagName === 'INPUT' && (e.target.type === 'number' || e.target.inputMode === 'numeric')) {
+                e.target.select();
+            }
+        });
+    }
+    </script>
+    ''',
+    height=0, width=0
+)
