@@ -2416,7 +2416,7 @@ with tab_dash:
     
     # Filter by selected year
     year_desp = df_desp[df_desp['any'] == selected_year]
-    year_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['cobrat'] == 'cobrat')]
+    year_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['cobrat'].astype(str).str.lower() == 'cobrat')]
     
     for m_cat in CATALAN_MONTHS:
         m_data = month_translations[m_cat]
@@ -2565,7 +2565,7 @@ with tab_dash:
             chart_data = []
             for yr in [selected_year - 1, selected_year]:
                 year_desp_c = df_desp[df_desp['any'] == yr]
-                year_ing_c = df_ing[(df_ing['any'] == yr) & (df_ing['cobrat'] == 'cobrat')]
+                year_ing_c = df_ing[(df_ing['any'] == yr) & (df_ing['cobrat'].astype(str).str.lower() == 'cobrat')]
                 
                 for m_cat in CATALAN_MONTHS:
                     m_data = month_translations[m_cat]
