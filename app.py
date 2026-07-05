@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import google.generativeai as genai
 import json
 from supabase import create_client, Client
 import numpy as np
@@ -2346,6 +2347,18 @@ if "kms_canvi_oli" not in st.session_state:
 # ----------------- APP HEADER & BANNER -----------------
 # Header already rendered above
 
+
+# Setup Gemini API if available
+has_gemini = False
+if "GEMINI_API_KEY" in st.secrets:
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        # We can test the configuration or just assume it's valid
+        has_gemini = True
+    except Exception as e:
+        st.sidebar.error(f"Error configuring Gemini: {e}")
+
+
 # ----------------- TABS SYSTEM -----------------
 tabs_list = [
         "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades"
@@ -3981,8 +3994,54 @@ with tab_db:
 # ================= TAB 5: ANÀLISI =================
 if st.session_state.get('role') == 'admin':
     with tab_analisi:
-        st.markdown("<h3 style='color:#f39c12;'>📈 Anàlisi i TR Cartera</h3>", unsafe_allow_html=True)
-        st.info("Pestanya en construcció. Aquí s'inclourà el saldo de TR Cartera i altres gràfics analítics.")
+        st.markdown("<h3 style='color:#f39c12;'>📈 Anàlisi d'IA amb Gemini</h3>", unsafe_allow_html=True)
+        
+        if not has_gemini:
+            st.warning("⚠️ No s'ha detectat la clau GEMINI_API_KEY als secrets. L'assistent no està disponible.")
+        else:
+            st.write("Pregunta-li el que vulguis a l'assistent sobre les teves despeses, ingressos o cartera.")
+            
+            # Initialize chat history
+            if "messages" not in st.session_state:
+                st.session_state.messages = []
+
+            # Display chat messages from history on app rerun
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+            # React to user input
+            if prompt := st.chat_input("Exemple: Quant he gastat en gasolina el mes de juny?"):
+                # Display user message in chat message container
+                st.chat_message("user").markdown(prompt)
+                # Add user message to chat history
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                
+                with st.spinner("L'assistent està pensant..."):
+                    try:
+                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        
+                        # Prepare context
+                        context = "Tens les següents taules de dades financeres en format CSV:\n\n"
+                        context += "TAULA DESPESES:\n" + df_desp.to_csv(index=False) + "\n\n"
+                        context += "TAULA INGRESSOS:\n" + df_ing.to_csv(index=False) + "\n\n"
+                        context += "TAULA TR CARTERA:\n" + df_cartera.to_csv(index=False) + "\n\n"
+                        
+                        sys_prompt = "Ets un assistent financer expert. Respon a les preguntes de l'usuari únicament basant-te en els dades proporcionats. Respon sempre en català de forma clara i concisa."
+                        
+                        # Generate response
+                        response = model.generate_content([sys_prompt, context, prompt])
+                        
+                        response_text = response.text
+                    except Exception as e:
+                        response_text = f"❌ Error de l'API: {str(e)}"
+                        
+                # Display assistant response in chat message container
+                with st.chat_message("assistant"):
+                    st.markdown(response_text)
+                # Add assistant response to chat history
+                st.session_state.messages.append({"role": "assistant", "content": response_text})
+
 
 # ================= TAB 6: REGISTRE D'ACCIONS (ONLY ADMIN) =================
 if st.session_state.get("role") == "admin":
