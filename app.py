@@ -3697,6 +3697,8 @@ with tab_db:
         df_to_show = df_km.drop(columns=['parsed_date'], errors='ignore')
     elif db_select == "Pagament Hipoteca":
         df_to_show = df_hip
+    elif db_select == "TR Cartera":
+        df_to_show = df_cartera
     elif db_select == "Estalvis DP":
         df_to_show = df_est
         
