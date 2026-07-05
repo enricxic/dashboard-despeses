@@ -510,6 +510,16 @@ def load_dashboard_data(mtimes=None):
 import json
 
 def load_categories_conceptes():
+    try:
+        supabase = get_supabase_client("guest")
+        res = supabase.table("app_config").select("config_json").eq("id", 1).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0]["config_json"]
+    except Exception as e:
+        print("Supabase config load failed:", e)
+        pass
+
+    # Fallback to local
     filepath = "categories_conceptes.json"
     if os.path.exists(filepath):
         try:
@@ -642,6 +652,14 @@ def add_concept_to_config(category, concept):
         save_categories_conceptes(cat_config)
 
 def save_categories_conceptes(config):
+    # Save to Supabase
+    try:
+        supabase = get_supabase_client("admin")
+        supabase.table("app_config").upsert({"id": 1, "config_json": config}).execute()
+    except Exception as e:
+        print("Supabase config save failed:", e)
+        
+    # Also save to local fallback
     filepath = "categories_conceptes.json"
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
