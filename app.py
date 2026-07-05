@@ -496,7 +496,7 @@ def load_dashboard_data(mtimes=None):
     df_pag['Import'] = clean_numeric(df_pag['Import'])
     df_pag['parsed_date'] = df_pag['Data'].apply(parse_excel_date)
     
-    return df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag
+    return df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag, df_cartera
 
 # Load categories_conceptes.json if exists
 import json
@@ -706,6 +706,7 @@ df_hip = st.session_state["df_hip"]
 df_est = st.session_state["df_est"]
 df_limits = st.session_state["df_limits"]
 df_pag = st.session_state["df_pag"]
+df_cartera = st.session_state.get("df_cartera", pd.DataFrame())
 
 def get_limits_for(year, month_name):
     month_idx = MONTHS_MAP.get(month_name.lower(), 12)
@@ -2877,7 +2878,7 @@ with tab_intro:
                 del st.session_state[k]
     
     data_type = st.selectbox("Tipus de registre", [
-        "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe"
+        "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe", "Moviment TR Cartera"
     ])
     st.markdown(f"### ➕ Introduir Nou Registre: {data_type}")
     
@@ -3107,6 +3108,72 @@ with tab_intro:
                     do_save_direct()
 
             
+
+    elif data_type == "Moviment TR Cartera":
+        # Row 1
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+        with r1_col1:
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"tr_data_{version}")
+            mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
+            any_val = data_val.year
+        with r1_col2:
+            cartera_val = st.selectbox("CARTERA", ["S&P500", "NVIDIA"], key=f"tr_cartera_{version}")
+        with r1_col3:
+            tr_concepte = st.selectbox("CONCEPTE", ["Compra", "Venda", "Promoció", "CashBack"], key=f"tr_concepte_{version}")
+        with r1_col4:
+            tr_import = st.number_input("Import (€)", value=0.0, step=0.01, key=f"tr_import_{version}")
+            
+        # Row 2
+        tr_comentari = st.text_input("COMENTARI", value="", key=f"tr_comentari_{version}")
+        
+        st.write("")
+        if st.button("💾 Desar Moviment TR Cartera", type="primary", use_container_width=True):
+            if tr_import <= 0 and tr_concepte != "CashBack": # Allow 0 or small for cashback just in case, but warn
+                st.error("L'import ha de ser superior a 0")
+            else:
+                with st.spinner("Desant..."):
+                    compra = tr_import if tr_concepte in ["Compra", "CashBack"] else 0.0
+                    venda = tr_import if tr_concepte in ["Venda", "Promoció"] else 0.0
+                    
+                    new_tr_row = {
+                        'DATA': data_val.strftime('%Y-%m-%d'),
+                        'mes': mes_val,
+                        'any': any_val,
+                        'COMPRA': compra,
+                        'VENDA': venda,
+                        'CARTERA': cartera_val,
+                        'CONCEPTE': tr_concepte,
+                        'COMENTARI': tr_comentari
+                    }
+                    
+                    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                    supabase.table("tr_cartera").insert([new_tr_row]).execute()
+                    
+                    # Also insert into despeses to balance the bank
+                    import_carg = tr_import if tr_concepte == "Compra" else 0.0
+                    import_ing = tr_import if tr_concepte != "Compra" else 0.0
+                    
+                    new_desp_row = {
+                        'Data': data_val.strftime('%Y-%m-%d'),
+                        'mes': mes_val,
+                        'any': any_val,
+                        'Banc': 'TR Cartera',
+                        'FormaPago': 'Compte',
+                        'Import càrrec': import_carg,
+                        'import ingrés': import_ing,
+                        'grup': 'op_banc',
+                        'Idcategoria': 'op_banc',
+                        'Concepte': tr_concepte,
+                        'Descripcio': f"[{cartera_val}] {tr_comentari}".strip(),
+                        'litres': 0.0,
+                        'Revisat': True
+                    }
+                    supabase.table("despeses").insert([new_desp_row]).execute()
+                    
+                    st.success("Moviment TR Cartera desat correctament!")
+                    clear_form_state("tr_")
+                    st.rerun()
+
     elif data_type == "Previsió de Pagament":
         # Row 1 (4 columns)
         r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
@@ -3555,7 +3622,7 @@ with tab_db:
     col_sel, col_search, col_size = st.columns([3, 5, 2], vertical_alignment="bottom")
     with col_sel:
         db_select = st.selectbox("Taula", [
-            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP"
+            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera"
         ], key="db_select_box")
     with col_search:
         search_query = st.text_input("🔍 Cerca global", value="", key=f"search_{db_select}")
