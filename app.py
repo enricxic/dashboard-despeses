@@ -1092,7 +1092,7 @@ def parse_text_ticket(text_content):
             'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA', 'TOTAL', 
             'TARGETA', 'TARGETA BANCÀRIA', 'TARJETA', 'TUTAL', 'TAROETA', 
             'BANCARTA', 'BANCARIA', 'BASE IMPOSABLE', 'IVA BASE', 'VISA', 
-            'DEBIT', 'DEBITE', 'IMPORT:'
+            'DEBIT', 'DEBITE', 'IMPORT:', "DESGLÒS D'IVA", "DESGLOS D'IVA"
         ]) or any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in [
             'TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 
             'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA', 'TOTAL', 
@@ -1151,31 +1151,41 @@ def parse_text_ticket(text_content):
         line_upper = line.upper()
         
         # Check if it has a price
-        # Dia tickets have a price followed by IVA letter (A, B, C). OCR sometimes reads A as 4 or 4/A, B as 8 or 3, etc.
-        # Price check with optional trailing IVA character and optional dashes/spaces
-        price_match_std = re.search(r'(\d+)\s*[\.,\s;:]\s*(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
         preu = 0.0
         price_match = None
-        if price_match_std:
-            preu = float(f"{price_match_std.group(1)}.{price_match_std.group(2)}")
-            price_match = price_match_std
+        bonarea_qty = 1
+        bonarea_match = re.search(r'^(.*?)\s+(?:(\d+)\s*[xX]\s*\d+[,.]\d+\s+)?(\d+)[.,](\d{2})\s+\d+[.,]\d{2}$', line.strip())
+        
+        if bonarea_match:
+            nom_brut = bonarea_match.group(1).replace('.', '').strip()
+            if bonarea_match.group(2):
+                bonarea_qty = int(bonarea_match.group(2))
+            preu = float(f"{bonarea_match.group(3)}.{bonarea_match.group(4)}")
+            price_match = bonarea_match
         else:
-            # Fallback for three/four digits with missed separator, e.g. 222A -> 2.22
-            price_match_missed = re.search(r'\s+(\d+)(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
-            if price_match_missed:
-                preu = float(f"{price_match_missed.group(1)}.{price_match_missed.group(2)}")
-                price_match = price_match_missed
+            # Dia tickets have a price followed by IVA letter (A, B, C). OCR sometimes reads A as 4 or 4/A, B as 8 or 3, etc.
+            # Price check with optional trailing IVA character and optional dashes/spaces
+            price_match_std = re.search(r'(\d+)\s*[\.,\s;:]\s*(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
+            if price_match_std:
+                preu = float(f"{price_match_std.group(1)}.{price_match_std.group(2)}")
+                price_match = price_match_std
             else:
-                # Fallback for letters like O/G/0 at start of cents (e.g. G95 -> 0.95, G95 - -> 0.95)
-                g_match = re.search(r'\b[GgOo0]\s*[\.,\s;:]*\s*(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
-                if g_match:
-                    preu = float(f"0.{g_match.group(1)}")
-                    price_match = g_match
+                # Fallback for three/four digits with missed separator, e.g. 222A -> 2.22
+                price_match_missed = re.search(r'\s+(\d+)(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
+                if price_match_missed:
+                    preu = float(f"{price_match_missed.group(1)}.{price_match_missed.group(2)}")
+                    price_match = price_match_missed
+                else:
+                    # Fallback for letters like O/G/0 at start of cents (e.g. G95 -> 0.95, G95 - -> 0.95)
+                    g_match = re.search(r'\b[GgOo0]\s*[\.,\s;:]*\s*(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
+                    if g_match:
+                        preu = float(f"0.{g_match.group(1)}")
+                        price_match = g_match
                 
         # Parse product name
-        if price_match:
+        if price_match and not bonarea_match:
             nom_brut = line[:price_match.start()].strip()
-        else:
+        elif not bonarea_match:
             nom_brut = line
             
         # Clean trailing letters/spaces/noise and specifically Dia IVA trailing characters/garbage
@@ -1231,7 +1241,10 @@ def parse_text_ticket(text_content):
                 has_next_weight = True
                 
         # Resolve quantities (e.g. '3 x' or just '3 ' at start of line for Mercadona)
-        quantitat = 1
+        if bonarea_match:
+            quantitat = bonarea_qty
+        else:
+            quantitat = 1
         quant_match = re.search(r'^(\d+)\s*[xX]\s*', nom_brut)
         if quant_match:
             quantitat = int(quant_match.group(1))
