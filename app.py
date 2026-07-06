@@ -1054,6 +1054,47 @@ def group_duplicate_ticket_items(items):
             grouped[key]['totLinea'] += item['totLinea']
     return list(grouped.values())
 
+
+def save_unknown_products(parsed_items, supermercat):
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        df_nom = fetch_all_supabase(supabase, 'tb_noms_producte')
+        
+        if not df_nom.empty:
+            df_super = df_nom[df_nom['supermercat'].astype(str).str.lower() == str(supermercat).lower()]
+            existing_names = set(df_super['nom_super'].dropna().apply(lambda x: normalitzar_text(x)))
+        else:
+            existing_names = set()
+            
+        new_rows = []
+        for item in parsed_items:
+            nom_brut = item.get('nom_brut', '').strip()
+            if not nom_brut:
+                continue
+                
+            nom_norm = normalitzar_text(nom_brut)
+            if not nom_norm:
+                continue
+                
+            # If not in existing names, we need to add it
+            if nom_norm not in existing_names:
+                new_rows.append({
+                    "supermercat": supermercat,
+                    "nom_super": nom_brut,
+                    "similitud_minima": 0.7,
+                    "idProducte": None,
+                    "tipus": None,
+                    "unitat": None,
+                    "mesura": None
+                })
+                existing_names.add(nom_norm)
+                
+        if new_rows:
+            supabase.table("tb_noms_producte").insert(new_rows).execute()
+            print(f"Saved {len(new_rows)} new unknown products to tb_noms_producte for {supermercat}.")
+    except Exception as e:
+        print(f"Error saving unknown products: {e}")
+
 def parse_text_ticket(text_content):
     # Log Streamlit OCR text
     try:
