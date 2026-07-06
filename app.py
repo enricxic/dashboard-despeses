@@ -2361,7 +2361,7 @@ if "GEMINI_API_KEY" in st.secrets:
 
 # ----------------- TABS SYSTEM -----------------
 tabs_list = [
-        "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades", "🤖 Xat IA"
+        "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades", "💬 Xat IA"
     ]
 if st.session_state.get("role") == "admin":
     tabs_list.extend(["🗄️ Bases de Dades (Supabase)", "🛠️ Registre d'Accions"])
@@ -3993,7 +3993,7 @@ with tab_db:
 
 # ================= TAB 4: XAT IA =================
 with tab_xat:
-    st.markdown("<h3 style='color:#f39c12;'>🤖 Xat IA amb Gemini</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#f39c12;'>💬 Xat IA amb Gemini</h3>", unsafe_allow_html=True)
         
     if not has_gemini:
         st.warning("⚠️ No s'ha detectat la clau GEMINI_API_KEY als secrets. L'assistent no està disponible.")
