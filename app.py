@@ -1133,7 +1133,7 @@ def parse_text_ticket(text_content):
             'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA', 'TOTAL', 
             'TARGETA', 'TARGETA BANCÀRIA', 'TARJETA', 'TUTAL', 'TAROETA', 
             'BANCARTA', 'BANCARIA', 'BASE IMPOSABLE', 'IVA BASE', 'VISA', 
-            'DEBIT', 'DEBITE', 'IMPORT:', "DESGLÒS D'IVA", "DESGLOS D'IVA"
+            'DEBIT', 'DEBITE', 'IMPORT:', "DESGLÒS D'IVA", "DESGLOS D'IVA", 'EFECTIU', 'CANVI', 'ENTREGAT', 'IVA %', 'SUBTOTAL', 'IVA INCLOS', 'I.V.A.'
         ]) or any(re.search(r'\b' + re.escape(kw) + r'\b', line_upper) for kw in [
             'TOTAL COMPRA', 'TOTAL A PAGAR', 'TOTAL ESTALVI', 'TOTAL ESTALVE', 
             'TOTAL COMPRA GRUPO DIA', 'TOTAL COMPRA GRUPC CTA', 'TOTAL', 
@@ -1215,6 +1215,9 @@ def parse_text_ticket(text_content):
                 price_match_missed = re.search(r'\s+(\d+)(\d{2})(?:\s*[A-Z834\-©]+)?\s*[^a-zA-Z0-9]*$', line.strip())
                 if price_match_missed:
                     preu = float(f"{price_match_missed.group(1)}.{price_match_missed.group(2)}")
+                    if preu > 50.0:
+                        preu = 0.0
+                        price_match = None
                     price_match = price_match_missed
                 else:
                     # Fallback for letters like O/G/0 at start of cents (e.g. G95 -> 0.95, G95 - -> 0.95)
@@ -1317,6 +1320,10 @@ def parse_text_ticket(text_content):
                 
         preu_unitat = tot_val if has_next_weight and quantitat == 1 else (preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0))
         
+        if preu_unitat > 1000.0:
+            preu_unitat = 0.0
+        if tot_val > 1000.0:
+            tot_val = 0.0
         # Duplicate product price fallback
         if preu_unitat == 0.0 and len(raw_products) > 0:
             prev_item = raw_products[-1]
