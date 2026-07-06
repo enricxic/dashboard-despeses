@@ -1015,18 +1015,14 @@ def parse_text_ticket(text_content):
         import os
         os.makedirs("C:/Users/Usuari/.gemini/antigravity/brain/98896f4c-68da-443a-b920-acd856bccd79/scratch", exist_ok=True)
         with open("C:/Users/Usuari/.gemini/antigravity/brain/98896f4c-68da-443a-b920-acd856bccd79/scratch/debug_ocr.log", "w", encoding="utf-8") as f_log:
-            f_log.write("--- NEW PARSE ---
-")
+            f_log.write("--- NEW PARSE ---\n")
             f_log.write(text_content)
-            f_log.write("
------------------
-")
+            f_log.write("\n-----------------\n")
     except Exception as e_log:
         pass
         
     df_mapping = load_product_mappings()
-    lines = text_content.split('
-')
+    lines = text_content.split('\n')
     
     try:
         st.session_state["ticket_discount"] = 0.0
@@ -1317,14 +1313,10 @@ def parse_text_ticket(text_content):
     res = [item for item in res if item['quantitat'] > 0]
     try:
         with open("C:/Users/Usuari/.gemini/antigravity/brain/98896f4c-68da-443a-b920-acd856bccd79/scratch/debug_ocr.log", "a", encoding="utf-8") as f_log:
-            f_log.write(f"
-Collected products zone lines: {len(product_lines_text)}
-")
-            f_log.write(f"Parsed items count: {len(res)}
-")
+            f_log.write(f"\nCollected products zone lines: {len(product_lines_text)}\n")
+            f_log.write(f"Parsed items count: {len(res)}\n")
             for p_item in res:
-                f_log.write(f"  - {p_item['article']} | preu: {p_item['preuUnit']} | tot: {p_item['totLinea']}
-")
+                f_log.write(f"  - {p_item['article']} | preu: {p_item['preuUnit']} | tot: {p_item['totLinea']}\n")
     except Exception:
         pass
     return res
@@ -1880,8 +1872,7 @@ def render_compres_super_interface():
                                 try:
                                     text = pytesseract.image_to_string(img, config=config)
                                     # Ensure the line contains both letters (product name) and price numbers to avoid column-split layouts
-                                    lines_with_price = sum(1 for line in text.split('
-') if re.search(r'[a-zA-Z]{3,}.*\b\d+[\.,\s]+\d{2}\b', line))
+                                    lines_with_price = sum(1 for line in text.split('\n') if re.search(r'[a-zA-Z]{3,}.*\b\d+[\.,\s]+\d{2}\b', line))
                                     if lines_with_price > best_lines_count:
                                         best_lines_count = lines_with_price
                                         best_text = text
@@ -2457,9 +2448,7 @@ with tab_dash:
                     else:
                         val_str = f"**{b_val:,.2f} €**"
                     
-                    label = f"{b_name}
-
-{val_str}"
+                    label = f"{b_name}\n\n{val_str}"
                     if st.button(label, key=f"btn_bank_{b_name}", use_container_width=True):
                         show_bank_extract_modal(b_name, selected_year, selected_month_data)
     
@@ -4006,78 +3995,67 @@ with tab_db:
 with tab_xat:
     st.markdown("<h3 style='color:#f39c12;'>🤖 Xat IA amb Gemini</h3>", unsafe_allow_html=True)
         
-        if not has_gemini:
-            st.warning("⚠️ No s'ha detectat la clau GEMINI_API_KEY als secrets. L'assistent no està disponible.")
-        else:
-            col_text, col_filter = st.columns([8, 4], vertical_alignment="bottom")
-            with col_text:
-                st.write("Pregunta-li el que vulguis a l'assistent sobre les teves despeses, ingressos o cartera.")
-            with col_filter:
-                analisi_year = st.selectbox("📅 Any a analitzar per l'IA:", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year_analisi")
+    if not has_gemini:
+        st.warning("⚠️ No s'ha detectat la clau GEMINI_API_KEY als secrets. L'assistent no està disponible.")
+    else:
+        col_text, col_filter = st.columns([8, 4], vertical_alignment="bottom")
+        with col_text:
+            st.write("Pregunta-li el que vulguis a l'assistent sobre les teves despeses, ingressos o cartera.")
+        with col_filter:
+            analisi_year = st.selectbox("📅 Any a analitzar per l'IA:", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year_analisi")
             
-            st.info(f"💡 L'assistent està analitzant exclusivament les dades de l'any **{analisi_year}** per garantir una resposta ràpida i respectar els límits.")
+        st.info(f"💡 L'assistent està analitzant exclusivament les dades de l'any **{analisi_year}** per garantir una resposta ràpida i respectar els límits.")
             
-            # Initialize chat history
-            if "messages" not in st.session_state:
-                st.session_state.messages = []
+        # Initialize chat history
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
 
-            # Display chat messages from history on app rerun
-            for message in st.session_state.messages:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
+        # Display chat messages from history on app rerun
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-            # React to user input
-            if prompt := st.chat_input("Exemple: Quant he gastat en gasolina el mes de juny?"):
-                # Display user message in chat message container
-                st.chat_message("user").markdown(prompt)
-                # Add user message to chat history
-                st.session_state.messages.append({"role": "user", "content": prompt})
+        # React to user input
+        if prompt := st.chat_input("Exemple: Quant he gastat en gasolina el mes de juny?"):
+            # Display user message in chat message container
+            st.chat_message("user").markdown(prompt)
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
                 
-                with st.spinner("L'assistent està pensant..."):
+            with st.spinner("L'assistent està pensant..."):
+                try:
+                    model = genai.GenerativeModel('gemini-flash-latest')
+                        
+                    # Prepare context using only analisi_year to drastically reduce token usage
+                    year_desp_context = df_desp[df_desp['any'] == analisi_year] if 'any' in df_desp.columns else df_desp
+                    year_ing_context = df_ing[df_ing['any'] == analisi_year] if 'any' in df_ing.columns else df_ing
+                        
+                    context = f"Tens les següents taules de dades financeres de l'any {analisi_year} en format CSV:\n\n"
+                    context += "TAULA DESPESES:\n" + year_desp_context.to_csv(index=False) + "\n\n"
+                    context += "TAULA INGRESSOS:\n" + year_ing_context.to_csv(index=False) + "\n\n"
+                    context += "TAULA TR CARTERA:\n" + df_cartera.to_csv(index=False) + "\n\n"
+                        
+                    sys_prompt = "Ets un assistent financer expert. Respon a les preguntes de l'usuari únicament basant-te en les dades proporcionades. Respon sempre en català de forma clara i concisa. IMPORTANT: Respon exclusivament amb text normal, no utilitzis cap eina ni function call ni codi."
+                        
+                    # Generate response
+                    response = model.generate_content([sys_prompt, context, prompt])
+                        
                     try:
-                        model = genai.GenerativeModel('gemini-flash-latest')
+                        response_text = response.text
+                    except ValueError:
+                        # Safely extract parts if it threw an error
+                        parts = response.candidates[0].content.parts
+                        response_text = "".join([p.text for p in parts if hasattr(p, 'text')])
+                        if not response_text:
+                            response_text = "L'assistent ha intentat executar codi però aquesta funció no està habilitada. Si us plau, torna a fer la pregunta."
+                except Exception as e:
+                    response_text = f"❌ Error de l'API: {str(e)}"
                         
-                        # Prepare context using only analisi_year to drastically reduce token usage
-                        year_desp_context = df_desp[df_desp['any'] == analisi_year] if 'any' in df_desp.columns else df_desp
-                        year_ing_context = df_ing[df_ing['any'] == analisi_year] if 'any' in df_ing.columns else df_ing
-                        
-                        context = f"Tens les següents taules de dades financeres de l'any {analisi_year} en format CSV:
-
-"
-                        context += "TAULA DESPESES:
-" + year_desp_context.to_csv(index=False) + "
-
-"
-                        context += "TAULA INGRESSOS:
-" + year_ing_context.to_csv(index=False) + "
-
-"
-                        context += "TAULA TR CARTERA:
-" + df_cartera.to_csv(index=False) + "
-
-"
-                        
-                        sys_prompt = "Ets un assistent financer expert. Respon a les preguntes de l'usuari únicament basant-te en les dades proporcionades. Respon sempre en català de forma clara i concisa. IMPORTANT: Respon exclusivament amb text normal, no utilitzis cap eina ni function call ni codi."
-                        
-                        # Generate response
-                        response = model.generate_content([sys_prompt, context, prompt])
-                        
-                        try:
-                            response_text = response.text
-                        except ValueError:
-                            # Safely extract parts if it threw an error
-                            parts = response.candidates[0].content.parts
-                            response_text = "".join([p.text for p in parts if hasattr(p, 'text')])
-                            if not response_text:
-                                response_text = "L'assistent ha intentat executar codi però aquesta funció no està habilitada. Si us plau, torna a fer la pregunta."
-                    except Exception as e:
-                        response_text = f"❌ Error de l'API: {str(e)}"
-                        
-                # Display assistant response in chat message container
-                with st.chat_message("assistant"):
-                    st.markdown(response_text)
-                # Add assistant response to chat history
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
+            # Display assistant response in chat message container
+            with st.chat_message("assistant"):
+                st.markdown(response_text)
+            # Add assistant response to chat history
+            st.session_state.messages.append({"role": "assistant", "content": response_text})
 
 
 # ================= TAB 6: REGISTRE D'ACCIONS (ONLY ADMIN) =================
