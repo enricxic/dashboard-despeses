@@ -553,7 +553,18 @@ def get_config_payment_methods():
         return [fp for fp in cat_config["formes_pago"] if fp]
     return ["Compte", "Dèbit", "VISA", "Efectiu"]
 
+@st.cache_data(ttl=300)
+def get_tb_supers_cached():
+    try:
+        supabase = get_supabase_client("guest")
+        return fetch_all_supabase(supabase, 'tb_supers')
+    except:
+        return pd.DataFrame()
+
 def get_config_supers():
+    df_supers = get_tb_supers_cached()
+    if not df_supers.empty and 'supermercat' in df_supers.columns:
+        return sorted(list(df_supers['supermercat'].dropna().unique()))
     if cat_config and "supers_tickets" in cat_config:
         return cat_config["supers_tickets"]
     return sorted(list(df_super['super'].dropna().unique())) if 'super' in df_super.columns else []
@@ -669,6 +680,13 @@ def add_concept_to_config(category, concept):
         save_categories_conceptes(cat_config)
 
 def add_super_to_config(super_name):
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        supabase.table("tb_supers").insert({"supermercat": super_name}).execute()
+        get_tb_supers_cached.clear()
+    except Exception as e:
+        print("Supabase insert failed for tb_supers:", e)
+        
     global cat_config
     if cat_config is None:
         cat_config = {}
