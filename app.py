@@ -3999,7 +3999,13 @@ if st.session_state.get('role') == 'admin':
         if not has_gemini:
             st.warning("⚠️ No s'ha detectat la clau GEMINI_API_KEY als secrets. L'assistent no està disponible.")
         else:
-            st.write("Pregunta-li el que vulguis a l'assistent sobre les teves despeses, ingressos o cartera.")
+            col_text, col_filter = st.columns([8, 4], vertical_alignment="bottom")
+            with col_text:
+                st.write("Pregunta-li el que vulguis a l'assistent sobre les teves despeses, ingressos o cartera.")
+            with col_filter:
+                analisi_year = st.selectbox("📅 Any a analitzar per l'IA:", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year_analisi")
+            
+            st.info(f"💡 L'assistent està analitzant exclusivament les dades de l'any **{analisi_year}** per garantir una resposta ràpida i respectar els límits.")
             
             # Initialize chat history
             if "messages" not in st.session_state:
@@ -4021,11 +4027,11 @@ if st.session_state.get('role') == 'admin':
                     try:
                         model = genai.GenerativeModel('gemini-flash-latest')
                         
-                        # Prepare context using only selected_year to drastically reduce token usage
-                        year_desp_context = df_desp[df_desp['any'] == selected_year] if 'any' in df_desp.columns else df_desp
-                        year_ing_context = df_ing[df_ing['any'] == selected_year] if 'any' in df_ing.columns else df_ing
+                        # Prepare context using only analisi_year to drastically reduce token usage
+                        year_desp_context = df_desp[df_desp['any'] == analisi_year] if 'any' in df_desp.columns else df_desp
+                        year_ing_context = df_ing[df_ing['any'] == analisi_year] if 'any' in df_ing.columns else df_ing
                         
-                        context = f"Tens les següents taules de dades financeres de l'any {selected_year} en format CSV:\n\n"
+                        context = f"Tens les següents taules de dades financeres de l'any {analisi_year} en format CSV:\n\n"
                         context += "TAULA DESPESES:\n" + year_desp_context.to_csv(index=False) + "\n\n"
                         context += "TAULA INGRESSOS:\n" + year_ing_context.to_csv(index=False) + "\n\n"
                         context += "TAULA TR CARTERA:\n" + df_cartera.to_csv(index=False) + "\n\n"
