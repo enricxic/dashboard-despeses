@@ -668,6 +668,17 @@ def add_concept_to_config(category, concept):
         cat_config[category].sort()
         save_categories_conceptes(cat_config)
 
+def add_super_to_config(super_name):
+    global cat_config
+    if cat_config is None:
+        cat_config = {}
+    if "supers_tickets" not in cat_config:
+        cat_config["supers_tickets"] = []
+    if super_name not in cat_config["supers_tickets"]:
+        cat_config["supers_tickets"].append(super_name)
+        cat_config["supers_tickets"].sort()
+        save_categories_conceptes(cat_config)
+
 def save_categories_conceptes(config):
     # Save to Supabase
     try:
@@ -1967,13 +1978,14 @@ def render_compres_super_interface():
                 st.session_state["show_new_super_popover"] = True
                 
         if st.session_state.get("show_new_super_popover", False):
-            new_super_name = st.text_input("Nom del nou Súper:", key="new_super_name_input")
+            new_super_name = st.text_input("Nom del nou Súper:", key="new_super_name_input", autocomplete="new-password")
             col_ns1, col_ns2 = st.columns(2)
             with col_ns1:
                 if st.button("Afegir", key="btn_add_new_super"):
                     if new_super_name.strip():
                         if new_super_name.strip() not in st.session_state["added_supers"]:
                             st.session_state["added_supers"].append(new_super_name.strip())
+                        add_super_to_config(new_super_name.strip())
                         st.session_state["show_new_super_popover"] = False
                         st.rerun()
             with col_ns2:
