@@ -558,12 +558,28 @@ def get_config_supers():
         return cat_config["supers_tickets"]
     return sorted(list(df_super['super'].dropna().unique())) if 'super' in df_super.columns else []
 
+@st.cache_data(ttl=300)
+def get_tb_productes_cached():
+    try:
+        supabase = get_supabase_client("guest")
+        return fetch_all_supabase(supabase, 'tb_productes')
+    except:
+        return pd.DataFrame()
+
 def get_config_families():
+    df_prod = get_tb_productes_cached()
+    if not df_prod.empty and 'familia' in df_prod.columns:
+        return sorted(list(df_prod['familia'].dropna().unique()))
     if cat_config and "families_compres" in cat_config:
         return cat_config["families_compres"]
     return sorted(list(df_super['familia'].dropna().unique())) if 'familia' in df_super.columns else []
 
 def get_config_articles(family):
+    df_prod = get_tb_productes_cached()
+    if not df_prod.empty and 'familia' in df_prod.columns and 'nom_estandard' in df_prod.columns:
+        articles = df_prod[df_prod['familia'] == family]['nom_estandard'].dropna().unique()
+        if len(articles) > 0:
+            return sorted(list(articles))
     if cat_config and "articles_compres" in cat_config and family in cat_config["articles_compres"]:
         return cat_config["articles_compres"][family]
     return sorted(list(df_super[df_super['familia'] == family]['article'].dropna().unique())) if 'article' in df_super.columns else []
