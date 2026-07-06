@@ -2463,8 +2463,11 @@ if "GEMINI_API_KEY" in st.secrets:
 tabs_list = [
         "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades", "💬 Xat IA"
     ]
+if st.session_state.get("role") in ["admin", "guest"]:
+    tabs_list.append("📦 Rebost / Stock")
+
 if st.session_state.get("role") == "admin":
-    tabs_list.extend(["🗄️ Bases de Dades (Supabase)", "🛠️ Registre d'Accions"])
+    tabs_list.extend(["🗄️ Bases de Dades (Supabase)", "📜 Registre d'Accions"])
     
 tabs = st.tabs(tabs_list)
 tab_dash = tabs[0]
@@ -2472,10 +2475,16 @@ tab_details = tabs[1]
 tab_intro = tabs[2]
 tab_xat = tabs[3]
 
-if st.session_state.get("role") == "admin":
-    tab_db = tabs[4]
-    tab_log = tabs[5]
+tab_idx = 4
+if st.session_state.get("role") in ["admin", "guest"]:
+    tab_rebost = tabs[tab_idx]
+    tab_idx += 1
+else:
+    tab_rebost = None
 
+if st.session_state.get("role") == "admin":
+    tab_db = tabs[tab_idx]
+    tab_log = tabs[tab_idx + 1]
 # ================= TAB 1: DASHBOARD GENERAL =================
 with tab_dash:
     # 1. Container for bank metrics (physically at the top)
@@ -3832,6 +3841,116 @@ def show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, 
         if st.button("Cancel·la", use_container_width=True):
             st.session_state["df_key_counter"] = st.session_state.get("df_key_counter", 0) + 1
             st.rerun()
+
+
+# ================= TAB REBOST / STOCK =================
+if tab_rebost:
+    with tab_rebost:
+        st.markdown("<h2 style='color:#3498db;'>📦 Gestió del Rebost i Stock</h2>", unsafe_allow_html=True)
+        st.write("Gestiona els articles nous detectats als tiquets i mantingues el teu inventari actualitzat.")
+        
+        # We need a function to load unmapped products
+        try:
+            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+            
+            st.markdown("### 🆕 Productes Nous Pendents d'Assignar")
+            df_noms = fetch_all_supabase(supabase, 'tb_noms_producte')
+            df_prods = fetch_all_supabase(supabase, 'tb_productes')
+            
+            if not df_noms.empty:
+                unmapped = df_noms[df_noms['idProducte'].isna() | (df_noms['idProducte'] == 0) | (df_noms['idProducte'] == "")]
+                if not unmapped.empty:
+                    st.info(f"Tens {len(unmapped)} producte(s) nou(s) detectat(s) als tiquets sense assignar a l'inventari estàndard.")
+                    
+                    for idx, row in unmapped.iterrows():
+                        with st.expander(f"📍 {row['nom_super']} (Súper: {row['supermercat']})"):
+                            col_sel, col_new, col_btn = st.columns([4, 4, 2])
+                            with col_sel:
+                                prod_options = ["--- Tria un producte existent ---"] + df_prods['nom_estandard'].tolist()
+                                sel_prod = st.selectbox("Assignar a:", prod_options, key=f"sel_prod_{row['idNom']}")
+                            with col_new:
+                                new_prod_name = st.text_input("O crea'n un de nou (Nom estàndard):", key=f"new_prod_{row['idNom']}")
+                                new_fam = st.selectbox("Família:", ["carn", "peix", "fruita", "verdura", "lactics", "esmorzar", "neteja", "higiene", "begudes", "congelats", "varis", "extres", "gasolina"], key=f"new_fam_{row['idNom']}")
+                            with col_btn:
+                                st.write("")
+                                st.write("")
+                                if st.button("Guardar Canvis", key=f"btn_save_{row['idNom']}", type="primary"):
+                                    if new_prod_name.strip():
+                                        # Create new product
+                                        res = supabase.table('tb_productes').insert({'nom_estandard': new_prod_name.strip(), 'familia': new_fam}).execute()
+                                        if res.data:
+                                            new_id = res.data[0]['idProducte']
+                                            supabase.table('tb_noms_producte').update({'idProducte': new_id}).eq('idNom', row['idNom']).execute()
+                                            st.success("Creat i assignat!")
+                                            st.rerun()
+                                    elif sel_prod != "--- Tria un producte existent ---":
+                                        # Map to existing
+                                        match_prod = df_prods[df_prods['nom_estandard'] == sel_prod].iloc[0]
+                                        supabase.table('tb_noms_producte').update({'idProducte': int(match_prod['idProducte'])}).eq('idNom', row['idNom']).execute()
+                                        st.success("Assignat correctament!")
+                                        st.rerun()
+                                    else:
+                                        st.error("Tria o crea un producte.")
+                else:
+                    st.success("Tots els productes dels teus tiquets estan ben assignats!")
+            else:
+                st.info("Encara no hi ha productes nous detectats.")
+                
+            st.divider()
+            
+            st.markdown("### 📊 Control d'Stock (El teu Rebost)")
+            if not df_prods.empty:
+                st.write("Edita les quantitats i el lloc on guardes cada article directament a la taula.")
+                
+                # We need to make sure cols exist in df
+                for col in ['stock_actual', 'stock_minim']:
+                    if col not in df_prods.columns:
+                        df_prods[col] = 0.0
+                if 'lloc' not in df_prods.columns:
+                    df_prods['lloc'] = ""
+                
+                # Order by familia and nom
+                df_prods = df_prods.sort_values(by=['familia', 'nom_estandard'])
+                
+                edited_df = st.data_editor(
+                    df_prods[['idProducte', 'nom_estandard', 'familia', 'stock_actual', 'stock_minim', 'lloc']],
+                    column_config={
+                        "idProducte": None,
+                        "nom_estandard": st.column_config.TextColumn("Producte", disabled=True),
+                        "familia": st.column_config.TextColumn("Família", disabled=True),
+                        "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
+                        "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
+                        "lloc": st.column_config.SelectboxColumn("Lloc", options=["Rebost", "Nevera", "Congelador", "Armari Cuina", "Armari Neteja", "Bany", "Garatge", "Altres"], required=False)
+                    },
+                    hide_index=True,
+                    use_container_width=True,
+                    key="editor_stock"
+                )
+                
+                if st.button("Guardar Estat del Stock"):
+                    # We need to find changed rows and update supabase
+                    updates_made = 0
+                    for i, row in edited_df.iterrows():
+                        orig_row = df_prods.iloc[i]
+                        if (row['stock_actual'] != orig_row['stock_actual'] or 
+                            row['stock_minim'] != orig_row['stock_minim'] or 
+                            row['lloc'] != orig_row['lloc']):
+                            supabase.table('tb_productes').update({
+                                'stock_actual': row['stock_actual'],
+                                'stock_minim': row['stock_minim'],
+                                'lloc': row['lloc']
+                            }).eq('idProducte', row['idProducte']).execute()
+                            updates_made += 1
+                            
+                    if updates_made > 0:
+                        st.success(f"S'han actualitzat {updates_made} productes!")
+                        st.cache_data.clear()
+                        st.rerun()
+                    else:
+                        st.info("No s'ha detectat cap canvi.")
+                        
+        except Exception as e:
+            st.error(f"Error carregant dades del rebost: {e}")
 
 # ================= TAB 4: BASES DE DADES (Supabase) =================
 with tab_db:
