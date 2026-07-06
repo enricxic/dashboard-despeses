@@ -4021,10 +4021,13 @@ if st.session_state.get('role') == 'admin':
                     try:
                         model = genai.GenerativeModel('gemini-flash-latest')
                         
-                        # Prepare context
-                        context = "Tens les següents taules de dades financeres en format CSV:\n\n"
-                        context += "TAULA DESPESES:\n" + df_desp.to_csv(index=False) + "\n\n"
-                        context += "TAULA INGRESSOS:\n" + df_ing.to_csv(index=False) + "\n\n"
+                        # Prepare context using only selected_year to drastically reduce token usage
+                        year_desp_context = df_desp[df_desp['any'] == selected_year] if 'any' in df_desp.columns else df_desp
+                        year_ing_context = df_ing[df_ing['any'] == selected_year] if 'any' in df_ing.columns else df_ing
+                        
+                        context = f"Tens les següents taules de dades financeres de l'any {selected_year} en format CSV:\n\n"
+                        context += "TAULA DESPESES:\n" + year_desp_context.to_csv(index=False) + "\n\n"
+                        context += "TAULA INGRESSOS:\n" + year_ing_context.to_csv(index=False) + "\n\n"
                         context += "TAULA TR CARTERA:\n" + df_cartera.to_csv(index=False) + "\n\n"
                         
                         sys_prompt = "Ets un assistent financer expert. Respon a les preguntes de l'usuari únicament basant-te en les dades proporcionades. Respon sempre en català de forma clara i concisa. IMPORTANT: Respon exclusivament amb text normal, no utilitzis cap eina ni function call ni codi."
