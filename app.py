@@ -2249,7 +2249,7 @@ def render_compres_super_interface():
                         except Exception as e:
                             print(f"Error saving to tb_productes: {e}")
                             
-                        st.session_state["manual_art_selectbox"] = new_art
+                        st.session_state["force_article_selection"] = new_art
                         st.toast(f"Article '{new_art}' afegit correctament!")
                         st.rerun()
                 else:
@@ -2259,6 +2259,11 @@ def render_compres_super_interface():
             art_options = [""] + get_config_articles(fam_sel)
         else:
             art_options = [""]
+        if "force_article_selection" in st.session_state:
+            force_art = st.session_state.pop("force_article_selection")
+            if force_art in art_options:
+                st.session_state["manual_art_selectbox"] = force_art
+                
         curr_art = st.session_state["manual_art_selectbox"]
         if curr_art not in art_options:
             st.session_state["manual_art_selectbox"] = ""
