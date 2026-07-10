@@ -99,6 +99,6 @@ def scan_ticket(output_path=None):
     res = scan_silent(output_path)
     
     if res["success"]:
-        return output_path
+        return output_path, None
     else:
-        return None
+        return None, res.get("error", "Error desconegut")

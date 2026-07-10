@@ -1905,21 +1905,19 @@ def render_compres_super_interface():
                     if not os.path.exists(tickets_dir):
                         os.makedirs(tickets_dir)
                     target_path = os.path.join(tickets_dir, f"ticket_{super_clean}_{date_str}.jpg")
-                    scanned_path = scanner.scan_ticket(target_path)
+                    scanned_path, scan_error = scanner.scan_ticket(target_path)
                 
                 if scanned_path:
                     with open(scanned_path, "rb") as f:
                         file_bytes = f.read()
                     file_obj = io.BytesIO(file_bytes)
-                    # We can use the actual target name so the user sees it in the UI
                     import os
                     file_obj.name = os.path.basename(scanned_path)
                     file_obj.size = len(file_bytes)
                     st.session_state["scanned_file"] = file_obj
                     st.rerun()
                 elif super_val and super_val != "--- Tria un Súper ---" and date_val:
-                    # Show error only if it wasn't cancelled by the empty fields check
-                    st.error("L'escàner HP només funciona si executes l'app localment o s'ha cancel·lat.")
+                    st.error(f"Error a l'escàner: {scan_error}")
         if st.session_state.get("scanned_file") is not None:
             uploaded_file = st.session_state["scanned_file"]
         elif camera_file is not None:
