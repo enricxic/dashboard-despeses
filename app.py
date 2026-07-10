@@ -1317,8 +1317,8 @@ def parse_text_ticket(text_content):
             fam, art = db_match['familia'], db_match['nomEstandard']
             nom_super_val = db_match.get('nom_super', '')
         else:
-            # Apply custom OCR backup rules if DB matching fails
-            fam, art = map_product_to_category(nom_brut)
+            continue
+
                 
         preu_unitat = tot_val if has_next_weight and quantitat == 1 else (preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0))
         
