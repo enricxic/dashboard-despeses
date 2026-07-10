@@ -2269,33 +2269,38 @@ def render_compres_super_interface():
             
             st.markdown("<hr style='margin: 4px 0 8px 0; border-color: #334155;'/>", unsafe_allow_html=True)
             
+            def _cell(text, color="", bold=False):
+                fw = "font-weight:bold;" if bold else ""
+                c = f"color:{color};" if color else ""
+                st.markdown(f"<div style='margin-bottom:-12px; padding-top:6px; font-size:0.9rem; {fw} {c}'>{text}</div>", unsafe_allow_html=True)
+
             for i, item in enumerate(items):
-                cols = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5])
+                cols = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5], vertical_alignment="center")
                 with cols[0]:
-                    st.write(f"{i+1}")
+                    _cell(f"{i+1}")
                 with cols[1]:
-                    st.write(item["familia"])
+                    _cell(item["familia"])
                 with cols[2]:
-                    st.write(item["article"])
+                    _cell(item["article"])
                 with cols[3]:
                     p_str = str(item['pes']).strip()
                     if p_str.replace('.', '', 1).isdigit() and float(p_str) > 0:
-                        st.write(f"{p_str}g")
+                        _cell(f"{p_str}g")
                     else:
-                        st.write(p_str if p_str else "0g")
+                        _cell(p_str if p_str else "0g")
                 with cols[4]:
-                    st.write(f"{item['quantitat']}")
+                    _cell(f"{item['quantitat']}")
                 with cols[5]:
-                    st.write(f"{item['preuUnit']:.2f} €")
+                    _cell(f"{item['preuUnit']:.2f} €")
                 with cols[6]:
                     if item['prom'] > 0:
-                        st.write(f":red[-{item['prom']:.2f} €]")
+                        _cell(f"-{item['prom']:.2f} €", color="#ef4444")
                     else:
-                        st.write("0.00 €")
+                        _cell("0.00 €")
                 with cols[7]:
-                    st.write(f"**{item['totLinea']:.2f} €**")
+                    _cell(f"{item['totLinea']:.2f} €", bold=True)
                 with cols[8]:
-                    st.write("🧺" if item['rebost'] == 'rebost' else "")
+                    _cell("🧺" if item['rebost'] == 'rebost' else "")
                 with cols[9]:
                     st.button("✏️", key=f"btn_edit_row_{i}", on_click=cb_edit_ticket_item, args=(i,), help="Modificar línia")
                 with cols[10]:
