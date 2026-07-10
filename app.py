@@ -1881,6 +1881,10 @@ def render_compres_super_interface():
     with col_hdr4:
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
         uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
+        with st.popover("📷 Escanejar amb càmera"):
+            camera_file = st.camera_input("Fes una foto al tiquet")
+        if camera_file is not None:
+            uploaded_file = camera_file
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
             if st.session_state.get("processed_file_id") != file_id:
