@@ -239,6 +239,8 @@ def check_password():
         st.write("")
         st.markdown("<h2 style='text-align: center; color: #f39c12;'>Accés Protegit</h2>", unsafe_allow_html=True)
         with st.form("login_form"):
+            # Dummy username field to trigger browser password managers
+            st.text_input("Usuari / Nom", value="Admin")
             password = st.text_input("Contrasenya d'accés", type="password")
             submit = st.form_submit_button("Entrar")
             if submit:
