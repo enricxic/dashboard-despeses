@@ -1278,18 +1278,24 @@ def parse_text_ticket(text_content):
                     pes_kg = float(pes_match.group(1).replace(',', '.'))
                     
                 # Extract preu_kg and totLine value from weight line
-                prices_match = list(re.finditer(r'(\d+)[\.,](\d{2})', next_line))
-                if len(prices_match) >= 2:
-                    extracted_preu_kg = float(f"{prices_match[-2].group(1)}.{prices_match[-2].group(2)}")
-                    tot_val = float(f"{prices_match[-1].group(1)}.{prices_match[-1].group(2)}")
-                elif len(prices_match) == 1:
-                    extracted_preu_kg = float(f"{prices_match[0].group(1)}.{prices_match[0].group(2)}")
-                    if pes_kg > 0:
-                        tot_val = round(pes_kg * extracted_preu_kg, 2)
-                    else:
-                        tot_val = extracted_preu_kg
+                match_kg_price = re.search(r'(\d+[\.,]\d{2})\s*(?:€/kg|/kg)', next_line, re.IGNORECASE)
+                if match_kg_price:
+                    extracted_preu_kg = float(match_kg_price.group(1).replace(',', '.'))
                 else:
                     extracted_preu_kg = 0.0
+                    
+                # The total is usually the last number with exactly 2 decimals (ignoring the 3 decimal weight)
+                prices_match = list(re.finditer(r'(\d+)[\.,](\d{2})(?!\d)', next_line))
+                if prices_match:
+                    last_price = float(f"{prices_match[-1].group(1)}.{prices_match[-1].group(2)}")
+                    if match_kg_price and prices_match[-1].start() == match_kg_price.start(1):
+                        # The last price found IS the kg price, which means total price is missing from this line
+                        tot_val = round(pes_kg * extracted_preu_kg, 2)
+                    else:
+                        tot_val = last_price
+                elif extracted_preu_kg > 0 and pes_kg > 0:
+                    tot_val = round(pes_kg * extracted_preu_kg, 2)
+                else:
                     tot_val = 0.0
                 has_next_weight = True
                 
