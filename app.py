@@ -1335,21 +1335,23 @@ def parse_text_ticket(text_content):
             fam, art = 'Pendent', 'pendent'
             nom_super_val = nom_brut
 
-                
-        preu_unitat = preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0)
+        if has_next_weight:
+            preu_unitat = round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0
+            import_total = tot_val
+        else:
+            preu_unitat = preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0)
+            import_total = quantitat * preu_unitat
         
         if preu_unitat > 1000.0:
             preu_unitat = 0.0
-        if tot_val > 1000.0:
-            tot_val = 0.0
+        if import_total > 1000.0:
+            import_total = 0.0
         # Duplicate product price fallback
         if preu_unitat == 0.0 and len(raw_products) > 0:
             prev_item = raw_products[-1]
             if prev_item['article'] == art and art != 'pendent' and prev_item['preuUnit'] > 0.0:
                 preu_unitat = prev_item['preuUnit']
                 
-        import_total = tot_val if has_next_weight else (quantitat * preu_unitat)
-        
         if is_void:
             quantitat = -quantitat
             import_total = -import_total
@@ -2249,9 +2251,12 @@ def render_compres_super_interface():
                         except Exception as e:
                             print(f"Error saving to tb_productes: {e}")
                             
-                        st.session_state["force_article_selection"] = new_art
                         st.toast(f"Article '{new_art}' afegit correctament!")
-                        st.rerun()
+                    else:
+                        st.toast(f"L'article '{new_art}' ja estava afegit prèviament.")
+                        
+                    st.session_state["force_article_selection"] = new_art
+                    st.rerun()
                 else:
                     st.error("El nom de l'article no pot estar buit.")
 
