@@ -1320,11 +1320,11 @@ def parse_text_ticket(text_content):
             fam, art = db_match['familia'], db_match['nomEstandard']
             nom_super_val = db_match.get('nom_super', '')
         else:
-            fam, art = 'Altres', 'varis'
+            fam, art = 'Pendent', 'pendent'
             nom_super_val = nom_brut
 
                 
-        preu_unitat = extracted_preu_kg if has_next_weight and extracted_preu_kg > 0.0 else (preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0))
+        preu_unitat = preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0)
         
         if preu_unitat > 1000.0:
             preu_unitat = 0.0
@@ -1333,7 +1333,7 @@ def parse_text_ticket(text_content):
         # Duplicate product price fallback
         if preu_unitat == 0.0 and len(raw_products) > 0:
             prev_item = raw_products[-1]
-            if prev_item['article'] == art and art != 'varis' and prev_item['preuUnit'] > 0.0:
+            if prev_item['article'] == art and art != 'pendent' and prev_item['preuUnit'] > 0.0:
                 preu_unitat = prev_item['preuUnit']
                 
         import_total = tot_val if has_next_weight else (quantitat * preu_unitat)
@@ -1417,8 +1417,8 @@ def parse_text_ticket(text_content):
             raw_products[best_match_idx]['prom'] += disc['val']
             raw_products[best_match_idx]['totLinea'] = max(0.0, (raw_products[best_match_idx]['quantitat'] * raw_products[best_match_idx]['preuUnit']) - raw_products[best_match_idx]['prom'])
             
-    # Keep recognized items even with 0.0 price, but discard 'varis' with 0.0 or negative price (typically garbage lines)
-    raw_products = [item for item in raw_products if item['article'] != 'varis' or item['totLinea'] > 0.0]
+    # Keep recognized items even with 0.0 price, but discard 'pendent' with 0.0 or negative price (typically garbage lines)
+    raw_products = [item for item in raw_products if item['article'] != 'pendent' or item['totLinea'] > 0.0]
     
     # 5. Sum duplicate products
     res = group_duplicate_ticket_items(raw_products)
@@ -1569,7 +1569,7 @@ def cb_add_ticket_line():
         new_item['nom_super'] = old_item.get('nom_super', '')
         
         # Si era un article no reconegut i ara l'usuari l'ha categoritzat, l'aprenem
-        if old_item.get('article') == 'varis' and art != 'varis' and art != '':
+        if old_item.get('article') == 'pendent' and art != 'pendent' and art != '':
             supermercat = st.session_state.get("ticket_super_val", "Desconegut")
             nom_brut = new_item['nom_brut']
             if nom_brut:
@@ -2333,9 +2333,15 @@ def render_compres_super_interface():
                 with cols[0]:
                     _cell(f"{i+1}")
                 with cols[1]:
-                    _cell(item["familia"])
+                    if item["familia"] == 'Pendent':
+                        _cell("Pendent", color="#ef4444", bold=True)
+                    else:
+                        _cell(item["familia"])
                 with cols[2]:
-                    _cell(item["article"])
+                    if item["article"] == 'pendent':
+                        _cell("pendent", color="#ef4444", bold=True)
+                    else:
+                        _cell(item["article"])
                 with cols[3]:
                     p_str = str(item['pes']).strip()
                     if p_str.replace('.', '', 1).isdigit() and float(p_str) > 0:
