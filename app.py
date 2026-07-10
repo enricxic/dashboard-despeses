@@ -1486,8 +1486,8 @@ def cb_edit_ticket_item(idx):
     if "finalize_error" in st.session_state:
         del st.session_state["finalize_error"]
     item = st.session_state["ticket_items"][idx]
-    st.session_state["manual_fam_selectbox"] = item['familia']
-    st.session_state["manual_art_selectbox"] = item['article']
+    st.session_state["manual_fam_selectbox"] = item['familia'] if item['familia'] != 'Pendent' else ""
+    st.session_state["manual_art_selectbox"] = item['article'] if item['article'] != 'pendent' else ""
     st.session_state["manual_pes_num"] = str(item['pes'])
     st.session_state["manual_qty_num"] = float(item['quantitat'])
     st.session_state["manual_preu_num"] = float(item['preuUnit'])
