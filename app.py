@@ -1,4 +1,6 @@
 import streamlit as st
+import scanner
+import io
 import pandas as pd
 import google.generativeai as genai
 import json
@@ -1568,6 +1570,8 @@ def cb_clear_ticket():
     st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
+    if "scanned_file" in st.session_state:
+        del st.session_state["scanned_file"]
     # Reset manual inputs
     st.session_state["manual_pes_num"] = "0"
     st.session_state["manual_qty_num"] = 1.0
@@ -1764,6 +1768,8 @@ def cb_finalize_ticket():
     st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
+    if "scanned_file" in st.session_state:
+        del st.session_state["scanned_file"]
     # Reset manual inputs
     st.session_state["manual_pes_num"] = "0"
     st.session_state["manual_qty_num"] = 1.0
@@ -1883,7 +1889,23 @@ def render_compres_super_interface():
         uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
         with st.popover("📷 Escanejar amb càmera"):
             camera_file = st.camera_input("Fes una foto al tiquet")
-        if camera_file is not None:
+        
+        if st.button("🖨️ Escanejar (HP Scanjet)"):
+            with st.spinner("Obrint escàner (busca la finestra al Windows)..."):
+                scanned_path = scanner.scan_ticket()
+                if scanned_path:
+                else:
+                    st.error("L'escàner HP només funciona si executes l'app localment, no des del núvol.")
+                    with open(scanned_path, "rb") as f:
+                        file_bytes = f.read()
+                    file_obj = io.BytesIO(file_bytes)
+                    file_obj.name = "hp_scanjet_ticket.jpg"
+                    file_obj.size = len(file_bytes)
+                    st.session_state["scanned_file"] = file_obj
+                    st.rerun()
+        if st.session_state.get("scanned_file") is not None:
+            uploaded_file = st.session_state["scanned_file"]
+        elif camera_file is not None:
             uploaded_file = camera_file
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
