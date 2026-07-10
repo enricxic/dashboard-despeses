@@ -1890,34 +1890,6 @@ def render_compres_super_interface():
         with st.popover("📷 Escanejar amb càmera"):
             camera_file = st.camera_input("Fes una foto al tiquet")
         
-        if st.button("🖨️ Escanejar (HP Scanjet)"):
-            with st.spinner("Obrint escàner (busca la finestra al Windows)..."):
-                import os
-                super_val = st.session_state.get("ticket_super_widget", st.session_state.get("ticket_super_val"))
-                date_val = st.session_state.get("ticket_date_widget", st.session_state.get("ticket_date"))
-                if not super_val or super_val == "--- Tria un Súper ---" or not date_val:
-                    st.error("⚠️ Si us plau, omple el Súper i la Data primer per poder guardar l'arxiu correctament.")
-                    scanned_path = None
-                else:
-                    date_str = date_val.strftime("%d%m%y")
-                    super_clean = "".join(c for c in super_val if c.isalnum() or c in (' ', '_')).replace(' ', '_')
-                    tickets_dir = "E:/Dashboard/tickets"
-                    if not os.path.exists(tickets_dir):
-                        os.makedirs(tickets_dir)
-                    target_path = os.path.join(tickets_dir, f"ticket_{super_clean}_{date_str}.jpg")
-                    scanned_path, scan_error = scanner.scan_ticket(target_path)
-                
-                if scanned_path:
-                    with open(scanned_path, "rb") as f:
-                        file_bytes = f.read()
-                    file_obj = io.BytesIO(file_bytes)
-                    import os
-                    file_obj.name = os.path.basename(scanned_path)
-                    file_obj.size = len(file_bytes)
-                    st.session_state["scanned_file"] = file_obj
-                    st.rerun()
-                elif super_val and super_val != "--- Tria un Súper ---" and date_val:
-                    st.error(f"Error a l'escàner: {scan_error}")
         if st.session_state.get("scanned_file") is not None:
             uploaded_file = st.session_state["scanned_file"]
         elif camera_file is not None:
