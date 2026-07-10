@@ -1571,7 +1571,7 @@ def cb_add_ticket_line():
         # Si era un article no reconegut i ara l'usuari l'ha categoritzat, l'aprenem
         if old_item.get('article') == 'pendent' and art != 'pendent' and art != '':
             supermercat = st.session_state.get("ticket_super_val", "Desconegut")
-            nom_brut = new_item['nom_brut']
+            nom_brut = st.session_state.get("manual_nom_brut_input", new_item['nom_brut'])
             if nom_brut:
                 learn_new_mapping(nom_brut, fam, art, supermercat)
                 
@@ -2196,6 +2196,13 @@ def render_compres_super_interface():
     # Manual Line Input Section
     st.write("")
     st.markdown("##### ➕ Introduir línia manualment")
+    
+    editing_idx = st.session_state.get("editing_ticket_item_idx", None)
+    if editing_idx is not None and 0 <= editing_idx < len(st.session_state.get("ticket_items", [])):
+        ed_item = st.session_state["ticket_items"][editing_idx]
+        if ed_item.get('nom_brut') and ed_item.get('article') == 'pendent':
+            st.text_input("Text original (modifica si cal abans de desar per ensenyar al sistema):", value=ed_item.get('nom_brut'), key="manual_nom_brut_input")
+            
     col_fam, col_art, col_pes, col_qty, col_pct, col_preu, col_prom, col_tot, col_reb, col_add = st.columns(
         [2, 2.2, 1, 1, 0.8, 1, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
     )
@@ -2221,6 +2228,15 @@ def render_compres_super_interface():
                         cat_config["articles_compres"][family].append(new_art)
                         cat_config["articles_compres"][family].sort()
                         save_categories_conceptes(cat_config)
+                        
+                        try:
+                            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                            if supabase:
+                                new_prod_db = {'nom_estandard': new_art, 'familia': family}
+                                supabase.table('tb_productes').insert(new_prod_db).execute()
+                        except Exception as e:
+                            print(f"Error saving to tb_productes: {e}")
+                            
                         st.session_state["manual_art_selectbox"] = new_art
                         st.toast(f"Article '{new_art}' afegit correctament!")
                         st.rerun()
