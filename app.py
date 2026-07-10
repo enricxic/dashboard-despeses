@@ -2251,9 +2251,22 @@ def render_compres_super_interface():
         st.markdown("##### 📝 Línies del Tiquet")
         
         with st.container(height=300):
+            st.markdown("<div class='ticket-lines-container'></div>", unsafe_allow_html=True)
+            st.markdown("""
+            <style>
+            div[data-testid="stVerticalBlock"]:has(.ticket-lines-container) {
+                gap: 0rem !important;
+            }
+            div[data-testid="stVerticalBlock"]:has(.ticket-lines-container) > div {
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+            }
+            div[data-testid="stVerticalBlock"]:has(.ticket-lines-container) hr {
+                margin: 4px 0 !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
             # Render a beautiful Streamlit grid with row-level buttons
-            # Columns layout: index, family, article, weight, qty, unit price, promo, total, rebost, edit, delete
-            st.write("")
             col_headers = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5])
             with col_headers[0]: st.markdown("**#**")
             with col_headers[1]: st.markdown("**FAMÍLIA**")
