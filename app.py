@@ -1320,8 +1320,8 @@ def parse_text_ticket(text_content):
             fam, art = db_match['familia'], db_match['nomEstandard']
             nom_super_val = db_match.get('nom_super', '')
         else:
-            idx += 2 if has_next_weight else 1
-            continue
+            fam, art = 'Altres', 'varis'
+            nom_super_val = nom_brut
 
                 
         preu_unitat = extracted_preu_kg if has_next_weight and extracted_preu_kg > 0.0 else (preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0))
@@ -1501,6 +1501,33 @@ def cb_del_ticket_item(idx):
     st.session_state["ticket_items"].pop(idx)
     st.session_state["editing_ticket_item_idx"] = None
 
+def learn_new_mapping(nom_brut, familia, article, supermercat):
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        if not supabase: return
+        # Trobar id del producte estandard
+        res = supabase.table('tb_productes').select('idProducte').eq('nom_estandard', article).execute()
+        if res.data:
+            id_prod = res.data[0]['idProducte']
+        else:
+            # Crear el producte estandard si no existeix
+            new_prod = {'nom_estandard': article, 'familia': familia}
+            ins = supabase.table('tb_productes').insert(new_prod).execute()
+            if ins.data:
+                id_prod = ins.data[0]['idProducte']
+            else:
+                return
+                
+        # Inserir a tb_noms_producte vinculat al supermercat
+        clean_name = normalitzar_text(nom_brut)
+        exist = supabase.table('tb_noms_producte').select('idNom').eq('nom_super', nom_brut).eq('supermercat', supermercat).execute()
+        if not exist.data:
+            new_nom = {'supermercat': supermercat, 'nom_super': nom_brut, 'nom_super_net': clean_name, 'idProducte': id_prod}
+            supabase.table('tb_noms_producte').insert(new_nom).execute()
+            print(f"Aprés nou producte: {nom_brut} -> {article}")
+    except Exception as e:
+        print(f"Error aprenent producte nou: {e}")
+
 def cb_add_ticket_line():
     if "finalize_error" in st.session_state:
         del st.session_state["finalize_error"]
@@ -1530,11 +1557,24 @@ def cb_add_ticket_line():
         'preuUnit': preu,
         'prom': prom,
         'totLinea': tot,
-        'rebost': 'rebost' if reb else None
+        'rebost': 'rebost' if reb else None,
+        'nom_brut': '',
+        'nom_super': ''
     }
     
     editing_idx = st.session_state.get("editing_ticket_item_idx", None)
     if editing_idx is not None and 0 <= editing_idx < len(st.session_state["ticket_items"]):
+        old_item = st.session_state["ticket_items"][editing_idx]
+        new_item['nom_brut'] = old_item.get('nom_brut', '')
+        new_item['nom_super'] = old_item.get('nom_super', '')
+        
+        # Si era un article no reconegut i ara l'usuari l'ha categoritzat, l'aprenem
+        if old_item.get('article') == 'varis' and art != 'varis' and art != '':
+            supermercat = st.session_state.get("ticket_super_val", "Desconegut")
+            nom_brut = new_item['nom_brut']
+            if nom_brut:
+                learn_new_mapping(nom_brut, fam, art, supermercat)
+                
         st.session_state["ticket_items"][editing_idx] = new_item
         st.session_state["editing_ticket_item_idx"] = None
     else:
