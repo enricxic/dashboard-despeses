@@ -2241,10 +2241,6 @@ def render_compres_super_interface():
                     if family not in cat_config["articles_compres"]:
                         cat_config["articles_compres"][family] = []
                     if new_art not in cat_config["articles_compres"][family]:
-                        cat_config["articles_compres"][family].append(new_art)
-                        cat_config["articles_compres"][family].sort()
-                        save_categories_conceptes(cat_config)
-                        
                         try:
                             supabase = get_supabase_client(st.session_state.get("role", "guest"))
                             if supabase:
@@ -2252,6 +2248,11 @@ def render_compres_super_interface():
                                 max_id = int(df_for_id['idProducte'].max()) if not df_for_id.empty else 0
                                 new_prod_db = {'idProducte': max_id + 1, 'nom_estandard': new_art, 'familia': family}
                                 supabase.table('tb_productes').insert(new_prod_db).execute()
+                                get_tb_productes_cached.clear()
+                                # Actualitzem manualment el json
+                                cat_config["articles_compres"][family].append(new_art)
+                                cat_config["articles_compres"][family].sort()
+                                save_categories_conceptes(cat_config)
                         except Exception as e:
                             print(f"Error saving to tb_productes: {e}")
                             
