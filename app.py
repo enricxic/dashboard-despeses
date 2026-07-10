@@ -1559,6 +1559,7 @@ def cb_recalculate_manual_pct():
 
 def cb_set_date_today():
     st.session_state["ticket_date"] = datetime.today().date()
+    st.session_state["ticket_date_widget"] = datetime.today().date()
 
 def cb_clear_ticket():
     st.session_state["ticket_items"] = []
@@ -1566,7 +1567,10 @@ def cb_clear_ticket():
     st.session_state["manual_pct_num"] = 0.0
     st.session_state["editing_ticket_item_idx"] = None
     st.session_state["ticket_date"] = datetime.today().date()
+    st.session_state["ticket_date_widget"] = datetime.today().date()
     st.session_state["ticket_super_val"] = ""
+    if "ticket_super_widget" in st.session_state:
+        st.session_state["ticket_super_widget"] = ""
     st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
