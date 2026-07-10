@@ -1538,7 +1538,7 @@ def learn_new_mapping(nom_brut, familia, article, supermercat):
         clean_name = normalitzar_text(nom_brut)
         exist = supabase.table('tb_noms_producte').select('idNom').eq('nom_super', nom_brut).eq('supermercat', supermercat).execute()
         if not exist.data:
-            new_nom = {'supermercat': supermercat, 'nom_super': nom_brut, 'nom_super_net': clean_name, 'idProducte': id_prod}
+            new_nom = {'supermercat': supermercat, 'nom_super': nom_brut, 'idProducte': id_prod}
             supabase.table('tb_noms_producte').insert(new_nom).execute()
             print(f"Aprés nou producte: {nom_brut} -> {article}")
     except Exception as e:
