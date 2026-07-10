@@ -1660,6 +1660,10 @@ def cb_finalize_ticket():
         st.session_state["finalize_error"] = "No es pot desar un tiquet buit!"
         return
         
+    ticket_super = st.session_state.get("ticket_super_val", "")
+    if ticket_super:
+        save_unknown_products(items, ticket_super)
+        
     if "finalize_error" in st.session_state:
         del st.session_state["finalize_error"]
         
@@ -1983,6 +1987,7 @@ def render_compres_super_interface():
                         text_content = uploaded_file.read().decode("utf-8")
                         parsed = parse_text_ticket(text_content)
                         st.session_state["ticket_items"] = parsed
+                        save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
                         st.session_state["ticket_msg_success"] = f"Tiquet de text llegit correctament! S'han trobat {len(parsed)} línies."
                         st.rerun()
                     except Exception as e:
@@ -2116,6 +2121,7 @@ def render_compres_super_interface():
                                     
                             parsed = parse_text_ticket(text_content)
                             st.session_state["ticket_items"] = parsed
+                            save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
                             st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit! S'han detectat {len(parsed)} articles."
                             st.rerun()
                     except Exception as e:
