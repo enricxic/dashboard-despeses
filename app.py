@@ -1890,6 +1890,22 @@ def render_compres_super_interface():
         with st.popover("📷 Escanejar amb càmera"):
             camera_file = st.camera_input("Fes una foto al tiquet")
         
+        if st.button("⚡ Llegir últim tiquet escanejat", use_container_width=True):
+            import os, glob, io
+            tickets_dir = "E:/Dashboard/tickets"
+            list_of_files = glob.glob(os.path.join(tickets_dir, '*.jpg')) + glob.glob(os.path.join(tickets_dir, '*.png'))
+            if list_of_files:
+                latest_file = max(list_of_files, key=os.path.getctime)
+                with open(latest_file, "rb") as f:
+                    file_bytes = f.read()
+                file_obj = io.BytesIO(file_bytes)
+                file_obj.name = os.path.basename(latest_file)
+                file_obj.size = len(file_bytes)
+                st.session_state["scanned_file"] = file_obj
+                st.rerun()
+            else:
+                st.warning("No s'ha trobat cap tiquet a la carpeta.")
+        
         if st.session_state.get("scanned_file") is not None:
             uploaded_file = st.session_state["scanned_file"]
         elif camera_file is not None:
