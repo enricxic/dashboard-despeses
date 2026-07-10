@@ -1264,6 +1264,7 @@ def parse_text_ticket(text_content):
         # Check if the NEXT line is a weight line (starts with digit and contains 'kg')
         pes_kg = 0.0
         tot_val = 0.0
+        extracted_preu_kg = 0.0
         has_next_weight = False
         if idx + 1 < len(product_lines_text):
             next_line = product_lines_text[idx + 1]
@@ -1272,18 +1273,20 @@ def parse_text_ticket(text_content):
                 if pes_match:
                     pes_kg = float(pes_match.group(1).replace(',', '.'))
                     
-                # Extract totLine value from weight line
-                s_end = re.sub(r'\s+[A-Z8]\s*$', '', next_line, flags=re.IGNORECASE).strip()
-                price_end_match = re.search(r'(\d+)\s*[,\.\s]\s*(\d)(?:\s*(\d))?\s*$', s_end)
-                if price_end_match:
-                    d1 = price_end_match.group(1)
-                    d2 = price_end_match.group(2)
-                    d3 = price_end_match.group(3) if price_end_match.group(3) else '0'
-                    tot_val = float(f"{d1}.{d2}{d3}")
+                # Extract preu_kg and totLine value from weight line
+                prices_match = list(re.finditer(r'(\d+)[\.,](\d{2})', next_line))
+                if len(prices_match) >= 2:
+                    extracted_preu_kg = float(f"{prices_match[-2].group(1)}.{prices_match[-2].group(2)}")
+                    tot_val = float(f"{prices_match[-1].group(1)}.{prices_match[-1].group(2)}")
+                elif len(prices_match) == 1:
+                    extracted_preu_kg = float(f"{prices_match[0].group(1)}.{prices_match[0].group(2)}")
+                    if pes_kg > 0:
+                        tot_val = round(pes_kg * extracted_preu_kg, 2)
+                    else:
+                        tot_val = extracted_preu_kg
                 else:
-                    price_end_match_std = list(re.finditer(r'(\d+)[\.,](\d{2})', s_end))
-                    if price_end_match_std:
-                        tot_val = float(f"{price_end_match_std[-1].group(1)}.{price_end_match_std[-1].group(2)}")
+                    extracted_preu_kg = 0.0
+                    tot_val = 0.0
                 has_next_weight = True
                 
         # Resolve quantities (e.g. '3 x' or just '3 ' at start of line for Mercadona)
@@ -1320,7 +1323,7 @@ def parse_text_ticket(text_content):
             continue
 
                 
-        preu_unitat = tot_val if has_next_weight and quantitat == 1 else (preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0))
+        preu_unitat = extracted_preu_kg if has_next_weight and extracted_preu_kg > 0.0 else (preu if preu > 0.0 else (round(tot_val / quantitat, 2) if tot_val > 0.0 else 0.0))
         
         if preu_unitat > 1000.0:
             preu_unitat = 0.0
