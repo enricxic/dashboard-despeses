@@ -1030,8 +1030,12 @@ def find_product_in_db(product_name, supermercat, df_mapping):
 
 def group_duplicate_ticket_items(items):
     grouped = {}
-    for item in items:
-        key = (item['familia'], item['article'], item['preuUnit'])
+    for i, item in enumerate(items):
+        if item['article'] == 'pendent':
+            key = (item['familia'], item['article'], item['preuUnit'], i)
+        else:
+            key = (item['familia'], item['article'], item['preuUnit'])
+        
         if key not in grouped:
             grouped[key] = {
                 'familia': item['familia'],
@@ -2200,8 +2204,8 @@ def render_compres_super_interface():
     editing_idx = st.session_state.get("editing_ticket_item_idx", None)
     if editing_idx is not None and 0 <= editing_idx < len(st.session_state.get("ticket_items", [])):
         ed_item = st.session_state["ticket_items"][editing_idx]
-        if ed_item.get('nom_brut') and ed_item.get('article') == 'pendent':
-            st.text_input("Text original (modifica si cal abans de desar per ensenyar al sistema):", value=ed_item.get('nom_brut'), key="manual_nom_brut_input")
+        if ed_item.get('article') == 'pendent':
+            st.text_input("Text original (modifica si cal abans de desar per ensenyar al sistema):", value=ed_item.get('nom_brut', ''), key="manual_nom_brut_input")
             
     col_fam, col_art, col_pes, col_qty, col_pct, col_preu, col_prom, col_tot, col_reb, col_add = st.columns(
         [2, 2.2, 1, 1, 0.8, 1, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
