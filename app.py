@@ -1893,8 +1893,8 @@ def render_compres_super_interface():
         if st.button("🖨️ Escanejar (HP Scanjet)"):
             with st.spinner("Obrint escàner (busca la finestra al Windows)..."):
                 import os
-                super_val = st.session_state.get("ticket_super_sel")
-                date_val = st.session_state.get("ticket_date")
+                super_val = st.session_state.get("ticket_super_widget", st.session_state.get("ticket_super_val"))
+                date_val = st.session_state.get("ticket_date_widget", st.session_state.get("ticket_date"))
                 if not super_val or super_val == "--- Tria un Súper ---" or not date_val:
                     st.error("⚠️ Si us plau, omple el Súper i la Data primer per poder guardar l'arxiu correctament.")
                     scanned_path = None
@@ -2077,7 +2077,7 @@ def render_compres_super_interface():
     with col_row2_1:
         col_d1, col_d2 = st.columns([3, 1], vertical_alignment="bottom")
         with col_d1:
-            ticket_date = st.date_input("Data:", value=st.session_state.get("ticket_date", None), format="DD/MM/YYYY")
+            ticket_date = st.date_input("Data:", value=st.session_state.get("ticket_date", None), format="DD/MM/YYYY", key="ticket_date_widget")
             st.session_state["ticket_date"] = ticket_date
         with col_d2:
             st.button("Avui", key="btn_avui", on_click=cb_set_date_today)
@@ -2093,7 +2093,7 @@ def render_compres_super_interface():
             if default_super not in super_options:
                 super_options.append(default_super)
             def_idx = super_options.index(default_super)
-            ticket_super = st.selectbox("Super:", super_options, index=def_idx)
+            ticket_super = st.selectbox("Super:", super_options, index=def_idx, key="ticket_super_widget")
             st.session_state["ticket_super_val"] = ticket_super
         with col_s2:
             if st.button("Nou", key="btn_nou_super"):
