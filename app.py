@@ -1525,9 +1525,7 @@ def learn_new_mapping(nom_brut, familia, article, supermercat):
             id_prod = res.data[0]['idProducte']
         else:
             # Crear el producte estandard si no existeix
-            df_for_id = fetch_all_supabase(supabase, 'tb_productes')
-            max_id = int(df_for_id['idProducte'].max()) if not df_for_id.empty else 0
-            new_prod = {'idProducte': max_id + 1, 'nom_estandard': article, 'familia': familia}
+            new_prod = {'nom_estandard': article, 'familia': familia}
             ins = supabase.table('tb_productes').insert(new_prod).execute()
             if ins.data:
                 id_prod = ins.data[0]['idProducte']
@@ -2250,9 +2248,7 @@ def render_compres_super_interface():
                         try:
                             supabase = get_supabase_client(st.session_state.get("role", "guest"))
                             if supabase:
-                                df_for_id = fetch_all_supabase(supabase, 'tb_productes')
-                                max_id = int(df_for_id['idProducte'].max()) if not df_for_id.empty else 0
-                                new_prod_db = {'idProducte': max_id + 1, 'nom_estandard': new_art, 'familia': family}
+                                new_prod_db = {'nom_estandard': new_art, 'familia': family}
                                 supabase.table('tb_productes').insert(new_prod_db).execute()
                                 get_tb_productes_cached.clear()
                                 # Actualitzem manualment el json
@@ -4034,8 +4030,7 @@ if tab_rebost:
                                 if st.button("Guardar Canvis", key=f"btn_save_{row['idNom']}", type="primary"):
                                     if new_prod_name.strip():
                                         # Create new product
-                                        max_id = int(df_prods['idProducte'].max()) if not df_prods.empty else 0
-                                        res = supabase.table('tb_productes').insert({'idProducte': max_id + 1, 'nom_estandard': new_prod_name.strip(), 'familia': new_fam}).execute()
+                                        res = supabase.table('tb_productes').insert({'nom_estandard': new_prod_name.strip(), 'familia': new_fam}).execute()
                                         if res.data:
                                             new_id = res.data[0]['idProducte']
                                             supabase.table('tb_noms_producte').update({'idProducte': new_id}).eq('idNom', row['idNom']).execute()
