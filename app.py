@@ -1320,6 +1320,7 @@ def parse_text_ticket(text_content):
             fam, art = db_match['familia'], db_match['nomEstandard']
             nom_super_val = db_match.get('nom_super', '')
         else:
+            idx += 2 if has_next_weight else 1
             continue
 
                 
