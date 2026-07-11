@@ -1541,6 +1541,42 @@ def parse_novavenda_ticket(text_content):
     return res
 
 def parse_text_ticket(text_content):
+    import re
+    from datetime import datetime
+    
+    # 1. Extract Date if possible
+    found_date = None
+    for match in re.finditer(r'\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b', text_content):
+        try:
+            d_val, m_val, y_val = map(int, match.groups())
+            if 1980 <= y_val <= 2090 and 1 <= m_val <= 12 and 1 <= d_val <= 31:
+                found_date = datetime(y_val, m_val, d_val).date()
+                break
+        except ValueError:
+            continue
+    
+    if not found_date:
+        for match in re.finditer(r'\b(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b', text_content):
+            try:
+                y_val = int(match.group(1))
+                m_val = int(match.group(2))
+                d_val = int(match.group(3))
+                found_date = datetime(y_val, m_val, d_val).date()
+                break
+            except ValueError:
+                continue
+                
+    if found_date:
+        st.session_state["ticket_date"] = found_date
+        st.session_state["ticket_date_widget"] = found_date
+        
+    # 2. Extract Supermercat
+    for sp in get_config_supers():
+        if sp.lower() in text_content.lower():
+            st.session_state["ticket_super_val"] = sp
+            st.session_state["ticket_super_widget"] = sp
+            break
+            
     ticket_super = st.session_state.get("ticket_super_val", "Dia").lower()
     
     if "novavenda" in ticket_super:
