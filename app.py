@@ -650,18 +650,15 @@ def append_to_db(df_new, table_name, state_key):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         supabase.table(table_name).insert(json.loads(df_new.to_json(orient='records', date_format='iso'))).execute()
-        log_action(table_name, 'INSERT_BULK', {'count': len(df_new)})
+        details = {'count': len(df_new)}
+        if table_name == 'compresSuper' and 'super' in df_new.columns:
+            supers = df_new['super'].unique().tolist()
+            details['supermercat'] = supers[0] if len(supers) == 1 else supers
+        log_action(table_name, 'INSERT_BULK', details)
+        
+        st.cache_data.clear()
         if state_key and state_key in st.session_state:
-            df = st.session_state[state_key]
-            df_new_local = df_new.copy()
-            if table_name == 'despeses':
-                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['Data'], format='%d/%m/%Y', errors='coerce')
-                df_new_local['date_score'] = df_new_local['any'].astype(int) * 12 + df_new_local['mes'].map(lambda x: MONTHS_MAP.get(str(x).lower(), 12))
-            elif table_name in ['ingressos', 'pagaments']:
-                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['Data'], format='%d/%m/%Y', errors='coerce')
-            elif table_name in ['compresSuper', 'gasolina']:
-                df_new_local['parsed_date'] = pd.to_datetime(df_new_local['data'], format='%d/%m/%Y', errors='coerce')
-            st.session_state[state_key] = pd.concat([df, df_new_local], ignore_index=True)
+            del st.session_state[state_key]
             
         tracker_obj = get_db_tracker()
         tracker_obj.update()
@@ -1592,6 +1589,13 @@ def cb_add_ticket_line():
             supermercat = st.session_state.get("ticket_super_val", "Desconegut")
             nom_brut = st.session_state.get("manual_nom_brut_input", new_item['nom_brut'])
             if nom_brut:
+                if nom_brut != old_item.get('nom_brut', ''):
+                    try:
+                        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                        if supabase:
+                            supabase.table('tb_noms_producte').delete().eq('nom_super', old_item.get('nom_brut')).eq('supermercat', supermercat).execute()
+                    except Exception:
+                        pass
                 learn_new_mapping(nom_brut, fam, art, supermercat)
                 
         st.session_state["ticket_items"][editing_idx] = new_item
@@ -1664,30 +1668,29 @@ def cb_finalize_ticket():
         return
         
     ticket_super = st.session_state.get("ticket_super_val", "")
-    if ticket_super:
-        save_unknown_products(items, ticket_super)
+    if not ticket_super:
+        st.session_state["finalize_error"] = "Si us plau, selecciona un Supermercat abans de desar el tiquet!"
+        return
+        
+    ticket_date = st.session_state.get("ticket_date", None)
+    if not ticket_date:
+        st.session_state["finalize_error"] = "Si us plau, especifica la Data del tiquet!"
+        return
+        
+    # Salvem els articles desconeguts si n'hi ha (ara que tenim supermercat confirmat)
+    save_unknown_products(items, ticket_super)
         
     if "finalize_error" in st.session_state:
         del st.session_state["finalize_error"]
         
     discount = st.session_state.get("ticket_discount", 0.0)
     send_expense = st.session_state.get("ticket_send_expense", True)
-    
-    ticket_date = st.session_state.get("ticket_date", None)
-    if not ticket_date:
-        st.session_state["finalize_error"] = "Si us plau, especifica la Data del tiquet!"
-        return
         
     if isinstance(ticket_date, datetime):
         ticket_date = ticket_date.date()
         
     mes_val = month_translations[CATALAN_MONTHS[ticket_date.month - 1]]
     any_val = ticket_date.year
-    
-    ticket_super = st.session_state.get("ticket_super_val", "")
-    if not ticket_super:
-        st.session_state["finalize_error"] = "Si us plau, selecciona un Supermercat!"
-        return
         
     bank_val = st.session_state.get("ticket_bank_sel", "")
     pay_method_val = st.session_state.get("ticket_pay_method_sel", "")
