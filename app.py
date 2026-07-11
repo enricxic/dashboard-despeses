@@ -1267,6 +1267,11 @@ def parse_text_ticket(text_content):
             idx += 1
             continue
             
+        # Skip Novavenda barcode + quantity lines (e.g. "5449000275165 1 x ")
+        if re.match(r'^\d{7,14}\s+\d+\s*[xX]$', nom_brut):
+            idx += 1
+            continue
+            
         # Check if the NEXT line is a weight line (starts with digit and contains 'kg')
         pes_kg = 0.0
         tot_val = 0.0
