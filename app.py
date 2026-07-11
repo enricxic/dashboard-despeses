@@ -1100,7 +1100,7 @@ def save_unknown_products(parsed_items, supermercat):
     except Exception as e:
         print(f"Error saving unknown products: {e}")
 
-def parse_text_ticket(text_content):
+def parse_default_ticket(text_content):
     # Log Streamlit OCR text
     try:
         import os
@@ -1449,6 +1449,106 @@ def parse_text_ticket(text_content):
         pass
     return res
  
+
+def parse_novavenda_ticket(text_content):
+    import re
+    df_mapping = load_product_mappings()
+    lines = text_content.split('\n')
+    
+    try:
+        st.session_state["ticket_discount"] = 0.0
+    except Exception:
+        pass
+        
+    raw_products = []
+    curr_item = None
+    
+    for line in lines:
+        line_clean = line.strip()
+        if not line_clean: continue
+        line_upper = line_clean.upper()
+        
+        # Stop processing at TOTAL or VAT section
+        if 'TOTAL ' in line_upper or line_upper == 'TOTAL' or 'BASE TYPE' in line_upper or 'QUOTA' in line_upper:
+            if curr_item:
+                raw_products.append(curr_item)
+                curr_item = None
+            break
+            
+        # Ignore NIF, header lines
+        if any(kw in line_upper for kw in ['NOVAVENDA', 'COMERBAL', 'NIF', 'C/.', 'FACTURA']):
+            continue
+            
+        # Check if line is barcode + quantity (e.g. "5449000275165 1 x 0,92 €")
+        match_barcode = re.search(r'^(\d{7,14})\s+(\d+)\s*[xX]\s*(\d+[\.,]\d{2})', line_clean)
+        if match_barcode:
+            if curr_item:
+                curr_item['quantitat'] = int(match_barcode.group(2))
+                curr_item['preuUnit'] = float(match_barcode.group(3).replace(',', '.'))
+            continue
+            
+        # Check if line is an offer (starts with OFERTA)
+        if line_upper.startswith('OFERTA') or 'PREU NORMAL' in line_upper:
+            continue
+            
+        # Check if line ends with a price
+        match_price = re.search(r'^(.*?)\s+(\d+[\.,]\d{2})(?:\s*[€E])?$', line_clean)
+        if match_price:
+            nom_brut = match_price.group(1).strip()
+            # If name is just numbers or very short, probably garbage
+            if len(nom_brut) < 3 or re.match(r'^[\d\s,.]+$', nom_brut):
+                continue
+                
+            tot_val = float(match_price.group(2).replace(',', '.'))
+            
+            if curr_item:
+                # Resolve unit price if quantity wasn't found
+                if curr_item['preuUnit'] == curr_item['totLinea'] and curr_item['quantitat'] > 1:
+                    curr_item['preuUnit'] = round(curr_item['totLinea'] / curr_item['quantitat'], 2)
+                raw_products.append(curr_item)
+                
+            curr_item = {
+                'familia': 'Pendent',
+                'article': 'pendent',
+                'pes': 0,
+                'quantitat': 1,
+                'preuUnit': tot_val,
+                'prom': 0.0,
+                'totLinea': tot_val,
+                'rebost': None,
+                'nom_brut': nom_brut,
+                'nom_super': nom_brut
+            }
+            
+    if curr_item:
+        if curr_item['preuUnit'] == curr_item['totLinea'] and curr_item['quantitat'] > 1:
+            curr_item['preuUnit'] = round(curr_item['totLinea'] / curr_item['quantitat'], 2)
+        raw_products.append(curr_item)
+        
+    # Match against DB
+    for item in raw_products:
+        db_match = find_product_in_db(item['nom_brut'], "Novavenda", df_mapping)
+        if db_match:
+            item['familia'] = db_match['familia']
+            item['article'] = db_match['nomEstandard']
+            item['nom_super'] = db_match.get('nom_super', item['nom_brut'])
+            
+    # Remove ghost items with 0 total price
+    raw_products = [item for item in raw_products if item['totLinea'] > 0.0]
+            
+    # Group duplicates
+    res = group_duplicate_ticket_items(raw_products)
+    return res
+
+def parse_text_ticket(text_content):
+    ticket_super = st.session_state.get("ticket_super_val", "Dia").lower()
+    
+    if "novavenda" in ticket_super:
+        return parse_novavenda_ticket(text_content)
+    
+    # Fallback for all other supermarkets (Dia, Mercadona, BonArea, Clarel)
+    return parse_default_ticket(text_content)
+
 def simulate_ocr_image(super_name):
     mock_products = {
         "AreaGuissona": [
