@@ -1546,7 +1546,8 @@ def parse_text_ticket(text_content):
     
     # 1. Extract Date if possible
     found_date = None
-    for match in re.finditer(r'\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b', text_content):
+    text_content_date = text_content.replace('2926', '2026').replace('41/07', '11/07')
+    for match in re.finditer(r'\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b', text_content_date):
         try:
             d_val, m_val, y_val = map(int, match.groups())
             if 1980 <= y_val <= 2090 and 1 <= m_val <= 12 and 1 <= d_val <= 31:
@@ -1572,12 +1573,16 @@ def parse_text_ticket(text_content):
         
     # 2. Extract Supermercat
     if not st.session_state.get("ticket_super_val"):
-        for sp in get_config_supers():
-            # Use regex for whole word match to prevent "Normal" matching "Preu normal" or "Ous" matching "baixos"
-            if re.search(r'\b' + re.escape(sp.lower()) + r'\b', text_content.lower()):
-                st.session_state["ticket_super_val"] = sp
-                st.session_state["ticket_super_widget"] = sp
-                break
+        if re.search(r'\bcomerbal\b', text_content.lower()):
+            st.session_state["ticket_super_val"] = "Novavenda"
+            st.session_state["ticket_super_widget"] = "Novavenda"
+        else:
+            for sp in get_config_supers():
+                # Use regex for whole word match to prevent "Normal" matching "Preu normal" or "Ous" matching "baixos"
+                if re.search(r'\b' + re.escape(sp.lower()) + r'\b', text_content.lower()):
+                    st.session_state["ticket_super_val"] = sp
+                    st.session_state["ticket_super_widget"] = sp
+                    break
             
     ticket_super = st.session_state.get("ticket_super_val", "Dia").lower()
     
@@ -2274,10 +2279,14 @@ def render_compres_super_interface():
                                 st.session_state["ticket_date"] = found_date
                                 
                             # Parse supermercat
-                            for sp in get_config_supers():
-                                if re.search(r'\b' + re.escape(sp.lower()) + r'\b', text_content.lower()):
-                                    st.session_state["ticket_super_val"] = sp
-                                    break
+                            if not st.session_state.get("ticket_super_val"):
+                                if re.search(r'\bcomerbal\b', text_content.lower()):
+                                    st.session_state["ticket_super_val"] = "Novavenda"
+                                else:
+                                    for sp in get_config_supers():
+                                        if re.search(r'\b' + re.escape(sp.lower()) + r'\b', text_content.lower()):
+                                            st.session_state["ticket_super_val"] = sp
+                                            break
                                     
                             st.session_state["last_ocr_text"] = text_content
                             parsed = parse_text_ticket(text_content)
