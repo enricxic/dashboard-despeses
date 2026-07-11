@@ -1571,11 +1571,12 @@ def parse_text_ticket(text_content):
         st.session_state["ticket_date_widget"] = found_date
         
     # 2. Extract Supermercat
-    for sp in get_config_supers():
-        if sp.lower() in text_content.lower():
-            st.session_state["ticket_super_val"] = sp
-            st.session_state["ticket_super_widget"] = sp
-            break
+    if not st.session_state.get("ticket_super_val"):
+        for sp in get_config_supers():
+            if sp.lower() in text_content.lower():
+                st.session_state["ticket_super_val"] = sp
+                st.session_state["ticket_super_widget"] = sp
+                break
             
     ticket_super = st.session_state.get("ticket_super_val", "Dia").lower()
     
@@ -2112,6 +2113,9 @@ def render_compres_super_interface():
                 file_obj.name = os.path.basename(latest_file)
                 file_obj.size = len(file_bytes)
                 st.session_state["scanned_file"] = file_obj
+                st.session_state["ticket_super_val"] = ""
+                if "ticket_super_widget" in st.session_state:
+                    del st.session_state["ticket_super_widget"]
                 st.rerun()
             else:
                 st.warning("No s'ha trobat cap tiquet a la carpeta.")
@@ -2127,6 +2131,7 @@ def render_compres_super_interface():
                 if uploaded_file.name.endswith(".txt"):
                     try:
                         text_content = uploaded_file.read().decode("utf-8")
+                        st.session_state["last_ocr_text"] = text_content
                         parsed = parse_text_ticket(text_content)
                         st.session_state["ticket_items"] = parsed
                         save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
@@ -2261,6 +2266,7 @@ def render_compres_super_interface():
                                     st.session_state["ticket_super_val"] = sp
                                     break
                                     
+                            st.session_state["last_ocr_text"] = text_content
                             parsed = parse_text_ticket(text_content)
                             st.session_state["ticket_items"] = parsed
                             save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
@@ -2291,7 +2297,16 @@ def render_compres_super_interface():
             if default_super not in super_options:
                 super_options.append(default_super)
             def_idx = super_options.index(default_super)
-            ticket_super = st.selectbox("Super:", super_options, index=def_idx, key="ticket_super_widget")
+            
+            def cb_super_changed():
+                new_super = st.session_state["ticket_super_widget"]
+                st.session_state["ticket_super_val"] = new_super
+                if "last_ocr_text" in st.session_state and st.session_state["last_ocr_text"]:
+                    parsed = parse_text_ticket(st.session_state["last_ocr_text"])
+                    st.session_state["ticket_items"] = parsed
+                    save_unknown_products(parsed, new_super)
+            
+            ticket_super = st.selectbox("Super:", super_options, index=def_idx, key="ticket_super_widget", on_change=cb_super_changed)
             st.session_state["ticket_super_val"] = ticket_super
         with col_s2:
             if st.button("Nou", key="btn_nou_super"):
