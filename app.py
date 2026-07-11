@@ -2133,6 +2133,12 @@ def render_compres_super_interface():
                         text_content = uploaded_file.read().decode("utf-8")
                         st.session_state["last_ocr_text"] = text_content
                         parsed = parse_text_ticket(text_content)
+                        
+                        if not st.session_state.get("ticket_super_val"):
+                            st.session_state["ticket_msg_error"] = "⚠️ No s'ha detectat automàticament el supermercat. Si us plau, selecciona'l al desplegable inferior perquè es puguin processar els articles."
+                            st.session_state["ticket_items"] = []
+                            st.rerun()
+                            
                         st.session_state["ticket_items"] = parsed
                         save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
                         st.session_state["ticket_msg_success"] = f"Tiquet de text llegit correctament! S'han trobat {len(parsed)} línies."
@@ -2268,6 +2274,12 @@ def render_compres_super_interface():
                                     
                             st.session_state["last_ocr_text"] = text_content
                             parsed = parse_text_ticket(text_content)
+                            
+                            if not st.session_state.get("ticket_super_val"):
+                                st.session_state["ticket_msg_error"] = "⚠️ No s'ha detectat automàticament el supermercat. Si us plau, selecciona'l al desplegable inferior perquè es puguin processar els articles."
+                                st.session_state["ticket_items"] = []
+                                st.rerun()
+                                
                             st.session_state["ticket_items"] = parsed
                             save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
                             st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit! S'han detectat {len(parsed)} articles."
@@ -2305,6 +2317,9 @@ def render_compres_super_interface():
                     parsed = parse_text_ticket(st.session_state["last_ocr_text"])
                     st.session_state["ticket_items"] = parsed
                     save_unknown_products(parsed, new_super)
+                    if "ticket_msg_error" in st.session_state:
+                        del st.session_state["ticket_msg_error"]
+                    st.session_state["ticket_msg_success"] = f"Tiquet reprocessat correctament com a {new_super}. S'han detectat {len(parsed)} articles."
             
             ticket_super = st.selectbox("Super:", super_options, index=def_idx, key="ticket_super_widget", on_change=cb_super_changed)
             st.session_state["ticket_super_val"] = ticket_super
