@@ -2117,6 +2117,12 @@ def render_compres_super_interface():
                 st.session_state["ticket_super_val"] = ""
                 if "ticket_super_widget" in st.session_state:
                     del st.session_state["ticket_super_widget"]
+                if "ticket_items" in st.session_state:
+                    st.session_state["ticket_items"] = []
+                if "ticket_msg_success" in st.session_state:
+                    del st.session_state["ticket_msg_success"]
+                if "ticket_msg_error" in st.session_state:
+                    del st.session_state["ticket_msg_error"]
                 st.rerun()
             else:
                 st.warning("No s'ha trobat cap tiquet a la carpeta.")
@@ -2269,7 +2275,7 @@ def render_compres_super_interface():
                                 
                             # Parse supermercat
                             for sp in get_config_supers():
-                                if sp.lower() in text_content.lower():
+                                if re.search(r'\b' + re.escape(sp.lower()) + r'\b', text_content.lower()):
                                     st.session_state["ticket_super_val"] = sp
                                     break
                                     
