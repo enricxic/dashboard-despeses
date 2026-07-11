@@ -1573,7 +1573,8 @@ def parse_text_ticket(text_content):
     # 2. Extract Supermercat
     if not st.session_state.get("ticket_super_val"):
         for sp in get_config_supers():
-            if sp.lower() in text_content.lower():
+            # Use regex for whole word match to prevent "Normal" matching "Preu normal" or "Ous" matching "baixos"
+            if re.search(r'\b' + re.escape(sp.lower()) + r'\b', text_content.lower()):
                 st.session_state["ticket_super_val"] = sp
                 st.session_state["ticket_super_widget"] = sp
                 break
@@ -1775,7 +1776,6 @@ def cb_clear_ticket():
     st.session_state["ticket_super_val"] = ""
     if "ticket_super_widget" in st.session_state:
         st.session_state["ticket_super_widget"] = ""
-    st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
     if "scanned_file" in st.session_state:
@@ -2113,6 +2113,7 @@ def render_compres_super_interface():
                 file_obj.name = os.path.basename(latest_file)
                 file_obj.size = len(file_bytes)
                 st.session_state["scanned_file"] = file_obj
+                st.session_state["processed_file_id"] = None
                 st.session_state["ticket_super_val"] = ""
                 if "ticket_super_widget" in st.session_state:
                     del st.session_state["ticket_super_widget"]
