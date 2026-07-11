@@ -662,7 +662,7 @@ def append_to_db(df_new, table_name, state_key):
             
         tracker_obj = get_db_tracker()
         tracker_obj.update()
-        st.session_state["last_synced_time"] = tracker_obj.last_update
+        st.session_state["dfs_initialized"] = False
         load_dashboard_data.clear()
         return True
     except Exception as e:
