@@ -2282,10 +2282,12 @@ def render_compres_super_interface():
                             if not st.session_state.get("ticket_super_val"):
                                 if re.search(r'\bcomerbal\b', text_content.lower()):
                                     st.session_state["ticket_super_val"] = "Novavenda"
+                                    st.session_state["ticket_super_widget"] = "Novavenda"
                                 else:
                                     for sp in get_config_supers():
                                         if re.search(r'\b' + re.escape(sp.lower()) + r'\b', text_content.lower()):
                                             st.session_state["ticket_super_val"] = sp
+                                            st.session_state["ticket_super_widget"] = sp
                                             break
                                     
                             st.session_state["last_ocr_text"] = text_content
