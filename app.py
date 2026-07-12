@@ -4029,11 +4029,27 @@ with tab_intro:
         # Row 1 (3 columns)
         r1_col1, r1_col2, r1_col3 = st.columns([3, 3, 6])
         with r1_col1:
-            cotxe_val = st.selectbox("Cotxe", sorted(list(df_km['cotxe'].dropna().unique())), key="km_cotxe")
+            cotxe_opts = sorted(list(df_km['cotxe'].dropna().str.lower().unique()))
+            # Remove ibiza from start to prevent it from being default if user wants tivoli
+            def_idx = 0
+            if 'tívoli' in cotxe_opts:
+                def_idx = cotxe_opts.index('tívoli')
+            elif 'tivoli' in cotxe_opts:
+                def_idx = cotxe_opts.index('tivoli')
+            
+            cotxe_val = st.selectbox("Cotxe", cotxe_opts, index=def_idx, key="km_cotxe")
         with r1_col2:
             data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="km_data")
         with r1_col3:
-            ruta_val = st.text_input("Ruta / Destinació", key="km_ruta")
+            ruta_opts = sorted(list(df_km['ruta'].dropna().unique()))
+            if "Nova ruta..." not in ruta_opts:
+                ruta_opts.insert(0, "Nova ruta...")
+            
+            ruta_sel = st.selectbox("Ruta / Destinació", ruta_opts, key="km_ruta_sel")
+            if ruta_sel == "Nova ruta...":
+                ruta_val = st.text_input("Escriu la nova ruta:", key="km_ruta")
+            else:
+                ruta_val = ruta_sel
             
         # Row 2 (2 columns)
         r2_col1, r2_col2 = st.columns(2)
