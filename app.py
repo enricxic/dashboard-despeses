@@ -4064,7 +4064,7 @@ with tab_intro:
             if not df_km_car.empty:
                 last_km = float(df_km_car.dropna(subset=['contador'])['contador'].iloc[0])
                 
-            contador_val = st.number_input("Lectura Odometer", min_value=0.0, value=None, placeholder=f"Última: {last_km:g}", step=1.0, key=f"km_contador_{km_version}")
+            contador_val = st.number_input("Lectura Odometer", min_value=0.0, value=None, placeholder=f"Última: {last_km:g}", step=1.0, key=f"km_odo_{km_version}")
         with r1_col3:
             km_val = max(0.0, contador_val - last_km) if contador_val is not None else 0.0
             st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True, key=f"km_recorreguts_disp_{km_version}")
