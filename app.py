@@ -4056,9 +4056,9 @@ with tab_intro:
             if not df_km_car.empty:
                 last_km = float(df_km_car.dropna(subset=['contador'])['contador'].iloc[0])
                 
-            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=last_km, step=1.0, key=f"km_contador_{km_version}")
+            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=None, placeholder=f"Última: {last_km:g}", step=1.0, key=f"km_contador_{km_version}")
         with r2_col2:
-            km_val = max(0.0, contador_val - last_km)
+            km_val = max(0.0, contador_val - last_km) if contador_val is not None else 0.0
             st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True, key=f"km_recorreguts_disp_{km_version}")
             
         col_btns = st.columns([2.5, 2.0, 7.5])
@@ -4070,20 +4070,25 @@ with tab_intro:
             clear_form_state("km_")
             st.rerun()
         if submitted:
-            new_row = {
-                'idRuta': int(df_km['idRuta'].max() + 1) if not df_km.empty else 1,
-                'cotxe': cotxe_val,
-                'data': data_val.strftime('%d/%m/%Y'),
-                'ruta': ruta_val,
-                'contador': int(contador_val),
-                'km': int(km_val)
-            }
-            append_to_db(pd.DataFrame([new_row]), 'kmCotxe', 'df_km')
-            st.success("Ruta desada correctament!")
-            st.session_state["km_ruta_sel"] = "Nova ruta..."
-            st.session_state["km_ruta"] = ""
-            clear_form_state("km_")
-            st.rerun()
+            if contador_val is None or contador_val <= 0:
+                st.error("⚠️ Heu d'introduir la lectura de l'odòmetre vàlida.")
+            elif not ruta_val.strip():
+                st.error("⚠️ Heu d'introduir una ruta.")
+            else:
+                new_row = {
+                    'idRuta': int(df_km['idRuta'].max() + 1) if not df_km.empty else 1,
+                    'cotxe': cotxe_val,
+                    'data': data_val.strftime('%d/%m/%Y'),
+                    'ruta': ruta_val,
+                    'contador': int(contador_val),
+                    'km': int(km_val)
+                }
+                append_to_db(pd.DataFrame([new_row]), 'kmCotxe', 'df_km')
+                st.success("Ruta desada correctament!")
+                st.session_state["km_ruta_sel"] = "Nova ruta..."
+                st.session_state["km_ruta"] = ""
+                clear_form_state("km_")
+                st.rerun()
             
     if data_type == "Km Cotxe":
         st.markdown("<h5 style='color:#f39c12; margin-top: 20px; margin-bottom: 5px;'>📋 Últimes rutes registrades</h5>", unsafe_allow_html=True)
