@@ -4067,7 +4067,7 @@ with tab_intro:
             contador_val = st.number_input("Lectura Odometer", min_value=0.0, value=None, placeholder=f"Última: {last_km:g}", step=1.0, key=f"km_odo_{km_version}")
         with r1_col3:
             km_val = max(0.0, contador_val - last_km) if contador_val is not None else 0.0
-            st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True, key=f"km_recorreguts_disp_{km_version}")
+            st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True)
             
         # Row 2 (2 columns)
         ruta_opts = get_config_routes(df_km)
