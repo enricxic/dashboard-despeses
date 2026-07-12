@@ -4029,15 +4029,7 @@ with tab_intro:
         # Row 1 (3 columns)
         r1_col1, r1_col2, r1_col3 = st.columns([3, 3, 6])
         with r1_col1:
-            cotxe_opts = sorted(list(df_km['cotxe'].dropna().str.lower().unique()))
-            # Remove ibiza from start to prevent it from being default if user wants tivoli
-            def_idx = 0
-            if 'tívoli' in cotxe_opts:
-                def_idx = cotxe_opts.index('tívoli')
-            elif 'tivoli' in cotxe_opts:
-                def_idx = cotxe_opts.index('tivoli')
-            
-            cotxe_val = st.selectbox("Cotxe", cotxe_opts, index=def_idx, key="km_cotxe")
+            cotxe_val = st.text_input("Cotxe", value="tívoli", disabled=True, key="km_cotxe")
         with r1_col2:
             data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="km_data")
         with r1_col3:
