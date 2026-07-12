@@ -2805,7 +2805,12 @@ total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pag
 # Get latest odometer reading
 car_kms_actuals = 0.0
 if not df_km.empty:
-    car_kms_actuals = df_km.dropna(subset=['contador'])['contador'].iloc[0]
+    if 'cotxe' in df_km.columns:
+        df_km_tivoli = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)]
+    else:
+        df_km_tivoli = df_km
+    if not df_km_tivoli.empty:
+        car_kms_actuals = df_km_tivoli.dropna(subset=['contador'])['contador'].iloc[0]
 
 # Make oil change target customizable or saved in session state
 if "kms_canvi_oli" not in st.session_state:
@@ -3147,8 +3152,11 @@ with tab_dash:
         df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
         df_km['parsed_date'] = df_km['data'].apply(parse_excel_date)
         
-        gas_yr = df_gas.groupby(df_gas['parsed_date'].dt.year)['litres'].sum()
-        km_yr = df_km.groupby(df_km['parsed_date'].dt.year)['km'].sum()
+        df_gas_tivoli = df_gas[df_gas['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_gas.columns else df_gas
+        df_km_tivoli = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
+        
+        gas_yr = df_gas_tivoli.groupby(df_gas_tivoli['parsed_date'].dt.year)['litres'].sum()
+        km_yr = df_km_tivoli.groupby(df_km_tivoli['parsed_date'].dt.year)['km'].sum()
         
         consumption = ((gas_yr / km_yr) * 100).dropna().reset_index()
         consumption.columns = ['Any', 'L/100km']
