@@ -2805,7 +2805,7 @@ total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pag
 # Get latest odometer reading
 car_kms_actuals = 0.0
 if not df_km.empty:
-    car_kms_actuals = df_km.dropna(subset=['contador'])['contador'].iloc[-1]
+    car_kms_actuals = df_km.dropna(subset=['contador'])['contador'].iloc[0]
 
 # Make oil change target customizable or saved in session state
 if "kms_canvi_oli" not in st.session_state:
