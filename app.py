@@ -2971,11 +2971,11 @@ with tab_dash:
         sub_desp = year_desp[year_desp['clean_mes'] == m_data]
         sub_desp_inflows = sub_desp[sub_desp['Idcategoria'] != 'op_banc']
         
-        # Fixed incomes = anything categorized as 'ingres_general'
-        ing_fixes = sub_desp_inflows[sub_desp_inflows['Idcategoria'] == 'ingres_general']['import ingrés'].sum()
+        # Fixed incomes = anything categorized as 'ingres_general' or 'ingrés_general'
+        ing_fixes = sub_desp_inflows[sub_desp_inflows['Idcategoria'].isin(['ingres_general', 'ingrés_general'])]['import ingrés'].sum()
         
-        # Extra incomes = anything NOT categorized as 'ingres_general'
-        ing_extres = sub_desp_inflows[~sub_desp_inflows['Idcategoria'].isin(['ingres_general'])]['import ingrés'].sum()
+        # Extra incomes = anything NOT categorized as 'ingres_general' or 'ingrés_general'
+        ing_extres = sub_desp_inflows[~sub_desp_inflows['Idcategoria'].isin(['ingres_general', 'ingrés_general'])]['import ingrés'].sum()
         
         ing_total = ing_fixes + ing_extres
 
@@ -2990,13 +2990,13 @@ with tab_dash:
         exp_rebost = sub_desp[cat_series.str.contains('rebost', case=False, na=False)]['Import càrrec'].sum()
         exp_gasolina = sub_desp[cat_series.str.contains('gasolina', case=False, na=False)]['Import càrrec'].sum()
         exp_restaurant = sub_desp[cat_series.str.contains('restaurant', case=False, na=False)]['Import càrrec'].sum()
-        exp_farmacia = sub_desp[cat_series.str.contains('farmacia', case=False, na=False)]['Import càrrec'].sum()
+        exp_farmacia = sub_desp[cat_series.str.contains('farmacia|farmàcia', case=False, na=False)]['Import càrrec'].sum()
         exp_neteja = sub_desp[cat_series.str.contains('neteja', case=False, na=False)]['Import càrrec'].sum()
         exp_proveidor = sub_desp[cat_series.str.contains('proveidor', case=False, na=False)]['Import càrrec'].sum()
         
         # Varis column sums all remaining categories
         exp_varis = sub_desp[~cat_series.str.contains(
-            'despesa_general|asseguran|menjar|rebost|gasolina|restaurant|farmacia|neteja|proveidor|op_banc|ingres_general|ingres_extra',
+            'despesa_general|asseguran|menjar|rebost|gasolina|restaurant|farmacia|farmàcia|neteja|proveidor|op_banc|ingres_general|ingrés_general|ingres_extra|ingrés_extra',
             case=False, na=False
         )]['Import càrrec'].sum()
         
@@ -3121,7 +3121,7 @@ with tab_dash:
                     # Expenses
                     sub_desp = year_desp_c[year_desp_c['clean_mes'] == m_data]
                     cat_series = sub_desp['Idcategoria'].astype(str)
-                    exp_total = sub_desp[~cat_series.str.contains('op_banc|ingres_general|ingres_extra', case=False, na=False)]['Import càrrec'].sum()
+                    exp_total = sub_desp[~cat_series.str.contains('op_banc|ingres_general|ingrés_general|ingres_extra|ingrés_extra', case=False, na=False)]['Import càrrec'].sum()
                     
                     chart_data.append({
                         'Mes-Any': f"{m_cat.capitalize()[:3]} {str(yr)[2:]}",
@@ -3911,7 +3911,7 @@ with tab_intro:
         with r1_col3:
             import_ing = st.number_input("Import Ingrés (€)", min_value=0.0, step=0.01, key="ing_import")
         with r1_col4:
-            cat_val = st.selectbox("Categoria", ["ingres_general", "ingres_extra"], key="ing_cat")
+            cat_val = st.selectbox("Categoria", ["ingrés_general", "ingrés_extra"], key="ing_cat")
             
         # Row 2 (4 columns)
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
