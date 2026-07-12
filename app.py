@@ -3403,8 +3403,11 @@ with tab_intro:
     def clear_form_state(prefix):
         if prefix == "desp_":
             st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
+        elif prefix == "km_":
+            st.session_state["km_version"] = st.session_state.get("km_version", 0) + 1
+            
         for k in list(st.session_state.keys()):
-            if k.startswith(prefix) and k != "desp_version":
+            if k.startswith(prefix) and k not in ["desp_version", "km_version"]:
                 del st.session_state[k]
     
     data_type = st.selectbox("Tipus de registre", [
@@ -4026,20 +4029,21 @@ with tab_intro:
             st.rerun()
             
     elif data_type == "Km Cotxe":
+        km_version = st.session_state.get("km_version", 0)
         # Row 1 (3 columns)
         r1_col1, r1_col2, r1_col3 = st.columns([3, 3, 6])
         with r1_col1:
-            cotxe_val = st.text_input("Cotxe", value="tívoli", disabled=True, key="km_cotxe")
+            cotxe_val = st.text_input("Cotxe", value="tívoli", disabled=True, key=f"km_cotxe_{km_version}")
         with r1_col2:
-            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="km_data")
+            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"km_data_{km_version}")
         with r1_col3:
             ruta_opts = sorted(list(df_km['ruta'].dropna().unique()))
             if "Nova ruta..." not in ruta_opts:
                 ruta_opts.insert(0, "Nova ruta...")
             
-            ruta_sel = st.selectbox("Ruta / Destinació", ruta_opts, key="km_ruta_sel")
+            ruta_sel = st.selectbox("Ruta / Destinació", ruta_opts, key=f"km_ruta_sel_{km_version}")
             if ruta_sel == "Nova ruta...":
-                ruta_val = st.text_input("Escriu la nova ruta:", key="km_ruta")
+                ruta_val = st.text_input("Escriu la nova ruta:", key=f"km_ruta_{km_version}")
             else:
                 ruta_val = ruta_sel
             
@@ -4052,16 +4056,16 @@ with tab_intro:
             if not df_km_car.empty:
                 last_km = float(df_km_car.dropna(subset=['contador'])['contador'].iloc[0])
                 
-            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=last_km, step=1.0, key="km_contador")
+            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=last_km, step=1.0, key=f"km_contador_{km_version}")
         with r2_col2:
             km_val = max(0.0, contador_val - last_km)
-            st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True, key="km_recorreguts_disp")
+            st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True, key=f"km_recorreguts_disp_{km_version}")
             
         col_btns = st.columns([2.5, 2.0, 7.5])
         with col_btns[0]:
             submitted = st.button("Desa els Kilòmetres", type="primary")
         with col_btns[1]:
-            cancelled = st.button("Cancel·lar", key="cancel_km")
+            cancelled = st.button("Cancel·lar", key=f"cancel_km_{km_version}")
         if cancelled:
             clear_form_state("km_")
             st.rerun()
