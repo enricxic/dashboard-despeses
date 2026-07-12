@@ -3413,7 +3413,8 @@ with tab_intro:
     data_type = st.selectbox("Tipus de registre", [
         "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe", "Moviment TR Cartera"
     ])
-    st.markdown(f"### ➕ Introduir Nou Registre: {data_type}")
+    title_text = "Km Cotxe Tívoli" if data_type == "Km Cotxe" else data_type
+    st.markdown(f"### ➕ Introduir Nou Registre: {title_text}")
     
     st.write("---")
     
@@ -4030,36 +4031,43 @@ with tab_intro:
             
     elif data_type == "Km Cotxe":
         km_version = st.session_state.get("km_version", 0)
+        cotxe_val = "tívoli"
+        
         # Row 1 (3 columns)
-        r1_col1, r1_col2, r1_col3 = st.columns([3, 3, 6])
+        r1_col1, r1_col2, r1_col3 = st.columns([2, 4, 4])
         with r1_col1:
-            cotxe_val = st.text_input("Cotxe", value="tívoli", disabled=True, key=f"km_cotxe_{km_version}")
-        with r1_col2:
             data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"km_data_{km_version}")
-        with r1_col3:
-            ruta_opts = sorted(list(df_km['ruta'].dropna().unique()))
-            if "Nova ruta..." not in ruta_opts:
-                ruta_opts.insert(0, "Nova ruta...")
-            
-            ruta_sel = st.selectbox("Ruta / Destinació", ruta_opts, key=f"km_ruta_sel_{km_version}")
-            if ruta_sel == "Nova ruta...":
-                ruta_val = st.text_input("Escriu la nova ruta:", key=f"km_ruta_{km_version}")
-            else:
-                ruta_val = ruta_sel
-            
-        # Row 2 (2 columns)
-        r2_col1, r2_col2 = st.columns(2)
-        with r2_col1:
+        with r1_col2:
             # Find the last odometer reading for the selected car
             last_km = 0.0
             df_km_car = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
             if not df_km_car.empty:
                 last_km = float(df_km_car.dropna(subset=['contador'])['contador'].iloc[0])
                 
-            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=None, placeholder=f"Última: {last_km:g}", step=1.0, key=f"km_contador_{km_version}")
-        with r2_col2:
+            contador_val = st.number_input("Lectura Odometer", min_value=0.0, value=None, placeholder=f"Última: {last_km:g}", step=1.0, key=f"km_contador_{km_version}")
+        with r1_col3:
             km_val = max(0.0, contador_val - last_km) if contador_val is not None else 0.0
             st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True, key=f"km_recorreguts_disp_{km_version}")
+            
+        # Row 2 (2 columns)
+        ruta_opts = sorted(list(df_km['ruta'].dropna().unique()))
+        if "Nova ruta..." not in ruta_opts:
+            ruta_opts.insert(0, "Nova ruta...")
+            
+        ruta_sel_key = f"km_ruta_sel_{km_version}"
+        current_sel = st.session_state.get(ruta_sel_key, "Nova ruta...")
+        
+        r2_col1, r2_col2 = st.columns(2)
+        with r2_col1:
+            ruta_sel = st.selectbox("Ruta / Destinació", ruta_opts, key=ruta_sel_key)
+        
+        if current_sel == "Nova ruta...":
+            with r2_col2:
+                ruta_val = st.text_input("Escriu la nova ruta:", key=f"km_ruta_{km_version}")
+        else:
+            with r2_col2:
+                st.write("") # Just filler
+            ruta_val = ruta_sel
             
         col_btns = st.columns([2.5, 2.0, 7.5])
         with col_btns[0]:
