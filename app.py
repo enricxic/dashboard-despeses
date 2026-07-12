@@ -4046,13 +4046,20 @@ with tab_intro:
         # Row 2 (2 columns)
         r2_col1, r2_col2 = st.columns(2)
         with r2_col1:
-            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=0.0, step=1.0, key="km_contador")
+            # Find the last odometer reading for the selected car
+            last_km = 0.0
+            df_km_car = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
+            if not df_km_car.empty:
+                last_km = float(df_km_car.dropna(subset=['contador'])['contador'].iloc[0])
+                
+            contador_val = st.number_input("Lectura Odometer / Contador", min_value=0.0, value=last_km, step=1.0, key="km_contador")
         with r2_col2:
-            km_val = st.number_input("Kilòmetres recorreguts", min_value=0.0, value=0.0, step=1.0, key="km_recorreguts")
+            km_val = max(0.0, contador_val - last_km)
+            st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True, key="km_recorreguts_disp")
             
         col_btns = st.columns([2.5, 2.0, 7.5])
         with col_btns[0]:
-            submitted = st.button("Desa els Kilòmetres")
+            submitted = st.button("Desa els Kilòmetres", type="primary")
         with col_btns[1]:
             cancelled = st.button("Cancel·lar", key="cancel_km")
         if cancelled:
