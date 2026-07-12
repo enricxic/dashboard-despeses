@@ -3082,6 +3082,10 @@ with tab_dash:
         if exceeded_list:
             st.error(f"⚠️ **Valor superat**: {', '.join(exceeded_list)}")
 
+    # Alerta de canvi d'oli
+    kms_left = st.session_state.get("kms_canvi_oli", 31491.0) - car_kms_actuals
+    if kms_left <= 0:
+        st.error(f"🔧 **Atenció!** Cal fer el canvi d'oli del cotxe. Teniu el límit superat per {int(abs(kms_left))} km.")
     # Display styled summary grid using static compact HTML table
     st.table(
         df_summary.style.format(precision=2, thousands=".", decimal=",")
