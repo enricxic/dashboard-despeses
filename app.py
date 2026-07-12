@@ -680,6 +680,26 @@ def add_concept_to_config(category, concept):
         cat_config[category].sort()
         save_categories_conceptes(cat_config)
 
+def get_config_routes(df_km):
+    if cat_config and "rutes_cotxe" in cat_config:
+        return sorted(cat_config["rutes_cotxe"])
+    return sorted(list(df_km['ruta'].dropna().unique()))
+
+def init_routes_config(df_km):
+    global cat_config
+    if cat_config is None:
+        cat_config = {}
+    if "rutes_cotxe" not in cat_config:
+        cat_config["rutes_cotxe"] = list(df_km['ruta'].dropna().unique())
+        save_categories_conceptes(cat_config)
+
+def add_route_to_config(route, df_km):
+    init_routes_config(df_km)
+    if route not in cat_config["rutes_cotxe"]:
+        cat_config["rutes_cotxe"].append(route)
+        cat_config["rutes_cotxe"].sort()
+        save_categories_conceptes(cat_config)
+
 def add_super_to_config(super_name):
     try:
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -4050,7 +4070,7 @@ with tab_intro:
             st.text_input("Kilòmetres recorreguts", value=f"{km_val:g}", disabled=True, key=f"km_recorreguts_disp_{km_version}")
             
         # Row 2 (2 columns)
-        ruta_opts = sorted(list(df_km['ruta'].dropna().unique()))
+        ruta_opts = get_config_routes(df_km)
         if "Nova ruta..." not in ruta_opts:
             ruta_opts.insert(0, "Nova ruta...")
             
@@ -4064,6 +4084,7 @@ with tab_intro:
         if current_sel == "Nova ruta...":
             with r2_col2:
                 ruta_val = st.text_input("Escriu la nova ruta:", key=f"km_ruta_{km_version}")
+                save_ruta_template = st.checkbox("💾 Guardar com a plantilla", value=True, key=f"km_save_ruta_{km_version}")
         else:
             with r2_col2:
                 st.write("") # Just filler
@@ -4092,6 +4113,11 @@ with tab_intro:
                     'km': int(km_val)
                 }
                 append_to_db(pd.DataFrame([new_row]), 'kmCotxe', 'df_km')
+                if current_sel == "Nova ruta...":
+                    if st.session_state.get(f"km_save_ruta_{km_version}", True):
+                        add_route_to_config(ruta_val, df_km)
+                    else:
+                        init_routes_config(df_km)
                 st.success("Ruta desada correctament!")
                 st.session_state["km_ruta_sel"] = "Nova ruta..."
                 st.session_state["km_ruta"] = ""
