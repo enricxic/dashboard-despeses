@@ -1973,6 +1973,28 @@ def cb_finalize_ticket():
         new_rows.append(new_row)
     append_to_db(pd.DataFrame(new_rows), 'compresSuper', 'df_super')
     
+    # Update stock for recognized products
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    if supabase:
+        for item in items:
+            article = item.get('article', '').strip()
+            if not article or article.lower() in ['pendent', 'varis']:
+                continue
+            try:
+                res = supabase.table('tb_productes').select('idProducte, stock_actual').eq('nom_estandard', article).execute()
+                if res.data:
+                    prod_id = res.data[0]['idProducte']
+                    current_stock = res.data[0].get('stock_actual', 0)
+                    if current_stock is None:
+                        current_stock = 0
+                    
+                    qty_to_add = float(item.get('qty', 1.0))
+                    new_stock = current_stock + qty_to_add
+                    
+                    supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', prod_id).execute()
+            except Exception as e:
+                print(f"Error updating stock for {article}: {e}")
+    
     st.session_state["finalize_success"] = "Tiquet de súper i despesa associada desats correctament!"
     # Clear all fields and files on successful finalize
     st.session_state["ticket_items"] = []
