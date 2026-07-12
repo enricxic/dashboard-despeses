@@ -4074,57 +4074,65 @@ with tab_intro:
                 'contador': int(contador_val),
                 'km': int(km_val)
             }
-            df_km = pd.concat([df_km, pd.DataFrame([new_row])], ignore_index=True)
-            save_to_csv(df_km.drop(columns=['parsed_date'], errors='ignore'), 'kmCotxe.csv')
+            append_to_db(pd.DataFrame([new_row]), 'kmCotxe', 'df_km')
             st.success("Ruta desada correctament!")
+            st.session_state["km_ruta_sel"] = "Nova ruta..."
+            st.session_state["km_ruta"] = ""
             clear_form_state("km_")
             st.rerun()
             
-    st.markdown("<h5 style='color:#f39c12; margin-top: 20px; margin-bottom: 5px;'>📋 Últims moviments</h5>", unsafe_allow_html=True)
-    
-    last_movs = []
-    for bank_key in get_config_banks():
-        df_b = df_desp[df_desp['Banc'] == bank_key]
-        if not df_b.empty:
-            last_row = df_b.iloc[0]
-            is_charge = float(last_row['Import càrrec']) > 0
-            val = last_row['Import càrrec'] if is_charge else last_row['import ingrés']
-            lbl = "Càrrec" if is_charge else "Ingrés"
-            
-            last_movs.append({
-                'Banc': BANK_MAPPING.get(bank_key, bank_key),
-                'Data': last_row['Data'],
-                'Categoria': last_row['Idcategoria'],
-                'Concepte': last_row['Idconcepte'],
-                'Tipus': lbl,
-                'Import': val,
-                '_Tipus_raw': lbl  # hidden helper for styling
-            })
-            
-    if last_movs:
-        df_last = pd.DataFrame(last_movs)
+    if data_type == "Km Cotxe":
+        st.markdown("<h5 style='color:#f39c12; margin-top: 20px; margin-bottom: 5px;'>📋 Últimes rutes registrades</h5>", unsafe_allow_html=True)
+        if not df_km.empty:
+            df_km_show = df_km.head(5)[['data', 'cotxe', 'ruta', 'km', 'contador']].copy()
+            df_km_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'ruta': 'Ruta', 'km': 'Km recorreguts', 'contador': 'Odòmetre'}, inplace=True)
+            st.table(df_km_show.set_index('Data'))
+    else:
+        st.markdown("<h5 style='color:#f39c12; margin-top: 20px; margin-bottom: 5px;'>📋 Últims moviments</h5>", unsafe_allow_html=True)
         
-        # Style callback to highlight charges in red, inflows in green
-        def style_last_mov_cells(val):
-            if isinstance(val, float):
+        last_movs = []
+        for bank_key in get_config_banks():
+            df_b = df_desp[df_desp['Banc'] == bank_key]
+            if not df_b.empty:
+                last_row = df_b.iloc[0]
+                is_charge = float(last_row['Import càrrec']) > 0
+                val = last_row['Import càrrec'] if is_charge else last_row['import ingrés']
+                lbl = "Càrrec" if is_charge else "Ingrés"
+                
+                last_movs.append({
+                    'Banc': BANK_MAPPING.get(bank_key, bank_key),
+                    'Data': last_row['Data'],
+                    'Categoria': last_row['Idcategoria'],
+                    'Concepte': last_row['Idconcepte'],
+                    'Tipus': lbl,
+                    'Import': val,
+                    '_Tipus_raw': lbl  # hidden helper for styling
+                })
+                
+        if last_movs:
+            df_last = pd.DataFrame(last_movs)
+            
+            # Style callback to highlight charges in red, inflows in green
+            def style_last_mov_cells(val):
+                if isinstance(val, float):
+                    return ""
                 return ""
-            return ""
-            
-        def style_rows(df):
-            style_df = pd.DataFrame("", index=df.index, columns=df.columns)
-            for idx, row in df.iterrows():
-                color = "#ef4444" if df_last.loc[idx, '_Tipus_raw'] == "Càrrec" else "#22c55e"
-                style_df.at[idx, 'Import'] = f"color: {color}; font-weight: bold;"
-                style_df.at[idx, 'Tipus'] = f"color: {color}; font-weight: bold;"
-            return style_df
-            
-        # Display as a compact, styled static table
-        st.table(
-            df_last.drop(columns=['_Tipus_raw'])
-            .style.format({'Import': '{:,.2f} €'})
-            .apply(style_rows, axis=None)
-            .set_properties(**{'font-size': '11px', 'padding': '3px'})
-        )
+                
+            def style_rows(df):
+                style_df = pd.DataFrame("", index=df.index, columns=df.columns)
+                for idx, row in df.iterrows():
+                    color = "#ef4444" if df_last.loc[idx, '_Tipus_raw'] == "Càrrec" else "#22c55e"
+                    style_df.at[idx, 'Import'] = f"color: {color}; font-weight: bold;"
+                    style_df.at[idx, 'Tipus'] = f"color: {color}; font-weight: bold;"
+                return style_df
+                
+            # Display as a compact, styled static table
+            st.table(
+                df_last.drop(columns=['_Tipus_raw'])
+                .style.format({'Import': '{:,.2f} €'})
+                .apply(style_rows, axis=None)
+                .set_properties(**{'font-size': '11px', 'padding': '3px'})
+            )
 # ----------------- DIALOGS FOR MODIFY / DELETE -----------------
 @st.dialog("✏️ Modificar Registre")
 def show_modify_dialog(table_name, id_col, id_val, current_row_data, db_select, df_to_show, row_idx):
