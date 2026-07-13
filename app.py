@@ -691,7 +691,17 @@ def init_routes_config(df_km):
         cat_config = {}
     if "rutes_cotxe" not in cat_config:
         cat_config["rutes_cotxe"] = list(df_km['ruta'].dropna().unique())
+        cat_config["rutes_cotxe"] = list(df_km['ruta'].dropna().unique())
         save_categories_conceptes(cat_config)
+
+def update_ticket_pendent_db(id_mov, status):
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        supabase.table("despeses").update({"ticketPendent": status}).eq("ID_mov", id_mov).execute()
+        if "df_desp" in st.session_state:
+            st.session_state["df_desp"].loc[st.session_state["df_desp"]["ID_mov"] == id_mov, "ticketPendent"] = status
+    except Exception as e:
+        print(f"Error updating ticketPendent for {id_mov}: {e}")
 
 def add_route_to_config(route, df_km):
     init_routes_config(df_km)
@@ -3434,9 +3444,15 @@ with tab_intro:
             if k.startswith(prefix) and k not in ["desp_version", "km_version"]:
                 del st.session_state[k]
     
-    data_type = st.selectbox("Tipus de registre", [
-        "Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe", "Moviment TR Cartera"
-    ])
+    options = ["Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe", "Moviment TR Cartera"]
+    default_idx = 0
+    if st.session_state.get('requested_view') in options:
+        default_idx = options.index(st.session_state['requested_view'])
+    
+    data_type = st.selectbox("Tipus de registre", options, index=default_idx)
+    
+    if 'requested_view' in st.session_state:
+        del st.session_state['requested_view']
     title_text = "Km Cotxe Tívoli" if data_type == "Km Cotxe" else data_type
     st.markdown(f"### ➕ Introduir Nou Registre: {title_text}")
     
@@ -3508,6 +3524,9 @@ with tab_intro:
             with custom_col2:
                 st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
                 save_new_concept = st.checkbox("Desar a la llista permanent?", value=True, key=f"desp_save_new_concept_{version}")
+
+        # Row 3 (ticket pendent)
+        ticket_pendent = st.checkbox("Aquesta despesa és una compra de súper amb ticket pendent de desglossar", key=f"desp_ticket_pendent_{version}")
 
         # Dynamic extra fields for Gasolina category inside Moviment Real form
         is_gas_cat = (str(cat_val).lower() == "gasolina")
@@ -3584,7 +3603,8 @@ with tab_intro:
                     'grup': grup_val,
                     'Idcategoria': cat_val,
                     'Idconcepte': actual_concept,
-                    'Comentari': comentari_val
+                    'Comentari': comentari_val,
+                    'ticketPendent': bool(ticket_pendent)
                 }
                 
                 new_row_gas = {}
@@ -3720,6 +3740,27 @@ with tab_intro:
                         show_mismatch_dialog(table_name, float(scheduled_import), float(input_import), idx, target_status_col, new_row_desp, is_gas_cat, new_row_gas, is_hipoteca, is_estalvis, target_df, csv_filename)
                 else:
                     do_save_direct()
+
+        # Show pending tickets section
+        st.write("---")
+        st.markdown("<h5 style='color:#f39c12; margin-top: 5px; margin-bottom: 5px;'>🛒 Tickets Pendents de Desglossar</h5>", unsafe_allow_html=True)
+        
+        pendents = df_desp[df_desp['ticketPendent'] == True] if 'ticketPendent' in df_desp.columns else pd.DataFrame()
+        if not pendents.empty:
+            for idx, row in pendents.iterrows():
+                cols = st.columns([2, 3, 2, 2, 3])
+                cols[0].write(row['Data'])
+                cols[1].write(row['Idconcepte'])
+                cols[2].write(f"{row['Import càrrec']} €")
+                cols[3].write(row['grup'])
+                if cols[4].button("Desglossar", key=f"desg_{row['ID_mov']}"):
+                    st.session_state['requested_view'] = "Compra Súper"
+                    st.session_state['pending_ticket_id'] = row['ID_mov']
+                    st.session_state['pending_super'] = row['Idconcepte']
+                    st.session_state['pending_data'] = row['Data']
+                    st.rerun()
+        else:
+            st.info("No hi ha cap ticket pendent de desglossar.")
 
             
 
@@ -3993,12 +4034,28 @@ with tab_intro:
             st.rerun()
             
     elif data_type == "Compra Súper":
+        pending_ticket_id = st.session_state.get('pending_ticket_id')
+        if pending_ticket_id:
+            pending_data = st.session_state.get('pending_data')
+            pending_super = st.session_state.get('pending_super')
+            st.info(f"🛒 Desglossant ticket pendent del **{pending_data}** a **{pending_super}**...")
+            
+            supers_list = get_config_supers()
+            default_super_idx = supers_list.index(pending_super) if pending_super in supers_list else 0
+            try:
+                default_data = datetime.strptime(pending_data, '%d/%m/%Y').date()
+            except:
+                default_data = datetime.today()
+        else:
+            default_super_idx = 0
+            default_data = datetime.today()
+
         # Row 1 (5 columns)
         r1_col1, r1_col2, r1_col3, r1_col4, r1_col5 = st.columns(5)
         with r1_col1:
-            super_val = st.selectbox("Supermercat", get_config_supers(), key="super_super")
+            super_val = st.selectbox("Supermercat", get_config_supers(), index=default_super_idx, key="super_super")
         with r1_col2:
-            data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="super_data")
+            data_val = st.date_input("Data", value=default_data, format="DD/MM/YYYY", key="super_data")
             mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
             any_val = data_val.year
         with r1_col3:
@@ -4025,6 +4082,19 @@ with tab_intro:
             submitted = st.button("Desa la Compra")
         with col_btns[1]:
             cancelled = st.button("Cancel·lar", key="cancel_super")
+            
+        if pending_ticket_id:
+            with col_btns[2]:
+                if st.button("✅ Finalitzar Ticket", type="primary"):
+                    update_ticket_pendent_db(pending_ticket_id, False)
+                    del st.session_state['pending_ticket_id']
+                    del st.session_state['pending_super']
+                    del st.session_state['pending_data']
+                    if 'requested_view' in st.session_state:
+                        del st.session_state['requested_view']
+                    st.success("Ticket finalitzat!")
+                    st.rerun()
+
         if cancelled:
             clear_form_state("super_")
             st.rerun()
