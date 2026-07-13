@@ -4862,8 +4862,15 @@ if st.session_state.get("role") == "admin":
             if logs_response.data:
                 df_logs = pd.DataFrame(logs_response.data)
                 df_logs['data_hora'] = pd.to_datetime(df_logs['data_hora']).dt.strftime('%d/%m/%Y %H:%M:%S')
-                df_logs['detalls'] = df_logs['detalls'].astype(str)
-                st.dataframe(df_logs[['data_hora', 'usuari', 'rol', 'tipus_accio', 'taula_afectada', 'detalls']], use_container_width=True, hide_index=True)
+                df_logs['detalls'] = df_logs['detalls'].apply(lambda x: str(x) if str(x) == "None" else f"ℹ️ {x}")
+                st.dataframe(
+                    df_logs[['data_hora', 'usuari', 'rol', 'tipus_accio', 'taula_afectada', 'detalls']],
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "detalls": st.column_config.TextColumn("Detalls")
+                    }
+                )
             else:
                 st.info("Encara no hi ha cap registre d'accions.")
         except Exception as e:
