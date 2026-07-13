@@ -323,7 +323,7 @@ INITIAL_BALANCES = {
     'CORTEINGLÉS': 1566.69,
     'TRADE REPUB.': 0.0,
     'Tg.Moneder': 0.0,
-    'Pago VISA': -2309.71  # Offset to ensure current balance is exactly 0 after historical discrepancies
+    'Pago VISA': 2995.45  # Calibrated for correct Debt logic (charges increase, payments decrease)
 }
 
 # Bank names in CSV mapped to display names
@@ -2826,19 +2826,19 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             is_payment = (sub_desp_prev['Idcategoria'] == 'op_banc') & (sub_desp_prev['Idconcepte'] == 'Pago VISA')
             sub_desp_prev.loc[is_payment, 'import ingrés'] = sub_desp_prev.loc[is_payment, 'import ingrés'].fillna(0) + sub_desp_prev.loc[is_payment, 'Import càrrec'].fillna(0)
             sub_desp_prev.loc[is_payment, 'Import càrrec'] = 0.0
+            
+            start_bal = INITIAL_BALANCES.get(bank_display_name, 0.0) + sub_desp_prev['Import càrrec'].fillna(0).sum() - sub_desp_prev['import ingrés'].fillna(0).sum()
         else:
             sub_desp_prev = df_desp[(df_desp['Banc'].isin(csv_names)) & (df_desp['date_score'] <= prev_target)]
             sub_desp_prev = sub_desp_prev[sub_desp_prev['FormaPago'].fillna('') != 'VISA']
-            
-        start_bal = INITIAL_BALANCES.get(bank_display_name, 0.0) + sub_desp_prev['import ingrés'].fillna(0).sum() - sub_desp_prev['Import càrrec'].fillna(0).sum()
+            start_bal = INITIAL_BALANCES.get(bank_display_name, 0.0) + sub_desp_prev['import ingrés'].fillna(0).sum() - sub_desp_prev['Import càrrec'].fillna(0).sum()
         
         b_desp = b_desp.sort_values(by=['parsed_date', 'ID_mov'], ascending=[True, True])
         inflows = b_desp['import ingrés'].fillna(0)
         outflows = b_desp['Import càrrec'].fillna(0)
         if bank_display_name == 'Pago VISA':
             # For VISA, operations are liabilities (charges increase the debt, inflows decrease it)
-            # Actually, standard balances: we just want to see the debt grow
-            b_desp['Saldo'] = start_bal + (inflows - outflows).cumsum()
+            b_desp['Saldo'] = start_bal + (outflows - inflows).cumsum()
         else:
             b_desp['Saldo'] = start_bal + (inflows - outflows).cumsum()
             
@@ -2894,7 +2894,7 @@ def get_balances_up_to(year, month_name):
     visa_expenses_charges = sub_desp[mask_pure_exp]['Import càrrec'].fillna(0).sum()
     visa_expenses_refunds = sub_desp[mask_pure_exp]['import ingrés'].fillna(0).sum()
     visa_payments = sub_desp[mask_visa_pay]['Import càrrec'].fillna(0).sum() + sub_desp[mask_visa_pay]['import ingrés'].fillna(0).sum()
-    balances['Pago VISA'] = INITIAL_BALANCES.get('Pago VISA', 0.0) + visa_payments + visa_expenses_refunds - visa_expenses_charges
+    balances['Pago VISA'] = INITIAL_BALANCES.get('Pago VISA', 0.0) + visa_expenses_charges - visa_payments - visa_expenses_refunds
     
     # Clean up small negative values that should be zero
     for k in balances:
@@ -2904,7 +2904,7 @@ def get_balances_up_to(year, month_name):
     return balances
 
 current_balances = get_balances_up_to(selected_year, selected_month_data)
-total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
+total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') - current_balances.get('Pago VISA', 0.0)
 
 # ----------------- OIL CHANGE METRICS -----------------
 # Get latest odometer reading
@@ -2982,7 +2982,7 @@ with tab_dash:
     # Remove TR Cartera from Dashboard General balances as requested
     current_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera'}
     
-    total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
+    total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') - current_balances.get('Pago VISA', 0.0)
     
     with bank_metrics_container:
         col_bal_title, col_bal_metrics = st.columns([1.6, 10.4], vertical_alignment="center")
