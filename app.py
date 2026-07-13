@@ -2846,11 +2846,14 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
             
         b_desp = b_desp[cols_to_show]
         
-        st.dataframe(
-            b_desp,
-            use_container_width=True,
-            hide_index=True
-        )
+        try:
+            st.dataframe(
+                b_desp,
+                use_container_width=True,
+                hide_index=True
+            )
+        except Exception as e:
+            st.error(f"Error rendering b_desp: {e}")
     _modal_inner()
 
 def get_balances_up_to(year, month_name):
@@ -3350,11 +3353,14 @@ with tab_details:
         # Load ingressos list for selected month
         month_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['clean_mes'] == selected_month_data)]
         if not month_ing.empty:
-            st.dataframe(
-                month_ing[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}),
-                use_container_width=True,
-                hide_index=True
-            )
+            try:
+                st.dataframe(
+                    month_ing[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            except Exception as e:
+                st.error(f"Error rendering month_ing: {e}")
             st.metric("Total Ingressat", f"{month_ing['Import'].sum():,.2f} €")
         else:
             st.info("No hi ha dades d'ingressos per aquest mes.")
@@ -3369,13 +3375,17 @@ with tab_details:
             grouped_desp = month_desp_filtered.groupby('Idcategoria')['Import càrrec'].sum().reset_index()
             grouped_desp = grouped_desp[grouped_desp['Import càrrec'] > 0].sort_values(by='Import càrrec', ascending=False)
             
-            event = st.dataframe(
-                grouped_desp.style.format({'Import càrrec': '{:,.2f} €'}),
-                use_container_width=True,
-                hide_index=True,
-                on_select="rerun",
-                selection_mode="single-row"
-            )
+            try:
+                event = st.dataframe(
+                    grouped_desp.style.format({'Import càrrec': '{:,.2f} €'}),
+                    use_container_width=True,
+                    hide_index=True,
+                    on_select="rerun",
+                    selection_mode="single-row"
+                )
+            except Exception as e:
+                st.error(f"Error rendering grouped_desp: {e}")
+                event = None
             st.metric("Total Gastat", f"{grouped_desp['Import càrrec'].sum():,.2f} €")
             
             # Show details of selected group if clicked
@@ -3389,11 +3399,14 @@ with tab_details:
                     ['Data', 'FormaPago', 'Idconcepte', 'Import càrrec', 'Comentari']
                 ].copy()
                 
-                st.dataframe(
-                    cat_details.style.format({'Import càrrec': '{:,.2f} €'}),
-                    use_container_width=True,
-                    hide_index=True
-                )
+                try:
+                    st.dataframe(
+                        cat_details.style.format({'Import càrrec': '{:,.2f} €'}),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                except Exception as e:
+                    st.error(f"Error rendering cat_details: {e}")
         else:
             st.info("No hi ha dades de despeses per aquest mes.")
 
@@ -4863,14 +4876,17 @@ if st.session_state.get("role") == "admin":
                 df_logs = pd.DataFrame(logs_response.data)
                 df_logs['data_hora'] = pd.to_datetime(df_logs['data_hora']).dt.strftime('%d/%m/%Y %H:%M:%S')
                 df_logs['detalls'] = df_logs['detalls'].apply(lambda x: str(x) if str(x) == "None" else f"ℹ️ {x}")
-                st.dataframe(
-                    df_logs[['data_hora', 'usuari', 'rol', 'tipus_accio', 'taula_afectada', 'detalls']],
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "detalls": st.column_config.TextColumn("Detalls")
-                    }
-                )
+                try:
+                    st.dataframe(
+                        df_logs[['data_hora', 'usuari', 'rol', 'tipus_accio', 'taula_afectada', 'detalls']],
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "detalls": st.column_config.TextColumn("Detalls")
+                        }
+                    )
+                except Exception as e:
+                    st.error(f"Error rendering df_logs: {e}")
             else:
                 st.info("Encara no hi ha cap registre d'accions.")
         except Exception as e:
