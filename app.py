@@ -1913,18 +1913,12 @@ def cb_finalize_ticket():
     id_despesa_menjar = 0
     id_despesa_neteja = 0
     id_despesa_rebost = 0
-    next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
-    
     if send_expense:
         new_entries = []
         
         # 1. Food Expense (menjar)
         if import_menjar > 0:
-            id_despesa_menjar = next_id
-            next_id += 1
-            
             new_entries.append({
-                'ID_mov': id_despesa_menjar,
                 'Banc': bank_val,
                 'FormaPago': pay_method_val,
                 'Data': ticket_date.strftime('%d/%m/%Y'),
@@ -1940,11 +1934,7 @@ def cb_finalize_ticket():
             
         # 2. Cleaning Expense (neteja)
         if import_neteja > 0:
-            id_despesa_neteja = next_id
-            next_id += 1
-            
             new_entries.append({
-                'ID_mov': id_despesa_neteja,
                 'Banc': bank_val,
                 'FormaPago': pay_method_val,
                 'Data': ticket_date.strftime('%d/%m/%Y'),
@@ -1960,11 +1950,7 @@ def cb_finalize_ticket():
             
         # 3. Pantry Expense (rebost)
         if import_rebost > 0:
-            id_despesa_rebost = next_id
-            next_id += 1
-            
             new_entries.append({
-                'ID_mov': id_despesa_rebost,
                 'Banc': bank_val,
                 'FormaPago': pay_method_val,
                 'Data': ticket_date.strftime('%d/%m/%Y'),
@@ -1977,6 +1963,27 @@ def cb_finalize_ticket():
                 'Idconcepte': ticket_super,
                 'Comentari': None
             })
+            
+        # Assign IDs to new_entries
+        next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
+        for i, entry in enumerate(new_entries):
+            if i == 0 and pending_ticket_id:
+                entry['ID_mov'] = pending_ticket_id
+                if entry['Idcategoria'] == 'menjar':
+                    id_despesa_menjar = pending_ticket_id
+                elif entry['Idcategoria'] == 'neteja':
+                    id_despesa_neteja = pending_ticket_id
+                elif entry['Idcategoria'] == 'rebost':
+                    id_despesa_rebost = pending_ticket_id
+            else:
+                entry['ID_mov'] = next_id
+                if entry['Idcategoria'] == 'menjar':
+                    id_despesa_menjar = next_id
+                elif entry['Idcategoria'] == 'neteja':
+                    id_despesa_neteja = next_id
+                elif entry['Idcategoria'] == 'rebost':
+                    id_despesa_rebost = next_id
+                next_id += 1
             
         if new_entries:
             if pending_ticket_id:
@@ -2485,7 +2492,10 @@ def render_compres_super_interface():
         st.markdown(f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{total_import:,.2f} €</div>", unsafe_allow_html=True)
         
     with col_row2_4:
-        next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
+        if pending_ticket_id:
+            next_id = pending_ticket_id
+        else:
+            next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
         st.markdown("**Nº DESPESA**")
         st.markdown(f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{next_id}</div>", unsafe_allow_html=True)
 
@@ -3811,12 +3821,13 @@ with tab_intro:
         pendents = df_desp[df_desp['ticketPendent'] == True] if 'ticketPendent' in df_desp.columns else pd.DataFrame()
         if not pendents.empty:
             for idx, row in pendents.iterrows():
-                cols = st.columns([2, 3, 2, 2, 3])
-                cols[0].write(row['Data'])
-                cols[1].write(row['Idconcepte'])
-                cols[2].write(f"{row['Import càrrec']} €")
-                cols[3].write(row['grup'])
-                if cols[4].button("Desglossar", key=f"desg_{row['ID_mov']}"):
+                cols = st.columns([1, 2, 2, 2, 2, 3])
+                cols[0].write(f"Nº {row['ID_mov']}")
+                cols[1].write(row['Data'])
+                cols[2].write(row['Idconcepte'])
+                cols[3].write(f"{row['Import càrrec']} €")
+                cols[4].write(row['grup'])
+                if cols[5].button("Desglossar", key=f"desg_{row['ID_mov']}"):
                     st.session_state['viewing_compres_super'] = True
                     st.session_state['pending_ticket_id'] = row['ID_mov']
                     st.session_state['pending_super'] = row['Idconcepte']
@@ -4698,6 +4709,8 @@ with tab_db:
             col_configs[col] = st.column_config.Column(width=60)
         elif "grup" in col_lower:
             col_configs[col] = st.column_config.Column(width=60)
+        elif "pendent" in col_lower:
+            col_configs[col] = st.column_config.CheckboxColumn(width=65)
         elif any(x in col_lower for x in ["categoria", "super", "familia", "rebost"]):
             col_configs[col] = st.column_config.TextColumn(width=75)
         elif "concepte" in col_lower or "article" in col_lower:
