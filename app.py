@@ -4214,6 +4214,9 @@ with tab_intro:
 
         if cancelled:
             clear_form_state("super_")
+            for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_ticket_new_ids', 'pending_ticket_mismatch', 'requested_view']:
+                if key in st.session_state:
+                    del st.session_state[key]
             st.rerun()
         if submitted:
             tot_linea = preu_unit * qty_val
