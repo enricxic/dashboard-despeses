@@ -4099,6 +4099,45 @@ with tab_intro:
             pending_super = st.session_state.get('pending_super')
             st.info(f"🛒 Desglossant ticket pendent del **{pending_data}** a **{pending_super}**...")
             
+            if st.session_state.get('pending_ticket_mismatch'):
+                orig_amt = st.session_state.get('pending_ticket_orig', 0.0)
+                sum_amt = st.session_state.get('pending_ticket_sum', 0.0)
+                st.error(f"⚠️ **Desquadrament detectat!**\n\nL'import inicial registrat al banc és de **{orig_amt:.2f} €**, però la suma dels productes que has introduït és de **{sum_amt:.2f} €**.")
+                st.info("Tria una solució:")
+                col_res1, col_res2 = st.columns(2)
+                with col_res1:
+                    if st.button("⬅️ Tornar i corregir els productes (tancar avís)", use_container_width=True):
+                        del st.session_state['pending_ticket_mismatch']
+                        st.rerun()
+                with col_res2:
+                    new_banc_val = st.number_input("O modifica l'import del banc:", value=float(sum_amt), step=0.01, format="%.2f")
+                    if st.button("💾 Actualitzar banc i Finalitzar", type="primary", use_container_width=True):
+                        try:
+                            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                            supabase.table("despeses").update({"Import càrrec": new_banc_val}).eq("ID_mov", pending_ticket_id).execute()
+                            if "df_desp" in st.session_state:
+                                df_local = st.session_state["df_desp"]
+                                idx_orig = df_local.index[df_local['ID_mov'] == pending_ticket_id].tolist()[0]
+                                df_local.at[idx_orig, 'Import càrrec'] = round(new_banc_val, 2)
+                        except Exception as e:
+                            st.error(f"Error actualitzant banc: {e}")
+                            
+                        new_ids = st.session_state.get('pending_ticket_new_ids', [])
+                        finalize_pending_ticket(pending_ticket_id, new_ids)
+                        
+                        del st.session_state['pending_ticket_id']
+                        del st.session_state['pending_super']
+                        del st.session_state['pending_data']
+                        del st.session_state['pending_ticket_mismatch']
+                        if 'pending_ticket_new_ids' in st.session_state:
+                            del st.session_state['pending_ticket_new_ids']
+                        if 'requested_view' in st.session_state:
+                            del st.session_state['requested_view']
+                        st.success("Banc actualitzat i ticket finalitzat!")
+                        st.rerun()
+                
+                st.write("---")
+            
             supers_list = get_config_supers()
             default_super_idx = supers_list.index(pending_super) if pending_super in supers_list else 0
             try:
@@ -4146,17 +4185,32 @@ with tab_intro:
             with col_btns[2]:
                 if st.button("✅ Finalitzar Ticket", type="primary"):
                     new_ids = st.session_state.get('pending_ticket_new_ids', [])
-                    finalize_pending_ticket(pending_ticket_id, new_ids)
                     
-                    del st.session_state['pending_ticket_id']
-                    del st.session_state['pending_super']
-                    del st.session_state['pending_data']
-                    if 'pending_ticket_new_ids' in st.session_state:
-                        del st.session_state['pending_ticket_new_ids']
-                    if 'requested_view' in st.session_state:
-                        del st.session_state['requested_view']
-                    st.success("Ticket finalitzat!")
-                    st.rerun()
+                    df_super_local = st.session_state.get("df_super", pd.DataFrame())
+                    compres = df_super_local[df_super_local['IdCompra'].isin(new_ids)] if 'IdCompra' in df_super_local.columns else pd.DataFrame()
+                    sum_products = compres['totLinea'].sum() if not compres.empty else 0.0
+                    
+                    df_desp_local = st.session_state.get("df_desp", pd.DataFrame())
+                    orig_row = df_desp_local[df_desp_local['ID_mov'] == pending_ticket_id] if 'ID_mov' in df_desp_local.columns else pd.DataFrame()
+                    orig_total = float(orig_row.iloc[0].get('Import càrrec', 0.0)) if not orig_row.empty else 0.0
+                    
+                    if abs(sum_products - orig_total) > 0.001:
+                        st.session_state['pending_ticket_mismatch'] = True
+                        st.session_state['pending_ticket_orig'] = orig_total
+                        st.session_state['pending_ticket_sum'] = sum_products
+                        st.rerun()
+                    else:
+                        finalize_pending_ticket(pending_ticket_id, new_ids)
+                        
+                        del st.session_state['pending_ticket_id']
+                        del st.session_state['pending_super']
+                        del st.session_state['pending_data']
+                        if 'pending_ticket_new_ids' in st.session_state:
+                            del st.session_state['pending_ticket_new_ids']
+                        if 'requested_view' in st.session_state:
+                            del st.session_state['requested_view']
+                        st.success("Ticket finalitzat!")
+                        st.rerun()
 
         if cancelled:
             clear_form_state("super_")
