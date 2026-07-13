@@ -694,14 +694,72 @@ def init_routes_config(df_km):
         cat_config["rutes_cotxe"] = list(df_km['ruta'].dropna().unique())
         save_categories_conceptes(cat_config)
 
-def update_ticket_pendent_db(id_mov, status):
+def finalize_pending_ticket(id_mov, new_ids):
     try:
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
-        supabase.table("despeses").update({"ticketPendent": status}).eq("ID_mov", id_mov).execute()
-        if "df_desp" in st.session_state:
-            st.session_state["df_desp"].loc[st.session_state["df_desp"]["ID_mov"] == id_mov, "ticketPendent"] = status
+        
+        if not new_ids or 'df_super' not in st.session_state:
+            supabase.table("despeses").update({"ticketPendent": False}).eq("ID_mov", id_mov).execute()
+            if "df_desp" in st.session_state:
+                st.session_state["df_desp"].loc[st.session_state["df_desp"]["ID_mov"] == id_mov, "ticketPendent"] = False
+            return
+            
+        df_super_local = st.session_state["df_super"]
+        compres = df_super_local[df_super_local['IdCompra'].isin(new_ids)]
+        
+        if compres.empty:
+            supabase.table("despeses").update({"ticketPendent": False}).eq("ID_mov", id_mov).execute()
+            if "df_desp" in st.session_state:
+                st.session_state["df_desp"].loc[st.session_state["df_desp"]["ID_mov"] == id_mov, "ticketPendent"] = False
+            return
+            
+        compres_copy = compres.copy()
+        compres_copy.loc[compres_copy['rebost'] == 'rebost', 'familia'] = 'rebost'
+        
+        sums = compres_copy.groupby('familia')['totLinea'].sum().to_dict()
+        
+        df_desp_local = st.session_state["df_desp"]
+        orig_row = df_desp_local[df_desp_local['ID_mov'] == id_mov].iloc[0].to_dict()
+        orig_total = float(orig_row.get('Import càrrec', 0.0))
+        
+        main_cat = 'menjar' 
+        other_cats = {k: v for k, v in sums.items() if str(k).lower() != main_cat and v > 0}
+        
+        other_cats_sum = sum(other_cats.values())
+        romanent_menjar = orig_total - other_cats_sum
+        
+        supabase.table("despeses").update({
+            "Idcategoria": main_cat,
+            "Import càrrec": round(romanent_menjar, 2),
+            "ticketPendent": False
+        }).eq("ID_mov", id_mov).execute()
+        
+        idx_orig = df_desp_local.index[df_desp_local['ID_mov'] == id_mov].tolist()[0]
+        df_desp_local.at[idx_orig, 'Idcategoria'] = main_cat
+        df_desp_local.at[idx_orig, 'Import càrrec'] = round(romanent_menjar, 2)
+        df_desp_local.at[idx_orig, 'ticketPendent'] = False
+        
+        new_despeses = []
+        max_id_desp = int(df_desp_local['ID_mov'].max())
+        
+        for cat, amount in other_cats.items():
+            max_id_desp += 1
+            new_desp = orig_row.copy()
+            new_desp['ID_mov'] = max_id_desp
+            new_desp['Idcategoria'] = cat
+            new_desp['Import càrrec'] = round(amount, 2)
+            new_desp['ticketPendent'] = False
+            for c in ['parsed_date', 'clean_mes', 'date_score', 'mes_lower']:
+                if c in new_desp: del new_desp[c]
+            new_despeses.append(new_desp)
+            
+        if new_despeses:
+            supabase.table("despeses").insert(new_despeses).execute()
+            df_new_despeses = pd.DataFrame(new_despeses)
+            st.session_state["df_desp"] = pd.concat([df_desp_local, df_new_despeses], ignore_index=True)
+            
     except Exception as e:
-        print(f"Error updating ticketPendent for {id_mov}: {e}")
+        print(f"Error finalitzant ticket: {e}")
 
 def add_route_to_config(route, df_km):
     init_routes_config(df_km)
@@ -3758,6 +3816,7 @@ with tab_intro:
                     st.session_state['pending_ticket_id'] = row['ID_mov']
                     st.session_state['pending_super'] = row['Idconcepte']
                     st.session_state['pending_data'] = row['Data']
+                    st.session_state['pending_ticket_new_ids'] = []
                     st.rerun()
         else:
             st.info("No hi ha cap ticket pendent de desglossar.")
@@ -4086,10 +4145,14 @@ with tab_intro:
         if pending_ticket_id:
             with col_btns[2]:
                 if st.button("✅ Finalitzar Ticket", type="primary"):
-                    update_ticket_pendent_db(pending_ticket_id, False)
+                    new_ids = st.session_state.get('pending_ticket_new_ids', [])
+                    finalize_pending_ticket(pending_ticket_id, new_ids)
+                    
                     del st.session_state['pending_ticket_id']
                     del st.session_state['pending_super']
                     del st.session_state['pending_data']
+                    if 'pending_ticket_new_ids' in st.session_state:
+                        del st.session_state['pending_ticket_new_ids']
                     if 'requested_view' in st.session_state:
                         del st.session_state['requested_view']
                     st.success("Ticket finalitzat!")
@@ -4119,6 +4182,12 @@ with tab_intro:
             }
             df_super = pd.concat([df_super, pd.DataFrame([new_row])], ignore_index=True)
             save_to_csv(df_super.drop(columns=['parsed_date'], errors='ignore'), 'compresSuper.csv')
+            
+            if pending_ticket_id:
+                if 'pending_ticket_new_ids' not in st.session_state:
+                    st.session_state['pending_ticket_new_ids'] = []
+                st.session_state['pending_ticket_new_ids'].append(new_row['IdCompra'])
+                
             st.success("Compra de súper desada correctament!")
             clear_form_state("super_")
             st.rerun()
