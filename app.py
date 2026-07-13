@@ -1808,6 +1808,8 @@ def cb_clear_ticket():
     st.session_state["editing_ticket_item_idx"] = None
     st.session_state["ticket_date"] = datetime.today().date()
     st.session_state["ticket_date_widget"] = datetime.today().date()
+    if "last_ocr_text" in st.session_state:
+        del st.session_state["last_ocr_text"]
     st.session_state["ticket_super_val"] = ""
     if "ticket_super_widget" in st.session_state:
         st.session_state["ticket_super_widget"] = ""
@@ -2075,7 +2077,7 @@ def cb_finalize_ticket():
     st.session_state["manual_art_selectbox"] = ""
     
     # Clear pending ticket state if any
-    for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum']:
+    for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum', 'last_ocr_text']:
         if key in st.session_state:
             del st.session_state[key]
             
