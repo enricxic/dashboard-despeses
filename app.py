@@ -4436,59 +4436,11 @@ def show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, 
 # ================= TAB REBOST / STOCK =================
 if tab_rebost:
     with tab_rebost:
-        st.markdown("<h2 style='color:#3498db;'>📦 Gestió del Rebost i Stock</h2>", unsafe_allow_html=True)
-        st.write("Gestiona els articles nous detectats als tiquets i mantingues el teu inventari actualitzat.")
-        
-        # We need a function to load unmapped products
         try:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
-            
-            st.markdown("### 🆕 Productes Nous Pendents d'Assignar")
-            df_noms = fetch_all_supabase(supabase, 'tb_noms_producte')
             df_prods = fetch_all_supabase(supabase, 'tb_productes')
             
-            if not df_noms.empty:
-                unmapped = df_noms[df_noms['idProducte'].isna() | (df_noms['idProducte'] == 0) | (df_noms['idProducte'] == "")]
-                if not unmapped.empty:
-                    st.info(f"Tens {len(unmapped)} producte(s) nou(s) detectat(s) als tiquets sense assignar a l'inventari estàndard.")
-                    
-                    for idx, row in unmapped.iterrows():
-                        with st.expander(f"📍 {row['nom_super']} (Súper: {row['supermercat']})"):
-                            col_sel, col_new, col_btn = st.columns([4, 4, 2])
-                            with col_sel:
-                                prod_options = ["--- Tria un producte existent ---"] + df_prods['nom_estandard'].tolist()
-                                sel_prod = st.selectbox("Assignar a:", prod_options, key=f"sel_prod_{row['idNom']}")
-                            with col_new:
-                                new_prod_name = st.text_input("O crea'n un de nou (Nom estàndard):", key=f"new_prod_{row['idNom']}")
-                                new_fam = st.selectbox("Família:", ["carn", "peix", "fruita", "verdura", "lactics", "esmorzar", "neteja", "higiene", "begudes", "congelats", "varis", "extres", "gasolina"], key=f"new_fam_{row['idNom']}")
-                            with col_btn:
-                                st.write("")
-                                st.write("")
-                                if st.button("Guardar Canvis", key=f"btn_save_{row['idNom']}", type="primary"):
-                                    if new_prod_name.strip():
-                                        # Create new product
-                                        res = supabase.table('tb_productes').insert({'nom_estandard': new_prod_name.strip(), 'familia': new_fam}).execute()
-                                        if res.data:
-                                            new_id = res.data[0]['idProducte']
-                                            supabase.table('tb_noms_producte').update({'idProducte': new_id}).eq('idNom', row['idNom']).execute()
-                                            st.success("Creat i assignat!")
-                                            st.rerun()
-                                    elif sel_prod != "--- Tria un producte existent ---":
-                                        # Map to existing
-                                        match_prod = df_prods[df_prods['nom_estandard'] == sel_prod].iloc[0]
-                                        supabase.table('tb_noms_producte').update({'idProducte': int(match_prod['idProducte'])}).eq('idNom', row['idNom']).execute()
-                                        st.success("Assignat correctament!")
-                                        st.rerun()
-                                    else:
-                                        st.error("Tria o crea un producte.")
-                else:
-                    st.success("Tots els productes dels teus tiquets estan ben assignats!")
-            else:
-                st.info("Encara no hi ha productes nous detectats.")
-                
-            st.divider()
-            
-            st.markdown("### 📊 Control d'Stock (El teu Rebost)")
+            st.markdown("<h2 style='color:#3498db;'>📦 Control d'Stock (El teu Rebost)</h2>", unsafe_allow_html=True)
             if not df_prods.empty:
                 st.write("Edita les quantitats i el lloc on guardes cada article directament a la taula.")
                 
