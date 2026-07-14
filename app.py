@@ -4706,15 +4706,55 @@ with tab_db:
     with col_table:
         # Interactive dataframe with row selection enabled
         dynamic_height = 38 + len(df_page) * 35.5
-        selection_event = st.dataframe(
-            df_page, 
-            use_container_width=True,
-            height=int(dynamic_height),
-            on_select="rerun",
-            selection_mode="single-row",
-            column_config=col_configs,
-            key=f"df_select_{db_select}_{st.session_state[page_key]}_{st.session_state.get('df_key_counter', 0)}"
-        )
+        
+        if db_select == "Stock Rebost":
+            # Add disabled ID column to config
+            col_configs["idProducte"] = st.column_config.Column(disabled=True, width=45)
+            
+            edited_df = st.data_editor(
+                df_page, 
+                use_container_width=True,
+                height=int(dynamic_height),
+                column_config=col_configs,
+                hide_index=True,
+                key=f"df_select_{db_select}_{st.session_state[page_key]}_{st.session_state.get('df_key_counter', 0)}"
+            )
+            
+            updates = 0
+            for i in range(len(df_page)):
+                orig_row = df_page.iloc[i]
+                new_row = edited_df.iloc[i]
+                if not orig_row.equals(new_row):
+                    update_data = new_row.to_dict()
+                    prod_id = update_data.pop('idProducte', None)
+                    if prod_id:
+                        for k, v in update_data.items():
+                            if pd.isna(v): 
+                                update_data[k] = None
+                            elif hasattr(v, 'item'): 
+                                update_data[k] = v.item()
+                        supabase.table('tb_productes').update(update_data).eq('idProducte', prod_id).execute()
+                        updates += 1
+            
+            if updates > 0:
+                st.session_state["df_key_counter"] = st.session_state.get("df_key_counter", 0) + 1
+                st.rerun()
+                
+            # Dummy selection event to bypass the edit form
+            class DummySelection:
+                def __init__(self):
+                    self.selection = {}
+            selection_event = DummySelection()
+        else:
+            selection_event = st.dataframe(
+                df_page, 
+                use_container_width=True,
+                height=int(dynamic_height),
+                on_select="rerun",
+                selection_mode="single-row",
+                column_config=col_configs,
+                key=f"df_select_{db_select}_{st.session_state[page_key]}_{st.session_state.get('df_key_counter', 0)}"
+            )
     
     # 4. Modify / Delete Section
     st.write("")
