@@ -4552,7 +4552,7 @@ if tab_rebost:
                                 'select_stock': bool(row['select_stock']),
                                 'stock_actual': float(row['stock_actual']) if pd.notna(row['stock_actual']) else 0.0,
                                 'stock_minim': float(row['stock_minim']) if pd.notna(row['stock_minim']) else 0.0,
-                                'lloc': row['lloc']
+                                'lloc': str(row['lloc']) if pd.notna(row['lloc']) and row['lloc'] != "None" else None
                             }).eq('idProducte', row['idProducte']).execute()
                             updates_made += 1
                             
