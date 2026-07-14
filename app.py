@@ -4483,23 +4483,32 @@ if tab_rebost:
                         else:
                             df_fam = df_available[df_available['familia'] == sel_fam].sort_values('nom_estandard')
                             
-                        st.markdown(f"**2️⃣ Què has gastat? (Toca un botó per restar-ne 1)**")
+                        st.markdown(f"**2️⃣ Què has gastat? (Toca per restar-ne 1)**")
                         
-                        # Generate 3 columns grid
-                        cols_per_row = 3
+                        # Generate 4 columns grid for smaller buttons (TPV style)
+                        cols_per_row = 4
                         for i in range(0, len(df_fam), cols_per_row):
                             cols = st.columns(cols_per_row)
                             chunk = df_fam.iloc[i:i+cols_per_row]
                             for j, (_, row) in enumerate(chunk.iterrows()):
                                 prod_name = row['nom_estandard']
-                                stock = float(row['stock_actual'])
-                                btn_label = f"🛒 {prod_name}\n📦 {stock} disp."
+                                stock = int(row['stock_actual']) # Convert to int
                                 
-                                if cols[j].button(btn_label, key=f"btn_consum_{row['idProducte']}", use_container_width=True):
-                                    new_stock = stock - 1.0
-                                    supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', row['idProducte']).execute()
-                                    st.success(f"➖ 1x {prod_name} gastat! (Et queden {new_stock})")
-                                    st.rerun()
+                                with cols[j]:
+                                    # If the user creates a 'foto_url' column in Supabase, we display it here
+                                    if 'foto_url' in row and pd.notna(row['foto_url']) and str(row['foto_url']).strip() != "":
+                                        try:
+                                            st.image(str(row['foto_url']), use_container_width=True)
+                                        except:
+                                            pass # Ignore invalid URLs for now
+                                            
+                                    btn_label = f"{prod_name}\n📦 {stock}"
+                                    
+                                    if st.button(btn_label, key=f"btn_consum_{row['idProducte']}", use_container_width=True):
+                                        new_stock = stock - 1.0
+                                        supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', row['idProducte']).execute()
+                                        st.success(f"➖ 1x {prod_name} gastat! (Et queden {int(new_stock)})")
+                                        st.rerun()
                 else:
                     st.info("Actualment no tens cap producte controlat amb stock disponible (> 0).")
                 
