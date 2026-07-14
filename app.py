@@ -4557,11 +4557,20 @@ if tab_rebost:
                             row['stock_minim'] != orig_row['stock_minim'] or 
                             row['lloc'] != orig_row['lloc'] or
                             row['select_stock'] != orig_row['select_stock']):
+                            
+                            def s_float(v):
+                                try:
+                                    val = float(v)
+                                    import math
+                                    return 0.0 if math.isnan(val) else val
+                                except:
+                                    return 0.0
+                                    
                             supabase.table('tb_productes').update({
                                 'select_stock': bool(row['select_stock']),
-                                'stock_actual': float(row['stock_actual']) if pd.notna(row['stock_actual']) else 0.0,
-                                'stock_minim': float(row['stock_minim']) if pd.notna(row['stock_minim']) else 0.0,
-                                'lloc': str(row['lloc']) if pd.notna(row['lloc']) and row['lloc'] != "None" else None
+                                'stock_actual': s_float(row['stock_actual']),
+                                'stock_minim': s_float(row['stock_minim']),
+                                'lloc': str(row['lloc']) if pd.notna(row['lloc']) and str(row['lloc']).strip().lower() != "none" else None
                             }).eq('idProducte', row['idProducte']).execute()
                             updates_made += 1
                             
@@ -4803,7 +4812,8 @@ with tab_db:
                         prod_id = update_data.pop('idProducte', None)
                         if prod_id:
                             for k, v in update_data.items():
-                                if pd.isna(v): 
+                                import math
+                                if pd.isna(v) or (isinstance(v, float) and math.isnan(v)): 
                                     update_data[k] = None
                                 elif hasattr(v, 'item'): 
                                     update_data[k] = v.item()
@@ -4811,6 +4821,7 @@ with tab_db:
                             updates += 1
                 
                 if updates > 0:
+                    st.cache_data.clear()
                     st.session_state["df_key_counter"] = st.session_state.get("df_key_counter", 0) + 1
                     st.rerun()
                 
