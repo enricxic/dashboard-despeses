@@ -4510,7 +4510,7 @@ with tab_db:
     col_sel, col_search, col_size = st.columns([3, 5, 2], vertical_alignment="bottom")
     with col_sel:
         db_select = st.selectbox("Taula", [
-            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera"
+            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera", "Stock Rebost"
         ], key="db_select_box")
     with col_search:
         search_query = st.text_input("🔍 Cerca global", value="", key=f"search_{db_select}")
@@ -4587,6 +4587,11 @@ with tab_db:
         # Si hi ha altres columnes (no hauria), les posem al final
         other_cols = [c for c in df_to_show.columns if c not in desired_order]
         df_to_show = df_to_show[available_cols + other_cols]
+        
+    elif db_select == "Stock Rebost":
+        df_to_show = fetch_all_supabase(supabase, 'tb_productes')
+        if not df_to_show.empty:
+            df_to_show = df_to_show.sort_values(by='nom_estandard')
         
     df_filtered = df_to_show.copy()
     
@@ -4729,7 +4734,8 @@ with tab_db:
             "Gasolina": ("gasolina", "idGasolina"),
             "Kilòmetres Cotxe": ("kmCotxe", "idRuta"),
             "Pagament Hipoteca": ("hipoteca", None),
-            "Estalvis DP": ("estalviDP", None)
+            "Estalvis DP": ("estalviDP", None),
+            "Stock Rebost": ("tb_productes", "idProducte")
         }.get(db_select)
         
         table_name, id_col = db_table_info
