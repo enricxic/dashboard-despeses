@@ -4497,13 +4497,40 @@ if tab_rebost:
                                 with cols[j]:
                                     # Use HTML to enforce a fixed height for all images/placeholders
                                     # This guarantees all buttons align perfectly at the bottom
+                                    # Use HTML to enforce a fixed height for all images/placeholders
+                                    # This guarantees all buttons align perfectly at the bottom
                                     if 'foto_url' in row and pd.notna(row['foto_url']) and str(row['foto_url']).strip() != "":
                                         foto_src = str(row['foto_url']).strip()
-                                        st.markdown(f'''
-                                            <div style="height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-                                                <img src="{foto_src}" style="max-height: 100%; max-width: 100%; border-radius: 8px; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                                            </div>
-                                        ''', unsafe_allow_html=True)
+                                        
+                                        # Handle local files by converting to base64 for HTML img tag
+                                        import base64
+                                        import os
+                                        
+                                        img_src = foto_src
+                                        if not foto_src.startswith("http"):
+                                            # It's a local file
+                                            if os.path.exists(foto_src):
+                                                with open(foto_src, "rb") as f:
+                                                    b64_data = base64.b64encode(f.read()).decode("utf-8")
+                                                    # Guess mime type roughly
+                                                    mime = "image/png" if foto_src.lower().endswith(".png") else "image/jpeg"
+                                                    img_src = f"data:{mime};base64,{b64_data}"
+                                            else:
+                                                img_src = "" # File not found
+                                                
+                                        if img_src:
+                                            st.markdown(f'''
+                                                <div style="height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+                                                    <img src="{img_src}" style="max-height: 100%; max-width: 100%; border-radius: 8px; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                                </div>
+                                            ''', unsafe_allow_html=True)
+                                        else:
+                                            # File was local but not found, show placeholder
+                                            st.markdown('''
+                                                <div style="height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;">
+                                                    <span style="font-size: 3rem; color: #ced4da;">📦</span>
+                                                </div>
+                                            ''', unsafe_allow_html=True)
                                     else:
                                         # Placeholder for items without image to maintain alignment
                                         st.markdown('''
