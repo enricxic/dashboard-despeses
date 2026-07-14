@@ -4495,12 +4495,22 @@ if tab_rebost:
                                 stock = int(row['stock_actual']) # Convert to int
                                 
                                 with cols[j]:
-                                    # If the user creates a 'foto_url' column in Supabase, we display it here
+                                    # Use HTML to enforce a fixed height for all images/placeholders
+                                    # This guarantees all buttons align perfectly at the bottom
                                     if 'foto_url' in row and pd.notna(row['foto_url']) and str(row['foto_url']).strip() != "":
-                                        try:
-                                            st.image(str(row['foto_url']), use_container_width=True)
-                                        except:
-                                            pass # Ignore invalid URLs for now
+                                        foto_src = str(row['foto_url']).strip()
+                                        st.markdown(f'''
+                                            <div style="height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+                                                <img src="{foto_src}" style="max-height: 100%; max-width: 100%; border-radius: 8px; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                            </div>
+                                        ''', unsafe_allow_html=True)
+                                    else:
+                                        # Placeholder for items without image to maintain alignment
+                                        st.markdown('''
+                                            <div style="height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;">
+                                                <span style="font-size: 3rem; color: #ced4da;">📦</span>
+                                            </div>
+                                        ''', unsafe_allow_html=True)
                                             
                                     btn_label = f"{prod_name}\n📦 {stock}"
                                     
