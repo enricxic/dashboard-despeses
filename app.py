@@ -4543,7 +4543,7 @@ if tab_rebost:
                     # We need to find changed rows and update supabase
                     updates_made = 0
                     for i, row in edited_df.iterrows():
-                        orig_row = df_prods_filtered.iloc[i]
+                        orig_row = df_prods_filtered.loc[i]
                         if (row['stock_actual'] != orig_row['stock_actual'] or 
                             row['stock_minim'] != orig_row['stock_minim'] or 
                             row['lloc'] != orig_row['lloc'] or
