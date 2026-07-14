@@ -2844,7 +2844,13 @@ def show_bank_extract_modal(bank_display_name, selected_year, month_name):
         if bank_display_name != 'Pago VISA':
             cols_to_show.append('FormaPago')
             
-        b_desp = b_desp[cols_to_show]
+        b_desp = b_desp[cols_to_show].copy()
+        for col in ['import ingrés', 'Import càrrec', 'Saldo']:
+            if col in b_desp.columns:
+                b_desp[col] = pd.to_numeric(b_desp[col], errors='coerce')
+        for col in ['Data', 'Idcategoria', 'Idconcepte', 'Comentari', 'FormaPago']:
+            if col in b_desp.columns:
+                b_desp[col] = b_desp[col].apply(lambda x: str(x) if pd.notna(x) else "")
         
         try:
             st.dataframe(
@@ -4491,13 +4497,21 @@ if tab_rebost:
                 if 'lloc' not in df_prods.columns:
                     df_prods['lloc'] = ""
                 
+                # Ensure select_stock exists
+                if 'select_stock' not in df_prods.columns:
+                    df_prods['select_stock'] = False
+                    
                 # Order by familia and nom
                 df_prods = df_prods.sort_values(by=['familia', 'nom_estandard'])
                 
+                # Filter ONLY items that are in the pantry (select_stock == True)
+                df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
+                
                 edited_df = st.data_editor(
-                    df_prods[['idProducte', 'nom_estandard', 'familia', 'stock_actual', 'stock_minim', 'lloc']],
+                    df_prods_filtered[['idProducte', 'select_stock', 'nom_estandard', 'familia', 'stock_actual', 'stock_minim', 'lloc']],
                     column_config={
                         "idProducte": None,
+                        "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
                         "nom_estandard": st.column_config.TextColumn("Producte", disabled=True),
                         "familia": st.column_config.TextColumn("Família", disabled=True),
                         "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
@@ -4513,13 +4527,15 @@ if tab_rebost:
                     # We need to find changed rows and update supabase
                     updates_made = 0
                     for i, row in edited_df.iterrows():
-                        orig_row = df_prods.iloc[i]
+                        orig_row = df_prods_filtered.iloc[i]
                         if (row['stock_actual'] != orig_row['stock_actual'] or 
                             row['stock_minim'] != orig_row['stock_minim'] or 
-                            row['lloc'] != orig_row['lloc']):
+                            row['lloc'] != orig_row['lloc'] or
+                            row['select_stock'] != orig_row['select_stock']):
                             supabase.table('tb_productes').update({
-                                'stock_actual': row['stock_actual'],
-                                'stock_minim': row['stock_minim'],
+                                'select_stock': bool(row['select_stock']),
+                                'stock_actual': float(row['stock_actual']) if pd.notna(row['stock_actual']) else 0.0,
+                                'stock_minim': float(row['stock_minim']) if pd.notna(row['stock_minim']) else 0.0,
                                 'lloc': row['lloc']
                             }).eq('idProducte', row['idProducte']).execute()
                             updates_made += 1
