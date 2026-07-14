@@ -2039,17 +2039,19 @@ def cb_finalize_ticket():
             if not article or article.lower() in ['pendent', 'varis']:
                 continue
             try:
-                res = supabase.table('tb_productes').select('idProducte, stock_actual').eq('nom_estandard', article).execute()
+                res = supabase.table('tb_productes').select('idProducte, stock_actual, select_stock').eq('nom_estandard', article).execute()
                 if res.data:
-                    prod_id = res.data[0]['idProducte']
-                    current_stock = res.data[0].get('stock_actual', 0)
-                    if current_stock is None:
-                        current_stock = 0
-                    
-                    qty_to_add = float(item.get('qty', 1.0))
-                    new_stock = current_stock + qty_to_add
-                    
-                    supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', prod_id).execute()
+                    # Check if the product has select_stock == True
+                    if res.data[0].get('select_stock', False) == True:
+                        prod_id = res.data[0]['idProducte']
+                        current_stock = res.data[0].get('stock_actual', 0)
+                        if current_stock is None:
+                            current_stock = 0
+                        
+                        qty_to_add = float(item.get('qty', 1.0))
+                        new_stock = current_stock + qty_to_add
+                        
+                        supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', prod_id).execute()
             except Exception as e:
                 print(f"Error updating stock for {article}: {e}")
     
