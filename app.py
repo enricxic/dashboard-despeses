@@ -4460,34 +4460,46 @@ if tab_rebost:
                 df_available = df_prods[(df_prods['select_stock'] == True) & (df_prods['stock_actual'] > 0)].copy()
                 
                 if not df_available.empty:
-                    df_available = df_available.sort_values(by=['familia', 'nom_estandard'])
-                    prod_options = []
-                    prod_map = {}
-                    for _, row in df_available.iterrows():
-                        label = f"{row['nom_estandard']} ({row['stock_actual']} disp.) - {row['familia']}"
-                        prod_options.append(label)
-                        prod_map[label] = row
+                    families = sorted([str(f) for f in df_available['familia'].dropna().unique() if str(f).strip() != ""])
+                    if not families:
+                        families = ["Sense Família"]
                         
-                    with st.form("form_baixa_stock"):
-                        col1, col2, col3 = st.columns([5, 2, 2], vertical_alignment="bottom")
-                        with col1:
-                            selected_label = st.selectbox("Producte a donar de baixa:", prod_options)
-                        with col2:
-                            qty_to_remove = st.number_input("Quantitat gastada:", min_value=1.0, value=1.0, step=1.0)
-                        with col3:
-                            btn_baixa = st.form_submit_button("Donar de baixa", type="primary", use_container_width=True)
+                    if 'selected_family_consum' not in st.session_state:
+                        st.session_state['selected_family_consum'] = families[0] if families else None
+                        
+                    # Create horizontal radio for families
+                    st.session_state['selected_family_consum'] = st.radio(
+                        "1️⃣ Tria la família:", 
+                        families, 
+                        horizontal=True,
+                        index=families.index(st.session_state['selected_family_consum']) if st.session_state.get('selected_family_consum') in families else 0
+                    )
+                    
+                    sel_fam = st.session_state['selected_family_consum']
+                    if sel_fam:
+                        # Handle the "Sense Família" case
+                        if sel_fam == "Sense Família":
+                            df_fam = df_available[df_available['familia'].isna() | (df_available['familia'] == "")].sort_values('nom_estandard')
+                        else:
+                            df_fam = df_available[df_available['familia'] == sel_fam].sort_values('nom_estandard')
                             
-                        if btn_baixa:
-                            sel_row = prod_map[selected_label]
-                            max_qty = float(sel_row['stock_actual'])
-                            if qty_to_remove > max_qty:
-                                st.error(f"⚠️ No pots gastar més del que tens! Stock actual: {max_qty}")
-                            else:
-                                new_stock = max_qty - qty_to_remove
-                                prod_id = sel_row['idProducte']
-                                supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', prod_id).execute()
-                                st.success(f"S'ha restat {qty_to_remove} de {sel_row['nom_estandard']}. Nou stock: {new_stock}")
-                                st.rerun()
+                        st.markdown(f"**2️⃣ Què has gastat? (Toca un botó per restar-ne 1)**")
+                        
+                        # Generate 3 columns grid
+                        cols_per_row = 3
+                        for i in range(0, len(df_fam), cols_per_row):
+                            cols = st.columns(cols_per_row)
+                            chunk = df_fam.iloc[i:i+cols_per_row]
+                            for j, (_, row) in enumerate(chunk.iterrows()):
+                                prod_name = row['nom_estandard']
+                                stock = float(row['stock_actual'])
+                                btn_label = f"🛒 {prod_name}\n📦 {stock} disp."
+                                
+                                if cols[j].button(btn_label, key=f"btn_consum_{row['idProducte']}", use_container_width=True):
+                                    new_stock = stock - 1.0
+                                    supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', row['idProducte']).execute()
+                                    st.success(f"➖ 1x {prod_name} gastat! (Et queden {new_stock})")
+                                    st.rerun()
                 else:
                     st.info("Actualment no tens cap producte controlat amb stock disponible (> 0).")
                 
