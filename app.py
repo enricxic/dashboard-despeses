@@ -4545,6 +4545,7 @@ if tab_rebost:
                                         new_stock = stock - 1.0
                                         supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', row['idProducte']).execute()
                                         st.success(f"➖ 1x {prod_name} gastat! (Et queden {int(new_stock)})")
+                                        st.cache_data.clear() # Clear cache so other devices see it
                                         st.rerun()
                 else:
                     st.info("Actualment no tens cap producte controlat amb stock disponible (> 0).")
