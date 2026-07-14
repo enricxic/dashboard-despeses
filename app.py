@@ -4442,8 +4442,58 @@ if tab_rebost:
             
             st.markdown("<h2 style='color:#3498db;'>📦 Control d'Stock (El teu Rebost)</h2>", unsafe_allow_html=True)
             if not df_prods.empty:
-                st.write("Edita les quantitats i el lloc on guardes cada article directament a la taula.")
+                # ================= REGISTRE DE BAIXES =================
+                st.markdown("### 🍽️ Registrar Baixa d'Stock")
+                st.write("Has gastat un producte? Registra-ho aquí perquè l'stock baixi de forma segura.")
                 
+                # Filter only products that have select_stock == True and stock_actual > 0
+                # Wait, df_prods might not have stock_actual as float yet, let's fillna first
+                for col in ['stock_actual', 'stock_minim']:
+                    if col not in df_prods.columns:
+                        df_prods[col] = 0.0
+                    else:
+                        df_prods[col] = pd.to_numeric(df_prods[col], errors='coerce').fillna(0.0)
+                        
+                if 'select_stock' not in df_prods.columns:
+                    df_prods['select_stock'] = False
+                
+                df_available = df_prods[(df_prods['select_stock'] == True) & (df_prods['stock_actual'] > 0)].copy()
+                
+                if not df_available.empty:
+                    df_available = df_available.sort_values(by=['familia', 'nom_estandard'])
+                    prod_options = []
+                    prod_map = {}
+                    for _, row in df_available.iterrows():
+                        label = f"{row['nom_estandard']} ({row['stock_actual']} disp.) - {row['familia']}"
+                        prod_options.append(label)
+                        prod_map[label] = row
+                        
+                    with st.form("form_baixa_stock"):
+                        col1, col2, col3 = st.columns([5, 2, 2], vertical_alignment="bottom")
+                        with col1:
+                            selected_label = st.selectbox("Producte a donar de baixa:", prod_options)
+                        with col2:
+                            qty_to_remove = st.number_input("Quantitat gastada:", min_value=1.0, value=1.0, step=1.0)
+                        with col3:
+                            btn_baixa = st.form_submit_button("Donar de baixa", type="primary", use_container_width=True)
+                            
+                        if btn_baixa:
+                            sel_row = prod_map[selected_label]
+                            max_qty = float(sel_row['stock_actual'])
+                            if qty_to_remove > max_qty:
+                                st.error(f"⚠️ No pots gastar més del que tens! Stock actual: {max_qty}")
+                            else:
+                                new_stock = max_qty - qty_to_remove
+                                prod_id = sel_row['idProducte']
+                                supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', prod_id).execute()
+                                st.success(f"S'ha restat {qty_to_remove} de {sel_row['nom_estandard']}. Nou stock: {new_stock}")
+                                st.rerun()
+                else:
+                    st.info("Actualment no tens cap producte controlat amb stock disponible (> 0).")
+                
+                st.divider()
+                st.markdown("### 📋 Taula d'Edició Ràpida")
+                st.write("Edita les quantitats i el lloc on guardes cada article directament a la taula.")
                 # We need to make sure cols exist in df
                 for col in ['stock_actual', 'stock_minim']:
                     if col not in df_prods.columns:
