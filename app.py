@@ -2947,7 +2947,7 @@ tabs_list = [
         "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades", "💬 Xat IA"
     ]
 if st.session_state.get("role") in ["admin", "guest"]:
-    tabs_list.append("📦 Rebost / Stock")
+    tabs_list.extend(["🛒 Llista de la Compra", "📦 Rebost / Stock"])
 
 if st.session_state.get("role") == "admin":
     tabs_list.extend(["🗄️ Bases de Dades (Supabase)", "📜 Registre d'Accions"])
@@ -2960,9 +2960,11 @@ tab_xat = tabs[3]
 
 tab_idx = 4
 if st.session_state.get("role") in ["admin", "guest"]:
-    tab_rebost = tabs[tab_idx]
-    tab_idx += 1
+    tab_compra = tabs[tab_idx]
+    tab_rebost = tabs[tab_idx + 1]
+    tab_idx += 2
 else:
+    tab_compra = None
     tab_rebost = None
 
 if st.session_state.get("role") == "admin":
@@ -4194,6 +4196,22 @@ with tab_intro:
             df_super = pd.concat([df_super, pd.DataFrame([new_row])], ignore_index=True)
             save_to_csv(df_super.drop(columns=['parsed_date'], errors='ignore'), 'compresSuper.csv')
             
+            # Update stock for the recognized product
+            try:
+                supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                if supabase and art_val and art_val.lower() not in ['pendent', 'varis']:
+                    res = supabase.table('tb_productes').select('idProducte, stock_actual, select_stock').eq('nom_estandard', art_val).execute()
+                    if res.data:
+                        if res.data[0].get('select_stock', False) == True:
+                            prod_id = res.data[0]['idProducte']
+                            current_stock = res.data[0].get('stock_actual', 0)
+                            if current_stock is None: current_stock = 0
+                            new_stock = current_stock + float(qty_val)
+                            supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', prod_id).execute()
+                            st.success(f"📦 Stock actualitzat automàticament: {art_val} (+{int(qty_val)} unitats)")
+            except Exception as e:
+                print(f"Error updating stock manually: {e}")
+            
             st.success("Compra de súper desada correctament!")
             clear_form_state("super_")
             st.rerun()
@@ -4433,6 +4451,54 @@ def show_delete_dialog(table_name, id_col, id_val, current_row_data, db_select, 
             st.rerun()
 
 
+# ================= TAB LLISTA DE LA COMPRA =================
+if tab_compra:
+    with tab_compra:
+        st.markdown("## 🛒 Llista de la Compra")
+        st.write("Aquesta llista mostra els productes del teu rebost on l'stock actual està per sota de l'stock mínim.")
+        try:
+            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+            df_prods = fetch_all_supabase(supabase, 'tb_productes')
+            
+            if not df_prods.empty:
+                # Ensure select_stock exists
+                if 'select_stock' not in df_prods.columns:
+                    df_prods['select_stock'] = False
+                
+                # Filter ONLY items that are in the pantry (select_stock == True)
+                df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
+                
+                for col in ['stock_actual', 'stock_minim']:
+                    if col not in df_prods_filtered.columns:
+                        df_prods_filtered[col] = 0.0
+                if 'super_habitual' not in df_prods_filtered.columns:
+                    df_prods_filtered['super_habitual'] = None
+                    
+                df_shopping = df_prods_filtered[df_prods_filtered['stock_actual'] < df_prods_filtered['stock_minim']].copy()
+                
+                if not df_shopping.empty:
+                    df_shopping['falta'] = df_shopping['stock_minim'] - df_shopping['stock_actual']
+                    # Fill missing supermarket
+                    df_shopping['super_habitual'] = df_shopping['super_habitual'].fillna("Sense Assignar").replace("", "Sense Assignar")
+                    
+                    # Sort by supermarket name
+                    df_shopping = df_shopping.sort_values(by='super_habitual')
+                    
+                    # Group by super_habitual
+                    for superm, group in df_shopping.groupby('super_habitual'):
+                        # Use expander for each supermarket
+                        with st.expander(f"🏪 {superm} ({len(group)} productes)", expanded=True):
+                            for _, row in group.iterrows():
+                                unit_str = row['unitat'] if 'unitat' in row and pd.notna(row['unitat']) and str(row['unitat']).lower() != 'none' else 'u.'
+                                st.markdown(f"- **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}")
+                else:
+                    st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu.")
+            else:
+                st.info("No hi ha productes a la base de dades.")
+                
+        except Exception as e:
+            st.error(f"⚠️ Error carregant la llista de la compra: {str(e)}")
+
 # ================= TAB REBOST / STOCK =================
 if tab_rebost:
     with tab_rebost:
@@ -4550,33 +4616,7 @@ if tab_rebost:
                 else:
                     st.info("Actualment no tens cap producte controlat amb stock disponible (> 0).")
                 
-                # Add Shopping List Section
-                st.divider()
-                st.markdown("### 🛒 Llista de la Compra")
-                
-                # Filter ONLY items that are in the pantry (select_stock == True)
-                df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
-                
-                for col in ['stock_actual', 'stock_minim']:
-                    if col not in df_prods_filtered.columns:
-                        df_prods_filtered[col] = 0.0
-                if 'super_habitual' not in df_prods_filtered.columns:
-                    df_prods_filtered['super_habitual'] = None
-                    
-                df_shopping = df_prods_filtered[df_prods_filtered['stock_actual'] < df_prods_filtered['stock_minim']].copy()
-                if not df_shopping.empty:
-                    df_shopping['falta'] = df_shopping['stock_minim'] - df_shopping['stock_actual']
-                    # Fill missing supermarket
-                    df_shopping['super_habitual'] = df_shopping['super_habitual'].fillna("Sense Assignar").replace("", "Sense Assignar")
-                    
-                    # Group by super_habitual
-                    for superm, group in df_shopping.groupby('super_habitual'):
-                        st.markdown(f"**🏪 {superm}**")
-                        for _, row in group.iterrows():
-                            unit_str = row['unitat'] if 'unitat' in row and pd.notna(row['unitat']) and str(row['unitat']).lower() != 'none' else 'u.'
-                            st.write(f"- {row['nom_estandard']}: falta **{int(row['falta'])}** {unit_str}")
-                else:
-                    st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu.")
+
 
                 st.divider()
                 st.markdown("### 📋 Taula d'Edició Ràpida")
