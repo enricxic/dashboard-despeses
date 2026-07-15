@@ -4490,7 +4490,7 @@ if tab_compra:
                         with st.expander(f"🏪 {superm} ({len(group)} productes)", expanded=True):
                             for _, row in group.iterrows():
                                 unit_str = row['unitat'] if 'unitat' in row and pd.notna(row['unitat']) and str(row['unitat']).lower() != 'none' else 'u.'
-                                st.markdown(f"- **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}")
+                                st.checkbox(f"**{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}", key=f"chk_shop_{row['idProducte']}")
                 else:
                     st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu.")
             else:
