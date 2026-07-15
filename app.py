@@ -4640,24 +4640,27 @@ if tab_rebost:
                 # Filter ONLY items that are in the pantry (select_stock == True)
                 df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
                 
-                edited_df = st.data_editor(
-                    df_prods_filtered[['idProducte', 'select_stock', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'lloc']],
-                    column_config={
-                        "idProducte": None,
-                        "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
-                        "nom_estandard": st.column_config.TextColumn("Producte", disabled=True),
-                        "familia": st.column_config.TextColumn("Família", disabled=True),
-                        "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=get_config_supers() + ["Sense Assignar"], required=False),
-                        "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
-                        "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
-                        "lloc": st.column_config.SelectboxColumn("Lloc", options=["Rebost", "Sota-pica", "Escala", "Nevera", "Congelador", "Bany", "Altres"], required=False)
-                    },
-                    hide_index=True,
-                    use_container_width=True,
-                    key="editor_stock"
-                )
+                with st.form("form_edicio_rapida_stock"):
+                    edited_df = st.data_editor(
+                        df_prods_filtered[['idProducte', 'select_stock', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'lloc']],
+                        column_config={
+                            "idProducte": None,
+                            "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
+                            "nom_estandard": st.column_config.TextColumn("Producte", disabled=True),
+                            "familia": st.column_config.TextColumn("Família", disabled=True),
+                            "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=get_config_supers() + ["Sense Assignar"], required=False),
+                            "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
+                            "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
+                            "lloc": st.column_config.SelectboxColumn("Lloc", options=["Rebost", "Sota-pica", "Escala", "Nevera", "Congelador", "Bany", "Altres"], required=False)
+                        },
+                        hide_index=True,
+                        use_container_width=True,
+                        key="editor_stock"
+                    )
+                    
+                    submitted = st.form_submit_button("Guardar Estat del Stock", type="primary")
                 
-                if st.button("Guardar Estat del Stock", type="primary"):
+                if submitted:
                     # We need to find changed rows and update supabase
                     updates_made = 0
                     for i, row in edited_df.iterrows():
@@ -4665,6 +4668,7 @@ if tab_rebost:
                         if (row['stock_actual'] != orig_row['stock_actual'] or 
                             row['stock_minim'] != orig_row['stock_minim'] or 
                             row['lloc'] != orig_row['lloc'] or
+                            row['super_habitual'] != orig_row['super_habitual'] or
                             row['select_stock'] != orig_row['select_stock']):
                             
                             def s_float(v):
