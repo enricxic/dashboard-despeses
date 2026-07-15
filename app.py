@@ -4647,7 +4647,7 @@ if tab_rebost:
                         "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
                         "nom_estandard": st.column_config.TextColumn("Producte", disabled=True),
                         "familia": st.column_config.TextColumn("Família", disabled=True),
-                        "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=["Mercadona", "Consum", "Bonpreu", "Ametller", "Esclat", "Lidl", "Aldi", "Carrefour", "Alcampo", "Dia", "Condis", "Caprabo", "Altres", "Varis"], required=False),
+                        "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=get_config_supers() + ["Sense Assignar"], required=False),
                         "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
                         "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
                         "lloc": st.column_config.SelectboxColumn("Lloc", options=["Rebost", "Nevera", "Congelador", "Armari Cuina", "Armari Neteja", "Bany", "Garatge", "Altres"], required=False)
