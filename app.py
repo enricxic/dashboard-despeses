@@ -3672,8 +3672,8 @@ with tab_intro:
                 st.error("⚠️ Per a op_banc s'ha d'introduir un import (Càrrec o Ingrés).")
             elif import_carg == 0.0 and import_ing == 0.0:
                 st.error("⚠️ S'ha d'introduir un import vàlid (Càrrec o Ingrés).")
-            elif not banc or (banc != "Efectiu" and not forma_pago) or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
-                st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu).")
+            elif not banc or (banc not in ["Efectiu", "Casa"] and not forma_pago) or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
+                st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu o Casa).")
             elif is_gas_cat and st.session_state.get(f"desp_litres_{version}", 0.0) <= 0.0:
                 st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
             else:
