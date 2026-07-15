@@ -4550,6 +4550,34 @@ if tab_rebost:
                 else:
                     st.info("Actualment no tens cap producte controlat amb stock disponible (> 0).")
                 
+                # Add Shopping List Section
+                st.divider()
+                st.markdown("### 🛒 Llista de la Compra")
+                
+                # Filter ONLY items that are in the pantry (select_stock == True)
+                df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
+                
+                for col in ['stock_actual', 'stock_minim']:
+                    if col not in df_prods_filtered.columns:
+                        df_prods_filtered[col] = 0.0
+                if 'super_habitual' not in df_prods_filtered.columns:
+                    df_prods_filtered['super_habitual'] = None
+                    
+                df_shopping = df_prods_filtered[df_prods_filtered['stock_actual'] < df_prods_filtered['stock_minim']].copy()
+                if not df_shopping.empty:
+                    df_shopping['falta'] = df_shopping['stock_minim'] - df_shopping['stock_actual']
+                    # Fill missing supermarket
+                    df_shopping['super_habitual'] = df_shopping['super_habitual'].fillna("Sense Assignar").replace("", "Sense Assignar")
+                    
+                    # Group by super_habitual
+                    for superm, group in df_shopping.groupby('super_habitual'):
+                        st.markdown(f"**🏪 {superm}**")
+                        for _, row in group.iterrows():
+                            unit_str = row['unitat'] if 'unitat' in row and pd.notna(row['unitat']) and str(row['unitat']).lower() != 'none' else 'u.'
+                            st.write(f"- {row['nom_estandard']}: falta **{int(row['falta'])}** {unit_str}")
+                else:
+                    st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu.")
+
                 st.divider()
                 st.markdown("### 📋 Taula d'Edició Ràpida")
                 st.write("Edita les quantitats i el lloc on guardes cada article directament a la taula.")
@@ -4559,6 +4587,8 @@ if tab_rebost:
                         df_prods[col] = 0.0
                 if 'lloc' not in df_prods.columns:
                     df_prods['lloc'] = ""
+                if 'super_habitual' not in df_prods.columns:
+                    df_prods['super_habitual'] = None
                 
                 # Ensure select_stock exists
                 if 'select_stock' not in df_prods.columns:
@@ -4571,12 +4601,13 @@ if tab_rebost:
                 df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
                 
                 edited_df = st.data_editor(
-                    df_prods_filtered[['idProducte', 'select_stock', 'nom_estandard', 'familia', 'stock_actual', 'stock_minim', 'lloc']],
+                    df_prods_filtered[['idProducte', 'select_stock', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'lloc']],
                     column_config={
                         "idProducte": None,
                         "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
                         "nom_estandard": st.column_config.TextColumn("Producte", disabled=True),
                         "familia": st.column_config.TextColumn("Família", disabled=True),
+                        "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=["Mercadona", "Consum", "Bonpreu", "Ametller", "Esclat", "Lidl", "Aldi", "Carrefour", "Alcampo", "Dia", "Condis", "Caprabo", "Altres", "Varis"], required=False),
                         "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
                         "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
                         "lloc": st.column_config.SelectboxColumn("Lloc", options=["Rebost", "Nevera", "Congelador", "Armari Cuina", "Armari Neteja", "Bany", "Garatge", "Altres"], required=False)
@@ -4608,7 +4639,8 @@ if tab_rebost:
                                 'select_stock': bool(row['select_stock']),
                                 'stock_actual': s_float(row['stock_actual']),
                                 'stock_minim': s_float(row['stock_minim']),
-                                'lloc': str(row['lloc']) if pd.notna(row['lloc']) and str(row['lloc']).strip().lower() != "none" else None
+                                'lloc': str(row['lloc']) if pd.notna(row['lloc']) and str(row['lloc']).strip().lower() != "none" else None,
+                                'super_habitual': str(row['super_habitual']) if pd.notna(row['super_habitual']) and str(row['super_habitual']).strip().lower() != "none" else None
                             }).eq('idProducte', row['idProducte']).execute()
                             updates_made += 1
                             
