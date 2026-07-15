@@ -4586,7 +4586,7 @@ if tab_rebost:
                     key="editor_stock"
                 )
                 
-                if st.button("Guardar Estat del Stock"):
+                if st.button("Guardar Estat del Stock", type="primary"):
                     # We need to find changed rows and update supabase
                     updates_made = 0
                     for i, row in edited_df.iterrows():
