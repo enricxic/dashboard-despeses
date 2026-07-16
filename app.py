@@ -4622,6 +4622,12 @@ if tab_compra:
                                                 supabase.table('tb_pendents_compra').update({'super_habitual': target_super}).eq('id', int(row_to_move['idProducte'])).execute()
                                             else:
                                                 supabase.table('tb_productes').update({'super_habitual': target_super}).eq('idProducte', int(row_to_move['idProducte'])).execute()
+                                                
+                                            # Netejar el check state perquè no aparegui comprat a l'altre super
+                                            chk_key = f"chk_shop_{row_to_move['idProducte']}_{row_to_move.get('is_manual', False)}"
+                                            if chk_key in st.session_state:
+                                                del st.session_state[chk_key]
+                                                
                                             st.success(f"Mogut a {target_super}!")
                                             st.rerun()
                                         except Exception as e:
