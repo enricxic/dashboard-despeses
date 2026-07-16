@@ -4587,12 +4587,21 @@ if tab_compra:
                             # Form for moving items if superm is Sense Assignar
                             if superm == "Sense Assignar" and len(group) > 0:
                                 st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+                                
+                                # Check if any checkbox is selected to set default article
+                                default_item_idx = 0
+                                item_options = group['nom_estandard'].tolist()
+                                for idx, (_, r_move) in enumerate(group.iterrows()):
+                                    chk_key = f"chk_shop_{r_move['idProducte']}_{r_move.get('is_manual', False)}"
+                                    if st.session_state.get(chk_key, False):
+                                        default_item_idx = idx
+                                        break
+                                        
                                 with st.form(f"move_items_{superm}"):
                                     st.write("🚚 **Moure a un altre supermercat**")
                                     col_m1, col_m2, col_m3 = st.columns([2, 2, 1])
                                     with col_m1:
-                                        item_options = group['nom_estandard'].tolist()
-                                        item_to_move = st.selectbox("Article", item_options)
+                                        item_to_move = st.selectbox("Article", item_options, index=default_item_idx)
                                     with col_m2:
                                         if not df_prods.empty and 'super_habitual' in df_prods.columns:
                                             all_supers_clean = sorted([str(s) for s in df_prods['super_habitual'].dropna().unique() if str(s).strip() not in ["", "Sense Assignar"]])
