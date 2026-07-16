@@ -4461,15 +4461,23 @@ if tab_compra:
             df_prods = fetch_all_supabase(supabase, 'tb_productes')
             
             # --- SECCIÓ AFEGIR MANUALMENT ---
-            with st.expander("➕ Afegir petició puntual", expanded=False):
+            if "show_add_manual" not in st.session_state:
+                st.session_state.show_add_manual = False
+                
+            if st.button("➕ Afegir petició puntual", type="primary" if not st.session_state.show_add_manual else "secondary"):
+                st.session_state.show_add_manual = not st.session_state.show_add_manual
+                st.rerun()
+                
+            if st.session_state.show_add_manual:
+                st.markdown("<div style='padding: 1rem; border: 1px solid #d3d3d3; border-radius: 0.5rem; margin-bottom: 1rem; background-color: #f8f9fa;'>", unsafe_allow_html=True)
                 with st.form("form_add_manual", clear_on_submit=True):
                     st.write("Afegeix articles que no tens al rebost o peticions especials.")
                     col1, col2, col3, col4 = st.columns([1.5, 2, 2.5, 1])
                     with col1:
                         if not df_prods.empty and 'super_habitual' in df_prods.columns:
-                            supers = sorted([str(s) for s in df_prods['super_habitual'].dropna().unique() if str(s).strip() != ""])
+                            supers = ["(Tria supermercat)"] + sorted([str(s) for s in df_prods['super_habitual'].dropna().unique() if str(s).strip() != ""])
                         else:
-                            supers = ["Mercadona", "BonArea", "Consum", "Ametller", "Esclat"]
+                            supers = ["(Tria supermercat)", "Mercadona", "BonArea", "Consum", "Ametller", "Esclat"]
                         if "Altres" not in supers:
                             supers.append("Altres")
                         super_sel = st.selectbox("Supermercat", supers)
@@ -4484,11 +4492,13 @@ if tab_compra:
                     with col4:
                         quantitat_nou = st.number_input("Quantitat", min_value=1, value=1, step=1)
                     
-                    submitted_manual = st.form_submit_button("➕ Afegir")
+                    submitted_manual = st.form_submit_button("➕ Afegir a la llista")
                     if submitted_manual:
                         nom_final = nom_lliure.strip() if nom_lliure.strip() else (nom_cataleg if nom_cataleg != "(No utilitzar)" else "")
                         
-                        if nom_final:
+                        if super_sel == "(Tria supermercat)":
+                            st.warning("⚠️ Si us plau, tria un supermercat de la llista.")
+                        elif nom_final:
                             # Insert into tb_pendents_compra
                             try:
                                 supabase.table('tb_pendents_compra').insert({
@@ -4497,12 +4507,14 @@ if tab_compra:
                                     'unitat': 'u.',
                                     'super_habitual': super_sel
                                 }).execute()
+                                st.session_state.show_add_manual = False
                                 st.success(f"S'ha afegit '{nom_final}' correctament!")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Error guardant l'article: {e}")
                         else:
-                            st.warning("Has d'escriure un nom lliure o triar un producte del catàleg.")
+                            st.warning("⚠️ Has d'escriure un nom lliure o triar un producte del catàleg.")
+                st.markdown("</div>", unsafe_allow_html=True)
             
             st.markdown("---")
             
@@ -4818,7 +4830,7 @@ with tab_db:
     col_sel, col_search, col_size = st.columns([3, 5, 2], vertical_alignment="bottom")
     with col_sel:
         db_select = st.selectbox("Taula", [
-            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera", "Stock Rebost"
+            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera", "Stock Rebost", "Peticions Lliures Compra"
         ], key="db_select_box")
     with col_search:
         search_query = st.text_input("🔍 Cerca global", value="", key=f"search_{db_select}")
@@ -4907,6 +4919,8 @@ with tab_db:
                 if col in df_to_show.columns:
                     df_to_show[col] = pd.to_numeric(df_to_show[col], errors='coerce').fillna(0.0)
             df_to_show = df_to_show.sort_values(by='nom_estandard')
+    elif db_select == "Peticions Lliures Compra":
+        df_to_show = fetch_all_supabase(supabase, 'tb_pendents_compra')
         
     df_filtered = df_to_show.copy()
     
@@ -5096,7 +5110,8 @@ with tab_db:
             "Kilòmetres Cotxe": ("kmCotxe", "idRuta"),
             "Pagament Hipoteca": ("hipoteca", None),
             "Estalvis DP": ("estalviDP", None),
-            "Stock Rebost": ("tb_productes", "idProducte")
+            "Stock Rebost": ("tb_productes", "idProducte"),
+            "Peticions Lliures Compra": ("tb_pendents_compra", "id")
         }.get(db_select)
         
         table_name, id_col = db_table_info
