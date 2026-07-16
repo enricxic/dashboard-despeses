@@ -4496,16 +4496,16 @@ if tab_compra:
                     if submitted_manual:
                         nom_final = nom_lliure.strip() if nom_lliure.strip() else (nom_cataleg if nom_cataleg != "(No utilitzar)" else "")
                         
-                        if super_sel == "(Tria supermercat)":
-                            st.warning("⚠️ Si us plau, tria un supermercat de la llista.")
-                        elif nom_final:
+                        super_to_save = "Sense Assignar" if super_sel == "(Tria supermercat)" else super_sel
+                        
+                        if nom_final:
                             # Insert into tb_pendents_compra
                             try:
                                 supabase.table('tb_pendents_compra').insert({
                                     'nom_article': nom_final,
                                     'quantitat': quantitat_nou,
                                     'unitat': 'u.',
-                                    'super_habitual': super_sel
+                                    'super_habitual': super_to_save
                                 }).execute()
                                 st.session_state.show_add_manual = False
                                 st.success(f"S'ha afegit '{nom_final}' correctament!")
@@ -4583,6 +4583,40 @@ if tab_compra:
                                             st.rerun()
                                         except Exception as e:
                                             st.error(f"Error esborrant: {e}")
+                                            
+                            # Form for moving items if superm is Sense Assignar
+                            if superm == "Sense Assignar" and len(group) > 0:
+                                st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+                                with st.form(f"move_items_{superm}"):
+                                    st.write("🚚 **Moure a un altre supermercat**")
+                                    col_m1, col_m2, col_m3 = st.columns([2, 2, 1])
+                                    with col_m1:
+                                        item_options = group['nom_estandard'].tolist()
+                                        item_to_move = st.selectbox("Article", item_options)
+                                    with col_m2:
+                                        if not df_prods.empty and 'super_habitual' in df_prods.columns:
+                                            all_supers_clean = sorted([str(s) for s in df_prods['super_habitual'].dropna().unique() if str(s).strip() not in ["", "Sense Assignar"]])
+                                        else:
+                                            all_supers_clean = ["Mercadona", "BonArea", "Consum", "Ametller", "Esclat", "Altres"]
+                                        if "Altres" not in all_supers_clean:
+                                            all_supers_clean.append("Altres")
+                                        target_super = st.selectbox("Destí", all_supers_clean)
+                                    with col_m3:
+                                        st.write("")
+                                        st.write("")
+                                        move_btn = st.form_submit_button("Moure")
+                                    
+                                    if move_btn:
+                                        row_to_move = group[group['nom_estandard'] == item_to_move].iloc[0]
+                                        try:
+                                            if row_to_move.get('is_manual'):
+                                                supabase.table('tb_pendents_compra').update({'super_habitual': target_super}).eq('id', int(row_to_move['idProducte'])).execute()
+                                            else:
+                                                supabase.table('tb_productes').update({'super_habitual': target_super}).eq('idProducte', int(row_to_move['idProducte'])).execute()
+                                            st.success(f"Mogut a {target_super}!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Error movent: {e}")
                 else:
                     st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu i no tens peticions puntuals.")
             else:
