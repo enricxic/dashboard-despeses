@@ -4625,8 +4625,7 @@ if tab_compra:
                                                 
                                             # Netejar el check state perquè no aparegui comprat a l'altre super
                                             chk_key = f"chk_shop_{row_to_move['idProducte']}_{row_to_move.get('is_manual', False)}"
-                                            if chk_key in st.session_state:
-                                                del st.session_state[chk_key]
+                                            st.session_state[chk_key] = False
                                                 
                                             st.success(f"Mogut a {target_super}!")
                                             st.rerun()
