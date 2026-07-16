@@ -4819,6 +4819,13 @@ with tab_db:
     elif db_select == "Stock Rebost":
         df_to_show = fetch_all_supabase(supabase, 'tb_productes')
         if not df_to_show.empty:
+            if 'select_stock' in df_to_show.columns:
+                df_to_show['select_stock'] = df_to_show['select_stock'].fillna(False).astype(bool)
+            if 'foto_url' in df_to_show.columns:
+                df_to_show['foto_url'] = df_to_show['foto_url'].fillna("")
+            for col in ['stock_actual', 'stock_minim']:
+                if col in df_to_show.columns:
+                    df_to_show[col] = pd.to_numeric(df_to_show[col], errors='coerce').fillna(0.0)
             df_to_show = df_to_show.sort_values(by='nom_estandard')
         
     df_filtered = df_to_show.copy()
