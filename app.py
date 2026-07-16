@@ -4462,9 +4462,9 @@ if tab_compra:
             
             # --- SECCIÓ AFEGIR MANUALMENT ---
             with st.expander("➕ Afegir petició puntual", expanded=False):
-                with st.form("form_add_manual"):
+                with st.form("form_add_manual", clear_on_submit=True):
                     st.write("Afegeix articles que no tens al rebost o peticions especials.")
-                    col1, col2, col3 = st.columns([2, 2, 1])
+                    col1, col2, col3, col4 = st.columns([1.5, 2, 2.5, 1])
                     with col1:
                         if not df_prods.empty and 'super_habitual' in df_prods.columns:
                             supers = sorted([str(s) for s in df_prods['super_habitual'].dropna().unique() if str(s).strip() != ""])
@@ -4474,27 +4474,35 @@ if tab_compra:
                             supers.append("Altres")
                         super_sel = st.selectbox("Supermercat", supers)
                     with col2:
-                        nom_nou = st.text_input("Què vols comprar?", placeholder="Ex: Piles AA, Xiclets...")
+                        nom_lliure = st.text_input("📝 Nom lliure (nou)", placeholder="Ex: Piles AA...")
                     with col3:
+                        if not df_prods.empty:
+                            noms_cataleg = ["(No utilitzar)"] + sorted(df_prods['nom_estandard'].dropna().unique().tolist())
+                        else:
+                            noms_cataleg = ["(No utilitzar)"]
+                        nom_cataleg = st.selectbox("📦 O tria del catàleg:", noms_cataleg)
+                    with col4:
                         quantitat_nou = st.number_input("Quantitat", min_value=1, value=1, step=1)
                     
-                    submitted_manual = st.form_submit_button("Afegir a la llista")
+                    submitted_manual = st.form_submit_button("➕ Afegir")
                     if submitted_manual:
-                        if nom_nou.strip():
+                        nom_final = nom_lliure.strip() if nom_lliure.strip() else (nom_cataleg if nom_cataleg != "(No utilitzar)" else "")
+                        
+                        if nom_final:
                             # Insert into tb_pendents_compra
                             try:
                                 supabase.table('tb_pendents_compra').insert({
-                                    'nom_article': nom_nou.strip(),
+                                    'nom_article': nom_final,
                                     'quantitat': quantitat_nou,
                                     'unitat': 'u.',
                                     'super_habitual': super_sel
                                 }).execute()
-                                st.success("Afegit correctament!")
+                                st.success(f"S'ha afegit '{nom_final}' correctament!")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Error guardant l'article: {e}")
                         else:
-                            st.warning("Has d'escriure un nom pel producte.")
+                            st.warning("Has d'escriure un nom lliure o triar un producte del catàleg.")
             
             st.markdown("---")
             
