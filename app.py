@@ -4567,7 +4567,7 @@ if tab_compra:
                             for _, row in group.iterrows():
                                 unit_str = row['unitat'] if 'unitat' in row and pd.notna(row['unitat']) and str(row['unitat']).lower() != 'none' else 'u.'
                                 icon = "➕" if row.get('is_manual', False) else "📦"
-                                st.checkbox(f"{icon} **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}", key=f"chk_shop_{row['idProducte']}_{row.get('is_manual', False)}")
+                                st.checkbox(f"{icon} **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}", key=f"chk_shop_{row['idProducte']}_{superm}_{row.get('is_manual', False)}")
                                 
                             # Botó netejar si hi ha manuals
                             manual_ids = group[group['is_manual'] == True]['idProducte'].tolist()
@@ -4592,7 +4592,7 @@ if tab_compra:
                                 default_item_idx = 0
                                 item_options = group['nom_estandard'].tolist()
                                 for idx, (_, r_move) in enumerate(group.iterrows()):
-                                    chk_key = f"chk_shop_{r_move['idProducte']}_{r_move.get('is_manual', False)}"
+                                    chk_key = f"chk_shop_{r_move['idProducte']}_{superm}_{r_move.get('is_manual', False)}"
                                     if st.session_state.get(chk_key, False):
                                         default_item_idx = idx
                                         break
@@ -4623,9 +4623,7 @@ if tab_compra:
                                             else:
                                                 supabase.table('tb_productes').update({'super_habitual': target_super}).eq('idProducte', int(row_to_move['idProducte'])).execute()
                                                 
-                                            # Netejar el check state perquè no aparegui comprat a l'altre super
-                                            chk_key = f"chk_shop_{row_to_move['idProducte']}_{row_to_move.get('is_manual', False)}"
-                                            st.session_state[chk_key] = False
+                                            # No cal netejar la session_state perquè al canviar de superm el checkbox tindrà una clau nova i s'iniciarà en fals
                                                 
                                             st.success(f"Mogut a {target_super}!")
                                             st.rerun()
