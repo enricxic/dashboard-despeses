@@ -4532,13 +4532,15 @@ if tab_rebost:
                         
                     if 'selected_family_consum' not in st.session_state:
                         st.session_state['selected_family_consum'] = families[0] if families else None
+                    elif st.session_state['selected_family_consum'] not in families:
+                        st.session_state['selected_family_consum'] = families[0] if families else None
                         
                     # Create horizontal radio for families
-                    st.session_state['selected_family_consum'] = st.radio(
+                    st.radio(
                         "1️⃣ Tria la família:", 
                         families, 
                         horizontal=True,
-                        index=families.index(st.session_state['selected_family_consum']) if st.session_state.get('selected_family_consum') in families else 0
+                        key='selected_family_consum'
                     )
                     
                     # Generate 6 columns grid for smaller buttons (TPV style)
