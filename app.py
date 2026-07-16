@@ -4541,6 +4541,42 @@ if tab_rebost:
                         index=families.index(st.session_state['selected_family_consum']) if st.session_state.get('selected_family_consum') in families else 0
                     )
                     
+                    # Generate 6 columns grid for smaller buttons (TPV style)
+                    cols_per_row = 6
+                    
+                    # Inject CSS to make mobile grid 3 columns
+                    st.components.v1.html("""
+                    <script>
+                        const parentDoc = window.parent.document;
+                        const spans = parentDoc.querySelectorAll('strong');
+                        spans.forEach(span => {
+                            if(span.innerText.includes('Què has gastat?')) {
+                                const verticalBlock = span.closest('div[data-testid="stVerticalBlock"]');
+                                if(verticalBlock) {
+                                    verticalBlock.classList.add('stock-grid-container');
+                                }
+                            }
+                        });
+                        
+                        if (!parentDoc.getElementById('stock-grid-style')) {
+                            const style = parentDoc.createElement('style');
+                            style.id = 'stock-grid-style';
+                            style.innerHTML = `
+                                @media (max-width: 576px) {
+                                    .stock-grid-container div[data-testid="stHorizontalBlock"] {
+                                        flex-wrap: wrap !important;
+                                    }
+                                    .stock-grid-container div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+                                        min-width: calc(33.33% - 1rem) !important;
+                                        flex: 1 1 calc(33.33% - 1rem) !important;
+                                    }
+                                }
+                            `;
+                            parentDoc.head.appendChild(style);
+                        }
+                    </script>
+                    """, height=0)
+                    
                     sel_fam = st.session_state['selected_family_consum']
                     if sel_fam:
                         # Handle the "Sense Família" case
@@ -4551,8 +4587,6 @@ if tab_rebost:
                             
                         st.markdown(f"**2️⃣ Què has gastat? (Toca per restar-ne 1)**")
                         
-                        # Generate 4 columns grid for smaller buttons (TPV style)
-                        cols_per_row = 4
                         for i in range(0, len(df_fam), cols_per_row):
                             cols = st.columns(cols_per_row)
                             chunk = df_fam.iloc[i:i+cols_per_row]
@@ -4561,8 +4595,6 @@ if tab_rebost:
                                 stock = int(row['stock_actual']) # Convert to int
                                 
                                 with cols[j]:
-                                    # Use HTML to enforce a fixed height for all images/placeholders
-                                    # This guarantees all buttons align perfectly at the bottom
                                     # Use HTML to enforce a fixed height for all images/placeholders
                                     # This guarantees all buttons align perfectly at the bottom
                                     if 'foto_url' in row and pd.notna(row['foto_url']) and str(row['foto_url']).strip() != "":
@@ -4578,30 +4610,30 @@ if tab_rebost:
                                             if os.path.exists(foto_src):
                                                 with open(foto_src, "rb") as f:
                                                     b64_data = base64.b64encode(f.read()).decode("utf-8")
-                                                    # Guess mime type roughly
-                                                    mime = "image/png" if foto_src.lower().endswith(".png") else "image/jpeg"
+                                                    ext = foto_src.split('.')[-1].lower()
+                                                    mime = f"image/{ext}" if ext != 'jpg' else "image/jpeg"
                                                     img_src = f"data:{mime};base64,{b64_data}"
                                             else:
                                                 img_src = "" # File not found
                                                 
                                         if img_src:
                                             st.markdown(f'''
-                                                <div style="height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+                                                <div style="height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px;">
                                                     <img src="{img_src}" style="max-height: 100%; max-width: 100%; border-radius: 8px; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                                                 </div>
                                             ''', unsafe_allow_html=True)
                                         else:
                                             # File was local but not found, show placeholder
                                             st.markdown('''
-                                                <div style="height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;">
-                                                    <span style="font-size: 3rem; color: #ced4da;">📦</span>
+                                                <div style="height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;">
+                                                    <span style="font-size: 2rem; color: #ced4da;">📦</span>
                                                 </div>
                                             ''', unsafe_allow_html=True)
                                     else:
                                         # Placeholder for items without image to maintain alignment
                                         st.markdown('''
-                                            <div style="height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;">
-                                                <span style="font-size: 3rem; color: #ced4da;">📦</span>
+                                            <div style="height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;">
+                                                <span style="font-size: 2rem; color: #ced4da;">📦</span>
                                             </div>
                                         ''', unsafe_allow_html=True)
                                             
