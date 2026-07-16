@@ -4940,7 +4940,8 @@ with tab_db:
             
     with col_table:
         # Interactive dataframe with row selection enabled
-        dynamic_height = 38 + len(df_page) * 35.5
+        # Limit dynamic_height to avoid browser Out of Memory (OOM) errors on large datasets
+        dynamic_height = min(800, 38 + len(df_page) * 35.5)
         
         if db_select == "Stock Rebost":
             # Add disabled ID column to config
