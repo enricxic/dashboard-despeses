@@ -4460,6 +4460,44 @@ if tab_compra:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_prods = fetch_all_supabase(supabase, 'tb_productes')
             
+            # --- SECCIÓ AFEGIR MANUALMENT ---
+            with st.expander("➕ Afegir petició puntual", expanded=False):
+                with st.form("form_add_manual"):
+                    st.write("Afegeix articles que no tens al rebost o peticions especials.")
+                    col1, col2, col3 = st.columns([2, 2, 1])
+                    with col1:
+                        if not df_prods.empty and 'super_habitual' in df_prods.columns:
+                            supers = sorted([str(s) for s in df_prods['super_habitual'].dropna().unique() if str(s).strip() != ""])
+                        else:
+                            supers = ["Mercadona", "BonArea", "Consum", "Ametller", "Esclat"]
+                        if "Altres" not in supers:
+                            supers.append("Altres")
+                        super_sel = st.selectbox("Supermercat", supers)
+                    with col2:
+                        nom_nou = st.text_input("Què vols comprar?", placeholder="Ex: Piles AA, Xiclets...")
+                    with col3:
+                        quantitat_nou = st.number_input("Quantitat", min_value=1, value=1, step=1)
+                    
+                    submitted_manual = st.form_submit_button("Afegir a la llista")
+                    if submitted_manual:
+                        if nom_nou.strip():
+                            # Insert into tb_pendents_compra
+                            try:
+                                supabase.table('tb_pendents_compra').insert({
+                                    'nom_article': nom_nou.strip(),
+                                    'quantitat': quantitat_nou,
+                                    'unitat': 'u.',
+                                    'super_habitual': super_sel
+                                }).execute()
+                                st.success("Afegit correctament!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error guardant l'article: {e}")
+                        else:
+                            st.warning("Has d'escriure un nom pel producte.")
+            
+            st.markdown("---")
+            
             if not df_prods.empty:
                 # Ensure select_stock exists
                 if 'select_stock' not in df_prods.columns:
@@ -4478,11 +4516,29 @@ if tab_compra:
                 
                 if not df_shopping.empty:
                     df_shopping['falta'] = df_shopping['stock_minim'] - df_shopping['stock_actual']
-                    # Fill missing supermarket
                     df_shopping['super_habitual'] = df_shopping['super_habitual'].fillna("Sense Assignar").replace("", "Sense Assignar")
+                    df_shopping['is_manual'] = False
+                else:
+                    df_shopping = pd.DataFrame(columns=['idProducte', 'nom_estandard', 'super_habitual', 'falta', 'unitat', 'is_manual'])
+                
+                # FETCH tb_pendents_compra
+                try:
+                    df_manual = fetch_all_supabase(supabase, 'tb_pendents_compra')
+                    if not df_manual.empty:
+                        # Rename to match df_shopping structure
+                        df_manual = df_manual.rename(columns={
+                            'id': 'idProducte',
+                            'nom_article': 'nom_estandard',
+                            'quantitat': 'falta'
+                        })
+                        df_manual['is_manual'] = True
+                        df_shopping = pd.concat([df_shopping, df_manual], ignore_index=True)
+                except Exception as e:
+                    pass # Taula potser no existeix o error
                     
+                if not df_shopping.empty:
                     # Sort by supermarket name
-                    df_shopping = df_shopping.sort_values(by='super_habitual')
+                    df_shopping = df_shopping.sort_values(by=['super_habitual', 'is_manual'])
                     
                     # Group by super_habitual
                     for superm, group in df_shopping.groupby('super_habitual'):
@@ -4490,9 +4546,25 @@ if tab_compra:
                         with st.expander(f"🏪 {superm} ({len(group)} productes)", expanded=True):
                             for _, row in group.iterrows():
                                 unit_str = row['unitat'] if 'unitat' in row and pd.notna(row['unitat']) and str(row['unitat']).lower() != 'none' else 'u.'
-                                st.checkbox(f"**{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}", key=f"chk_shop_{row['idProducte']}")
+                                icon = "➕" if row.get('is_manual', False) else "📦"
+                                st.checkbox(f"{icon} **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}", key=f"chk_shop_{row['idProducte']}_{row.get('is_manual', False)}")
+                                
+                            # Botó netejar si hi ha manuals
+                            manual_ids = group[group['is_manual'] == True]['idProducte'].tolist()
+                            if manual_ids:
+                                st.write("")
+                                col_btn, _ = st.columns([1, 2])
+                                with col_btn:
+                                    if st.button(f"🧹 Netejar peticions lliures", key=f"clear_man_{superm}"):
+                                        try:
+                                            # Esborrar un a un
+                                            for mid in manual_ids:
+                                                supabase.table('tb_pendents_compra').delete().eq('id', int(mid)).execute()
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Error esborrant: {e}")
                 else:
-                    st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu.")
+                    st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu i no tens peticions puntuals.")
             else:
                 st.info("No hi ha productes a la base de dades.")
                 
