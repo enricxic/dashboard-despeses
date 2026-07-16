@@ -4563,7 +4563,7 @@ if tab_compra:
                     # Group by super_habitual
                     for superm, group in df_shopping.groupby('super_habitual'):
                         # Use expander for each supermarket
-                        with st.expander(f"🏪 {superm} ({len(group)} productes)", expanded=True):
+                        with st.expander(f"🏪 {superm} ({len(group)} productes)", expanded=(superm == "Sense Assignar")):
                             for _, row in group.iterrows():
                                 unit_str = row['unitat'] if 'unitat' in row and pd.notna(row['unitat']) and str(row['unitat']).lower() != 'none' else 'u.'
                                 icon = "➕" if row.get('is_manual', False) else "📦"
