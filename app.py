@@ -4717,6 +4717,76 @@ if tab_rebost:
                 if st.button("📋 Inventari", type="primary", use_container_width=True):
                     modal_inventari(df_prods)
                     
+            # ================= LECTOR DE CODIS DE BARRES =================
+            with st.expander("📷 Escanejar Codi de Barres (Càmera)", expanded=False):
+                st.write("Fes servir la càmera del mòbil per escanejar un producte i actualitzar-ne l'stock.")
+                img_file = st.camera_input("Fes una foto al codi de barres clarament il·luminat", key="barcode_camera")
+                if img_file is not None:
+                    try:
+                        from pyzbar.pyzbar import decode
+                        from PIL import Image
+                        image = Image.open(img_file)
+                        decoded_objects = decode(image)
+                        
+                        if not decoded_objects:
+                            st.error("No s'ha detectat cap codi de barres a la imatge. Prova d'enfocar millor i que hi hagi bona llum.")
+                        else:
+                            barcode = decoded_objects[0].data.decode('utf-8')
+                            barcode_type = decoded_objects[0].type
+                            
+                            st.success(f"✅ Codi llegit: **{barcode}** ({barcode_type})")
+                            
+                            # Lookup in database
+                            res_codi = supabase.table('tb_codis_barres').select('id_producte').eq('codi_barres', barcode).execute()
+                            
+                            if res_codi.data:
+                                # Found!
+                                id_prod = res_codi.data[0]['id_producte']
+                                res_prod = supabase.table('tb_productes').select('idProducte, nom_estandard, familia, stock_actual').eq('idProducte', id_prod).execute()
+                                
+                                if res_prod.data:
+                                    prod = res_prod.data[0]
+                                    st.info(f"Aquest codi correspon a: **{prod['nom_estandard']}** (Stock actual: {prod['stock_actual']})")
+                                    
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        if st.button("➕ Afegir 1 a l'stock", type="primary", use_container_width=True, key=f"add_{barcode}"):
+                                            new_stock = float(prod['stock_actual']) + 1.0
+                                            supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', id_prod).execute()
+                                            st.success(f"Afegit! Nou stock: {new_stock}")
+                                            st.cache_data.clear()
+                                            st.rerun()
+                                    with col2:
+                                        if st.button("➖ Gastar 1 de l'stock", type="secondary", use_container_width=True, key=f"sub_{barcode}"):
+                                            new_stock = max(0.0, float(prod['stock_actual']) - 1.0)
+                                            supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', id_prod).execute()
+                                            st.success(f"Gastat! Nou stock: {new_stock}")
+                                            st.cache_data.clear()
+                                            st.rerun()
+                            else:
+                                # Not found. Ask to associate.
+                                st.warning("Aquest codi no està associat a cap producte del teu rebost.")
+                                if not df_prods.empty:
+                                    df_p = df_prods.sort_values(by=['familia', 'nom_estandard'])
+                                    prod_options = df_p.apply(lambda r: f"{r['nom_estandard']} ({r['familia']})", axis=1).tolist()
+                                    prod_ids = df_p['idProducte'].tolist()
+                                    
+                                    selected_idx = st.selectbox("A quin producte correspon?", range(len(prod_options)), format_func=lambda i: prod_options[i])
+                                    
+                                    if st.button("🔗 Enllaçar Codi i Producte", use_container_width=True):
+                                        try:
+                                            supabase.table('tb_codis_barres').insert({
+                                                'codi_barres': barcode,
+                                                'id_producte': prod_ids[selected_idx]
+                                            }).execute()
+                                            st.success("Enllaçat correctament! Pots prémer els botons per actualitzar l'stock.")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Error enllaçant: {e}")
+                    except Exception as e:
+                        st.error(f"Error processant la imatge: {e}")
+            
+            st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
             if not df_prods.empty:
                 # ================= REGISTRE DE BAIXES =================
                 st.markdown("### 🍽️ Registrar Baixa d'Stock")
