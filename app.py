@@ -2946,6 +2946,10 @@ if "GEMINI_API_KEY" in st.secrets:
 def modal_inventari(df_inv):
     st.write("Actualitza ràpidament l'stock agrupat pel lloc on el guardes.")
     
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    df_llocs = fetch_all_supabase(supabase, 'tb_llocs')
+    llocs_options = df_llocs['nom_lloc'].tolist() if not df_llocs.empty else ["Sense Assignar"]
+    
     # Filter only products that are tracked in Rebost
     if 'select_stock' in df_inv.columns:
         df_inv = df_inv[df_inv['select_stock'] == True].copy()
@@ -2977,6 +2981,14 @@ def modal_inventari(df_inv):
                 use_container_width=True,
                 disabled=['familia', 'nom_estandard'],
                 hide_index=True,
+                column_config={
+                    "lloc": st.column_config.SelectboxColumn(
+                        "Lloc",
+                        help="Tria la ubicació on es guarda el producte",
+                        options=llocs_options,
+                        required=True
+                    )
+                },
                 key=f"editor_inv_{lloc}"
             )
             
@@ -5025,7 +5037,7 @@ with tab_db:
     col_sel, col_search, col_size = st.columns([3, 5, 2], vertical_alignment="bottom")
     with col_sel:
         db_select = st.selectbox("Taula", [
-            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera", "Stock Rebost", "Peticions Lliures Compra"
+            "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera", "Stock Rebost", "Peticions Lliures Compra", "Llocs d'Inventari"
         ], key="db_select_box")
     with col_search:
         search_query = st.text_input("🔍 Cerca global", value="", key=f"search_{db_select}")
@@ -5046,6 +5058,28 @@ with tab_db:
         
     st.write("")
     
+    if db_select == "Llocs d'Inventari":
+        @st.dialog("📍 Afegir Nou Lloc")
+        def modal_add_lloc():
+            nom = st.text_input("Nom del Lloc:")
+            if st.button("💾 Guardar Lloc"):
+                if nom.strip():
+                    try:
+                        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                        supabase.table('tb_llocs').insert({'nom_lloc': nom.strip()}).execute()
+                        st.success("Lloc creat correctament!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error creant el lloc: {e}")
+                else:
+                    st.error("El nom no pot estar buit.")
+                    
+        col_new, _ = st.columns([2, 8])
+        with col_new:
+            if st.button("➕ Crear Nou Lloc", use_container_width=True, type="primary"):
+                modal_add_lloc()
+        st.write("")
+
     # 1. Select the base dataframe
     if db_select == "Despeses (General)":
         df_to_show = df_desp.drop(columns=['parsed_date', 'clean_mes', 'date_score', 'mes_lower'], errors='ignore')
@@ -5105,6 +5139,10 @@ with tab_db:
         
     elif db_select == "Stock Rebost":
         df_to_show = fetch_all_supabase(supabase, 'tb_productes')
+    elif db_select == "Llocs d'Inventari":
+        df_to_show = fetch_all_supabase(supabase, 'tb_llocs')
+        if not df_to_show.empty:
+            df_to_show = df_to_show.sort_values(by='nom_lloc')
         if not df_to_show.empty:
             if 'select_stock' in df_to_show.columns:
                 df_to_show['select_stock'] = df_to_show['select_stock'].fillna(False).astype(bool)
@@ -5306,7 +5344,8 @@ with tab_db:
             "Pagament Hipoteca": ("hipoteca", None),
             "Estalvis DP": ("estalviDP", None),
             "Stock Rebost": ("tb_productes", "idProducte"),
-            "Peticions Lliures Compra": ("tb_pendents_compra", "id")
+            "Peticions Lliures Compra": ("tb_pendents_compra", "id"),
+            "Llocs d'Inventari": ("tb_llocs", "id_lloc")
         }.get(db_select)
         
         table_name, id_col = db_table_info
