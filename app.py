@@ -2942,6 +2942,71 @@ if "GEMINI_API_KEY" in st.secrets:
         st.sidebar.error(f"Error configuring Gemini: {e}")
 
 
+@st.dialog("📋 Inventari Ràpid", width="large")
+def modal_inventari(df_inv):
+    st.write("Actualitza ràpidament l'stock agrupat pel lloc on el guardes.")
+    
+    if df_inv.empty:
+        st.warning("No hi ha productes.")
+        return
+        
+    # Group by lloc
+    df_inv['lloc'] = df_inv.get('lloc', 'Sense Assignar').fillna('Sense Assignar')
+    df_inv.loc[df_inv['lloc'] == '', 'lloc'] = 'Sense Assignar'
+    
+    # Track changes
+    if "inv_changes" not in st.session_state:
+        st.session_state.inv_changes = {}
+        
+    for lloc, group in df_inv.groupby('lloc'):
+        with st.expander(f"📍 {lloc} ({len(group)} productes)", expanded=False):
+            # Sort by familia then name
+            group = group.sort_values(by=['familia', 'nom_estandard'])
+            
+            # Prepare data editor df
+            cols_to_show = ['familia', 'nom_estandard', 'stock_actual', 'stock_minim']
+            df_edit = group[cols_to_show].copy()
+            df_edit.set_index(group['idProducte'], inplace=True)
+            
+            edited_df = st.data_editor(
+                df_edit,
+                use_container_width=True,
+                disabled=['familia', 'nom_estandard'],
+                hide_index=True,
+                key=f"editor_inv_{lloc}"
+            )
+            
+            for idx, row in edited_df.iterrows():
+                old_act = df_edit.at[idx, 'stock_actual']
+                new_act = row['stock_actual']
+                old_min = df_edit.at[idx, 'stock_minim']
+                new_min = row['stock_minim']
+                
+                if old_act != new_act or old_min != new_min:
+                    st.session_state.inv_changes[idx] = {
+                        'stock_actual': new_act,
+                        'stock_minim': new_min
+                    }
+                    
+    st.markdown("---")
+    if len(st.session_state.inv_changes) > 0:
+        st.info(f"Tens {len(st.session_state.inv_changes)} canvis pendents de guardar.")
+    else:
+        st.write("No has fet canvis.")
+        
+    if st.button("💾 Guardar Canvis d'Inventari", type="primary", use_container_width=True):
+        if len(st.session_state.inv_changes) > 0:
+            try:
+                supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                for idx, changes in st.session_state.inv_changes.items():
+                    supabase.table('tb_productes').update(changes).eq('idProducte', int(idx)).execute()
+                st.success(f"S'han guardat {len(st.session_state.inv_changes)} canvis correctament!")
+                st.session_state.inv_changes = {}
+                st.cache_data.clear()
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error guardant: {e}")
+
 # ----------------- TABS SYSTEM -----------------
 tabs_list = [
         "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades", "💬 Xat IA"
@@ -4644,7 +4709,14 @@ if tab_rebost:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_prods = fetch_all_supabase(supabase, 'tb_productes')
             
-            st.markdown("<h2 style='color:#3498db;'>📦 Control d'Stock (El teu Rebost)</h2>", unsafe_allow_html=True)
+            col_t1, col_t2 = st.columns([3, 1])
+            with col_t1:
+                st.markdown("<h2 style='color:#3498db;'>📦 Control d'Stock (El teu Rebost)</h2>", unsafe_allow_html=True)
+            with col_t2:
+                st.write("") # Spacer
+                if st.button("📋 Inventari", type="primary", use_container_width=True):
+                    modal_inventari(df_prods)
+                    
             if not df_prods.empty:
                 # ================= REGISTRE DE BAIXES =================
                 st.markdown("### 🍽️ Registrar Baixa d'Stock")
