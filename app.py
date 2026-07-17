@@ -5596,7 +5596,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     with f_col2:
                         f_dif = st.selectbox("Dificultat", ["Totes", "Fàcil", "Mitjana", "Difícil"], key="f_dif")
                     with f_col3:
-                        f_dia = st.selectbox("Dia", ["Tots", "Entre setmana", "Cap de setmana", "Festiu", "Qualsevol"], key="f_dia")
+                        f_dia = st.selectbox("Dia", ["Tots", "Entre setmana", "Cap de setmana", "Festiu"], key="f_dia")
                     with f_col4:
                         f_ori = st.selectbox("Origen", ["Tots", "Biblioteca/Pròpia", "Externa/Internet"], key="f_ori")
                 
@@ -5639,7 +5639,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5)
                     with c2:
                         new_dif = st.selectbox("Dificultat", ["Fàcil", "Mitjana", "Difícil"])
-                        new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu", "Qualsevol"])
+                        new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu"])
                         new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"])
                     with c3:
                         new_ori = st.selectbox("Origen", ["Biblioteca/Pròpia", "Externa/Internet"])
