@@ -5641,7 +5641,24 @@ def modal_recepta(row):
                 
             vid_url = row.get('video_url')
             if pd.notna(vid_url) and str(vid_url).strip() != '':
-                st.video(str(vid_url).strip())
+                vid_str = str(vid_url).strip()
+                if "3cat.cat" in vid_str or "ccma.cat" in vid_str:
+                    import urllib.request
+                    import re
+                    import streamlit.components.v1 as components
+                    try:
+                        req = urllib.request.Request(vid_str, headers={'User-Agent': 'Mozilla/5.0'})
+                        html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
+                        match = re.search(r'"embedUrl":\s*"//(www\.3cat\.cat/video/embed/\d+/)"', html)
+                        if match:
+                            embed_url = f"https://{match.group(1)}"
+                            components.iframe(embed_url, height=300)
+                        else:
+                            st.video(vid_str)
+                    except:
+                        st.video(vid_str)
+                else:
+                    st.video(vid_str)
         
         with col_d:
             st.markdown("### Ingredients:")
