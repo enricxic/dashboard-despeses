@@ -5533,8 +5533,6 @@ components.html(
     height=0, width=0
 )
 
-
-import streamlit.components.v1 as components
 components.html(
     """
     <script>
@@ -5565,22 +5563,26 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                 if df_receptes.empty:
                     st.info("Encara no hi ha cap recepta. Afegeix-ne una!")
                 else:
-                    for idx, row in df_receptes.iterrows():
-                        with st.expander(f"{row.get('titol', 'Sense títol')} - {row.get('categoria', '')}"):
-                            col_img, col_info = st.columns([1, 2])
-                            with col_img:
+                    cols = st.columns(3)
+                    for idx_row, row in df_receptes.iterrows():
+                        col = cols[idx_row % 3]
+                        with col:
+                            with st.container(border=True):
                                 img_url = row.get('imatge_url')
                                 if pd.notna(img_url) and str(img_url).strip() != '':
                                     st.image(img_url, use_container_width=True)
                                 else:
-                                    st.write("Sense imatge")
-                            with col_info:
-                                st.write(f"**Temps de prep:** {row.get('temps_prep_minuts', 0)} min | **Salut:** {row.get('puntuacio_salut', 0)}/10")
-                                st.write(f"**Temporada:** {row.get('temporada', '')}")
-                                st.write("**Ingredients:**")
-                                st.write(row.get('ingredients', ''))
-                                st.write("**Instruccions:**")
-                                st.write(row.get('instruccions', ''))
+                                    st.info("Sense imatge", icon="📷")
+                                
+                                st.markdown(f"#### {row.get('titol', 'Sense títol')}")
+                                st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min")
+                                
+                                with st.expander("📖 Veure Recepta"):
+                                    st.write(f"**Salut:** {row.get('puntuacio_salut', 0)}/10 | **Temporada:** {row.get('temporada', '')}")
+                                    st.markdown("**Ingredients:**")
+                                    st.info(row.get('ingredients', ''))
+                                    st.markdown("**Instruccions:**")
+                                    st.write(row.get('instruccions', ''))
             
             with subtab_add:
                 with st.form("form_add_recepta"):
