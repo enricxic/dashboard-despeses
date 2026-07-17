@@ -5550,7 +5550,7 @@ components.html(
 
 # ================= TAB X: MENJAR =================
 
-@st.dialog("", width="large")
+@st.dialog(" ", width="large")
 def modal_recepta(row):
     st.markdown(f"## {row.get('titol', '')}")
     st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 📉 Dificultat: {row.get('dificultat', 'No definida')} | 📅 {row.get('tipus_dia', 'Qualsevol')}")
