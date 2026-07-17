@@ -5625,28 +5625,53 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                     modal_recepta(row)
             
             with subtab_add:
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    new_titol = st.text_input("Títol de la Recepta")
-                    new_cat = st.selectbox("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"])
-                    new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5)
-                with c2:
-                    new_dif = st.selectbox("Dificultat", ["Fàcil", "Mitjana", "Difícil"])
-                    new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu", "Qualsevol"])
-                    new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"])
-                with c3:
-                    new_ori = st.selectbox("Origen", ["Biblioteca/Pròpia", "Externa/Internet"])
-                    new_salut = st.slider("Puntuació Salut (0-10)", 0, 10, 5)
-                    new_img = st.text_input("URL Imatge (opcional)")
-                    if new_img.strip():
-                        st.image(new_img, width=150, caption="Previsualització")
+                c_fields, c_img = st.columns([3, 1])
                 
-                new_ing = st.text_area("Ingredients (un per línia)")
-                new_ins = st.text_area("Instruccions de preparació")
+                with c_fields:
+                    c1, c2, c3 = st.columns(3)
+                    with c1:
+                        new_titol = st.text_input("Títol de la Recepta")
+                        new_cat = st.selectbox("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"])
+                        new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5)
+                    with c2:
+                        new_dif = st.selectbox("Dificultat", ["Fàcil", "Mitjana", "Difícil"])
+                        new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu", "Qualsevol"])
+                        new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"])
+                    with c3:
+                        new_ori = st.selectbox("Origen", ["Biblioteca/Pròpia", "Externa/Internet"])
+                        new_salut = st.slider("Puntuació Salut (0-10)", 0, 10, 5)
+                        new_img_url = st.text_input("URL Imatge (opcional)")
+                    
+                    new_ing = st.text_area("Ingredients (un per línia)")
+                    new_ins = st.text_area("Instruccions de preparació")
+                
+                with c_img:
+                    st.markdown("**🖼️ Imatge del plat**")
+                    uploaded_file = st.file_uploader("Pujar des de l'ordinador", type=["jpg", "jpeg", "png", "webp"])
+                    
+                    if uploaded_file is not None:
+                        st.image(uploaded_file, use_container_width=True)
+                    elif new_img_url.strip():
+                        st.image(new_img_url, use_container_width=True)
+                    else:
+                        st.info("Sense imatge. Afegeix una URL o puja un arxiu.", icon="📷")
                 
                 submitted = st.button("💾 Guardar Recepta")
                 if submitted:
                     if new_titol:
+                        final_img_url = new_img_url
+                        if uploaded_file is not None:
+                            try:
+                                import uuid
+                                file_ext = uploaded_file.name.split(".")[-1]
+                                file_name = f"{uuid.uuid4()}.{file_ext}"
+                                file_bytes = uploaded_file.getvalue()
+                                res = supabase.storage.from_("imatges-receptes").upload(file_name, file_bytes)
+                                final_img_url = supabase.storage.from_("imatges-receptes").get_public_url(file_name)
+                            except Exception as e:
+                                st.error(f"Error pujant l'arxiu a Supabase Storage: {e}")
+                                final_img_url = new_img_url
+
                         data_insert = {
                             "titol": new_titol,
                             "categoria": new_cat,
@@ -5655,7 +5680,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                             "puntuacio_salut": new_salut,
                             "ingredients": new_ing,
                             "instruccions": new_ins,
-                            "imatge_url": new_img,
+                            "imatge_url": final_img_url,
                             "dificultat": new_dif,
                             "tipus_dia": new_dia,
                             "origen": new_ori
