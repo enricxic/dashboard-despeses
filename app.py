@@ -2968,7 +2968,7 @@ def modal_inventari(df_inv):
             group = group.sort_values(by=['familia', 'nom_estandard'])
             
             # Prepare data editor df
-            cols_to_show = ['familia', 'nom_estandard', 'stock_actual', 'stock_minim']
+            cols_to_show = ['familia', 'nom_estandard', 'lloc', 'stock_actual', 'stock_minim']
             df_edit = group[cols_to_show].copy()
             df_edit.set_index(group['idProducte'], inplace=True)
             
@@ -2985,11 +2985,14 @@ def modal_inventari(df_inv):
                 new_act = row['stock_actual']
                 old_min = df_edit.at[idx, 'stock_minim']
                 new_min = row['stock_minim']
+                old_loc = df_edit.at[idx, 'lloc']
+                new_loc = row['lloc']
                 
-                if old_act != new_act or old_min != new_min:
+                if old_act != new_act or old_min != new_min or old_loc != new_loc:
                     st.session_state.inv_changes[idx] = {
                         'stock_actual': new_act,
-                        'stock_minim': new_min
+                        'stock_minim': new_min,
+                        'lloc': new_loc if pd.notna(new_loc) else None
                     }
                     
     st.markdown("---")
