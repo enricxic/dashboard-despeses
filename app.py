@@ -2948,7 +2948,11 @@ def modal_inventari(df_inv):
     
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     df_llocs = fetch_all_supabase(supabase, 'tb_llocs')
-    llocs_options = df_llocs['nom_lloc'].tolist() if not df_llocs.empty else ["Sense Assignar"]
+    if not df_llocs.empty:
+        df_llocs = df_llocs.sort_values(by='id_lloc')
+        llocs_options = df_llocs['nom_lloc'].tolist()
+    else:
+        llocs_options = ["Sense Assignar"]
     
     # Filter only products that are tracked in Rebost
     if 'select_stock' in df_inv.columns:
@@ -5151,7 +5155,7 @@ with tab_db:
     elif db_select == "Llocs d'Inventari":
         df_to_show = fetch_all_supabase(supabase, 'tb_llocs')
         if not df_to_show.empty:
-            df_to_show = df_to_show.sort_values(by='nom_lloc')
+            df_to_show = df_to_show.sort_values(by='id_lloc')
     elif db_select == "Peticions Lliures Compra":
         df_to_show = fetch_all_supabase(supabase, 'tb_pendents_compra')
         
