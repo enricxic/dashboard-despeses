@@ -4977,6 +4977,14 @@ if tab_rebost:
                 # Filter ONLY items that are in the pantry (select_stock == True)
                 df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
                 
+                # Fetch dynamically updated locations
+                df_llocs = fetch_all_supabase(supabase, 'tb_llocs')
+                if not df_llocs.empty:
+                    df_llocs = df_llocs.sort_values(by='id_lloc')
+                    llocs_options = df_llocs['nom_lloc'].tolist()
+                else:
+                    llocs_options = ["Sense Assignar"]
+                    
                 with st.form("form_edicio_rapida_stock"):
                     edited_df = st.data_editor(
                         df_prods_filtered[['idProducte', 'select_stock', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'lloc']],
@@ -4988,7 +4996,7 @@ if tab_rebost:
                             "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=get_config_supers() + ["Sense Assignar"], required=False),
                             "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
                             "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
-                            "lloc": st.column_config.SelectboxColumn("Lloc", options=["Rebost", "Sota-pica", "Escala", "Nevera", "Congelador", "Bany", "Altres"], required=False)
+                            "lloc": st.column_config.SelectboxColumn("Lloc", options=llocs_options, required=False)
                         },
                         hide_index=True,
                         use_container_width=True,
