@@ -5692,7 +5692,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     for idx_row, row in df_filtrat.iterrows():
                         col = cols[idx_row % 4]
                         with col:
-                            with st.container(border=True):
+                            with st.container(border=True, height=340):
                                 img_url = row.get('imatge_url')
                                 if pd.notna(img_url) and str(img_url).strip() != '':
                                     st.markdown(f'<img src="{img_url}" style="width:100%; height:160px; object-fit:cover; border-radius:8px;">', unsafe_allow_html=True)
