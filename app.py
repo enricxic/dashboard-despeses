@@ -5550,7 +5550,7 @@ components.html(
 
 # ================= TAB X: MENJAR =================
 
-@st.dialog("🍽️", width="large")
+@st.dialog("", width="large")
 def modal_recepta(row):
     st.markdown(f"## {row.get('titol', '')}")
     st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 📉 Dificultat: {row.get('dificultat', 'No definida')} | 📅 {row.get('tipus_dia', 'Qualsevol')}")
@@ -5560,6 +5560,10 @@ def modal_recepta(row):
         img_url = row.get('imatge_url')
         if pd.notna(img_url) and str(img_url).strip() != '':
             st.image(img_url, use_container_width=True)
+            
+        vid_url = row.get('video_url')
+        if pd.notna(vid_url) and str(vid_url).strip() != '':
+            st.video(str(vid_url).strip())
     
     with col_d:
         st.markdown("### Ingredients:")
@@ -5641,6 +5645,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         new_ori = st.selectbox("Origen", ["Biblioteca/Pròpia", "Externa/Internet"])
                         new_salut = st.slider("Puntuació Salut (0-10)", 0, 10, 5)
                         new_img_url = st.text_input("URL Imatge (opcional)")
+                        new_vid_url = st.text_input("URL Vídeo (YouTube, opcional)")
                     
                     new_ing = st.text_area("Ingredients (un per línia)")
                     new_ins = st.text_area("Instruccions de preparació")
@@ -5681,6 +5686,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                             "ingredients": new_ing,
                             "instruccions": new_ins,
                             "imatge_url": final_img_url,
+                            "video_url": new_vid_url,
                             "dificultat": new_dif,
                             "tipus_dia": new_dia,
                             "origen": new_ori
