@@ -5568,8 +5568,8 @@ def modal_recepta(row):
         st.write(f"**Salut:** {row.get('puntuacio_salut', 0)}/10 | **Temporada:** {row.get('temporada', '')}")
         st.write(f"**Origen:** {row.get('origen', 'Desconegut')}")
         
-    st.markdown("### Instruccions:")
-    st.write(row.get('instruccions', ''))
+        st.markdown("### Instruccions:")
+        st.write(row.get('instruccions', ''))
 
 
 if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
