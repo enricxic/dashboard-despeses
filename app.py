@@ -148,6 +148,15 @@ st.markdown("""
     div.element-container {
         margin-bottom: 1px !important;
     }
+    /* Fer la càmera més gran a mòbils */
+    div[data-testid="stCameraInput"] {
+        min-height: 450px !important;
+    }
+    div[data-testid="stCameraInput"] video, div[data-testid="stCameraInput"] canvas {
+        width: 100% !important;
+        min-height: 450px !important;
+        object-fit: cover !important;
+    }
     /* Hide step buttons inside number inputs */
     div[data-testid="stNumberInput"] button {
         display: none !important;
