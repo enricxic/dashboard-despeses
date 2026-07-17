@@ -5693,13 +5693,8 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                 st.markdown(f"#### {row.get('titol', 'Sense títol')}")
                                 st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min")
                                 
-                                c_btn1, c_btn2 = st.columns([3, 1])
-                                with c_btn1:
-                                    if st.button("📖 Llegir", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
-                                        modal_recepta(row)
-                                with c_btn2:
-                                    if st.button("✏️", key=f"btn_edit_{row.get('id', idx_row)}", use_container_width=True):
-                                        modal_edit_recepta(row)
+                                if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
+                                    modal_recepta(row)
             
             with subtab_add:
                 c_fields, c_img = st.columns([3, 1])
