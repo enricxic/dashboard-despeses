@@ -4685,21 +4685,20 @@ if tab_compra:
                             if superm == "Sense Assignar" and len(group) > 0:
                                 st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
                                 
-                                # Check if any checkbox is selected to set default article
-                                default_item_idx = 0
-                                item_options = group['nom_estandard'].tolist()
-                                for idx, (_, r_move) in enumerate(group.iterrows()):
+                                # Llista d'articles seleccionats
+                                items_to_move = []
+                                for _, r_move in group.iterrows():
                                     chk_key = f"chk_shop_{r_move['idProducte']}_{superm}_{r_move.get('is_manual', False)}"
                                     if st.session_state.get(chk_key, False):
-                                        default_item_idx = idx
-                                        break
+                                        items_to_move.append(r_move)
                                         
                                 with st.form(f"move_items_{superm}"):
-                                    st.write("🚚 **Moure a un altre supermercat**")
-                                    col_m1, col_m2, col_m3 = st.columns([2, 2, 1])
+                                    num_selected = len(items_to_move)
+                                    text_title = f"🚚 **Moure els {num_selected} articles seleccionats**" if num_selected > 0 else "🚚 **Moure els articles seleccionats**"
+                                    st.write(text_title)
+                                    
+                                    col_m1, col_m2 = st.columns([3, 1])
                                     with col_m1:
-                                        item_to_move = st.selectbox("Article", item_options, index=default_item_idx)
-                                    with col_m2:
                                         if not df_prods.empty and 'super_habitual' in df_prods.columns:
                                             all_supers_clean = sorted([str(s) for s in df_prods['super_habitual'].dropna().unique() if str(s).strip() not in ["", "Sense Assignar"]])
                                         else:
@@ -4707,25 +4706,28 @@ if tab_compra:
                                         if "Altres" not in all_supers_clean:
                                             all_supers_clean.append("Altres")
                                         target_super = st.selectbox("Destí", all_supers_clean)
-                                    with col_m3:
+                                    with col_m2:
                                         st.write("")
                                         st.write("")
                                         move_btn = st.form_submit_button("Moure")
                                     
                                     if move_btn:
-                                        row_to_move = group[group['nom_estandard'] == item_to_move].iloc[0]
-                                        try:
-                                            if row_to_move.get('is_manual'):
-                                                supabase.table('tb_pendents_compra').update({'super_habitual': target_super}).eq('id', int(row_to_move['idProducte'])).execute()
-                                            else:
-                                                supabase.table('tb_productes').update({'super_habitual': target_super}).eq('idProducte', int(row_to_move['idProducte'])).execute()
+                                        if not items_to_move:
+                                            st.error("No has seleccionat cap article a la llista de dalt (clica a la casella de l'esquerra).")
+                                        else:
+                                            try:
+                                                updates = 0
+                                                for r_move in items_to_move:
+                                                    if r_move.get('is_manual'):
+                                                        supabase.table('tb_pendents_compra').update({'super_habitual': target_super}).eq('id', int(r_move['idProducte'])).execute()
+                                                    else:
+                                                        supabase.table('tb_productes').update({'super_habitual': target_super}).eq('idProducte', int(r_move['idProducte'])).execute()
+                                                    updates += 1
                                                 
-                                            # No cal netejar la session_state perquè al canviar de superm el checkbox tindrà una clau nova i s'iniciarà en fals
-                                                
-                                            st.success(f"Mogut a {target_super}!")
-                                            st.rerun()
-                                        except Exception as e:
-                                            st.error(f"Error movent: {e}")
+                                                st.success(f"S'han mogut {updates} articles a {target_super}!")
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Error movent: {e}")
                 else:
                     st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu i no tens peticions puntuals.")
             else:
