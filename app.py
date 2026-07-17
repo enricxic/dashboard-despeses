@@ -5594,7 +5594,6 @@ def modal_recepta(row):
         with col_btn1:
             if st.button("❌ Cancel·lar", use_container_width=True):
                 st.session_state[f"editing_{row['id']}"] = False
-                st.rerun()
         with col_btn2:
             if st.button("💾 Desar Canvis", use_container_width=True):
                 supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -5633,7 +5632,6 @@ def modal_recepta(row):
         with col_btn:
             if st.button("✏️ Editar", key=f"edit_top_{row['id']}", use_container_width=True):
                 st.session_state[f"editing_{row['id']}"] = True
-                st.rerun()
                 
         col_i, col_d = st.columns([1, 1])
         with col_i:
