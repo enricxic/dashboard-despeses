@@ -5549,3 +5549,74 @@ components.html(
     height=0,
     width=0,
 )
+
+# ================= TAB X: MENJAR =================
+if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
+    with tab_menjar:
+        st.markdown("### 🍲 Menjar (Receptari MVP)")
+        
+        try:
+            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+            df_receptes = fetch_all_supabase(supabase, 'tb_receptes_pro')
+            
+            subtab_list, subtab_add = st.tabs(["📖 Llibre de Receptes", "➕ Afegir Recepta"])
+            
+            with subtab_list:
+                if df_receptes.empty:
+                    st.info("Encara no hi ha cap recepta. Afegeix-ne una!")
+                else:
+                    for idx, row in df_receptes.iterrows():
+                        with st.expander(f"{row.get('titol', 'Sense títol')} - {row.get('categoria', '')}"):
+                            col_img, col_info = st.columns([1, 2])
+                            with col_img:
+                                img_url = row.get('imatge_url')
+                                if pd.notna(img_url) and str(img_url).strip() != '':
+                                    st.image(img_url, use_container_width=True)
+                                else:
+                                    st.write("Sense imatge")
+                            with col_info:
+                                st.write(f"**Temps de prep:** {row.get('temps_prep_minuts', 0)} min | **Salut:** {row.get('puntuacio_salut', 0)}/10")
+                                st.write(f"**Temporada:** {row.get('temporada', '')}")
+                                st.write("**Ingredients:**")
+                                st.write(row.get('ingredients', ''))
+                                st.write("**Instruccions:**")
+                                st.write(row.get('instruccions', ''))
+            
+            with subtab_add:
+                with st.form("form_add_recepta"):
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        new_titol = st.text_input("Títol de la Recepta")
+                        new_cat = st.selectbox("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"])
+                        new_temps = st.number_input("Temps de prep. (minuts)", min_value=0, step=5)
+                    with c2:
+                        new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"])
+                        new_salut = st.slider("Puntuació de Salut (0-10)", 0, 10, 5)
+                        new_img = st.text_input("URL de la Imatge (opcional)")
+                    
+                    new_ing = st.text_area("Ingredients (un per línia)")
+                    new_ins = st.text_area("Instruccions de preparació")
+                    
+                    submitted = st.form_submit_button("💾 Guardar Recepta")
+                    if submitted:
+                        if new_titol:
+                            data_insert = {
+                                "titol": new_titol,
+                                "categoria": new_cat,
+                                "temps_prep_minuts": new_temps,
+                                "temporada": new_temp,
+                                "puntuacio_salut": new_salut,
+                                "ingredients": new_ing,
+                                "instruccions": new_ins,
+                                "imatge_url": new_img
+                            }
+                            resp = supabase.table('tb_receptes_pro').insert(data_insert).execute()
+                            if resp.data:
+                                st.success(f"Recepta '{new_titol}' guardada correctament!")
+                                st.rerun()
+                            else:
+                                st.error("Error al guardar la recepta.")
+                        else:
+                            st.warning("El títol és obligatori!")
+        except Exception as e:
+            st.error(f"Error carregant Menjar: {e}")
