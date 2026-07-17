@@ -5550,7 +5550,7 @@ components.html(
 
 # ================= TAB X: MENJAR =================
 
-@st.dialog("📖 Detalls de la Recepta", width="large")
+@st.dialog("🍽️", width="large")
 def modal_recepta(row):
     st.markdown(f"## {row.get('titol', '')}")
     st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 📉 Dificultat: {row.get('dificultat', 'No definida')} | 📅 {row.get('tipus_dia', 'Qualsevol')}")
@@ -5560,12 +5560,13 @@ def modal_recepta(row):
         img_url = row.get('imatge_url')
         if pd.notna(img_url) and str(img_url).strip() != '':
             st.image(img_url, use_container_width=True)
-        st.write(f"**Salut:** {row.get('puntuacio_salut', 0)}/10 | **Temporada:** {row.get('temporada', '')}")
-        st.write(f"**Origen:** {row.get('origen', 'Desconegut')}")
     
     with col_d:
         st.markdown("### Ingredients:")
         st.info(row.get('ingredients', ''))
+        st.markdown("### Info Addicional:")
+        st.write(f"**Salut:** {row.get('puntuacio_salut', 0)}/10 | **Temporada:** {row.get('temporada', '')}")
+        st.write(f"**Origen:** {row.get('origen', 'Desconegut')}")
         
     st.markdown("### Instruccions:")
     st.write(row.get('instruccions', ''))
