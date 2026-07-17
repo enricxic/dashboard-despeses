@@ -3050,7 +3050,7 @@ tabs_list = [
         "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades", "💬 Xat IA"
     ]
 if st.session_state.get("role") in ["admin", "guest"]:
-    tabs_list.extend(["🛒 Llista de la Compra", "📦 Rebost / Stock"])
+    tabs_list.extend(["🛒 Llista de la Compra", "📦 Rebost / Stock", "🍲 Menjar"])
 
 if st.session_state.get("role") == "admin":
     tabs_list.extend(["🗄️ Bases de Dades (Supabase)", "📜 Registre d'Accions"])
@@ -3065,10 +3065,12 @@ tab_idx = 4
 if st.session_state.get("role") in ["admin", "guest"]:
     tab_compra = tabs[tab_idx]
     tab_rebost = tabs[tab_idx + 1]
-    tab_idx += 2
+    tab_menjar = tabs[tab_idx + 2]
+    tab_idx += 3
 else:
     tab_compra = None
     tab_rebost = None
+    tab_menjar = None
 
 if st.session_state.get("role") == "admin":
     tab_db = tabs[tab_idx]
