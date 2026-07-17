@@ -5656,8 +5656,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
             
             with subtab_list:
                 # Sistema de Filtres
-                with st.container(border=True):
-                    st.markdown("**🔍 Filtres**")
+                with st.expander("🔍 Filtres", expanded=False):
                     f_col1, f_col2, f_col3, f_col4 = st.columns(4)
                     with f_col1:
                         f_cat = st.selectbox("Categoria", ["Totes", "Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"], key="f_cat")
