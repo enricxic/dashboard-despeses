@@ -2946,8 +2946,12 @@ if "GEMINI_API_KEY" in st.secrets:
 def modal_inventari(df_inv):
     st.write("Actualitza ràpidament l'stock agrupat pel lloc on el guardes.")
     
+    # Filter only products that are tracked in Rebost
+    if 'select_stock' in df_inv.columns:
+        df_inv = df_inv[df_inv['select_stock'] == True].copy()
+        
     if df_inv.empty:
-        st.warning("No hi ha productes.")
+        st.warning("No hi ha productes de rebost.")
         return
         
     # Group by lloc
