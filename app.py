@@ -130,6 +130,12 @@ st.markdown("""
         padding: 3px 6px !important;
         line-height: 1.15 !important;
     }
+    /* Hide Streamlit Menu and Toolbar */
+    [data-testid="stHeader"] {
+        display: none !important;
+    }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     
     div.block-container {
         padding-top: 0.5rem !important;
@@ -3331,7 +3337,7 @@ with tab_dash:
                 xaxis=dict(gridcolor='#334155', tickangle=-45),
                 yaxis=dict(gridcolor='#334155')
             )
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, use_container_width=True, config={'staticPlot': True})
             
         with chart_col2:
             st.markdown("<h4 style='color:#f39c12;'>🍕 Compres Super %</h4>", unsafe_allow_html=True)
@@ -3344,7 +3350,7 @@ with tab_dash:
                     paper_bgcolor='rgba(0,0,0,0)',
                     font=dict(color='#f8fafc')
                 )
-                st.plotly_chart(fig_pie, use_container_width=True)
+                st.plotly_chart(fig_pie, use_container_width=True, config={'staticPlot': True})
             else:
                 st.info(f"No hi ha dades de compres de supermercat per a {selected_month_cat} del {selected_year}.")
                 
@@ -3369,8 +3375,13 @@ with tab_dash:
         df_gas_tivoli = df_gas[df_gas['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_gas.columns else df_gas
         df_km_tivoli = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
         
+        df_km_tivoli_valid = df_km_tivoli.dropna(subset=['contador', 'parsed_date'])
+        
         gas_yr = df_gas_tivoli.groupby(df_gas_tivoli['parsed_date'].dt.year)['litres'].sum()
-        km_yr = df_km_tivoli.groupby(df_km_tivoli['parsed_date'].dt.year)['km'].sum()
+        
+        # Càlcul de km reals recorreguts per any (màxim contador - mínim contador)
+        km_yr = df_km_tivoli_valid.groupby(df_km_tivoli_valid['parsed_date'].dt.year)['contador'].agg(lambda x: x.max() - x.min())
+        km_yr = km_yr.replace(0, pd.NA) # Evitar divisió per zero
         
         consumption = ((gas_yr / km_yr) * 100).dropna().reset_index()
         consumption.columns = ['Any', 'L/100km']
@@ -3384,7 +3395,7 @@ with tab_dash:
             xaxis=dict(gridcolor='#334155'),
             yaxis=dict(gridcolor='#334155')
         )
-        st.plotly_chart(fig_line, use_container_width=True)
+        st.plotly_chart(fig_line, use_container_width=True, config={'staticPlot': True})
 
 # ================= TAB 2: DETALLS DEL MES =================
 with tab_details:
