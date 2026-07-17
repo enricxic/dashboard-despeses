@@ -5550,11 +5550,79 @@ components.html(
 
 # ================= TAB X: MENJAR =================
 
+@st.dialog("✏️ Editar Recepta", width="large")
+def modal_edit_recepta(row):
+    c_fields, c_img = st.columns([3, 1])
+    with c_fields:
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            e_titol = st.text_input("Títol", value=row.get('titol', ''))
+            cat_opts = ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"]
+            e_cat = st.selectbox("Categoria", cat_opts, index=cat_opts.index(row.get('categoria')) if row.get('categoria') in cat_opts else 0)
+            e_temps = st.number_input("Temps (min)", value=int(row.get('temps_prep_minuts', 0)), step=5)
+        with c2:
+            dif_opts = ["Fàcil", "Mitjana", "Difícil"]
+            e_dif = st.selectbox("Dificultat", dif_opts, index=dif_opts.index(row.get('dificultat')) if row.get('dificultat') in dif_opts else 0)
+            dia_opts = ["Entre setmana", "Cap de setmana", "Festiu"]
+            e_dia = st.selectbox("Tipus de dia", dia_opts, index=dia_opts.index(row.get('tipus_dia')) if row.get('tipus_dia') in dia_opts else 0)
+            temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
+            e_temp = st.selectbox("Temporada", temp_opts, index=temp_opts.index(row.get('temporada')) if row.get('temporada') in temp_opts else 0)
+        with c3:
+            ori_opts = ["Biblioteca/Pròpia", "Externa/Internet"]
+            e_ori = st.selectbox("Origen", ori_opts, index=ori_opts.index(row.get('origen')) if row.get('origen') in ori_opts else 0)
+            e_salut = st.slider("Salut (0-10)", 0, 10, int(row.get('puntuacio_salut', 5)))
+            e_img_url = st.text_input("URL Imatge", value=str(row.get('imatge_url', '')).strip() if pd.notna(row.get('imatge_url')) else "")
+            e_vid_url = st.text_input("URL Vídeo", value=str(row.get('video_url', '')).strip() if pd.notna(row.get('video_url')) else "")
+            
+        e_ing = st.text_area("Ingredients", value=row.get('ingredients', ''))
+        e_ins = st.text_area("Instruccions", value=row.get('instruccions', ''))
+        
+    with c_img:
+        st.markdown("**Imatge Actual**")
+        if e_img_url:
+            st.image(e_img_url, use_container_width=True)
+        else:
+            st.info("Sense imatge")
+            
+        e_uploaded = st.file_uploader("Substituir imatge (ordinador)", type=["jpg", "jpeg", "png", "webp"], key=f"e_up_{row['id']}")
+        
+    if st.button("💾 Desar Canvis", use_container_width=True):
+        final_img = e_img_url
+        if e_uploaded is not None:
+            try:
+                import uuid
+                file_ext = e_uploaded.name.split(".")[-1]
+                file_name = f"{uuid.uuid4()}.{file_ext}"
+                supabase.storage.from_("imatges-receptes").upload(file_name, e_uploaded.getvalue())
+                final_img = supabase.storage.from_("imatges-receptes").get_public_url(file_name)
+            except Exception as e:
+                st.error(f"Error pujant la imatge: {e}")
+        
+        update_data = {
+            "titol": e_titol, "categoria": e_cat, "temps_prep_minuts": e_temps,
+            "temporada": e_temp, "puntuacio_salut": e_salut, "ingredients": e_ing,
+            "instruccions": e_ins, "imatge_url": final_img, "video_url": e_vid_url,
+            "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori
+        }
+        
+        res = supabase.table('tb_receptes_pro').update(update_data).eq('id', row['id']).execute()
+        if res.data:
+            st.success("Recepta actualitzada!")
+            st.rerun()
+        else:
+            st.error("Error al actualitzar.")
+
 @st.dialog(" ", width="large")
 def modal_recepta(row):
-    st.markdown(f"## {row.get('titol', '')}")
-    st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 📉 Dificultat: {row.get('dificultat', 'No definida')} | 📅 {row.get('tipus_dia', 'Qualsevol')}")
-    
+    col_titol, col_btn = st.columns([4, 1])
+    with col_titol:
+        st.markdown(f"## {row.get('titol', '')}")
+        st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 📉 Dificultat: {row.get('dificultat', 'No definida')} | 📅 {row.get('tipus_dia', 'Qualsevol')}")
+    with col_btn:
+        if st.button("✏️ Editar", key=f"edit_top_{row['id']}", use_container_width=True):
+            modal_edit_recepta(row)
+            st.rerun()
+            
     col_i, col_d = st.columns([1, 1])
     with col_i:
         img_url = row.get('imatge_url')
@@ -5625,8 +5693,13 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                 st.markdown(f"#### {row.get('titol', 'Sense títol')}")
                                 st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min")
                                 
-                                if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
-                                    modal_recepta(row)
+                                c_btn1, c_btn2 = st.columns([3, 1])
+                                with c_btn1:
+                                    if st.button("📖 Llegir", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
+                                        modal_recepta(row)
+                                with c_btn2:
+                                    if st.button("✏️", key=f"btn_edit_{row.get('id', idx_row)}", use_container_width=True):
+                                        modal_edit_recepta(row)
             
             with subtab_add:
                 c_fields, c_img = st.columns([3, 1])
@@ -5634,25 +5707,25 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                 with c_fields:
                     c1, c2, c3 = st.columns(3)
                     with c1:
-                        new_titol = st.text_input("Títol de la Recepta")
-                        new_cat = st.selectbox("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"])
-                        new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5)
+                        new_titol = st.text_input("Títol de la Recepta", key="k_titol")
+                        new_cat = st.selectbox("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"], key="k_cat")
+                        new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5, key="k_temps")
                     with c2:
-                        new_dif = st.selectbox("Dificultat", ["Fàcil", "Mitjana", "Difícil"])
-                        new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu"])
-                        new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"])
+                        new_dif = st.selectbox("Dificultat", ["Fàcil", "Mitjana", "Difícil"], key="k_dif")
+                        new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu"], key="k_dia")
+                        new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"], key="k_temp")
                     with c3:
-                        new_ori = st.selectbox("Origen", ["Biblioteca/Pròpia", "Externa/Internet"])
-                        new_salut = st.slider("Puntuació Salut (0-10)", 0, 10, 5)
-                        new_img_url = st.text_input("URL Imatge (opcional)")
-                        new_vid_url = st.text_input("URL Vídeo (YouTube, opcional)")
+                        new_ori = st.selectbox("Origen", ["Biblioteca/Pròpia", "Externa/Internet"], key="k_ori")
+                        new_salut = st.slider("Puntuació Salut (0-10)", 0, 10, 5, key="k_salut")
+                        new_img_url = st.text_input("URL Imatge (opcional)", key="k_img_url")
+                        new_vid_url = st.text_input("URL Vídeo (YouTube, opcional)", key="k_vid_url")
                     
-                    new_ing = st.text_area("Ingredients (un per línia)")
-                    new_ins = st.text_area("Instruccions de preparació")
+                    new_ing = st.text_area("Ingredients (un per línia)", key="k_ing")
+                    new_ins = st.text_area("Instruccions de preparació", key="k_ins")
                 
                 with c_img:
                     st.markdown("**🖼️ Imatge del plat**")
-                    uploaded_file = st.file_uploader("Pujar des de l'ordinador", type=["jpg", "jpeg", "png", "webp"])
+                    uploaded_file = st.file_uploader("Pujar des de l'ordinador", type=["jpg", "jpeg", "png", "webp"], key="k_uploaded")
                     
                     if uploaded_file is not None:
                         st.image(uploaded_file, use_container_width=True)
@@ -5693,6 +5766,12 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         }
                         resp = supabase.table('tb_receptes_pro').insert(data_insert).execute()
                         if resp.data:
+                            # Clear form keys from session_state
+                            keys_to_clear = ['k_titol', 'k_cat', 'k_temps', 'k_dif', 'k_dia', 'k_temp', 'k_ori', 'k_salut', 'k_img_url', 'k_vid_url', 'k_ing', 'k_ins', 'k_uploaded']
+                            for key in keys_to_clear:
+                                if key in st.session_state:
+                                    del st.session_state[key]
+                                    
                             st.success(f"Recepta '{new_titol}' guardada correctament!")
                             st.rerun()
                         else:
