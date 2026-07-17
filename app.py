@@ -5549,6 +5549,28 @@ components.html(
 )
 
 # ================= TAB X: MENJAR =================
+
+@st.dialog("📖 Detalls de la Recepta", width="large")
+def modal_recepta(row):
+    st.markdown(f"## {row.get('titol', '')}")
+    st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 📉 Dificultat: {row.get('dificultat', 'No definida')} | 📅 {row.get('tipus_dia', 'Qualsevol')}")
+    
+    col_i, col_d = st.columns([1, 1])
+    with col_i:
+        img_url = row.get('imatge_url')
+        if pd.notna(img_url) and str(img_url).strip() != '':
+            st.image(img_url, use_container_width=True)
+        st.write(f"**Salut:** {row.get('puntuacio_salut', 0)}/10 | **Temporada:** {row.get('temporada', '')}")
+        st.write(f"**Origen:** {row.get('origen', 'Desconegut')}")
+    
+    with col_d:
+        st.markdown("### Ingredients:")
+        st.info(row.get('ingredients', ''))
+        
+    st.markdown("### Instruccions:")
+    st.write(row.get('instruccions', ''))
+
+
 if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
     with tab_menjar:
         st.markdown("### 🍲 Menjar (Receptari MVP)")
@@ -5560,65 +5582,90 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
             subtab_list, subtab_add = st.tabs(["📖 Llibre de Receptes", "➕ Afegir Recepta"])
             
             with subtab_list:
-                if df_receptes.empty:
-                    st.info("Encara no hi ha cap recepta. Afegeix-ne una!")
+                # Sistema de Filtres
+                with st.container(border=True):
+                    st.markdown("**🔍 Filtres**")
+                    f_col1, f_col2, f_col3, f_col4 = st.columns(4)
+                    with f_col1:
+                        f_cat = st.selectbox("Categoria", ["Totes", "Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"], key="f_cat")
+                    with f_col2:
+                        f_dif = st.selectbox("Dificultat", ["Totes", "Fàcil", "Mitjana", "Difícil"], key="f_dif")
+                    with f_col3:
+                        f_dia = st.selectbox("Dia", ["Tots", "Entre setmana", "Cap de setmana", "Festiu", "Qualsevol"], key="f_dia")
+                    with f_col4:
+                        f_ori = st.selectbox("Origen", ["Tots", "Biblioteca/Pròpia", "Externa/Internet"], key="f_ori")
+                
+                # Apply filters
+                df_filtrat = df_receptes.copy()
+                if not df_filtrat.empty:
+                    if f_cat != "Totes": df_filtrat = df_filtrat[df_filtrat['categoria'] == f_cat]
+                    if f_dif != "Totes": df_filtrat = df_filtrat[df_filtrat['dificultat'] == f_dif]
+                    if f_dia != "Tots": df_filtrat = df_filtrat[df_filtrat['tipus_dia'] == f_dia]
+                    if f_ori != "Tots": df_filtrat = df_filtrat[df_filtrat['origen'] == f_ori]
+                
+                if df_filtrat.empty:
+                    st.info("No s'han trobat receptes amb aquests filtres. Afegeix-ne una!")
                 else:
-                    cols = st.columns(3)
-                    for idx_row, row in df_receptes.iterrows():
-                        col = cols[idx_row % 3]
+                    cols = st.columns(4)
+                    for idx_row, row in df_filtrat.iterrows():
+                        col = cols[idx_row % 4]
                         with col:
                             with st.container(border=True):
                                 img_url = row.get('imatge_url')
                                 if pd.notna(img_url) and str(img_url).strip() != '':
-                                    st.image(img_url, use_container_width=True)
+                                    st.markdown(f'<img src="{img_url}" style="width:100%; height:160px; object-fit:cover; border-radius:8px;">', unsafe_allow_html=True)
                                 else:
                                     st.info("Sense imatge", icon="📷")
                                 
                                 st.markdown(f"#### {row.get('titol', 'Sense títol')}")
                                 st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min")
                                 
-                                with st.expander("📖 Veure Recepta"):
-                                    st.write(f"**Salut:** {row.get('puntuacio_salut', 0)}/10 | **Temporada:** {row.get('temporada', '')}")
-                                    st.markdown("**Ingredients:**")
-                                    st.info(row.get('ingredients', ''))
-                                    st.markdown("**Instruccions:**")
-                                    st.write(row.get('instruccions', ''))
+                                if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
+                                    modal_recepta(row)
             
             with subtab_add:
-                with st.form("form_add_recepta"):
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        new_titol = st.text_input("Títol de la Recepta")
-                        new_cat = st.selectbox("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"])
-                        new_temps = st.number_input("Temps de prep. (minuts)", min_value=0, step=5)
-                    with c2:
-                        new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"])
-                        new_salut = st.slider("Puntuació de Salut (0-10)", 0, 10, 5)
-                        new_img = st.text_input("URL de la Imatge (opcional)")
-                    
-                    new_ing = st.text_area("Ingredients (un per línia)")
-                    new_ins = st.text_area("Instruccions de preparació")
-                    
-                    submitted = st.form_submit_button("💾 Guardar Recepta")
-                    if submitted:
-                        if new_titol:
-                            data_insert = {
-                                "titol": new_titol,
-                                "categoria": new_cat,
-                                "temps_prep_minuts": new_temps,
-                                "temporada": new_temp,
-                                "puntuacio_salut": new_salut,
-                                "ingredients": new_ing,
-                                "instruccions": new_ins,
-                                "imatge_url": new_img
-                            }
-                            resp = supabase.table('tb_receptes_pro').insert(data_insert).execute()
-                            if resp.data:
-                                st.success(f"Recepta '{new_titol}' guardada correctament!")
-                                st.rerun()
-                            else:
-                                st.error("Error al guardar la recepta.")
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    new_titol = st.text_input("Títol de la Recepta")
+                    new_cat = st.selectbox("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"])
+                    new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5)
+                with c2:
+                    new_dif = st.selectbox("Dificultat", ["Fàcil", "Mitjana", "Difícil"])
+                    new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu", "Qualsevol"])
+                    new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"])
+                with c3:
+                    new_ori = st.selectbox("Origen", ["Biblioteca/Pròpia", "Externa/Internet"])
+                    new_salut = st.slider("Puntuació Salut (0-10)", 0, 10, 5)
+                    new_img = st.text_input("URL Imatge (opcional)")
+                    if new_img.strip():
+                        st.image(new_img, width=150, caption="Previsualització")
+                
+                new_ing = st.text_area("Ingredients (un per línia)")
+                new_ins = st.text_area("Instruccions de preparació")
+                
+                submitted = st.button("💾 Guardar Recepta")
+                if submitted:
+                    if new_titol:
+                        data_insert = {
+                            "titol": new_titol,
+                            "categoria": new_cat,
+                            "temps_prep_minuts": new_temps,
+                            "temporada": new_temp,
+                            "puntuacio_salut": new_salut,
+                            "ingredients": new_ing,
+                            "instruccions": new_ins,
+                            "imatge_url": new_img,
+                            "dificultat": new_dif,
+                            "tipus_dia": new_dia,
+                            "origen": new_ori
+                        }
+                        resp = supabase.table('tb_receptes_pro').insert(data_insert).execute()
+                        if resp.data:
+                            st.success(f"Recepta '{new_titol}' guardada correctament!")
+                            st.rerun()
                         else:
-                            st.warning("El títol és obligatori!")
+                            st.error("Error al guardar la recepta.")
+                    else:
+                        st.warning("El títol és obligatori!")
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
