@@ -5139,10 +5139,6 @@ with tab_db:
         
     elif db_select == "Stock Rebost":
         df_to_show = fetch_all_supabase(supabase, 'tb_productes')
-    elif db_select == "Llocs d'Inventari":
-        df_to_show = fetch_all_supabase(supabase, 'tb_llocs')
-        if not df_to_show.empty:
-            df_to_show = df_to_show.sort_values(by='nom_lloc')
         if not df_to_show.empty:
             if 'select_stock' in df_to_show.columns:
                 df_to_show['select_stock'] = df_to_show['select_stock'].fillna(False).astype(bool)
@@ -5152,6 +5148,10 @@ with tab_db:
                 if col in df_to_show.columns:
                     df_to_show[col] = pd.to_numeric(df_to_show[col], errors='coerce').fillna(0.0)
             df_to_show = df_to_show.sort_values(by='nom_estandard')
+    elif db_select == "Llocs d'Inventari":
+        df_to_show = fetch_all_supabase(supabase, 'tb_llocs')
+        if not df_to_show.empty:
+            df_to_show = df_to_show.sort_values(by='nom_lloc')
     elif db_select == "Peticions Lliures Compra":
         df_to_show = fetch_all_supabase(supabase, 'tb_pendents_compra')
         
