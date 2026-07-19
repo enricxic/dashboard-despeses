@@ -5679,7 +5679,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_receptes = fetch_all_supabase(supabase, 'tb_receptes_pro')
             
-            subtab_list, subtab_add = st.tabs(["📖 Llibre de Receptes", "➕ Afegir Recepta"])
+            subtab_list, subtab_add, subtab_gen = st.tabs(["📖 Llibre de Receptes", "➕ Afegir Recepta", "🧠 Recomanador de Menús"])
             
             with subtab_list:
                 # Sistema de Filtres
@@ -5799,5 +5799,90 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                             st.error("Error al guardar la recepta.")
                     else:
                         st.warning("El títol és obligatori!")
+                        
+            with subtab_gen:
+                st.markdown("### 🧠 Recomanador de Menús Intel·ligent")
+                st.write("Aquest recomanador llegeix el teu historial real de menjars del calendari per fer-te suggeriments personalitzats.")
+                
+                @st.cache_data(ttl=600)
+                def fetch_historial(role):
+                    try:
+                        supa = get_supabase_client(role)
+                        res = supa.table('tb_historial_menjars').select('*').order('data_apat', desc=True).execute()
+                        if res.data:
+                            import pandas as pd
+                            return pd.DataFrame(res.data)
+                    except Exception as e:
+                        st.error(f"Error carregant l'historial: {e}")
+                    import pandas as pd
+                    return pd.DataFrame()
+                
+                df_hist = fetch_historial(st.session_state.get("role", "guest"))
+                
+                if df_hist.empty:
+                    st.warning("No hi ha historial de menjars a la base de dades.")
+                else:
+                    st.info(f"S'han carregat **{len(df_hist)}** àpats de l'historial del teu Google Calendar.")
+                    
+                    st.markdown("#### 📊 Anàlisi del teu Historial")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        with st.container(border=True, height=280):
+                            st.markdown("**⭐ Els teus plats més repetits:**")
+                            top_plats = df_hist['nom_plat'].value_counts().head(5)
+                            for plat, count in top_plats.items():
+                                st.write(f"- **{plat}** ({count} cops)")
+                    
+                    with col2:
+                        with st.container(border=True, height=280):
+                            st.markdown("**🕰️ Fa molt temps que no menges:**")
+                            last_eaten = df_hist.groupby('nom_plat')['data_apat'].max().sort_values().head(5)
+                            for plat, date_eaten in last_eaten.items():
+                                st.write(f"- **{plat}** (Últim: {date_eaten})")
+                            
+                    st.divider()
+                    st.markdown("#### 💡 Suggeriments Màgics per Avui")
+                    
+                    if st.button("🪄 Generar Propostes de Menú", use_container_width=True):
+                        with st.spinner("Analitzant els teus gustos i creuant amb les dates..."):
+                            import time
+                            time.sleep(1.5)
+                            
+                            df_hist['data_apat'] = pd.to_datetime(df_hist['data_apat'])
+                            avui = pd.Timestamp.now()
+                            
+                            freq = df_hist['nom_plat'].value_counts()
+                            last_eaten_df = df_hist.groupby('nom_plat')['data_apat'].max()
+                            
+                            favorits_oblidats = []
+                            tresors_perduts = []
+                            
+                            for plat, count in freq.items():
+                                last = last_eaten_df[plat]
+                                dies_des_de_ultim = (avui - last).days
+                                
+                                if count >= 3 and 7 <= dies_des_de_ultim <= 45:
+                                    favorits_oblidats.append(plat)
+                                elif count >= 2 and dies_des_de_ultim > 45:
+                                    tresors_perduts.append(plat)
+                            
+                            import random
+                            st.success("Aquí tens algunes idees basades en el teu propi historial!")
+                            c1, c2 = st.columns(2)
+                            
+                            with c1:
+                                st.info("**✅ Un dels teus habituals**\n\n(que fa dies que no menges)")
+                                if favorits_oblidats:
+                                    st.markdown(f"### 🍲 {random.choice(favorits_oblidats)}")
+                                else:
+                                    st.write("Avui no tenim suggeriments d'aquest tipus.")
+                                    
+                            with c2:
+                                st.warning("**💎 Una joia perduda**\n\n(que no fas des de fa més d'un mes)")
+                                if tresors_perduts:
+                                    st.markdown(f"### 🍽️ {random.choice(tresors_perduts)}")
+                                else:
+                                    st.write("Avui no tenim suggeriments d'aquest tipus.")
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
