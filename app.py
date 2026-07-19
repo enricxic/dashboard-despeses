@@ -5819,6 +5819,10 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                 
                 df_hist = fetch_historial(st.session_state.get("role", "guest"))
                 
+                # Neteja de dades: Ignorar "Restaurant" i possibles variants
+                if not df_hist.empty:
+                    df_hist = df_hist[~df_hist['nom_plat'].str.lower().str.contains('restaurant', na=False)]
+                
                 if df_hist.empty:
                     st.warning("No hi ha historial de menjars a la base de dades.")
                 else:
