@@ -2003,7 +2003,8 @@ def cb_finalize_ticket():
                 next_id += 1
             
         if new_entries:
-            if pending_ticket_id:
+            success = append_to_db(pd.DataFrame(new_entries), 'despeses', 'df_desp')
+            if success and pending_ticket_id:
                 try:
                     supabase = get_supabase_client(st.session_state.get("role", "guest"))
                     supabase.table('despeses').delete().eq('ID_mov', pending_ticket_id).execute()
@@ -2011,8 +2012,6 @@ def cb_finalize_ticket():
                     st.session_state['df_desp'] = df_desp
                 except Exception as e:
                     print(f"Error deleting pending ticket {pending_ticket_id}: {e}")
-                    
-            append_to_db(pd.DataFrame(new_entries), 'despeses', 'df_desp')
     
     new_rows = []
     base_id = int(df_super['IdCompra'].max() + 1) if not df_super.empty else 1
@@ -5618,8 +5617,8 @@ def modal_recepta(row):
                 res = supabase.table('tb_receptes_pro').update(update_data).eq('id', row['id']).execute()
                 if res.data:
                     st.session_state[f"editing_{row['id']}"] = False
-                    st.success("Recepta actualitzada! Tanca i torna a obrir per veure els canvis.")
-                    st.rerun()
+                    st.success("Recepta actualitzada! (Els canvis s'aplicaran en tancar aquesta finestra).")
+                    # Hem eliminat st.rerun() per evitar tancaments/refrescs bruscos en mòbils
                 else:
                     st.error("Error al actualitzar.")
 
