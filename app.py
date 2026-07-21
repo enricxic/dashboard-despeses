@@ -5572,7 +5572,8 @@ def modal_recepta(row):
                 e_titol = st.text_input("Títol", value=row.get('titol', ''))
                 cat_opts = ["Primer", "Segon", "Postre", "Complement", "Guarnició"]
                 e_cat = st.selectbox("Categoria", cat_opts, index=cat_opts.index(row.get('categoria')) if row.get('categoria') in cat_opts else 0)
-                e_temps = st.number_input("Temps (min)", value=int(row.get('temps_prep_minuts', 0)), step=5)
+                val_temps = row.get('temps_prep_minuts', 0)
+                e_temps = st.number_input("Temps (min)", value=int(val_temps) if pd.notna(val_temps) else 0, step=5)
             with c2:
                 dif_opts = ["Fàcil", "Mitjana", "Difícil"]
                 e_dif = st.selectbox("Dificultat", dif_opts, index=dif_opts.index(row.get('dificultat')) if row.get('dificultat') in dif_opts else 0)
@@ -5583,7 +5584,8 @@ def modal_recepta(row):
             with c3:
                 ori_opts = ["Biblioteca/Pròpia", "Externa/Internet"]
                 e_ori = st.selectbox("Origen", ori_opts, index=ori_opts.index(row.get('origen')) if row.get('origen') in ori_opts else 0)
-                e_salut = st.slider("Salut (0-10)", 0, 10, int(row.get('puntuacio_salut', 5)))
+                val_salut = row.get('puntuacio_salut', 5)
+                e_salut = st.slider("Salut (0-10)", 0, 10, int(val_salut) if pd.notna(val_salut) else 5)
                 e_img_url = st.text_input("URL Imatge", value=str(row.get('imatge_url', '')).strip() if pd.notna(row.get('imatge_url')) else "")
                 e_vid_url = st.text_input("URL Vídeo", value=str(row.get('video_url', '')).strip() if pd.notna(row.get('video_url')) else "")
                 
