@@ -2243,8 +2243,8 @@ def render_compres_super_interface():
     with col_hdr4:
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
         uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
-        with st.popover("📷 Escanejar amb càmera"):
-            camera_file = st.camera_input("Fes una foto al tiquet")
+        # st.camera_input eliminat per usar la càmera nativa via st.file_uploader
+        camera_file = None
         
         if st.button("⚡ Llegir últim tiquet escanejat", use_container_width=True):
             import os, glob, io
@@ -4772,10 +4772,10 @@ if tab_rebost:
                     modal_inventari(df_prods)
                     
             # ================= LECTOR DE CODIS DE BARRES =================
-            st.markdown("### 📷 Escanejar Codi de Barres (Càmera)")
+            st.markdown("### 📷 Escanejar Codi de Barres (Càmera nativa)")
             if True:
-                st.write("Fes servir la càmera del mòbil per escanejar un producte i actualitzar-ne l'stock.")
-                img_file = st.camera_input("Fes una foto al codi de barres clarament il·luminat", key="barcode_camera")
+                st.write("Clica el botó de sota per obrir la càmera del teu mòbil (o pujar una foto) per escanejar un codi de barres.")
+                img_file = st.file_uploader("Fes una foto al codi de barres", type=["png", "jpg", "jpeg"], key="barcode_camera", label_visibility="collapsed")
                 if img_file is not None:
                     try:
                         from pyzbar.pyzbar import decode
