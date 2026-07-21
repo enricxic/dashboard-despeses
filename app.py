@@ -5605,6 +5605,7 @@ def modal_recepta(row):
         with col_btn1:
             if st.button("❌ Cancel·lar", use_container_width=True):
                 st.session_state[f"editing_{row['id']}"] = False
+                st.rerun()
         with col_btn2:
             if st.button("💾 Desar Canvis", use_container_width=True):
                 supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -5629,8 +5630,8 @@ def modal_recepta(row):
                 res = supabase.table('tb_receptes_pro').update(update_data).eq('id', row['id']).execute()
                 if res.data:
                     st.session_state[f"editing_{row['id']}"] = False
-                    st.success("Recepta actualitzada! (Els canvis s'aplicaran en tancar aquesta finestra).")
-                    # Hem eliminat st.rerun() per evitar tancaments/refrescs bruscos en mòbils
+                    st.success("Recepta actualitzada!")
+                    st.rerun()
                 else:
                     st.error("Error al actualitzar.")
 
@@ -5643,6 +5644,7 @@ def modal_recepta(row):
         with col_btn:
             if st.button("✏️ Editar", key=f"edit_top_{row['id']}", use_container_width=True):
                 st.session_state[f"editing_{row['id']}"] = True
+                st.rerun()
                 
         col_i, col_d = st.columns([1, 1])
         with col_i:
@@ -5696,6 +5698,8 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
         try:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_receptes = fetch_all_supabase(supabase, 'tb_receptes_pro')
+            if not df_receptes.empty:
+                df_receptes = df_receptes.sort_values(by=['categoria', 'tipus_dia', 'titol'], ascending=[True, True, True]).reset_index(drop=True)
             
             subtab_list, subtab_add, subtab_gen = st.tabs(["📖 Llibre de Receptes", "➕ Afegir Recepta", "🧠 Recomanador de Menús"])
             
