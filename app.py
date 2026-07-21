@@ -5707,7 +5707,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                 # Sistema de Filtres
                 with st.expander("🔍 Cercar i Filtrar Receptes", expanded=False):
                     f_text = st.text_input("Cercar per nom de la recepta...", key="f_text")
-                    f_col1, f_col2, f_col3, f_col4 = st.columns(4)
+                    f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns(5)
                     with f_col1:
                         f_cat = st.multiselect("Categoria", ["Tots", "Primer", "Segon", "Postre", "Complement", "Guarnició"], key="f_cat_m")
                     with f_col2:
@@ -5715,7 +5715,9 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     with f_col3:
                         f_dia = st.multiselect("Dia", ["Tots", "Entre setmana", "Cap de setmana", "Festiu", "Especial"], key="f_dia_m")
                     with f_col4:
-                        f_temps = st.slider("Temps màxim (minuts)", min_value=0, max_value=240, value=240, step=5, key="f_temps_s")
+                        f_ori = st.multiselect("Origen", ["Tots", "Biblioteca/Pròpia", "Externa/Internet"], key="f_ori_m")
+                    with f_col5:
+                        f_temps = st.slider("Temps màxim", min_value=0, max_value=240, value=240, step=5, key="f_temps_s")
                 
                 # Apply filters
                 df_filtrat = df_receptes.copy()
@@ -5731,6 +5733,9 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     if f_dia:
                         if "Tots" not in f_dia:
                             df_filtrat = df_filtrat[df_filtrat['tipus_dia'].isin(f_dia)]
+                    if f_ori:
+                        if "Tots" not in f_ori:
+                            df_filtrat = df_filtrat[df_filtrat['origen'].isin(f_ori)]
                     if f_temps < 240:
                         df_filtrat['temps_num'] = pd.to_numeric(df_filtrat['temps_prep_minuts'], errors='coerce').fillna(0)
                         df_filtrat = df_filtrat[df_filtrat['temps_num'] <= f_temps]
