@@ -5676,7 +5676,7 @@ def modal_recepta(row):
             ing_raw = str(row.get('ingredients', ''))
             if ing_raw.strip():
                 import re
-                lines = [re.sub(r'^[\-\*•\·\d\.]+\s*', '', line.strip()).strip() for line in ing_raw.split('\n') if line.strip()]
+                lines = [re.sub(r'^[\-\*•\·]\s*', '', line.strip()).strip() for line in ing_raw.split('\n') if line.strip()]
                 ing_format = " * ".join(lines)
             else:
                 ing_format = "Sense ingredients"
