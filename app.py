@@ -2272,10 +2272,18 @@ def render_compres_super_interface():
             else:
                 st.warning("No s'ha trobat cap tiquet a la carpeta.")
         
-        if st.session_state.get("scanned_file") is not None:
-            uploaded_file = st.session_state["scanned_file"]
-        elif camera_file is not None:
-            uploaded_file = camera_file
+        candidates = [f for f in [uploaded_file, camera_file, st.session_state.get("scanned_file")] if f is not None]
+        chosen_file = None
+        for f in candidates:
+            fid = f"{f.name}_{f.size}"
+            if fid != st.session_state.get("processed_file_id"):
+                chosen_file = f
+                break
+        if chosen_file is None and candidates:
+            chosen_file = candidates[0]
+            
+        uploaded_file = chosen_file
+        
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
             if st.session_state.get("processed_file_id") != file_id:
@@ -4764,7 +4772,8 @@ if tab_rebost:
                     modal_inventari(df_prods)
                     
             # ================= LECTOR DE CODIS DE BARRES =================
-            with st.expander("📷 Escanejar Codi de Barres (Càmera)", expanded=False):
+            st.markdown("### 📷 Escanejar Codi de Barres (Càmera)")
+            if True:
                 st.write("Fes servir la càmera del mòbil per escanejar un producte i actualitzar-ne l'stock.")
                 img_file = st.camera_input("Fes una foto al codi de barres clarament il·luminat", key="barcode_camera")
                 if img_file is not None:
