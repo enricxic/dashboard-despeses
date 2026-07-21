@@ -1739,9 +1739,12 @@ def cb_add_ticket_line():
     fam = st.session_state.get("manual_fam_selectbox", "")
     art = st.session_state.get("manual_art_selectbox", "")
     pes_raw = st.session_state.get("manual_pes_num", "0")
-    qty = st.session_state.get("manual_qty_num", 0.0)
-    preu = st.session_state.get("manual_preu_num", 0.0)
-    prom = st.session_state.get("manual_prom_num", 0.0)
+    qty_raw = st.session_state.get("manual_qty_num", 1.0)
+    qty = float(qty_raw) if qty_raw is not None else 1.0
+    preu_raw = st.session_state.get("manual_preu_num", 0.0)
+    preu = float(preu_raw) if preu_raw is not None else 0.0
+    prom_raw = st.session_state.get("manual_prom_num", 0.0)
+    prom = float(prom_raw) if prom_raw is not None else 0.0
     reb = st.session_state.get("manual_reb_chk", False)
     
     if not fam or not art:
@@ -1794,9 +1797,9 @@ def cb_add_ticket_line():
     
     # Reset widget states
     st.session_state["manual_pes_num"] = "0"
-    st.session_state["manual_qty_num"] = 1.0
+    st.session_state["manual_qty_num"] = None
     st.session_state["manual_pct_num"] = 0.0
-    st.session_state["manual_preu_num"] = 0.0
+    st.session_state["manual_preu_num"] = None
     st.session_state["manual_prom_num"] = 0.0
     st.session_state["manual_reb_chk"] = False
     st.session_state["manual_fam_selectbox"] = ""
@@ -1835,9 +1838,9 @@ def cb_clear_ticket():
         del st.session_state["scanned_file"]
     # Reset manual inputs
     st.session_state["manual_pes_num"] = "0"
-    st.session_state["manual_qty_num"] = 1.0
+    st.session_state["manual_qty_num"] = None
     st.session_state["manual_pct_num"] = 0.0
-    st.session_state["manual_preu_num"] = 0.0
+    st.session_state["manual_preu_num"] = None
     st.session_state["manual_prom_num"] = 0.0
     st.session_state["manual_reb_chk"] = False
     st.session_state["manual_fam_selectbox"] = ""
@@ -2085,9 +2088,9 @@ def cb_finalize_ticket():
         del st.session_state["scanned_file"]
     # Reset manual inputs
     st.session_state["manual_pes_num"] = "0"
-    st.session_state["manual_qty_num"] = 1.0
+    st.session_state["manual_qty_num"] = None
     st.session_state["manual_pct_num"] = 0.0
-    st.session_state["manual_preu_num"] = 0.0
+    st.session_state["manual_preu_num"] = None
     st.session_state["manual_prom_num"] = 0.0
     st.session_state["manual_reb_chk"] = False
     st.session_state["manual_fam_selectbox"] = ""
@@ -2534,11 +2537,11 @@ def render_compres_super_interface():
     if "manual_pes_num" not in st.session_state:
         st.session_state["manual_pes_num"] = "0"
     if "manual_qty_num" not in st.session_state:
-        st.session_state["manual_qty_num"] = 1.0
+        st.session_state["manual_qty_num"] = None
     if "manual_pct_num" not in st.session_state:
         st.session_state["manual_pct_num"] = 0.0
     if "manual_preu_num" not in st.session_state:
-        st.session_state["manual_preu_num"] = 0.0
+        st.session_state["manual_preu_num"] = None
     if "manual_prom_num" not in st.session_state:
         st.session_state["manual_prom_num"] = 0.0
     if "manual_reb_chk" not in st.session_state:
@@ -2567,8 +2570,8 @@ def render_compres_super_interface():
         if ed_item.get('article') == 'pendent':
             st.text_input("Text original (modifica si cal abans de desar per ensenyar al sistema):", value=ed_item.get('nom_brut', ''), key="manual_nom_brut_input")
             
-    col_fam, col_art, col_pes, col_qty, col_pct, col_preu, col_prom, col_tot, col_reb, col_add = st.columns(
-        [2, 2.2, 1, 1, 0.8, 1, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
+    col_fam, col_art, col_pes, col_qty, col_preu, col_pct, col_prom, col_tot, col_reb, col_add = st.columns(
+        [2, 2.2, 1, 1, 1, 0.8, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
     )
     
     with col_fam:
@@ -2655,15 +2658,15 @@ def render_compres_super_interface():
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
     with col_qty:
-        qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num", on_change=cb_recalculate_manual_pct)
+        qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num", on_change=cb_recalculate_manual_pct, value=None, placeholder="1")
+    with col_preu:
+        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", on_change=cb_recalculate_manual_pct, value=None, placeholder="0.0")
     with col_pct:
         pct_val = st.number_input("%", min_value=0.0, max_value=100.0, step=1.0, key="manual_pct_num", on_change=cb_recalculate_manual_pct)
-    with col_preu:
-        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", on_change=cb_recalculate_manual_pct)
     with col_prom:
         prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num")
         
-    tot_linea_val = (qty_val * preu_val) - prom_val
+    tot_linea_val = ((qty_val or 1.0) * (preu_val or 0.0)) - prom_val
     with col_tot:
         st.text_input("TOTAL LÍNIA", value=f"{tot_linea_val:,.2f} €", disabled=True)
     with col_reb:
@@ -5570,7 +5573,7 @@ def modal_recepta(row):
             c1, c2, c3 = st.columns(3)
             with c1:
                 e_titol = st.text_input("Títol", value=row.get('titol', ''))
-                cat_opts = ["Primer", "Segon", "Postre", "Complement", "Guarnició"]
+                cat_opts = ["Primer", "Segon", "Postre", "Complement", "Guarnició", "Salsa"]
                 e_cat = st.selectbox("Categoria", cat_opts, index=cat_opts.index(row.get('categoria')) if row.get('categoria') in cat_opts else 0)
                 val_temps = row.get('temps_prep_minuts', 0)
                 e_temps = st.number_input("Temps (min)", value=int(val_temps) if pd.notna(val_temps) else 0, step=5)
@@ -5709,7 +5712,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     f_text = st.text_input("Cercar per nom de la recepta...", key="f_text")
                     f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns(5)
                     with f_col1:
-                        f_cat = st.multiselect("Categoria", ["Tots", "Primer", "Segon", "Postre", "Complement", "Guarnició"], key="f_cat_m")
+                        f_cat = st.multiselect("Categoria", ["Tots", "Primer", "Segon", "Postre", "Complement", "Guarnició", "Salsa"], key="f_cat_m")
                     with f_col2:
                         f_dif = st.multiselect("Dificultat", ["Tots", "Fàcil", "Mitjana", "Difícil"], key="f_dif_m")
                     with f_col3:
