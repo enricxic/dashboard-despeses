@@ -5692,24 +5692,33 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
             
             with subtab_list:
                 # Sistema de Filtres
-                with st.expander("🔍 Filtres", expanded=False):
+                with st.expander("🔍 Cercar i Filtrar Receptes", expanded=False):
+                    f_text = st.text_input("Cercar per nom de la recepta...", key="f_text")
                     f_col1, f_col2, f_col3, f_col4 = st.columns(4)
                     with f_col1:
-                        f_cat = st.selectbox("Categoria", ["Totes", "Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"], key="f_cat")
+                        f_cat = st.multiselect("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"], key="f_cat_m")
                     with f_col2:
-                        f_dif = st.selectbox("Dificultat", ["Totes", "Fàcil", "Mitjana", "Difícil"], key="f_dif")
+                        f_dif = st.multiselect("Dificultat", ["Fàcil", "Mitjana", "Difícil"], key="f_dif_m")
                     with f_col3:
-                        f_dia = st.selectbox("Dia", ["Tots", "Entre setmana", "Cap de setmana", "Festiu"], key="f_dia")
+                        f_dia = st.multiselect("Dia", ["Entre setmana", "Cap de setmana", "Festiu"], key="f_dia_m")
                     with f_col4:
-                        f_ori = st.selectbox("Origen", ["Tots", "Biblioteca/Pròpia", "Externa/Internet"], key="f_ori")
+                        f_temps = st.slider("Temps màxim (minuts)", min_value=0, max_value=240, value=240, step=5, key="f_temps_s")
                 
                 # Apply filters
                 df_filtrat = df_receptes.copy()
                 if not df_filtrat.empty:
-                    if f_cat != "Totes": df_filtrat = df_filtrat[df_filtrat['categoria'] == f_cat]
-                    if f_dif != "Totes": df_filtrat = df_filtrat[df_filtrat['dificultat'] == f_dif]
-                    if f_dia != "Tots": df_filtrat = df_filtrat[df_filtrat['tipus_dia'] == f_dia]
-                    if f_ori != "Tots": df_filtrat = df_filtrat[df_filtrat['origen'] == f_ori]
+                    if f_text:
+                        df_filtrat = df_filtrat[df_filtrat['titol'].str.contains(f_text, case=False, na=False)]
+                    if f_cat:
+                        df_filtrat = df_filtrat[df_filtrat['categoria'].isin(f_cat)]
+                    if f_dif:
+                        df_filtrat = df_filtrat[df_filtrat['dificultat'].isin(f_dif)]
+                    if f_dia:
+                        df_filtrat = df_filtrat[df_filtrat['tipus_dia'].isin(f_dia)]
+                    if f_temps < 240:
+                        df_filtrat['temps_num'] = pd.to_numeric(df_filtrat['temps_prep_minuts'], errors='coerce').fillna(0)
+                        df_filtrat = df_filtrat[df_filtrat['temps_num'] <= f_temps]
+                        df_filtrat = df_filtrat.drop(columns=['temps_num'])
                 
                 if df_filtrat.empty:
                     st.info("No s'han trobat receptes amb aquests filtres. Afegeix-ne una!")
