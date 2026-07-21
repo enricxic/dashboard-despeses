@@ -5745,6 +5745,9 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         df_filtrat = df_filtrat[df_filtrat['temps_num'] <= f_temps]
                         df_filtrat = df_filtrat.drop(columns=['temps_num'])
                 
+                st.write("")
+                mode_estalvi = st.toggle("📱 Mode Estalvi (Sense imatges per estalviar dades)", value=False)
+                
                 if df_filtrat.empty:
                     st.info("No s'han trobat receptes amb aquests filtres. Afegeix-ne una!")
                 else:
@@ -5752,12 +5755,14 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     for idx_row, row in df_filtrat.iterrows():
                         col = cols[idx_row % 4]
                         with col:
-                            with st.container(border=True, height=335):
+                            card_height = 175 if mode_estalvi else 335
+                            with st.container(border=True, height=card_height):
                                 img_url = row.get('imatge_url')
-                                if pd.notna(img_url) and str(img_url).strip() != '':
-                                    st.markdown(f'<img src="{img_url}" style="width:100%; height:160px; object-fit:cover; border-radius:8px;">', unsafe_allow_html=True)
-                                else:
-                                    st.info("Sense imatge", icon="📷")
+                                if not mode_estalvi:
+                                    if pd.notna(img_url) and str(img_url).strip() != '':
+                                        st.markdown(f'<img src="{img_url}" loading="lazy" style="width:100%; height:160px; object-fit:cover; border-radius:8px;">', unsafe_allow_html=True)
+                                    else:
+                                        st.info("Sense imatge", icon="📷")
                                 
                                 st.markdown(f'<div style="height: 70px; overflow: hidden; margin-top: 10px; margin-bottom: 5px; display: flex; align-items: flex-start;"><h4 style="margin:0; line-height: 1.15;">{row.get("titol", "Sense títol")}</h4></div>', unsafe_allow_html=True)
                                 st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 🔪 {row.get('dificultat', 'Fàcil')}")
