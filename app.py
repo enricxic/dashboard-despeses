@@ -5671,7 +5671,14 @@ def modal_recepta(row):
         
         with col_d:
             st.markdown("### Ingredients:")
-            st.info(row.get('ingredients', ''))
+            ing_raw = str(row.get('ingredients', ''))
+            if ing_raw.strip():
+                import re
+                lines = [re.sub(r'^[\-\*•\·\d\.]+\s*', '', line.strip()).strip() for line in ing_raw.split('\n') if line.strip()]
+                ing_format = " * ".join(lines)
+            else:
+                ing_format = "Sense ingredients"
+            st.info(ing_format)
             st.markdown("### Info Addicional:")
             st.write(f"**Salut:** {row.get('puntuacio_salut', 0)}/10 | **Temporada:** {row.get('temporada', '')}")
             st.write(f"**Origen:** {row.get('origen', 'Desconegut')}")
