@@ -5562,6 +5562,9 @@ components.html(
 
 # ================= TAB X: MENJAR =================
 
+def cb_set_editing_recepta(r_id, val):
+    st.session_state[f"editing_{r_id}"] = val
+
 @st.dialog(" ", width="large")
 def modal_recepta(row):
     is_editing = st.session_state.get(f"editing_{row['id']}", False)
@@ -5645,9 +5648,7 @@ def modal_recepta(row):
             st.markdown(f"## {row.get('titol', '')}")
             st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 📉 Dificultat: {row.get('dificultat', 'No definida')} | 📅 {row.get('tipus_dia', 'Qualsevol')}")
         with col_btn:
-            if st.button("✏️ Editar", key=f"edit_top_{row['id']}", use_container_width=True):
-                st.session_state[f"editing_{row['id']}"] = True
-                st.rerun()
+            st.button("✏️ Editar", key=f"edit_top_{row['id']}", on_click=cb_set_editing_recepta, args=(row['id'], True), use_container_width=True)
                 
         col_i, col_d = st.columns([1, 1])
         with col_i:
