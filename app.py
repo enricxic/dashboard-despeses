@@ -5725,7 +5725,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                 else:
                                     st.info("Sense imatge", icon="📷")
                                 
-                                st.markdown(f'<div style="height: 60px; overflow: hidden; margin-top: 10px; display: flex; align-items: flex-start;"><h4 style="margin:0;">{row.get("titol", "Sense títol")}</h4></div>', unsafe_allow_html=True)
+                                st.markdown(f'<div style="height: 55px; overflow: hidden; margin-top: 5px; margin-bottom: 5px; display: flex; align-items: flex-start;"><h4 style="margin:0; line-height: 1.2; font-size: 1.15rem;">{row.get("titol", "Sense títol")}</h4></div>', unsafe_allow_html=True)
                                 st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min")
                                 
                                 if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
