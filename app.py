@@ -1305,7 +1305,8 @@ def parse_default_ticket(text_content):
             idx += 1
             continue
             
-        if not nom_brut or len(nom_brut) < 2:
+        # If name doesn't contain at least 3 letters, or starts with a long number (barcode), it's garbage
+        if not nom_brut or len([c for c in nom_brut if c.isalpha()]) < 3 or re.match(r'^\d{5,}', nom_brut):
             idx += 1
             continue
             
@@ -1540,8 +1541,8 @@ def parse_novavenda_ticket(text_content):
         match_price = re.search(r'^(.*?)\s+(\d+[\.,]\d{2})(?:\s*[€E])?$', line_clean)
         if match_price:
             nom_brut = match_price.group(1).strip()
-            # If name is just numbers or very short, probably garbage
-            if len(nom_brut) < 3 or re.match(r'^[\d\s,.]+$', nom_brut):
+            # If name doesn't contain at least 3 letters, or starts with a long number (barcode), it's garbage
+            if len([c for c in nom_brut if c.isalpha()]) < 3 or re.match(r'^[\d\s,.]+$', nom_brut) or re.match(r'^\d{5,}', nom_brut):
                 continue
                 
             tot_val = float(match_price.group(2).replace(',', '.'))
