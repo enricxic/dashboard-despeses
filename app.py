@@ -5570,13 +5570,13 @@ def modal_recepta(row):
             c1, c2, c3 = st.columns(3)
             with c1:
                 e_titol = st.text_input("Títol", value=row.get('titol', ''))
-                cat_opts = ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"]
+                cat_opts = ["Primer", "Segon", "Postre", "Complement", "Guarnició"]
                 e_cat = st.selectbox("Categoria", cat_opts, index=cat_opts.index(row.get('categoria')) if row.get('categoria') in cat_opts else 0)
                 e_temps = st.number_input("Temps (min)", value=int(row.get('temps_prep_minuts', 0)), step=5)
             with c2:
                 dif_opts = ["Fàcil", "Mitjana", "Difícil"]
                 e_dif = st.selectbox("Dificultat", dif_opts, index=dif_opts.index(row.get('dificultat')) if row.get('dificultat') in dif_opts else 0)
-                dia_opts = ["Entre setmana", "Cap de setmana", "Festiu"]
+                dia_opts = ["Entre setmana", "Cap de setmana", "Festiu", "Especial"]
                 e_dia = st.selectbox("Tipus de dia", dia_opts, index=dia_opts.index(row.get('tipus_dia')) if row.get('tipus_dia') in dia_opts else 0)
                 temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
                 e_temp = st.selectbox("Temporada", temp_opts, index=temp_opts.index(row.get('temporada')) if row.get('temporada') in temp_opts else 0)
@@ -5696,11 +5696,11 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     f_text = st.text_input("Cercar per nom de la recepta...", key="f_text")
                     f_col1, f_col2, f_col3, f_col4 = st.columns(4)
                     with f_col1:
-                        f_cat = st.multiselect("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"], key="f_cat_m")
+                        f_cat = st.multiselect("Categoria", ["Tots", "Primer", "Segon", "Postre", "Complement", "Guarnició"], key="f_cat_m")
                     with f_col2:
-                        f_dif = st.multiselect("Dificultat", ["Fàcil", "Mitjana", "Difícil"], key="f_dif_m")
+                        f_dif = st.multiselect("Dificultat", ["Tots", "Fàcil", "Mitjana", "Difícil"], key="f_dif_m")
                     with f_col3:
-                        f_dia = st.multiselect("Dia", ["Entre setmana", "Cap de setmana", "Festiu"], key="f_dia_m")
+                        f_dia = st.multiselect("Dia", ["Tots", "Entre setmana", "Cap de setmana", "Festiu", "Especial"], key="f_dia_m")
                     with f_col4:
                         f_temps = st.slider("Temps màxim (minuts)", min_value=0, max_value=240, value=240, step=5, key="f_temps_s")
                 
@@ -5710,10 +5710,13 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     if f_text:
                         df_filtrat = df_filtrat[df_filtrat['titol'].str.contains(f_text, case=False, na=False)]
                     if f_cat:
+                        if "Tots" not in f_cat:
                         df_filtrat = df_filtrat[df_filtrat['categoria'].isin(f_cat)]
                     if f_dif:
+                        if "Tots" not in f_dif:
                         df_filtrat = df_filtrat[df_filtrat['dificultat'].isin(f_dif)]
                     if f_dia:
+                        if "Tots" not in f_dia:
                         df_filtrat = df_filtrat[df_filtrat['tipus_dia'].isin(f_dia)]
                     if f_temps < 240:
                         df_filtrat['temps_num'] = pd.to_numeric(df_filtrat['temps_prep_minuts'], errors='coerce').fillna(0)
@@ -5747,11 +5750,11 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     c1, c2, c3 = st.columns(3)
                     with c1:
                         new_titol = st.text_input("Títol de la Recepta", key="k_titol")
-                        new_cat = st.selectbox("Categoria", ["Primers", "Segons", "Postres", "Esmorzars", "Snacks", "Altres"], key="k_cat")
+                        new_cat = st.selectbox("Categoria", ["Primer", "Segon", "Postre", "Complement", "Guarnició"], key="k_cat")
                         new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5, key="k_temps")
                     with c2:
                         new_dif = st.selectbox("Dificultat", ["Fàcil", "Mitjana", "Difícil"], key="k_dif")
-                        new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu"], key="k_dia")
+                        new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu", "Especial"], key="k_dia")
                         new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"], key="k_temp")
                     with c3:
                         new_ori = st.selectbox("Origen", ["Biblioteca/Pròpia", "Externa/Internet"], key="k_ori")
