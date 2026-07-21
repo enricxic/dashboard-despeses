@@ -5711,13 +5711,13 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         df_filtrat = df_filtrat[df_filtrat['titol'].str.contains(f_text, case=False, na=False)]
                     if f_cat:
                         if "Tots" not in f_cat:
-                        df_filtrat = df_filtrat[df_filtrat['categoria'].isin(f_cat)]
+                            df_filtrat = df_filtrat[df_filtrat['categoria'].isin(f_cat)]
                     if f_dif:
                         if "Tots" not in f_dif:
-                        df_filtrat = df_filtrat[df_filtrat['dificultat'].isin(f_dif)]
+                            df_filtrat = df_filtrat[df_filtrat['dificultat'].isin(f_dif)]
                     if f_dia:
                         if "Tots" not in f_dia:
-                        df_filtrat = df_filtrat[df_filtrat['tipus_dia'].isin(f_dia)]
+                            df_filtrat = df_filtrat[df_filtrat['tipus_dia'].isin(f_dia)]
                     if f_temps < 240:
                         df_filtrat['temps_num'] = pd.to_numeric(df_filtrat['temps_prep_minuts'], errors='coerce').fillna(0)
                         df_filtrat = df_filtrat[df_filtrat['temps_num'] <= f_temps]
