@@ -2809,9 +2809,10 @@ with col_super:
             st.session_state["viewing_compres_super"] = False
             st.rerun()
     else:
-        if st.button("🛒 Compres Súper", use_container_width=True):
-            st.session_state["viewing_compres_super"] = True
-            st.rerun()
+        if st.session_state.get("role") != "viewer":
+            if st.button("🛒 Compres Súper", use_container_width=True):
+                st.session_state["viewing_compres_super"] = True
+                st.rerun()
 
 if st.session_state.get("viewing_compres_super", False):
     render_compres_super_interface()
@@ -3106,6 +3107,9 @@ else:
 if st.session_state.get("role") == "admin":
     tab_db = tabs[tab_idx]
     tab_log = tabs[tab_idx + 1]
+else:
+    tab_db = None
+    tab_log = None
 # ================= TAB 1: DASHBOARD GENERAL =================
 with tab_dash:
     # 1. Container for bank metrics (physically at the top)
