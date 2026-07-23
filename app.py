@@ -3124,6 +3124,7 @@ with tab_dash:
     with col_sum_btn:
         with st.popover("⚙️", use_container_width=False):
             selected_year = st.selectbox("Any", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year")
+            show_limits = st.checkbox("Veure límits despesa", value=False)
 
     # 3. Re-calculate balances and render bank metrics at the top container
     current_balances = get_balances_up_to(selected_year, selected_month_data)
@@ -3275,7 +3276,7 @@ with tab_dash:
             'Desp. Varis': 'varis'
         }
         for idx, row in df.iterrows():
-            if row['Mes'] == 'TOTAL':
+            if row['Mes'] in ['TOTAL', 'LÍMITS']:
                 continue
             m_name = str(row['Mes']).lower()
             m_data = month_translations.get(m_name, 'enero')
@@ -3319,9 +3320,18 @@ with tab_dash:
     kms_left = st.session_state.get("kms_canvi_oli", 31491.0) - car_kms_actuals
     if kms_left <= 0:
         st.error(f"🔧 **Atenció!** Cal fer el canvi d'oli del cotxe. Teniu el límit superat per {int(abs(kms_left))} km.")
+        
+    if show_limits:
+        limits_row = {c: None for c in df_summary.columns}
+        limits_row['Mes'] = 'LÍMITS'
+        for col_name, (display_lbl, limit_key) in col_mapping_alert.items():
+            if limit_key in selected_limits:
+                limits_row[col_name] = selected_limits[limit_key]
+        df_summary = pd.concat([pd.DataFrame([limits_row]), df_summary], ignore_index=True)
+
     # Display styled summary grid using static compact HTML table
     st.table(
-        df_summary.style.format(precision=2, thousands=".", decimal=",")
+        df_summary.style.format(precision=2, thousands=".", decimal=",", na_rep="")
         .apply(highlight_exceeded_limits, axis=None)
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000)
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
