@@ -675,7 +675,7 @@ def insert_db_row(table_name, new_row_dict):
     except Exception as e:
         st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
 
-def append_to_db(df_new, table_name, state_key):
+def append_to_db(df_new, table_name, state_key, extra_details=None):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         supabase.table(table_name).insert(json.loads(df_new.to_json(orient='records', date_format='iso'))).execute()
@@ -683,6 +683,10 @@ def append_to_db(df_new, table_name, state_key):
         if table_name == 'compresSuper' and 'super' in df_new.columns:
             supers = df_new['super'].unique().tolist()
             details['supermercat'] = supers[0] if len(supers) == 1 else supers
+            
+        if extra_details:
+            details.update(extra_details)
+            
         log_action(table_name, 'INSERT_BULK', details)
         
         st.cache_data.clear()
@@ -2061,9 +2065,9 @@ def cb_finalize_ticket():
             'rebost': item['rebost']
         }
         new_rows.append(new_row)
-    append_to_db(pd.DataFrame(new_rows), 'compresSuper', 'df_super')
-    
-    # Update stock for recognized products
+
+    # Update stock for recognized products and track them
+    updated_stocks = []
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     if supabase:
         for item in items:
@@ -2084,8 +2088,19 @@ def cb_finalize_ticket():
                         new_stock = current_stock + qty_to_add
                         
                         supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', prod_id).execute()
+                        updated_stocks.append(article)
             except Exception as e:
                 print(f"Error updating stock for {article}: {e}")
+
+    extra_details = {'partials': {}}
+    if import_menjar > 0: extra_details['partials']['menjar'] = round(import_menjar, 2)
+    if import_neteja > 0: extra_details['partials']['neteja'] = round(import_neteja, 2)
+    if import_rebost > 0: extra_details['partials']['rebost'] = round(import_rebost, 2)
+    
+    if updated_stocks:
+        extra_details['stock_actualitzat'] = updated_stocks
+
+    append_to_db(pd.DataFrame(new_rows), 'compresSuper', 'df_super', extra_details)
     
     st.session_state["finalize_success"] = "Tiquet de súper i despesa associada desats correctament!"
     # Clear all fields and files on successful finalize
