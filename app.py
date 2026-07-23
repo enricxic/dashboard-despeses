@@ -264,18 +264,32 @@ def check_password():
                 # Retrieve configured hashes from secrets (lists or strings)
                 admin_hashes = st.secrets.get("admin_password_hashes", [])
                 guest_hashes = st.secrets.get("guest_password_hashes", [])
+                viewer_hashes = st.secrets.get("viewer_password_hashes", [])
+                viewer_hashes = st.secrets.get("viewer_password_hashes", [])
                 
                 # Retrieve names dictionary
                 mapped_names = st.secrets.get("noms_usuaris", {})
                 
                 if isinstance(admin_hashes, str): admin_hashes = [admin_hashes]
                 if isinstance(guest_hashes, str): guest_hashes = [guest_hashes]
+                if isinstance(viewer_hashes, str): viewer_hashes = [viewer_hashes]
+                if isinstance(viewer_hashes, str): viewer_hashes = [viewer_hashes]
                 
                 assigned_name = mapped_names.get(hashed, "Anònim")
                 
                 if hashed in admin_hashes:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "admin"
+                    st.session_state["username"] = assigned_name
+                    st.rerun()
+                elif hashed in viewer_hashes:
+                    st.session_state["authenticated"] = True
+                    st.session_state["role"] = "viewer"
+                    st.session_state["username"] = assigned_name
+                    st.rerun()
+                elif hashed in viewer_hashes:
+                    st.session_state["authenticated"] = True
+                    st.session_state["role"] = "viewer"
                     st.session_state["username"] = assigned_name
                     st.rerun()
                 elif hashed in guest_hashes:
@@ -291,8 +305,8 @@ if not check_password():
     st.stop()
 
 # --- Role Indicator ---
-role_icon = "👑" if st.session_state.get("role") == "admin" else "👤"
-role_title = "Administrador" if st.session_state.get("role") == "admin" else "Convidat"
+role_icon = "👑" if st.session_state.get("role") == "admin" else ("👁️" if st.session_state.get("role") == "viewer" else "👤")
+role_title = "Administrador" if st.session_state.get("role") == "admin" else ("Visor" if st.session_state.get("role") == "viewer" else "Convidat")
 username_disp = st.session_state.get("username", "Local")
 
 st.markdown(
@@ -3057,9 +3071,9 @@ def modal_inventari(df_inv):
                 st.error(f"Error guardant: {e}")
 
 # ----------------- TABS SYSTEM -----------------
-tabs_list = [
-        "📊 Dashboard General", "📋 Detalls del Mes", "📝 Intro Dades", "💬 Xat IA"
-    ]
+tabs_list = ["📊 Dashboard General", "📋 Detalls del Mes"]
+if st.session_state.get("role") in ["admin", "guest"]:
+    tabs_list.extend(["📝 Intro Dades", "💬 Xat IA"])
 if st.session_state.get("role") in ["admin", "guest"]:
     tabs_list.extend(["🛒 Llista de la Compra", "📦 Rebost / Stock", "🍲 Menjar"])
 
@@ -3307,7 +3321,10 @@ with tab_dash:
     st.write("")
     
     # 4. Charts block
-    show_charts = st.checkbox("Mostra gràfics", value=True)
+    if st.session_state.get("role") == "viewer":
+        show_charts = False
+    else:
+        show_charts = st.checkbox("Mostra gràfics", value=True)
     if show_charts:
         st.markdown("---")
         chart_col1, chart_col2 = st.columns(2)
