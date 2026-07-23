@@ -5980,3 +5980,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                     st.write("Avui no tenim suggeriments d'aquest tipus.")
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
+
+# ================= EXTRA SPACE AT THE BOTTOM =================
+# Add blank lines so floating logos (Streamlit, User) don't cover the bottom content
+st.markdown("<br><br><br><br>", unsafe_allow_html=True)
