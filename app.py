@@ -3803,6 +3803,7 @@ if tab_intro:
 
             # Row 3 (ticket pendent)
             ticket_pendent = st.checkbox("Aquesta despesa és una compra de súper amb ticket pendent de desglossar", key=f"desp_ticket_pendent_{version}")
+            vacances_pendent = st.checkbox("Compra de viatge / vacances (Sense desglós ni estoc)", key=f"desp_vacances_pendent_{version}")
 
             # Dynamic extra fields for Gasolina category inside Moviment Real form
             is_gas_cat = (str(cat_val).lower() == "gasolina")
@@ -3866,6 +3867,13 @@ if tab_intro:
                     if concept_val == "➕ Afegir nou..." and st.session_state.get(f"desp_save_new_concept_{version}", True):
                         add_concept_to_config(cat_val, actual_concept)
                         
+                    if vacances_pendent:
+                        ticket_pendent = False
+                        if comentari_val:
+                            comentari_val = "[VACANCES] " + comentari_val
+                        else:
+                            comentari_val = "[VACANCES]"
+
                     # Prepare objects to save
                     new_row_desp = {
                         'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1,
