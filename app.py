@@ -2547,9 +2547,9 @@ def render_compres_super_interface():
     if "manual_reb_chk" not in st.session_state:
         st.session_state["manual_reb_chk"] = False
     # Dynamic recalculation for manual ticket lines if pct (%) is entered
-    pct = st.session_state.get("manual_pct_num", 0.0)
-    preu_final = st.session_state.get("manual_preu_num", 0.0)
-    qty = st.session_state.get("manual_qty_num", 1.0)
+    pct = st.session_state.get("manual_pct_num", 0.0) or 0.0
+    preu_final = st.session_state.get("manual_preu_num", 0.0) or 0.0
+    qty = st.session_state.get("manual_qty_num", 1.0) or 1.0
     if qty <= 0.0:
         qty = 1.0
     if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
