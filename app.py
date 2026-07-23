@@ -3329,10 +3329,19 @@ with tab_dash:
                 limits_row[col_name] = selected_limits[limit_key]
         df_summary = pd.concat([pd.DataFrame([limits_row]), df_summary], ignore_index=True)
 
+    def style_limits_row(row):
+        styles = [''] * len(row)
+        if row['Mes'] == 'LÍMITS':
+            for i in range(len(row)):
+                if i == 0 or pd.notna(row.iloc[i]):
+                    styles[i] = 'color: #3498db; font-weight: bold; background-color: rgba(52, 152, 219, 0.1)'
+        return styles
+
     # Display styled summary grid using static compact HTML table
     st.table(
         df_summary.style.format(precision=2, thousands=".", decimal=",", na_rep="")
         .apply(highlight_exceeded_limits, axis=None)
+        .apply(style_limits_row, axis=1)
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000)
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
         .highlight_max(subset=['Desp. Total'], color='#c0392b')
