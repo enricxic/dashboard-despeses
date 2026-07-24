@@ -5755,7 +5755,7 @@ def modal_recepta(row):
         with col_d:
             st.markdown("### Ingredients:")
             ing_val = row.get('ingredients', '')
-            ing_raw = str(ing_val) if pd.notna(ing_val) else ''
+            ing_raw = str(ing_val) if pd.notna(ing_val) and str(ing_val).strip().lower() != 'nan' else ''
             if ing_raw.strip():
                 import re
                 lines = [re.sub(r'^[\-\*•\·]\s*', '', line.strip()).strip() for line in ing_raw.split('\n') if line.strip()]
@@ -5766,18 +5766,18 @@ def modal_recepta(row):
             
             st.markdown("### Info Addicional:")
             salut = row.get('puntuacio_salut', 0)
-            salut_str = int(salut) if pd.notna(salut) else 0
+            salut_str = int(salut) if pd.notna(salut) and str(salut).strip().lower() != 'nan' else 0
             temp = row.get('temporada', '')
-            temp_str = temp if pd.notna(temp) else "Tot l'any"
+            temp_str = temp if pd.notna(temp) and str(temp).strip().lower() != 'nan' else "Tot l'any"
             ori = row.get('origen', 'Desconegut')
-            ori_str = ori if pd.notna(ori) else 'Desconegut'
+            ori_str = ori if pd.notna(ori) and str(ori).strip().lower() != 'nan' else 'Desconegut'
             
             st.write(f"**Salut:** {salut_str}/10 | **Temporada:** {temp_str}")
             st.write(f"**Origen:** {ori_str}")
             
             st.markdown("### Instruccions:")
             ins_val = row.get('instruccions', '')
-            ins_raw = str(ins_val) if pd.notna(ins_val) else 'Sense instruccions'
+            ins_raw = str(ins_val) if pd.notna(ins_val) and str(ins_val).strip().lower() != 'nan' else 'Sense instruccions'
             st.write(ins_raw)
 
 
