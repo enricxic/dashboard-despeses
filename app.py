@@ -5718,7 +5718,10 @@ def modal_recepta(row):
         col_titol, col_btn = st.columns([4, 1])
         with col_titol:
             st.markdown(f"## {row.get('titol', '')}")
-            st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 📉 Dificultat: {row.get('dificultat', 'No definida')} | 📅 {row.get('tipus_dia', 'Qualsevol')}")
+            t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
+            d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'No definida'
+            t_dia = row['tipus_dia'] if pd.notna(row.get('tipus_dia')) else 'Qualsevol'
+            st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 📉 Dificultat: {d_dif} | 📅 {t_dia}")
         with col_btn:
             st.button("✏️ Editar", key=f"edit_top_{row['id']}", on_click=cb_set_editing_recepta, args=(row['id'], True), use_container_width=True)
                 
@@ -5837,7 +5840,9 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                         st.info("Sense imatge", icon="📷")
                                 
                                 st.markdown(f'<div style="height: 70px; overflow: hidden; margin-top: 10px; margin-bottom: 5px; display: flex; align-items: flex-start;"><h4 style="margin:0; line-height: 1.15;">{row.get("titol", "Sense títol")}</h4></div>', unsafe_allow_html=True)
-                                st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {row.get('temps_prep_minuts', 0)} min | 🔪 {row.get('dificultat', 'Fàcil')}")
+                                t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
+                                d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'Fàcil'
+                                st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif}")
                                 
                                 if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
                                     modal_recepta(row)
