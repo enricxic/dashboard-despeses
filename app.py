@@ -5754,7 +5754,8 @@ def modal_recepta(row):
         
         with col_d:
             st.markdown("### Ingredients:")
-            ing_raw = str(row.get('ingredients', ''))
+            ing_val = row.get('ingredients', '')
+            ing_raw = str(ing_val) if pd.notna(ing_val) else ''
             if ing_raw.strip():
                 import re
                 lines = [re.sub(r'^[\-\*•\·]\s*', '', line.strip()).strip() for line in ing_raw.split('\n') if line.strip()]
@@ -5762,12 +5763,22 @@ def modal_recepta(row):
             else:
                 ing_format = "Sense ingredients"
             st.info(ing_format)
+            
             st.markdown("### Info Addicional:")
-            st.write(f"**Salut:** {row.get('puntuacio_salut', 0)}/10 | **Temporada:** {row.get('temporada', '')}")
-            st.write(f"**Origen:** {row.get('origen', 'Desconegut')}")
+            salut = row.get('puntuacio_salut', 0)
+            salut_str = int(salut) if pd.notna(salut) else 0
+            temp = row.get('temporada', '')
+            temp_str = temp if pd.notna(temp) else "Tot l'any"
+            ori = row.get('origen', 'Desconegut')
+            ori_str = ori if pd.notna(ori) else 'Desconegut'
+            
+            st.write(f"**Salut:** {salut_str}/10 | **Temporada:** {temp_str}")
+            st.write(f"**Origen:** {ori_str}")
             
             st.markdown("### Instruccions:")
-            st.write(row.get('instruccions', ''))
+            ins_val = row.get('instruccions', '')
+            ins_raw = str(ins_val) if pd.notna(ins_val) else 'Sense instruccions'
+            st.write(ins_raw)
 
 
 if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
