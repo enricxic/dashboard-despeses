@@ -5692,6 +5692,7 @@ def modal_recepta(row):
                 e_vid_url = st.text_input("URL Vídeo", value=str(row.get('video_url', '')).strip() if pd.notna(row.get('video_url')) else "")
                 
             e_ing = st.text_area("Ingredients", value=row.get('ingredients', ''))
+            e_mise = st.text_area("Mise en place (Preparació prèvia)", value=row.get('mise_en_place', ''))
             e_ins = st.text_area("Instruccions", value=row.get('instruccions', ''))
             
         with c_img:
@@ -5725,6 +5726,7 @@ def modal_recepta(row):
                 update_data = {
                     "titol": e_titol, "categoria": e_cat, "temps_prep_minuts": e_temps,
                     "temporada": e_temp, "puntuacio_salut": e_salut, "ingredients": e_ing,
+                    "mise_en_place": e_mise,
                     "instruccions": e_ins, "imatge_url": final_img, "video_url": e_vid_url,
                     "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori
                 }
@@ -5788,6 +5790,11 @@ def modal_recepta(row):
                 ing_format = "Sense ingredients"
             st.info(ing_format)
             
+            mise = row.get('mise_en_place', '')
+            if pd.notna(mise) and str(mise).strip() != '' and str(mise).strip().lower() != 'nan':
+                st.markdown("### Mise en place:")
+                st.info(str(mise).strip())
+                
             st.markdown("### Info Addicional:")
             salut = row.get('puntuacio_salut', 0)
             salut_str = int(salut) if pd.notna(salut) and str(salut).strip().lower() != 'nan' else 0
@@ -5902,6 +5909,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         new_vid_url = st.text_input("URL Vídeo (YouTube, opcional)", key="k_vid_url")
                     
                     new_ing = st.text_area("Ingredients (un per línia)", key="k_ing")
+                    new_mise = st.text_area("Mise en place (Preparació prèvia)", key="k_mise")
                     new_ins = st.text_area("Instruccions de preparació", key="k_ins")
                 
                 with c_img:
@@ -5938,6 +5946,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                             "temporada": new_temp,
                             "puntuacio_salut": new_salut,
                             "ingredients": new_ing,
+                            "mise_en_place": new_mise,
                             "instruccions": new_ins,
                             "imatge_url": final_img_url,
                             "video_url": new_vid_url,
@@ -5948,7 +5957,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         resp = supabase.table('tb_receptes_pro').insert(data_insert).execute()
                         if resp.data:
                             # Clear form keys from session_state
-                            keys_to_clear = ['k_titol', 'k_cat', 'k_temps', 'k_dif', 'k_dia', 'k_temp', 'k_ori', 'k_salut', 'k_img_url', 'k_vid_url', 'k_ing', 'k_ins', 'k_uploaded']
+                            keys_to_clear = ['k_titol', 'k_cat', 'k_temps', 'k_dif', 'k_dia', 'k_temp', 'k_ori', 'k_salut', 'k_img_url', 'k_vid_url', 'k_ing', 'k_mise', 'k_ins', 'k_uploaded']
                             for key in keys_to_clear:
                                 if key in st.session_state:
                                     del st.session_state[key]
