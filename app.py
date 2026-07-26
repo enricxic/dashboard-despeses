@@ -641,6 +641,7 @@ def save_to_csv(df, filename):
             
         st.cache_data.clear()
         get_db_tracker().update()
+        st.session_state["dfs_initialized"] = False
         return True
     except Exception as e:
         st.error(f"❌ **Error al desar la taula `{table_name}` a Supabase**: {str(e)}")
@@ -3553,7 +3554,24 @@ with tab_details:
                 )
             except Exception as e:
                 st.error(f"Error rendering month_ing: {e}")
-            st.metric("Total Ingressat", f"{month_ing['Import'].sum():,.2f} €")
+            # Sum the pending ingressos
+            try:
+                pendent_sum = month_ing[month_ing['cobrat'].astype(str).str.strip().str.lower() == 'pendent']['Import'].sum()
+            except:
+                pendent_sum = 0.0
+                
+            st.markdown(f"""
+            <div style="display: flex; gap: 40px; margin-top: 10px;">
+                <div data-testid="stMetric">
+                    <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a ingressar</div>
+                    <div style="font-size: 1.8rem; font-weight: 400; color: inherit;">{month_ing['Import'].sum():,.2f} €</div>
+                </div>
+                <div data-testid="stMetric">
+                    <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
+                    <div style="font-size: 1.8rem; font-weight: 400; color: inherit;">{pendent_sum:,.2f} €</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             st.info("No hi ha dades d'ingressos per aquest mes.")
             
@@ -4136,23 +4154,23 @@ if tab_intro:
             # Row 1 (4 columns)
             r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
             with r1_col1:
-                banc = st.selectbox("Banc", get_config_banks(), key="pag_banc")
+                banc = st.selectbox("Banc", [""] + get_config_banks(), index=0, key="pag_banc")
             with r1_col2:
-                forma_pago = st.selectbox("Forma de Pagament", get_config_payment_methods(), key="pag_forma_pago")
+                forma_pago = st.selectbox("Forma de Pagament", [""] + get_config_payment_methods(), index=0, key="pag_forma_pago")
             with r1_col3:
                 data_val = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="pag_data")
                 mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
                 any_val = data_val.year
             with r1_col4:
-                import_carg = st.number_input("Import (€)", min_value=0.0, step=0.01, key="pag_import")
+                import_carg = st.number_input("Import (€)", min_value=0.0, value=None, step=0.01, key="pag_import")
                 
             # Row 2 (5 columns to fit repeating settings)
             r2_col1, r2_col2, r2_col3, r2_col4, r2_col5 = st.columns([2.5, 2.5, 2.0, 2.5, 2.5])
             with r2_col1:
-                cat_val = st.selectbox("Categoria", get_config_categories(), key="pag_cat")
+                cat_val = st.selectbox("Categoria", [""] + get_config_categories(), index=0, key="pag_cat")
             with r2_col2:
-                concept_options = get_config_concepts(cat_val)
-                concept_val = st.selectbox("Concepte", concept_options, key="pag_concepte")
+                concept_options = [""] + get_config_concepts(cat_val) if cat_val else [""]
+                concept_val = st.selectbox("Concepte", concept_options, index=0, key="pag_concepte")
             with r2_col3:
                 pagat_val = st.selectbox("Estat", ["pendent", "pagat"], key="pag_estat")
             with r2_col4:
@@ -4232,21 +4250,21 @@ if tab_intro:
             # Row 1 (4 columns)
             r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
             with r1_col1:
-                banc = st.selectbox("Banc", get_config_banks(), key="ing_banc")
+                banc = st.selectbox("Banc", [""] + get_config_banks(), index=0, key="ing_banc")
             with r1_col2:
                 data_val = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="ing_data")
                 mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
                 any_val = data_val.year
             with r1_col3:
-                import_ing = st.number_input("Import Ingrés (€)", min_value=0.0, step=0.01, key="ing_import")
+                import_ing = st.number_input("Import Ingrés (€)", min_value=0.0, value=None, step=0.01, key="ing_import")
             with r1_col4:
-                cat_val = st.selectbox("Categoria", ["ingrés_general", "ingrés_extra"], key="ing_cat")
+                cat_val = st.selectbox("Categoria", ["", "ingrés_general", "ingrés_extra"], index=0, key="ing_cat")
                 
             # Row 2 (4 columns)
             r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
             with r2_col1:
-                concept_options = get_config_concepts(cat_val)
-                concept_val = st.selectbox("Concepte", concept_options, key="ing_concepte")
+                concept_options = [""] + get_config_concepts(cat_val) if cat_val else [""]
+                concept_val = st.selectbox("Concepte", concept_options, index=0, key="ing_concepte")
             with r2_col2:
                 cobrat_val = st.selectbox("Estat", ["cobrat", "pendent"], key="ing_cobrat")
             with r2_col3:
@@ -4320,6 +4338,12 @@ if tab_intro:
                 clear_form_state("ing_")
                 clear_form_state("rep_any_ing")
                 st.rerun()
+                
+        elif data_type == "Compra Súper":
+            pending_super = st.session_state.get('pending_super')
+            pending_data = st.session_state.get('pending_data')
+            
+            if pending_super:
                 default_super_idx = supers_list.index(pending_super) if pending_super in supers_list else 0
                 try:
                     default_data = datetime.strptime(pending_data, '%d/%m/%Y').date()
