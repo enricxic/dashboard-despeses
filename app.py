@@ -3568,7 +3568,7 @@ with tab_details:
                 </div>
                 <div data-testid="stMetric">
                     <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
-                    <div style="font-size: 1.8rem; font-weight: 400; color: inherit;">{pendent_sum:,.2f} €</div>
+                    <div style="font-size: 1.8rem; font-weight: 400; color: #3b82f6;">{pendent_sum:,.2f} €</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
