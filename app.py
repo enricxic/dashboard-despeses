@@ -3564,11 +3564,11 @@ with tab_details:
             <div style="display: flex; gap: 40px; margin-top: 10px;">
                 <div data-testid="stMetric">
                     <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a ingressar</div>
-                    <div style="font-size: 1.8rem; font-weight: 400; color: inherit;">{month_ing['Import'].sum():,.2f} €</div>
+                    <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{month_ing['Import'].sum():,.2f} €</div>
                 </div>
                 <div data-testid="stMetric">
                     <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
-                    <div style="font-size: 1.8rem; font-weight: 400; color: #3b82f6;">{pendent_sum:,.2f} €</div>
+                    <div style="font-size: 2.25rem; font-weight: 400; color: #3b82f6;">{pendent_sum:,.2f} €</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
