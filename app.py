@@ -5820,7 +5820,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_receptes = fetch_all_supabase(supabase, 'tb_receptes_pro')
             if not df_receptes.empty:
-                df_receptes = df_receptes.sort_values(by=['categoria', 'tipus_dia', 'titol'], ascending=[True, True, True]).reset_index(drop=True)
+                df_receptes = df_receptes.sort_values(by=['categoria', 'titol'], ascending=[True, True]).reset_index(drop=True)
             
             subtab_list, subtab_add, subtab_gen = st.tabs(["📖 Llibre de Receptes", "➕ Afegir Recepta", "🧠 Recomanador de Menús"])
             
