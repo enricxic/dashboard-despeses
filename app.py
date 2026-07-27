@@ -331,7 +331,7 @@ username_disp = st.session_state.get("username", "Local")
 st.markdown(
     f"""
     <div style='position: fixed; top: 2rem; right: 1.2rem; z-index: 10000;'>
-        <a href="javascript:window.location.reload(true)" title="Forçar reinici de la vista" style="font-size: 1rem; text-decoration: none; opacity: 0.5; cursor: pointer;">🔄</a>
+        <button onclick="window.location.reload(true)" title="Forçar reinici de la vista" style="font-size: 1rem; border: none; background: transparent; opacity: 0.5; cursor: pointer;">🔄</button>
     </div>
     <div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
                 font-size: 1.8rem; cursor: help; 
