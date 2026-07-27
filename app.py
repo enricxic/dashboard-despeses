@@ -207,6 +207,15 @@ st.markdown("""
     #MainMenu {
         display: none !important;
     }
+    /* Safely hide header anchor links without affecting other buttons */
+    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+        display: none !important;
+        pointer-events: none !important;
+    }
+    div[data-testid="stMarkdownContainer"] a[href^="#"] {
+        display: none !important;
+        pointer-events: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
