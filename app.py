@@ -207,30 +207,6 @@ st.markdown("""
     #MainMenu {
         display: none !important;
     }
-    /* Hide header anchor links (the chain icon) */
-    .stMarkdown a.header-anchor, .stMarkdown a.anchor, .st-emotion-cache-18jtd28 a {
-        display: none !important;
-    }
-    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
-        display: none !important;
-        pointer-events: none !important;
-        opacity: 0 !important;
-    }
-    svg.link-icon {
-        display: none !important;
-    }
-    
-    /* Ultimate catch-all for Streamlit header anchors */
-    div[data-testid="stMarkdownContainer"] a[href^="#"] {
-        display: none !important;
-        pointer-events: none !important;
-        visibility: hidden !important;
-        width: 0;
-        height: 0;
-    }
-    .stMarkdown a > svg {
-        display: none !important;
-    }
     </style>
 """, unsafe_allow_html=True)
 
