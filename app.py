@@ -5902,6 +5902,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                 st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif} | 🍽️ {t_apat}")
                                 
                                 if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
+                                    st.session_state[f"editing_{row['id']}"] = False
                                     modal_recepta(row)
             
             with subtab_add:
