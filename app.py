@@ -305,12 +305,15 @@ if not check_password():
     st.stop()
 
 # --- Role Indicator ---
-role_icon = "👑" if st.session_state.get("role") == "admin" else ("👁️" if st.session_state.get("role") == "viewer" else "👤")
+role_icon = "👑" if st.session_state.get("role") == "admin" else ("👁️‍🗨️" if st.session_state.get("role") == "viewer" else "👤")
 role_title = "Administrador" if st.session_state.get("role") == "admin" else ("Visor" if st.session_state.get("role") == "viewer" else "Convidat")
 username_disp = st.session_state.get("username", "Local")
 
 st.markdown(
     f"""
+    <div style='position: fixed; top: 2rem; right: 1.2rem; z-index: 10000;'>
+        <a href="javascript:window.location.reload(true)" title="Forçar reinici de la vista" style="font-size: 1rem; text-decoration: none; opacity: 0.5; cursor: pointer;">🔄</a>
+    </div>
     <div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
                 font-size: 1.8rem; cursor: help; 
                 text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
@@ -5679,6 +5682,8 @@ def modal_recepta(row):
                 val_temps = row.get('temps_prep_minuts', 0)
                 e_temps = st.number_input("Temps (min)", value=int(val_temps) if pd.notna(val_temps) else 0, step=5)
             with c2:
+                apat_opts = ["Esmorzar", "Dinar", "Sopar", "Dinar/Sopar"]
+                e_apat = st.selectbox("Àpat", apat_opts, index=apat_opts.index(row.get('apat')) if row.get('apat') in apat_opts else 0)
                 dif_opts = ["Fàcil", "Mitjana", "Difícil"]
                 e_dif = st.selectbox("Dificultat", dif_opts, index=dif_opts.index(row.get('dificultat')) if row.get('dificultat') in dif_opts else 0)
                 dia_opts = ["Entre setmana", "Cap de setmana", "Festiu", "Especial"]
@@ -5730,7 +5735,7 @@ def modal_recepta(row):
                     "temporada": e_temp, "puntuacio_salut": e_salut, "ingredients": e_ing,
                     "mise_en_place": e_mise,
                     "instruccions": e_ins, "imatge_url": final_img, "video_url": e_vid_url,
-                    "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori
+                    "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori, "apat": e_apat
                 }
                 
                 res = supabase.table('tb_receptes_pro').update(update_data).eq('id', row['id']).execute()
@@ -5830,7 +5835,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                 # Sistema de Filtres
                 with st.expander("🔍 Cercar i Filtrar Receptes", expanded=False):
                     f_text = st.text_input("Cercar per nom de la recepta...", key="f_text")
-                    f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns(5)
+                    f_col1, f_col2, f_col3, f_col4, f_col5, f_col6 = st.columns(6)
                     with f_col1:
                         f_cat = st.multiselect("Categoria", ["Tots", "Primer", "Segon", "Postre", "Complement", "Guarnició", "Salsa"], key="f_cat_m")
                     with f_col2:
@@ -5838,8 +5843,10 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     with f_col3:
                         f_dia = st.multiselect("Dia", ["Tots", "Entre setmana", "Cap de setmana", "Festiu", "Especial"], key="f_dia_m")
                     with f_col4:
-                        f_ori = st.multiselect("Origen", ["Tots", "Biblioteca/Pròpia", "Externa/Internet"], key="f_ori_m")
+                        f_apat = st.multiselect("Àpat", ["Tots", "Esmorzar", "Dinar", "Sopar", "Dinar/Sopar"], key="f_apat_m")
                     with f_col5:
+                        f_ori = st.multiselect("Origen", ["Tots", "Biblioteca/Pròpia", "Externa/Internet"], key="f_ori_m")
+                    with f_col6:
                         f_temps = st.slider("Temps màxim", min_value=0, max_value=240, value=240, step=5, key="f_temps_s")
                 
                 # Apply filters
@@ -5856,6 +5863,9 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     if f_dia:
                         if "Tots" not in f_dia:
                             df_filtrat = df_filtrat[df_filtrat['tipus_dia'].isin(f_dia)]
+                    if f_apat:
+                        if "Tots" not in f_apat:
+                            df_filtrat = df_filtrat[df_filtrat['apat'].isin(f_apat)]
                     if f_ori:
                         if "Tots" not in f_ori:
                             df_filtrat = df_filtrat[df_filtrat['origen'].isin(f_ori)]
@@ -5886,7 +5896,9 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                 st.markdown(f'<div style="height: 70px; overflow: hidden; margin-top: 10px; margin-bottom: 5px; display: flex; align-items: flex-start;"><h4 style="margin:0; line-height: 1.15;">{row.get("titol", "Sense títol")}</h4></div>', unsafe_allow_html=True)
                                 t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
                                 d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'Fàcil'
-                                st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif}")
+                                t_apat = row.get('apat', 'Sense definir')
+                                if pd.isna(t_apat) or not str(t_apat).strip(): t_apat = 'Sense definir'
+                                st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif} | 🍽️ {t_apat}")
                                 
                                 if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
                                     modal_recepta(row)
@@ -5901,6 +5913,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         new_cat = st.selectbox("Categoria", ["Primer", "Segon", "Postre", "Complement", "Guarnició"], key="k_cat")
                         new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5, key="k_temps")
                     with c2:
+                        new_apat = st.selectbox("Àpat", ["Esmorzar", "Dinar", "Sopar", "Dinar/Sopar"], key="k_apat")
                         new_dif = st.selectbox("Dificultat", ["Fàcil", "Mitjana", "Difícil"], key="k_dif")
                         new_dia = st.selectbox("Tipus de dia", ["Entre setmana", "Cap de setmana", "Festiu", "Especial"], key="k_dia")
                         new_temp = st.selectbox("Temporada", ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"], key="k_temp")
@@ -5954,7 +5967,8 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                             "video_url": new_vid_url,
                             "dificultat": new_dif,
                             "tipus_dia": new_dia,
-                            "origen": new_ori
+                            "origen": new_ori,
+                            "apat": new_apat
                         }
                         resp = supabase.table('tb_receptes_pro').insert(data_insert).execute()
                         if resp.data:
