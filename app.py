@@ -494,10 +494,12 @@ def load_dashboard_data(mtimes=None):
     df_super['parsed_date'] = df_super['data'].apply(parse_excel_date)
     
     df_gas = fix_mojibake_df(fetch_all_supabase(supabase, 'gasolina'))
+    df_gas = df_gas.rename(columns={'?/l': '€/l'})
     df_gas['idGasolina'] = pd.to_numeric(df_gas['idGasolina'], errors='coerce')
     df_gas = df_gas.dropna(subset=['idGasolina']).sort_values(by='idGasolina', ascending=False).reset_index(drop=True)
     df_gas['import'] = clean_numeric(df_gas['import'])
     df_gas['litres'] = clean_numeric(df_gas['litres'])
+    df_gas['€/l'] = clean_numeric(df_gas['€/l'])
     df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
     
     df_km = fix_mojibake_df(fetch_all_supabase(supabase, 'kmCotxe'))
