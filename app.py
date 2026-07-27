@@ -5754,7 +5754,7 @@ def modal_recepta(row):
             t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
             d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'No definida'
             t_dia = row['tipus_dia'] if pd.notna(row.get('tipus_dia')) else 'Qualsevol'
-            st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 📉 Dificultat: {d_dif} | 📅 {t_dia}")
+            st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif} | 📅 {t_dia}")
         with col_btn:
             st.button("✏️ Editar", key=f"edit_top_{row['id']}", on_click=cb_set_editing_recepta, args=(row['id'], True), use_container_width=True)
                 
