@@ -5201,16 +5201,15 @@ if tab_rebost:
 if tab_db:
     with tab_db:
         st.write("")
-        col_sel, col_search, col_size = st.columns([3, 5, 2], vertical_alignment="bottom")
+        col_sel, col_search = st.columns([4, 6], vertical_alignment="bottom")
         with col_sel:
             db_select = st.selectbox("Taula", [
                 "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera", "Stock Rebost", "Peticions Lliures Compra", "Llocs d'Inventari"
             ], key="db_select_box")
         with col_search:
             search_query = st.text_input("🔍 Cerca global", value="", key=f"search_{db_select}")
-        with col_size:
-            page_size = st.selectbox("Registres/pàgina", [20, 50, 100, 200, 500, 1000], index=2, key=f"size_{db_select}")
             
+        page_size = 1000
         st.write("")
         col_title, col_check = st.columns([7, 3], vertical_alignment="bottom")
         with col_title:
