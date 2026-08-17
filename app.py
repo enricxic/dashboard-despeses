@@ -3659,7 +3659,7 @@ def show_mismatch_dialog(target_table_name, scheduled_import, input_import, idx,
         else:
             new_row_desp['import ingrés'] = scheduled_import
             
-        df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'Cobrat'
+        df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'cobrat'
         save_to_csv(df_to_update.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
         
         if target_table_name == 'pagaments':
@@ -3689,7 +3689,7 @@ def show_mismatch_dialog(target_table_name, scheduled_import, input_import, idx,
 
     if st.button(f"✏️ Modificar previsió a {input_import:,.2f} €", use_container_width=True):
         df_to_update.loc[idx, 'Import'] = input_import
-        df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'Cobrat'
+        df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'cobrat'
         save_to_csv(df_to_update.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
         
         if target_table_name == 'pagaments':
@@ -4054,7 +4054,7 @@ if tab_intro:
                         scheduled_import = target_df.loc[idx, 'Import']
                         if abs(float(scheduled_import) - float(input_import)) < 0.01:
                             # Exact match
-                            target_df.loc[idx, target_status_col] = 'Pagat' if table_name == 'pagaments' else 'Cobrat'
+                            target_df.loc[idx, target_status_col] = 'Pagat' if table_name == 'pagaments' else 'cobrat'
                             save_to_csv(target_df.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
                             if table_name == 'pagaments':
                                 st.session_state["df_pag"] = target_df
