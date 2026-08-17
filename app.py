@@ -3794,10 +3794,17 @@ if tab_intro:
                 any_val = data_val.year
             with r1_col4:
                 sub_col1, sub_col2 = st.columns(2)
+                
+                # Retrieve current values from session state to make inputs mutually exclusive
+                curr_carg = st.session_state.get(f"desp_import_carg_{version}", 0.0)
+                curr_ing = st.session_state.get(f"desp_import_ing_{version}", 0.0)
+                disable_carg = curr_ing > 0.0
+                disable_ing = curr_carg > 0.0
+                
                 with sub_col1:
-                    import_carg = st.number_input("Import Càrrec (€)", value=0.0, step=0.01, key=f"desp_import_carg_{version}")
+                    import_carg = st.number_input("Import Càrrec (€)", value=0.0, step=0.01, key=f"desp_import_carg_{version}", disabled=disable_carg)
                 with sub_col2:
-                    import_ing = st.number_input("Import Ingrés (€)", value=0.0, step=0.01, key=f"desp_import_ing_{version}")
+                    import_ing = st.number_input("Import Ingrés (€)", value=0.0, step=0.01, key=f"desp_import_ing_{version}", disabled=disable_ing)
                 
             # Dialog calculator helper for Gasolina price per litre
             @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
@@ -3820,14 +3827,28 @@ if tab_intro:
                 if banc == "TR Cartera":
                     grup_options = ["op_banc"]
                 else:
-                    grup_options = ["", "Càrrec", "op_banc", "Ingrés"]
+                    if import_carg > 0:
+                        grup_options = ["Càrrec", "op_banc"]
+                    elif import_ing > 0:
+                        grup_options = ["Ingrés", "op_banc"]
+                    else:
+                        grup_options = ["", "Càrrec", "Ingrés", "op_banc"]
                 grup_val = st.selectbox("Grup", grup_options, index=0, key=f"desp_grup_{version}")
+                
             with r2_col2:
-                if banc == "TR Cartera":
+                if banc == "TR Cartera" or grup_val == "op_banc":
                     categories_opt = ["op_banc"]
                 else:
-                    categories_opt = [""] + get_config_categories()
+                    all_cats = get_config_categories()
+                    ingres_cats = ["ingres_general", "ingres_extra"]
+                    if import_ing > 0 or grup_val == "Ingrés":
+                        categories_opt = [""] + [c for c in all_cats if c in ingres_cats]
+                    elif import_carg > 0 or grup_val == "Càrrec":
+                        categories_opt = [""] + [c for c in all_cats if c not in ingres_cats]
+                    else:
+                        categories_opt = [""] + all_cats
                 cat_val = st.selectbox("Categoria", categories_opt, index=0, key=f"desp_cat_{version}")
+                
             with r2_col3:
                 concept_options = [""] + get_config_concepts(cat_val) + ["➕ Afegir nou..."] if cat_val else [""]
                 concept_val = st.selectbox("Concepte", concept_options, index=0, key=f"desp_concepte_{version}")
