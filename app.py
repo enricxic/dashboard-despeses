@@ -3734,6 +3734,19 @@ if tab_intro:
                 if (e.key === 'Enter') {
                     const target = e.target;
                     if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
+                        
+                        // Custom logic: if Enter pressed on Import Càrrec/Ingrés, focus directly on Categoria (skipping Grup)
+                        const ariaLabel = target.getAttribute('aria-label') || "";
+                        if (ariaLabel.includes('Import Càrrec') || ariaLabel.includes('Import Ingrés')) {
+                            const catCombobox = doc.querySelector('[aria-label="Categoria"]');
+                            if (catCombobox) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                catCombobox.focus();
+                                return;
+                            }
+                        }
+
                         const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
                         const index = inputs.indexOf(target);
                         if (index > -1 && index < inputs.length - 1) {
