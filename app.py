@@ -2299,21 +2299,23 @@ def render_compres_super_interface():
             st.error("Si us plau, selecciona una Forma de Pagament per a la despesa!")
             
     with col_hdr4:
-        uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
-        uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
-        # st.camera_input eliminat per usar la càmera nativa via st.file_uploader
-        camera_file = None
+        import os, glob, io
+        tickets_dir = "E:/Dashboard/tickets"
+        list_of_files = glob.glob(os.path.join(tickets_dir, '*.jpg')) + glob.glob(os.path.join(tickets_dir, '*.png'))
         
-        if st.button("⚡ Llegir últim tiquet escanejat", use_container_width=True):
-            import os, glob, io
-            tickets_dir = "E:/Dashboard/tickets"
-            list_of_files = glob.glob(os.path.join(tickets_dir, '*.jpg')) + glob.glob(os.path.join(tickets_dir, '*.png'))
-            if list_of_files:
-                latest_file = max(list_of_files, key=os.path.getctime)
-                with open(latest_file, "rb") as f:
+        if list_of_files:
+            # Ordenar per data de creació (més recents primer)
+            list_of_files.sort(key=os.path.getctime, reverse=True)
+            file_names = [os.path.basename(f) for f in list_of_files]
+            
+            selected_file = st.selectbox("📷 Tria un tiquet", file_names, label_visibility="collapsed")
+            
+            if st.button("⚡ Llegir tiquet seleccionat", use_container_width=True):
+                target_path = os.path.join(tickets_dir, selected_file)
+                with open(target_path, "rb") as f:
                     file_bytes = f.read()
                 file_obj = io.BytesIO(file_bytes)
-                file_obj.name = os.path.basename(latest_file)
+                file_obj.name = selected_file
                 file_obj.size = len(file_bytes)
                 st.session_state["scanned_file"] = file_obj
                 st.session_state["processed_file_id"] = None
@@ -2327,10 +2329,10 @@ def render_compres_super_interface():
                 if "ticket_msg_error" in st.session_state:
                     del st.session_state["ticket_msg_error"]
                 st.rerun()
-            else:
-                st.warning("No s'ha trobat cap tiquet a la carpeta.")
-        
-        candidates = [f for f in [uploaded_file, camera_file, st.session_state.get("scanned_file")] if f is not None]
+        else:
+            st.info("No s'han trobat tiquets a E:/Dashboard/tickets")
+            
+        candidates = [f for f in [st.session_state.get("scanned_file")] if f is not None]
         chosen_file = None
         for f in candidates:
             fid = f"{f.name}_{f.size}"
