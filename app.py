@@ -2343,15 +2343,19 @@ def render_compres_super_interface():
                     try:
                         # Run OCR using Google Gemini AI
                         with st.spinner("Llegint tiquet amb IA (Gemini Vision)..."):
-                            import google.generativeai as genai
+                            import requests
+                            import base64
                             import json
-                            from PIL import Image
                             from datetime import datetime
                             
-                            # Load API key
-                            genai.configure(api_key=st.secrets.get("GEMINI_API_KEY", ""))
+                            api_key = st.secrets.get("GEMINI_API_KEY", "")
                             
-                            img = Image.open(uploaded_file)
+                            mime_type = "image/jpeg"
+                            if uploaded_file.name.lower().endswith(".png"):
+                                mime_type = "image/png"
+                                
+                            uploaded_file.seek(0)
+                            encoded_image = base64.b64encode(uploaded_file.read()).decode("utf-8")
                             
                             prompt = """
 Ets un expert en extracció de dades de tiquets de compra.
@@ -2373,12 +2377,33 @@ Notes importants:
 1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal, Ofertes, Cupons).
 2. Assegura't de capturar bé el 'preu_total' de la línia.
 3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
-4. Retorna NOMÉS el JSON cru, sense etiquetes de format de markdown (sense ```json).
 """
-                            model = genai.GenerativeModel('gemini-flash-latest')
-                            response = model.generate_content([prompt, img])
+                            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+                            payload = {
+                                "contents": [
+                                    {
+                                        "parts": [
+                                            {"text": prompt},
+                                            {
+                                                "inline_data": {
+                                                    "mime_type": mime_type,
+                                                    "data": encoded_image
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "generationConfig": {
+                                    "responseMimeType": "application/json"
+                                }
+                            }
                             
-                            response_text = response.text.replace('```json', '').replace('```', '').strip()
+                            req = requests.post(url, json=payload, timeout=30)
+                            if req.status_code != 200:
+                                raise Exception(f"API Error {req.status_code}: {req.text}")
+                                
+                            response_data = req.json()
+                            response_text = response_data['candidates'][0]['content']['parts'][0]['text']
                             data = json.loads(response_text)
                             
                             # 1. Update supermercat
