@@ -2201,7 +2201,7 @@ def render_compres_super_interface():
     st.markdown("<h2 style='text-align: center; color: #f39c12; margin-top: 5px; margin-bottom: 20px;'>Intro ticket Super</h2>", unsafe_allow_html=True)
     
     if "ticket_msg_success" in st.session_state:
-        st.success(st.session_state["ticket_msg_success"])
+        st.toast(st.session_state["ticket_msg_success"], icon="✅")
         del st.session_state["ticket_msg_success"]
     if "ticket_msg_error" in st.session_state:
         st.error(st.session_state["ticket_msg_error"])
