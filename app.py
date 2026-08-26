@@ -2302,6 +2302,32 @@ def render_compres_super_interface():
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
         uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
         
+        if st.button("⚡ Llegir últim tiquet escanejat", use_container_width=True):
+            import os, glob, io
+            tickets_dir = "E:/Dashboard/tickets"
+            list_of_files = glob.glob(os.path.join(tickets_dir, '*.jpg')) + glob.glob(os.path.join(tickets_dir, '*.png'))
+            if list_of_files:
+                latest_file = max(list_of_files, key=os.path.getctime)
+                with open(latest_file, "rb") as f:
+                    file_bytes = f.read()
+                file_obj = io.BytesIO(file_bytes)
+                file_obj.name = os.path.basename(latest_file)
+                file_obj.size = len(file_bytes)
+                st.session_state["scanned_file"] = file_obj
+                st.session_state["processed_file_id"] = None
+                st.session_state["ticket_super_val"] = ""
+                if "ticket_super_widget" in st.session_state:
+                    del st.session_state["ticket_super_widget"]
+                if "ticket_items" in st.session_state:
+                    st.session_state["ticket_items"] = []
+                if "ticket_msg_success" in st.session_state:
+                    del st.session_state["ticket_msg_success"]
+                if "ticket_msg_error" in st.session_state:
+                    del st.session_state["ticket_msg_error"]
+                st.rerun()
+            else:
+                st.warning("No s'ha trobat cap tiquet a la carpeta E:/Dashboard/tickets.")
+        
         candidates = [f for f in [uploaded_file, st.session_state.get("scanned_file")] if f is not None]
         chosen_file = None
         for f in candidates:
@@ -2313,6 +2339,9 @@ def render_compres_super_interface():
             chosen_file = candidates[0]
             
         uploaded_file = chosen_file
+        
+        if uploaded_file is not None:
+            st.caption(f"📁 **Fitxer:** `{uploaded_file.name}`")
         
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
