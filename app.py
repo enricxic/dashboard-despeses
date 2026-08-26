@@ -2372,7 +2372,7 @@ Notes importants:
 3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 4. Retorna NOMÉS el JSON cru, sense etiquetes de format de markdown (sense ```json).
 """
-                            model = genai.GenerativeModel('gemini-1.5-flash')
+                            model = genai.GenerativeModel('gemini-flash-latest')
                             response = model.generate_content([prompt, img])
                             
                             response_text = response.text.replace('```json', '').replace('```', '').strip()
