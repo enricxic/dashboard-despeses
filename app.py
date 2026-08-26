@@ -2366,147 +2366,115 @@ def render_compres_super_interface():
                         st.rerun()
                 else:
                     try:
-                        # Run REAL OCR using pytesseract
-                        with st.spinner("Processant tiquet amb OCR..."):
-                            from PIL import ImageOps
+                        # Run OCR using Google Gemini AI
+                        with st.spinner("Llegint tiquet amb IA (Gemini Vision)..."):
+                            import google.generativeai as genai
+                            import json
+                            from PIL import Image
+                            from datetime import datetime
+                            
+                            # Load API key
+                            genai.configure(api_key=st.secrets.get("GEMINI_API_KEY", ""))
+                            
                             img = Image.open(uploaded_file)
-                            img = ImageOps.exif_transpose(img)
                             
-                            # Detect orientation by testing crop rotations
-                            if img.mode != 'L':
-                                img_l = img.convert('L')
-                            else:
-                                img_l = img.copy()
+                            prompt = """
+Ets un expert en extracció de dades de tiquets de compra.
+Llegeix aquest tiquet de supermercat i retorna les dades en un format JSON net i estricte.
+L'estructura del JSON ha de ser EXACTAMENT aquesta:
+{
+    "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
+    "data": "DD/MM/YYYY (si la trobes)",
+    "articles": [
+        {
+            "nom_brut": "Nom exacte del producte que surt al tiquet, respectant lletres",
+            "quantitat": 1,
+            "preu_unitari": 0.0,
+            "preu_total": 0.0
+        }
+    ]
+}
+Notes importants:
+1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal, Ofertes, Cupons).
+2. Assegura't de capturar bé el 'preu_total' de la línia.
+3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
+4. Retorna NOMÉS el JSON cru, sense etiquetes de format de markdown (sense ```json).
+"""
+                            model = genai.GenerativeModel('gemini-1.5-flash')
+                            response = model.generate_content([prompt, img])
                             
-                            # Scale down for fast orientation check
-                            detect_scale = 1.5
-                            dw, dh = img_l.size
-                            img_detect = img_l.resize((int(dw * detect_scale), int(dh * detect_scale)), Image.Resampling.LANCZOS)
+                            response_text = response.text.replace('```json', '').replace('```', '').strip()
+                            data = json.loads(response_text)
                             
-                            best_angle = 0
-                            max_prices = -1
-                            
-                            for angle in [0, 90, 180, 270]:
-                                if angle == 0:
-                                    rotated_test = img_detect
+                            # 1. Update supermercat
+                            super_trobat = data.get("supermercat", "")
+                            if super_trobat:
+                                valid_supers = get_config_supers()
+                                super_definitiu = None
+                                for sp in valid_supers:
+                                    if sp.lower() in super_trobat.lower() or super_trobat.lower() in sp.lower():
+                                        super_definitiu = sp
+                                        break
+                                
+                                if not super_definitiu and 'comerbal' in super_trobat.lower():
+                                    super_definitiu = 'Novavenda'
+                                    
+                                if super_definitiu:
+                                    st.session_state["ticket_super_val"] = super_definitiu
+                                    st.session_state["ticket_super_widget"] = super_definitiu
                                 else:
-                                    rotated_test = img_detect.rotate(angle, expand=True)
-                                    
-                                r_w, r_h = rotated_test.size
-                                crop_w, crop_h = min(800, r_w), min(800, r_h)
-                                left = (r_w - crop_w) // 2
-                                top = (r_h - crop_h) // 2
-                                crop_img = rotated_test.crop((left, top, left + crop_w, top + crop_h))
-                                
-                                txt_test = pytesseract.image_to_string(crop_img, config=r'--oem 3 --psm 6 -l spa+cat')
-                                prices_found = len(re.findall(r'\b\d+[\.,]\d{2}\b', txt_test))
-                                
-                                if prices_found > max_prices:
-                                    max_prices = prices_found
-                                    best_angle = angle
-                                    
-                                # If we find many prices, it's likely oriented correctly
-                                if prices_found > 10:
-                                    best_angle = angle
-                                    break
-                                    
-                            if best_angle != 0:
-                                img = img.rotate(best_angle, expand=True)
-                            
-                            # Preprocess image optimized for receipts (similar to offline test)
-                            # 1. Convert to grayscale
-                            if img.mode != 'L':
-                                img = img.convert('L')
-                             
-                            # 2. Resize by 3.0 to make text larger and easier for Tesseract
-                            scale = 3.0
-                            new_width = int(img.width * scale)
-                            new_height = int(img.height * scale)
-                            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                             
-                            # 3. Enhance Contrast moderately (1.2)
-                            from PIL import ImageEnhance
-                            enhancer = ImageEnhance.Contrast(img)
-                            img = enhancer.enhance(1.2)
-                             
-                            # 4. Enhance Sharpness moderately (1.2)
-                            enhancer = ImageEnhance.Sharpness(img)
-                            img = enhancer.enhance(1.2)
-                            
-                            # Run Tesseract OCR with multiple configurations to find the best result
-                            # We prefer PSM 6 (uniform block of text) and bilingual Spanish+Catalan first
-                            configs_proves = [
-                                r'--oem 3 --psm 6 -l spa+cat',   # Bilingual structured
-                                r'--oem 3 --psm 6',              # Uniform block of text
-                            ]
-                            
-                            best_text = ""
-                            best_lines_count = -1
-                            
-                            for config in configs_proves:
+                                    st.session_state["ticket_super_val"] = super_trobat
+                                    st.session_state["ticket_super_widget"] = super_trobat
+
+                            # 2. Update date
+                            data_trobada = data.get("data", "")
+                            if data_trobada:
                                 try:
-                                    text = pytesseract.image_to_string(img, config=config)
-                                    # Ensure the line contains both letters (product name) and price numbers to avoid column-split layouts
-                                    lines_with_price = sum(1 for line in text.split('\n') if re.search(r'[a-zA-Z]{3,}.*\b\d+[\.,\s]+\d{2}\b', line))
-                                    if lines_with_price > best_lines_count:
-                                        best_lines_count = lines_with_price
-                                        best_text = text
+                                    d_val, m_val, y_val = map(int, data_trobada.split('/'))
+                                    st.session_state["ticket_date"] = datetime(y_val, m_val, d_val).date()
                                 except Exception:
-                                    continue
-                                    
-                            if best_text:
-                                text_content = best_text
-                            else:
-                                text_content = pytesseract.image_to_string(img, config=r'--oem 3 --psm 6')
+                                    pass
+
+                            # 3. Mapejar els articles
+                            parsed = []
+                            df_mapping = load_product_mappings()
+                            current_super = st.session_state.get("ticket_super_val", "")
                             
-                             # Parse date (DD-MM-YYYY or DD/MM/YYYY) with validation
-                            found_date = None
-                            for match in re.finditer(r'(\d{2})[-/](\d{2})[-/](\d{4})', text_content):
-                                try:
-                                    d_val, m_val, y_val = map(int, match.groups())
-                                    if 1980 <= y_val <= 2090 and 1 <= m_val <= 12 and 1 <= d_val <= 31:
-                                        found_date = datetime(y_val, m_val, d_val).date()
-                                        break
-                                except ValueError:
-                                    continue
-                            
-                            if not found_date:
-                                for match in re.finditer(r'\b(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b', text_content):
-                                    try:
-                                        y_val = int(match.group(1))
-                                        m_val = int(match.group(2))
-                                        d_val = int(match.group(3))
-                                        found_date = datetime(y_val, m_val, d_val).date()
-                                        break
-                                    except ValueError:
-                                        continue
-                                        
-                            if found_date:
-                                st.session_state["ticket_date"] = found_date
+                            for art in data.get("articles", []):
+                                nom_brut = art.get("nom_brut", "")
+                                if not nom_brut: continue
                                 
-                            # Parse supermercat
-                            if not st.session_state.get("ticket_super_val"):
-                                if re.search(r'\bcomerbal\b', text_content.lower()):
-                                    st.session_state["ticket_super_val"] = "Novavenda"
-                                    st.session_state["ticket_super_widget"] = "Novavenda"
-                                else:
-                                    for sp in get_config_supers():
-                                        if re.search(r'\b' + re.escape(sp.lower()) + r'\b', text_content.lower()):
-                                            st.session_state["ticket_super_val"] = sp
-                                            st.session_state["ticket_super_widget"] = sp
-                                            break
-                                    
-                            st.session_state["last_ocr_text"] = text_content
-                            parsed = parse_text_ticket(text_content)
-                            
-                            if not st.session_state.get("ticket_super_val"):
-                                st.session_state["ticket_msg_error"] = "⚠️ No s'ha detectat automàticament el supermercat. Si us plau, selecciona'l al desplegable inferior perquè es puguin processar els articles."
-                                st.session_state["ticket_items"] = []
-                                st.rerun()
+                                q_val = float(art.get("quantitat", 1))
+                                p_unit = float(art.get("preu_unitari", 0.0))
+                                p_tot = float(art.get("preu_total", 0.0))
                                 
+                                if p_tot == 0.0 and p_unit > 0.0:
+                                    p_tot = p_unit * q_val
+                                    
+                                curr_item = {
+                                    'familia': 'Pendent',
+                                    'article': 'pendent',
+                                    'pes': 0,
+                                    'quantitat': q_val,
+                                    'preuUnit': p_unit,
+                                    'prom': 0.0,
+                                    'totLinea': p_tot,
+                                    'rebost': None,
+                                    'nom_brut': nom_brut,
+                                    'nom_super': current_super
+                                }
+                                
+                                db_match = find_product_in_db(nom_brut, current_super, df_mapping)
+                                if db_match:
+                                    curr_item['familia'] = db_match['familia']
+                                    curr_item['article'] = db_match['nomEstandard']
+                                    curr_item['nom_super'] = db_match.get('nom_super', nom_brut)
+                                    
+                                parsed.append(curr_item)
+
                             st.session_state["ticket_items"] = parsed
-                            save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
-                            st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit! S'han detectat {len(parsed)} articles."
+                            save_unknown_products(parsed, current_super)
+                            st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA (Gemini)! S'han detectat {len(parsed)} articles."
                             st.rerun()
                     except Exception as e:
                         st.session_state["ticket_msg_error"] = f"Error al processar l'imatge amb OCR: {str(e)}. Si us plau, introdueix els productes manualment."
