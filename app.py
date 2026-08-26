@@ -2299,40 +2299,10 @@ def render_compres_super_interface():
             st.error("Si us plau, selecciona una Forma de Pagament per a la despesa!")
             
     with col_hdr4:
-        import os, glob, io
-        tickets_dir = "E:/Dashboard/tickets"
-        list_of_files = glob.glob(os.path.join(tickets_dir, '*.jpg')) + glob.glob(os.path.join(tickets_dir, '*.png'))
+        uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
+        uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
         
-        if list_of_files:
-            # Ordenar per data de creació (més recents primer)
-            list_of_files.sort(key=os.path.getctime, reverse=True)
-            file_names = [os.path.basename(f) for f in list_of_files]
-            
-            selected_file = st.selectbox("📷 Tria un tiquet", file_names, label_visibility="collapsed")
-            
-            if st.button("⚡ Llegir tiquet seleccionat", use_container_width=True):
-                target_path = os.path.join(tickets_dir, selected_file)
-                with open(target_path, "rb") as f:
-                    file_bytes = f.read()
-                file_obj = io.BytesIO(file_bytes)
-                file_obj.name = selected_file
-                file_obj.size = len(file_bytes)
-                st.session_state["scanned_file"] = file_obj
-                st.session_state["processed_file_id"] = None
-                st.session_state["ticket_super_val"] = ""
-                if "ticket_super_widget" in st.session_state:
-                    del st.session_state["ticket_super_widget"]
-                if "ticket_items" in st.session_state:
-                    st.session_state["ticket_items"] = []
-                if "ticket_msg_success" in st.session_state:
-                    del st.session_state["ticket_msg_success"]
-                if "ticket_msg_error" in st.session_state:
-                    del st.session_state["ticket_msg_error"]
-                st.rerun()
-        else:
-            st.info("No s'han trobat tiquets a E:/Dashboard/tickets")
-            
-        candidates = [f for f in [st.session_state.get("scanned_file")] if f is not None]
+        candidates = [f for f in [uploaded_file, st.session_state.get("scanned_file")] if f is not None]
         chosen_file = None
         for f in candidates:
             fid = f"{f.name}_{f.size}"
