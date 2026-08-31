@@ -330,9 +330,37 @@ username_disp = st.session_state.get("username", "Local")
 
 st.markdown(
     f"""
-    <div style='position: fixed; top: 2rem; right: 1.2rem; z-index: 10000;'>
-        <a href="?" target="_self" title="Forçar reinici de la vista" style="font-size: 1rem; text-decoration: none; opacity: 0.5; cursor: pointer;">🔄</a>
+    <div style='position: fixed; top: 1.5rem; right: 1.2rem; z-index: 10000; text-align: right;'>
+        <div onclick="var m = document.getElementById('settings-dropdown'); m.style.display = m.style.display === 'none' ? 'block' : 'none';" 
+             style="font-size: 1.2rem; cursor: pointer; opacity: 0.7; user-select: none;" title="Configuració">⚙️</div>
+        <div id="settings-dropdown" style="display: none; background: #1e293b; padding: 15px; border: 1px solid #555; border-radius: 8px; margin-top: 8px; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">
+            <div style="margin-bottom: 15px; border-bottom: 1px solid #555; padding-bottom: 10px;">
+                <a href="?" target="_self" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 8px; font-weight: bold;">🔄 Reiniciar App</a>
+            </div>
+            <div style="margin-bottom: 12px; cursor: pointer; color: white; display: flex; align-items: center; gap: 8px;" onclick="
+                localStorage.setItem('user_theme', 'light');
+                let s = document.getElementById('dynamic-theme');
+                if (!s) {{ s = document.createElement('style'); s.id = 'dynamic-theme'; document.head.appendChild(s); }}
+                s.innerHTML = ':root {{ --background-color: #ffffff !important; --secondary-background-color: #f0f2f6 !important; --text-color: #262730 !important; }} .stApp {{ background-color: #ffffff !important; color: #262730 !important; }} .stAppHeader {{ background-color: transparent !important; }} [data-testid=\\'stSidebar\\'] {{ background-color: #f0f2f6 !important; }} h1, h2, h3, h4, h5, h6, p, label, div, span, td, th {{ color: #262730 !important; }} .stDataFrame {{ color: #262730 !important; }} button[kind=\\'secondary\\'] {{ background-color: #ffffff !important; color: #262730 !important; border: 1px solid #cccccc !important; }} div[data-baseweb=\\'select\\'] > div {{ background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }} div[data-baseweb=\\'popover\\'] {{ background-color: #ffffff !important; color: #262730 !important; }} div[data-testid=\\'stExpander\\'] div[role=\\'button\\'] p {{ color: #262730 !important; }} .stTextInput>div>div>input {{ color: #262730 !important; }} .stNumberInput>div>div>input {{ color: #262730 !important; }} [data-testid=\\'stNumberInputContainer\\'] {{ border-color: #cccccc !important; }}';
+                document.getElementById('settings-dropdown').style.display = 'none';
+            ">☀️ Tema Clar</div>
+            <div style="cursor: pointer; color: white; display: flex; align-items: center; gap: 8px;" onclick="
+                localStorage.setItem('user_theme', 'dark');
+                let s = document.getElementById('dynamic-theme');
+                if (s) s.innerHTML = '';
+                document.getElementById('settings-dropdown').style.display = 'none';
+            ">🌙 Tema Fosc</div>
+        </div>
     </div>
+    <!-- Auto-apply theme on load -->
+    <img src="dummy" style="display:none;" onerror="
+        var t = localStorage.getItem('user_theme');
+        if(t === 'light'){{
+            let s = document.getElementById('dynamic-theme');
+            if (!s) {{ s = document.createElement('style'); s.id = 'dynamic-theme'; document.head.appendChild(s); }}
+            s.innerHTML = ':root {{ --background-color: #ffffff !important; --secondary-background-color: #f0f2f6 !important; --text-color: #262730 !important; }} .stApp {{ background-color: #ffffff !important; color: #262730 !important; }} .stAppHeader {{ background-color: transparent !important; }} [data-testid=\\'stSidebar\\'] {{ background-color: #f0f2f6 !important; }} h1, h2, h3, h4, h5, h6, p, label, div, span, td, th {{ color: #262730 !important; }} .stDataFrame {{ color: #262730 !important; }} button[kind=\\'secondary\\'] {{ background-color: #ffffff !important; color: #262730 !important; border: 1px solid #cccccc !important; }} div[data-baseweb=\\'select\\'] > div {{ background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }} div[data-baseweb=\\'popover\\'] {{ background-color: #ffffff !important; color: #262730 !important; }} div[data-testid=\\'stExpander\\'] div[role=\\'button\\'] p {{ color: #262730 !important; }} .stTextInput>div>div>input {{ color: #262730 !important; }} .stNumberInput>div>div>input {{ color: #262730 !important; }} [data-testid=\\'stNumberInputContainer\\'] {{ border-color: #cccccc !important; }}';
+        }}
+    ">
     <div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
                 font-size: 1.8rem; cursor: help; 
                 text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
