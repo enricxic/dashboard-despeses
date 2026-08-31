@@ -3582,8 +3582,10 @@ with tab_details:
         month_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['clean_mes'] == selected_month_data)]
         if not month_ing.empty:
             try:
-                st.table(
-                    month_ing[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}).hide(axis="index")
+                st.dataframe(
+                    month_ing[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}),
+                    use_container_width=True,
+                    hide_index=True
                 )
             except Exception as e:
                 st.error(f"Error rendering month_ing: {e}")
@@ -3619,20 +3621,23 @@ with tab_details:
             grouped_desp = grouped_desp[grouped_desp['Import càrrec'] > 0].sort_values(by='Import càrrec', ascending=False)
             
             try:
-                st.table(
-                    grouped_desp.style.format({'Import càrrec': '{:,.2f} €'}).hide(axis="index")
+                event = st.dataframe(
+                    grouped_desp.style.format({'Import càrrec': '{:,.2f} €'}),
+                    use_container_width=True,
+                    hide_index=True,
+                    on_select="rerun",
+                    selection_mode="single-row"
                 )
             except Exception as e:
                 st.error(f"Error rendering grouped_desp: {e}")
+                event = None
             st.metric("Total Gastat", f"{grouped_desp['Import càrrec'].sum():,.2f} €")
             
-            # Show details of selected group via selectbox
-            st.write("")
-            st.markdown("##### Detalls per Categoria")
-            opcions_cat = ["(Cap)"] + list(grouped_desp['Idcategoria'])
-            selected_cat = st.selectbox("Selecciona una categoria per veure'n el desglòs:", opcions_cat, label_visibility="collapsed")
-            
-            if selected_cat != "(Cap)":
+            # Show details of selected group if clicked
+            if event and 'rows' in event.selection and event.selection['rows']:
+                selected_row_idx = event.selection['rows'][0]
+                selected_cat = grouped_desp.iloc[selected_row_idx]['Idcategoria']
+                st.write("")
                 st.markdown(f"**🔍 Desglòs de despeses: {selected_cat}**")
                 
                 cat_details = month_desp_filtered[month_desp_filtered['Idcategoria'] == selected_cat][
@@ -3640,8 +3645,10 @@ with tab_details:
                 ].copy()
                 
                 try:
-                    st.table(
-                        cat_details.style.format({'Import càrrec': '{:,.2f} €'}).hide(axis="index")
+                    st.dataframe(
+                        cat_details.style.format({'Import càrrec': '{:,.2f} €'}),
+                        use_container_width=True,
+                        hide_index=True
                     )
                 except Exception as e:
                     st.error(f"Error rendering cat_details: {e}")
