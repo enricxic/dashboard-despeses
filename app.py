@@ -3361,7 +3361,7 @@ with tab_dash:
             val = m_row[col_name]
             lim = selected_limits.get(limit_key, float('inf'))
             if val > lim:
-                exceeded_list.append(f"**{display_lbl}** ({val:,.2f} € > {lim:,.2f} €)")
+                exceeded_list.append(f"<b>{display_lbl}</b> ({val:,.2f} € > {lim:,.2f} €)")
         if exceeded_list:
             st.markdown(f"<div style='background-color: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;'>⚠️ <b style='color:#ef4444;'>Valor superat:</b> {', '.join(exceeded_list)}</div>", unsafe_allow_html=True)
 
@@ -3392,7 +3392,7 @@ with tab_dash:
         .apply(highlight_exceeded_limits, axis=None)
         .apply(style_limits_row, axis=1)
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000)
-        .applymap(lambda _: 'color: #1e293b !important; font-weight: bold;', subset=['Saldo'])
+        .map(lambda _: 'color: #1e293b !important; font-weight: bold;', subset=['Saldo'])
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
         .highlight_max(subset=['Desp. Total'], color='#c0392b')
     )
