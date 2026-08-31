@@ -338,6 +338,7 @@ if st.session_state.get("app_theme") == "Clar":
     button[kind='secondary'] { background-color: #ffffff !important; color: #262730 !important; border: 1px solid #cccccc !important; }
     div[data-baseweb='select'] > div { background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }
     div[data-baseweb='popover'] { background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }
+    [data-testid='stPopoverBody'] { background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }
     div[data-testid='stExpander'] div[role='button'] p { color: #262730 !important; }
     .stTextInput>div>div>input { color: #262730 !important; }
     .stNumberInput>div>div>input { color: #262730 !important; }
@@ -352,7 +353,8 @@ elif st.session_state.get("app_theme") == "Fosc":
     h1, h2, h3, h4, h5, h6, p, label { color: #f8fafc !important; }
     button[kind='secondary'] { background-color: #0f172a !important; color: #f8fafc !important; border: 1px solid #334155 !important; }
     div[data-baseweb='select'] > div { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
-    div[data-baseweb='popover'] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+    div[data-baseweb='popover'], div[data-baseweb='popover'] > div { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+    [data-testid='stPopoverBody'] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
     div[data-testid='stExpander'] div[role='button'] p { color: #f8fafc !important; }
     .stTextInput>div>div>input { color: #f8fafc !important; }
     .stNumberInput>div>div>input { color: #f8fafc !important; }
