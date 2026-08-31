@@ -3584,17 +3584,17 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     df_pag_local.loc[res['idx'], 'pagat'] = 'Pagat'
                     
                 new_row = {
-                    'ID_mov': max_id,
+                    'ID_mov': int(max_id),
                     'Data': avui,
-                    'Banc': res['banc'],
-                    'FormaPago': res['forma_pago'],
-                    'Idcategoria': res['row'].get('Categoria', 'despesa_general'),
-                    'Idconcepte': res['row']['Concepte'],
+                    'Banc': str(res['banc']),
+                    'FormaPago': str(res['forma_pago']),
+                    'Idcategoria': str(res['row'].get('Categoria', 'despesa_general')),
+                    'Idconcepte': str(res['row']['Concepte']),
                     'Import càrrec': float(res['row']['Import']),
                     'import ingrés': 0.0,
                     'Comentari': "Pendent automàtic",
                     'mes': mes_cat.capitalize(),
-                    'any': any_val,
+                    'any': int(any_val),
                     'grup': "Despesa Fixa",
                     'ticketPendent': False,
                     'Revisat': True
@@ -3604,17 +3604,17 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
             elif res['type'] == 'ingres':
                 df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
                 new_row = {
-                    'ID_mov': max_id,
+                    'ID_mov': int(max_id),
                     'Data': avui,
-                    'Banc': res['banc'],
-                    'FormaPago': res['forma_pago'],
+                    'Banc': str(res['banc']),
+                    'FormaPago': str(res['forma_pago']),
                     'Idcategoria': 'ingressos',
-                    'Idconcepte': res['row']['Concepte'],
+                    'Idconcepte': str(res['row']['Concepte']),
                     'Import càrrec': 0.0,
                     'import ingrés': float(res['row']['Import']),
                     'Comentari': "Ingrés automàtic",
                     'mes': mes_cat.capitalize(),
-                    'any': any_val,
+                    'any': int(any_val),
                     'grup': "Ingrés Fix",
                     'ticketPendent': False,
                     'Revisat': True
@@ -3623,8 +3623,8 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                 updates_made = True
                 
         if updates_made:
-            save_to_csv(df_pag_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'prev_pagaments.csv')
-            save_to_csv(df_ing_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'prev_ingressos.csv')
+            save_to_csv(df_pag_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+            save_to_csv(df_ing_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
             st.session_state["df_pag"] = df_pag_local
             st.session_state["df_ing"] = df_ing_local
             
