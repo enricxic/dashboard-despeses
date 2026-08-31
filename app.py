@@ -363,7 +363,14 @@ elif st.session_state.get("app_theme") == "Fosc":
 
 st.markdown(
     f"""
-
+    <style>
+    .st-key-settings_gear_popover {{
+        position: fixed !important;
+        top: 1.5rem !important;
+        right: 1.2rem !important;
+        z-index: 10000 !important;
+    }}
+    </style>
     <div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
                 font-size: 1.8rem; cursor: help; 
                 text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
@@ -2833,7 +2840,7 @@ if "finalize_success" in st.session_state:
     st.toast(st.session_state["finalize_success"], icon="✅")
     del st.session_state["finalize_success"]
 
-col_logo, col_title, col_super, col_settings = st.columns([0.8, 8.2, 2.5, 0.5], vertical_alignment="center")
+col_logo, col_title, col_super = st.columns([0.8, 8.7, 2.5], vertical_alignment="center")
 with col_logo:
     if os.path.exists("logoEXD.png"):
         st.image("logoEXD.png", width=65)
@@ -2851,12 +2858,13 @@ with col_super:
             if st.button("🛒 Compres Súper", use_container_width=True):
                 st.session_state["viewing_compres_super"] = True
                 st.rerun()
-with col_settings:
-    with st.popover("⚙️"):
-        st.markdown("<div style='margin-bottom:10px;'><a href='?' target='_self' style='text-decoration:none;'>🔄 Reiniciar App</a></div>", unsafe_allow_html=True)
-        def on_theme_change():
-            pass
-        st.radio("Tema", ["Fosc", "Clar"], key="app_theme", label_visibility="collapsed", on_change=on_theme_change)
+
+# Global settings popover, positioned fixed at top right via CSS
+with st.popover("⚙️", key="settings_gear_popover"):
+    st.markdown("<div style='margin-bottom:10px;'><a href='?' target='_self' style='text-decoration:none;'>🔄 Reiniciar App</a></div>", unsafe_allow_html=True)
+    def on_theme_change():
+        pass
+    st.radio("Tema", ["Fosc", "Clar"], key="app_theme", label_visibility="collapsed", on_change=on_theme_change)
 
 if st.session_state.get("viewing_compres_super", False):
     render_compres_super_interface()
