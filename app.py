@@ -3519,6 +3519,119 @@ with tab_dash:
         st.plotly_chart(fig_line, use_container_width=True, config={'staticPlot': True})
 
 # ================= TAB 2: DETALLS DEL MES =================
+
+@st.dialog("⚙️ Confirmar Operacions i Bancs", width="large")
+def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
+    import datetime, time
+    st.write("Verifica el **Banc** i la **Forma de Pagament** per a cada operació seleccionada:")
+    
+    bancs_options = [""] + get_config_banks()
+    pay_methods = [""] + get_config_payment_methods()
+    
+    results = {}
+    
+    if pagaments_sel:
+        st.markdown("#### 🔴 Pagaments a processar")
+        for p in pagaments_sel:
+            idx = p['idx']
+            row = p['row']
+            st.markdown(f"**{row['Concepte']}** — {float(row.get('Import', 0.0)):,.2f} €")
+            c1, c2 = st.columns(2)
+            with c1:
+                b = st.selectbox(f"Banc", bancs_options, index=1 if len(bancs_options)>1 else 0, key=f"b_pag_{idx}")
+            with c2:
+                pm = st.selectbox(f"F. Pagament", pay_methods, index=1 if len(pay_methods)>1 else 0, key=f"pm_pag_{idx}")
+            results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm}
+            st.divider()
+            
+    if ingressos_sel:
+        st.markdown("#### 🟢 Ingressos a processar")
+        for i in ingressos_sel:
+            idx = i['idx']
+            row = i['row']
+            st.markdown(f"**{row['Concepte']}** — {float(row.get('Import', 0.0)):,.2f} €")
+            c1, c2 = st.columns(2)
+            with c1:
+                b = st.selectbox(f"Banc", bancs_options, index=1 if len(bancs_options)>1 else 0, key=f"b_ing_{idx}")
+            with c2:
+                pm = st.selectbox(f"F. Pagament", pay_methods, index=1 if len(pay_methods)>1 else 0, key=f"pm_ing_{idx}")
+            results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm}
+            st.divider()
+            
+    if st.button("✅ Confirmar i Desar a BBDD", type="primary", use_container_width=True):
+        df_desp_local = st.session_state["df_desp"]
+        max_id = int(df_desp_local['ID_mov'].max()) if not df_desp_local.empty else 0
+        
+        df_pag_local = st.session_state["df_pag"]
+        df_ing_local = st.session_state["df_ing"]
+        
+        avui = datetime.datetime.now().strftime("%Y-%m-%d")
+        
+        updates_made = False
+        for key, res in results.items():
+            if not res['banc'] or not res['forma_pago']:
+                st.error("Si us plau, selecciona Banc i Forma de Pagament per a totes les operacions.")
+                return
+                
+            max_id += 1
+            if res['type'] == 'pagament':
+                if res['idx'] == 'hipoteca':
+                    df_hip_local = st.session_state["df_hip"]
+                    df_hip_local.loc[(df_hip_local['any'] == any_val) & (df_hip_local['mes'].str.lower() == selected_month_data), 'pagat'] = 'pagat'
+                    save_to_csv(df_hip_local, 'hipoteca.csv')
+                    st.session_state["df_hip"] = df_hip_local
+                else:
+                    df_pag_local.loc[res['idx'], 'pagat'] = 'Pagat'
+                    
+                new_row = {
+                    'ID_mov': max_id,
+                    'Data': avui,
+                    'Banc': res['banc'],
+                    'FormaPago': res['forma_pago'],
+                    'Idcategoria': res['row'].get('Categoria', 'despesa_general'),
+                    'Idconcepte': res['row']['Concepte'],
+                    'Import càrrec': float(res['row']['Import']),
+                    'import ingrés': 0.0,
+                    'Comentari': "Pendent automàtic",
+                    'mes': mes_cat.capitalize(),
+                    'any': any_val,
+                    'grup': "Despesa Fixa",
+                    'ticketPendent': False,
+                    'Revisat': True
+                }
+                insert_db_row('despeses', new_row)
+                updates_made = True
+            elif res['type'] == 'ingres':
+                df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
+                new_row = {
+                    'ID_mov': max_id,
+                    'Data': avui,
+                    'Banc': res['banc'],
+                    'FormaPago': res['forma_pago'],
+                    'Idcategoria': 'ingressos',
+                    'Idconcepte': res['row']['Concepte'],
+                    'Import càrrec': 0.0,
+                    'import ingrés': float(res['row']['Import']),
+                    'Comentari': "Ingrés automàtic",
+                    'mes': mes_cat.capitalize(),
+                    'any': any_val,
+                    'grup': "Ingrés Fix",
+                    'ticketPendent': False,
+                    'Revisat': True
+                }
+                insert_db_row('despeses', new_row)
+                updates_made = True
+                
+        if updates_made:
+            save_to_csv(df_pag_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'prev_pagaments.csv')
+            save_to_csv(df_ing_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'prev_ingressos.csv')
+            st.session_state["df_pag"] = df_pag_local
+            st.session_state["df_ing"] = df_ing_local
+            
+            st.success("Operacions desades correctament!")
+            time.sleep(1)
+            st.rerun()
+
 with tab_details:
     st.markdown(f"### 🔍 Detalls de {selected_month_cat.capitalize()} del {selected_year}")
     
@@ -3531,6 +3644,8 @@ with tab_details:
         total_pendent = 0.0
         shown_concepts = set()
         
+        pagaments_a_processar = []
+        
         # 1. Hipoteca status
         sub_hip = df_hip[(df_hip['any'] == selected_year) & (df_hip['mes'].str.lower() == selected_month_data)]
         if not sub_hip.empty:
@@ -3538,7 +3653,8 @@ with tab_details:
             status_hip = "Pagat" if str(hip_row['pagat']).lower() == 'pagat' else "Pendent"
             if status_hip == "Pendent":
                 amt = hip_row['Quota fixa']
-                st.markdown(f"**🏠 Hipoteca**: {amt:.2f} € (<span style='color:red;'>{status_hip}</span>)", unsafe_allow_html=True)
+                if st.checkbox(f"🏠 **Hipoteca**: {amt:.2f} €", key="chk_pag_hipoteca"):
+                    pagaments_a_processar.append({'idx': 'hipoteca', 'row': {'Concepte': 'Hipoteca', 'Import': amt, 'Categoria': 'manteniment'}})
                 has_pending = True
                 total_pendent += float(amt)
                 shown_concepts.add('hipoteca')
@@ -3552,7 +3668,7 @@ with tab_details:
             (df_pag['pagat'].astype(str).str.lower().str.strip() != 'pagat')
         ]
         
-        for _, p_row in sub_pag.iterrows():
+        for p_idx, p_row in sub_pag.iterrows():
             concept_lower = str(p_row['Concepte']).lower().strip()
             if concept_lower in shown_concepts:
                 continue
@@ -3576,7 +3692,9 @@ with tab_details:
                 icon = "💸"
                 
             amt = float(p_row['Import'])
-            st.markdown(f"**{icon} {p_row['Concepte']}**: {amt:.2f} € (<span style='color:red;'>Pendent</span>)", unsafe_allow_html=True)
+            if st.checkbox(f"{icon} **{p_row['Concepte']}**: {amt:.2f} €", key=f"chk_pag_{p_idx}"):
+                pagaments_a_processar.append({'idx': p_idx, 'row': p_row})
+                
             has_pending = True
             total_pendent += amt
             shown_concepts.add(concept_lower)
@@ -3587,24 +3705,46 @@ with tab_details:
             st.markdown("---")
             st.markdown(f"<div style='text-align:left; font-size:2.2rem; color:#ef4444; padding-top:0.5rem; line-height:1.2;'>{total_pendent:,.2f} €</div>", unsafe_allow_html=True)
             
+            if len(pagaments_a_processar) > 0:
+                if st.button("📥 Passar seleccionats a la BBDD", key="btn_proc_pag"):
+                    dialog_confirmar_operacions(pagaments_a_processar, [], selected_year, selected_month_cat)
+            
     with col_mid:
         st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
         # Load ingressos list for selected month
         month_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['clean_mes'] == selected_month_data)]
         if not month_ing.empty:
-            try:
-                st.dataframe(
-                    month_ing[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}),
-                    use_container_width=True,
-                    hide_index=True
-                )
-            except Exception as e:
-                st.error(f"Error rendering month_ing: {e}")
+            ingressos_a_processar = []
+            mask_pendent = month_ing['cobrat'].astype(str).str.strip().str.lower() == 'pendent'
+            month_ing_pendent = month_ing[mask_pendent]
+            month_ing_cobrat = month_ing[~mask_pendent]
+            
+            if not month_ing_pendent.empty:
+                st.write("**Pendents de cobrament:**")
+                for i_idx, i_row in month_ing_pendent.iterrows():
+                    amt = float(i_row['Import'])
+                    if st.checkbox(f"🟢 **{i_row['Concepte']}**: {amt:.2f} €", key=f"chk_ing_{i_idx}"):
+                        ingressos_a_processar.append({'idx': i_idx, 'row': i_row})
+                
+                if len(ingressos_a_processar) > 0:
+                    if st.button("📥 Passar ingressos a BBDD", key="btn_proc_ing"):
+                        dialog_confirmar_operacions([], ingressos_a_processar, selected_year, selected_month_cat)
+                
+                st.write("") # spacer
+            
+            if not month_ing_cobrat.empty:
+                st.write("**Cobrats:**")
+                try:
+                    st.dataframe(
+                        month_ing_cobrat[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                except Exception as e:
+                    st.error(f"Error rendering month_ing: {e}")
+                    
             # Sum the pending ingressos
-            try:
-                pendent_sum = month_ing[month_ing['cobrat'].astype(str).str.strip().str.lower() == 'pendent']['Import'].sum()
-            except:
-                pendent_sum = 0.0
+            pendent_sum = month_ing_pendent['Import'].sum() if not month_ing_pendent.empty else 0.0
                 
             st.markdown(f"""
             <div style="display: flex; gap: 40px; margin-top: 10px;">
