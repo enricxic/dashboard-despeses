@@ -3596,8 +3596,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'mes': mes_cat.capitalize(),
                     'any': int(any_val),
                     'grup': "Despesa Fixa",
-                    'ticketPendent': False,
-                    'Revisat': True
+                    'ticketPendent': False
                 }
                 insert_db_row('despeses', new_row)
                 updates_made = True
@@ -3616,8 +3615,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'mes': mes_cat.capitalize(),
                     'any': int(any_val),
                     'grup': "Ingrés Fix",
-                    'ticketPendent': False,
-                    'Revisat': True
+                    'ticketPendent': False
                 }
                 insert_db_row('despeses', new_row)
                 updates_made = True
