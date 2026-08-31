@@ -3194,8 +3194,6 @@ with tab_dash:
             st.markdown("""
                 <style>
                 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
-                    background-color: #0f172a !important;
-                    border: 1px solid #334155 !important;
                     border-radius: 8px !important;
                     min-height: 65px !important;
                     min-width: 130px !important;
@@ -3209,7 +3207,6 @@ with tab_dash:
                 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p {
                     text-transform: uppercase;
                     font-size: 0.85rem;
-                    color: #f1f5f9;
                     font-weight: 600;
                     line-height: 1.4;
                     margin: 0;
@@ -3217,7 +3214,7 @@ with tab_dash:
                 }
                 /* Make the green/red value larger */
                 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span {
-                    font-size: 1.15rem;
+                    font-size: 1.3rem;
                     text-transform: none;
                     font-weight: bold;
                 }
@@ -3366,7 +3363,7 @@ with tab_dash:
             if val > lim:
                 exceeded_list.append(f"**{display_lbl}** ({val:,.2f} € > {lim:,.2f} €)")
         if exceeded_list:
-            st.error(f"⚠️ **Valor superat**: {', '.join(exceeded_list)}")
+            st.markdown(f"<div style='background-color: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;'>⚠️ <b style='color:#ef4444;'>Valor superat:</b> {', '.join(exceeded_list)}</div>", unsafe_allow_html=True)
 
     # Alerta de canvi d'oli
     kms_left = st.session_state.get("kms_canvi_oli", 31491.0) - car_kms_actuals
@@ -3395,6 +3392,7 @@ with tab_dash:
         .apply(highlight_exceeded_limits, axis=None)
         .apply(style_limits_row, axis=1)
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000)
+        .applymap(lambda _: 'color: #1e293b !important; font-weight: bold;', subset=['Saldo'])
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
         .highlight_max(subset=['Desp. Total'], color='#c0392b')
     )
