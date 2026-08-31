@@ -340,9 +340,20 @@ if st.session_state.get("app_theme") == "Clar":
     div[data-baseweb='popover'] { background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }
     [data-testid='stPopoverBody'] { background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }
     div[data-testid='stExpander'] div[role='button'] p { color: #262730 !important; }
-    .stTextInput>div>div>input { color: #262730 !important; }
-    .stNumberInput>div>div>input { color: #262730 !important; }
-    [data-testid='stNumberInputContainer'] { border-color: #cccccc !important; }
+    
+    .stTextInput>div>div { background-color: #ffffff !important; border-color: #cccccc !important; }
+    .stTextInput>div>div>input { color: #262730 !important; -webkit-text-fill-color: #262730 !important; }
+    
+    .stNumberInput>div>div { background-color: #ffffff !important; border-color: #cccccc !important; }
+    .stNumberInput>div>div>input { color: #262730 !important; -webkit-text-fill-color: #262730 !important; }
+    
+    .stDateInput>div>div { background-color: #ffffff !important; border-color: #cccccc !important; }
+    .stDateInput>div>div>input { color: #262730 !important; -webkit-text-fill-color: #262730 !important; }
+    
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div { background-color: #ffffff !important; border-color: #cccccc !important; }
+    [data-testid="stSelectbox"] div[data-baseweb="select"] span { color: #262730 !important; }
+    
+    [data-testid='stNumberInputContainer'] { background-color: #ffffff !important; border-color: #cccccc !important; }
     </style>""", unsafe_allow_html=True)
 elif st.session_state.get("app_theme") == "Fosc":
     st.markdown("""<style>
