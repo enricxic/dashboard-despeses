@@ -334,8 +334,7 @@ if st.session_state.get("app_theme") == "Clar":
     .stApp { background-color: #ffffff !important; color: #262730 !important; }
     .stAppHeader { background-color: transparent !important; }
     [data-testid='stSidebar'] { background-color: #f0f2f6 !important; }
-    h1, h2, h3, h4, h5, h6, p, label, div, span, td, th { color: #262730 !important; }
-    .stDataFrame { color: #262730 !important; }
+    h1, h2, h3, h4, h5, h6, p, label { color: #262730 !important; }
     button[kind='secondary'] { background-color: #ffffff !important; color: #262730 !important; border: 1px solid #cccccc !important; }
     div[data-baseweb='select'] > div { background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }
     div[data-baseweb='popover'] { background-color: #ffffff !important; color: #262730 !important; border-color: #cccccc !important; }
@@ -343,6 +342,21 @@ if st.session_state.get("app_theme") == "Clar":
     .stTextInput>div>div>input { color: #262730 !important; }
     .stNumberInput>div>div>input { color: #262730 !important; }
     [data-testid='stNumberInputContainer'] { border-color: #cccccc !important; }
+    </style>""", unsafe_allow_html=True)
+elif st.session_state.get("app_theme") == "Fosc":
+    st.markdown("""<style>
+    :root { --background-color: #0f172a !important; --secondary-background-color: #1e293b !important; --text-color: #f8fafc !important; }
+    .stApp { background-color: #0f172a !important; color: #f8fafc !important; }
+    .stAppHeader { background-color: transparent !important; }
+    [data-testid='stSidebar'] { background-color: #1e293b !important; }
+    h1, h2, h3, h4, h5, h6, p, label { color: #f8fafc !important; }
+    button[kind='secondary'] { background-color: #0f172a !important; color: #f8fafc !important; border: 1px solid #334155 !important; }
+    div[data-baseweb='select'] > div { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+    div[data-baseweb='popover'] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+    div[data-testid='stExpander'] div[role='button'] p { color: #f8fafc !important; }
+    .stTextInput>div>div>input { color: #f8fafc !important; }
+    .stNumberInput>div>div>input { color: #f8fafc !important; }
+    [data-testid='stNumberInputContainer'] { border-color: #334155 !important; }
     </style>""", unsafe_allow_html=True)
 
 st.markdown(
