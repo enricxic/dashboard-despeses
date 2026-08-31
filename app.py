@@ -3212,8 +3212,9 @@ with tab_dash:
                     margin: 0;
                     white-space: nowrap !important;
                 }
-                /* Make the green/red value larger */
-                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span {
+                /* Make the green/red/zero value larger */
+                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span,
+                div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p strong {
                     font-size: 1.3rem;
                     text-transform: none;
                     font-weight: bold;
@@ -3391,8 +3392,8 @@ with tab_dash:
         df_summary.style.format(precision=2, thousands=".", decimal=",", na_rep="")
         .apply(highlight_exceeded_limits, axis=None)
         .apply(style_limits_row, axis=1)
-        .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000)
-        .map(lambda _: 'color: #1e293b !important; font-weight: bold;', subset=['Saldo'])
+        .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000, text_color_threshold=0)
+        .map(lambda _: 'font-weight: bold;', subset=['Saldo'])
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
         .highlight_max(subset=['Desp. Total'], color='#c0392b')
     )
