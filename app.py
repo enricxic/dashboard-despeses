@@ -1868,9 +1868,9 @@ def cb_recalculate_manual_pct():
     preu_final = st.session_state.get("manual_preu_num", 0.0)
     existing_prom = st.session_state.get("manual_prom_num", 0.0)
     if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
-        base = round(preu_final / (1 - pct / 100.0), 2)
-        prom_from_pct = round(base * (pct / 100.0), 2)
-        st.session_state["manual_preu_num"] = base
+        qty = st.session_state.get("manual_qty_num", 1.0)
+        if qty is None or qty <= 0: qty = 1.0
+        prom_from_pct = round(preu_final * (pct / 100.0) * qty, 2)
         st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
         st.session_state["manual_pct_num"] = 0.0
 
@@ -2590,10 +2590,9 @@ Notes importants:
     if qty <= 0.0:
         qty = 1.0
     if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
-        base = round(preu_final / (1 - pct / 100.0), 2)
-        prom_from_pct = round(base * (pct / 100.0) * qty, 2)
-        st.session_state["manual_preu_num"] = base
-        st.session_state["manual_prom_num"] = prom_from_pct
+        existing_prom = st.session_state.get("manual_prom_num", 0.0) or 0.0
+        prom_from_pct = round(preu_final * (pct / 100.0) * qty, 2)
+        st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
         st.session_state["manual_pct_num"] = 0.0 # reset pct
         st.rerun()
 
