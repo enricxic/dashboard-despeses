@@ -3654,7 +3654,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'Comentari': None,
                     'mes': mes_cat.capitalize(),
                     'any': int(any_val),
-                    'grup': "Despesa Fixa",
+                    'grup': "Càrrec",
                     'ticketPendent': False
                 }
                 insert_db_row('despeses', new_row)
@@ -3674,7 +3674,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'Comentari': None,
                     'mes': mes_cat.capitalize(),
                     'any': int(any_val),
-                    'grup': "Ingrés Fix",
+                    'grup': "Ingrés",
                     'ticketPendent': False
                 }
                 try:
