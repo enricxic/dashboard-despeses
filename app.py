@@ -3677,8 +3677,11 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'grup': "Ingrés Fix",
                     'ticketPendent': False
                 }
-                insert_db_row('despeses', new_row)
-                updates_made = True
+                try:
+                    insert_db_row('despeses', new_row)
+                    updates_made = True
+                except Exception as e:
+                    st.error(f"Error inserint ingressos: {e}")
                 
         if updates_made:
             save_to_csv(df_pag_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
@@ -3688,6 +3691,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
             
             st.success("Operacions desades correctament!")
             time.sleep(1)
+            st.cache_data.clear()
             st.rerun()
 
 with tab_details:
