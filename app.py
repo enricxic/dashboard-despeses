@@ -4865,6 +4865,11 @@ if tab_intro:
                     else:
                         new_values[col_name] = st.text_input(f"{col_name}", value=str(val) if not pd.isna(val) else "")
                         
+            apply_to_future = False
+            if db_select in ["Previsió de Pagaments", "Previsió d'Ingressos"]:
+                st.write("")
+                apply_to_future = st.checkbox(f"Modificar també l'import per als propers mesos d'aquest any?", value=False)
+                
             st.write("")
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
@@ -4894,6 +4899,33 @@ if tab_intro:
                 if id_col:
                     if update_db_row(table_name, id_col, id_val, typed_values):
                         st.success("Registre modificat correctament!")
+                        
+                        # Apply to future logic
+                        if apply_to_future and 'Import' in typed_values:
+                            try:
+                                month_to_num = {
+                                    'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
+                                    'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12,
+                                    'gener': 1, 'febrer': 2, 'març': 3, 'maig': 5, 'juny': 6, 'juliol': 7, 'agost': 8,
+                                    'setembre': 9, 'novembre': 11, 'desembre': 12
+                                }
+                                current_mes = str(current_row_data.get('mes', '')).lower()
+                                current_any = int(current_row_data.get('any', 0))
+                                current_concepte = current_row_data.get('Concepte', '')
+                                current_num = month_to_num.get(current_mes, 0)
+                                
+                                if current_num > 0 and current_any > 0 and current_concepte:
+                                    future_months = [m for m, n in month_to_num.items() if n > current_num]
+                                    if future_months:
+                                        res = supabase.table(table_name).select(id_col).eq('Concepte', current_concepte).eq('any', current_any).in_('mes', future_months).execute()
+                                        if res.data:
+                                            future_ids = [r[id_col] for r in res.data]
+                                            for fid in future_ids:
+                                                supabase.table(table_name).update({'Import': typed_values['Import']}).eq(id_col, fid).execute()
+                                            st.success(f"S'han actualitzat {len(future_ids)} apunts posteriors (aquest any) de '{current_concepte}' amb el nou import.")
+                            except Exception as e:
+                                st.error(f"Error aplicant a mesos següents: {e}")
+                                
                         st.session_state["df_key_counter"] = st.session_state.get("df_key_counter", 0) + 1
                         st.rerun()
                 else:
