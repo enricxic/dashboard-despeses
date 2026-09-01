@@ -3398,17 +3398,46 @@ with tab_dash:
                     styles[i] = 'color: #3498db; font-weight: bold; background-color: rgba(52, 152, 219, 0.1)'
         return styles
 
-    # Display styled summary grid using static compact HTML table
-    st.dataframe(
-        df_summary.style.format(precision=2, thousands=".", decimal=",", na_rep="")
+    html_table = (
+        df_summary.style.hide(axis="index")
+        .format(precision=2, thousands=".", decimal=",", na_rep="")
         .apply(highlight_exceeded_limits, axis=None)
         .apply(style_limits_row, axis=1)
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000, text_color_threshold=0)
         .map(lambda _: 'font-weight: bold; color: black !important;', subset=['Saldo'])
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
-        .highlight_max(subset=['Desp. Total'], color='#c0392b'),
-        use_container_width=True,
-        hide_index=True
+        .highlight_max(subset=['Desp. Total'], color='#c0392b')
+        .to_html()
+    )
+    
+    st.markdown(
+        f"""
+        <style>
+        .custom-summary-table table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }}
+        .custom-summary-table th, .custom-summary-table td {{
+            padding: 6px 3px;
+            text-align: right;
+            border-bottom: 1px solid #333;
+        }}
+        .custom-summary-table th {{
+            text-align: center;
+            font-weight: bold;
+            color: #bbb;
+        }}
+        .custom-summary-table td:first-child {{
+            font-weight: bold;
+            text-align: left;
+        }}
+        </style>
+        <div class="custom-summary-table">
+            {html_table}
+        </div>
+        """,
+        unsafe_allow_html=True
     )
     
     st.write("")
