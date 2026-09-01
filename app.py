@@ -3535,13 +3535,15 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
         for p in pagaments_sel:
             idx = p['idx']
             row = p['row']
-            st.markdown(f"**{row['Concepte']}** — {float(row.get('Import', 0.0)):,.2f} €")
-            c1, c2 = st.columns(2)
+            st.markdown(f"**{row['Concepte']}**")
+            c1, c2, c3 = st.columns([1, 1.5, 1.5])
             with c1:
-                b = st.selectbox(f"Banc", bancs_options, index=1 if len(bancs_options)>1 else 0, key=f"b_pag_{idx}")
+                amt = st.number_input(f"Import (€)", value=float(row.get('Import', 0.0)), step=1.0, format="%.2f", key=f"amt_pag_{idx}")
             with c2:
+                b = st.selectbox(f"Banc", bancs_options, index=1 if len(bancs_options)>1 else 0, key=f"b_pag_{idx}")
+            with c3:
                 pm = st.selectbox(f"F. Pagament", pay_methods, index=1 if len(pay_methods)>1 else 0, key=f"pm_pag_{idx}")
-            results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm}
+            results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm, 'import_final': amt}
             st.divider()
             
     if ingressos_sel:
@@ -3549,13 +3551,15 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
         for i in ingressos_sel:
             idx = i['idx']
             row = i['row']
-            st.markdown(f"**{row['Concepte']}** — {float(row.get('Import', 0.0)):,.2f} €")
-            c1, c2 = st.columns(2)
+            st.markdown(f"**{row['Concepte']}**")
+            c1, c2, c3 = st.columns([1, 1.5, 1.5])
             with c1:
-                b = st.selectbox(f"Banc", bancs_options, index=1 if len(bancs_options)>1 else 0, key=f"b_ing_{idx}")
+                amt = st.number_input(f"Import (€)", value=float(row.get('Import', 0.0)), step=1.0, format="%.2f", key=f"amt_ing_{idx}")
             with c2:
+                b = st.selectbox(f"Banc", bancs_options, index=1 if len(bancs_options)>1 else 0, key=f"b_ing_{idx}")
+            with c3:
                 pm = st.selectbox(f"F. Pagament", pay_methods, index=1 if len(pay_methods)>1 else 0, key=f"pm_ing_{idx}")
-            results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm}
+            results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm, 'import_final': amt}
             st.divider()
             
     if st.button("✅ Confirmar i Desar a BBDD", type="primary", use_container_width=True):
@@ -3578,10 +3582,12 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                 if res['idx'] == 'hipoteca':
                     df_hip_local = st.session_state["df_hip"]
                     df_hip_local.loc[(df_hip_local['any'] == any_val) & (df_hip_local['mes'].str.lower() == selected_month_data), 'pagat'] = 'pagat'
+                    df_hip_local.loc[(df_hip_local['any'] == any_val) & (df_hip_local['mes'].str.lower() == selected_month_data), 'Quota fixa'] = float(res['import_final'])
                     save_to_csv(df_hip_local, 'hipoteca.csv')
                     st.session_state["df_hip"] = df_hip_local
                 else:
                     df_pag_local.loc[res['idx'], 'pagat'] = 'Pagat'
+                    df_pag_local.loc[res['idx'], 'Import'] = float(res['import_final'])
                     
                 new_row = {
                     'ID_mov': int(max_id),
@@ -3590,7 +3596,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'FormaPago': str(res['forma_pago']),
                     'Idcategoria': str(res['row'].get('Categoria', 'despesa_general')),
                     'Idconcepte': str(res['row']['Concepte']),
-                    'Import càrrec': float(res['row']['Import']),
+                    'Import càrrec': float(res['import_final']),
                     'import ingrés': 0.0,
                     'Comentari': "Pendent automàtic",
                     'mes': mes_cat.capitalize(),
@@ -3602,6 +3608,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                 updates_made = True
             elif res['type'] == 'ingres':
                 df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
+                df_ing_local.loc[res['idx'], 'Import'] = float(res['import_final'])
                 new_row = {
                     'ID_mov': int(max_id),
                     'Data': avui,
@@ -3610,7 +3617,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'Idcategoria': 'ingressos',
                     'Idconcepte': str(res['row']['Concepte']),
                     'Import càrrec': 0.0,
-                    'import ingrés': float(res['row']['Import']),
+                    'import ingrés': float(res['import_final']),
                     'Comentari': "Ingrés automàtic",
                     'mes': mes_cat.capitalize(),
                     'any': int(any_val),
