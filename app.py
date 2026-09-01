@@ -3303,16 +3303,16 @@ with tab_dash:
             'Ing. Fixes': ing_fixes,
             'Ing. Extres': ing_extres,
             'Ing. Total': ing_total,
-            'Desp. Fixes': exp_fixes,
-            'Desp. Menjar': exp_menjar,
-            'Desp. Rebost': exp_rebost,
-            'Desp. Gasolina': exp_gasolina,
-            'Desp. Restaurant': exp_restaurant,
-            'Desp. Farmàcia': exp_farmacia,
-            'Desp. Neteja': exp_neteja,
-            'Desp. Varis': exp_varis,
-            'Desp. Proveïdor': exp_proveidor,
-            'Desp. Total': exp_total,
+            'Fixes': exp_fixes,
+            'Menjar': exp_menjar,
+            'Rebost': exp_rebost,
+            'Gasolina': exp_gasolina,
+            'Restaurant': exp_restaurant,
+            'Farmàcia': exp_farmacia,
+            'Neteja': exp_neteja,
+            'Varis': exp_varis,
+            'Proveïdor': exp_proveidor,
+            'Total Desp.': exp_total,
             'Saldo': saldo_total
         })
         
@@ -3329,12 +3329,12 @@ with tab_dash:
     def highlight_exceeded_limits(df):
         style_df = pd.DataFrame('', index=df.index, columns=df.columns)
         col_mapping = {
-            'Desp. Menjar': 'menjar',
-            'Desp. Gasolina': 'gasolina',
-            'Desp. Restaurant': 'restaurant',
-            'Desp. Farmàcia': 'farmacia',
-            'Desp. Neteja': 'neteja',
-            'Desp. Varis': 'varis'
+            'Menjar': 'menjar',
+            'Gasolina': 'gasolina',
+            'Restaurant': 'restaurant',
+            'Farmàcia': 'farmacia',
+            'Neteja': 'neteja',
+            'Varis': 'varis'
         }
         for idx, row in df.iterrows():
             if row['Mes'] in ['TOTAL', 'LÍMITS']:
@@ -3362,12 +3362,12 @@ with tab_dash:
         m_row = selected_month_summary.iloc[0]
         exceeded_list = []
         col_mapping_alert = {
-            'Desp. Menjar': ('menjar', 'menjar'),
-            'Desp. Gasolina': ('gasolina', 'gasolina'),
-            'Desp. Restaurant': ('restaurant', 'restaurant'),
-            'Desp. Farmàcia': ('farmàcia', 'farmacia'),
-            'Desp. Neteja': ('neteja', 'neteja'),
-            'Desp. Varis': ('varis', 'varis')
+            'Menjar': ('menjar', 'menjar'),
+            'Gasolina': ('gasolina', 'gasolina'),
+            'Restaurant': ('restaurant', 'restaurant'),
+            'Farmàcia': ('farmàcia', 'farmacia'),
+            'Neteja': ('neteja', 'neteja'),
+            'Varis': ('varis', 'varis')
         }
         for col_name, (display_lbl, limit_key) in col_mapping_alert.items():
             val = m_row[col_name]
@@ -3406,7 +3406,7 @@ with tab_dash:
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000, text_color_threshold=0)
         .map(lambda _: 'font-weight: bold; color: black !important;', subset=['Saldo'])
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
-        .highlight_max(subset=['Desp. Total'], color='#c0392b')
+        .highlight_max(subset=['Total Desp.'], color='#c0392b')
         .to_html()
     )
     
@@ -3419,7 +3419,7 @@ with tab_dash:
     font-size: 0.85em;
 }}
 .custom-summary-table th, .custom-summary-table td {{
-    padding: 6px 3px;
+    padding: 2px 3px;
     text-align: right;
     border-bottom: 1px solid #333;
 }}
