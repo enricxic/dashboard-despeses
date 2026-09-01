@@ -3652,7 +3652,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'Import càrrec': float(res['import_final']),
                     'import ingrés': 0.0,
                     'Comentari': None,
-                    'mes': mes_cat.capitalize(),
+                    'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
                     'any': int(any_val),
                     'grup': "Càrrec",
                     'ticketPendent': False
@@ -3672,7 +3672,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'Import càrrec': 0.0,
                     'import ingrés': float(res['import_final']),
                     'Comentari': None,
-                    'mes': mes_cat.capitalize(),
+                    'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
                     'any': int(any_val),
                     'grup': "Ingrés",
                     'ticketPendent': False
