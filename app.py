@@ -3404,7 +3404,7 @@ with tab_dash:
         .apply(highlight_exceeded_limits, axis=None)
         .apply(style_limits_row, axis=1)
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000, text_color_threshold=0)
-        .map(lambda _: 'font-weight: bold;', subset=['Saldo'])
+        .map(lambda _: 'font-weight: bold; color: black !important;', subset=['Saldo'])
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
         .highlight_max(subset=['Desp. Total'], color='#c0392b')
     )
