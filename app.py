@@ -3568,12 +3568,23 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
             row = p['row']
             st.markdown(f"**{row['Concepte']}**")
             c1, c2, c3 = st.columns([1, 1.5, 1.5])
+            
+            default_b_idx = 1 if len(bancs_options) > 1 else 0
+            row_banc = str(row.get('Banc', '')).strip()
+            if row_banc in bancs_options:
+                default_b_idx = bancs_options.index(row_banc)
+                
+            default_pm_idx = 1 if len(pay_methods) > 1 else 0
+            row_pm = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
+            if row_pm in pay_methods:
+                default_pm_idx = pay_methods.index(row_pm)
+                
             with c1:
                 amt = st.number_input(f"Import (€)", value=float(row.get('Import', 0.0)), step=1.0, format="%.2f", key=f"amt_pag_{idx}")
             with c2:
-                b = st.selectbox(f"Banc", bancs_options, index=1 if len(bancs_options)>1 else 0, key=f"b_pag_{idx}")
+                b = st.selectbox(f"Banc", bancs_options, index=default_b_idx, key=f"b_pag_{idx}")
             with c3:
-                pm = st.selectbox(f"F. Pagament", pay_methods, index=1 if len(pay_methods)>1 else 0, key=f"pm_pag_{idx}")
+                pm = st.selectbox(f"F. Pagament", pay_methods, index=default_pm_idx, key=f"pm_pag_{idx}")
             results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm, 'import_final': amt}
             st.divider()
             
@@ -3584,12 +3595,23 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
             row = i['row']
             st.markdown(f"**{row['Concepte']}**")
             c1, c2, c3 = st.columns([1, 1.5, 1.5])
+            
+            default_b_idx = 1 if len(bancs_options) > 1 else 0
+            row_banc = str(row.get('Banc', '')).strip()
+            if row_banc in bancs_options:
+                default_b_idx = bancs_options.index(row_banc)
+                
+            default_pm_idx = 1 if len(pay_methods) > 1 else 0
+            row_pm = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
+            if row_pm in pay_methods:
+                default_pm_idx = pay_methods.index(row_pm)
+                
             with c1:
                 amt = st.number_input(f"Import (€)", value=float(row.get('Import', 0.0)), step=1.0, format="%.2f", key=f"amt_ing_{idx}")
             with c2:
-                b = st.selectbox(f"Banc", bancs_options, index=1 if len(bancs_options)>1 else 0, key=f"b_ing_{idx}")
+                b = st.selectbox(f"Banc", bancs_options, index=default_b_idx, key=f"b_ing_{idx}")
             with c3:
-                pm = st.selectbox(f"F. Pagament", pay_methods, index=1 if len(pay_methods)>1 else 0, key=f"pm_ing_{idx}")
+                pm = st.selectbox(f"F. Pagament", pay_methods, index=default_pm_idx, key=f"pm_ing_{idx}")
             results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm, 'import_final': amt}
             st.divider()
             
