@@ -3412,30 +3412,30 @@ with tab_dash:
     
     st.markdown(
         f"""
-        <style>
-        .custom-summary-table table {{
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85em;
-        }}
-        .custom-summary-table th, .custom-summary-table td {{
-            padding: 6px 3px;
-            text-align: right;
-            border-bottom: 1px solid #333;
-        }}
-        .custom-summary-table th {{
-            text-align: center;
-            font-weight: bold;
-            color: #bbb;
-        }}
-        .custom-summary-table td:first-child {{
-            font-weight: bold;
-            text-align: left;
-        }}
-        </style>
-        <div class="custom-summary-table">
-            {html_table}
-        </div>
+<style>
+.custom-summary-table table {{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+}}
+.custom-summary-table th, .custom-summary-table td {{
+    padding: 6px 3px;
+    text-align: right;
+    border-bottom: 1px solid #333;
+}}
+.custom-summary-table th {{
+    text-align: center;
+    font-weight: bold;
+    color: #bbb;
+}}
+.custom-summary-table td:first-child {{
+    font-weight: bold;
+    text-align: left;
+}}
+</style>
+<div class="custom-summary-table">
+{html_table}
+</div>
         """,
         unsafe_allow_html=True
     )
