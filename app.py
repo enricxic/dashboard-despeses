@@ -3399,14 +3399,16 @@ with tab_dash:
         return styles
 
     # Display styled summary grid using static compact HTML table
-    st.table(
+    st.dataframe(
         df_summary.style.format(precision=2, thousands=".", decimal=",", na_rep="")
         .apply(highlight_exceeded_limits, axis=None)
         .apply(style_limits_row, axis=1)
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000, text_color_threshold=0)
         .map(lambda _: 'font-weight: bold; color: black !important;', subset=['Saldo'])
         .highlight_max(subset=['Ing. Total'], color='#27ae60')
-        .highlight_max(subset=['Desp. Total'], color='#c0392b')
+        .highlight_max(subset=['Desp. Total'], color='#c0392b'),
+        use_container_width=True,
+        hide_index=True
     )
     
     st.write("")
@@ -4736,7 +4738,7 @@ if tab_intro:
             if not df_km.empty:
                 df_km_show = df_km.head(5)[['data', 'cotxe', 'ruta', 'km', 'contador']].copy()
                 df_km_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'ruta': 'Ruta', 'km': 'Km recorreguts', 'contador': 'Odòmetre'}, inplace=True)
-                st.table(df_km_show.set_index('Data'))
+                st.dataframe(df_km_show.set_index('Data'), use_container_width=True)
         else:
             st.markdown("<h5 style='color:#f39c12; margin-top: 20px; margin-bottom: 5px;'>📋 Últims moviments</h5>", unsafe_allow_html=True)
             
@@ -4777,11 +4779,13 @@ if tab_intro:
                     return style_df
                     
                 # Display as a compact, styled static table
-                st.table(
+                st.dataframe(
                     df_last.drop(columns=['_Tipus_raw'])
                     .style.format({'Import': '{:,.2f} €'})
                     .apply(style_rows, axis=None)
-                    .set_properties(**{'font-size': '11px', 'padding': '3px'})
+                    .set_properties(**{'font-size': '11px', 'padding': '3px'}),
+                    use_container_width=True,
+                    hide_index=True
                 )
     # ----------------- DIALOGS FOR MODIFY / DELETE -----------------
     @st.dialog("✏️ Modificar Registre")
