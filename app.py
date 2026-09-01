@@ -714,7 +714,7 @@ def save_to_csv(df, filename):
             
         st.cache_data.clear()
         get_db_tracker().update()
-        st.session_state["dfs_initialized"] = False
+        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         st.error(f"❌ **Error al desar la taula `{table_name}` a Supabase**: {str(e)}")
@@ -736,15 +736,80 @@ def log_action(table_name, tipus_accio, detalls):
         # Silently fail if logging fails
         pass
 
+def update_session_state_insert(table_name, new_row_dict):
+    table_map = {
+        'despeses': ('df_desp', 'ID_mov'), 'ingressos': ('df_ing', 'idIngres'),
+        'compresSuper': ('df_super', 'IdCompra'), 'gasolina': ('df_gas', 'idGasolina'),
+        'kmCotxe': ('df_km', 'idRuta'), 'hipoteca': ('df_hip', None),
+        'estalviDP': ('df_est', None), 'limitsDespeses': ('df_limits', None),
+        'pagaments': ('df_pag', 'idPago'), 'tr_cartera': ('df_cartera', 'idTRCartera')
+    }
+    if table_name not in table_map: return
+    df_key, sort_col = table_map[table_name]
+    if df_key in st.session_state:
+        df = st.session_state[df_key]
+        new_row = new_row_dict.copy()
+        for col in df.columns:
+            if col in new_row:
+                val = new_row[col]
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    try: new_row[col] = pd.to_numeric(val)
+                    except: pass
+        if 'Data' in new_row and 'parsed_date' in df.columns:
+            try: new_row['parsed_date'] = pd.to_datetime(new_row['Data'], format='%d/%m/%Y', errors='coerce')
+            except: pass
+        new_df = pd.DataFrame([new_row])
+        updated_df = pd.concat([new_df, df], ignore_index=True)
+        if sort_col and sort_col in updated_df.columns:
+            updated_df[sort_col] = pd.to_numeric(updated_df[sort_col], errors='coerce')
+            updated_df = updated_df.sort_values(by=sort_col, ascending=False).reset_index(drop=True)
+        st.session_state[df_key] = updated_df
+
+def update_session_state_update(table_name, id_col, id_val, update_dict):
+    table_map = {
+        'despeses': ('df_desp', 'ID_mov'), 'ingressos': ('df_ing', 'idIngres'),
+        'compresSuper': ('df_super', 'IdCompra'), 'gasolina': ('df_gas', 'idGasolina'),
+        'kmCotxe': ('df_km', 'idRuta'), 'hipoteca': ('df_hip', None),
+        'estalviDP': ('df_est', None), 'limitsDespeses': ('df_limits', None),
+        'pagaments': ('df_pag', 'idPago'), 'tr_cartera': ('df_cartera', 'idTRCartera')
+    }
+    if table_name not in table_map: return
+    df_key, _ = table_map[table_name]
+    if df_key in st.session_state:
+        df = st.session_state[df_key]
+        if id_col in df.columns:
+            mask = df[id_col] == id_val
+            if mask.any():
+                for k, v in update_dict.items():
+                    if k in df.columns:
+                        if pd.api.types.is_numeric_dtype(df[k]):
+                            try: v = pd.to_numeric(v)
+                            except: pass
+                        df.loc[mask, k] = v
+                st.session_state[df_key] = df
+
+def update_session_state_delete(table_name, id_col, id_val):
+    table_map = {
+        'despeses': 'df_desp', 'ingressos': 'df_ing', 'compresSuper': 'df_super',
+        'gasolina': 'df_gas', 'kmCotxe': 'df_km', 'pagaments': 'df_pag', 'tr_cartera': 'df_cartera'
+    }
+    if table_name not in table_map: return
+    df_key = table_map[table_name]
+    if df_key in st.session_state:
+        df = st.session_state[df_key]
+        if id_col in df.columns:
+            st.session_state[df_key] = df[df[id_col] != id_val].reset_index(drop=True)
+
 def insert_db_row(table_name, new_row_dict):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         supabase.table(table_name).insert(new_row_dict).execute()
         log_action(table_name, 'INSERT', new_row_dict)
         
+        update_session_state_insert(table_name, new_row_dict)
         st.cache_data.clear()
         get_db_tracker().update()
-        st.session_state["dfs_initialized"] = False
+        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
@@ -769,7 +834,7 @@ def append_to_db(df_new, table_name, state_key, extra_details=None):
             
         tracker_obj = get_db_tracker()
         tracker_obj.update()
-        st.session_state["dfs_initialized"] = False
+        st.session_state["last_synced_time"] = get_db_tracker().last_update
         load_dashboard_data.clear()
         return True
     except Exception as e:
@@ -859,9 +924,10 @@ def delete_db_row(table_name, id_col, id_val):
         supabase.table(table_name).delete().eq(id_col, id_val).execute()
         log_action(table_name, 'DELETE', {'id_col': id_col, 'id_val': id_val})
         
+        update_session_state_delete(table_name, id_col, id_val)
         st.cache_data.clear()
         get_db_tracker().update()
-        st.session_state["dfs_initialized"] = False
+        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         st.error(f"❌ Error a l'esborrar de Supabase ({table_name}): {str(e)}")
@@ -881,9 +947,10 @@ def update_db_row(table_name, id_col, id_val, new_data):
         supabase.table(table_name).update(update_payload).eq(id_col, id_val).execute()
         log_action(table_name, 'UPDATE', {'id_col': id_col, 'id_val': id_val, 'changes': update_payload})
         
+        update_session_state_update(table_name, id_col, id_val, update_payload)
         st.cache_data.clear()
         get_db_tracker().update()
-        st.session_state["dfs_initialized"] = False
+        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         print(f"FAILED PAYLOAD FOR {table_name}:", update_payload)
