@@ -3569,7 +3569,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
         df_pag_local = st.session_state["df_pag"]
         df_ing_local = st.session_state["df_ing"]
         
-        avui = datetime.datetime.now().strftime("%Y-%m-%d")
+        avui = datetime.datetime.now().strftime("%d/%m/%Y")
         
         updates_made = False
         for key, res in results.items():
@@ -3598,7 +3598,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'Idconcepte': str(res['row']['Concepte']),
                     'Import càrrec': float(res['import_final']),
                     'import ingrés': 0.0,
-                    'Comentari': "Pendent automàtic",
+                    'Comentari': None,
                     'mes': mes_cat.capitalize(),
                     'any': int(any_val),
                     'grup': "Despesa Fixa",
@@ -3618,7 +3618,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'Idconcepte': str(res['row']['Concepte']),
                     'Import càrrec': 0.0,
                     'import ingrés': float(res['import_final']),
-                    'Comentari': "Ingrés automàtic",
+                    'Comentari': None,
                     'mes': mes_cat.capitalize(),
                     'any': int(any_val),
                     'grup': "Ingrés Fix",
