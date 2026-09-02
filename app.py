@@ -2543,7 +2543,7 @@ def render_compres_super_interface():
             
     with col_hdr4:
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
-        uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg", "txt"], label_visibility="collapsed", key=uploader_key)
+        uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg"], label_visibility="collapsed", key=uploader_key)
         
         candidates = [f for f in [uploaded_file, st.session_state.get("scanned_file")] if f is not None]
         chosen_file = None
@@ -4224,6 +4224,10 @@ if tab_intro:
             for k in list(st.session_state.keys()):
                 if k.startswith(prefix) and k not in ["desp_version", "km_version"]:
                     del st.session_state[k]
+            if prefix == "super_":
+                for p in ['pending_super', 'pending_data']:
+                    if p in st.session_state:
+                        del st.session_state[p]
         
         options = ["Moviment Real (Despesa)", "Previsió de Pagament", "Previsió d'Ingrés", "Compra Súper", "Km Cotxe", "Moviment TR Cartera"]
         default_idx = 0
