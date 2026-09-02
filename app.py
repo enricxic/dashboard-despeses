@@ -2641,9 +2641,17 @@ Notes importants:
                                 }
                             }
                             
-                            req = requests.post(url, json=payload, timeout=90)
-                            if req.status_code != 200:
-                                raise Exception(f"API Error {req.status_code}: {req.text}")
+                            import time
+                            max_retries = 3
+                            for attempt in range(max_retries):
+                                req = requests.post(url, json=payload, timeout=90)
+                                if req.status_code == 503 or req.status_code == 429:
+                                    if attempt < max_retries - 1:
+                                        time.sleep(2 ** attempt)
+                                        continue
+                                if req.status_code != 200:
+                                    raise Exception(f"API Error {req.status_code}: {req.text}")
+                                break
                                 
                             response_data = req.json()
                             try:
