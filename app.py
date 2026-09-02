@@ -6275,6 +6275,12 @@ def modal_recepta(row):
                 e_img_url = st.text_input("URL Imatge", value=str(row.get('imatge_url', '')).strip() if pd.notna(row.get('imatge_url')) else "")
                 e_vid_url = st.text_input("URL Vídeo", value=str(row.get('video_url', '')).strip() if pd.notna(row.get('video_url')) else "")
                 
+            tags_opts = ["Sense Gluten", "Sense Lactosa", "Vegetarià", "Vegà", "Baix en Sal", "Baix en Greix", "Alt en Proteïna", "Sense Sucre"]
+            curr_tags = row.get('tags_nutricionals')
+            if not isinstance(curr_tags, list): curr_tags = []
+            curr_tags = [t for t in curr_tags if t in tags_opts]
+            e_tags = st.multiselect("Etiquetes / Al·lèrgies (Nutrició)", tags_opts, default=curr_tags, key=f"e_tags_{row['id']}")
+            
             e_ing = st.text_area("Ingredients", value=row.get('ingredients', ''))
             e_mise = st.text_area("Mise en place (Preparació prèvia)", value=row.get('mise_en_place', ''))
             e_ins = st.text_area("Instruccions", value=row.get('instruccions', ''))
@@ -6312,7 +6318,8 @@ def modal_recepta(row):
                     "temporada": e_temp, "puntuacio_salut": e_salut, "ingredients": e_ing,
                     "mise_en_place": e_mise,
                     "instruccions": e_ins, "imatge_url": final_img, "video_url": e_vid_url,
-                    "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori, "apat": e_apat
+                    "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori, "apat": e_apat,
+                    "tags_nutricionals": e_tags
                 }
                 
                 res = supabase.table('tb_receptes_pro').update(update_data).eq('id', row['id']).execute()
@@ -6502,6 +6509,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         new_img_url = st.text_input("URL Imatge (opcional)", key="k_img_url")
                         new_vid_url = st.text_input("URL Vídeo (YouTube, opcional)", key="k_vid_url")
                     
+                    new_tags = st.multiselect("Etiquetes / Al·lèrgies (Nutrició)", ["Sense Gluten", "Sense Lactosa", "Vegetarià", "Vegà", "Baix en Sal", "Baix en Greix", "Alt en Proteïna", "Sense Sucre"], key="k_tags")
                     new_ing = st.text_area("Ingredients (un per línia)", key="k_ing")
                     new_mise = st.text_area("Mise en place (Preparació prèvia)", key="k_mise")
                     new_ins = st.text_area("Instruccions de preparació", key="k_ins")
@@ -6547,7 +6555,8 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                             "dificultat": new_dif,
                             "tipus_dia": new_dia,
                             "origen": new_ori,
-                            "apat": new_apat
+                            "apat": new_apat,
+                            "tags_nutricionals": new_tags
                         }
                         resp = supabase.table('tb_receptes_pro').insert(data_insert).execute()
                         if resp.data:
