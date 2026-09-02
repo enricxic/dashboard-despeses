@@ -2945,15 +2945,9 @@ def render():
     with col_title:
         st.markdown("<h2 style='margin:0; color:#f39c12;'>Dashboard Despeses</h2>", unsafe_allow_html=True)
     with col_super:
-        if "viewing_compres_super" not in st.session_state:
-            st.session_state["viewing_compres_super"] = False
-        if st.session_state["viewing_compres_super"]:
-            if st.button("⬅️ Tornar al Dashboard", use_container_width=True):
-                st.session_state["viewing_compres_super"] = False
-                st.rerun()
-        else:
-            if st.session_state.get("role") != "viewer":
-                pass
+        if st.button("🔙 Tornar a l'inici", use_container_width=True):
+            st.session_state.current_module = None
+            st.rerun()
                 
     
     # Global settings popover, positioned fixed at top right via CSS

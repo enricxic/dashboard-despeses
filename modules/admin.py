@@ -22,7 +22,13 @@ def save_config(config_data):
         json.dump(config_data, f, indent=4)
 
 def render():
-    st.title("⚙️ Administració i Configuració")
+    col_t1, col_t2 = st.columns([8.5, 1.5], vertical_alignment="center")
+    with col_t1:
+        st.markdown("<h2 style='margin:0; color:#f39c12;'>⚙️ Administració i Configuració</h2>", unsafe_allow_html=True)
+    with col_t2:
+        if st.button("🔙 Tornar a l'inici", use_container_width=True):
+            st.session_state.current_module = None
+            st.rerun()
     
     tab_conf, tab_bd, tab_pap = st.tabs(["🎛️ Configuració Global", "🗄️ Bases de Dades", "🗑️ Paperera"])
     

@@ -74,12 +74,6 @@ if st.session_state.current_module is None:
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.markdown('<div class="back-button">', unsafe_allow_html=True)
-    if st.button("🔙 Tornar a l'inici"):
-        st.session_state.current_module = None
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
     st.markdown("---")
     
     try:
