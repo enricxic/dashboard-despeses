@@ -281,11 +281,11 @@ def render():
             z-index: 10000 !important;
         }}
         </style>
-        <div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
+<div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
                     font-size: 1.8rem; cursor: help; 
                     text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
-            {role_icon}
-    </div>
+{role_icon}
+</div>
         """, 
         unsafe_allow_html=True
     )
@@ -3227,31 +3227,14 @@ def render():
     tab_dash = tabs[0]
     tab_details = tabs[1]
     
-    tab_idx = 2
     if st.session_state.get("role") in ["admin", "guest"]:
-        tab_intro = tabs[tab_idx]
-        tab_xat = tabs[tab_idx + 1]
-        tab_idx += 2
+        tab_intro = tabs[2]
+        tab_xat = tabs[3]
     else:
         tab_intro = None
         tab_xat = None
+
     
-    if st.session_state.get("role") in ["admin", "guest"]:
-        tab_compra = tabs[tab_idx]
-        tab_rebost = tabs[tab_idx + 1]
-        tab_menjar = tabs[tab_idx + 2]
-        tab_idx += 3
-    else:
-        tab_compra = None
-        tab_rebost = None
-        tab_menjar = None
-    
-    if st.session_state.get("role") == "admin":
-        tab_db = tabs[tab_idx]
-        tab_log = tabs[tab_idx + 1]
-    else:
-        tab_db = None
-        tab_log = None
     # ================= TAB 1: DASHBOARD GENERAL =================
     with tab_dash:
         # 1. Container for bank metrics (physically at the top)

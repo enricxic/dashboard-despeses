@@ -12,44 +12,78 @@ st.set_page_config(
 st.markdown('''
     <style>
     #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
     footer {visibility: hidden;}
     .css-1d391kg {padding-top: 1rem;}
-    /* Custom styling for the navigation radio buttons to make them look like pills */
-    div.row-widget.stRadio > div { flex-direction: row; justify-content: center; gap: 10px;}
+    
+    /* Make home screen buttons massive */
+    .home-button .stButton > button {
+        height: 140px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 15px;
+        margin-bottom: 20px;
+    }
+    
+    /* Top back button smaller */
+    .back-button .stButton > button {
+        height: 40px;
+        font-size: 16px;
+    }
     </style>
 ''', unsafe_allow_html=True)
 
 if not check_password():
     st.stop()
 
-menu = {
-    "📊 Econòmic": "modules.economic",
-    "🛒 Compres Súper": "modules.compres",
-    "🍽️ Menjar": "modules.menjar",
-    "📅 Calendari": "modules.calendari",
-    "🏠 Domòtica": "modules.domotica",
-    "⚙️ Administració": "modules.admin"
-}
+if 'current_module' not in st.session_state:
+    st.session_state.current_module = None
 
-st.markdown("### 🎛️ Navegació V2")
+if st.session_state.current_module is None:
+    st.write("")
+    st.write("")
+    st.markdown("<h1 style='text-align: center; margin-bottom: 40px;'>👑 Dashboard Principal</h1>", unsafe_allow_html=True)
+    
+    # We wrap buttons in a container that we can target via markdown if needed, but we'll just use a class wrapper
+    st.markdown('<div class="home-button">', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📊 Àrea Econòmica", use_container_width=True):
+            st.session_state.current_module = "modules.economic"
+            st.rerun()
+        if st.button("🍽️ Menjar i Rebost", use_container_width=True):
+            st.session_state.current_module = "modules.menjar"
+            st.rerun()
+        if st.button("🏠 Domòtica i Llar", use_container_width=True):
+            st.session_state.current_module = "modules.domotica"
+            st.rerun()
+            
+    with col2:
+        if st.button("🛒 Compres al Súper", use_container_width=True):
+            st.session_state.current_module = "modules.compres"
+            st.rerun()
+        if st.button("📅 Agenda i Manteniment", use_container_width=True):
+            st.session_state.current_module = "modules.calendari"
+            st.rerun()
+        if st.button("⚙️ Configuració Global", use_container_width=True):
+            st.session_state.current_module = "modules.admin"
+            st.rerun()
+            
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# st.pills or st.segmented_control if available, else horizontal radio
-if hasattr(st, 'segmented_control'):
-    selection = st.segmented_control("Mòdul", list(menu.keys()), default=list(menu.keys())[0], label_visibility="collapsed")
-    if not selection:
-        selection = list(menu.keys())[0]
-elif hasattr(st, 'pills'):
-    selection = st.pills("Mòdul", list(menu.keys()), default=list(menu.keys())[0], label_visibility="collapsed")
-    if not selection:
-        selection = list(menu.keys())[0]
 else:
-    selection = st.radio("Mòdul", list(menu.keys()), horizontal=True, label_visibility="collapsed")
-
-st.markdown("---")
-
-try:
-    module_name = menu[selection]
-    mod = importlib.import_module(module_name)
-    mod.render()
-except Exception as e:
-    st.error(f"Error carregant el mòdul {selection}: {e}")
+    st.markdown('<div class="back-button">', unsafe_allow_html=True)
+    if st.button("🔙 Tornar a l'inici"):
+        st.session_state.current_module = None
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    try:
+        mod = importlib.import_module(st.session_state.current_module)
+        mod.render()
+    except Exception as e:
+        st.error(f"Error carregant el mòdul: {e}")
