@@ -6574,95 +6574,92 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         st.warning("El títol és obligatori!")
                         
             with subtab_gen:
-                st.markdown("### 🧠 Recomanador de Menús Intel·ligent")
-                st.write("Aquest recomanador llegeix el teu historial real de menjars del calendari per fer-te suggeriments personalitzats.")
+                st.markdown("### 🧠 Planificador de Menús Setmanal")
+                st.write("Genera un menú equilibrat basat en les teves receptes, la temporada i les teves preferències.")
                 
-                @st.cache_data(ttl=600)
-                def fetch_historial(role):
-                    try:
-                        supa = get_supabase_client(role)
-                        res = supa.table('tb_historial_menjars').select('*').order('data_apat', desc=True).execute()
-                        if res.data:
-                            import pandas as pd
-                            return pd.DataFrame(res.data)
-                    except Exception as e:
-                        st.error(f"Error carregant l'historial: {e}")
-                    import pandas as pd
-                    return pd.DataFrame()
-                
-                df_hist = fetch_historial(st.session_state.get("role", "guest"))
-                
-                # Neteja de dades: Ignorar "Restaurant" i restringir només a Dinars
-                if not df_hist.empty:
-                    df_hist = df_hist[~df_hist['nom_plat'].str.lower().str.contains('restaurant', na=False)]
-                    if 'tipus_apat' in df_hist.columns:
-                        df_hist = df_hist[df_hist['tipus_apat'].str.lower() == 'dinar']
-                
-                if df_hist.empty:
-                    st.warning("No hi ha historial de menjars a la base de dades.")
-                else:
-                    st.info(f"S'han carregat **{len(df_hist)}** àpats de l'historial del teu Google Calendar.")
-                    
-                    st.markdown("#### 📊 Anàlisi del teu Historial")
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        with st.container(border=True, height=280):
-                            st.markdown("**⭐ Els teus plats més repetits:**")
-                            top_plats = df_hist['nom_plat'].value_counts().head(5)
-                            for plat, count in top_plats.items():
-                                st.write(f"- **{plat}** ({count} cops)")
-                    
-                    with col2:
-                        with st.container(border=True, height=280):
-                            st.markdown("**🕰️ Fa molt temps que no menges:**")
-                            last_eaten = df_hist.groupby('nom_plat')['data_apat'].max().sort_values().head(5)
-                            for plat, date_eaten in last_eaten.items():
-                                st.write(f"- **{plat}** (Últim: {date_eaten})")
-                            
-                    st.divider()
-                    st.markdown("#### 💡 Suggeriments Màgics per Avui")
-                    
-                    if st.button("🪄 Generar Propostes de Menú", use_container_width=True):
-                        with st.spinner("Analitzant els teus gustos i creuant amb les dates..."):
-                            import time
-                            time.sleep(1.5)
-                            
-                            df_hist['data_apat'] = pd.to_datetime(df_hist['data_apat'])
-                            avui = pd.Timestamp.now()
-                            
-                            freq = df_hist['nom_plat'].value_counts()
-                            last_eaten_df = df_hist.groupby('nom_plat')['data_apat'].max()
-                            
-                            favorits_oblidats = []
-                            tresors_perduts = []
-                            
-                            for plat, count in freq.items():
-                                last = last_eaten_df[plat]
-                                dies_des_de_ultim = (avui - last).days
-                                
-                                if count >= 3 and 7 <= dies_des_de_ultim <= 45:
-                                    favorits_oblidats.append(plat)
-                                elif count >= 2 and dies_des_de_ultim > 45:
-                                    tresors_perduts.append(plat)
-                            
+                with st.expander("⚙️ Configuració del Perfil Familiar", expanded=True):
+                    c1, c2, c3 = st.columns(3)
+                    with c1:
+                        num_comensals = st.number_input("Nombre de comensals", min_value=1, value=2, step=1)
+                        st.session_state['num_comensals'] = num_comensals
+                        temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
+                        import datetime
+                        month = datetime.datetime.now().month
+                        if month in [3,4,5]: def_temp = "Primavera"
+                        elif month in [6,7,8]: def_temp = "Estiu"
+                        elif month in [9,10,11]: def_temp = "Tardor"
+                        else: def_temp = "Hivern"
+                        sel_temp = st.selectbox("Temporada actual", temp_opts, index=temp_opts.index(def_temp))
+                    with c2:
+                        tags_opts = ["Sense Gluten", "Sense Lactosa", "Vegetarià", "Vegà", "Baix en Sal", "Baix en Greix", "Alt en Proteïna", "Sense Sucre"]
+                        req_tags = st.multiselect("Requisits Nutricionals (oblidatoris per la recepta)", tags_opts)
+                    with c3:
+                        st.write(" ")
+                        st.write(" ")
+                        btn_gen = st.button("🔄 Generar Menú Setmanal", use_container_width=True, type="primary")
+
+                if btn_gen:
+                    if df_receptes.empty:
+                        st.warning("No hi ha receptes suficients per generar un menú.")
+                    else:
+                        with st.spinner("Creant menú equilibrat..."):
                             import random
-                            st.success("Aquí tens algunes idees basades en el teu propi historial!")
-                            c1, c2 = st.columns(2)
+                            df_pool = df_receptes.copy()
+                            df_pool = df_pool[(df_pool['temporada'].isin([sel_temp, "Tot l'any"]))]
+                            if req_tags:
+                                def has_all_tags(tags_list):
+                                    if not isinstance(tags_list, list): return False
+                                    return all(t in tags_list for t in req_tags)
+                                df_pool = df_pool[df_pool['tags_nutricionals'].apply(has_all_tags)]
+                                
+                            df_dinar_primer = df_pool[(df_pool['apat'].isin(['Dinar', 'Dinar/Sopar'])) & (df_pool['categoria'].isin(['Primer']))].copy()
+                            df_dinar_segon = df_pool[(df_pool['apat'].isin(['Dinar', 'Dinar/Sopar'])) & (df_pool['categoria'].isin(['Segon', 'Plat únic']))].copy()
+                            df_dinar_postre = df_pool[df_pool['categoria'] == 'Postre'].copy()
                             
-                            with c1:
-                                st.info("**✅ Un dels teus habituals**\n\n(que fa dies que no menges)")
-                                if favorits_oblidats:
-                                    st.markdown(f"### 🍲 {random.choice(favorits_oblidats)}")
-                                else:
-                                    st.write("Avui no tenim suggeriments d'aquest tipus.")
-                                    
-                            with c2:
-                                st.warning("**💎 Una joia perduda**\n\n(que no fas des de fa més d'un mes)")
-                                if tresors_perduts:
-                                    st.markdown(f"### 🍽️ {random.choice(tresors_perduts)}")
-                                else:
-                                    st.write("Avui no tenim suggeriments d'aquest tipus.")
+                            df_sopar_segon = df_pool[(df_pool['apat'].isin(['Sopar', 'Dinar/Sopar'])) & (df_pool['categoria'].isin(['Segon', 'Plat únic', 'Primer']))].copy()
+                            df_sopar_postre = df_pool[df_pool['categoria'] == 'Postre'].copy()
+                            
+                            def get_list(df_cat):
+                                if df_cat.empty: return []
+                                lst = df_cat['titol'].tolist()
+                                random.shuffle(lst)
+                                return lst
+                                
+                            list_dp = get_list(df_dinar_primer)
+                            list_ds = get_list(df_dinar_segon)
+                            list_dpo = get_list(df_dinar_postre)
+                            list_ss = get_list(df_sopar_segon)
+                            list_spo = get_list(df_sopar_postre)
+                            
+                            def pop_recipe(lst):
+                                if not lst: return "-"
+                                val = lst.pop(0)
+                                lst.append(val)
+                                return val
+                                
+                            dies = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
+                            menu_data = []
+                            for dia in dies:
+                                menu_data.append({
+                                    "Dia": dia,
+                                    "Dinar: Primer": pop_recipe(list_dp),
+                                    "Dinar: Segon": pop_recipe(list_ds),
+                                    "Dinar: Postre": pop_recipe(list_dpo),
+                                    "Sopar: Segon": pop_recipe(list_ss),
+                                    "Sopar: Postre": pop_recipe(list_spo)
+                                })
+                            
+                            st.session_state['gen_menu_data'] = menu_data
+                            
+                if 'gen_menu_data' in st.session_state:
+                    st.markdown("#### 📅 El teu Menú Setmanal")
+                    import pandas as pd
+                    st.dataframe(pd.DataFrame(st.session_state['gen_menu_data']), use_container_width=True, hide_index=True)
+                    
+                    st.markdown("#### ⏱️ Timing i Organització (Batch Cooking)")
+                    c_n = st.session_state.get('num_comensals', 2)
+                    st.info(f"**Suggeriment d'organització per {c_n} comensals:**\n- **Mise en place:** Revisa el diumenge els ingredients necessaris pels primers plats de la setmana.\n- **Preparació prèvia:** Pots tallar verdures i deixar sofregits a la nevera per accelerar els sopars entre setmana.\n- **Congelació:** Si fas guisats per dinar, planteja't doblar la recepta i congelar els tàpers restants per estalviar temps la setmana vinent.")
+
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
 
