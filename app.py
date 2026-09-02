@@ -2646,8 +2646,12 @@ Notes importants:
                                 raise Exception(f"API Error {req.status_code}: {req.text}")
                                 
                             response_data = req.json()
-                            response_text = response_data['candidates'][0]['content']['parts'][0]['text']
-                            data = json.loads(response_text)
+                            try:
+                                response_text = response_data['candidates'][0]['content']['parts'][0]['text']
+                                response_text = response_text.replace('```json', '').replace('```', '').strip()
+                                data = json.loads(response_text)
+                            except Exception as e:
+                                raise Exception(f"Failed to parse AI response: {str(e)}. Raw: {str(response_data)[:200]}")
                             
                             # 1. Update supermercat
                             super_trobat = data.get("supermercat", "")
