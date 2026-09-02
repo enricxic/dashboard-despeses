@@ -8,7 +8,15 @@ Aquest document descriu l'arquitectura, funcionalitats i regles de l'aplicaci√≥ 
 - **Base de Dades**: **Supabase** (PostgreSQL). La comunicaci√≥ es fa mitjan√ßant la llibreria `supabase-py`.
 - **Processament de Dades**: √Ämpliament basat en **Pandas** per a la manipulaci√≥, neteja i filtratge dels DataFrames abans de renderitzar.
 
-## 2. Estructura de l'Aplicaci√≥ (Pestanyes Principals)
+## 2. Estructura de Directori i Arxius
+A l'hora d'analitzar l'aplicaci√≥, √©s important tenir clar quins arxius formen part del projecte actiu i ignorar la resta (es recomana no crear scripts temporals no rastrejats per git):
+- `app.py`: L'arxiu principal i motor de l'aplicaci√≥.
+- `scanner.py`: M√≤dul de suport (hist√≤ricament per funcionalitats OCR o escaneig).
+- `auto_scan_ui.py`: M√≤dul d'UI per a escaneig autom√†tic de tiquets.
+- Carpeta `programes py/`: Cont√© subm√≤duls importants del sistema (`compresSuper.py`, `connect_formulari.py`, `introProductesSuper.py`, `ocr_ticket.py`).
+- *Nota*: Qualsevol altre petit arxiu python (`patch_*.py`, `test_*.py`, `update_*.py`) solien ser esborranys temporals i s'han eliminat. L'aplicaci√≥ es mant√© neta.
+
+## 3. Estructura de l'Aplicaci√≥ (Pestanyes Principals)
 L'aplicaci√≥ es divideix en v√†ries pestanyes (`st.tabs`):
 1. **Dashboard General**: Gr√†fics i m√®triques (ingressos, despeses, estalvis).
 2. **Detalls del Mes**: Resum mensual amb taules de despeses per categoria, i un llistat interactiu de **Pagaments Pendents** i **Ingressos Pendents** (que permet marcar-los com a cobrats/pagats i moure'ls a la taula general de despeses triant el banc de forma individualitzada amb una finestra modal).
@@ -40,3 +48,9 @@ Taules principals:
 Si inicies una conversa nova amb un agent o assistent, digues-li directament:
 **"Abans de res, llegeix l'arxiu `DOCUMENTACIO_PROJECTE.md` per entendre el context de la meva app de Dashboard."**
 Aix√≤ assegurar√† que sap on s√≥n les taules, com funciona el disseny, el codi existent i com evitar els errors que ja hem solucionat en el passat.
+ 
+## 7. Estratägia de Sincronitzaci¢ Memïria i Cache  
+L'aplicaci¢ compta amb un sistema d'actualitzaci¢ de dades de latäncia zero:  
+- **Lectura**: Quan l'aplicaci¢ s'obre per primera vegada, es descarreguen totes les taules de Supabase simultÖniament usant load_dashboard_data() i la cachÇ de Streamlit (@st.cache_data). Aixï pot trigar diversos segons.  
+- **Escriptura (0 segons delay)**: Per evitar tornar a trigar segons sencers en cada actualitzaci¢, l'aplicaci¢ utilitza les funcions insert_db_row, update_db_row, delete_db_row i save_to_csv. Aquestes funcions envien la dada a Supabase i al mateix temps utilitzen les funcions auxiliars update_session_state_insert, etc. per **injectar/modificar directament el DataFrame actiu a la memïria RAM** (st.session_state).  
+- **Neteja**: Tot i l'actualitzaci¢ manual, el sistema neteja la memïria cau per darrere (st.cache_data.clear()) i actualitza la variable last_synced_time, per tal de que si l'usuari fa un F5 complet, torni a fer la cÖrrega inicial descarregant completament la base de dades. D'aquesta manera s'assegura que mentre la sessi¢ estÖ activa no hi ha interrupcions per cÖrrega, perï tampoc hi ha problemes de desincronitzaci¢ a llarg termini. 
