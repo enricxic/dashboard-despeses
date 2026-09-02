@@ -2621,7 +2621,7 @@ Notes importants:
 2. Assegura't de capturar bé el 'preu_total' de la línia.
 3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 """
-                            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
                             payload = {
                                 "contents": [
                                     {
