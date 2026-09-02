@@ -3852,6 +3852,38 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
                     'ticketPendent': False
                 }
                 insert_db_row('despeses', new_row)
+                
+                # Check for scheduled transfers
+                banc_desti = df_pag_local.loc[res['idx'], 'banc_desti_traspas'] if 'banc_desti_traspas' in df_pag_local.columns else None
+                import pandas as pd
+                if banc_desti and pd.notna(banc_desti) and str(banc_desti).strip() != '':
+                    banc_desti_str = str(banc_desti).strip()
+                    # 1. Add compensatory income to despeses
+                    row_dest = new_row.copy()
+                    row_dest['ID_mov'] = int(max_id + 1)
+                    row_dest['Banc'] = banc_desti_str
+                    row_dest['Import càrrec'] = 0.0
+                    row_dest['import ingrés'] = float(res['import_final'])
+                    row_dest['grup'] = "Ingrés"
+                    insert_db_row('despeses', row_dest)
+                    max_id += 1
+                    
+                    # 2. If dest_banc == TR Cartera, insert into tr_cartera as Compra
+                    if banc_desti_str == 'TR Cartera':
+                        concepte_str = str(res['row']['Concepte']).lower()
+                        cartera_val = 'NVIDIA' if 'nvidia' in concepte_str else 'S&P500'
+                        new_tr_row = {
+                            'DATA': datetime.datetime.now().strftime('%Y-%m-%d'),
+                            'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
+                            'any': int(any_val),
+                            'COMPRA': float(res['import_final']),
+                            'VENDA': 0.0,
+                            'CARTERA': cartera_val,
+                            'CONCEPTE': 'Compra',
+                            'COMENTARI': f"Traspàs automàtic: {res['row']['Concepte']}"
+                        }
+                        insert_db_row('tr_cartera', new_tr_row)
+                        
                 updates_made = True
             elif res['type'] == 'ingres':
                 df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
@@ -4678,6 +4710,11 @@ if tab_intro:
             with r2_col5:
                 repetir_any_limit = st.selectbox("Fins a desembre de l'any:", [any_val, any_val + 1, any_val + 2], index=0, key="rep_any_pag")
             
+            # Row 3
+            r3_col1, r3_col2 = st.columns([1, 1])
+            with r3_col1:
+                dest_banc_pag = st.selectbox("Banc de Destí (Opcional, només per Traspassos)", [""] + get_config_banks(), index=0, key="pag_dest_banc")
+            
             col_btns = st.columns([3.5, 2.0, 6.5])
             with col_btns[0]:
                 submitted = st.button("Desa la Previsió de Pagament")
@@ -4705,6 +4742,7 @@ if tab_intro:
                                 df_pag.loc[mask, 'Formapago'] = forma_pago
                                 df_pag.loc[mask, 'Categoria'] = cat_val
                                 df_pag.loc[mask, 'pagat'] = pagat_val
+                                df_pag.loc[mask, 'banc_desti_traspas'] = dest_banc_pag if dest_banc_pag else None
                                 updated_count += 1
                             else:
                                 new_row = {
@@ -4718,7 +4756,8 @@ if tab_intro:
                                     'Categoria': cat_val,
                                     'Concepte': concept_val,
                                     'Import': import_carg,
-                                    'pagat': pagat_val
+                                    'pagat': pagat_val,
+                                    'banc_desti_traspas': dest_banc_pag if dest_banc_pag else None
                                 }
                                 df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
                                 current_max_id += 1
@@ -4737,7 +4776,8 @@ if tab_intro:
                         'Categoria': cat_val,
                         'Concepte': concept_val,
                         'Import': import_carg,
-                        'pagat': pagat_val
+                        'pagat': pagat_val,
+                        'banc_desti_traspas': dest_banc_pag if dest_banc_pag else None
                     }
                     df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
                     save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
@@ -6023,6 +6063,7 @@ if tab_db:
                 "Kilòmetres Cotxe": ("kmCotxe", "idRuta"),
                 "Pagament Hipoteca": ("hipoteca", None),
                 "Estalvis DP": ("estalviDP", None),
+                "TR Cartera": ("tr_cartera", "idTRCartera"),
                 "Stock Rebost": ("tb_productes", "idProducte"),
                 "Peticions Lliures Compra": ("tb_pendents_compra", "id"),
                 "Llocs d'Inventari": ("tb_llocs", "id_lloc")
