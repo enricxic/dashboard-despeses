@@ -1531,7 +1531,7 @@ Notes importants:
                                 }
                             }
                             
-                            req = requests.post(url, json=payload, timeout=30)
+                            req = requests.post(url, json=payload, timeout=90)
                             if req.status_code != 200:
                                 raise Exception(f"API Error {req.status_code}: {req.text}")
                                 
