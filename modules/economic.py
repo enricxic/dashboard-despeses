@@ -285,7 +285,7 @@ def render():
                     font-size: 1.8rem; cursor: help; 
                     text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
             {role_icon}
-        </div>
+    </div>
         """, 
         unsafe_allow_html=True
     )
@@ -3219,15 +3219,10 @@ def render():
                     st.error(f"Error guardant: {e}")
     
     # ----------------- TABS SYSTEM -----------------
-    tabs_list = ["📊 Dashboard General", "📋 Detalls del Mes"]
+    tabs_list = ["📊 Dashboard General", "📈 Detalls del Mes"]
     if st.session_state.get("role") in ["admin", "guest"]:
-        tabs_list.extend(["📝 Intro Dades", "💬 Xat IA"])
-    if st.session_state.get("role") in ["admin", "guest"]:
-        tabs_list.extend(["🛒 Llista de la Compra", "📦 Rebost / Stock", "🍲 Menjar"])
+        tabs_list.extend(["📝 Intro Dades", "🤖 Xat IA"])
     
-    if st.session_state.get("role") == "admin":
-        tabs_list.extend(["🗄️ Bases de Dades (Supabase)", "📜 Registre d'Accions"])
-        
     tabs = st.tabs(tabs_list)
     tab_dash = tabs[0]
     tab_details = tabs[1]
@@ -3495,8 +3490,7 @@ def render():
         )
         
         st.markdown(
-            f"""
-    <style>
+            f"""<style>
     .custom-summary-table table {{
         width: 100%;
         border-collapse: collapse;
@@ -3517,9 +3511,9 @@ def render():
         text-align: left;
     }}
     </style>
-    <div class="custom-summary-table">
-    {html_table}
-    </div>
+<div class="custom-summary-table">
+{html_table}
+</div>
             """,
             unsafe_allow_html=True
         )
@@ -3927,12 +3921,12 @@ def render():
                     <div data-testid="stMetric">
                         <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a ingressar</div>
                         <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{month_ing['Import'].sum():,.2f} €</div>
-                    </div>
+                </div>
                     <div data-testid="stMetric">
                         <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
                         <div style="font-size: 2.25rem; font-weight: 400; color: #3b82f6;">{pendent_sum:,.2f} €</div>
-                    </div>
                 </div>
+            </div>
                 """, unsafe_allow_html=True)
             else:
                 st.info("No hi ha dades d'ingressos per aquest mes.")
