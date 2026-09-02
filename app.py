@@ -6602,7 +6602,7 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                     if df_receptes.empty:
                         st.warning("No hi ha receptes suficients per generar un menú.")
                     else:
-                        with st.spinner("Creant menú equilibrat..."):
+                        with st.spinner("Creant menú intel·ligent..."):
                             import random
                             df_pool = df_receptes.copy()
                             df_pool = df_pool[(df_pool['temporada'].isin([sel_temp, "Tot l'any"]))]
@@ -6611,44 +6611,98 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                                     if not isinstance(tags_list, list): return False
                                     return all(t in tags_list for t in req_tags)
                                 df_pool = df_pool[df_pool['tags_nutricionals'].apply(has_all_tags)]
+                            
+                            def get_pool(apat_req, cat_req):
+                                df = df_pool[(df_pool['apat'].isin(apat_req)) & (df_pool['categoria'].isin(cat_req))]
+                                return df.to_dict('records')
                                 
-                            df_dinar_primer = df_pool[(df_pool['apat'].isin(['Dinar', 'Dinar/Sopar'])) & (df_pool['categoria'].isin(['Primer']))].copy()
-                            df_dinar_segon = df_pool[(df_pool['apat'].isin(['Dinar', 'Dinar/Sopar'])) & (df_pool['categoria'].isin(['Segon', 'Plat únic']))].copy()
-                            df_dinar_postre = df_pool[df_pool['categoria'] == 'Postre'].copy()
+                            pool_dp = get_pool(['Dinar', 'Dinar/Sopar'], ['Primer'])
+                            pool_ds = get_pool(['Dinar', 'Dinar/Sopar'], ['Segon', 'Plat únic'])
+                            pool_dpo = get_pool(['Dinar', 'Dinar/Sopar', 'Sopar'], ['Postre'])
                             
-                            df_sopar_segon = df_pool[(df_pool['apat'].isin(['Sopar', 'Dinar/Sopar'])) & (df_pool['categoria'].isin(['Segon', 'Plat únic', 'Primer']))].copy()
-                            df_sopar_postre = df_pool[df_pool['categoria'] == 'Postre'].copy()
-                            
-                            def get_list(df_cat):
-                                if df_cat.empty: return []
-                                lst = df_cat['titol'].tolist()
-                                random.shuffle(lst)
-                                return lst
+                            pool_ss = get_pool(['Sopar', 'Dinar/Sopar'], ['Segon', 'Plat únic'])
+                            if len(pool_ss) < 7:
+                                pool_ss.extend(get_pool(['Dinar'], ['Primer', 'Plat únic'])) # Borrow light lunches
                                 
-                            list_dp = get_list(df_dinar_primer)
-                            list_ds = get_list(df_dinar_segon)
-                            list_dpo = get_list(df_dinar_postre)
-                            list_ss = get_list(df_sopar_segon)
-                            list_spo = get_list(df_sopar_postre)
+                            pool_spo = get_pool(['Sopar', 'Dinar/Sopar', 'Dinar'], ['Postre'])
                             
-                            def pop_recipe(lst):
-                                if not lst: return "-"
-                                val = lst.pop(0)
-                                lst.append(val)
-                                return val
+                            def pick_recipe(pool, avoid_ingredients, used_weekly, is_weekend, max_arros_pasta=2):
+                                if not pool: return None, avoid_ingredients
+                                
+                                random.shuffle(pool)
+                                
+                                # First pass: strict constraints
+                                for r in pool:
+                                    t = r['titol']
+                                    t_low = t.lower()
+                                    if t in used_weekly: continue
+                                    
+                                    # Day constraint
+                                    tipus_dia = r.get('tipus_dia', '')
+                                    if not is_weekend and tipus_dia in ['Cap de setmana', 'Festiu', 'Especial']: continue
+                                    
+                                    # Ingredient clash (same meal)
+                                    clash = False
+                                    for kw in avoid_ingredients:
+                                        if kw in t_low: clash = True
+                                    if clash: continue
+                                        
+                                    # Weekly limits (arròs / pasta / llegums)
+                                    if 'arròs' in t_low or 'arros' in t_low:
+                                        if sum(1 for x in used_weekly if 'arròs' in x.lower() or 'arros' in x.lower()) >= max_arros_pasta:
+                                            continue
+                                    if 'pasta' in t_low or 'macarrons' in t_low or 'fideus' in t_low or 'espaguetis' in t_low:
+                                        if sum(1 for x in used_weekly if 'pasta' in x.lower() or 'macarrons' in x.lower() or 'fideus' in x.lower() or 'espaguetis' in x.lower()) >= max_arros_pasta:
+                                            continue
+                                            
+                                    # Extract new keywords to avoid in same meal
+                                    new_av = list(avoid_ingredients)
+                                    for kw in ['ou', 'arròs', 'arros', 'pasta', 'pollastre', 'porc', 'vedella', 'peix', 'formatge', 'patata']:
+                                        if kw in t_low: new_av.append(kw)
+                                        
+                                    used_weekly.append(t)
+                                    return t, new_av
+                                    
+                                # Fallback 1: loosen day constraints, but keep weekly ingredient limit and avoid same-meal clashes
+                                for r in pool:
+                                    t = r['titol']
+                                    t_low = t.lower()
+                                    if t in used_weekly: continue
+                                    clash = False
+                                    for kw in avoid_ingredients:
+                                        if kw in t_low: clash = True
+                                    if clash: continue
+                                    used_weekly.append(t)
+                                    return t, avoid_ingredients
+                                    
+                                # Fallback 2: allow repeats if we run out of unique recipes
+                                r = random.choice(pool)
+                                return r['titol'], avoid_ingredients
                                 
                             dies = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
                             menu_data = []
+                            used_all_week = []
+                            
                             for dia in dies:
+                                is_weekend = dia in ["Dissabte", "Diumenge"]
+                                av_ingredients_dinar = []
+                                av_ingredients_sopar = []
+                                
+                                p1, av_ingredients_dinar = pick_recipe(pool_dp, av_ingredients_dinar, used_all_week, is_weekend)
+                                p2, av_ingredients_dinar = pick_recipe(pool_ds, av_ingredients_dinar, used_all_week, is_weekend)
+                                p3, _ = pick_recipe(pool_dpo, [], used_all_week, is_weekend)
+                                
+                                s1, av_ingredients_sopar = pick_recipe(pool_ss, av_ingredients_sopar, used_all_week, is_weekend)
+                                s2, _ = pick_recipe(pool_spo, [], used_all_week, is_weekend)
+                                
                                 menu_data.append({
                                     "Dia": dia,
-                                    "Dinar: Primer": pop_recipe(list_dp),
-                                    "Dinar: Segon": pop_recipe(list_ds),
-                                    "Dinar: Postre": pop_recipe(list_dpo),
-                                    "Sopar: Segon": pop_recipe(list_ss),
-                                    "Sopar: Postre": pop_recipe(list_spo)
+                                    "Dinar: Primer": p1 or "-",
+                                    "Dinar: Segon": p2 or "-",
+                                    "Dinar: Postre": p3 or "-",
+                                    "Sopar: Segon": s1 or "-",
+                                    "Sopar: Postre": s2 or "-"
                                 })
-                            
                             st.session_state['gen_menu_data'] = menu_data
                             
                 if 'gen_menu_data' in st.session_state:
