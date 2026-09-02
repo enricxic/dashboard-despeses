@@ -498,6 +498,7 @@ def insert_db_row(table_name, new_row_dict):
         st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
 
 def append_to_db(df_new, table_name, state_key, extra_details=None):
+    import json
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         supabase.table(table_name).insert(json.loads(df_new.to_json(orient='records', date_format='iso'))).execute()
@@ -510,7 +511,6 @@ def append_to_db(df_new, table_name, state_key, extra_details=None):
             details.update(extra_details)
             
         # Also store the fully inserted rows for auditing
-        import json
         details['rows_inserted'] = json.loads(df_new.to_json(orient='records', date_format='iso'))
             
         log_action(table_name, 'INSERT_BULK', details)
