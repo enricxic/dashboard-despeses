@@ -4169,7 +4169,7 @@ if tab_intro:
                     save_new_concept = st.checkbox("Desar a la llista permanent?", value=True, key=f"desp_save_new_concept_{version}")
 
             dest_banc = None
-            if grup_val == "op_banc" and cat_val == "op_banc":
+            if grup_val == "op_banc" and cat_val == "op_banc" and concept_val == "Traspàs comptes":
                 st.markdown("<h5 style='color:#3498db; margin-top:5px; margin-bottom:5px;'>🔁 Traspàs entre comptes</h5>", unsafe_allow_html=True)
                 dest_col1, dest_col2 = st.columns(2)
                 with dest_col1:
@@ -4228,7 +4228,7 @@ if tab_intro:
                     st.error("⚠️ El grup és Càrrec, per tant l'Import Ingrés ha de ser 0.")
                 elif grup_val == "Ingrés" and import_carg != 0.0:
                     st.error("⚠️ El grup és Ingrés, per tant l'Import Càrrec ha de ser 0.")
-                elif grup_val == "op_banc" and cat_val == "op_banc" and not dest_banc:
+                elif grup_val == "op_banc" and cat_val == "op_banc" and actual_concept == "Traspàs comptes" and not dest_banc:
                     st.error("❌ Per a un traspàs entre comptes has d'escollir un banc de destí.")
                 elif grup_val == "op_banc" and import_carg != 0.0 and import_ing != 0.0:
                     st.error("⚠️ Per a op_banc s'ha d'emplenar només un dels dos imports (Càrrec o Ingrés), no tots dos.")
@@ -4345,7 +4345,7 @@ if tab_intro:
                         else:
                             insert_db_row('despeses', new_row_desp)
                             
-                            if grup_val == "op_banc" and cat_val == "op_banc" and dest_banc:
+                            if grup_val == "op_banc" and cat_val == "op_banc" and actual_concept == "Traspàs comptes" and dest_banc:
                                 row_dest = new_row_desp.copy()
                                 # We get the new ID from the freshly updated session state
                                 row_dest['ID_mov'] = int(st.session_state["df_desp"]['ID_mov'].max() + 1) if "df_desp" in st.session_state else int(df_desp['ID_mov'].max() + 2)
