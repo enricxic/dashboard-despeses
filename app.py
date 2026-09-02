@@ -736,6 +736,55 @@ def log_action(table_name, tipus_accio, detalls):
         # Silently fail if logging fails
         pass
 
+@st.dialog("🗑️ Paperera de Reciclatge", width="large")
+def show_paperera_modal():
+    st.write("Aquesta pantalla et permet recuperar els últims registres esborrats.")
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        res = supabase.table("registre_accions").select("*").eq("tipus_accio", "DELETE").order("id", desc=True).limit(20).execute()
+        if not res.data:
+            st.info("No hi ha registres esborrats recents.")
+            return
+            
+        for r in res.data:
+            import json
+            det = r.get("detalls", {})
+            if isinstance(det, str):
+                try: det = json.loads(det)
+                except: pass
+            
+            row_data = det.get("deleted_row") if isinstance(det, dict) else None
+            if not row_data:
+                continue
+                
+            taula = r.get("taula_afectada", "desconeguda")
+            data_esb = r.get("created_at", "")[:16].replace("T", " ")
+            usuari = r.get("usuari", "desconegut")
+            
+            with st.container():
+                c1, c2 = st.columns([8, 2])
+                with c1:
+                    st.markdown(f"**{taula.upper()}** (esborrat per {usuari} el {data_esb})")
+                    st.json(row_data, expanded=False)
+                with c2:
+                    st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+                    if st.button("♻️ Recuperar", key=f"rec_{r.get('id')}"):
+                        try:
+                            supabase.table(taula).insert(row_data).execute()
+                            log_action(taula, "RESTORE", {"restored_id": r.get("id"), "row": row_data})
+                            st.cache_data.clear()
+                            get_db_tracker().update()
+                            st.session_state["last_synced_time"] = get_db_tracker().last_update
+                            st.success("Recuperat correctament! Refrescant...")
+                            import time
+                            time.sleep(1)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                st.divider()
+    except Exception as e:
+        st.error(f"No s'ha pogut carregar la paperera: {e}")
+
 def update_session_state_insert(table_name, new_row_dict):
     table_map = {
         'despeses': ('df_desp', 'ID_mov'), 'ingressos': ('df_ing', 'idIngres'),
@@ -920,9 +969,38 @@ def save_categories_conceptes(config):
 
 def delete_db_row(table_name, id_col, id_val):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    
+    # NEW CODE: Fetch deleted row from session_state before deleting
+    deleted_row_data = {}
+    table_map = {
+        'despeses': 'df_desp', 'ingressos': 'df_ing',
+        'compresSuper': 'df_super', 'gasolina': 'df_gas',
+        'hipoteca': 'df_hip', 'estalviDP': 'df_est',
+        'tb_productes': 'df_prod', 'tb_llocs': 'df_llocs',
+        'tb_pendents_compra': 'df_pendents',
+        'tr_cartera': 'df_tr_cartera'
+    }
+    df_key = table_map.get(table_name)
+    if df_key and df_key in st.session_state:
+        import numpy as np
+        import pandas as pd
+        df = st.session_state[df_key]
+        mask = df[id_col] == id_val
+        if mask.any():
+            row_dict = df[mask].iloc[0].replace({np.nan: None}).to_dict()
+            for k, v in row_dict.items():
+                if isinstance(v, pd.Timestamp):
+                    row_dict[k] = v.isoformat()
+            deleted_row_data = row_dict
+
     try:
         supabase.table(table_name).delete().eq(id_col, id_val).execute()
-        log_action(table_name, 'DELETE', {'id_col': id_col, 'id_val': id_val})
+        
+        detalls = {'id_col': id_col, 'id_val': id_val}
+        if deleted_row_data:
+            detalls['deleted_row'] = deleted_row_data
+            
+        log_action(table_name, 'DELETE', detalls)
         
         update_session_state_delete(table_name, id_col, id_val)
         st.cache_data.clear()
@@ -5584,13 +5662,17 @@ if tab_rebost:
 if tab_db:
     with tab_db:
         st.write("")
-        col_sel, col_search = st.columns([4, 6], vertical_alignment="bottom")
+        col_sel, col_search, col_trash = st.columns([4, 5, 1], vertical_alignment="bottom")
         with col_sel:
             db_select = st.selectbox("Taula", [
                 "Despeses (General)", "Previsió de Pagaments", "Previsió d'Ingressos", "Compres Supermercat", "Gasolina", "Kilòmetres Cotxe", "Pagament Hipoteca", "Estalvis DP", "TR Cartera", "Stock Rebost", "Peticions Lliures Compra", "Llocs d'Inventari"
             ], key="db_select_box")
         with col_search:
             search_query = st.text_input("🔍 Cerca global", value="", key=f"search_{db_select}")
+        with col_trash:
+            st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+            if st.button("🗑️", key="btn_paperera", help="Paperera de Reciclatge"):
+                show_paperera_modal()
             
         page_size = 1000
         st.write("")
