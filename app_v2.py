@@ -1,5 +1,6 @@
 import streamlit as st
 import importlib
+from core.auth import check_password
 
 st.set_page_config(
     page_title="Dashboard V2",
@@ -16,22 +17,10 @@ st.markdown('''
     </style>
 ''', unsafe_allow_html=True)
 
-if 'role' not in st.session_state:
-    st.session_state['role'] = 'guest'
-
-def set_role():
-    st.session_state['role'] = st.session_state.temp_role_selector
+if not check_password():
+    st.stop()
 
 with st.sidebar:
-    rol_index = 0 if st.session_state.get('role') == 'admin' else 1
-    selected_role = st.selectbox(
-        "Rol Actual",
-        ["admin", "guest"],
-        index=rol_index,
-        on_change=set_role,
-        key="temp_role_selector"
-    )
-    
     st.markdown("---")
     st.markdown("### 🎛️ Navegació V2")
     
