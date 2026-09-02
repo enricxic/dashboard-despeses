@@ -723,12 +723,30 @@ def save_to_csv(df, filename):
 def log_action(table_name, tipus_accio, detalls):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
+        import json
+        import pandas as pd
+        import numpy as np
+        
+        # Clean detalls for JSON serialization
+        def clean_dict(d):
+            if isinstance(d, dict):
+                return {k: clean_dict(v) for k, v in d.items()}
+            elif isinstance(d, list):
+                return [clean_dict(x) for x in d]
+            elif isinstance(d, pd.Timestamp):
+                return d.isoformat()
+            elif pd.isna(d):
+                return None
+            return d
+            
+        clean_detalls = clean_dict(detalls)
+        
         log_payload = {
             "usuari": st.session_state.get("username", "Desconegut"),
             "rol": st.session_state.get("role", "guest"),
             "taula_afectada": table_name,
             "tipus_accio": tipus_accio,
-            "detalls": detalls
+            "detalls": clean_detalls
         }
         # Log unrestrictedly using anonymous push or admin push (handled by RLS policies)
         supabase.table("registre_accions").insert(log_payload).execute()
@@ -875,6 +893,10 @@ def append_to_db(df_new, table_name, state_key, extra_details=None):
         if extra_details:
             details.update(extra_details)
             
+        # Also store the fully inserted rows for auditing
+        import json
+        details['rows_inserted'] = json.loads(df_new.to_json(orient='records', date_format='iso'))
+            
         log_action(table_name, 'INSERT_BULK', details)
         
         st.cache_data.clear()
@@ -1012,6 +1034,29 @@ def delete_db_row(table_name, id_col, id_val):
 
 def update_db_row(table_name, id_col, id_val, new_data):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    
+    old_row_data = {}
+    table_map = {
+        'despeses': 'df_desp', 'ingressos': 'df_ing',
+        'compresSuper': 'df_super', 'gasolina': 'df_gas',
+        'hipoteca': 'df_hip', 'estalviDP': 'df_est',
+        'tb_productes': 'df_prod', 'tb_llocs': 'df_llocs',
+        'tb_pendents_compra': 'df_pendents',
+        'tr_cartera': 'df_tr_cartera'
+    }
+    df_key = table_map.get(table_name)
+    if df_key and df_key in st.session_state:
+        import numpy as np
+        import pandas as pd
+        df = st.session_state[df_key]
+        mask = df[id_col] == id_val
+        if mask.any():
+            row_dict = df[mask].iloc[0].replace({np.nan: None}).to_dict()
+            for k, v in row_dict.items():
+                if isinstance(v, pd.Timestamp):
+                    row_dict[k] = v.isoformat()
+            old_row_data = row_dict
+            
     try:
         update_payload = new_data.copy()
         if id_col in update_payload:
@@ -1023,7 +1068,11 @@ def update_db_row(table_name, id_col, id_val, new_data):
                 update_payload[k] = None
                 
         supabase.table(table_name).update(update_payload).eq(id_col, id_val).execute()
-        log_action(table_name, 'UPDATE', {'id_col': id_col, 'id_val': id_val, 'changes': update_payload})
+        
+        detalls = {'id_col': id_col, 'id_val': id_val, 'changes': update_payload}
+        if old_row_data:
+            detalls['old_row'] = old_row_data
+        log_action(table_name, 'UPDATE', detalls)
         
         update_session_state_update(table_name, id_col, id_val, update_payload)
         st.cache_data.clear()
