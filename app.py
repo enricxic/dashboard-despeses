@@ -6583,8 +6583,8 @@ if st.session_state.get("role") in ["admin", "guest"] and tab_menjar:
                         num_comensals = st.number_input("Nombre de comensals", min_value=1, value=2, step=1)
                         st.session_state['num_comensals'] = num_comensals
                         temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
-                        import datetime
-                        month = datetime.datetime.now().month
+                        import pandas as pd
+                        month = pd.Timestamp.now().month
                         if month in [3,4,5]: def_temp = "Primavera"
                         elif month in [6,7,8]: def_temp = "Estiu"
                         elif month in [9,10,11]: def_temp = "Tardor"
