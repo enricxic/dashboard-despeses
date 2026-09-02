@@ -3298,7 +3298,7 @@ def render():
                             val_str = f":green[**{b_val:,.2f} €**]"
                         else:
                             val_str = f"**{b_val:,.2f} €**"
-                        label = f"{b_name}\\n{val_str}"
+                        label = f"{b_name}\n{val_str}"
                         if st.button(label, key=f"btn_bank_{b_name}", use_container_width=True):
                             show_bank_extract_modal(b_name, selected_year, selected_month_data)
         
