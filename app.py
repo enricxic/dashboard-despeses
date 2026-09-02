@@ -5538,8 +5538,7 @@ if tab_rebost:
                 
                 if not df_available.empty:
                     families = sorted([str(f) for f in df_available['familia'].dropna().unique() if str(f).strip() != ""])
-                    if not families:
-                        families = ["Sense Família"]
+                    families = ["Totes"] + families
                         
                     if 'selected_family_consum' not in st.session_state:
                         st.session_state['selected_family_consum'] = families[0] if families else None
@@ -5592,8 +5591,9 @@ if tab_rebost:
                     
                     sel_fam = st.session_state['selected_family_consum']
                     if sel_fam:
-                        # Handle the "Sense Família" case
-                        if sel_fam == "Sense Família":
+                        if sel_fam == "Totes":
+                            df_fam = df_available.sort_values('nom_estandard')
+                        elif sel_fam == "Sense Família":
                             df_fam = df_available[df_available['familia'].isna() | (df_available['familia'] == "")].sort_values('nom_estandard')
                         else:
                             df_fam = df_available[df_available['familia'] == sel_fam].sort_values('nom_estandard')
