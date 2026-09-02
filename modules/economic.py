@@ -21,59 +21,7 @@ if platform.system() == "Windows":
     pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-# Prevent browser from proposing page translation and hide streamlit developer badges
-import streamlit.components.v1 as components
-components.html(
-    """
-    <script>
-        const doc = window.parent.document;
-        doc.documentElement.classList.add("notranslate");
-        doc.body.classList.add("notranslate");
-        if (!doc.querySelector('meta[name="google"][content="notranslate"]')) {
-            const meta = doc.createElement('meta');
-            meta.name = 'google';
-            meta.content = 'notranslate';
-            doc.head.appendChild(meta);
-        }
-        
-        // Hide Manage App floating element dynamically and continuously
-        const hideBadges = () => {
-            const badges = doc.querySelectorAll('div[class^="viewerBadge_"], .viewerBadge_container__1QS1h, .viewerBadge_link__29513, footer, [data-testid="stAppDeployButton"]');
-            badges.forEach(b => b.style.display = 'none');
-            
-            // Also search in parent window
-            const pBadges = window.parent.document.querySelectorAll('div[class^="viewerBadge_"], .viewerBadge_container__1QS1h, .viewerBadge_link__29513, footer, [data-testid="stAppDeployButton"]');
-            pBadges.forEach(b => b.style.display = 'none');
-        };
-        hideBadges();
-        setInterval(hideBadges, 300);
-        
-        // Target style tag injection in parent (ensures elements are hidden immediately if they are rendered)
-        const style = doc.createElement('style');
-        style.innerHTML = `
-            footer { display: none !important; visibility: hidden !important; height: 0 !important; }
-            [data-testid="stAppDeployButton"] { display: none !important; visibility: hidden !important; }
-            .viewerBadge_container__1QS1h, .viewerBadge_link__29513 { display: none !important; }
-            iframe[title="streamlit.components.v1.html-component"] { display: none !important; height: 0 !important; }
-            div[class^="viewerBadge_"] { display: none !important; }
-        `;
-        doc.head.appendChild(style);
-        
-        // Detect if client is a desktop computer and redirect with a parameter to bypass login without stealing focus
-        const ua = navigator.userAgent;
-        const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
-        if (!isMobile) {
-            const params = new URLSearchParams(window.parent.location.search);
-            if (!params.has("device") || params.get("device") !== "desktop") {
-                params.set("device", "desktop");
-                window.parent.location.search = params.toString();
-            }
-        }
-    </script>
-    """,
-    height=0,
-    width=0
-)
+
 
 # Custom styles for premium look (orange/slate dark theme)
 st.markdown("""
