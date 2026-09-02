@@ -623,7 +623,6 @@ def render():
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
         try:
             import json
-            import pandas as pd
             import numpy as np
             
             # Clean detalls for JSON serialization
@@ -904,7 +903,6 @@ def render():
         df_key = table_map.get(table_name)
         if df_key and df_key in st.session_state:
             import numpy as np
-            import pandas as pd
             df = st.session_state[df_key]
             mask = df[id_col] == id_val
             if mask.any():
@@ -946,7 +944,6 @@ def render():
         df_key = table_map.get(table_name)
         if df_key and df_key in st.session_state:
             import numpy as np
-            import pandas as pd
             df = st.session_state[df_key]
             mask = df[id_col] == id_val
             if mask.any():
@@ -961,7 +958,6 @@ def render():
             if id_col in update_payload:
                 del update_payload[id_col]
                 
-            import pandas as pd
             for k, v in update_payload.items():
                 if pd.isna(v):
                     update_payload[k] = None
@@ -1773,7 +1769,6 @@ def render():
     
     def parse_text_ticket(text_content):
         import re
-        from datetime import datetime
         
         # 1. Extract Date if possible
         found_date = None
@@ -2488,7 +2483,6 @@ def render():
                                 import requests
                                 import base64
                                 import json
-                                from datetime import datetime
                                 
                                 api_key = st.secrets.get("GEMINI_API_KEY", "")
                                 
@@ -3643,7 +3637,6 @@ def render():
     
     @st.dialog("⚙️ Confirmar Operacions i Bancs", width="large")
     def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
-        import datetime, time
         st.write("Verifica el **Banc** i la **Forma de Pagament** per a cada operació seleccionada:")
         
         bancs_options = [""] + get_config_banks()
@@ -3751,7 +3744,6 @@ def render():
                     
                     # Check for scheduled transfers
                     banc_desti = df_pag_local.loc[res['idx'], 'banc_desti_traspas'] if 'banc_desti_traspas' in df_pag_local.columns else None
-                    import pandas as pd
                     if banc_desti and pd.notna(banc_desti) and str(banc_desti).strip() != '':
                         banc_desti_str = str(banc_desti).strip()
                         # 1. Add compensatory income to despeses
@@ -5974,7 +5966,6 @@ def render():
                             num_comensals = st.number_input("Nombre de comensals", min_value=1, value=2, step=1)
                             st.session_state['num_comensals'] = num_comensals
                             temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
-                            import pandas as pd
                             month = pd.Timestamp.now().month
                             if month in [3,4,5]: def_temp = "Primavera"
                             elif month in [6,7,8]: def_temp = "Estiu"
@@ -6098,7 +6089,6 @@ def render():
                                 
                     if 'gen_menu_data' in st.session_state:
                         st.markdown("#### 📅 El teu Menú Setmanal")
-                        import pandas as pd
                         st.dataframe(pd.DataFrame(st.session_state['gen_menu_data']), use_container_width=True, hide_index=True)
                         
                         st.markdown("#### ⏱️ Timing i Organització (Batch Cooking)")
