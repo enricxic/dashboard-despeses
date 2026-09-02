@@ -4168,6 +4168,16 @@ if tab_intro:
                     st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
                     save_new_concept = st.checkbox("Desar a la llista permanent?", value=True, key=f"desp_save_new_concept_{version}")
 
+            dest_banc = None
+            if grup_val == "op_banc" and cat_val == "op_banc":
+                st.markdown("<h5 style='color:#3498db; margin-top:5px; margin-bottom:5px;'>🔁 Traspàs entre comptes</h5>", unsafe_allow_html=True)
+                dest_col1, dest_col2 = st.columns(2)
+                with dest_col1:
+                    dest_banc_opt = [""] + get_config_banks()
+                    if banc in dest_banc_opt:
+                        dest_banc_opt.remove(banc)
+                    dest_banc = st.selectbox("Banc de Destí", dest_banc_opt, index=0, key=f"desp_dest_banc_{version}")
+
             # Row 3 (ticket pendent)
             ticket_pendent = st.checkbox("Aquesta despesa és una compra de súper amb ticket pendent de desglossar", key=f"desp_ticket_pendent_{version}")
             vacances_pendent = st.checkbox("Compra de viatge / vacances (Sense desglós ni estoc)", key=f"desp_vacances_pendent_{version}")
@@ -4213,12 +4223,13 @@ if tab_intro:
                 if not actual_concept or actual_concept == "➕ Afegir nou...":
                     # Keep error message trigger
                     pass
-                    
                 # Perform group vs import criteria checks
                 if grup_val == "Càrrec" and import_ing != 0.0:
                     st.error("⚠️ El grup és Càrrec, per tant l'Import Ingrés ha de ser 0.")
                 elif grup_val == "Ingrés" and import_carg != 0.0:
                     st.error("⚠️ El grup és Ingrés, per tant l'Import Càrrec ha de ser 0.")
+                elif grup_val == "op_banc" and cat_val == "op_banc" and not dest_banc:
+                    st.error("❌ Per a un traspàs entre comptes has d'escollir un banc de destí.")
                 elif grup_val == "op_banc" and import_carg != 0.0 and import_ing != 0.0:
                     st.error("⚠️ Per a op_banc s'ha d'emplenar només un dels dos imports (Càrrec o Ingrés), no tots dos.")
                 elif grup_val == "op_banc" and import_carg == 0.0 and import_ing == 0.0:
@@ -4333,6 +4344,19 @@ if tab_intro:
                                 st.error(f"Error inserint a TR Cartera: {e}")
                         else:
                             insert_db_row('despeses', new_row_desp)
+                            
+                            if grup_val == "op_banc" and cat_val == "op_banc" and dest_banc:
+                                row_dest = new_row_desp.copy()
+                                # We get the new ID from the freshly updated session state
+                                row_dest['ID_mov'] = int(st.session_state["df_desp"]['ID_mov'].max() + 1) if "df_desp" in st.session_state else int(df_desp['ID_mov'].max() + 2)
+                                row_dest['Banc'] = dest_banc
+                                # Swap amounts: we can't hardcode keys due to mojibake, we'll swap the values directly
+                                for k in list(row_dest.keys()):
+                                    if 'ingr' in k.lower(): ing_key = k
+                                    if 'rrec' in k.lower(): carg_key = k
+                                row_dest[ing_key] = new_row_desp[carg_key]
+                                row_dest[carg_key] = new_row_desp[ing_key]
+                                insert_db_row('despeses', row_dest)
                             
                         if is_gas_cat:
                             insert_db_row('gasolina', new_row_gas)
