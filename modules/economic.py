@@ -3289,20 +3289,23 @@ def render():
                     </style>
                 """, unsafe_allow_html=True)
     
-                col_ratios = [1] * len(current_balances)
-                cols = st.columns(col_ratios, gap="small")
-                for i, (b_name, b_val) in enumerate(current_balances.items()):
-                    with cols[i]:
-                        if b_val < -0.05:
-                            val_str = f":red[**{b_val:,.2f} €**]"
-                        elif b_val > 0.05:
-                            val_str = f":green[**{b_val:,.2f} €**]"
-                        else:
-                            val_str = f"**{b_val:,.2f} €**"
+                n_cols = 4 if len(current_balances) > 4 else len(current_balances)
+                banks = list(current_balances.items())
+                for i in range(0, len(banks), n_cols):
+                    chunk = banks[i:i+n_cols]
+                    cols = st.columns([1]*n_cols, gap="small")
+                    for j, (b_name, b_val) in enumerate(chunk):
+                        with cols[j]:
+                            if b_val < -0.05:
+                                val_str = f":red[**{b_val:,.2f} €**]"
+                            elif b_val > 0.05:
+                                val_str = f":green[**{b_val:,.2f} €**]"
+                            else:
+                                val_str = f"**{b_val:,.2f} €**"
                         
-                        label = f"{b_name}\n\n{val_str}"
-                        if st.button(label, key=f"btn_bank_{b_name}", use_container_width=True):
-                            show_bank_extract_modal(b_name, selected_year, selected_month_data)
+                            label = f"{b_name}\n\n{val_str}"
+                            if st.button(label, key=f"btn_bank_{b_name}", use_container_width=True):
+                                show_bank_extract_modal(b_name, selected_year, selected_month_data)
         
         # Pivot-like summary computation for the selected year
         summary_data = []

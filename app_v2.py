@@ -74,8 +74,6 @@ if st.session_state.current_module is None:
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.markdown("---")
-    
     try:
         mod = importlib.import_module(st.session_state.current_module)
         mod.render()
