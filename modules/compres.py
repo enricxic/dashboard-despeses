@@ -2021,10 +2021,260 @@ Notes importants:
 # ----------------- HEADER AREA -----------------
 
 
+@st.dialog("📋 Inventari Ràpid", width="large")
+def modal_inventari(df_inv):
+    st.write("Actualitza ràpidament l'stock agrupat pel lloc on el guardes.")
+    
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    df_llocs = fetch_all_supabase(supabase, 'tb_llocs')
+    if not df_llocs.empty:
+        df_llocs = df_llocs.sort_values(by='id_lloc')
+        llocs_options = df_llocs['nom_lloc'].tolist()
+    else:
+        llocs_options = ["Sense Assignar"]
+    
+    # Filter only products that are tracked in Rebost
+    if 'select_stock' in df_inv.columns:
+        df_inv = df_inv[df_inv['select_stock'] == True].copy()
+        
+    if df_inv.empty:
+        st.warning("No hi ha productes de rebost.")
+        return
+        
+    # Group by lloc
+    df_inv['lloc'] = df_inv.get('lloc', 'Sense Assignar').fillna('Sense Assignar')
+    df_inv.loc[df_inv['lloc'] == '', 'lloc'] = 'Sense Assignar'
+    
+    # Track changes
+    if "inv_changes" not in st.session_state:
+        st.session_state.inv_changes = {}
+        
+    for lloc, group in df_inv.groupby('lloc'):
+        with st.expander(f"📍 {lloc} ({len(group)} productes)", expanded=False):
+            # Sort by familia then name
+            group = group.sort_values(by=['familia', 'nom_estandard'])
+            
+            # Prepare data editor df
+            cols_to_show = ['familia', 'nom_estandard', 'lloc', 'stock_actual', 'stock_minim']
+            df_edit = group[cols_to_show].copy()
+            df_edit.set_index(group['idProducte'], inplace=True)
+            
+            edited_df = st.data_editor(
+                df_edit,
+                use_container_width=True,
+                disabled=['familia', 'nom_estandard'],
+                hide_index=True,
+                column_config={
+                    "lloc": st.column_config.SelectboxColumn(
+                        "Lloc",
+                        help="Tria la ubicació on es guarda el producte",
+                        options=llocs_options,
+                        required=True
+                    )
+                },
+                key=f"editor_inv_{lloc}"
+            )
+            
+            for idx, row in edited_df.iterrows():
+                old_act = df_edit.at[idx, 'stock_actual']
+                new_act = row['stock_actual']
+                old_min = df_edit.at[idx, 'stock_minim']
+                new_min = row['stock_minim']
+                old_loc = df_edit.at[idx, 'lloc']
+                new_loc = row['lloc']
+                
+                if old_act != new_act or old_min != new_min or old_loc != new_loc:
+                    st.session_state.inv_changes[idx] = {
+                        'stock_actual': new_act,
+                        'stock_minim': new_min,
+                        'lloc': new_loc if pd.notna(new_loc) else None
+                    }
+                    
+    st.markdown("---")
+    if len(st.session_state.inv_changes) > 0:
+        st.info(f"Tens {len(st.session_state.inv_changes)} canvis pendents de guardar.")
+    else:
+        st.write("No has fet canvis.")
+        
+    if st.button("💾 Guardar Canvis d'Inventari", type="primary", use_container_width=True):
+        if len(st.session_state.inv_changes) > 0:
+            try:
+                supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                for idx, changes in st.session_state.inv_changes.items():
+                    supabase.table('tb_productes').update(changes).eq('idProducte', int(idx)).execute()
+                st.success(f"S'han guardat {len(st.session_state.inv_changes)} canvis correctament!")
+                st.session_state.inv_changes = {}
+                st.cache_data.clear()
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error guardant: {e}")
+
+@st.dialog(" ", width="large")
+def modal_recepta(row):
+    is_editing = st.session_state.get(f"editing_{row['id']}", False)
+    
+    if is_editing:
+        st.markdown("### ✏️ Editar Recepta")
+        c_fields, c_img = st.columns([3, 1])
+        with c_fields:
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                e_titol = st.text_input("Títol", value=row.get('titol', ''))
+                cat_opts = ["Primer", "Segon", "Plat únic", "Postre", "Complement", "Guarnició", "Salsa"]
+                e_cat = st.selectbox("Categoria", cat_opts, index=cat_opts.index(row.get('categoria')) if row.get('categoria') in cat_opts else 0)
+                val_temps = row.get('temps_prep_minuts', 0)
+                e_temps = st.number_input("Temps (min)", value=int(val_temps) if pd.notna(val_temps) else 0, step=5)
+            with c2:
+                apat_opts = ["Esmorzar", "Dinar", "Sopar", "Dinar/Sopar"]
+                e_apat = st.selectbox("Àpat", apat_opts, index=apat_opts.index(row.get('apat')) if row.get('apat') in apat_opts else 0)
+                dif_opts = ["Fàcil", "Mitjana", "Difícil"]
+                e_dif = st.selectbox("Dificultat", dif_opts, index=dif_opts.index(row.get('dificultat')) if row.get('dificultat') in dif_opts else 0)
+                dia_opts = ["Entre setmana", "Cap de setmana", "Festiu", "Especial"]
+                e_dia = st.selectbox("Tipus de dia", dia_opts, index=dia_opts.index(row.get('tipus_dia')) if row.get('tipus_dia') in dia_opts else 0)
+                temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
+                e_temp = st.selectbox("Temporada", temp_opts, index=temp_opts.index(row.get('temporada')) if row.get('temporada') in temp_opts else 0)
+            with c3:
+                ori_opts = ["Biblioteca/Pròpia", "Externa/Internet"]
+                e_ori = st.selectbox("Origen", ori_opts, index=ori_opts.index(row.get('origen')) if row.get('origen') in ori_opts else 0)
+                val_salut = row.get('puntuacio_salut', 5)
+                e_salut = st.slider("Salut (0-10)", 0, 10, int(val_salut) if pd.notna(val_salut) else 5)
+                e_img_url = st.text_input("URL Imatge", value=str(row.get('imatge_url', '')).strip() if pd.notna(row.get('imatge_url')) else "")
+                e_vid_url = st.text_input("URL Vídeo", value=str(row.get('video_url', '')).strip() if pd.notna(row.get('video_url')) else "")
+                
+            tags_opts = ["Sense Gluten", "Sense Lactosa", "Vegetarià", "Vegà", "Baix en Sal", "Baix en Greix", "Alt en Proteïna", "Sense Sucre"]
+            curr_tags = row.get('tags_nutricionals')
+            if not isinstance(curr_tags, list): curr_tags = []
+            curr_tags = [t for t in curr_tags if t in tags_opts]
+            e_tags = st.multiselect("Etiquetes / Al·lèrgies (Nutrició)", tags_opts, default=curr_tags, key=f"e_tags_{row['id']}")
+            
+            e_ing = st.text_area("Ingredients", value=row.get('ingredients', ''))
+            e_mise = st.text_area("Mise en place (Preparació prèvia)", value=row.get('mise_en_place', ''))
+            e_ins = st.text_area("Instruccions", value=row.get('instruccions', ''))
+            
+        with c_img:
+            st.markdown("**Imatge Actual**")
+            if e_img_url:
+                st.image(e_img_url, use_container_width=True)
+            else:
+                st.info("Sense imatge")
+                
+            e_uploaded = st.file_uploader("Substituir imatge", type=["jpg", "jpeg", "png", "webp"], key=f"e_up_{row['id']}")
+            
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("❌ Cancel·lar", use_container_width=True):
+                st.session_state[f"editing_{row['id']}"] = False
+                st.rerun()
+        with col_btn2:
+            if st.button("💾 Desar Canvis", use_container_width=True):
+                supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                final_img = e_img_url
+                if e_uploaded is not None:
+                    try:
+                        import uuid
+                        file_ext = e_uploaded.name.split(".")[-1]
+                        file_name = f"{uuid.uuid4()}.{file_ext}"
+                        supabase.storage.from_("imatges-receptes").upload(file_name, e_uploaded.getvalue())
+                        final_img = supabase.storage.from_("imatges-receptes").get_public_url(file_name)
+                    except Exception as e:
+                        st.error(f"Error pujant la imatge: {e}")
+                
+                update_data = {
+                    "titol": e_titol, "categoria": e_cat, "temps_prep_minuts": e_temps,
+                    "temporada": e_temp, "puntuacio_salut": e_salut, "ingredients": e_ing,
+                    "mise_en_place": e_mise,
+                    "instruccions": e_ins, "imatge_url": final_img, "video_url": e_vid_url,
+                    "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori, "apat": e_apat,
+                    "tags_nutricionals": e_tags
+                }
+                
+                res = supabase.table('tb_receptes_pro').update(update_data).eq('id', row['id']).execute()
+                if res.data:
+                    st.session_state[f"editing_{row['id']}"] = False
+                    st.success("Recepta actualitzada!")
+                    st.rerun()
+                else:
+                    st.error("Error al actualitzar.")
+
+    else:
+        # Mode Lectura
+        col_titol, col_btn = st.columns([4, 1])
+        with col_titol:
+            st.markdown(f"## {row.get('titol', '')}")
+            t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
+            d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'No definida'
+            t_dia = row['tipus_dia'] if pd.notna(row.get('tipus_dia')) else 'Qualsevol'
+            t_apat = row['apat'] if pd.notna(row.get('apat')) else 'Sense definir'
+            st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif} | 📅 {t_dia} | 🍽️ {t_apat}")
+        with col_btn:
+            st.button("✏️ Editar", key=f"edit_top_{row['id']}", on_click=cb_set_editing_recepta, args=(row['id'], True), use_container_width=True)
+                
+        col_i, col_d = st.columns([1, 1])
+        with col_i:
+            img_url = row.get('imatge_url')
+            if pd.notna(img_url) and str(img_url).strip() != '':
+                st.image(img_url, use_container_width=True)
+                
+            vid_url = row.get('video_url')
+            if pd.notna(vid_url) and str(vid_url).strip() != '':
+                vid_str = str(vid_url).strip()
+                if "3cat.cat" in vid_str or "ccma.cat" in vid_str:
+                    import urllib.request
+                    import re
+                    import streamlit.components.v1 as components
+                    try:
+                        req = urllib.request.Request(vid_str, headers={'User-Agent': 'Mozilla/5.0'})
+                        html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
+                        match = re.search(r'"embedUrl":\s*"//(www\.3cat\.cat/video/embed/\d+/)"', html)
+                        if match:
+                            embed_url = f"https://{match.group(1)}"
+                            components.iframe(embed_url, height=300)
+                        else:
+                            st.video(vid_str)
+                    except:
+                        st.video(vid_str)
+                else:
+                    st.video(vid_str)
+        
+        with col_d:
+            st.markdown("### Ingredients:")
+            ing_val = row.get('ingredients', '')
+            ing_raw = str(ing_val) if pd.notna(ing_val) and str(ing_val).strip().lower() != 'nan' else ''
+            if ing_raw.strip():
+                import re
+                lines = [re.sub(r'^[\-\*•\·]\s*', '', line.strip()).strip() for line in ing_raw.split('\n') if line.strip()]
+                ing_format = " * ".join(lines)
+            else:
+                ing_format = "Sense ingredients"
+            st.info(ing_format)
+            
+            mise = row.get('mise_en_place', '')
+            if pd.notna(mise) and str(mise).strip() != '' and str(mise).strip().lower() != 'nan':
+                st.markdown("### Mise en place:")
+                st.info(str(mise).strip())
+                
+            st.markdown("### Info Addicional:")
+            salut = row.get('puntuacio_salut', 0)
+            salut_str = int(salut) if pd.notna(salut) and str(salut).strip().lower() != 'nan' else 0
+            temp = row.get('temporada', '')
+            temp_str = temp if pd.notna(temp) and str(temp).strip().lower() != 'nan' else "Tot l'any"
+            ori = row.get('origen', 'Desconegut')
+            ori_str = ori if pd.notna(ori) and str(ori).strip().lower() != 'nan' else 'Desconegut'
+            
+            st.write(f"**Salut:** {salut_str}/10 | **Temporada:** {temp_str}")
+            st.write(f"**Origen:** {ori_str}")
+            
+            st.markdown("### Instruccions:")
+            ins_val = row.get('instruccions', '')
+            ins_raw = str(ins_val) if pd.notna(ins_val) and str(ins_val).strip().lower() != 'nan' else 'Sense instruccions'
+            st.write(ins_raw)
+
+
+
 def render():
 
     
-    tab_scanner, tab_llista = st.tabs(["🧾 Escàner Súper", "📋 Llista de la Compra"])
+    tab_scanner, tab_llista, tab_rebost = st.tabs(["📄 Escàner Súper", "📋 Llista de la Compra", "📦 Rebost / Stock"])
     
     with tab_scanner:
         render_compres_super_interface()
@@ -2214,3 +2464,324 @@ def render():
         except Exception as e:
             st.error(f"⚠️ Error carregant la llista de la compra: {str(e)}")
 
+
+
+    
+    with tab_rebost:
+        try:
+            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+            df_prods = fetch_all_supabase(supabase, 'tb_productes')
+            
+            col_t1, col_t2 = st.columns([3, 1])
+            with col_t1:
+                st.markdown("<h2 style='color:#3498db;'>📦 Control d'Stock (El teu Rebost)</h2>", unsafe_allow_html=True)
+            with col_t2:
+                st.write("") # Spacer
+                if st.button("📋 Inventari", type="primary", use_container_width=True):
+                    modal_inventari(df_prods)
+                    
+            # ================= LECTOR DE CODIS DE BARRES =================
+            st.markdown("### 📷 Escanejar Codi de Barres (Càmera nativa)")
+            if True:
+                st.write("Clica el botó de sota per obrir la càmera del teu mòbil (o pujar una foto) per escanejar un codi de barres.")
+                img_file = st.file_uploader("Fes una foto al codi de barres", type=["png", "jpg", "jpeg"], key="barcode_camera", label_visibility="collapsed")
+                if img_file is not None:
+                    try:
+                        from pyzbar.pyzbar import decode
+                        from PIL import Image
+                        image = Image.open(img_file)
+                        decoded_objects = decode(image)
+                        
+                        if not decoded_objects:
+                            st.error("No s'ha detectat cap codi de barres a la imatge. Prova d'enfocar millor i que hi hagi bona llum.")
+                        else:
+                            barcode = decoded_objects[0].data.decode('utf-8')
+                            barcode_type = decoded_objects[0].type
+                            
+                            st.success(f"✅ Codi llegit: **{barcode}** ({barcode_type})")
+                            
+                            # Lookup in database
+                            res_codi = supabase.table('tb_codis_barres').select('id_producte').eq('codi_barres', barcode).execute()
+                            
+                            if res_codi.data:
+                                # Found!
+                                id_prod = res_codi.data[0]['id_producte']
+                                res_prod = supabase.table('tb_productes').select('idProducte, nom_estandard, familia, stock_actual').eq('idProducte', id_prod).execute()
+                                
+                                if res_prod.data:
+                                    prod = res_prod.data[0]
+                                    st.info(f"Aquest codi correspon a: **{prod['nom_estandard']}** (Stock actual: {prod['stock_actual']})")
+                                    
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        if st.button("➕ Afegir 1 a l'stock", type="primary", use_container_width=True, key=f"add_{barcode}"):
+                                            new_stock = float(prod['stock_actual']) + 1.0
+                                            supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', id_prod).execute()
+                                            st.success(f"Afegit! Nou stock: {new_stock}")
+                                            st.cache_data.clear()
+                                            st.rerun()
+                                    with col2:
+                                        if st.button("➖ Gastar 1 de l'stock", type="secondary", use_container_width=True, key=f"sub_{barcode}"):
+                                            new_stock = max(0.0, float(prod['stock_actual']) - 1.0)
+                                            supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', id_prod).execute()
+                                            st.success(f"Gastat! Nou stock: {new_stock}")
+                                            st.cache_data.clear()
+                                            st.rerun()
+                            else:
+                                # Not found. Ask to associate.
+                                st.warning("Aquest codi no està associat a cap producte del teu rebost.")
+                                if not df_prods.empty:
+                                    df_p = df_prods.sort_values(by=['familia', 'nom_estandard'])
+                                    prod_options = df_p.apply(lambda r: f"{r['nom_estandard']} ({r['familia']})", axis=1).tolist()
+                                    prod_ids = df_p['idProducte'].tolist()
+                                    
+                                    selected_idx = st.selectbox("A quin producte correspon?", range(len(prod_options)), format_func=lambda i: prod_options[i])
+                                    
+                                    if st.button("🔗 Enllaçar Codi i Producte", use_container_width=True):
+                                        try:
+                                            supabase.table('tb_codis_barres').insert({
+                                                'codi_barres': barcode,
+                                                'id_producte': prod_ids[selected_idx]
+                                            }).execute()
+                                            st.success("Enllaçat correctament! Pots prémer els botons per actualitzar l'stock.")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Error enllaçant: {e}")
+                    except Exception as e:
+                        st.error(f"Error processant la imatge: {e}")
+            
+            st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+            if not df_prods.empty:
+                # ================= REGISTRE DE BAIXES =================
+                st.markdown("### 🍽️ Registrar Baixa d'Stock")
+                st.write("Has gastat un producte? Registra-ho aquí perquè l'stock baixi de forma segura.")
+                
+                # Filter only products that have select_stock == True and stock_actual > 0
+                # Wait, df_prods might not have stock_actual as float yet, let's fillna first
+                for col in ['stock_actual', 'stock_minim']:
+                    if col not in df_prods.columns:
+                        df_prods[col] = 0.0
+                    else:
+                        df_prods[col] = pd.to_numeric(df_prods[col], errors='coerce').fillna(0.0)
+                        
+                if 'select_stock' not in df_prods.columns:
+                    df_prods['select_stock'] = False
+                
+                df_available = df_prods[(df_prods['select_stock'] == True) & (df_prods['stock_actual'] > 0)].copy()
+                
+                if not df_available.empty:
+                    families = sorted([str(f) for f in df_available['familia'].dropna().unique() if str(f).strip() != ""])
+                    families = ["Totes"] + families
+                        
+                    if 'selected_family_consum' not in st.session_state:
+                        st.session_state['selected_family_consum'] = families[0] if families else None
+                    elif st.session_state['selected_family_consum'] not in families:
+                        st.session_state['selected_family_consum'] = families[0] if families else None
+                        
+                    # Create horizontal radio for families
+                    st.radio(
+                        "1️⃣ Tria la família:", 
+                        families, 
+                        horizontal=True,
+                        key='selected_family_consum'
+                    )
+                    
+                    # Generate 6 columns grid for smaller buttons (TPV style)
+                    cols_per_row = 6
+                    
+                    # Inject CSS to make mobile grid 3 columns
+                    st.components.v1.html("""
+                    <script>
+                        const parentDoc = window.parent.document;
+                        const spans = parentDoc.querySelectorAll('strong');
+                        spans.forEach(span => {
+                            if(span.innerText.includes('Què has gastat?')) {
+                                const verticalBlock = span.closest('div[data-testid="stVerticalBlock"]');
+                                if(verticalBlock) {
+                                    verticalBlock.classList.add('stock-grid-container');
+                                }
+                            }
+                        });
+                        
+                        if (!parentDoc.getElementById('stock-grid-style')) {
+                            const style = parentDoc.createElement('style');
+                            style.id = 'stock-grid-style';
+                            style.innerHTML = `
+                                @media (max-width: 576px) {
+                                    .stock-grid-container div[data-testid="stHorizontalBlock"] {
+                                        flex-wrap: wrap !important;
+                                    }
+                                    .stock-grid-container div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+                                        min-width: calc(33.33% - 1rem) !important;
+                                        flex: 1 1 calc(33.33% - 1rem) !important;
+                                    }
+                                }
+                            `;
+                            parentDoc.head.appendChild(style);
+                        }
+                    </script>
+                    """, height=0)
+                    
+                    sel_fam = st.session_state['selected_family_consum']
+                    if sel_fam:
+                        if sel_fam == "Totes":
+                            df_fam = df_available.sort_values('nom_estandard')
+                        elif sel_fam == "Sense Família":
+                            df_fam = df_available[df_available['familia'].isna() | (df_available['familia'] == "")].sort_values('nom_estandard')
+                        else:
+                            df_fam = df_available[df_available['familia'] == sel_fam].sort_values('nom_estandard')
+                            
+                        st.markdown(f"**2️⃣ Què has gastat? (Toca per restar-ne 1)**")
+                        
+                        for i in range(0, len(df_fam), cols_per_row):
+                            cols = st.columns(cols_per_row)
+                            chunk = df_fam.iloc[i:i+cols_per_row]
+                            for j, (_, row) in enumerate(chunk.iterrows()):
+                                prod_name = row['nom_estandard']
+                                stock = int(row['stock_actual']) # Convert to int
+                                
+                                with cols[j]:
+                                    # Use HTML to enforce a fixed height for all images/placeholders
+                                    # This guarantees all buttons align perfectly at the bottom
+                                    if 'foto_url' in row and pd.notna(row['foto_url']) and str(row['foto_url']).strip() != "":
+                                        foto_src = str(row['foto_url']).strip()
+                                        
+                                        # Handle local files by converting to base64 for HTML img tag
+                                        import base64
+                                        import os
+                                        
+                                        img_src = foto_src
+                                        if not foto_src.startswith("http"):
+                                            # It's a local file
+                                            if os.path.exists(foto_src):
+                                                with open(foto_src, "rb") as f:
+                                                    b64_data = base64.b64encode(f.read()).decode("utf-8")
+                                                    ext = foto_src.split('.')[-1].lower()
+                                                    mime = f"image/{ext}" if ext != 'jpg' else "image/jpeg"
+                                                    img_src = f"data:{mime};base64,{b64_data}"
+                                            else:
+                                                img_src = "" # File not found
+                                                
+                                        if img_src:
+                                            st.markdown(f'''
+                                                <div style="height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px;">
+                                                    <img src="{img_src}" style="max-height: 100%; max-width: 100%; border-radius: 8px; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                                </div>
+                                            ''', unsafe_allow_html=True)
+                                        else:
+                                            # File was local but not found, show placeholder
+                                            st.markdown('''
+                                                <div style="height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;">
+                                                    <span style="font-size: 2rem; color: #ced4da;">📦</span>
+                                                </div>
+                                            ''', unsafe_allow_html=True)
+                                    else:
+                                        # Placeholder for items without image to maintain alignment
+                                        st.markdown('''
+                                            <div style="height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #dee2e6;">
+                                                <span style="font-size: 2rem; color: #ced4da;">📦</span>
+                                            </div>
+                                        ''', unsafe_allow_html=True)
+                                            
+                                    btn_label = f"{prod_name}\n📦 {stock}"
+                                    
+                                    if st.button(btn_label, key=f"btn_consum_{row['idProducte']}", use_container_width=True):
+                                        new_stock = stock - 1.0
+                                        supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', row['idProducte']).execute()
+                                        st.success(f"➖ 1x {prod_name} gastat! (Et queden {int(new_stock)})")
+                                        st.cache_data.clear() # Clear cache so other devices see it
+                                        st.rerun()
+                else:
+                    st.info("Actualment no tens cap producte controlat amb stock disponible (> 0).")
+                
+
+
+                st.divider()
+                st.markdown("### 📋 Taula d'Edició Ràpida")
+                st.write("Edita les quantitats i el lloc on guardes cada article directament a la taula.")
+                # We need to make sure cols exist in df
+                for col in ['stock_actual', 'stock_minim']:
+                    if col not in df_prods.columns:
+                        df_prods[col] = 0.0
+                if 'lloc' not in df_prods.columns:
+                    df_prods['lloc'] = ""
+                if 'super_habitual' not in df_prods.columns:
+                    df_prods['super_habitual'] = None
+                
+                # Ensure select_stock exists
+                if 'select_stock' not in df_prods.columns:
+                    df_prods['select_stock'] = False
+                    
+                # Order by familia and nom
+                df_prods = df_prods.sort_values(by=['familia', 'nom_estandard'])
+                
+                # Filter ONLY items that are in the pantry (select_stock == True)
+                df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
+                
+                # Fetch dynamically updated locations
+                df_llocs = fetch_all_supabase(supabase, 'tb_llocs')
+                if not df_llocs.empty:
+                    df_llocs = df_llocs.sort_values(by='id_lloc')
+                    llocs_options = df_llocs['nom_lloc'].tolist()
+                else:
+                    llocs_options = ["Sense Assignar"]
+                    
+                with st.form("form_edicio_rapida_stock"):
+                    edited_df = st.data_editor(
+                        df_prods_filtered[['idProducte', 'select_stock', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'lloc']],
+                        column_config={
+                            "idProducte": None,
+                            "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
+                            "nom_estandard": st.column_config.TextColumn("Producte", disabled=True),
+                            "familia": st.column_config.TextColumn("Família", disabled=True),
+                            "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=get_config_supers() + ["Sense Assignar"], required=False),
+                            "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
+                            "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
+                            "lloc": st.column_config.SelectboxColumn("Lloc", options=llocs_options, required=False)
+                        },
+                        hide_index=True,
+                        use_container_width=True,
+                        key="editor_stock"
+                    )
+                    
+                    submitted = st.form_submit_button("Guardar Estat del Stock", type="primary")
+                
+                if submitted:
+                    # We need to find changed rows and update supabase
+                    updates_made = 0
+                    for i, row in edited_df.iterrows():
+                        orig_row = df_prods_filtered.loc[i]
+                        if (row['stock_actual'] != orig_row['stock_actual'] or 
+                            row['stock_minim'] != orig_row['stock_minim'] or 
+                            row['lloc'] != orig_row['lloc'] or
+                            row['super_habitual'] != orig_row['super_habitual'] or
+                            row['select_stock'] != orig_row['select_stock']):
+                            
+                            def s_float(v):
+                                try:
+                                    val = float(v)
+                                    import math
+                                    return 0.0 if math.isnan(val) else val
+                                except:
+                                    return 0.0
+                                    
+                            supabase.table('tb_productes').update({
+                                'select_stock': bool(row['select_stock']),
+                                'stock_actual': s_float(row['stock_actual']),
+                                'stock_minim': s_float(row['stock_minim']),
+                                'lloc': str(row['lloc']) if pd.notna(row['lloc']) and str(row['lloc']).strip().lower() != "none" else None,
+                                'super_habitual': str(row['super_habitual']) if pd.notna(row['super_habitual']) and str(row['super_habitual']).strip().lower() != "none" else None
+                            }).eq('idProducte', row['idProducte']).execute()
+                            updates_made += 1
+                            
+                    if updates_made > 0:
+                        st.success(f"S'han actualitzat {updates_made} productes!")
+                        st.cache_data.clear()
+                        st.rerun()
+                    else:
+                        st.info("No s'ha detectat cap canvi.")
+                        
+        except Exception as e:
+            st.error(f"Error carregant dades del rebost: {e}")
+
+# ================= TAB 4: BASES DE DADES (Supabase) =================
