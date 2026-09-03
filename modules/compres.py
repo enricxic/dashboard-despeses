@@ -1515,6 +1515,9 @@ T'han donat aquest text OCR brut d'un tiquet de supermercat (conté errors i sor
 ---
 {raw_text}
 ---
+IMPORTANT: En tiquets com els de bonArea / AreaGuissona, sovint apareix el tipus d'IVA (ex: 4.0, 10.0) a la mateixa línia del producte. 
+RUTINA DE CONTROL: MAI confonguis aquest tipus d'IVA amb el preu_total. Verifica sempre lògicament que quantitat * preu_unitari sigui aproximadament igual a preu_total (tenint en compte productes a pes). Si no quadra gens i el suposat total és un nombre enter petit com 4.0 o 10.0, descarta'l com a IVA i fes la multiplicació correcta.
+
 Extreu i neteja els productes en un format JSON estricte:
 {{
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
@@ -1555,6 +1558,10 @@ Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes 
                                 prompt = """
 Ets un expert en extracció de dades de tiquets de compra.
 Llegeix aquest tiquet de supermercat i retorna les dades en un format JSON net i estricte.
+
+IMPORTANT: En tiquets com els de bonArea / AreaGuissona, sovint apareix el tipus d'IVA (ex: 4.0, 10.0) al final de la línia del producte. 
+RUTINA DE CONTROL: MAI confonguis aquest tipus d'IVA amb el preu_total. Verifica sempre que la multiplicació quantitat * preu_unitari tingui sentit respecte al preu_total (admetent variacions per pes). Si el preu llegit no quadra i és 4.00, 10.00 o 21.00, descarta'l i utilitza el resultat lògic de multiplicar la quantitat pel preu.
+
 L'estructura del JSON ha de ser EXACTAMENT aquesta:
 {
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
