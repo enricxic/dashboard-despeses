@@ -926,7 +926,8 @@ def cb_add_ticket_line():
         
     pes = str(pes_raw).strip()
 
-    tot = (qty * preu) - prom
+    # El preu ja té aplicat el descompte, no cal restar prom
+    tot = qty * preu
     new_item = {
         'familia': fam,
         'article': art,
@@ -1722,7 +1723,9 @@ Notes importants:
     if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
         existing_prom = st.session_state.get("manual_prom_num", 0.0) or 0.0
         prom_from_pct = round(preu_final * (pct / 100.0) * qty, 2)
+        nou_preu = max(0.0, preu_final - (preu_final * (pct / 100.0)))
         st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
+        st.session_state["manual_preu_num"] = round(nou_preu, 2)
         st.session_state["manual_pct_num"] = 0.0 # reset pct
         st.rerun()
 
@@ -1832,7 +1835,8 @@ Notes importants:
     with col_prom:
         prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num")
         
-    tot_linea_val = ((qty_val or 1.0) * (preu_val or 0.0)) - prom_val
+    # El preu_val ja és la base descomptada, per tant no restem la promoció de nou
+    tot_linea_val = (qty_val or 1.0) * (preu_val or 0.0)
     with col_tot:
         st.text_input("TOTAL LÍNIA", value=f"{tot_linea_val:,.2f} €", disabled=True)
     with col_reb:
