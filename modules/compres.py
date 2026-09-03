@@ -992,14 +992,24 @@ def cb_add_ticket_line():
 
 def cb_recalculate_manual_pct():
     pct = st.session_state.get("manual_pct_num", 0.0)
+    if pct is None: pct = 0.0
     preu_final = st.session_state.get("manual_preu_num", 0.0)
+    if preu_final is None: preu_final = 0.0
     existing_prom = st.session_state.get("manual_prom_num", 0.0)
+    if existing_prom is None: existing_prom = 0.0
+    
     if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
         qty = st.session_state.get("manual_qty_num", 1.0)
         if qty is None or qty <= 0: qty = 1.0
-        prom_from_pct = round(preu_final * (pct / 100.0) * qty, 2)
+        
+        p_orig = preu_final / (1.0 - (pct / 100.0))
+        prom_per_unit = p_orig - preu_final
+        prom_from_pct = prom_per_unit * qty
+        
         st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
+        st.session_state["manual_preu_num"] = round(p_orig, 2)
         st.session_state["manual_pct_num"] = 0.0
+
 
 def cb_set_date_today():
     st.session_state["ticket_date"] = datetime.today().date()
@@ -1767,24 +1777,6 @@ Notes importants:
         st.session_state["manual_prom_num"] = 0.0
     if "manual_reb_chk" not in st.session_state:
         st.session_state["manual_reb_chk"] = False
-    # Dynamic recalculation for manual ticket lines if pct (%) is entered
-    pct = st.session_state.get("manual_pct_num", 0.0) or 0.0
-    preu_final = st.session_state.get("manual_preu_num", 0.0) or 0.0
-    qty = st.session_state.get("manual_qty_num", 1.0) or 1.0
-    if qty <= 0.0:
-        qty = 1.0
-    if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
-        existing_prom = st.session_state.get("manual_prom_num", 0.0) or 0.0
-        # preu_final = preu_orig * (1 - pct/100)
-        # preu_orig = preu_final / (1 - pct/100)
-        p_orig = preu_final / (1.0 - (pct / 100.0))
-        prom_per_unit = p_orig - preu_final
-        prom_from_pct = prom_per_unit * qty
-        
-        st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
-        st.session_state["manual_preu_num"] = round(p_orig, 2)
-        st.session_state["manual_pct_num"] = 0.0 # reset pct
-        st.rerun()
 
     # Manual Line Input Section
     st.write("")
