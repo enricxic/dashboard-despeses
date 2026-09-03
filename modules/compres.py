@@ -1639,6 +1639,7 @@ Notes importants:
                             try:
                                 d_val, m_val, y_val = map(int, data_trobada.split('/'))
                                 st.session_state["ticket_date"] = datetime(y_val, m_val, d_val).date()
+                                st.session_state["ticket_date_widget"] = datetime(y_val, m_val, d_val).date()
                             except Exception:
                                 pass
 

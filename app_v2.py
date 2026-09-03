@@ -12,9 +12,9 @@ st.set_page_config(
 st.markdown('''
     <style>
     #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
+    header {visibility: hidden; height: 0px !important;}
     footer {visibility: hidden;}
-    .css-1d391kg {padding-top: 1rem;}
+    .block-container {padding-top: 1rem !important; margin-top: 0rem !important;}
     
     /* Make home screen buttons massive */
     .home-button .stButton > button {
