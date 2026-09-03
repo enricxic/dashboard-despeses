@@ -1530,7 +1530,7 @@ Extreu i neteja els productes en un format JSON estricte:
 }}
 Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes reals.
 """
-                                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
                                 payload = {
                                     "contents": [
                                         {
@@ -1573,7 +1573,7 @@ Notes importants:
 2. Assegura't de capturar bé el 'preu_total' de la línia.
 3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 """
-                                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
                                 payload = {
                                     "contents": [
                                         {
