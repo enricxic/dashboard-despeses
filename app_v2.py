@@ -39,8 +39,8 @@ if st.session_state.current_module is None:
             background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #80deea 100%);
         }
         div.stButton > button {
-            height: 180px !important;
-            font-size: 24px !important;
+            height: 130px !important;
+            font-size: 28px !important;
             background-color: rgba(255, 255, 255, 0.85) !important;
             color: #111 !important;
             border: 2px solid #fff !important;
@@ -58,7 +58,7 @@ if st.session_state.current_module is None:
     st.write("")
     
     # Logo centered using base64
-    col_l1, col_l2, col_l3 = st.columns([1, 1, 1])
+    col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
     with col_l2:
         try:
             import base64
@@ -66,7 +66,7 @@ if st.session_state.current_module is None:
             logo_path = os.path.join(os.path.dirname(__file__), "logoXiquiHouse.png")
             with open(logo_path, "rb") as img_file:
                 b64_logo = base64.b64encode(img_file.read()).decode()
-            st.markdown(f'<div style="text-align: center; margin-bottom: 40px;"><img src="data:image/png;base64,{b64_logo}" style="width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="text-align: center; margin-bottom: 40px;"><img src="data:image/png;base64,{b64_logo}" style="width: 100%; max-width: 600px; mix-blend-mode: multiply;"></div>', unsafe_allow_html=True)
         except Exception as e:
             st.error(str(e))
             st.markdown("<h1 style='text-align: center; margin-bottom: 40px; color: #333;'>👑 Dashboard Principal</h1>", unsafe_allow_html=True)
