@@ -925,7 +925,7 @@ def render():
     if "last_synced_time" not in st.session_state or not isinstance(st.session_state["last_synced_time"], datetime) or st.session_state["last_synced_time"] < tracker.last_update:
         st.session_state["dfs_initialized"] = False
     
-    if "dfs_initialized" not in st.session_state or not st.session_state["dfs_initialized"]:
+    if "dfs_initialized" not in st.session_state or not st.session_state["dfs_initialized"] or "df_desp" not in st.session_state or 'date_score' not in st.session_state["df_desp"].columns:
         dfs = load_dashboard_data(get_csv_mtimes())
         st.session_state["df_desp"] = dfs[0]
         st.session_state["df_ing"] = dfs[1]

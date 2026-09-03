@@ -78,4 +78,4 @@ else:
         mod = importlib.import_module(st.session_state.current_module)
         mod.render()
     except Exception as e:
-        st.error(f"Error carregant el mòdul: {e}")
+        import traceback; st.error(f"Error carregant el mòdul: {e}"); st.code(traceback.format_exc())
