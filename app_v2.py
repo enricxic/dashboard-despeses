@@ -40,9 +40,39 @@ if 'current_module' not in st.session_state:
     st.session_state.current_module = None
 
 if st.session_state.current_module is None:
+    
+    # Add light blue gradient to home screen only
+    st.markdown("""
+        <style>
+        .stApp {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #80deea 100%);
+        }
+        .home-button .stButton > button {
+            height: 180px;  /* Make them taller to be square-ish */
+            font-size: 20px;
+            background-color: rgba(255, 255, 255, 0.85); /* Light transparent buttons */
+            color: #111;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .home-button .stButton > button:hover {
+            background-color: white;
+            border-color: #2980b9;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
     st.write("")
-    st.write("")
-    st.markdown("<h1 style='text-align: center; margin-bottom: 40px;'>👑 Dashboard Principal</h1>", unsafe_allow_html=True)
+    
+    # Logo centered
+    col_l1, col_l2, col_l3 = st.columns([1, 1, 1])
+    with col_l2:
+        try:
+            st.image("logoXiquiHouse.png", use_container_width=True)
+            st.markdown("<div style='margin-bottom: 40px;'></div>", unsafe_allow_html=True)
+        except:
+            st.markdown("<h1 style='text-align: center; margin-bottom: 40px; color: #333;'>👑 Dashboard Principal</h1>", unsafe_allow_html=True)
+
     
     # We wrap buttons in a container that we can target via markdown if needed, but we'll just use a class wrapper
     st.markdown('<div class="home-button">', unsafe_allow_html=True)
