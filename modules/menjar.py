@@ -22,10 +22,10 @@ def render():
             st.session_state.current_module = None
             st.rerun()
     
-    tab_receptes, = st.tabs(["🍽️ Receptari & Menús"])
+    
 
 
-    with tab_receptes:
+    if True:
         st.markdown("### 🍲 Menjar (Receptari MVP)")
         
         try:
@@ -90,15 +90,15 @@ def render():
                         col = cols[idx_row % 4]
                         with col:
                             card_height = 175 if mode_estalvi else 335
-                            with st.container(border=True, height=card_height):
+                            with st.container(border=True):
                                 img_url = row.get('imatge_url')
                                 if not mode_estalvi:
                                     if pd.notna(img_url) and str(img_url).strip() != '':
-                                        st.markdown(f'<img src="{img_url}" loading="lazy" style="width:100%; height:160px; object-fit:cover; border-radius:8px;">', unsafe_allow_html=True)
+                                        st.image(img_url, use_container_width=True)
                                     else:
                                         st.info("Sense imatge", icon="📷")
                                 
-                                st.markdown(f'<div style="height: 70px; overflow: hidden; margin-top: 10px; margin-bottom: 5px; display: flex; align-items: flex-start;"><h4 style="margin:0; line-height: 1.15;">{row.get("titol", "Sense títol")}</h4></div>', unsafe_allow_html=True)
+                                st.markdown(f"**{row.get('titol', 'Sense títol')}**")
                                 t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
                                 d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'Fàcil'
                                 t_apat = row.get('apat', 'Sense definir')
