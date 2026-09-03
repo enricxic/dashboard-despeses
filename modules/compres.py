@@ -1448,7 +1448,16 @@ def render_compres_super_interface():
         uploaded_file = chosen_file
         
         if uploaded_file is not None:
-            st.caption(f"📁 **Fitxer:** `{uploaded_file.name}`")
+            col_f1, col_f2 = st.columns([3, 1], vertical_alignment="center")
+            with col_f1:
+                st.caption(f"📁 **Fitxer:** `{uploaded_file.name}`")
+            with col_f2:
+                file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+                if st.session_state.get("ocr_failed", False) or st.session_state.get("processed_file_id") == file_id:
+                    if st.button("🔄 Reintentar", key="btn_retry_ocr_ui", help="Torna a passar el tiquet per la IA"):
+                        if "processed_file_id" in st.session_state:
+                            del st.session_state["processed_file_id"]
+                        st.rerun()
         
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
@@ -1619,9 +1628,11 @@ Notes importants:
 
                             st.session_state["ticket_items"] = parsed
                             save_unknown_products(parsed, current_super)
+                            st.session_state["ocr_failed"] = False
                             st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA (Gemini)! S'han detectat {len(parsed)} articles."
                             st.rerun()
                     except Exception as e:
+                        st.session_state["ocr_failed"] = True
                         st.session_state["ticket_msg_error"] = f"Error al processar l'imatge amb OCR: {str(e)}. Si us plau, introdueix els productes manualment."
                         st.rerun()
         
