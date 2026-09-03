@@ -203,7 +203,6 @@ def render():
                         num_comensals = st.number_input("Nombre de comensals", min_value=1, value=2, step=1)
                         st.session_state['num_comensals'] = num_comensals
                         temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
-                        import pandas as pd
                         month = pd.Timestamp.now().month
                         if month in [3,4,5]: def_temp = "Primavera"
                         elif month in [6,7,8]: def_temp = "Estiu"
@@ -327,7 +326,6 @@ def render():
                             
                 if 'gen_menu_data' in st.session_state:
                     st.markdown("#### 📅 El teu Menú Setmanal")
-                    import pandas as pd
                     st.dataframe(pd.DataFrame(st.session_state['gen_menu_data']), use_container_width=True, hide_index=True)
                     
                     st.markdown("#### ⏱️ Timing i Organització (Batch Cooking)")
