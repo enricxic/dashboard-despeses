@@ -47,22 +47,30 @@ if st.session_state.current_module is None:
     # We wrap buttons in a container that we can target via markdown if needed, but we'll just use a class wrapper
     st.markdown('<div class="home-button">', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
-    with col1:
+        with col1:
         if st.button("📊 Àrea Econòmica", use_container_width=True):
             st.session_state.current_module = "modules.economic"
             st.rerun()
         if st.button("🍽️ Menjar i Rebost", use_container_width=True):
             st.session_state.current_module = "modules.menjar"
             st.rerun()
-        if st.button("🏠 Domòtica i Llar", use_container_width=True):
-            st.session_state.current_module = "modules.domotica"
-            st.rerun()
             
     with col2:
         if st.button("🛒 Compres al Súper", use_container_width=True):
             st.session_state.current_module = "modules.compres"
+            st.rerun()
+        if st.button("🗓️ Agenda i Manteniment", use_container_width=True):
+            st.session_state.current_module = "modules.calendari"
+            st.rerun()
+            
+    with col3:
+        if st.button("🏡 Domòtica i Llar", use_container_width=True):
+            st.session_state.current_module = "modules.domotica"
+            st.rerun()
+        if st.button("⚙️ Configuració Global", use_container_width=True):
+            st.session_state.current_module = "modules.config"
             st.rerun()
         if st.button("📅 Agenda i Manteniment", use_container_width=True):
             st.session_state.current_module = "modules.calendari"
