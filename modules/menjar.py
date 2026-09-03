@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
-from core.db import get_supabase_client, fetch_all_supabase, delete_from_db, update_db_row, log_action, insert_db_row
+from core.db import get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row
 import pytz
 import re
 import urllib.parse

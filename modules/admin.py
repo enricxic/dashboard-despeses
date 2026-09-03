@@ -1,7 +1,7 @@
 import streamlit as st
 import json
 import os
-from core.db import get_supabase_client, fetch_all_supabase, delete_from_db, update_db_row, log_action, insert_db_row
+from core.db import get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row
 
 CONFIG_FILE = "core/config.json"
 
