@@ -16,15 +16,6 @@ st.markdown('''
     footer {visibility: hidden;}
     .block-container {padding-top: 1rem !important; margin-top: 0rem !important;}
     
-    /* Make home screen buttons massive */
-    .home-button .stButton > button {
-        height: 140px;
-        font-size: 24px;
-        font-weight: bold;
-        border-radius: 15px;
-        margin-bottom: 20px;
-    }
-    
     /* Top back button smaller */
     .back-button .stButton > button {
         height: 40px;
@@ -41,41 +32,44 @@ if 'current_module' not in st.session_state:
 
 if st.session_state.current_module is None:
     
-    # Add light blue gradient to home screen only
+    # Add light blue gradient to home screen only and massive square buttons
     st.markdown("""
         <style>
         .stApp {
             background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #80deea 100%);
         }
-        .home-button .stButton > button {
-            height: 180px;  /* Make them taller to be square-ish */
-            font-size: 20px;
-            background-color: rgba(255, 255, 255, 0.85); /* Light transparent buttons */
-            color: #111;
-            border: 2px solid #fff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        div.stButton > button {
+            height: 180px !important;
+            font-size: 24px !important;
+            background-color: rgba(255, 255, 255, 0.85) !important;
+            color: #111 !important;
+            border: 2px solid #fff !important;
+            border-radius: 15px !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+            margin-bottom: 20px !important;
         }
-        .home-button .stButton > button:hover {
-            background-color: white;
-            border-color: #2980b9;
+        div.stButton > button:hover {
+            background-color: white !important;
+            border-color: #2980b9 !important;
         }
         </style>
     """, unsafe_allow_html=True)
     
     st.write("")
     
-    # Logo centered
+    # Logo centered using base64
     col_l1, col_l2, col_l3 = st.columns([1, 1, 1])
     with col_l2:
         try:
-            st.image("logoXiquiHouse.png", use_container_width=True)
-            st.markdown("<div style='margin-bottom: 40px;'></div>", unsafe_allow_html=True)
-        except:
+            import base64
+            import os
+            logo_path = os.path.join(os.path.dirname(__file__), "logoXiquiHouse.png")
+            with open(logo_path, "rb") as img_file:
+                b64_logo = base64.b64encode(img_file.read()).decode()
+            st.markdown(f'<div style="text-align: center; margin-bottom: 40px;"><img src="data:image/png;base64,{b64_logo}" style="width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>', unsafe_allow_html=True)
+        except Exception as e:
+            st.error(str(e))
             st.markdown("<h1 style='text-align: center; margin-bottom: 40px; color: #333;'>👑 Dashboard Principal</h1>", unsafe_allow_html=True)
-
-    
-    # We wrap buttons in a container that we can target via markdown if needed, but we'll just use a class wrapper
-    st.markdown('<div class="home-button">', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
     
@@ -102,8 +96,6 @@ if st.session_state.current_module is None:
         if st.button("⚙️ Configuració Global", use_container_width=True):
             st.session_state.current_module = "modules.admin"
             st.rerun()
-            
-    st.markdown('</div>', unsafe_allow_html=True)
 
 else:
     try:
