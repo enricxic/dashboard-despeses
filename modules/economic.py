@@ -4076,9 +4076,9 @@ def render():
                     disable_ing = curr_carg > 0.0
                     
                     with sub_col1:
-                        import_carg = st.number_input("Import Càrrec (€)", value=0.0, step=0.01, key=f"desp_import_carg_{version}", disabled=disable_carg)
+                        import_carg = st.number_input("Import Càrrec (€)", value=0.0, step=None, format="%.2f", key=f"desp_import_carg_{version}", disabled=disable_carg)
                     with sub_col2:
-                        import_ing = st.number_input("Import Ingrés (€)", value=0.0, step=0.01, key=f"desp_import_ing_{version}", disabled=disable_ing)
+                        import_ing = st.number_input("Import Ingrés (€)", value=0.0, step=None, format="%.2f", key=f"desp_import_ing_{version}", disabled=disable_ing)
                     
                 # Dialog calculator helper for Gasolina price per litre
                 @st.dialog("⛽ Calculadora de Litres per Preu/Litre")
