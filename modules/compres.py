@@ -1317,41 +1317,7 @@ def render_compres_super_interface():
     if "df_super" not in st.session_state:
         st.session_state["df_super"] = fetch_all_supabase(supabase, 'compresSuper')
     df_super = st.session_state["df_super"]
-    st.components.v1.html(
-        """
-        <script>
-        const doc = window.parent.document;
-                doc.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const target = e.target;
-                if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
-                    const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
-                    const index = inputs.indexOf(target);
-                    if (index > -1 && index < inputs.length - 1) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        inputs[index + 1].focus();
-                    }
-                }
-            }
-        }, true);
-        
-        doc.addEventListener('focusin', function(e) {
-            const target = e.target;
-            if (target.tagName === 'INPUT') {
-                const val = target.value.trim();
-                if (val === '0' || val === '0,00' || val === '0.00' || val === '0.0' || val === '0,0') {
-                    setTimeout(() => {
-                        target.select();
-                    }, 50);
-                }
-            }
-        }, true);
-        </script>
-        """,
-        height=0,
-        width=0
-    )
+
     
     col_t1, col_t2 = st.columns([8.5, 1.5], vertical_alignment="center")
     with col_t1:
@@ -1475,6 +1441,9 @@ def render_compres_super_interface():
             
         uploaded_file = chosen_file
         
+        st.write("")
+        ocr_mode = st.radio("Mètode d'Escaneig", ["⚡ Híbrid (Tesseract+IA, recomanat)", "🤖 Visió Pura (Només Gemini)"], horizontal=True, help="Si la IA dóna error 503 per saturació, el mètode Híbrid sol funcionar gairebé sempre perqué és més lleuger.")
+        
         if uploaded_file is not None:
             col_f1, col_f2 = st.columns([3, 1], vertical_alignment="center")
             with col_f1:
@@ -1511,23 +1480,69 @@ def render_compres_super_interface():
                         st.rerun()
                 else:
                     try:
-                        # Run OCR using Google Gemini AI
-                        with st.spinner("Llegint tiquet amb IA (Gemini Vision)..."):
-                            import requests
-                            import base64
-                            import json
-                            from datetime import datetime
-                            
-                            api_key = st.secrets.get("GEMINI_API_KEY", "")
-                            
-                            mime_type = "image/jpeg"
-                            if uploaded_file.name.lower().endswith(".png"):
-                                mime_type = "image/png"
+                        import requests
+                        import base64
+                        import json
+                        from datetime import datetime
+                        import pytesseract
+                        from PIL import Image
+                        import io
+                        
+                        api_key = st.secrets.get("GEMINI_API_KEY", "")
+                        
+                        if "Híbrid" in ocr_mode:
+                            with st.spinner("1/2 - Llegint tiquet amb Tesseract OCR..."):
+                                uploaded_file.seek(0)
+                                img = Image.open(io.BytesIO(uploaded_file.read()))
+                                try:
+                                    raw_text = pytesseract.image_to_string(img, lang='cat+spa')
+                                except Exception:
+                                    raw_text = pytesseract.image_to_string(img)
                                 
-                            uploaded_file.seek(0)
-                            encoded_image = base64.b64encode(uploaded_file.read()).decode("utf-8")
-                            
-                            prompt = """
+                            with st.spinner("2/2 - Endreçant i raonant dades amb IA (Gemini Text)..."):
+                                prompt = f"""Ets un expert en extracció de dades de tiquets de compra.
+T'han donat aquest text OCR brut d'un tiquet de supermercat (conté errors i soroll):
+"""
+{raw_text}
+"""
+Extreu i neteja els productes en un format JSON estricte:
+{{
+    "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
+    "data": "DD/MM/YYYY (si la trobes)",
+    "articles": [
+        {{
+            "nom_brut": "Nom exacte del producte, corregint errors d'OCR",
+            "quantitat": 1,
+            "preu_unitari": 0.0,
+            "preu_total": 0.0
+        }}
+    ]
+}}
+Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes reals.
+"""
+                                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                                payload = {
+                                    "contents": [
+                                        {
+                                            "parts": [
+                                                {"text": prompt}
+                                            ]
+                                        }
+                                    ],
+                                    "generationConfig": {
+                                        "responseMimeType": "application/json"
+                                    }
+                                }
+                        else:
+                            with st.spinner("Llegint tiquet amb IA (Gemini Vision)..."):
+                                mime_type = "image/jpeg"
+                                if uploaded_file.name.lower().endswith(".png"):
+                                    mime_type = "image/png"
+                                    
+                                uploaded_file.seek(0)
+                                encoded_image = base64.b64encode(uploaded_file.read()).decode("utf-8")
+                                
+                                prompt = """
 Ets un expert en extracció de dades de tiquets de compra.
 Llegeix aquest tiquet de supermercat i retorna les dades en un format JSON net i estricte.
 L'estructura del JSON ha de ser EXACTAMENT aquesta:
@@ -1548,27 +1563,27 @@ Notes importants:
 2. Assegura't de capturar bé el 'preu_total' de la línia.
 3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 """
-                            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
-                            payload = {
-                                "contents": [
-                                    {
-                                        "parts": [
-                                            {"text": prompt},
-                                            {
-                                                "inline_data": {
-                                                    "mime_type": mime_type,
-                                                    "data": encoded_image
+                                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                                payload = {
+                                    "contents": [
+                                        {
+                                            "parts": [
+                                                {"text": prompt},
+                                                {
+                                                    "inline_data": {
+                                                        "mime_type": mime_type,
+                                                        "data": encoded_image
+                                                    }
                                                 }
-                                            }
-                                        ]
+                                            ]
+                                        }
+                                    ],
+                                    "generationConfig": {
+                                        "responseMimeType": "application/json"
                                     }
-                                ],
-                                "generationConfig": {
-                                    "responseMimeType": "application/json"
                                 }
-                            }
-                            
-                            import time
+                                
+                        import time
                             max_retries = 5
                             for attempt in range(max_retries):
                                 req = requests.post(url, json=payload, timeout=90)
@@ -1986,6 +2001,42 @@ Notes importants:
                 
     with col_b2:
         st.button("Netejar Tiquet", key="btn_clear_ticket", on_click=cb_clear_ticket)
+
+    st.components.v1.html(
+        """
+        <script>
+        const doc = window.parent.document;
+                doc.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const target = e.target;
+                if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
+                    const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
+                    const index = inputs.indexOf(target);
+                    if (index > -1 && index < inputs.length - 1) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        inputs[index + 1].focus();
+                    }
+                }
+            }
+        }, true);
+        
+        doc.addEventListener('focusin', function(e) {
+            const target = e.target;
+            if (target.tagName === 'INPUT') {
+                const val = target.value.trim();
+                if (val === '0' || val === '0,00' || val === '0.00' || val === '0.0' || val === '0,0') {
+                    setTimeout(() => {
+                        target.select();
+                    }, 50);
+                }
+            }
+        }, true);
+        </script>
+        """,
+        height=0,
+        width=0
+    )
 
 # ----------------- HEADER AREA -----------------
 
