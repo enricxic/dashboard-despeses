@@ -3268,7 +3268,7 @@ def render():
             
             # Incomes are calculated EXCLUSIVELY from the despeses (bank) table
             sub_desp = year_desp[year_desp['clean_mes'] == m_data]
-            sub_desp_inflows = sub_desp[sub_desp['Idcategoria'] != 'op_banc']
+            sub_desp_inflows = sub_desp[(sub_desp['Idcategoria'] != 'op_banc') & (sub_desp['grup'] != 'op_banc')]
             
             # Fixed incomes = anything categorized as 'ingres_general' or 'ingrés_general'
             ing_fixes = sub_desp_inflows[sub_desp_inflows['Idcategoria'].isin(['ingres_general', 'ingrés_general'])]['import ingrés'].sum()
@@ -3281,6 +3281,7 @@ def render():
             
             # Expenses
             sub_desp = year_desp[year_desp['clean_mes'] == m_data]
+            sub_desp = sub_desp[(sub_desp['Idcategoria'] != 'op_banc') & (sub_desp['grup'] != 'op_banc')]
             # Grid column mapping logic
             cat_series = sub_desp['Idcategoria'].astype(str)
             
