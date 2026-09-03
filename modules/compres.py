@@ -1789,8 +1789,8 @@ Notes importants:
         if ed_item.get('article') == 'pendent':
             st.text_input("Text original (modifica si cal abans de desar per ensenyar al sistema):", value=ed_item.get('nom_brut', ''), key="manual_nom_brut_input")
             
-    col_fam, col_art, col_pes, col_qty, col_preu, col_pct, col_prom, col_tot, col_reb, col_add = st.columns(
-        [2, 2.2, 1, 1, 1, 0.8, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
+    col_fam, col_art, col_art_btn, col_pes, col_qty, col_preu, col_pct, col_prom, col_tot, col_reb, col_add = st.columns(
+        [2, 1.9, 0.3, 1, 1, 1, 0.8, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
     )
     
     with col_fam:
