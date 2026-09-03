@@ -20,9 +20,9 @@ CATALAN_MONTHS = [
 ]
 
 month_translations = {
-    "Gener": "January", "Febrer": "February", "Març": "March", "Abril": "April",
-    "Maig": "May", "Juny": "June", "Juliol": "July", "Agost": "August",
-    "Setembre": "September", "Octubre": "October", "Novembre": "November", "Desembre": "December"
+    "Gener": "enero", "Febrer": "febrero", "Març": "marzo", "Abril": "abril",
+    "Maig": "mayo", "Juny": "junio", "Juliol": "julio", "Agost": "agosto",
+    "Setembre": "septiembre", "Octubre": "octubre", "Novembre": "noviembre", "Desembre": "diciembre"
 }
 import base64
 import requests
