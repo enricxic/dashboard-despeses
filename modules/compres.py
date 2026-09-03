@@ -1037,7 +1037,13 @@ def cb_clear_ticket():
 
 def cb_finalize_ticket():
     global df_desp, df_super
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    if "df_desp" not in st.session_state:
+        st.session_state["df_desp"] = fetch_all_supabase(supabase, 'despeses')
     df_desp = st.session_state["df_desp"]
+    
+    if "df_super" not in st.session_state:
+        st.session_state["df_super"] = fetch_all_supabase(supabase, 'compresSuper')
     df_super = st.session_state["df_super"]
     
     items = st.session_state.get("ticket_items", [])
@@ -1303,7 +1309,14 @@ def cb_finalize_ticket():
 
 def render_compres_super_interface():
     global df_super, df_desp
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    if "df_desp" not in st.session_state:
+        st.session_state["df_desp"] = fetch_all_supabase(supabase, 'despeses')
+    df_desp = st.session_state["df_desp"]
     
+    if "df_super" not in st.session_state:
+        st.session_state["df_super"] = fetch_all_supabase(supabase, 'compresSuper')
+    df_super = st.session_state["df_super"]
     st.components.v1.html(
         """
         <script>
@@ -1978,7 +1991,7 @@ Notes importants:
 
 
 def render():
-    st.title("🛒 Mòdul de Compres")
+
     
     tab_scanner, tab_llista = st.tabs(["🧾 Escàner Súper", "📋 Llista de la Compra"])
     
