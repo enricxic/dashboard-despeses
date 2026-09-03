@@ -1512,9 +1512,9 @@ def render_compres_super_interface():
                             with st.spinner("2/2 - Endreçant i raonant dades amb IA (Gemini Text)..."):
                                 prompt = f"""Ets un expert en extracció de dades de tiquets de compra.
 T'han donat aquest text OCR brut d'un tiquet de supermercat (conté errors i soroll):
-"""
+---
 {raw_text}
-"""
+---
 Extreu i neteja els productes en un format JSON estricte:
 {{
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
@@ -1594,96 +1594,96 @@ Notes importants:
                                 }
                                 
                         import time
-                            max_retries = 5
-                            for attempt in range(max_retries):
-                                req = requests.post(url, json=payload, timeout=90)
-                                if req.status_code == 503 or req.status_code == 429:
-                                    if attempt < max_retries - 1:
-                                        time.sleep(3 + (2 ** attempt))
-                                        continue
-                                if req.status_code != 200:
-                                    raise Exception(f"API Error {req.status_code}: {req.text}")
-                                break
+                        max_retries = 5
+                        for attempt in range(max_retries):
+                            req = requests.post(url, json=payload, timeout=90)
+                            if req.status_code == 503 or req.status_code == 429:
+                                if attempt < max_retries - 1:
+                                    time.sleep(3 + (2 ** attempt))
+                                    continue
+                            if req.status_code != 200:
+                                raise Exception(f"API Error {req.status_code}: {req.text}")
+                            break
+                            
+                        response_data = req.json()
+                        try:
+                            response_text = response_data['candidates'][0]['content']['parts'][0]['text']
+                            response_text = response_text.replace('```json', '').replace('```', '').strip()
+                            data = json.loads(response_text)
+                        except Exception as e:
+                            raise Exception(f"Failed to parse AI response: {str(e)}. Raw: {str(response_data)[:200]}")
+                        
+                        # 1. Update supermercat
+                        super_trobat = data.get("supermercat", "")
+                        if super_trobat:
+                            valid_supers = get_config_supers()
+                            super_definitiu = None
+                            for sp in valid_supers:
+                                if sp.lower() in super_trobat.lower() or super_trobat.lower() in sp.lower():
+                                    super_definitiu = sp
+                                    break
+                            
+                            if not super_definitiu and 'comerbal' in super_trobat.lower():
+                                super_definitiu = 'Novavenda'
                                 
-                            response_data = req.json()
+                            if super_definitiu:
+                                st.session_state["ticket_super_val"] = super_definitiu
+                                st.session_state["ticket_super_widget"] = super_definitiu
+                            else:
+                                st.session_state["ticket_super_val"] = super_trobat
+                                st.session_state["ticket_super_widget"] = super_trobat
+
+                        # 2. Update date
+                        data_trobada = data.get("data", "")
+                        if data_trobada:
                             try:
-                                response_text = response_data['candidates'][0]['content']['parts'][0]['text']
-                                response_text = response_text.replace('```json', '').replace('```', '').strip()
-                                data = json.loads(response_text)
-                            except Exception as e:
-                                raise Exception(f"Failed to parse AI response: {str(e)}. Raw: {str(response_data)[:200]}")
+                                d_val, m_val, y_val = map(int, data_trobada.split('/'))
+                                st.session_state["ticket_date"] = datetime(y_val, m_val, d_val).date()
+                            except Exception:
+                                pass
+
+                        # 3. Mapejar els articles
+                        parsed = []
+                        df_mapping = load_product_mappings()
+                        current_super = st.session_state.get("ticket_super_val", "")
+                        
+                        for art in data.get("articles", []):
+                            nom_brut = art.get("nom_brut", "")
+                            if not nom_brut: continue
                             
-                            # 1. Update supermercat
-                            super_trobat = data.get("supermercat", "")
-                            if super_trobat:
-                                valid_supers = get_config_supers()
-                                super_definitiu = None
-                                for sp in valid_supers:
-                                    if sp.lower() in super_trobat.lower() or super_trobat.lower() in sp.lower():
-                                        super_definitiu = sp
-                                        break
-                                
-                                if not super_definitiu and 'comerbal' in super_trobat.lower():
-                                    super_definitiu = 'Novavenda'
-                                    
-                                if super_definitiu:
-                                    st.session_state["ticket_super_val"] = super_definitiu
-                                    st.session_state["ticket_super_widget"] = super_definitiu
-                                else:
-                                    st.session_state["ticket_super_val"] = super_trobat
-                                    st.session_state["ticket_super_widget"] = super_trobat
-
-                            # 2. Update date
-                            data_trobada = data.get("data", "")
-                            if data_trobada:
-                                try:
-                                    d_val, m_val, y_val = map(int, data_trobada.split('/'))
-                                    st.session_state["ticket_date"] = datetime(y_val, m_val, d_val).date()
-                                except Exception:
-                                    pass
-
-                            # 3. Mapejar els articles
-                            parsed = []
-                            df_mapping = load_product_mappings()
-                            current_super = st.session_state.get("ticket_super_val", "")
+                            q_val = float(art.get("quantitat", 1))
+                            p_unit = float(art.get("preu_unitari", 0.0))
+                            p_tot = float(art.get("preu_total", 0.0))
                             
-                            for art in data.get("articles", []):
-                                nom_brut = art.get("nom_brut", "")
-                                if not nom_brut: continue
+                            if p_tot == 0.0 and p_unit > 0.0:
+                                p_tot = p_unit * q_val
                                 
-                                q_val = float(art.get("quantitat", 1))
-                                p_unit = float(art.get("preu_unitari", 0.0))
-                                p_tot = float(art.get("preu_total", 0.0))
+                            curr_item = {
+                                'familia': 'Pendent',
+                                'article': 'pendent',
+                                'pes': 0,
+                                'quantitat': q_val,
+                                'preuUnit': p_unit,
+                                'prom': 0.0,
+                                'totLinea': p_tot,
+                                'rebost': None,
+                                'nom_brut': nom_brut,
+                                'nom_super': current_super
+                            }
+                            
+                            db_match = find_product_in_db(nom_brut, current_super, df_mapping)
+                            if db_match:
+                                curr_item['familia'] = db_match['familia']
+                                curr_item['article'] = db_match['nomEstandard']
+                                curr_item['nom_super'] = db_match.get('nom_super', nom_brut)
                                 
-                                if p_tot == 0.0 and p_unit > 0.0:
-                                    p_tot = p_unit * q_val
-                                    
-                                curr_item = {
-                                    'familia': 'Pendent',
-                                    'article': 'pendent',
-                                    'pes': 0,
-                                    'quantitat': q_val,
-                                    'preuUnit': p_unit,
-                                    'prom': 0.0,
-                                    'totLinea': p_tot,
-                                    'rebost': None,
-                                    'nom_brut': nom_brut,
-                                    'nom_super': current_super
-                                }
-                                
-                                db_match = find_product_in_db(nom_brut, current_super, df_mapping)
-                                if db_match:
-                                    curr_item['familia'] = db_match['familia']
-                                    curr_item['article'] = db_match['nomEstandard']
-                                    curr_item['nom_super'] = db_match.get('nom_super', nom_brut)
-                                    
-                                parsed.append(curr_item)
+                            parsed.append(curr_item)
 
-                            st.session_state["ticket_items"] = parsed
-                            save_unknown_products(parsed, current_super)
-                            st.session_state["ocr_failed"] = False
-                            st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA (Gemini)! S'han detectat {len(parsed)} articles."
-                            st.rerun()
+                        st.session_state["ticket_items"] = parsed
+                        save_unknown_products(parsed, current_super)
+                        st.session_state["ocr_failed"] = False
+                        st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA (Gemini)! S'han detectat {len(parsed)} articles."
+                        st.rerun()
                     except Exception as e:
                         st.session_state["ocr_failed"] = True
                         st.session_state["ticket_msg_error"] = f"Error al processar l'imatge amb OCR: {str(e)}. Si us plau, introdueix els productes manualment."
