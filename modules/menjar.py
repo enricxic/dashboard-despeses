@@ -94,9 +94,9 @@ def render():
                                 img_url = row.get('imatge_url')
                                 if not mode_estalvi:
                                     if pd.notna(img_url) and str(img_url).strip() != '':
-                                        st.image(img_url, use_container_width=True)
+                                        st.markdown(f'<img src="{img_url}" loading="lazy" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom: 10px;">', unsafe_allow_html=True)
                                     else:
-                                        st.info("Sense imatge", icon="📷")
+                                        st.markdown('<div style="width:100%; height:160px; background-color:#1e2530; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#555; margin-bottom: 10px;">📷 Sense imatge</div>', unsafe_allow_html=True)
                                 
                                 st.markdown(f"**{row.get('titol', 'Sense títol')}**")
                                 t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
