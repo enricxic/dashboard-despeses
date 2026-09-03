@@ -1846,34 +1846,14 @@ Notes importants:
         if curr_art not in art_options:
             st.session_state["manual_art_selectbox"] = ""
             
-        # Draw side-by-side columns: 85% selectbox, 15% small + button
-        art_input_cols = st.columns([8, 2])
-        with art_input_cols[0]:
-            art_sel = st.selectbox("ARTICLE", art_options, key="manual_art_selectbox")
-        with art_input_cols[1]:
-            st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
-            if fam_sel:
-                st.markdown(
-                    """
-                    <style>
-                    .small-add-btn button {
-                        padding: 0px !important;
-                        font-size: 12px !important;
-                        height: 28px !important;
-                        width: 28px !important;
-                        min-height: 28px !important;
-                        line-height: 28px !important;
-                        border-radius: 4px !important;
-                    }
-                    </style>
-                    <div class="small-add-btn">
-                    """,
-                    unsafe_allow_html=True
-                )
-                if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article"):
-                    show_add_article_dialog(fam_sel)
-                st.markdown("</div>", unsafe_allow_html=True)
+        art_sel = st.selectbox("ARTICLE", art_options, key="manual_art_selectbox")
         
+    with col_art_btn:
+        st.markdown("<div style='margin-bottom: 2px;'></div>", unsafe_allow_html=True)
+        if fam_sel:
+            if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article", use_container_width=True):
+                show_add_article_dialog(fam_sel)
+                
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
     with col_qty:
