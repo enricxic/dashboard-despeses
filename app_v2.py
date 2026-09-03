@@ -49,7 +49,7 @@ if st.session_state.current_module is None:
     
     col1, col2, col3 = st.columns(3)
     
-        with col1:
+    with col1:
         if st.button("📊 Àrea Econòmica", use_container_width=True):
             st.session_state.current_module = "modules.economic"
             st.rerun()
