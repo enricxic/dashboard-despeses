@@ -27,9 +27,18 @@ L'estructura actual del projecte V2 és la següent:
 - *Nota Històrica*: `app.py` original es manté com a fallback, però el desenvolupament actiu es fa sobre la branca modular.
 
 ## 3. Lògica Avançada (OCR i Gemini)
-- L'extracció de tiquets del súper a `compres.py` i `app.py` funciona exclusivament a través de **Google Gemini Vision** (`gemini-1.5-flash`), cridant directament l'API mitjançant la llibreria `requests`.
+- L'extracció de tiquets del súper a `compres.py` i `app.py` funciona exclusivament a través de **Google Gemini Vision** (`gemini-3.6-flash`), cridant directament l'API mitjançant la llibreria `requests` (amb sistema de reintents / retry automàtic si l'API retorna error 503 per saturació).
 - S'evita l'ús de `pytesseract` com a motor principal per qüestions de fiabilitat en el desplegament al núvol.
 - L'API Key de Gemini està guardada als `st.secrets` (`GEMINI_API_KEY`).
+
+### 3.1 Introducció Manual de Línies de Tiquet amb Descompte (Enginyeria Inversa)
+- Quan un usuari introdueix manualment un article al tiquet a `modules/compres.py`, el flux de treball assumeix que s'està introduint el **preu final ja pagat** (tal com sol sortir als tiquets de Dia o Lidl). 
+- Si l'usuari posa un preu de `1.25€` i marca que li han fet un `%` de descompte del `30%`, l'aplicació fa un càlcul a la inversa (*enginyeria inversa*):
+  1. Calcula la base original: `preu_original = 1.25 / (1 - 0.30) = 1.79€`
+  2. Actualitza la casella del `PREU UNIT.` automàticament a `1.79€`.
+  3. Calcula i emplena la casella de `PROMOCIÓ` amb l'estalvi: `0.54€`
+  4. Manté el `TOTAL LÍNIA` en `1.25€` (que és l'import que realment es sumarà a la despesa del tiquet).
+Això permet registrar històrics de preus fiables dels productes sense que l'usuari hagi de calcular-los a mà.
 
 ## 4. Convencions de Disseny (UI/UX)
 - **CSS i Marge Superior**: A `app_v2.py` s'injecta CSS extremadament agressiu per eliminar l'espai i el padding superior de Streamlit (`div.block-container {padding-top: 0rem !important;}`). Així mateix, s'oculten les insígnies del núvol (`viewerBadge`, footer).
