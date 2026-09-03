@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, date
 from core.db import get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row
-import pytz
+
 import re
 import urllib.parse
 from PIL import Image
