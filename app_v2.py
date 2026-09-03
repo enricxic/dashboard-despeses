@@ -70,12 +70,6 @@ if st.session_state.current_module is None:
             st.session_state.current_module = "modules.domotica"
             st.rerun()
         if st.button("⚙️ Configuració Global", use_container_width=True):
-            st.session_state.current_module = "modules.config"
-            st.rerun()
-        if st.button("📅 Agenda i Manteniment", use_container_width=True):
-            st.session_state.current_module = "modules.calendari"
-            st.rerun()
-        if st.button("⚙️ Configuració Global", use_container_width=True):
             st.session_state.current_module = "modules.admin"
             st.rerun()
             
