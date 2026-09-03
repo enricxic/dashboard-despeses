@@ -5,7 +5,9 @@ import pandas as pd
 import google.generativeai as genai
 import json
 from supabase import create_client, Client
+from core.db import get_config_supers
 import numpy as np
+import time
 import plotly.express as px
 import plotly.graph_objects as graph_objects
 import os
@@ -4693,7 +4695,7 @@ def render():
                 pending_data = st.session_state.get('pending_data')
                 
                 if pending_super:
-                    default_super_idx = supers_list.index(pending_super) if pending_super in supers_list else 0
+                    default_super_idx = get_config_supers().index(pending_super) if pending_super in get_config_supers() else 0
                     try:
                         default_data = datetime.strptime(pending_data, '%d/%m/%Y').date()
                     except:

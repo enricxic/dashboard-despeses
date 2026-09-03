@@ -2,13 +2,28 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
-from core.db import get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row
-
+from core.db import (
+    get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row, append_to_db,
+    get_config_supers, get_config_banks, get_config_payment_methods, get_config_families, get_config_articles,
+    add_super_to_config, get_tb_productes_cached, save_categories_conceptes
+)
 import re
 import urllib.parse
 from PIL import Image
 import pytesseract
 import json
+import difflib
+
+CATALAN_MONTHS = [
+    "Gener", "Febrer", "Març", "Abril", "Maig", "Juny",
+    "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"
+]
+
+month_translations = {
+    "Gener": "January", "Febrer": "February", "Març": "March", "Abril": "April",
+    "Maig": "May", "Juny": "June", "Juliol": "July", "Agost": "August",
+    "Setembre": "September", "Octubre": "October", "Novembre": "November", "Desembre": "December"
+}
 import base64
 import requests
 
