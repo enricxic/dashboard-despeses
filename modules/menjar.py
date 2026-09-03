@@ -98,12 +98,12 @@ def render():
                                     else:
                                         st.markdown('<div style="width:100%; height:160px; background-color:#1e2530; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#555; margin-bottom: 10px;">📷 Sense imatge</div>', unsafe_allow_html=True)
                                 
-                                st.markdown(f"**{row.get('titol', 'Sense títol')}**")
+                                st.markdown(f'<div style="height: 55px; overflow: hidden; margin-bottom: 5px;"><strong>{row.get("titol", "Sense títol")}</strong></div>', unsafe_allow_html=True)
                                 t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
                                 d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'Fàcil'
                                 t_apat = row.get('apat', 'Sense definir')
                                 if pd.isna(t_apat) or not str(t_apat).strip(): t_apat = 'Sense definir'
-                                st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif} | 🍽️ {t_apat}")
+                                st.markdown(f'<div style="height: 45px; overflow: hidden; font-size: 0.85em; color: #a3a8b8; margin-bottom: 10px;">🍳 {row.get("categoria", "")} | ⏱️ {t_prep} min | ⚖️ {d_dif} | 🍽️ {t_apat}</div>', unsafe_allow_html=True)
                                 
                                 if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
                                     st.session_state[f"editing_{row['id']}"] = False
