@@ -139,7 +139,7 @@ if st.session_state.current_module is None:
         overflow-x: hidden !important;
     }}
     .main-wrapper {{
-        min-height: 94vh !important;
+        min-height: 95vh !important;
         padding: 0 !important;
         overflow: hidden !important;
         display: flex !important;
@@ -149,17 +149,17 @@ if st.session_state.current_module is None:
     .logo-box {{
         width: 100% !important;
         max-width: 100% !important;
-        transform: scale(1.52) !important;
+        transform: scale(2.05) !important;
         transform-origin: center center !important;
     }}
     /* Mida tàctil còmoda i fàcil de prémer al mòbil */
     .hotspot {{
-        width: 13.0% !important;
-        height: 16.0% !important;
-        background: rgba(2, 136, 209, 0.08) !important;
+        width: 12.5% !important;
+        height: 15.5% !important;
+        background: rgba(2, 136, 209, 0.01) !important;
     }}
     .hotspot.pulse {{
-        border: 2px dashed rgba(2, 136, 209, 0.5) !important;
+        border: none !important;
     }}
 }}
 </style>
