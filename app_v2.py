@@ -78,8 +78,8 @@ if st.session_state.current_module is None:
     background-color: #9fb5c2 !important;
 }}
 .block-container {{
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
     max-width: 100% !important;
 }}
 .main-wrapper {{
@@ -116,20 +116,43 @@ if st.session_state.current_module is None:
     border: 2px solid transparent;
     text-decoration: none !important;
     display: block;
+    -webkit-tap-highlight-color: rgba(2, 136, 209, 0.4);
 }}
-.hotspot:hover {{
+.hotspot:hover, .hotspot:active {{
     background: rgba(2, 136, 209, 0.32);
     border: 3px solid #0288d1;
     box-shadow: 0 0 25px 8px rgba(2, 136, 209, 0.7), inset 0 0 14px rgba(255,255,255,0.75);
     transform: translate(-50%, -50%) scale(1.14);
 }}
 @keyframes pulse-ring {{
-    0% {{ box-shadow: 0 0 0 0 rgba(2, 136, 209, 0.5); }}
-    70% {{ box-shadow: 0 0 0 11px rgba(2, 136, 209, 0); }}
+    0% {{ box-shadow: 0 0 0 0 rgba(2, 136, 209, 0.55); }}
+    70% {{ box-shadow: 0 0 0 12px rgba(2, 136, 209, 0); }}
     100% {{ box-shadow: 0 0 0 0 rgba(2, 136, 209, 0); }}
 }}
 .pulse {{
-    animation: pulse-ring 2.6s infinite;
+    animation: pulse-ring 2.4s infinite;
+}}
+
+/* ================= AJUSTOS PER A MÒBILS I PANTALLES VERTICALS ================= */
+@media (max-width: 768px) {{
+    .main-wrapper {{
+        min-height: 92vh !important;
+        padding: 0 !important;
+    }}
+    .logo-box {{
+        width: 100vw !important;
+        max-width: 100vw !important;
+        transform: scale(1.04);
+    }}
+    /* Ampliar notablement l'àrea tàctil per prémer amb el dit fàcilment */
+    .hotspot {{
+        width: 13.5% !important;
+        height: 16.5% !important;
+        background: rgba(2, 136, 209, 0.06);
+    }}
+    .hotspot.pulse {{
+        border: 1.5px dashed rgba(2, 136, 209, 0.4);
+    }}
 }}
 </style>
 
