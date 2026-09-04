@@ -18,6 +18,35 @@ def check_password():
         st.session_state["username"] = "Admin Local"
         return True
 
+    # 1. Comprovar si hi ha un token d'autenticació vàlid a la URL
+    admin_hashes = st.secrets.get("admin_password_hashes", [])
+    guest_hashes = st.secrets.get("guest_password_hashes", [])
+    viewer_hashes = st.secrets.get("viewer_password_hashes", [])
+    mapped_names = st.secrets.get("noms_usuaris", {})
+    
+    if isinstance(admin_hashes, str): admin_hashes = [admin_hashes]
+    if isinstance(guest_hashes, str): guest_hashes = [guest_hashes]
+    if isinstance(viewer_hashes, str): viewer_hashes = [viewer_hashes]
+
+    auth_param = st.query_params.get("auth")
+    if auth_param:
+        assigned_name = mapped_names.get(auth_param, "Usuari")
+        if auth_param in admin_hashes or auth_param == DEFAULT_HASH:
+            st.session_state["authenticated"] = True
+            st.session_state["role"] = "admin"
+            st.session_state["username"] = assigned_name
+            return True
+        elif auth_param in viewer_hashes:
+            st.session_state["authenticated"] = True
+            st.session_state["role"] = "viewer"
+            st.session_state["username"] = assigned_name
+            return True
+        elif auth_param in guest_hashes:
+            st.session_state["authenticated"] = True
+            st.session_state["role"] = "guest"
+            st.session_state["username"] = assigned_name
+            return True
+
     try:
         from streamlit.web.server.websocket_headers import _get_websocket_headers
         headers = _get_websocket_headers()
@@ -53,37 +82,25 @@ def check_password():
             submit = st.form_submit_button("Entrar")
             if submit:
                 hashed = hashlib.sha256(password.encode()).hexdigest()
-                
-                admin_hashes = st.secrets.get("admin_password_hashes", [])
-                guest_hashes = st.secrets.get("guest_password_hashes", [])
-                viewer_hashes = st.secrets.get("viewer_password_hashes", [])
-                mapped_names = st.secrets.get("noms_usuaris", {})
-                
-                if isinstance(admin_hashes, str): admin_hashes = [admin_hashes]
-                if isinstance(guest_hashes, str): guest_hashes = [guest_hashes]
-                if isinstance(viewer_hashes, str): viewer_hashes = [viewer_hashes]
-                
                 assigned_name = mapped_names.get(hashed, "Anònim")
                 
-                if hashed in admin_hashes:
+                if hashed in admin_hashes or hashed == DEFAULT_HASH:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "admin"
                     st.session_state["username"] = assigned_name
+                    st.query_params["auth"] = hashed
                     st.rerun()
                 elif hashed in viewer_hashes:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "viewer"
                     st.session_state["username"] = assigned_name
+                    st.query_params["auth"] = hashed
                     st.rerun()
                 elif hashed in guest_hashes:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "guest"
                     st.session_state["username"] = assigned_name
-                    st.rerun()
-                elif hashed == DEFAULT_HASH:
-                    st.session_state["authenticated"] = True
-                    st.session_state["role"] = "admin"
-                    st.session_state["username"] = "Admin"
+                    st.query_params["auth"] = hashed
                     st.rerun()
                 else:
                     st.error("Contrasenya incorrecta")
