@@ -42,19 +42,32 @@ if 'current_module' not in st.session_state:
 
 if st.session_state.current_module is None:
     import textwrap
-    # Carregar la imatge en base64 des de imatges/logo xiquiHouse.jpg
-    logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.jpg")
+    
+    # 1. Carregar el fons de pantalla completa
+    fons_path = os.path.join(os.path.dirname(__file__), "imatges", "fons xiquiHouse.jpg")
+    b64_fons = ""
+    if os.path.exists(fons_path):
+        with open(fons_path, "rb") as f_file:
+            b64_fons = base64.b64encode(f_file.read()).decode()
+
+    # 2. Carregar el logotip transparent
+    logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
     if not os.path.exists(logo_path):
-        logo_path = os.path.join(os.path.dirname(__file__), "logoXiquiHouse.png")
+        logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.jpg")
         
     b64_logo = ""
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as img_file:
             b64_logo = base64.b64encode(img_file.read()).decode()
 
-    # Layout centrat i calibrat amb precisió de píxels
+    # Layout responsive integrat amb fons de pantalla completa
     html_content = textwrap.dedent(f"""<style>
 .stApp {{
+    background-image: url("data:image/jpeg;base64,{b64_fons}") !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
     background-color: #9fb5c2 !important;
 }}
 .block-container {{
@@ -67,7 +80,7 @@ if st.session_state.current_module is None:
     justify-content: center;
     align-items: center;
     width: 100%;
-    min-height: 85vh;
+    min-height: 88vh;
 }}
 .logo-box {{
     position: relative;
@@ -81,10 +94,9 @@ if st.session_state.current_module is None:
     width: 100%;
     height: auto;
     display: block;
-    border-radius: 16px;
-    box-shadow: 0 12px 35px rgba(0,0,0,0.18);
     pointer-events: none;
     user-select: none;
+    filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
 }}
 .hotspot {{
     position: absolute;
@@ -99,14 +111,14 @@ if st.session_state.current_module is None:
     display: block;
 }}
 .hotspot:hover {{
-    background: rgba(2, 136, 209, 0.3);
+    background: rgba(2, 136, 209, 0.32);
     border: 3px solid #0288d1;
-    box-shadow: 0 0 22px 6px rgba(2, 136, 209, 0.65), inset 0 0 12px rgba(255,255,255,0.7);
-    transform: translate(-50%, -50%) scale(1.12);
+    box-shadow: 0 0 25px 8px rgba(2, 136, 209, 0.7), inset 0 0 14px rgba(255,255,255,0.75);
+    transform: translate(-50%, -50%) scale(1.14);
 }}
 @keyframes pulse-ring {{
     0% {{ box-shadow: 0 0 0 0 rgba(2, 136, 209, 0.5); }}
-    70% {{ box-shadow: 0 0 0 10px rgba(2, 136, 209, 0); }}
+    70% {{ box-shadow: 0 0 0 11px rgba(2, 136, 209, 0); }}
     100% {{ box-shadow: 0 0 0 0 rgba(2, 136, 209, 0); }}
 }}
 .pulse {{
@@ -116,7 +128,7 @@ if st.session_state.current_module is None:
 
 <div class="main-wrapper">
 <div class="logo-box">
-<img src="data:image/jpeg;base64,{b64_logo}" class="img-logo" alt="XiquiHouse">
+<img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="XiquiHouse">
 
 <!-- 1. Dalt Esquerra: WiFi / Domòtica -->
 <a href="?mod=modules.domotica" target="_self" class="hotspot pulse" style="left: 27.5%; top: 26.0%; width: 7.2%; height: 10.8%;" title="📶 Domòtica i Llar"></a>
