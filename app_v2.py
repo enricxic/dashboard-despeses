@@ -41,148 +41,6 @@ if 'current_module' not in st.session_state:
     st.session_state.current_module = None
 
 if st.session_state.current_module is None:
-    # Fons i ajust a pantalla completa
-    st.markdown("""
-<style>
-    .stApp {
-        background: #a9c7d8 !important;
-    }
-    .block-container {
-        padding: 0 !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-    }
-    .interactive-stage {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100vw;
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: #a9c7d8;
-    }
-    .interactive-container {
-        position: relative;
-        width: 100%;
-        max-width: 1400px;
-        height: 100%;
-        max-height: 95vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .base-image {
-        max-width: 100%;
-        max-height: 95vh;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        display: block;
-        pointer-events: none;
-        user-select: none;
-    }
-    
-    /* Botons rodons interactius */
-    .hotspot {
-        position: absolute;
-        border-radius: 50%;
-        cursor: pointer;
-        transform: translate(-50%, -50%);
-        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 100;
-        background: rgba(2, 136, 209, 0.01);
-        border: 2px solid transparent;
-        text-decoration: none !important;
-        display: block;
-    }
-    
-    .hotspot:hover {
-        background: rgba(2, 136, 209, 0.28);
-        border: 3px solid #0288d1;
-        box-shadow: 0 0 25px 8px rgba(2, 136, 209, 0.65), inset 0 0 15px rgba(255,255,255,0.8);
-        transform: translate(-50%, -50%) scale(1.16);
-    }
-    
-    .hotspot:active {
-        transform: translate(-50%, -50%) scale(0.95);
-    }
-
-    /* Tooltips personalitzats */
-    .hotspot .tooltip {
-        visibility: hidden;
-        opacity: 0;
-        position: absolute;
-        background: rgba(15, 23, 42, 0.95);
-        color: #ffffff;
-        text-align: center;
-        padding: 7px 14px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        white-space: nowrap;
-        pointer-events: none;
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.35);
-        z-index: 200;
-    }
-
-    .hotspot.left .tooltip {
-        right: 110%;
-        top: 50%;
-        transform: translateY(-50%) translateX(8px);
-    }
-    .hotspot.left:hover .tooltip {
-        visibility: visible;
-        opacity: 1;
-        transform: translateY(-50%) translateX(0);
-    }
-
-    .hotspot.right .tooltip {
-        left: 110%;
-        top: 50%;
-        transform: translateY(-50%) translateX(-8px);
-    }
-    .hotspot.right:hover .tooltip {
-        visibility: visible;
-        opacity: 1;
-        transform: translateY(-50%) translateX(0);
-    }
-
-    .hotspot.top .tooltip {
-        bottom: 115%;
-        left: 50%;
-        transform: translateX(-50%) translateY(8px);
-    }
-    .hotspot.top:hover .tooltip {
-        visibility: visible;
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-
-    .hotspot.center-btn .tooltip {
-        bottom: 115%;
-        left: 50%;
-        transform: translateX(-50%) translateY(8px);
-    }
-    .hotspot.center-btn:hover .tooltip {
-        visibility: visible;
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-
-    @keyframes pulse-ring {
-        0% { box-shadow: 0 0 0 0 rgba(2, 136, 209, 0.5); }
-        70% { box-shadow: 0 0 0 12px rgba(2, 136, 209, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(2, 136, 209, 0); }
-    }
-    .pulse-indicator {
-        animation: pulse-ring 2.5s infinite;
-    }
-</style>
-""", unsafe_allow_html=True)
-    
     # Carregar la imatge en base64 des de imatges/logo xiquiHouse.jpg
     logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.jpg")
     if not os.path.exists(logo_path):
@@ -192,25 +50,154 @@ if st.session_state.current_module is None:
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as img_file:
             b64_logo = base64.b64encode(img_file.read()).decode()
-            
-    # Renderitzat HTML sense indentació inicial per evitar blocs de codi markdown
-    html_markup = f"""<div class="interactive-stage">
-<div class="interactive-container" style="position: relative; display: inline-block;">
-<img class="base-image" src="data:image/jpeg;base64,{b64_logo}" alt="XiquiHouse">
-<a href="?mod=modules.domotica" target="_self" class="hotspot left pulse-indicator" style="left: 27.5%; top: 26.0%; width: 7.5%; aspect-ratio: 1/1;"><span class="tooltip">📶 Domòtica i Xarxa</span></a>
-<a href="?mod=modules.domotica" target="_self" class="hotspot left pulse-indicator" style="left: 27.6%; top: 41.7%; width: 7.5%; aspect-ratio: 1/1;"><span class="tooltip">🌡️ Climatització i Sensors</span></a>
-<a href="?mod=modules.domotica" target="_self" class="hotspot left pulse-indicator" style="left: 27.4%; top: 57.8%; width: 7.5%; aspect-ratio: 1/1;"><span class="tooltip">📹 Seguretat i Càmeres</span></a>
-<a href="?mod=modules.economic" target="_self" class="hotspot right pulse-indicator" style="left: 72.2%; top: 26.2%; width: 7.5%; aspect-ratio: 1/1;"><span class="tooltip">🚗 Transport, Km i Gasolina</span></a>
-<a href="?mod=modules.menjar" target="_self" class="hotspot right pulse-indicator" style="left: 72.1%; top: 41.6%; width: 7.5%; aspect-ratio: 1/1;"><span class="tooltip">🍽️ Menjar, Menús i Rebost</span></a>
-<a href="?mod=modules.compres" target="_self" class="hotspot right pulse-indicator" style="left: 72.1%; top: 58.3%; width: 7.5%; aspect-ratio: 1/1;"><span class="tooltip">🛒 Compres al Súper i Tiquets</span></a>
-<a href="?mod=modules.admin" target="_self" class="hotspot top" style="left: 37.1%; top: 17.8%; width: 7.5%; aspect-ratio: 1/1;"><span class="tooltip">⚙️ Configuració Global</span></a>
-<a href="?mod=modules.economic" target="_self" class="hotspot top" style="left: 60.9%; top: 17.8%; width: 7.5%; aspect-ratio: 1/1;"><span class="tooltip">📊 Àrea Econòmica i Finances</span></a>
-<a href="?mod=modules.calendari" target="_self" class="hotspot center-btn" style="left: 58.0%; top: 57.4%; width: 9%; aspect-ratio: 1/1;"><span class="tooltip">🗓️ Agenda i Manteniment</span></a>
-<a href="?mod=modules.menjar" target="_self" class="hotspot center-btn" style="left: 46.4%; top: 57.4%; width: 9%; aspect-ratio: 1/1;"><span class="tooltip">🥕 Rebost i Productes</span></a>
-</div>
-</div>"""
 
-    st.markdown(html_markup, unsafe_allow_html=True)
+    # SVG natiu interactiu de pantalla completa amb coordenades exactes
+    svg_fullscreen = f"""
+<style>
+    /* Netejar marges de Streamlit per a la pantalla d'inici */
+    .stApp {{
+        background-color: #9fb5c2 !important;
+        overflow: hidden !important;
+    }}
+    .block-container {{
+        padding: 0 !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+    }}
+    
+    /* Contenidor a pantalla completa fixa */
+    .xiqui-fullscreen {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #9fb5c2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+        margin: 0;
+        padding: 0;
+    }}
+    
+    .xiqui-svg {{
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
+    }}
+    
+    /* Estils dels botons circulars sobre el SVG */
+    .svg-hotspot {{
+        fill: rgba(2, 136, 209, 0.01);
+        stroke: transparent;
+        stroke-width: 8;
+        cursor: pointer;
+        transition: all 0.22s ease-in-out;
+    }}
+    
+    .svg-hotspot:hover {{
+        fill: rgba(2, 136, 209, 0.3);
+        stroke: #0288d1;
+        stroke-width: 10;
+        filter: drop-shadow(0px 0px 14px #0288d1);
+    }}
+    
+    /* Efecte polsador animat */
+    @keyframes svg-pulse {{
+        0% {{ stroke-width: 6; stroke: rgba(2, 136, 209, 0.5); }}
+        50% {{ stroke-width: 14; stroke: rgba(2, 136, 209, 0.1); }}
+        100% {{ stroke-width: 6; stroke: rgba(2, 136, 209, 0.5); }}
+    }}
+    .pulse-node {{
+        animation: svg-pulse 2.6s infinite ease-in-out;
+    }}
+</style>
+
+<div class="xiqui-fullscreen">
+    <svg class="xiqui-svg" viewBox="0 0 1772 1181" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <!-- Fons / Logotip d'alta definició -->
+        <image href="data:image/jpeg;base64,{b64_logo}" width="1772" height="1181" preserveAspectRatio="xMidYMid slice"/>
+        
+        <!-- ================= ESQUERRA (3 BOTONS) ================= -->
+        <!-- 1. Dalt Esquerra: WiFi / Domòtica -->
+        <a href="?mod=modules.domotica" target="_self">
+            <circle class="svg-hotspot pulse-node" cx="488" cy="307" r="62">
+                <title>📶 Domòtica i Llar</title>
+            </circle>
+        </a>
+
+        <!-- 2. Centre Esquerra: Termòmetre / Climatització -->
+        <a href="?mod=modules.domotica" target="_self">
+            <circle class="svg-hotspot pulse-node" cx="489" cy="493" r="62">
+                <title>🌡️ Climatització i Sensors</title>
+            </circle>
+        </a>
+
+        <!-- 3. Baix Esquerra: Càmera / Seguretat -->
+        <a href="?mod=modules.domotica" target="_self">
+            <circle class="svg-hotspot pulse-node" cx="485" cy="683" r="62">
+                <title>📹 Seguretat i Càmeres</title>
+            </circle>
+        </a>
+
+        <!-- ================= DRETA (3 BOTONS) ================= -->
+        <!-- 4. Dalt Dreta: Cotxe / Transport / Gasolina -->
+        <a href="?mod=modules.economic" target="_self">
+            <circle class="svg-hotspot pulse-node" cx="1280" cy="309" r="62">
+                <title>🚗 Transport, Km i Gasolina</title>
+            </circle>
+        </a>
+
+        <!-- 5. Centre Dreta: Menjar i Rebost -->
+        <a href="?mod=modules.menjar" target="_self">
+            <circle class="svg-hotspot pulse-node" cx="1277" cy="491" r="62">
+                <title>🍽️ Menjar, Menús i Rebost</title>
+            </circle>
+        </a>
+
+        <!-- 6. Baix Dreta: Compres al Súper -->
+        <a href="?mod=modules.compres" target="_self">
+            <circle class="svg-hotspot pulse-node" cx="1277" cy="688" r="62">
+                <title>🛒 Compres al Súper i Tiquets</title>
+            </circle>
+        </a>
+
+        <!-- ================= ELEMENTS DE LA CASA ================= -->
+        <!-- 7. Engranatge Superior: Configuració Global -->
+        <a href="?mod=modules.admin" target="_self">
+            <circle class="svg-hotspot" cx="655" cy="208" r="70">
+                <title>⚙️ Configuració Global</title>
+            </circle>
+        </a>
+
+        <!-- 8. Gràfic Superior: Àrea Econòmica -->
+        <a href="?mod=modules.economic" target="_self">
+            <circle class="svg-hotspot" cx="1075" cy="208" r="70">
+                <title>📊 Àrea Econòmica i Finances</title>
+            </circle>
+        </a>
+
+        <!-- 9. Cos Casa Dreta: Manteniment i Agenda -->
+        <a href="?mod=modules.calendari" target="_self">
+            <circle class="svg-hotspot" cx="1030" cy="678" r="88">
+                <title>🗓️ Agenda i Manteniment</title>
+            </circle>
+        </a>
+
+        <!-- 10. Cos Casa Esquerra: Rebost -->
+        <a href="?mod=modules.menjar" target="_self">
+            <circle class="svg-hotspot" cx="820" cy="678" r="88">
+                <title>🥕 Rebost i Productes</title>
+            </circle>
+        </a>
+    </svg>
+</div>
+"""
+
+    st.markdown(svg_fullscreen, unsafe_allow_html=True)
 
 else:
     try:
