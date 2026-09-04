@@ -135,23 +135,31 @@ if st.session_state.current_module is None:
 
 /* ================= AJUSTOS PER A MÒBILS I PANTALLES VERTICALS ================= */
 @media (max-width: 768px) {{
+    .stApp {{
+        overflow-x: hidden !important;
+    }}
     .main-wrapper {{
-        min-height: 92vh !important;
+        min-height: 94vh !important;
         padding: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }}
     .logo-box {{
-        width: 100vw !important;
-        max-width: 100vw !important;
-        transform: scale(1.04);
+        width: 100% !important;
+        max-width: 100% !important;
+        transform: scale(1.52) !important;
+        transform-origin: center center !important;
     }}
-    /* Ampliar notablement l'àrea tàctil per prémer amb el dit fàcilment */
+    /* Mida tàctil còmoda i fàcil de prémer al mòbil */
     .hotspot {{
-        width: 13.5% !important;
-        height: 16.5% !important;
-        background: rgba(2, 136, 209, 0.06);
+        width: 13.0% !important;
+        height: 16.0% !important;
+        background: rgba(2, 136, 209, 0.08) !important;
     }}
     .hotspot.pulse {{
-        border: 1.5px dashed rgba(2, 136, 209, 0.4);
+        border: 2px dashed rgba(2, 136, 209, 0.5) !important;
     }}
 }}
 </style>
