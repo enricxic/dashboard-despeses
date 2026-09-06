@@ -205,11 +205,20 @@ if st.session_state.current_module is None:
     # Dades del títol i colors de la casa
     from core.config_manager import get_translation
     casa_cfg = app_cfg.get("casa", {})
-    p1 = casa_cfg.get("paraula1", "Xiqui")
-    c1 = casa_cfg.get("color1", "#0284c7")
-    p2 = casa_cfg.get("paraula2", "House")
-    c2 = casa_cfg.get("color2", "#22c55e")
-    tamany_px = int(casa_cfg.get("tamany_lletra", 42))
+    p1 = str(casa_cfg.get("paraula1", "")).strip()
+    c1 = casa_cfg.get("color1", "#407faf")
+    p2 = str(casa_cfg.get("paraula2", "")).strip()
+    c2 = casa_cfg.get("color2", "#73ad69")
+    tamany_px = int(casa_cfg.get("tamany_lletra", 58))
+    
+    if p1 and p2:
+        title_html = f'<span style="color: {c1};">{p1}</span><span style="color: {c2};">{p2}</span>'
+    elif p1:
+        title_html = f'<span style="color: {c1};">{p1}</span>'
+    elif p2:
+        title_html = f'<span style="color: {c2};">{p2}</span>'
+    else:
+        title_html = f'<span style="color: {c1};">Xiqui</span><span style="color: {c2};">House</span>'
     
     lang = app_cfg.get("idioma", "ca")
     slogan_text = get_translation("slogan", lang)
@@ -298,6 +307,9 @@ if st.session_state.current_module is None:
     letter-spacing: 0.5px;
     text-shadow: 0 3px 10px rgba(0,0,0,0.85);
     line-height: 1;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }}
 .house-custom-slogan {{
     position: absolute;
@@ -307,7 +319,7 @@ if st.session_state.current_module is None:
     font-size: calc({max(12, int(tamany_px * 0.36))} * min(98vw, 146vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #0284c7;
+    color: #407faf;
     letter-spacing: 2px;
     text-transform: uppercase;
     text-align: center;
@@ -363,10 +375,10 @@ if st.session_state.current_module is None:
         max-width: 100vw !important;
     }}
     .house-custom-title {{
-        font-size: calc({tamany_px}px * 0.7);
+        font-size: calc({tamany_px} * 0.7px);
     }}
     .house-custom-slogan {{
-        font-size: calc({max(11, int(tamany_px * 0.35))}px * 0.7);
+        font-size: calc({max(12, int(tamany_px * 0.36))} * 0.7px);
     }}
 }}
 </style>
@@ -378,11 +390,11 @@ if st.session_state.current_module is None:
 
 <div class="main-wrapper">
 <div class="logo-box">
-<img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="{p1} {p2}">
+<img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="XiquiHouse">
 
 <!-- Títol personalitzat de la casa en dues caselles, colors i tamany -->
 <div class="house-custom-title">
-    <span style="color: {c1};">{p1}</span><span style="color: {c2};">{p2}</span>
+    {title_html}
 </div>
 
 <!-- Eslògan traduït de la llar -->

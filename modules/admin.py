@@ -264,33 +264,73 @@ def render():
             st.markdown(f"""
             <div class="chrome-card">
                 <div class="chrome-card-header">🏷️ Títol de la Casa (Pantalla d'Inici)</div>
-                <div class="chrome-card-desc">Personalitza com s'anomena la teva llar, tria els colors per a cadascuna de les dues parts del nom i ajusta el tamany de la lletra. El text i l'eslògan es mostraran a la part inferior central del logotip.</div>
+                <div class="chrome-card-desc">Personalitza com s'anomena la teva llar, tria els colors per a cadascuna de les dues parts del nom i ajusta el tamany de la lletra. Pots fer clic als botons de colors predeterminats (<b>#407faf</b> i <b>#73ad69</b>). Si només poses una paraula, quedarà automàticament centrada.</div>
             </div>
             """, unsafe_allow_html=True)
             
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            
+            # Gestionar estat dels colors si es cliquen els predeterminats
+            if "input_col1" not in st.session_state:
+                st.session_state["input_col1"] = casa_cfg.get("color1", "#407faf")
+            if "input_col2" not in st.session_state:
+                st.session_state["input_col2"] = casa_cfg.get("color2", "#73ad69")
+
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown("##### Primera Paraula")
                 p1 = st.text_input("Text 1", value=casa_cfg.get("paraula1", "Xiqui"), key="input_p1")
-                col1 = st.color_picker("Color de la 1a paraula", value=casa_cfg.get("color1", "#0284c7"), key="input_col1")
+                
+                # Preset button
+                c_pick1, c_preset1 = st.columns([1.2, 1.8], vertical_alignment="center")
+                with c_preset1:
+                    if st.button("🟦 #407faf (Blau original)", key="btn_preset_c1", use_container_width=True):
+                        st.session_state["input_col1"] = "#407faf"
+                        st.rerun()
+                with c_pick1:
+                    col1 = st.color_picker("Color 1", value=st.session_state["input_col1"], key="picker_c1")
+                    if col1 != st.session_state["input_col1"]:
+                        st.session_state["input_col1"] = col1
+                
             with c2:
-                st.markdown("##### Segona Paraula")
+                st.markdown("##### Segona Paraula (Opcional)")
                 p2 = st.text_input("Text 2", value=casa_cfg.get("paraula2", "House"), key="input_p2")
-                col2 = st.color_picker("Color de la 2a paraula", value=casa_cfg.get("color2", "#22c55e"), key="input_col2")
+                
+                # Preset button
+                c_pick2, c_preset2 = st.columns([1.2, 1.8], vertical_alignment="center")
+                with c_preset2:
+                    if st.button("🟩 #73ad69 (Verd original)", key="btn_preset_c2", use_container_width=True):
+                        st.session_state["input_col2"] = "#73ad69"
+                        st.rerun()
+                with c_pick2:
+                    col2 = st.color_picker("Color 2", value=st.session_state["input_col2"], key="picker_c2")
+                    if col2 != st.session_state["input_col2"]:
+                        st.session_state["input_col2"] = col2
                 
             st.markdown("##### 🔤 Tamany del Text")
-            tamany_lletra = st.slider("Tamany de la lletra del títol (píxels)", min_value=24, max_value=64, value=int(casa_cfg.get("tamany_lletra", 42)), step=2, key="slider_tamany")
+            tamany_lletra = st.slider("Tamany de la lletra del títol (píxels)", min_value=24, max_value=72, value=int(casa_cfg.get("tamany_lletra", 58)), step=2, key="slider_tamany")
                 
             st.markdown("#### 👁️ Previsualització en directe")
             slogan_text = get_translation("slogan", lang)
+            
+            p1_clean = p1.strip()
+            p2_clean = p2.strip()
+            if p1_clean and p2_clean:
+                preview_title_html = f'<span style="color: {col1};">{p1_clean}</span><span style="color: {col2};">{p2_clean}</span>'
+            elif p1_clean:
+                preview_title_html = f'<span style="color: {col1};">{p1_clean}</span>'
+            elif p2_clean:
+                preview_title_html = f'<span style="color: {col2};">{p2_clean}</span>'
+            else:
+                preview_title_html = f'<span style="color: {col1};">Xiqui</span><span style="color: {col2};">House</span>'
+
             st.markdown(f"""
             <div class="preview-box">
                 <div style="font-size: 0.8rem; color: {text_secondary}; text-transform: uppercase; margin-bottom: 8px;">Com es veurà a la pantalla d'inici:</div>
-                <div style="font-size: {tamany_lletra}px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.5px; text-shadow: 0 3px 10px rgba(0,0,0,0.5); line-height: 1.1;">
-                    <span style="color: {col1};">{p1}</span><span style="color: {col2};">{p2}</span>
+                <div style="font-size: {tamany_lletra}px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.5px; text-shadow: 0 3px 10px rgba(0,0,0,0.5); line-height: 1.1; text-align: center;">
+                    {preview_title_html}
                 </div>
-                <div style="font-size: {max(11, int(tamany_lletra * 0.35))}px; font-weight: 800; color: #0284c7; letter-spacing: 1.8px; margin-top: 6px; text-transform: uppercase;">
+                <div style="font-size: {max(12, int(tamany_lletra * 0.36))}px; font-weight: 800; color: #407faf; letter-spacing: 1.8px; margin-top: 6px; text-transform: uppercase; text-align: center;">
                     {slogan_text}
                 </div>
             </div>

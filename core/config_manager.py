@@ -14,10 +14,10 @@ DEFAULT_CONFIG = {
     },
     "casa": {
         "paraula1": "Xiqui",
-        "color1": "#0284c7",
+        "color1": "#407faf",
         "paraula2": "House",
-        "color2": "#22c55e",
-        "tamany_lletra": 42
+        "color2": "#73ad69",
+        "tamany_lletra": 58
     },
     "familia": [
         {"id": 1, "nom": "Enric", "rol": "Pare", "edat": "45", "circunstancies": "Cap al·lèrgia", "icona": "👨"},
