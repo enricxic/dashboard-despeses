@@ -179,15 +179,17 @@ def render_traditional_menubar():
 
 if st.session_state.current_module is None:
     # ------------------ PANTALLA PRINCIPAL (LOGO INTERACTIU) ------------------
-    # Carregar imatge de fons
-    fons_path = "fons_app.jpg"
+    # Carregar el fons de pantalla completa
+    fons_path = os.path.join(os.path.dirname(__file__), "imatges", "fons xiquiHouse.jpg")
     b64_fons = ""
     if os.path.exists(fons_path):
         with open(fons_path, "rb") as f_img:
             b64_fons = base64.b64encode(f_img.read()).decode()
 
-    # Carregar imatge de la pantalla d'inici (1024x682)
-    logo_path = "imatge_inici.png"
+    # Carregar el logotip transparent (1024x682)
+    logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
+    if not os.path.exists(logo_path):
+        logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.jpg")
     b64_logo = ""
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as img_file:
@@ -274,10 +276,10 @@ if st.session_state.current_module is None:
 }}
 .house-custom-title {{
     position: absolute;
-    top: 38.2%;
+    top: 49.5%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 2.1rem;
+    font-size: 1.85rem;
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     text-align: center;
@@ -286,7 +288,7 @@ if st.session_state.current_module is None:
     pointer-events: none;
     user-select: none;
     letter-spacing: 0.5px;
-    text-shadow: 0 3px 10px rgba(0,0,0,0.75);
+    text-shadow: 0 3px 10px rgba(0,0,0,0.85);
 }}
 .hotspot {{
     position: absolute;
