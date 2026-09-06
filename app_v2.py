@@ -70,111 +70,108 @@ def render_traditional_menubar():
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
     icones_actives = app_cfg.get("icones_actives", {})
     
-    menubar_html = f"""
-    <style>
-    .desktop-menubar {{
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        background: transparent;
-        padding: 0px;
-        margin: -0.8rem 0 0.1rem 0;
-        gap: 18px;
-        user-select: none;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        font-size: 0.78rem;
-        z-index: 9999;
-    }}
-    .desktop-menubar .menu-item {{
-        position: relative;
-        cursor: pointer;
-        display: inline-block;
-    }}
-    .desktop-menubar .menu-title {{
-        color: #94a3b8;
-        padding: 2px 4px;
-        border-radius: 2px;
-        transition: all 0.12s ease;
-        display: inline-block;
-    }}
-    .desktop-menubar .menu-item:hover .menu-title {{
-        background-color: rgba(255, 255, 255, 0.08);
-        color: #f8fafc;
-    }}
-    .desktop-menubar .menu-dropdown {{
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        background-color: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 4px;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-        min-width: 190px;
-        z-index: 999999;
-        padding: 4px 0;
-    }}
-    .desktop-menubar .menu-item:hover .menu-dropdown {{
-        display: block;
-    }}
-    .desktop-menubar .menu-dropdown a {{
-        display: block;
-        padding: 5px 14px;
-        color: #cbd5e1 !important;
-        text-decoration: none !important;
-        font-size: 0.78rem;
-        white-space: nowrap;
-        transition: background 0.12s ease;
-    }}
-    .desktop-menubar .menu-dropdown a:hover {{
-        background-color: #0284c7 !important;
-        color: #ffffff !important;
-    }}
-    </style>
-    
-    <nav class="desktop-menubar">
-        <div class="menu-item">
-            <span class="menu-title">Arxiu</span>
-            <div class="menu-dropdown">
-                <a href="?action=home{auth_suffix}" target="_self">Pantalla d'inici</a>
-                <a href="?action=reset{auth_suffix}" target="_self">Reiniciar sessió</a>
-                <a href="?action=logout" target="_self">Tancar sessió</a>
-            </div>
-        </div>
-        <div class="menu-item">
-            <span class="menu-title">Finances</span>
-            <div class="menu-dropdown">
-                <a href="?mod=modules.dashboard{auth_suffix}" target="_self">Dashboard General</a>
-                {f'<a href="?mod=modules.economic{auth_suffix}" target="_self">Mòdul Econòmic</a>' if icones_actives.get('economic', True) else ''}
-                {f'<a href="?mod=modules.compres{auth_suffix}" target="_self">Compres i tiquets súper</a>' if icones_actives.get('compres', True) else ''}
-            </div>
-        </div>
-        <div class="menu-item">
-            <span class="menu-title">Llar</span>
-            <div class="menu-dropdown">
-                {f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
-                {f'<a href="?mod=modules.manteniment{auth_suffix}" target="_self">Manteniment</a>' if icones_actives.get('manteniment', True) else ''}
-                {f'<a href="?mod=modules.cotxe{auth_suffix}" target="_self">Cotxe</a>' if icones_actives.get('cotxe', True) else ''}
-                {f'<a href="?mod=modules.domotica{auth_suffix}" target="_self">Domòtica</a>' if icones_actives.get('domotica', True) else ''}
-                {f'<a href="?mod=modules.seguretat{auth_suffix}" target="_self">Seguretat</a>' if icones_actives.get('seguretat', True) else ''}
-            </div>
-        </div>
-        <div class="menu-item">
-            <span class="menu-title">Família</span>
-            <div class="menu-dropdown">
-                {f'<a href="?mod=modules.calendari{auth_suffix}" target="_self">Agenda</a>' if icones_actives.get('agenda', True) else ''}
-                {f'<a href="?mod=modules.medicacio{auth_suffix}" target="_self">Medicació</a>' if icones_actives.get('medicacio', True) else ''}
-                {f'<a href="?mod=modules.jocs{auth_suffix}" target="_self">Jocs</a>' if icones_actives.get('jocs', True) else ''}
-            </div>
-        </div>
-        <div class="menu-item">
-            <span class="menu-title">Ajustos</span>
-            <div class="menu-dropdown">
-                <a href="?mod=modules.admin{auth_suffix}" target="_self">Configuració global</a>
-            </div>
-        </div>
-    </nav>
-    """
+    menubar_html = f"""<style>
+.desktop-menubar {{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    background: transparent;
+    padding: 0px;
+    margin: -0.8rem 0 0.1rem 0;
+    gap: 18px;
+    user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.78rem;
+    z-index: 9999;
+}}
+.desktop-menubar .menu-item {{
+    position: relative;
+    cursor: pointer;
+    display: inline-block;
+}}
+.desktop-menubar .menu-title {{
+    color: #94a3b8;
+    padding: 2px 4px;
+    border-radius: 2px;
+    transition: all 0.12s ease;
+    display: inline-block;
+}}
+.desktop-menubar .menu-item:hover .menu-title {{
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+}}
+.desktop-menubar .menu-dropdown {{
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    min-width: 190px;
+    z-index: 999999;
+    padding: 4px 0;
+}}
+.desktop-menubar .menu-item:hover .menu-dropdown {{
+    display: block;
+}}
+.desktop-menubar .menu-dropdown a {{
+    display: block;
+    padding: 5px 14px;
+    color: #cbd5e1 !important;
+    text-decoration: none !important;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    transition: background 0.12s ease;
+}}
+.desktop-menubar .menu-dropdown a:hover {{
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+}}
+</style>
+<nav class="desktop-menubar">
+<div class="menu-item">
+<span class="menu-title">Arxiu</span>
+<div class="menu-dropdown">
+<a href="?action=home{auth_suffix}" target="_self">Pantalla d'inici</a>
+<a href="?action=reset{auth_suffix}" target="_self">Reiniciar sessió</a>
+<a href="?action=logout" target="_self">Tancar sessió</a>
+</div>
+</div>
+<div class="menu-item">
+<span class="menu-title">Finances</span>
+<div class="menu-dropdown">
+<a href="?mod=modules.dashboard{auth_suffix}" target="_self">Dashboard General</a>
+{f'<a href="?mod=modules.economic{auth_suffix}" target="_self">Mòdul Econòmic</a>' if icones_actives.get('economic', True) else ''}
+{f'<a href="?mod=modules.compres{auth_suffix}" target="_self">Compres i tiquets súper</a>' if icones_actives.get('compres', True) else ''}
+</div>
+</div>
+<div class="menu-item">
+<span class="menu-title">Llar</span>
+<div class="menu-dropdown">
+{f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
+{f'<a href="?mod=modules.manteniment{auth_suffix}" target="_self">Manteniment</a>' if icones_actives.get('manteniment', True) else ''}
+{f'<a href="?mod=modules.cotxe{auth_suffix}" target="_self">Cotxe</a>' if icones_actives.get('cotxe', True) else ''}
+{f'<a href="?mod=modules.domotica{auth_suffix}" target="_self">Domòtica</a>' if icones_actives.get('domotica', True) else ''}
+{f'<a href="?mod=modules.seguretat{auth_suffix}" target="_self">Seguretat</a>' if icones_actives.get('seguretat', True) else ''}
+</div>
+</div>
+<div class="menu-item">
+<span class="menu-title">Família</span>
+<div class="menu-dropdown">
+{f'<a href="?mod=modules.calendari{auth_suffix}" target="_self">Agenda</a>' if icones_actives.get('agenda', True) else ''}
+{f'<a href="?mod=modules.medicacio{auth_suffix}" target="_self">Medicació</a>' if icones_actives.get('medicacio', True) else ''}
+{f'<a href="?mod=modules.jocs{auth_suffix}" target="_self">Jocs</a>' if icones_actives.get('jocs', True) else ''}
+</div>
+</div>
+<div class="menu-item">
+<span class="menu-title">Ajustos</span>
+<div class="menu-dropdown">
+<a href="?mod=modules.admin{auth_suffix}" target="_self">Configuració global</a>
+</div>
+</div>
+</nav>"""
     st.markdown(menubar_html, unsafe_allow_html=True)
 
 if st.session_state.current_module is None:

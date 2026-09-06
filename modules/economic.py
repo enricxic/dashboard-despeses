@@ -3448,7 +3448,7 @@ def render(view_mode="economic"):
                                 
                                 if col == 'Saldo' and not is_limits:
                                     bg = get_saldo_gradient_rgb(v_num)
-                                    td_style.append(f'background-color: {bg}; color: black !important; font-weight: bold;')
+                                    td_style.append(f'background-color: {bg}; color: #000000 !important; font-weight: bold;')
                                 
                                 if not is_total and not is_limits:
                                     if col == 'Ing. Total' and max_ing is not None and v_num == max_ing:
@@ -3494,6 +3494,10 @@ def render(view_mode="economic"):
     .custom-summary-table td:first-child {{
         font-weight: bold;
         text-align: left;
+    }}
+    .custom-summary-table tbody tr td:last-child {{
+        color: #000000 !important;
+        font-weight: bold !important;
     }}
     </style>
 <div class="custom-summary-table">

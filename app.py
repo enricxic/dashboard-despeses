@@ -3638,6 +3638,10 @@ with tab_dash:
     font-weight: bold;
     text-align: left;
 }}
+.custom-summary-table tbody tr td:last-child {
+    color: #000000 !important;
+    font-weight: bold !important;
+}
 </style>
 <div class="custom-summary-table">
 {html_table}
