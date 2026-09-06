@@ -327,7 +327,7 @@ def render():
             st.markdown(f"""
             <div class="preview-box">
                 <div style="font-size: 0.8rem; color: {text_secondary}; text-transform: uppercase; margin-bottom: 8px;">Com es veurà a la pantalla d'inici:</div>
-                <div style="font-size: {tamany_lletra}px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.5px; text-shadow: 0 3px 10px rgba(0,0,0,0.5); line-height: 1.1; text-align: center;">
+                <div style="font-size: {tamany_lletra}px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.5px; line-height: 1.1; text-align: center;">
                     {preview_title_html}
                 </div>
                 <div style="font-size: {max(12, int(tamany_lletra * 0.36))}px; font-weight: 800; color: #407faf; letter-spacing: 1.8px; margin-top: 6px; text-transform: uppercase; text-align: center;">

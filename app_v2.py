@@ -305,7 +305,6 @@ if st.session_state.current_module is None:
     pointer-events: none;
     user-select: none;
     letter-spacing: 0.5px;
-    text-shadow: 0 3px 10px rgba(0,0,0,0.85);
     line-height: 1;
     display: inline-flex;
     justify-content: center;
@@ -327,7 +326,6 @@ if st.session_state.current_module is None:
     z-index: 50;
     pointer-events: none;
     user-select: none;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.8);
     line-height: 1;
 }}
 .hotspot {{
