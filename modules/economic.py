@@ -2918,13 +2918,13 @@ def render(view_mode="economic"):
         st.toast(st.session_state["finalize_success"], icon="✅")
         del st.session_state["finalize_success"]
     
-    col_logo, col_title, col_super = st.columns([0.8, 8.7, 2.5], vertical_alignment="center")
+    col_logo, col_title, col_super = st.columns([0.6, 8.9, 2.5], vertical_alignment="center")
     with col_logo:
         if os.path.exists("logoEXD.png"):
-            st.image("logoEXD.png", width=65)
+            st.image("logoEXD.png", width=42)
     with col_title:
         title_text = "Dashboard General" if view_mode == "dashboard" else "Mòdul Econòmic"
-        st.markdown(f"<h2 style='margin:0; color:#f39c12; user-select:none;'>{title_text}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='margin:0; font-size:1.5rem; color:#f39c12; user-select:none; line-height:1.2;'>{title_text}</h2>", unsafe_allow_html=True)
     with col_super:
         if st.button("🔙 Tornar a l'inici", use_container_width=True, key=f"btn_back_{view_mode}"):
             st.session_state.current_module = None
@@ -3198,12 +3198,10 @@ def render(view_mode="economic"):
         # 1. Container for bank metrics (physically at the top)
         bank_metrics_container = st.container()
         
-        st.write("")
-        
         # 2. Row of Title and Filters Popover (in place of Juny 2026)
         col_sum_lbl, col_sum_btn = st.columns([11.4, 0.6], vertical_alignment="center")
         with col_sum_lbl:
-            st.markdown(f"<h3 style='margin:0; color:#f39c12;'>📅 Resum Mensual d'Ingressos i Despeses {selected_year}</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin: 4px 0 2px 0; font-size: 1.15rem; color:#f39c12;'>📅 Resum Mensual d'Ingressos i Despeses {selected_year}</h4>", unsafe_allow_html=True)
         with col_sum_btn:
             with st.popover("🔍", use_container_width=False):
                 selected_year = st.selectbox("Any", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year")
@@ -3217,42 +3215,42 @@ def render(view_mode="economic"):
         total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
         
         with bank_metrics_container:
-            col_bal_title, col_bal_metrics = st.columns([1.6, 10.4], vertical_alignment="center")
+            col_bal_title, col_bal_metrics = st.columns([1.5, 10.5], vertical_alignment="center")
             with col_bal_title:
-                st.markdown(f"<h3 style='margin:0; font-size: 1.3rem;'>💰 Saldo Comptes:<br><span style='color: #22c55e;'>{total_accounts_balance:,.2f} €</span></h3>", unsafe_allow_html=True)
+                st.markdown(f"<h4 style='margin:0; font-size: 1.05rem; line-height:1.2;'>💰 Saldo Comptes:<br><span style='color: #22c55e; font-size:1.25rem;'>{total_accounts_balance:,.2f} €</span></h4>", unsafe_allow_html=True)
             with col_bal_metrics:
                 # Apply custom styling to the nested horizontal block (the one containing the buttons)
                 st.markdown("""
                     <style>
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
-                        border-radius: 8px !important;
-                        min-height: 65px !important;
-                        min-width: 130px !important;
-                        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3) !important;
+                        border-radius: 6px !important;
+                        min-height: 48px !important;
+                        min-width: 110px !important;
+                        box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.3) !important;
                         height: 100% !important;
-                        padding: 5px !important;
+                        padding: 2px 4px !important;
                     }
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button:hover {
                         border-color: #f39c12 !important;
                     }
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p {
                         text-transform: uppercase;
-                        font-size: 0.85rem;
+                        font-size: 0.76rem;
                         font-weight: 600;
-                        line-height: 1.4;
+                        line-height: 1.25;
                         margin: 0;
                         display: flex;
                         flex-direction: column;
                         align-items: center;
                         justify-content: center;
                         text-align: center;
-                        gap: 2px;
+                        gap: 1px;
                         white-space: normal !important;
                     }
                     /* Make the green/red/zero value larger */
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span,
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p strong {
-                        font-size: 1.3rem;
+                        font-size: 1.15rem;
                         text-transform: none;
                         font-weight: bold;
                     }
