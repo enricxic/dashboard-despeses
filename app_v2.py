@@ -208,7 +208,7 @@ if st.session_state.current_module is None:
     role_icon = "👑" if role == "admin" else ("👁️‍🗨️" if role == "viewer" else "👤")
     role_title = "Administrador" if role == "admin" else ("Visor" if role == "viewer" else "Convidat")
 
-    # Layout responsive integrat amb fons de pantalla completa i SVG Hotspots
+    # Layout responsive integrat amb fons de pantalla completa i Hotspots HTML
     html_content = textwrap.dedent(f"""<style>
 .stApp {{
     background-image: url("data:image/jpeg;base64,{b64_fons}") !important;
@@ -219,8 +219,10 @@ if st.session_state.current_module is None:
     background-color: #9fb5c2 !important;
 }}
 .block-container {{
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
     max-width: 100% !important;
 }}
 .role-badge {{
@@ -233,7 +235,7 @@ if st.session_state.current_module is None:
     padding: 0;
     z-index: 99999;
     user-select: none;
-    font-size: 1.6rem;
+    font-size: 1.65rem;
     filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));
     cursor: default;
 }}
@@ -242,13 +244,15 @@ if st.session_state.current_module is None:
     justify-content: center;
     align-items: center;
     width: 100%;
-    min-height: 90vh;
+    min-height: 94vh;
+    padding: 0;
+    margin: 0;
 }}
 .logo-box {{
     position: relative;
     display: block;
-    width: 95vw;
-    max-width: 1300px;
+    width: 98vw;
+    max-width: 1450px;
     margin: 0 auto;
     line-height: 0;
 }}
@@ -260,29 +264,26 @@ if st.session_state.current_module is None:
     user-select: none;
     filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
 }}
-.hotspot-overlay {{
+.hotspot {{
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 50;
-    pointer-events: none;
-}}
-.svg-hotspot {{
-    fill: rgba(0, 0, 0, 0.001);
-    stroke: transparent;
-    stroke-width: 1px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
     cursor: pointer !important;
-    pointer-events: all !important;
-    transition: fill 0.2s ease, stroke 0.2s ease, filter 0.2s ease;
+    z-index: 100;
+    transition: all 0.15s ease-in-out;
+    background: rgba(0, 0, 0, 0.001) !important;
+    border: 2px solid transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+    display: block !important;
     -webkit-tap-highlight-color: transparent;
 }}
-.svg-hotspot:hover, .svg-hotspot:active {{
-    fill: rgba(2, 136, 209, 0.25) !important;
-    stroke: rgba(2, 136, 209, 0.6) !important;
-    stroke-width: 2px !important;
-    filter: drop-shadow(0 0 10px rgba(2, 136, 209, 0.5));
+.hotspot:hover, .hotspot:active {{
+    background: rgba(2, 136, 209, 0.25) !important;
+    border: 2px solid rgba(2, 136, 209, 0.6) !important;
+    box-shadow: 0 0 16px rgba(2, 136, 209, 0.55) !important;
 }}
 
 /* ================= AJUSTOS PER A MÒBILS I PANTALLES VERTICALS ================= */
@@ -291,7 +292,7 @@ if st.session_state.current_module is None:
         overflow-x: hidden !important;
     }}
     .main-wrapper {{
-        min-height: 95vh !important;
+        min-height: 96vh !important;
         padding: 0 !important;
         overflow: hidden !important;
         display: flex !important;
@@ -316,70 +317,44 @@ if st.session_state.current_module is None:
 <div class="logo-box">
 <img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="XiquiHouse">
 
-<svg viewBox="0 0 1024 682" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="hotspot-overlay">
-    <!-- ================= SENSE RODONA (SUPERIOR) ================= -->
-    <!-- Icona engranatge: Configuracions -->
-    <a href="?mod=modules.admin{auth_suffix}" xlink:href="?mod=modules.admin{auth_suffix}" target="_self">
-        <circle cx="381.5" cy="127" r="34" class="svg-hotspot"><title>⚙️ Configuració Global</title></circle>
-    </a>
+<!-- ================= SENSE RODONA (SUPERIOR) ================= -->
+<!-- Icona engranatge: Configuracions -->
+<a href="?mod=modules.admin{auth_suffix}" target="_self" class="hotspot" style="left: 37.33%; top: 18.43%; width: 7.2%;" title="⚙️ Configuració Global"></a>
 
-    <!-- Icona pantalla + gràfic: Dashboard -->
-    <a href="?mod=modules.dashboard{auth_suffix}" xlink:href="?mod=modules.dashboard{auth_suffix}" target="_self">
-        <circle cx="626.5" cy="124.5" r="34" class="svg-hotspot"><title>📊 Dashboard General</title></circle>
-    </a>
+<!-- Icona pantalla + gràfic: Dashboard -->
+<a href="?mod=modules.dashboard{auth_suffix}" target="_self" class="hotspot" style="left: 61.18%; top: 18.26%; width: 7.2%;" title="📊 Dashboard General"></a>
 
-    <!-- ================= AMB RODONA PART ESQUERRA (5 NODES) ================= -->
-    <!-- 1. Icona gràfic: Econòmic -->
-    <a href="?mod=modules.economic{auth_suffix}" xlink:href="?mod=modules.economic{auth_suffix}" target="_self">
-        <circle cx="282" cy="177" r="40" class="svg-hotspot"><title>📈 Mòdul Econòmic</title></circle>
-    </a>
+<!-- ================= AMB RODONA PART ESQUERRA (5 NODES) ================= -->
+<!-- 1. Icona gràfic: Econòmic -->
+<a href="?mod=modules.economic{auth_suffix}" target="_self" class="hotspot" style="left: 27.54%; top: 25.95%; width: 8.2%;" title="📈 Mòdul Econòmic"></a>
 
-    <!-- 2. Icona càmara: Seguretat -->
-    <a href="?mod=modules.seguretat{auth_suffix}" xlink:href="?mod=modules.seguretat{auth_suffix}" target="_self">
-        <circle cx="176.5" cy="234.5" r="40" class="svg-hotspot"><title>📹 Seguretat i Càmeres</title></circle>
-    </a>
+<!-- 2. Icona càmara: Seguretat -->
+<a href="?mod=modules.seguretat{auth_suffix}" target="_self" class="hotspot" style="left: 17.24%; top: 34.38%; width: 8.2%;" title="📹 Seguretat i Càmeres"></a>
 
-    <!-- 3. Icona casa amb eina: Manteniment -->
-    <a href="?mod=modules.manteniment{auth_suffix}" xlink:href="?mod=modules.manteniment{auth_suffix}" target="_self">
-        <circle cx="282" cy="282.5" r="40" class="svg-hotspot"><title>🛠️ Manteniment de la Llar</title></circle>
-    </a>
+<!-- 3. Icona casa amb eina: Manteniment -->
+<a href="?mod=modules.manteniment{auth_suffix}" target="_self" class="hotspot" style="left: 27.54%; top: 41.42%; width: 8.2%;" title="🛠️ Manteniment de la Llar"></a>
 
-    <!-- 4. Icona wifi: Domòtica -->
-    <a href="?mod=modules.domotica{auth_suffix}" xlink:href="?mod=modules.domotica{auth_suffix}" target="_self">
-        <circle cx="175" cy="349.5" r="40" class="svg-hotspot"><title>📶 Domòtica (Home Assistant)</title></circle>
-    </a>
+<!-- 4. Icona wifi: Domòtica -->
+<a href="?mod=modules.domotica{auth_suffix}" target="_self" class="hotspot" style="left: 17.09%; top: 51.25%; width: 8.2%;" title="📶 Domòtica (Home Assistant)"></a>
 
-    <!-- 5. Icona daus: Jocs -->
-    <a href="?mod=modules.jocs{auth_suffix}" xlink:href="?mod=modules.jocs{auth_suffix}" target="_self">
-        <circle cx="282" cy="393" r="40" class="svg-hotspot"><title>🎲 Jocs i Oci Familiar</title></circle>
-    </a>
+<!-- 5. Icona daus: Jocs -->
+<a href="?mod=modules.jocs{auth_suffix}" target="_self" class="hotspot" style="left: 27.54%; top: 57.62%; width: 8.2%;" title="🎲 Jocs i Oci Familiar"></a>
 
-    <!-- ================= AMB RODONA PART DRETA (5 NODES) ================= -->
-    <!-- 6. Icona calendari: Agenda -->
-    <a href="?mod=modules.calendari{auth_suffix}" xlink:href="?mod=modules.calendari{auth_suffix}" target="_self">
-        <circle cx="739" cy="177" r="40" class="svg-hotspot"><title>📅 Agenda i Calendari</title></circle>
-    </a>
+<!-- ================= AMB RODONA PART DRETA (5 NODES) ================= -->
+<!-- 6. Icona calendari: Agenda -->
+<a href="?mod=modules.calendari{auth_suffix}" target="_self" class="hotspot" style="left: 72.17%; top: 25.95%; width: 8.2%;" title="📅 Agenda i Calendari"></a>
 
-    <!-- 7. Icona pastilles: Control Medicació -->
-    <a href="?mod=modules.medicacio{auth_suffix}" xlink:href="?mod=modules.medicacio{auth_suffix}" target="_self">
-        <circle cx="830" cy="233" r="40" class="svg-hotspot"><title>💊 Control de Medicació</title></circle>
-    </a>
+<!-- 7. Icona pastilles: Control Medicació -->
+<a href="?mod=modules.medicacio{auth_suffix}" target="_self" class="hotspot" style="left: 81.05%; top: 34.16%; width: 8.2%;" title="💊 Control de Medicació"></a>
 
-    <!-- 8. Icona cuberts: Menjar -->
-    <a href="?mod=modules.menjar{auth_suffix}" xlink:href="?mod=modules.menjar{auth_suffix}" target="_self">
-        <circle cx="736" cy="283.5" r="40" class="svg-hotspot"><title>🍽️ Menjar, Menús i Rebost</title></circle>
-    </a>
+<!-- 8. Icona cuberts: Menjar -->
+<a href="?mod=modules.menjar{auth_suffix}" target="_self" class="hotspot" style="left: 71.88%; top: 41.57%; width: 8.2%;" title="🍽️ Menjar, Menús i Rebost"></a>
 
-    <!-- 9. Icona cotxe: Cotxe -->
-    <a href="?mod=modules.cotxe{auth_suffix}" xlink:href="?mod=modules.cotxe{auth_suffix}" target="_self">
-        <circle cx="828.5" cy="349.5" r="40" class="svg-hotspot"><title>🚗 Cotxe i Transport</title></circle>
-    </a>
+<!-- 9. Icona cotxe: Cotxe -->
+<a href="?mod=modules.cotxe{auth_suffix}" target="_self" class="hotspot" style="left: 80.91%; top: 51.25%; width: 8.2%;" title="🚗 Cotxe i Transport"></a>
 
-    <!-- 10. Icona carro compra: Compres Super/Stock -->
-    <a href="?mod=modules.compres{auth_suffix}" xlink:href="?mod=modules.compres{auth_suffix}" target="_self">
-        <circle cx="736" cy="398" r="40" class="svg-hotspot"><title>🛒 Compres al Súper i Stock</title></circle>
-    </a>
-</svg>
+<!-- 10. Icona carro compra: Compres Super/Stock -->
+<a href="?mod=modules.compres{auth_suffix}" target="_self" class="hotspot" style="left: 71.88%; top: 58.36%; width: 8.2%;" title="🛒 Compres al Súper i Stock"></a>
 
 </div>
 </div>""")
