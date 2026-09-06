@@ -284,10 +284,10 @@ if st.session_state.current_module is None:
 }}
 .house-custom-title {{
     position: absolute;
-    top: 69.5%;
+    top: 70.8%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: calc({tamany_px}px * min(98vw, 146vh) / 1024);
+    font-size: calc({tamany_px} * min(98vw, 146vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     text-align: center;
@@ -301,10 +301,10 @@ if st.session_state.current_module is None:
 }}
 .house-custom-slogan {{
     position: absolute;
-    top: 77.5%;
+    top: 79.2%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: calc({max(11, int(tamany_px * 0.35))}px * min(98vw, 146vh) / 1024);
+    font-size: calc({max(12, int(tamany_px * 0.36))} * min(98vw, 146vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #0284c7;
@@ -316,6 +316,7 @@ if st.session_state.current_module is None:
     pointer-events: none;
     user-select: none;
     text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    line-height: 1;
 }}
 .hotspot {{
     position: absolute;
