@@ -43,69 +43,138 @@ if "mod" in st.query_params:
 if 'current_module' not in st.session_state:
     st.session_state.current_module = None
 
-MODULES_NAV = [
-    {"id": "modules.dashboard", "label": "📊 Dashboard", "title": "Dashboard General"},
-    {"id": "modules.economic", "label": "📈 Econòmic", "title": "Mòdul Econòmic"},
-    {"id": "modules.compres", "label": "🛒 Compres", "title": "Compres Super i Stock"},
-    {"id": "modules.menjar", "label": "🍽️ Menjar", "title": "Menús i Rebost"},
-    {"id": "modules.calendari", "label": "📅 Agenda", "title": "Agenda i Calendari"},
-    {"id": "modules.medicacio", "label": "💊 Medicació", "title": "Control Medicació"},
-    {"id": "modules.cotxe", "label": "🚗 Cotxe", "title": "Cotxe i Transport"},
-    {"id": "modules.manteniment", "label": "🛠️ Manteniment", "title": "Manteniment Llar"},
-    {"id": "modules.seguretat", "label": "📹 Seguretat", "title": "Seguretat i Càmeres"},
-    {"id": "modules.domotica", "label": "📶 Domòtica", "title": "Domòtica"},
-    {"id": "modules.jocs", "label": "🎲 Jocs", "title": "Jocs i Oci"},
-]
-
-def render_top_navbar():
+def render_traditional_menubar():
     st.markdown("""
         <style>
-        div[data-testid="stPills"] {
-            overflow-x: auto;
-            white-space: nowrap;
-            padding-bottom: 2px;
-            scrollbar-width: thin;
+        /* Traditional Desktop Menu Bar styling */
+        div[data-testid="stPopover"] > button {
+            background: transparent !important;
+            border: 1px solid transparent !important;
+            box-shadow: none !important;
+            color: #cbd5e1 !important;
+            font-size: 0.88rem !important;
+            font-weight: 500 !important;
+            padding: 2px 10px !important;
+            border-radius: 4px !important;
+            min-height: 28px !important;
+            height: 28px !important;
+            margin: 0 1px !important;
         }
-        div[data-testid="stPills"] button {
-            font-size: 0.86rem !important;
-            padding: 4px 10px !important;
+        div[data-testid="stPopover"] > button:hover {
+            background-color: #334155 !important;
+            color: #ffffff !important;
+            border: 1px solid #475569 !important;
+        }
+        div[data-testid="stPopover"] > button:focus, div[data-testid="stPopover"] > button:active {
+            background-color: #0284c7 !important;
+            color: #ffffff !important;
+            border-color: #38bdf8 !important;
+        }
+        div[data-testid="stPopoverBody"] {
+            background-color: #1e293b !important;
+            border: 1px solid #475569 !important;
             border-radius: 6px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+            padding: 6px !important;
+            min-width: 230px !important;
+        }
+        div[data-testid="stPopoverBody"] button {
+            text-align: left !important;
+            justify-content: flex-start !important;
+            font-size: 0.86rem !important;
+            padding: 6px 12px !important;
+            margin-bottom: 2px !important;
+            border: none !important;
+            background: transparent !important;
+            color: #f1f5f9 !important;
+            border-radius: 4px !important;
+            width: 100% !important;
+        }
+        div[data-testid="stPopoverBody"] button:hover {
+            background-color: #0284c7 !important;
+            color: #ffffff !important;
         }
         </style>
     """, unsafe_allow_html=True)
     
-    col_home, col_pills, col_admin = st.columns([1.2, 9.6, 1.2], vertical_alignment="center")
-    with col_home:
-        if st.button("🏡 Inici", key="top_btn_home", use_container_width=True, help="Tornar a la pantalla principal"):
-            st.session_state.current_module = None
-            st.rerun()
-            
-    with col_pills:
-        mod_map = {m["id"]: m["label"] for m in MODULES_NAV}
-        label_map = {m["label"]: m["id"] for m in MODULES_NAV}
-        
-        current_label = mod_map.get(st.session_state.current_module, None)
-        options = [m["label"] for m in MODULES_NAV]
-        
-        selected = st.pills(
-            "Mòduls",
-            options=options,
-            default=current_label if current_label in options else None,
-            label_visibility="collapsed",
-            key="top_nav_pills_bar"
-        )
-        if selected and label_map.get(selected) != st.session_state.current_module:
-            st.session_state.current_module = label_map[selected]
-            st.rerun()
-            
-    with col_admin:
-        is_admin_active = (st.session_state.current_module == "modules.admin")
-        btn_type = "primary" if is_admin_active else "secondary"
-        if st.button("⚙️ Ajustos", key="top_btn_admin", type=btn_type, use_container_width=True, help="Configuració global"):
-            st.session_state.current_module = "modules.admin"
-            st.rerun()
-            
-    st.markdown("<hr style='margin: 0.2rem 0 0.8rem 0; border-color: #334155;'/>", unsafe_allow_html=True)
+    c1, c2, c3, c4, c5, c6, c_spacer = st.columns([1.0, 1.2, 1.0, 1.1, 1.1, 1.0, 5.6], vertical_alignment="center")
+    
+    with c1:
+        with st.popover("📁 Arxiu"):
+            if st.button("🏡 Pantalla d'Inici", use_container_width=True, key="m_arxiu_inici"):
+                st.session_state.current_module = None
+                st.rerun()
+            if st.button("🔄 Reiniciar Sessió", use_container_width=True, key="m_arxiu_reset"):
+                for k in list(st.session_state.keys()):
+                    del st.session_state[k]
+                st.rerun()
+            if st.button("🔒 Tancar Sessió", use_container_width=True, key="m_arxiu_logout"):
+                if "password_correct" in st.session_state:
+                    del st.session_state["password_correct"]
+                if "auth" in st.query_params:
+                    del st.query_params["auth"]
+                st.rerun()
+
+    with c2:
+        with st.popover("💰 Finances"):
+            if st.button("📊 Dashboard General", use_container_width=True, key="m_fin_dash"):
+                st.session_state.current_module = "modules.dashboard"
+                st.rerun()
+            if st.button("📈 Mòdul Econòmic", use_container_width=True, key="m_fin_econ"):
+                st.session_state.current_module = "modules.economic"
+                st.rerun()
+            if st.button("🛒 Compres i Tiquets Súper", use_container_width=True, key="m_fin_comp"):
+                st.session_state.current_module = "modules.compres"
+                st.rerun()
+
+    with c3:
+        with st.popover("🏡 Llar"):
+            if st.button("🍽️ Menús i Cuina", use_container_width=True, key="m_llar_menjar"):
+                st.session_state.current_module = "modules.menjar"
+                st.rerun()
+            if st.button("🛠️ Manteniment de la Llar", use_container_width=True, key="m_llar_mant"):
+                st.session_state.current_module = "modules.manteniment"
+                st.rerun()
+            if st.button("🚗 Cotxe i Transport", use_container_width=True, key="m_llar_cotxe"):
+                st.session_state.current_module = "modules.cotxe"
+                st.rerun()
+            if st.button("📶 Domòtica (Home Assistant)", use_container_width=True, key="m_llar_dom"):
+                st.session_state.current_module = "modules.domotica"
+                st.rerun()
+            if st.button("📹 Seguretat i Càmeres", use_container_width=True, key="m_llar_seg"):
+                st.session_state.current_module = "modules.seguretat"
+                st.rerun()
+
+    with c4:
+        with st.popover("👥 Família"):
+            if st.button("📅 Agenda i Calendari", use_container_width=True, key="m_fam_cal"):
+                st.session_state.current_module = "modules.calendari"
+                st.rerun()
+            if st.button("💊 Control de Medicació", use_container_width=True, key="m_fam_med"):
+                st.session_state.current_module = "modules.medicacio"
+                st.rerun()
+            if st.button("🎲 Jocs i Oci Familiar", use_container_width=True, key="m_fam_jocs"):
+                st.session_state.current_module = "modules.jocs"
+                st.rerun()
+
+    with c5:
+        with st.popover("⚙️ Ajustos"):
+            if st.button("⚙️ Configuració Global", use_container_width=True, key="m_aj_admin"):
+                st.session_state.current_module = "modules.admin"
+                st.rerun()
+
+    with c6:
+        with st.popover("❓ Ajuda"):
+            st.markdown("### 🏡 XiquiHouse V2")
+            st.caption("Sistema de gestió integral de la llar.")
+            st.markdown("---")
+            st.markdown("- **Versió**: 2.2.0")
+            st.markdown("- **Arquitectura**: Modular V2")
+            if st.button("⚙️ Panell de Control", use_container_width=True, key="m_aj_doc"):
+                st.session_state.current_module = "modules.admin"
+                st.rerun()
+                
+    st.markdown("<hr style='margin: 0.1rem 0 0.7rem 0; border-color: #334155;'/>", unsafe_allow_html=True)
 
 if st.session_state.current_module is None:
     import textwrap
@@ -276,7 +345,7 @@ if st.session_state.current_module is None:
     st.markdown(html_content, unsafe_allow_html=True)
 
 else:
-    render_top_navbar()
+    render_traditional_menubar()
     try:
         mod = importlib.import_module(st.session_state.current_module)
         mod.render()

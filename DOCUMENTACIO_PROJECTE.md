@@ -8,7 +8,7 @@ Aquest document descriu l'arquitectura, funcionalitats, estructura de fitxers i 
 L'aplicació ha transicionat d'un model monolític (`app.py`) a una **arquitectura modular V2** neta, extensible i optimitzada per a mòbils i escriptori.
 - **Frontend / Backend**: Construïda en **Streamlit** (Python).
 - **Entrada Principal (Router)**: L'arxiu **`app_v2.py`** actua com a menú principal (Landing Screen interactiva) i gestor de navegació global.
-- **Barra Superior de Menús**: Quan s'està dins de qualsevol mòdul, es mostra una barra de navegació superior amb accés ràpid a tots els mòduls (`st.pills`), botó `🏡 Inici` i botó `⚙️ Ajustos`.
+- **Barra Superior de Menús (Estil Tradicional d'Escriptori)**: Dins de qualsevol mòdul, es disposa d'un menú superior clàssic (`Arxiu`, `Finances`, `Llar`, `Família`, `Ajustos`, `Ajuda`) amb submenús desplegables per activar directament qualsevol secció o acció de l'aplicació.
 - **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/fons xiquiHouse.jpg`), amb 12 punts d'accés (hotspots interactius 100% transparents en repòs) mapejats amb precisió sobre les icones de la casa.
 - **Base de Dades**: **Supabase** (PostgreSQL). Tota la comunicació CRUD està centralitzada a `core/db.py`.
 - **Autenticació**: Gestionada a `core/auth.py`. Incorpora persistència de sessió mitjançant paràmetre de consulta (`?auth=<token>`) per evitar demanar contrasenya en recarregar la pàgina al fer clic als hotspots d'inici.
