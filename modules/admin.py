@@ -1,104 +1,527 @@
 import streamlit as st
 import json
 import os
-from core.db import get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row
-
-CONFIG_FILE = "core/config.json"
-
-def load_config():
-    if not os.path.exists(CONFIG_FILE):
-        return {
-            "membres_familia": [{"nom": "Adult 1", "circunstancies": ""}, {"nom": "Adult 2", "circunstancies": ""}],
-            "bancs_dashboard": ["CaixaBank", "Sabadell", "TR Cartera", "Efectiu"],
-            "columna_proveidors": True,
-            "columnes_resum": ["menjar", "gasolina", "restaurant", "farmacia", "neteja", "varis"],
-            "activar_ia": True
-        }
-    with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
-
-def save_config(config_data):
-    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(config_data, f, indent=4)
+from core.config_manager import load_app_config, save_app_config, get_translation
 
 def render():
-    col_t1, col_t2 = st.columns([8.5, 1.5], vertical_alignment="center")
-    with col_t1:
-        st.markdown("<h2 style='margin:0; color:#f39c12;'>⚙️ Administració i Configuració</h2>", unsafe_allow_html=True)
-    with col_t2:
-        if st.button("🔙 Tornar a l'inici", use_container_width=True):
+    cfg = load_app_config()
+    lang = cfg.get("idioma", "ca")
+    
+    # ---------------- CSS ESTIL GOOGLE CHROME SETTINGS ----------------
+    is_dark = st.session_state.get("app_theme", cfg.get("tema", "Fosc")) != "Clar"
+    
+    bg_card = "#1e293b" if is_dark else "#ffffff"
+    border_color = "#334155" if is_dark else "#dadce0"
+    text_primary = "#f8fafc" if is_dark else "#202124"
+    text_secondary = "#94a3b8" if is_dark else "#5f6368"
+    active_pill_bg = "#25344d" if is_dark else "#e8f0fe"
+    active_pill_text = "#8ab4f8" if is_dark else "#1a73e8"
+    hover_pill_bg = "rgba(255,255,255,0.06)" if is_dark else "#f1f3f4"
+    search_bg = "#0f172a" if is_dark else "#f1f3f4"
+    search_border = "#334155" if is_dark else "transparent"
+    
+    st.markdown(f"""
+        <style>
+        .chrome-header {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            background: {bg_card};
+            border-bottom: 1px solid {border_color};
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }}
+        .chrome-title-group {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }}
+        .chrome-logo {{
+            font-size: 1.8rem;
+            line-height: 1;
+        }}
+        .chrome-title {{
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: {text_primary};
+            letter-spacing: -0.2px;
+            margin: 0;
+        }}
+        .chrome-search-box {{
+            flex: 1;
+            max-width: 480px;
+            margin: 0 20px;
+        }}
+        .chrome-card {{
+            background: {bg_card};
+            border: 1px solid {border_color};
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }}
+        .chrome-card-header {{
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: {text_primary};
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+        .chrome-card-desc {{
+            font-size: 0.86rem;
+            color: {text_secondary};
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }}
+        .chrome-profile-banner {{
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 16px;
+            background: {search_bg};
+            border: 1px solid {border_color};
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }}
+        .chrome-profile-avatar {{
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #f39c12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.9rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }}
+        .chrome-profile-info {{
+            flex: 1;
+        }}
+        .chrome-profile-name {{
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: {text_primary};
+            margin: 0 0 3px 0;
+        }}
+        .chrome-profile-sub {{
+            font-size: 0.83rem;
+            color: {text_secondary};
+            margin: 0;
+        }}
+        .chrome-row {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid {border_color};
+        }}
+        .chrome-row:last-child {{
+            border-bottom: none;
+        }}
+        .chrome-row-label {{
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: {text_primary};
+            margin: 0;
+        }}
+        .chrome-row-sub {{
+            font-size: 0.8rem;
+            color: {text_secondary};
+            margin: 2px 0 0 0;
+        }}
+        .preview-box {{
+            padding: 18px;
+            border-radius: 10px;
+            border: 2px dashed {border_color};
+            background: {search_bg};
+            text-align: center;
+            margin: 12px 0;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Header estil Google Chrome
+    c_head1, c_head2, c_head3 = st.columns([3, 5, 2], vertical_alignment="center")
+    with c_head1:
+        st.markdown(f"""
+        <div class="chrome-title-group">
+            <span class="chrome-logo">⚙️</span>
+            <h2 class="chrome-title">Configuració</h2>
+        </div>
+        """, unsafe_allow_html=True)
+    with c_head2:
+        search_query = st.text_input("🔍 Cercar ajustos", placeholder="Cercar a la configuració...", label_visibility="collapsed", key="cfg_search")
+    with c_head3:
+        if st.button("🔙 Tornar a l'inici", use_container_width=True, key="btn_cfg_home"):
             st.session_state.current_module = None
             st.rerun()
+            
+    st.write("")
     
-    tab_conf, tab_bd, tab_pap = st.tabs(["🎛️ Configuració Global", "🗄️ Bases de Dades", "🗑️ Paperera"])
+    # Layout en dues columnes (Menú lateral Chrome a l'esquerra + Contingut a la dreta)
+    col_menu, col_body = st.columns([3, 7], gap="large")
     
-    with tab_conf:
-        st.markdown("### Configuració del Sistema")
-        cfg = load_config()
+    with col_menu:
+        st.markdown(f"<div style='font-size:0.8rem; text-transform:uppercase; font-weight:700; color:{text_secondary}; margin-bottom:8px; padding-left:6px;'>Seccions</div>", unsafe_allow_html=True)
         
-        with st.expander("👨‍👩‍👧‍👦 Membres de la Família", expanded=True):
-            st.write("Gestiona els membres i les seves preferències/al·lèrgies (Aquesta info l'usarà el Recomanador de Menús i la IA).")
+        sections = [
+            ("admin", "👤 Administrador"),
+            ("titol", "🏷️ Títol de la casa"),
+            ("familia", "👨‍👩‍👧‍👦 Família"),
+            ("tema", "🎨 Aspecte i Tema"),
+            ("icones", "🔘 Icones pantalla d'inici"),
+            ("idioma", "🌐 Idiomes")
+        ]
+        
+        # Filtrar si s'està cercant
+        if search_query:
+            q = search_query.lower()
+            filtered_sections = [s for s in sections if q in s[1].lower() or q in s[0]]
+            if not filtered_sections:
+                filtered_sections = sections
+        else:
+            filtered_sections = sections
             
-            # Simple form to edit members
-            new_members = []
-            for i, mem in enumerate(cfg.get("membres_familia", [])):
-                c1, c2, c3 = st.columns([2, 3, 1])
+        if "cfg_active_tab" not in st.session_state:
+            st.session_state.cfg_active_tab = "admin"
+            
+        for key_s, label_s in filtered_sections:
+            is_active = (st.session_state.cfg_active_tab == key_s)
+            btn_type = "primary" if is_active else "secondary"
+            if st.button(label_s, key=f"nav_btn_{key_s}", use_container_width=True, type=btn_type):
+                st.session_state.cfg_active_tab = key_s
+                st.rerun()
+                
+    with col_body:
+        active = st.session_state.get("cfg_active_tab", "admin")
+        
+        # =========================================================================
+        # 1. SECCIÓ: ADMINISTRADOR
+        # =========================================================================
+        if active == "admin":
+            admin_cfg = cfg.get("admin", {})
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">👤 Administrador del Sistema</div>
+                <div class="chrome-card-desc">Gestiona el compte principal, el perfil i les credencials d'accés mestres.</div>
+                <div class="chrome-profile-banner">
+                    <div class="chrome-profile-avatar">{admin_cfg.get('avatar', '👑')}</div>
+                    <div class="chrome-profile-info">
+                        <div class="chrome-profile-name">{admin_cfg.get('nom', 'Enric Xicars')}</div>
+                        <div class="chrome-profile-sub">Sincronitzat amb <b>{admin_cfg.get('email', 'enricxicars@gmail.com')}</b></div>
+                        <div class="chrome-profile-sub" style="color:#22c55e; margin-top:2px;">● Rol actiu: {admin_cfg.get('rol', 'Administrador')}</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            with st.container():
+                st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+                st.markdown("#### ✏️ Dades de contacte i perfil")
+                c1, c2 = st.columns(2)
                 with c1:
-                    nom = st.text_input("Nom", value=mem.get("nom", ""), key=f"mem_nom_{i}")
+                    new_nom = st.text_input("Nom de l'administrador", value=admin_cfg.get("nom", "Enric Xicars"))
+                    new_email = st.text_input("Correu electrònic", value=admin_cfg.get("email", "enricxicars@gmail.com"))
                 with c2:
-                    circ = st.text_input("Circumstàncies / Al·lèrgies", value=mem.get("circunstancies", ""), key=f"mem_circ_{i}")
-                with c3:
-                    st.write("")
-                    del_btn = st.checkbox("Esborrar", key=f"mem_del_{i}")
-                if not del_btn:
-                    new_members.append({"nom": nom, "circunstancies": circ})
-            
-            st.markdown("---")
-            c1, c2 = st.columns([2, 4])
-            with c1:
-                add_nom = st.text_input("Nou membre (Nom)")
-            with c2:
-                add_circ = st.text_input("Noves circumstàncies")
-            if st.button("➕ Afegir Membre"):
-                if add_nom:
-                    new_members.append({"nom": add_nom, "circunstancies": add_circ})
-                    cfg["membres_familia"] = new_members
-                    save_config(cfg)
-                    st.rerun()
-            
-            if st.button("💾 Desar Membres", type="primary"):
-                cfg["membres_familia"] = new_members
-                save_config(cfg)
-                st.success("Membres desats!")
+                    new_tel = st.text_input("Telèfon de contacte", value=admin_cfg.get("telefon", "+34 600 000 000"))
+                    avatar_options = ["👑", "👤", "⭐", "🏠", "🛡️", "🚀"]
+                    cur_avatar = admin_cfg.get("avatar", "👑")
+                    av_idx = avatar_options.index(cur_avatar) if cur_avatar in avatar_options else 0
+                    new_avatar = st.selectbox("Icona / Avatar", avatar_options, index=av_idx)
                 
-        with st.expander("🏦 Bancs del Dashboard"):
-            st.write("Selecciona quins bancs es veuran sumats al càlcul de saldo total del Dashboard.")
-            bancs_text = st.text_area("Bancs (un per línia)", value="\n".join(cfg.get("bancs_dashboard", [])))
-            if st.button("Desar Bancs"):
-                cfg["bancs_dashboard"] = [b.strip() for b in bancs_text.split('\n') if b.strip()]
-                save_config(cfg)
-                st.success("Bancs actualitzats!")
+                st.markdown("---")
+                st.markdown("#### 🔒 Seguretat i PIN mestre")
+                c_pin1, c_pin2 = st.columns(2)
+                with c_pin1:
+                    new_pin = st.text_input("PIN d'accés / Contrasenya", value=admin_cfg.get("pin", "1234"), type="password")
+                with c_pin2:
+                    new_rol = st.selectbox("Rol per defecte", ["Administrador", "Usuari Avançat", "Convidat"], index=0)
                 
-        with st.expander("📊 Resum Mensual i Vistes"):
+                st.write("")
+                if st.button("💾 Desar Dades d'Administrador", type="primary", use_container_width=True, key="save_admin"):
+                    cfg["admin"] = {
+                        "nom": new_nom,
+                        "email": new_email,
+                        "telefon": new_tel,
+                        "avatar": new_avatar,
+                        "pin": new_pin,
+                        "rol": new_rol
+                    }
+                    if save_app_config(cfg):
+                        st.success("✅ Dades d'administrador actualitzades correctament!")
+                        st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 2. SECCIÓ: TÍTOL DE LA CASA
+        # =========================================================================
+        elif active == "titol":
+            casa_cfg = cfg.get("casa", {})
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🏷️ Títol de la Casa (Pantalla d'Inici)</div>
+                <div class="chrome-card-desc">Personalitza com s'anomena la teva llar i tria els colors per a cadascuna de les dues parts del nom. El resultat es mostrarà a la pantalla principal en lloc de "Xiqui House".</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             with c1:
-                show_prov = st.toggle("Activar Columna Proveïdors a la taula resum", value=cfg.get("columna_proveidors", True))
+                st.markdown("##### Primera Paraula")
+                p1 = st.text_input("Text 1", value=casa_cfg.get("paraula1", "Xiqui"), key="input_p1")
+                col1 = st.color_picker("Color de la 1a paraula", value=casa_cfg.get("color1", "#f39c12"), key="input_col1")
             with c2:
-                show_ia = st.toggle("Activar Xat IA (Conseller Financer)", value=cfg.get("activar_ia", True))
+                st.markdown("##### Segona Paraula")
+                p2 = st.text_input("Text 2", value=casa_cfg.get("paraula2", "House"), key="input_p2")
+                col2 = st.color_picker("Color de la 2a paraula", value=casa_cfg.get("color2", "#ffffff"), key="input_col2")
                 
-            cols_text = st.text_area("Columnes del resum (una per línia, p. ex: menjar, gasolina)", value="\n".join(cfg.get("columnes_resum", [])))
+            st.markdown("#### 👁️ Previsualització en directe")
+            st.markdown(f"""
+            <div class="preview-box">
+                <div style="font-size: 0.8rem; color: {text_secondary}; text-transform: uppercase; margin-bottom: 8px;">Com es veurà a la pantalla d'inici:</div>
+                <div style="font-size: 2.4rem; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.5);">
+                    <span style="color: {col1};">{p1}</span> <span style="color: {col2};">{p2}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
-            if st.button("Desar Vistes"):
-                cfg["columna_proveidors"] = show_prov
-                cfg["activar_ia"] = show_ia
-                cfg["columnes_resum"] = [c.strip() for c in cols_text.split('\n') if c.strip()]
-                save_config(cfg)
-                st.success("Configuració visual actualitzada!")
+            st.write("")
+            if st.button("💾 Desar Títol de la Casa", type="primary", use_container_width=True, key="save_titol"):
+                cfg["casa"] = {
+                    "paraula1": p1,
+                    "color1": col1,
+                    "paraula2": p2,
+                    "color2": col2
+                }
+                if save_app_config(cfg):
+                    st.success("✅ Títol de la casa desat correctament!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    with tab_bd:
-        st.markdown("### 🗄️ Visor i Editor de Bases de Dades (V2)")
-        st.warning("Per fer: Moure el codi del db_editor des de l'app original aquí.")
-        
-    with tab_pap:
-        st.markdown("### 🗑️ Registre d'Accions i Paperera")
-        st.warning("Per fer: Moure el codi de la paperera aquí.")
+        # =========================================================================
+        # 3. SECCIÓ: FAMÍLIA (0 a 10 membres)
+        # =========================================================================
+        elif active == "familia":
+            familia_list = list(cfg.get("familia", []))
+            num_membres = len(familia_list)
+            
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">👨‍👩‍👧‍👦 Membres de la Família ({num_membres} / 10)</div>
+                <div class="chrome-card-desc">Afegeix i gestiona els membres de la llar (fins a un màxim de 10). Aquesta informació s'utilitza pel control de medicació, menús familiars, preferències i assistent IA.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            
+            # Botó d'afegir membre
+            if num_membres < 10:
+                col_add1, col_add2 = st.columns([8, 2])
+                with col_add2:
+                    if st.button("➕ Afegir Membre", type="primary", use_container_width=True):
+                        next_id = max([m.get("id", 0) for m in familia_list] + [0]) + 1
+                        familia_list.append({
+                            "id": next_id,
+                            "nom": f"Membre {num_membres + 1}",
+                            "rol": "Familiar",
+                            "edat": "",
+                            "circunstancies": "",
+                            "icona": "👤"
+                        })
+                        cfg["familia"] = familia_list
+                        save_app_config(cfg)
+                        st.rerun()
+            else:
+                st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
+                
+            st.write("")
+            
+            # Llista de membres
+            updated_familia = []
+            icons_pool = ["👨", "👩", "👦", "👧", "👶", "👴", "👵", "🐶", "🐱", "🧑", "👑", "⭐"]
+            roles_pool = ["Pare", "Mare", "Fill", "Filla", "Avi", "Àvia", "Germà", "Germana", "Mascota", "Altres"]
+            
+            for i, mem in enumerate(familia_list):
+                with st.expander(f"{mem.get('icona', '👤')} {mem.get('nom', f'Membre {i+1}')} ({mem.get('rol', 'Familiar')})", expanded=True):
+                    c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 1.5])
+                    with c1:
+                        cur_icon = mem.get("icona", "👤")
+                        ic_idx = icons_pool.index(cur_icon) if cur_icon in icons_pool else 0
+                        m_icon = st.selectbox("Icona", icons_pool, index=ic_idx, key=f"f_icon_{i}")
+                    with c2:
+                        m_nom = st.text_input("Nom", value=mem.get("nom", ""), key=f"f_nom_{i}")
+                    with c3:
+                        cur_r = mem.get("rol", "Familiar")
+                        r_idx = roles_pool.index(cur_r) if cur_r in roles_pool else len(roles_pool)-1
+                        m_rol = st.selectbox("Rol / Relació", roles_pool, index=r_idx, key=f"f_rol_{i}")
+                    with c4:
+                        m_edat = st.text_input("Edat", value=str(mem.get("edat", "")), key=f"f_edat_{i}")
+                        
+                    c_circ1, c_circ2 = st.columns([8.5, 1.5], vertical_alignment="center")
+                    with c_circ1:
+                        m_circ = st.text_input("Al·lèrgies, dietes o circumstàncies mèdiques/personals", value=mem.get("circunstancies", ""), key=f"f_circ_{i}")
+                    with c_circ2:
+                        st.write("")
+                        del_btn = st.button("🗑️ Esborrar", key=f"f_del_{i}", use_container_width=True)
+                        
+                    if not del_btn:
+                        updated_familia.append({
+                            "id": mem.get("id", i + 1),
+                            "nom": m_nom,
+                            "rol": m_rol,
+                            "edat": m_edat,
+                            "circunstancies": m_circ,
+                            "icona": m_icon
+                        })
+                    else:
+                        cfg["familia"] = updated_familia + familia_list[i+1:]
+                        save_app_config(cfg)
+                        st.success(f"Membre eliminat.")
+                        st.rerun()
+                        
+            st.write("")
+            if st.button("💾 Desar Tots els Membres de la Família", type="primary", use_container_width=True, key="save_fam"):
+                cfg["familia"] = updated_familia
+                if save_app_config(cfg):
+                    st.success("✅ Membres de la família desats correctament!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 4. SECCIÓ: TEMA I ASPECTE
+        # =========================================================================
+        elif active == "tema":
+            cur_tema = cfg.get("tema", "Fosc")
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🎨 Aspecte i Tema Visual</div>
+                <div class="chrome-card-desc">Tria l'aparença visual de l'aplicació per adaptar-la al teu gust o entorn d'il·luminació.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            temes = ["Fosc", "Clar", "Automàtic"]
+            idx_tema = temes.index(cur_tema) if cur_tema in temes else 0
+            
+            sel_tema = st.radio(
+                "Selecciona el tema de l'aplicació:",
+                temes,
+                index=idx_tema,
+                format_func=lambda t: {
+                    "Fosc": "🌙 Fosc (Colors foscos i descans per a la vista)",
+                    "Clar": "☀️ Clar (Fons blanc d'alt contrast)",
+                    "Automàtic": "⚙️ Automàtic (S'adapta segons la configuració del teu dispositiu)"
+                }[t],
+                key="radio_tema"
+            )
+            
+            st.write("")
+            if st.button("💾 Aplicar i Desar Tema", type="primary", use_container_width=True, key="save_tema"):
+                cfg["tema"] = sel_tema
+                st.session_state["app_theme"] = sel_tema
+                if save_app_config(cfg):
+                    st.success("✅ Tema visual actualitzat!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 5. SECCIÓ: ICONES DE LA PANTALLA D'INICI ACTIVADES
+        # =========================================================================
+        elif active == "icones":
+            icones_cfg = cfg.get("icones_actives", {})
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🔘 Icones de la Pantalla d'Inici</div>
+                <div class="chrome-card-desc">Configura quins mòduls estan disponibles i clicables a la pantalla d'inici de l'aplicació. El <b>Dashboard General</b> és l'element principal i està sempre activat de manera fixa.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            
+            modules_list = [
+                ("dashboard", "📊 Dashboard General", True, True, "Pantalla central de resum general (Sempre activada)"),
+                ("economic", "📈 Mòdul Econòmic", icones_cfg.get("economic", True), False, "Gestió financera completa, ingressos, despeses i previsions"),
+                ("seguretat", "📹 Seguretat i Càmeres", icones_cfg.get("seguretat", True), False, "Control de càmeres de vigilància i seguretat"),
+                ("manteniment", "🛠️ Manteniment de la Llar", icones_cfg.get("manteniment", True), False, "Tasques de manteniment, reparacions i manuals"),
+                ("domotica", "📶 Domòtica (Home Assistant)", icones_cfg.get("domotica", True), False, "Integració de llums, sensors i automatitzacions"),
+                ("jocs", "🎲 Jocs i Oci Familiar", icones_cfg.get("jocs", True), False, "Partides, puntuacions i jocs familiars"),
+                ("agenda", "📅 Agenda i Calendari", icones_cfg.get("agenda", True), False, "Esdeveniments familiars i calendari compartit"),
+                ("medicacio", "💊 Control de Medicació", icones_cfg.get("medicacio", True), False, "Pautes de medicació i avisos de preses"),
+                ("menjar", "🍽️ Menjar, Menús i Rebost", icones_cfg.get("menjar", True), False, "Planificació de menús setmanals i stock del rebost"),
+                ("cotxe", "🚗 Cotxe i Transport", icones_cfg.get("cotxe", True), False, "Quilometratge, consums, canvis d'oli i ITV"),
+                ("compres", "🛒 Compres al Súper i Stock", icones_cfg.get("compres", True), False, "Gestió de tiquets del súper i preus d'articles"),
+                ("admin", "⚙️ Configuració Global", icones_cfg.get("admin", True), False, "Ajustos de la casa, administradors i paràmetres")
+            ]
+            
+            new_icones_state = {}
+            
+            for key_m, label_m, val_m, is_locked, desc_m in modules_list:
+                c_lbl, c_tog = st.columns([8, 2], vertical_alignment="center")
+                with c_lbl:
+                    lock_badge = " <span style='color:#38bdf8; font-size:0.75rem; border:1px solid #38bdf8; padding:1px 6px; border-radius:10px; font-weight:bold;'>FIXAT</span>" if is_locked else ""
+                    st.markdown(f"<div style='font-size:0.95rem; font-weight:600; color:{text_primary};'>{label_m}{lock_badge}</div><div style='font-size:0.8rem; color:{text_secondary};'>{desc_m}</div>", unsafe_allow_html=True)
+                with c_tog:
+                    if is_locked:
+                        st.toggle("Actiu", value=True, disabled=True, key=f"tog_{key_m}", label_visibility="collapsed")
+                        new_icones_state[key_m] = True
+                    else:
+                        tog_val = st.toggle("Actiu", value=val_m, key=f"tog_{key_m}", label_visibility="collapsed")
+                        new_icones_state[key_m] = tog_val
+                st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:8px 0;'></div>", unsafe_allow_html=True)
+                
+            st.write("")
+            if st.button("💾 Desar Configuració d'Icones", type="primary", use_container_width=True, key="save_icones"):
+                cfg["icones_actives"] = new_icones_state
+                if save_app_config(cfg):
+                    st.success("✅ Configuració d'icones de la pantalla d'inici desada correctament!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 6. SECCIÓ: IDIOMA I TRADUCCIONS
+        # =========================================================================
+        elif active == "idioma":
+            cur_lang = cfg.get("idioma", "ca")
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🌐 Idiomes i Traducció</div>
+                <div class="chrome-card-desc">Tria l'idioma principal de l'aplicació i revisa els textos de la interfície.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            idiomes_map = {
+                "ca": "🏴󠁥󠁳󠁣󠁴󠁿 Català (Predeterminat)",
+                "es": "🇪🇸 Castellano",
+                "en": "🇬🇧 English",
+                "fr": "🇫🇷 Français"
+            }
+            idiomes_keys = list(idiomes_map.keys())
+            idx_lang = idiomes_keys.index(cur_lang) if cur_lang in idiomes_keys else 0
+            
+            sel_lang = st.selectbox(
+                "Idioma principal de l'aplicació:",
+                idiomes_keys,
+                index=idx_lang,
+                format_func=lambda k: idiomes_map.get(k, k),
+                key="sel_idioma"
+            )
+            
+            st.write("")
+            st.markdown("#### 📚 Diccionari de textos actiu")
+            from core.config_manager import TRANSLATIONS
+            active_dict = TRANSLATIONS.get(sel_lang, TRANSLATIONS["ca"])
+            df_trans = [{"Clau": k, "Traducció": v} for k, v in active_dict.items()]
+            st.dataframe(df_trans, use_container_width=True, hide_index=True)
+            
+            st.write("")
+            if st.button("💾 Desar Preferència d'Idioma", type="primary", use_container_width=True, key="save_lang"):
+                cfg["idioma"] = sel_lang
+                if save_app_config(cfg):
+                    st.success(f"✅ Idioma canviat a {idiomes_map[sel_lang]}!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)

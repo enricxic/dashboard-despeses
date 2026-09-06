@@ -2,8 +2,9 @@ import streamlit as st
 import importlib
 import base64
 import os
+import textwrap
 from core.auth import check_password
-import streamlit.components.v1 as components
+from core.config_manager import load_app_config
 
 st.set_page_config(
     page_title="XiquiHouse Dashboard",
@@ -29,6 +30,8 @@ st.markdown('''
 
 if not check_password():
     st.stop()
+
+app_cfg = load_app_config()
 
 # Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu)
 if "mod" in st.query_params:
@@ -65,6 +68,7 @@ if 'current_module' not in st.session_state:
 def render_traditional_menubar():
     auth_token = st.query_params.get("auth", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
+    icones_actives = app_cfg.get("icones_actives", {})
     
     menubar_html = f"""
     <style>
@@ -141,26 +145,26 @@ def render_traditional_menubar():
             <span class="menu-title">Finances</span>
             <div class="menu-dropdown">
                 <a href="?mod=modules.dashboard{auth_suffix}" target="_self">Dashboard General</a>
-                <a href="?mod=modules.economic{auth_suffix}" target="_self">Mòdul Econòmic</a>
-                <a href="?mod=modules.compres{auth_suffix}" target="_self">Compres i tiquets súper</a>
+                {f'<a href="?mod=modules.economic{auth_suffix}" target="_self">Mòdul Econòmic</a>' if icones_actives.get('economic', True) else ''}
+                {f'<a href="?mod=modules.compres{auth_suffix}" target="_self">Compres i tiquets súper</a>' if icones_actives.get('compres', True) else ''}
             </div>
         </div>
         <div class="menu-item">
             <span class="menu-title">Llar</span>
             <div class="menu-dropdown">
-                <a href="?mod=modules.menjar{auth_suffix}" target="_self">Menús i cuina</a>
-                <a href="?mod=modules.manteniment{auth_suffix}" target="_self">Manteniment</a>
-                <a href="?mod=modules.cotxe{auth_suffix}" target="_self">Cotxe</a>
-                <a href="?mod=modules.domotica{auth_suffix}" target="_self">Domòtica</a>
-                <a href="?mod=modules.seguretat{auth_suffix}" target="_self">Seguretat</a>
+                {f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
+                {f'<a href="?mod=modules.manteniment{auth_suffix}" target="_self">Manteniment</a>' if icones_actives.get('manteniment', True) else ''}
+                {f'<a href="?mod=modules.cotxe{auth_suffix}" target="_self">Cotxe</a>' if icones_actives.get('cotxe', True) else ''}
+                {f'<a href="?mod=modules.domotica{auth_suffix}" target="_self">Domòtica</a>' if icones_actives.get('domotica', True) else ''}
+                {f'<a href="?mod=modules.seguretat{auth_suffix}" target="_self">Seguretat</a>' if icones_actives.get('seguretat', True) else ''}
             </div>
         </div>
         <div class="menu-item">
             <span class="menu-title">Família</span>
             <div class="menu-dropdown">
-                <a href="?mod=modules.calendari{auth_suffix}" target="_self">Agenda</a>
-                <a href="?mod=modules.medicacio{auth_suffix}" target="_self">Medicació</a>
-                <a href="?mod=modules.jocs{auth_suffix}" target="_self">Jocs</a>
+                {f'<a href="?mod=modules.calendari{auth_suffix}" target="_self">Agenda</a>' if icones_actives.get('agenda', True) else ''}
+                {f'<a href="?mod=modules.medicacio{auth_suffix}" target="_self">Medicació</a>' if icones_actives.get('medicacio', True) else ''}
+                {f'<a href="?mod=modules.jocs{auth_suffix}" target="_self">Jocs</a>' if icones_actives.get('jocs', True) else ''}
             </div>
         </div>
         <div class="menu-item">
@@ -169,46 +173,48 @@ def render_traditional_menubar():
                 <a href="?mod=modules.admin{auth_suffix}" target="_self">Configuració global</a>
             </div>
         </div>
-        <div class="menu-item">
-            <span class="menu-title">Ajuda</span>
-            <div class="menu-dropdown">
-                <a href="?mod=modules.admin{auth_suffix}" target="_self">Panell de control i versió</a>
-            </div>
-        </div>
     </nav>
     """
     st.markdown(menubar_html, unsafe_allow_html=True)
 
 if st.session_state.current_module is None:
-    import textwrap
-    
-    # 1. Carregar el fons de pantalla completa
-    fons_path = os.path.join(os.path.dirname(__file__), "imatges", "fons xiquiHouse.jpg")
+    # ------------------ PANTALLA PRINCIPAL (LOGO INTERACTIU) ------------------
+    # Carregar imatge de fons
+    fons_path = "fons_app.jpg"
     b64_fons = ""
     if os.path.exists(fons_path):
-        with open(fons_path, "rb") as f_file:
-            b64_fons = base64.b64encode(f_file.read()).decode()
+        with open(fons_path, "rb") as f_img:
+            b64_fons = base64.b64encode(f_img.read()).decode()
 
-    # 2. Carregar el logotip transparent
-    logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
-    if not os.path.exists(logo_path):
-        logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.jpg")
-        
+    # Carregar imatge de la pantalla d'inici (1024x682)
+    logo_path = "imatge_inici.png"
     b64_logo = ""
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as img_file:
             b64_logo = base64.b64encode(img_file.read()).decode()
 
-    # Preservar el token d'autenticació a la URL
     auth_token = st.query_params.get("auth", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
 
-    # Determinar rol
     role = st.session_state.get("role", "admin")
     role_icon = "👑" if role == "admin" else ("👁️‍🗨️" if role == "viewer" else "👤")
     role_title = "Administrador" if role == "admin" else ("Visor" if role == "viewer" else "Convidat")
 
-    # Layout responsive integrat amb fons de pantalla completa i Hotspots HTML
+    # Dades del títol i colors de la casa
+    casa_cfg = app_cfg.get("casa", {})
+    p1 = casa_cfg.get("paraula1", "Xiqui")
+    c1 = casa_cfg.get("color1", "#f39c12")
+    p2 = casa_cfg.get("paraula2", "House")
+    c2 = casa_cfg.get("color2", "#ffffff")
+    
+    icones_actives = app_cfg.get("icones_actives", {})
+
+    def render_hotspot(mod_key, style_str, title_str, always_active=False):
+        is_active = always_active or icones_actives.get(mod_key, True)
+        if is_active:
+            return f'<a href="?mod=modules.{mod_key}{auth_suffix}" target="_self" class="hotspot" style="{style_str}" title="{title_str}"></a>'
+        return f'<div class="hotspot-disabled" style="{style_str}" title="{title_str} (Desactivat)"></div>'
+
     html_content = textwrap.dedent(f"""<style>
 .stApp {{
     background-image: url("data:image/jpeg;base64,{b64_fons}") !important;
@@ -266,6 +272,22 @@ if st.session_state.current_module is None:
     object-fit: contain;
     filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
 }}
+.house-custom-title {{
+    position: absolute;
+    top: 38.2%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.1rem;
+    font-weight: 800;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    text-align: center;
+    white-space: nowrap;
+    z-index: 50;
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: 0.5px;
+    text-shadow: 0 3px 10px rgba(0,0,0,0.75);
+}}
 .hotspot {{
     position: absolute;
     aspect-ratio: 1 / 1;
@@ -287,8 +309,17 @@ if st.session_state.current_module is None:
     border: 2px solid rgba(2, 136, 209, 0.6) !important;
     box-shadow: 0 0 16px rgba(2, 136, 209, 0.55) !important;
 }}
+.hotspot-disabled {{
+    position: absolute;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.25;
+    filter: grayscale(100%);
+    pointer-events: none;
+    z-index: 99;
+}}
 
-/* ================= AJUSTOS PER A MÒBILS I PANTALLES VERTICALS ================= */
 @media (max-width: 768px) {{
     .stApp {{
         overflow-x: hidden !important;
@@ -301,56 +332,43 @@ if st.session_state.current_module is None:
         width: 100vw !important;
         max-width: 100vw !important;
     }}
+    .house-custom-title {{
+        font-size: 1.4rem;
+    }}
 }}
 </style>
 
-<!-- Indicador de Rol Usuari (Només icona neta) -->
+<!-- Indicador de Rol Usuari -->
 <div class="role-badge" title="{role_title}">
     <span>{role_icon}</span>
 </div>
 
 <div class="main-wrapper">
 <div class="logo-box">
-<img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="XiquiHouse">
+<img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="{p1} {p2}">
+
+<!-- Títol personalitzat de la casa en dues caselles i colors -->
+<div class="house-custom-title">
+    <span style="color: {c1};">{p1}</span> <span style="color: {c2};">{p2}</span>
+</div>
 
 <!-- ================= SENSE RODONA (SUPERIOR) ================= -->
-<!-- Icona engranatge: Configuracions -->
-<a href="?mod=modules.admin{auth_suffix}" target="_self" class="hotspot" style="left: 37.33%; top: 18.43%; width: 7.2%;" title="⚙️ Configuració Global"></a>
-
-<!-- Icona pantalla + gràfic: Dashboard -->
-<a href="?mod=modules.dashboard{auth_suffix}" target="_self" class="hotspot" style="left: 61.18%; top: 18.26%; width: 7.2%;" title="📊 Dashboard General"></a>
+{render_hotspot('admin', 'left: 37.33%; top: 18.43%; width: 7.2%;', '⚙️ Configuració Global')}
+{render_hotspot('dashboard', 'left: 61.18%; top: 18.26%; width: 7.2%;', '📊 Dashboard General', always_active=True)}
 
 <!-- ================= AMB RODONA PART ESQUERRA (5 NODES) ================= -->
-<!-- 1. Icona gràfic: Econòmic -->
-<a href="?mod=modules.economic{auth_suffix}" target="_self" class="hotspot" style="left: 27.54%; top: 25.95%; width: 8.2%;" title="📈 Mòdul Econòmic"></a>
-
-<!-- 2. Icona càmara: Seguretat -->
-<a href="?mod=modules.seguretat{auth_suffix}" target="_self" class="hotspot" style="left: 17.24%; top: 34.38%; width: 8.2%;" title="📹 Seguretat i Càmeres"></a>
-
-<!-- 3. Icona casa amb eina: Manteniment -->
-<a href="?mod=modules.manteniment{auth_suffix}" target="_self" class="hotspot" style="left: 27.54%; top: 41.42%; width: 8.2%;" title="🛠️ Manteniment de la Llar"></a>
-
-<!-- 4. Icona wifi: Domòtica -->
-<a href="?mod=modules.domotica{auth_suffix}" target="_self" class="hotspot" style="left: 17.09%; top: 51.25%; width: 8.2%;" title="📶 Domòtica (Home Assistant)"></a>
-
-<!-- 5. Icona daus: Jocs -->
-<a href="?mod=modules.jocs{auth_suffix}" target="_self" class="hotspot" style="left: 27.54%; top: 57.62%; width: 8.2%;" title="🎲 Jocs i Oci Familiar"></a>
+{render_hotspot('economic', 'left: 27.54%; top: 25.95%; width: 8.2%;', '📈 Mòdul Econòmic')}
+{render_hotspot('seguretat', 'left: 17.24%; top: 34.38%; width: 8.2%;', '📹 Seguretat i Càmeres')}
+{render_hotspot('manteniment', 'left: 27.54%; top: 41.42%; width: 8.2%;', '🛠️ Manteniment de la Llar')}
+{render_hotspot('domotica', 'left: 17.09%; top: 51.25%; width: 8.2%;', '📶 Domòtica (Home Assistant)')}
+{render_hotspot('jocs', 'left: 27.54%; top: 57.62%; width: 8.2%;', '🎲 Jocs i Oci Familiar')}
 
 <!-- ================= AMB RODONA PART DRETA (5 NODES) ================= -->
-<!-- 6. Icona calendari: Agenda -->
-<a href="?mod=modules.calendari{auth_suffix}" target="_self" class="hotspot" style="left: 72.17%; top: 25.95%; width: 8.2%;" title="📅 Agenda i Calendari"></a>
-
-<!-- 7. Icona pastilles: Control Medicació -->
-<a href="?mod=modules.medicacio{auth_suffix}" target="_self" class="hotspot" style="left: 81.05%; top: 34.16%; width: 8.2%;" title="💊 Control de Medicació"></a>
-
-<!-- 8. Icona cuberts: Menjar -->
-<a href="?mod=modules.menjar{auth_suffix}" target="_self" class="hotspot" style="left: 71.88%; top: 41.57%; width: 8.2%;" title="🍽️ Menjar, Menús i Rebost"></a>
-
-<!-- 9. Icona cotxe: Cotxe -->
-<a href="?mod=modules.cotxe{auth_suffix}" target="_self" class="hotspot" style="left: 80.91%; top: 51.25%; width: 8.2%;" title="🚗 Cotxe i Transport"></a>
-
-<!-- 10. Icona carro compra: Compres Super/Stock -->
-<a href="?mod=modules.compres{auth_suffix}" target="_self" class="hotspot" style="left: 71.88%; top: 58.36%; width: 8.2%;" title="🛒 Compres al Súper i Stock"></a>
+{render_hotspot('calendari', 'left: 72.17%; top: 25.95%; width: 8.2%;', '📅 Agenda i Calendari')}
+{render_hotspot('medicacio', 'left: 81.05%; top: 34.16%; width: 8.2%;', '💊 Control de Medicació')}
+{render_hotspot('menjar', 'left: 71.88%; top: 41.57%; width: 8.2%;', '🍽️ Menjar, Menús i Rebost')}
+{render_hotspot('cotxe', 'left: 80.91%; top: 51.25%; width: 8.2%;', '🚗 Cotxe i Transport')}
+{render_hotspot('compres', 'left: 71.88%; top: 58.36%; width: 8.2%;', '🛒 Compres al Súper i Stock')}
 
 </div>
 </div>""")
