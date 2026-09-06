@@ -3448,12 +3448,12 @@ def render(view_mode="economic"):
                                     bg = get_saldo_gradient_rgb(v_num)
                                     td_style.append(f'background-color: {bg}; color: #000000 !important; font-weight: bold;')
                                 
-                                if not is_total and not is_limits:
-                                    if col == 'Ing. Total' and max_ing is not None and v_num == max_ing:
+                                if is_total:
+                                    if col == 'Ing. Total':
                                         td_style.append('background-color: #27ae60; color: white; font-weight: bold;')
-                                    elif col == 'Total Desp.' and max_desp is not None and v_num == max_desp:
+                                    elif col == 'Total Desp.':
                                         td_style.append('background-color: #c0392b; color: white; font-weight: bold;')
-                                    
+                                elif not is_limits:
                                     if col in col_limits_keys:
                                         lim = row_limits.get(col_limits_keys[col], float('inf'))
                                         if v_num > lim:

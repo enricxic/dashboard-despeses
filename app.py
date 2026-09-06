@@ -3604,15 +3604,25 @@ with tab_dash:
                     styles[i] = 'color: #3498db; font-weight: bold; background-color: rgba(52, 152, 219, 0.1)'
         return styles
 
+    def highlight_totals(df):
+        style_df = pd.DataFrame('', index=df.index, columns=df.columns)
+        total_idx = df[df['Mes'] == 'TOTAL'].index
+        if not total_idx.empty:
+            t_i = total_idx[0]
+            if 'Ing. Total' in df.columns:
+                style_df.at[t_i, 'Ing. Total'] = 'background-color: #27ae60; color: white; font-weight: bold;'
+            if 'Total Desp.' in df.columns:
+                style_df.at[t_i, 'Total Desp.'] = 'background-color: #c0392b; color: white; font-weight: bold;'
+        return style_df
+
     html_table = (
         df_summary.style.hide(axis="index")
         .format(precision=2, thousands=".", decimal=",", na_rep="")
         .apply(highlight_exceeded_limits, axis=None)
         .apply(style_limits_row, axis=1)
+        .apply(highlight_totals, axis=None)
         .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000, text_color_threshold=0)
         .map(lambda _: 'font-weight: bold; color: black !important;', subset=['Saldo'])
-        .highlight_max(subset=['Ing. Total'], color='#27ae60')
-        .highlight_max(subset=['Total Desp.'], color='#c0392b')
         .to_html()
     )
     

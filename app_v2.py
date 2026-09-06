@@ -98,14 +98,14 @@ def render_traditional_menubar():
     
     menubar_html = f"""<style>
 div.block-container {{
-    padding-top: 1.1rem !important;
-    padding-bottom: 1rem !important;
+    padding-top: 1.8rem !important;
+    padding-bottom: 1.5rem !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;
     max-width: 100% !important;
 }}
 [data-testid="stVerticalBlock"] {{
-    gap: 0.4rem !important;
+    gap: 0.5rem !important;
 }}
 [data-testid="stHeader"] {{
     display: none !important;
