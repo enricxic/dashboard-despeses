@@ -219,10 +219,11 @@ if st.session_state.current_module is None:
     background-color: #9fb5c2 !important;
 }}
 .block-container {{
-    padding-top: 0.2rem !important;
-    padding-bottom: 0.2rem !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 auto !important;
     max-width: 100% !important;
 }}
 .role-badge {{
@@ -235,7 +236,7 @@ if st.session_state.current_module is None:
     padding: 0;
     z-index: 99999;
     user-select: none;
-    font-size: 1.65rem;
+    font-size: 1.75rem;
     filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));
     cursor: default;
 }}
@@ -244,24 +245,25 @@ if st.session_state.current_module is None:
     justify-content: center;
     align-items: center;
     width: 100%;
-    min-height: 94vh;
+    min-height: 95vh;
     padding: 0;
-    margin: 0;
+    margin: 0 auto;
 }}
 .logo-box {{
     position: relative;
     display: block;
-    width: 98vw;
-    max-width: 1450px;
+    width: min(94vw, 138vh);
+    aspect-ratio: 1024 / 682;
     margin: 0 auto;
     line-height: 0;
 }}
 .img-logo {{
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
     pointer-events: none;
     user-select: none;
+    object-fit: contain;
     filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
 }}
 .hotspot {{
@@ -294,16 +296,10 @@ if st.session_state.current_module is None:
     .main-wrapper {{
         min-height: 96vh !important;
         padding: 0 !important;
-        overflow: hidden !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
     }}
     .logo-box {{
-        width: 100% !important;
-        max-width: 100% !important;
-        transform: scale(1.48) !important;
-        transform-origin: center center !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
     }}
 }}
 </style>
