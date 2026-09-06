@@ -383,12 +383,24 @@ def render(view_mode="economic"):
             df[col] = df[col].apply(fix_mojibake)
         return df
     
-    @st.cache_data(ttl=300)
+    @st.cache_data(ttl=600, show_spinner=False)
     def load_dashboard_data(mtimes=None):
+        from concurrent.futures import ThreadPoolExecutor
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
         
+        tables_to_fetch = [
+            'despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe',
+            'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'
+        ]
+        
+        def _fetch_table(tbl):
+            return tbl, fetch_all_supabase(supabase, tbl)
+            
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            fetched = dict(executor.map(_fetch_table, tables_to_fetch))
+        
         # Load tables from PostgreSQL
-        df_desp = fix_mojibake_df(fetch_all_supabase(supabase, 'despeses'))
+        df_desp = fix_mojibake_df(fetched['despeses'])
         df_desp['ID_mov'] = pd.to_numeric(df_desp['ID_mov'], errors='coerce')
         df_desp = df_desp.dropna(subset=['ID_mov']).sort_values(by='ID_mov', ascending=False).reset_index(drop=True)
         df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
@@ -396,19 +408,19 @@ def render(view_mode="economic"):
         df_desp['parsed_date'] = df_desp['Data'].apply(parse_excel_date)
         df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes'].astype(str).str.lower().map(MONTHS_MAP).fillna(12).astype(int)
         
-        df_ing = fix_mojibake_df(fetch_all_supabase(supabase, 'ingressos'))
+        df_ing = fix_mojibake_df(fetched['ingressos'])
         df_ing['idIngres'] = pd.to_numeric(df_ing['idIngres'], errors='coerce')
         df_ing = df_ing.dropna(subset=['idIngres']).sort_values(by='idIngres', ascending=False).reset_index(drop=True)
         df_ing['Import'] = clean_numeric(df_ing['Import'])
         df_ing['parsed_date'] = df_ing['Data'].apply(parse_excel_date)
         
-        df_super = fix_mojibake_df(fetch_all_supabase(supabase, 'compresSuper'))
+        df_super = fix_mojibake_df(fetched['compresSuper'])
         df_super['IdCompra'] = pd.to_numeric(df_super['IdCompra'], errors='coerce')
         df_super = df_super.dropna(subset=['IdCompra']).sort_values(by='IdCompra', ascending=False).reset_index(drop=True)
         df_super['totLinea'] = clean_numeric(df_super['totLinea'])
         df_super['parsed_date'] = df_super['data'].apply(parse_excel_date)
         
-        df_gas = fix_mojibake_df(fetch_all_supabase(supabase, 'gasolina'))
+        df_gas = fix_mojibake_df(fetched['gasolina'])
         df_gas = df_gas.rename(columns={'?/l': '€/l'})
         df_gas['idGasolina'] = pd.to_numeric(df_gas['idGasolina'], errors='coerce')
         df_gas = df_gas.dropna(subset=['idGasolina']).sort_values(by='idGasolina', ascending=False).reset_index(drop=True)
@@ -417,26 +429,26 @@ def render(view_mode="economic"):
         df_gas['€/l'] = clean_numeric(df_gas['€/l'])
         df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
         
-        df_km = fix_mojibake_df(fetch_all_supabase(supabase, 'kmCotxe'))
+        df_km = fix_mojibake_df(fetched['kmCotxe'])
         df_km['idRuta'] = pd.to_numeric(df_km['idRuta'], errors='coerce')
         df_km = df_km.dropna(subset=['idRuta']).sort_values(by='idRuta', ascending=False).reset_index(drop=True)
         df_km['contador'] = clean_numeric(df_km['contador'])
         df_km['km'] = clean_numeric(df_km['km'])
         df_km['parsed_date'] = df_km['data'].apply(parse_excel_date)
         
-        df_hip = fetch_all_supabase(supabase, 'hipoteca').dropna(how='all')
+        df_hip = fetched['hipoteca'].dropna(how='all')
         if 'Quota fixa' in df_hip.columns:
             df_hip = df_hip.dropna(subset=['Quota fixa'])
         df_hip['Quota fixa'] = clean_numeric(df_hip['Quota fixa'])
         
-        df_cartera = fix_mojibake_df(fetch_all_supabase(supabase, 'tr_cartera'))
+        df_cartera = fix_mojibake_df(fetched['tr_cartera'])
         df_cartera['idTRCartera'] = pd.to_numeric(df_cartera.get('idTRCartera', df_cartera.index), errors='coerce')
         df_cartera = df_cartera.dropna(subset=['idTRCartera']).sort_values(by='idTRCartera', ascending=False).reset_index(drop=True)
         df_cartera['COMPRA'] = clean_numeric(df_cartera.get('COMPRA', 0))
         df_cartera['VENDA'] = clean_numeric(df_cartera.get('VENDA', 0))
         df_cartera['parsed_date'] = df_cartera.get('DATA', pd.Series(dtype=object)).apply(parse_excel_date)
         
-        df_est = fetch_all_supabase(supabase, 'estalviDP')
+        df_est = fetched['estalviDP']
         df_est = df_est.dropna(subset=['mes', 'any'])
         df_est['any'] = pd.to_numeric(df_est['any'], errors='coerce')
         df_est['quota'] = clean_numeric(df_est['quota'])
@@ -447,10 +459,10 @@ def render(view_mode="economic"):
         if 'pérdua' in df_est.columns:
             df_est['pérdua'] = clean_numeric(df_est['pérdua'])
         
-        df_limits = fetch_all_supabase(supabase, 'limitsDespeses').dropna(subset=['data_inici'])
+        df_limits = fetched['limitsDespeses'].dropna(subset=['data_inici'])
         df_limits['parsed_date'] = df_limits['data_inici'].apply(parse_excel_date)
         
-        df_pag = fetch_all_supabase(supabase, 'pagaments')
+        df_pag = fetched['pagaments']
         df_pag = df_pag.dropna(subset=['idPago'])
         df_pag['Import'] = clean_numeric(df_pag['Import'])
         df_pag['parsed_date'] = df_pag['Data'].apply(parse_excel_date)
