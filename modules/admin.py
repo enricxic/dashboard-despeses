@@ -271,10 +271,10 @@ def render():
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             
             # Gestionar estat dels colors si es cliquen els predeterminats
-            if "input_col1" not in st.session_state:
-                st.session_state["input_col1"] = casa_cfg.get("color1", "#407faf")
-            if "input_col2" not in st.session_state:
-                st.session_state["input_col2"] = casa_cfg.get("color2", "#73ad69")
+            if "picker_c1" not in st.session_state:
+                st.session_state["picker_c1"] = casa_cfg.get("color1", "#407faf")
+            if "picker_c2" not in st.session_state:
+                st.session_state["picker_c2"] = casa_cfg.get("color2", "#73ad69")
 
             c1, c2 = st.columns(2)
             with c1:
@@ -285,12 +285,10 @@ def render():
                 c_pick1, c_preset1 = st.columns([1.2, 1.8], vertical_alignment="center")
                 with c_preset1:
                     if st.button("🟦 #407faf (Blau original)", key="btn_preset_c1", use_container_width=True):
-                        st.session_state["input_col1"] = "#407faf"
+                        st.session_state["picker_c1"] = "#407faf"
                         st.rerun()
                 with c_pick1:
-                    col1 = st.color_picker("Color 1", value=st.session_state["input_col1"], key="picker_c1")
-                    if col1 != st.session_state["input_col1"]:
-                        st.session_state["input_col1"] = col1
+                    col1 = st.color_picker("Color 1", key="picker_c1")
                 
             with c2:
                 st.markdown("##### Segona Paraula (Opcional)")
@@ -300,12 +298,10 @@ def render():
                 c_pick2, c_preset2 = st.columns([1.2, 1.8], vertical_alignment="center")
                 with c_preset2:
                     if st.button("🟩 #73ad69 (Verd original)", key="btn_preset_c2", use_container_width=True):
-                        st.session_state["input_col2"] = "#73ad69"
+                        st.session_state["picker_c2"] = "#73ad69"
                         st.rerun()
                 with c_pick2:
-                    col2 = st.color_picker("Color 2", value=st.session_state["input_col2"], key="picker_c2")
-                    if col2 != st.session_state["input_col2"]:
-                        st.session_state["input_col2"] = col2
+                    col2 = st.color_picker("Color 2", key="picker_c2")
                 
             st.markdown("##### 🔤 Tamany del Text")
             tamany_lletra = st.slider("Tamany de la lletra del títol (píxels)", min_value=24, max_value=72, value=int(casa_cfg.get("tamany_lletra", 58)), step=2, key="slider_tamany")
