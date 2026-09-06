@@ -3535,13 +3535,32 @@ def render(view_mode="economic"):
         df_chart_2yrs = pd.DataFrame(chart_data)
         
         fig_bar = graph_objects.Figure()
-        fig_bar.add_trace(graph_objects.Bar(x=df_chart_2yrs['Mes-Any'], y=df_chart_2yrs['Ingressos'], name='Ingressos', marker_color='#2ecc71'))
-        fig_bar.add_trace(graph_objects.Bar(x=df_chart_2yrs['Mes-Any'], y=df_chart_2yrs['Despeses'], name='Despeses', marker_color='#e74c3c'))
+        fig_bar.add_trace(graph_objects.Bar(
+            x=df_chart_2yrs['Mes-Any'],
+            y=df_chart_2yrs['Ingressos'],
+            name='Ingressos',
+            marker_color='#2ecc71',
+            hovertemplate='🟢 Ingressos: <b>%{y:,.2f} €</b><extra></extra>'
+        ))
+        fig_bar.add_trace(graph_objects.Bar(
+            x=df_chart_2yrs['Mes-Any'],
+            y=df_chart_2yrs['Despeses'],
+            name='Despeses',
+            marker_color='#e74c3c',
+            hovertemplate='🔴 Despeses: <b>%{y:,.2f} €</b><extra></extra>'
+        ))
         fig_bar.update_layout(
             barmode='group',
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='#f8fafc', size=12),
+            hovermode='x unified',
+            hoverlabel=dict(
+                bgcolor='#1e293b',
+                bordercolor='#334155',
+                font_size=13,
+                font_family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            ),
             xaxis=dict(gridcolor='#334155', tickangle=-45),
             yaxis=dict(
                 gridcolor='#334155',
@@ -3554,7 +3573,7 @@ def render(view_mode="economic"):
             height=460,
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-        st.plotly_chart(fig_bar, use_container_width=True, config={'staticPlot': True})
+        st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
         st.markdown("<div style='margin-bottom: 40px;'></div>", unsafe_allow_html=True)
         
         return
