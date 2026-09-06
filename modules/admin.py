@@ -186,6 +186,13 @@ def render():
         else:
             filtered_sections = sections
             
+        if "tab" in st.query_params:
+            st.session_state.cfg_active_tab = st.query_params.get("tab")
+            try:
+                del st.query_params["tab"]
+            except Exception:
+                pass
+
         if "cfg_active_tab" not in st.session_state:
             st.session_state.cfg_active_tab = "admin"
             

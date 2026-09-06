@@ -43,7 +43,7 @@ if "mod" in st.query_params:
         pass
     st.rerun()
 
-# Comprovar si s'ha sol·licitat una acció des del menú superior (Home, Reset, Logout)
+# Comprovar si s'ha sol·licitat una acció des del menú superior (Home, Reset, Logout, DB Actions)
 if "action" in st.query_params:
     act = st.query_params.get("action")
     if act == "home":
@@ -51,16 +51,42 @@ if "action" in st.query_params:
     elif act == "reset":
         for k in list(st.session_state.keys()):
             del st.session_state[k]
+        st.cache_data.clear()
     elif act == "logout":
         if "password_correct" in st.session_state:
             del st.session_state["password_correct"]
         if "auth" in st.query_params:
             del st.query_params["auth"]
+    elif act == "sync_db":
+        st.cache_data.clear()
+        st.session_state["db_synced_toast"] = True
+    elif act == "backup_db":
+        import zipfile
+        os.makedirs("backup_dades", exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        zip_path = os.path.join("backup_dades", f"backup_dades_{ts}.zip")
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            if os.path.exists("csv"):
+                for root, _, files in os.walk("csv"):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        zipf.write(file_path, os.path.relpath(file_path, "csv"))
+            if os.path.exists("core/config.json"):
+                zipf.write("core/config.json", "config.json")
+        st.session_state["db_backup_toast"] = os.path.basename(zip_path)
     try:
         del st.query_params["action"]
     except Exception:
         pass
     st.rerun()
+
+if st.session_state.get("db_synced_toast"):
+    st.toast("🔄 Memòria cau alliberada i dades sincronitzades!", icon="⚡")
+    del st.session_state["db_synced_toast"]
+
+if st.session_state.get("db_backup_toast"):
+    st.toast(f"💾 Còpia de seguretat desada a backup_dades/{st.session_state['db_backup_toast']}", icon="✅")
+    del st.session_state["db_backup_toast"]
 
 if 'current_module' not in st.session_state:
     st.session_state.current_module = None
@@ -109,7 +135,7 @@ def render_traditional_menubar():
     border: 1px solid #334155;
     border-radius: 4px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-    min-width: 190px;
+    min-width: 220px;
     z-index: 999999;
     padding: 4px 0;
 }}
@@ -118,7 +144,7 @@ def render_traditional_menubar():
 }}
 .desktop-menubar .menu-dropdown a {{
     display: block;
-    padding: 5px 14px;
+    padding: 6px 14px;
     color: #cbd5e1 !important;
     text-decoration: none !important;
     font-size: 0.78rem;
@@ -134,41 +160,56 @@ def render_traditional_menubar():
 <div class="menu-item">
 <span class="menu-title">Arxiu</span>
 <div class="menu-dropdown">
-<a href="?action=home{auth_suffix}" target="_self">Pantalla d'inici</a>
-<a href="?action=reset{auth_suffix}" target="_self">Reiniciar sessió</a>
-<a href="?action=logout" target="_self">Tancar sessió</a>
+<a href="?action=home{auth_suffix}" target="_self">🏠 Pantalla d'inici</a>
+<a href="?action=reset{auth_suffix}" target="_self">🔄 Reiniciar aplicació / memòria cau</a>
+<a href="?action=logout" target="_self">🔒 Tancar sessió</a>
 </div>
 </div>
 <div class="menu-item">
 <span class="menu-title">Finances</span>
 <div class="menu-dropdown">
-<a href="?mod=modules.dashboard{auth_suffix}" target="_self">Dashboard General</a>
-{f'<a href="?mod=modules.economic{auth_suffix}" target="_self">Mòdul Econòmic</a>' if icones_actives.get('economic', True) else ''}
-{f'<a href="?mod=modules.compres{auth_suffix}" target="_self">Compres i tiquets súper</a>' if icones_actives.get('compres', True) else ''}
+<a href="?mod=modules.dashboard{auth_suffix}" target="_self">📊 Resum General (Dashboard)</a>
+{f'<a href="?mod=modules.economic{auth_suffix}" target="_self">📈 Mòdul Econòmic complet</a>' if icones_actives.get('economic', True) else ''}
+{f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Compres i tiquets súper</a>' if icones_actives.get('compres', True) else ''}
 </div>
 </div>
 <div class="menu-item">
 <span class="menu-title">Llar</span>
 <div class="menu-dropdown">
-{f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
-{f'<a href="?mod=modules.manteniment{auth_suffix}" target="_self">Manteniment</a>' if icones_actives.get('manteniment', True) else ''}
-{f'<a href="?mod=modules.cotxe{auth_suffix}" target="_self">Cotxe</a>' if icones_actives.get('cotxe', True) else ''}
-{f'<a href="?mod=modules.domotica{auth_suffix}" target="_self">Domòtica</a>' if icones_actives.get('domotica', True) else ''}
-{f'<a href="?mod=modules.seguretat{auth_suffix}" target="_self">Seguretat</a>' if icones_actives.get('seguretat', True) else ''}
+{f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">🍽️ Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
+{f'<a href="?mod=modules.manteniment{auth_suffix}" target="_self">🛠️ Manteniment de la llar</a>' if icones_actives.get('manteniment', True) else ''}
+{f'<a href="?mod=modules.cotxe{auth_suffix}" target="_self">🚗 Cotxe i manteniment</a>' if icones_actives.get('cotxe', True) else ''}
+{f'<a href="?mod=modules.domotica{auth_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
+{f'<a href="?mod=modules.seguretat{auth_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
 </div>
 </div>
 <div class="menu-item">
 <span class="menu-title">Família</span>
 <div class="menu-dropdown">
-{f'<a href="?mod=modules.calendari{auth_suffix}" target="_self">Agenda</a>' if icones_actives.get('agenda', True) else ''}
-{f'<a href="?mod=modules.medicacio{auth_suffix}" target="_self">Medicació</a>' if icones_actives.get('medicacio', True) else ''}
-{f'<a href="?mod=modules.jocs{auth_suffix}" target="_self">Jocs</a>' if icones_actives.get('jocs', True) else ''}
+{f'<a href="?mod=modules.calendari{auth_suffix}" target="_self">📅 Agenda i esdeveniments</a>' if icones_actives.get('agenda', True) else ''}
+{f'<a href="?mod=modules.medicacio{auth_suffix}" target="_self">💊 Control de medicació</a>' if icones_actives.get('medicacio', True) else ''}
+{f'<a href="?mod=modules.jocs{auth_suffix}" target="_self">🎲 Jocs i oci</a>' if icones_actives.get('jocs', True) else ''}
+</div>
+</div>
+<div class="menu-item">
+<span class="menu-title">Bases de dades</span>
+<div class="menu-dropdown">
+<a href="?mod=modules.economic{auth_suffix}" target="_self">🗄️ Taules de Dades (Despeses / Ingressos)</a>
+<a href="?action=sync_db{auth_suffix}" target="_self">🔄 Sincronitzar / Recarregar dades</a>
+<a href="?action=backup_db{auth_suffix}" target="_self">💾 Crear Còpia de seguretat (ZIP)</a>
+<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Base de dades d'articles i súper</a>
 </div>
 </div>
 <div class="menu-item">
 <span class="menu-title">Ajustos</span>
 <div class="menu-dropdown">
-<a href="?mod=modules.admin{auth_suffix}" target="_self">Configuració global</a>
+<a href="?mod=modules.admin{auth_suffix}" target="_self">⚙️ Configuració general</a>
+<a href="?mod=modules.admin&tab=admin{auth_suffix}" target="_self">👤 Perfil Administrador</a>
+<a href="?mod=modules.admin&tab=titol{auth_suffix}" target="_self">🏷️ Títol de la casa</a>
+<a href="?mod=modules.admin&tab=familia{auth_suffix}" target="_self">👨‍👩‍👧‍👦 Membres de la família</a>
+<a href="?mod=modules.admin&tab=tema{auth_suffix}" target="_self">🎨 Aspecte i tema</a>
+<a href="?mod=modules.admin&tab=icones{auth_suffix}" target="_self">🔘 Icones actives d'inici</a>
+<a href="?mod=modules.admin&tab=idioma{auth_suffix}" target="_self">🌐 Idioma i traducció</a>
 </div>
 </div>
 </nav>"""
