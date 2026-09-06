@@ -264,7 +264,7 @@ def render():
             st.markdown(f"""
             <div class="chrome-card">
                 <div class="chrome-card-header">🏷️ Títol de la Casa (Pantalla d'Inici)</div>
-                <div class="chrome-card-desc">Personalitza com s'anomena la teva llar i tria els colors per a cadascuna de les dues parts del nom. El resultat es mostrarà a la pantalla principal en lloc de "Xiqui House".</div>
+                <div class="chrome-card-desc">Personalitza com s'anomena la teva llar, tria els colors per a cadascuna de les dues parts del nom i ajusta el tamany de la lletra. El text i l'eslògan es mostraran a la part inferior central del logotip.</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -273,18 +273,25 @@ def render():
             with c1:
                 st.markdown("##### Primera Paraula")
                 p1 = st.text_input("Text 1", value=casa_cfg.get("paraula1", "Xiqui"), key="input_p1")
-                col1 = st.color_picker("Color de la 1a paraula", value=casa_cfg.get("color1", "#f39c12"), key="input_col1")
+                col1 = st.color_picker("Color de la 1a paraula", value=casa_cfg.get("color1", "#0284c7"), key="input_col1")
             with c2:
                 st.markdown("##### Segona Paraula")
                 p2 = st.text_input("Text 2", value=casa_cfg.get("paraula2", "House"), key="input_p2")
-                col2 = st.color_picker("Color de la 2a paraula", value=casa_cfg.get("color2", "#ffffff"), key="input_col2")
+                col2 = st.color_picker("Color de la 2a paraula", value=casa_cfg.get("color2", "#22c55e"), key="input_col2")
+                
+            st.markdown("##### 🔤 Tamany del Text")
+            tamany_lletra = st.slider("Tamany de la lletra del títol (píxels)", min_value=24, max_value=64, value=int(casa_cfg.get("tamany_lletra", 42)), step=2, key="slider_tamany")
                 
             st.markdown("#### 👁️ Previsualització en directe")
+            slogan_text = get_translation("slogan", lang)
             st.markdown(f"""
             <div class="preview-box">
                 <div style="font-size: 0.8rem; color: {text_secondary}; text-transform: uppercase; margin-bottom: 8px;">Com es veurà a la pantalla d'inici:</div>
-                <div style="font-size: 2.4rem; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.5);">
-                    <span style="color: {col1};">{p1}</span> <span style="color: {col2};">{p2}</span>
+                <div style="font-size: {tamany_lletra}px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.5px; text-shadow: 0 3px 10px rgba(0,0,0,0.5); line-height: 1.1;">
+                    <span style="color: {col1};">{p1}</span><span style="color: {col2};">{p2}</span>
+                </div>
+                <div style="font-size: {max(11, int(tamany_lletra * 0.35))}px; font-weight: 800; color: #0284c7; letter-spacing: 1.8px; margin-top: 6px; text-transform: uppercase;">
+                    {slogan_text}
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -295,7 +302,8 @@ def render():
                     "paraula1": p1,
                     "color1": col1,
                     "paraula2": p2,
-                    "color2": col2
+                    "color2": col2,
+                    "tamany_lletra": tamany_lletra
                 }
                 if save_app_config(cfg):
                     st.success("✅ Títol de la casa desat correctament!")

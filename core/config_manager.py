@@ -14,9 +14,10 @@ DEFAULT_CONFIG = {
     },
     "casa": {
         "paraula1": "Xiqui",
-        "color1": "#f39c12",
+        "color1": "#0284c7",
         "paraula2": "House",
-        "color2": "#ffffff"
+        "color2": "#22c55e",
+        "tamany_lletra": 42
     },
     "familia": [
         {"id": 1, "nom": "Enric", "rol": "Pare", "edat": "45", "circunstancies": "Cap al·lèrgia", "icona": "👨"},
@@ -52,7 +53,8 @@ TRANSLATIONS = {
         "tema_title": "Aspecte i Tema",
         "icones_title": "Icones d'inici",
         "idioma_title": "Idiomes",
-        "back_home": "Tornar a l'inici"
+        "back_home": "Tornar a l'inici",
+        "slogan": "TOTA LA TEVA LLAR, CONTROLADA"
     },
     "es": {
         "settings_title": "Configuración",
@@ -65,7 +67,8 @@ TRANSLATIONS = {
         "tema_title": "Aspecto y Tema",
         "icones_title": "Iconos de inicio",
         "idioma_title": "Idiomas",
-        "back_home": "Volver al inicio"
+        "back_home": "Volver al inicio",
+        "slogan": "TODO TU HOGAR, CONTROLADO"
     },
     "en": {
         "settings_title": "Settings",
@@ -78,7 +81,8 @@ TRANSLATIONS = {
         "tema_title": "Appearance and Theme",
         "icones_title": "Home screen icons",
         "idioma_title": "Languages",
-        "back_home": "Back to Home"
+        "back_home": "Back to Home",
+        "slogan": "ALL YOUR HOME, UNDER CONTROL"
     },
     "fr": {
         "settings_title": "Paramètres",
@@ -91,7 +95,8 @@ TRANSLATIONS = {
         "tema_title": "Apparence et Thème",
         "icones_title": "Icônes d'accueil",
         "idioma_title": "Langues",
-        "back_home": "Retour à l'accueil"
+        "back_home": "Retour à l'accueil",
+        "slogan": "TOUTE VOTRE MAISON, CONTRÔLÉE"
     }
 }
 

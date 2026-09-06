@@ -203,11 +203,16 @@ if st.session_state.current_module is None:
     role_title = "Administrador" if role == "admin" else ("Visor" if role == "viewer" else "Convidat")
 
     # Dades del títol i colors de la casa
+    from core.config_manager import get_translation
     casa_cfg = app_cfg.get("casa", {})
     p1 = casa_cfg.get("paraula1", "Xiqui")
-    c1 = casa_cfg.get("color1", "#f39c12")
+    c1 = casa_cfg.get("color1", "#0284c7")
     p2 = casa_cfg.get("paraula2", "House")
-    c2 = casa_cfg.get("color2", "#ffffff")
+    c2 = casa_cfg.get("color2", "#22c55e")
+    tamany_px = int(casa_cfg.get("tamany_lletra", 42))
+    
+    lang = app_cfg.get("idioma", "ca")
+    slogan_text = get_translation("slogan", lang)
     
     icones_actives = app_cfg.get("icones_actives", {})
 
@@ -218,6 +223,9 @@ if st.session_state.current_module is None:
         return f'<div class="hotspot-disabled" style="{style_str}" title="{title_str} (Desactivat)"></div>'
 
     html_content = textwrap.dedent(f"""<style>
+:root {{
+    --title-size: {tamany_px}px;
+}}
 .stApp {{
     background-image: url("data:image/jpeg;base64,{b64_fons}") !important;
     background-size: cover !important;
@@ -253,14 +261,14 @@ if st.session_state.current_module is None:
     justify-content: center;
     align-items: center;
     width: 100%;
-    min-height: 95vh;
+    min-height: 98vh;
     padding: 0;
     margin: 0 auto;
 }}
 .logo-box {{
     position: relative;
     display: block;
-    width: min(94vw, 138vh);
+    width: min(98vw, 146vh);
     aspect-ratio: 1024 / 682;
     margin: 0 auto;
     line-height: 0;
@@ -276,10 +284,10 @@ if st.session_state.current_module is None:
 }}
 .house-custom-title {{
     position: absolute;
-    top: 49.5%;
+    top: 69.5%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 1.85rem;
+    font-size: calc({tamany_px}px * min(98vw, 146vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     text-align: center;
@@ -289,6 +297,25 @@ if st.session_state.current_module is None:
     user-select: none;
     letter-spacing: 0.5px;
     text-shadow: 0 3px 10px rgba(0,0,0,0.85);
+    line-height: 1;
+}}
+.house-custom-slogan {{
+    position: absolute;
+    top: 77.5%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: calc({max(11, int(tamany_px * 0.35))}px * min(98vw, 146vh) / 1024);
+    font-weight: 800;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0284c7;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    white-space: nowrap;
+    z-index: 50;
+    pointer-events: none;
+    user-select: none;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.8);
 }}
 .hotspot {{
     position: absolute;
@@ -335,7 +362,10 @@ if st.session_state.current_module is None:
         max-width: 100vw !important;
     }}
     .house-custom-title {{
-        font-size: 1.4rem;
+        font-size: calc({tamany_px}px * 0.7);
+    }}
+    .house-custom-slogan {{
+        font-size: calc({max(11, int(tamany_px * 0.35))}px * 0.7);
     }}
 }}
 </style>
@@ -349,9 +379,14 @@ if st.session_state.current_module is None:
 <div class="logo-box">
 <img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="{p1} {p2}">
 
-<!-- Títol personalitzat de la casa en dues caselles i colors -->
+<!-- Títol personalitzat de la casa en dues caselles, colors i tamany -->
 <div class="house-custom-title">
-    <span style="color: {c1};">{p1}</span> <span style="color: {c2};">{p2}</span>
+    <span style="color: {c1};">{p1}</span><span style="color: {c2};">{p2}</span>
+</div>
+
+<!-- Eslògan traduït de la llar -->
+<div class="house-custom-slogan">
+    {slogan_text}
 </div>
 
 <!-- ================= SENSE RODONA (SUPERIOR) ================= -->
