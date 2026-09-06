@@ -26,6 +26,7 @@ month_translations = {
 }
 import base64
 import requests
+import plotly.express as px
 
 def clear_form_state(prefix: str):
     for key in list(st.session_state.keys()):
@@ -2266,6 +2267,20 @@ def modal_recepta(row):
 
 
 def render():
+    st.markdown("""
+    <style>
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+    a[data-testid="stHeaderActionLink"] {
+        display: none !important;
+    }
+    .stHeading a, h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     col_t1, col_t2 = st.columns([8.5, 1.5], vertical_alignment="center")
     with col_t1:
         st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres al Súper</h2>", unsafe_allow_html=True)
@@ -2274,7 +2289,7 @@ def render():
             st.session_state.current_module = None
             st.rerun()
 
-    tab_scanner, tab_llista, tab_rebost = st.tabs(["📄 Escàner Súper", "📋 Llista de la Compra", "📦 Rebost / Stock"])
+    tab_scanner, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Escàner Súper", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
     
     with tab_scanner:
         render_compres_super_interface()
@@ -2784,4 +2799,38 @@ def render():
         except Exception as e:
             st.error(f"Error carregant dades del rebost: {e}")
 
-# ================= TAB 4: BASES DE DADES (Supabase) =================
+    with tab_stats:
+        st.markdown("<h3 style='color:#f39c12;'>🍕 Distribució de Compres per Família</h3>", unsafe_allow_html=True)
+        try:
+            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+            df_super_stats = fetch_all_supabase(supabase, 'compresSuper')
+            if not df_super_stats.empty and 'familia' in df_super_stats.columns:
+                col_f1, col_f2 = st.columns(2)
+                with col_f1:
+                    available_years = sorted([int(y) for y in df_super_stats['any'].dropna().unique() if str(y).isdigit()], reverse=True)
+                    cur_yr = datetime.today().year
+                    sel_year = st.selectbox("Any", available_years, index=available_years.index(cur_yr) if cur_yr in available_years else 0, key="stats_super_year")
+                with col_f2:
+                    months_opts = ["Tots els mesos"] + CATALAN_MONTHS
+                    sel_month = st.selectbox("Mes", months_opts, index=0, key="stats_super_month")
+
+                filtered_df = df_super_stats[df_super_stats['any'].astype(str) == str(sel_year)]
+                if sel_month != "Tots els mesos":
+                    m_val = month_translations.get(sel_month, sel_month.lower())
+                    filtered_df = filtered_df[filtered_df['mes'].astype(str).str.lower() == m_val.lower()]
+
+                if not filtered_df.empty:
+                    df_pie = filtered_df.groupby('familia')['totLinea'].sum().reset_index()
+                    fig_pie = px.pie(df_pie, values='totLinea', names='familia', hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
+                    fig_pie.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='#f8fafc'),
+                        margin=dict(t=20, b=20, l=10, r=10)
+                    )
+                    st.plotly_chart(fig_pie, use_container_width=True, config={'staticPlot': True})
+                else:
+                    st.info(f"No hi ha dades de compres per al període seleccionat.")
+            else:
+                st.info("No s'han trobat dades de compres al súper.")
+        except Exception as e:
+            st.error(f"Error carregant estadístiques de compres: {e}")

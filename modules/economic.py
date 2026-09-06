@@ -151,13 +151,15 @@ st.markdown("""
         display: none !important;
     }
     /* Safely hide header anchor links without affecting other buttons */
-    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    [data-testid="stHeaderActionElements"],
+    a[data-testid="stHeaderActionLink"],
+    .stHeading a,
+    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a,
+    div[data-testid="stMarkdownContainer"] a[href^="#"],
+    span[data-testid="stHeaderActionElements"] {
         display: none !important;
         pointer-events: none !important;
-    }
-    div[data-testid="stMarkdownContainer"] a[href^="#"] {
-        display: none !important;
-        pointer-events: none !important;
+        visibility: hidden !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -2886,8 +2888,8 @@ def render(view_mode="economic"):
         if os.path.exists("logoEXD.png"):
             st.image("logoEXD.png", width=65)
     with col_title:
-        title_text = "📊 Dashboard General" if view_mode == "dashboard" else "📈 Mòdul Econòmic"
-        st.markdown(f"<h2 style='margin:0; color:#f39c12;'>{title_text}</h2>", unsafe_allow_html=True)
+        title_text = "Dashboard General" if view_mode == "dashboard" else "Mòdul Econòmic"
+        st.markdown(f"<h2 style='margin:0; color:#f39c12; user-select:none;'>{title_text}</h2>", unsafe_allow_html=True)
     with col_super:
         if st.button("🔙 Tornar a l'inici", use_container_width=True, key=f"btn_back_{view_mode}"):
             st.session_state.current_module = None
@@ -3429,113 +3431,45 @@ def render(view_mode="economic"):
         )
         
         st.write("")
+        st.markdown("<h4 style='color:#f39c12; margin-top: 10px; margin-bottom: 5px;'>📈 Previsió ingressos/despeses</h4>", unsafe_allow_html=True)
+        # Calculate summary for the last 2 years for the chart
+        chart_data = []
+        for yr in [selected_year - 1, selected_year]:
+            year_desp_c = df_desp[df_desp['any'] == yr]
+            year_ing_c = df_ing[(df_ing['any'] == yr) & (df_ing['cobrat'].astype(str).str.lower() == 'cobrat')]
+            
+            for m_cat in CATALAN_MONTHS:
+                m_data = month_translations[m_cat]
+                
+                # Incomes
+                sub_ing = year_ing_c[year_ing_c['clean_mes'] == m_data]
+                ing_total = sub_ing['Import'].sum()
+                
+                # Expenses
+                sub_desp = year_desp_c[year_desp_c['clean_mes'] == m_data]
+                cat_series = sub_desp['Idcategoria'].astype(str)
+                exp_total = sub_desp[~cat_series.str.contains('op_banc|ingres_general|ingrés_general|ingres_extra|ingrés_extra', case=False, na=False)]['Import càrrec'].sum()
+                
+                chart_data.append({
+                    'Mes-Any': f"{m_cat.capitalize()[:3]} {str(yr)[2:]}",
+                    'Ingressos': ing_total,
+                    'Despeses': exp_total
+                })
+        df_chart_2yrs = pd.DataFrame(chart_data)
         
-        # 4. Charts block
-        if st.session_state.get("role") == "viewer":
-            show_charts = False
-        else:
-            show_charts = st.checkbox("Mostra gràfics", value=True)
-        if show_charts:
-            st.markdown("---")
-            chart_col1, chart_col2 = st.columns(2)
-            
-            with chart_col1:
-                st.markdown("<h4 style='color:#f39c12;'>📈 Previsió ingressos/despeses</h4>", unsafe_allow_html=True)
-                # Calculate summary for the last 2 years for the chart
-                chart_data = []
-                for yr in [selected_year - 1, selected_year]:
-                    year_desp_c = df_desp[df_desp['any'] == yr]
-                    year_ing_c = df_ing[(df_ing['any'] == yr) & (df_ing['cobrat'].astype(str).str.lower() == 'cobrat')]
-                    
-                    for m_cat in CATALAN_MONTHS:
-                        m_data = month_translations[m_cat]
-                        
-                        # Incomes
-                        sub_ing = year_ing_c[year_ing_c['clean_mes'] == m_data]
-                        ing_total = sub_ing['Import'].sum()
-                        
-                        # Expenses
-                        sub_desp = year_desp_c[year_desp_c['clean_mes'] == m_data]
-                        cat_series = sub_desp['Idcategoria'].astype(str)
-                        exp_total = sub_desp[~cat_series.str.contains('op_banc|ingres_general|ingrés_general|ingres_extra|ingrés_extra', case=False, na=False)]['Import càrrec'].sum()
-                        
-                        chart_data.append({
-                            'Mes-Any': f"{m_cat.capitalize()[:3]} {str(yr)[2:]}",
-                            'Ingressos': ing_total,
-                            'Despeses': exp_total
-                        })
-                df_chart_2yrs = pd.DataFrame(chart_data)
-                
-                fig_bar = graph_objects.Figure()
-                fig_bar.add_trace(graph_objects.Bar(x=df_chart_2yrs['Mes-Any'], y=df_chart_2yrs['Ingressos'], name='Ingressos', marker_color='#2ecc71'))
-                fig_bar.add_trace(graph_objects.Bar(x=df_chart_2yrs['Mes-Any'], y=df_chart_2yrs['Despeses'], name='Despeses', marker_color='#e74c3c'))
-                fig_bar.update_layout(
-                    barmode='group',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#f8fafc'),
-                    xaxis=dict(gridcolor='#334155', tickangle=-45),
-                    yaxis=dict(gridcolor='#334155')
-                )
-                st.plotly_chart(fig_bar, use_container_width=True, config={'staticPlot': True})
-                
-            with chart_col2:
-                st.markdown("<h4 style='color:#f39c12;'>🍕 Compres Super %</h4>", unsafe_allow_html=True)
-                # Pie chart of compresSuper for selected month
-                super_sub = df_super[(df_super['any'] == selected_year) & (df_super['mes'].str.lower() == selected_month_data)]
-                if not super_sub.empty:
-                    df_pie = super_sub.groupby('familia')['totLinea'].sum().reset_index()
-                    fig_pie = px.pie(df_pie, values='totLinea', names='familia', hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
-                    fig_pie.update_layout(
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='#f8fafc')
-                    )
-                    st.plotly_chart(fig_pie, use_container_width=True, config={'staticPlot': True})
-                else:
-                    st.info(f"No hi ha dades de compres de supermercat per a {selected_month_cat} del {selected_year}.")
-                    
-            st.write("")
-            # 🔧 Oil change section moved here
-            st.markdown("<h4 style='color:#f39c12;'>🔧 Canvi d'oli cotxe</h4>", unsafe_allow_html=True)
-            col_oil1, col_oil2, col_oil3, col_oil_space = st.columns([2, 2, 2, 6])
-            with col_oil1:
-                st.metric("Kms actuals", f"{int(car_kms_actuals):,}")
-            with col_oil2:
-                st.session_state["kms_canvi_oli"] = st.number_input("Kms canvi oli", value=st.session_state["kms_canvi_oli"], step=1000.0)
-            with col_oil3:
-                kms_left = st.session_state["kms_canvi_oli"] - car_kms_actuals
-                st.metric("Canvi dintre", f"{int(kms_left):,}", delta=f"{int(kms_left)} km left", delta_color="normal" if kms_left > 500 else "inverse")
-                
-            st.write("")
-            st.markdown("<h4 style='color:#f39c12;'>⛽ Consum Cotxe (L/100km)</h4>", unsafe_allow_html=True)
-            # Compute annual fuel consumption
-            df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
-            df_km['parsed_date'] = df_km['data'].apply(parse_excel_date)
-            
-            df_gas_tivoli = df_gas[df_gas['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_gas.columns else df_gas
-            df_km_tivoli = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
-            
-            df_km_tivoli_valid = df_km_tivoli.dropna(subset=['contador', 'parsed_date'])
-            
-            gas_yr = df_gas_tivoli.groupby(df_gas_tivoli['parsed_date'].dt.year)['litres'].sum()
-            
-            # Càlcul de km reals recorreguts per any (màxim contador - mínim contador)
-            km_yr = df_km_tivoli_valid.groupby(df_km_tivoli_valid['parsed_date'].dt.year)['contador'].agg(lambda x: x.max() - x.min())
-            km_yr = km_yr.replace(0, pd.NA) # Evitar divisió per zero
-            
-            consumption = ((gas_yr / km_yr) * 100).dropna().reset_index()
-            consumption.columns = ['Any', 'L/100km']
-            consumption['Any'] = consumption['Any'].astype(str)
-            
-            fig_line = px.bar(consumption, x='Any', y='L/100km', text_auto='.2f', color_discrete_sequence=['#f39c12'])
-            fig_line.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#f8fafc'),
-                xaxis=dict(gridcolor='#334155'),
-                yaxis=dict(gridcolor='#334155')
-            )
-            st.plotly_chart(fig_line, use_container_width=True, config={'staticPlot': True})
+        fig_bar = graph_objects.Figure()
+        fig_bar.add_trace(graph_objects.Bar(x=df_chart_2yrs['Mes-Any'], y=df_chart_2yrs['Ingressos'], name='Ingressos', marker_color='#2ecc71'))
+        fig_bar.add_trace(graph_objects.Bar(x=df_chart_2yrs['Mes-Any'], y=df_chart_2yrs['Despeses'], name='Despeses', marker_color='#e74c3c'))
+        fig_bar.update_layout(
+            barmode='group',
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#f8fafc'),
+            xaxis=dict(gridcolor='#334155', tickangle=-45),
+            yaxis=dict(gridcolor='#334155'),
+            margin=dict(t=20, b=20, l=10, r=10)
+        )
+        st.plotly_chart(fig_bar, use_container_width=True, config={'staticPlot': True})
         
         return
 
