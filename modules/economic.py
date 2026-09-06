@@ -3507,8 +3507,8 @@ def render(view_mode="economic"):
             unsafe_allow_html=True
         )
         
-        st.write("")
-        st.markdown("<h4 style='color:#f39c12; margin-top: 10px; margin-bottom: 5px;'>📈 Previsió ingressos/despeses</h4>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 55px;'></div>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#f39c12; margin-top: 10px; margin-bottom: 8px; font-size:1.35rem; font-weight:700;'>📈 Previsió ingressos/despeses</h3>", unsafe_allow_html=True)
         # Calculate summary for the last 2 years for the chart
         chart_data = []
         for yr in [selected_year - 1, selected_year]:
@@ -3541,14 +3541,21 @@ def render(view_mode="economic"):
             barmode='group',
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#f8fafc', size=11),
+            font=dict(color='#f8fafc', size=12),
             xaxis=dict(gridcolor='#334155', tickangle=-45),
-            yaxis=dict(gridcolor='#334155'),
-            margin=dict(t=10, b=25, l=10, r=10),
-            height=240,
+            yaxis=dict(
+                gridcolor='#334155',
+                dtick=1000,
+                tick0=0,
+                tickformat=',.0f',
+                ticksuffix=' €'
+            ),
+            margin=dict(t=20, b=30, l=10, r=10),
+            height=460,
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         st.plotly_chart(fig_bar, use_container_width=True, config={'staticPlot': True})
+        st.markdown("<div style='margin-bottom: 40px;'></div>", unsafe_allow_html=True)
         
         return
 
