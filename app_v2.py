@@ -43,6 +43,70 @@ if "mod" in st.query_params:
 if 'current_module' not in st.session_state:
     st.session_state.current_module = None
 
+MODULES_NAV = [
+    {"id": "modules.dashboard", "label": "📊 Dashboard", "title": "Dashboard General"},
+    {"id": "modules.economic", "label": "📈 Econòmic", "title": "Mòdul Econòmic"},
+    {"id": "modules.compres", "label": "🛒 Compres", "title": "Compres Super i Stock"},
+    {"id": "modules.menjar", "label": "🍽️ Menjar", "title": "Menús i Rebost"},
+    {"id": "modules.calendari", "label": "📅 Agenda", "title": "Agenda i Calendari"},
+    {"id": "modules.medicacio", "label": "💊 Medicació", "title": "Control Medicació"},
+    {"id": "modules.cotxe", "label": "🚗 Cotxe", "title": "Cotxe i Transport"},
+    {"id": "modules.manteniment", "label": "🛠️ Manteniment", "title": "Manteniment Llar"},
+    {"id": "modules.seguretat", "label": "📹 Seguretat", "title": "Seguretat i Càmeres"},
+    {"id": "modules.domotica", "label": "📶 Domòtica", "title": "Domòtica"},
+    {"id": "modules.jocs", "label": "🎲 Jocs", "title": "Jocs i Oci"},
+]
+
+def render_top_navbar():
+    st.markdown("""
+        <style>
+        div[data-testid="stPills"] {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 2px;
+            scrollbar-width: thin;
+        }
+        div[data-testid="stPills"] button {
+            font-size: 0.86rem !important;
+            padding: 4px 10px !important;
+            border-radius: 6px !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    col_home, col_pills, col_admin = st.columns([1.2, 9.6, 1.2], vertical_alignment="center")
+    with col_home:
+        if st.button("🏡 Inici", key="top_btn_home", use_container_width=True, help="Tornar a la pantalla principal"):
+            st.session_state.current_module = None
+            st.rerun()
+            
+    with col_pills:
+        mod_map = {m["id"]: m["label"] for m in MODULES_NAV}
+        label_map = {m["label"]: m["id"] for m in MODULES_NAV}
+        
+        current_label = mod_map.get(st.session_state.current_module, None)
+        options = [m["label"] for m in MODULES_NAV]
+        
+        selected = st.pills(
+            "Mòduls",
+            options=options,
+            default=current_label if current_label in options else None,
+            label_visibility="collapsed",
+            key="top_nav_pills_bar"
+        )
+        if selected and label_map.get(selected) != st.session_state.current_module:
+            st.session_state.current_module = label_map[selected]
+            st.rerun()
+            
+    with col_admin:
+        is_admin_active = (st.session_state.current_module == "modules.admin")
+        btn_type = "primary" if is_admin_active else "secondary"
+        if st.button("⚙️ Ajustos", key="top_btn_admin", type=btn_type, use_container_width=True, help="Configuració global"):
+            st.session_state.current_module = "modules.admin"
+            st.rerun()
+            
+    st.markdown("<hr style='margin: 0.2rem 0 0.8rem 0; border-color: #334155;'/>", unsafe_allow_html=True)
+
 if st.session_state.current_module is None:
     import textwrap
     
@@ -212,6 +276,7 @@ if st.session_state.current_module is None:
     st.markdown(html_content, unsafe_allow_html=True)
 
 else:
+    render_top_navbar()
     try:
         mod = importlib.import_module(st.session_state.current_module)
         mod.render()

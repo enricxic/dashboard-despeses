@@ -164,7 +164,7 @@ st.markdown("""
 
 
 
-def render():
+def render(view_mode="economic"):
     # --- Role Indicator ---
     role_icon = "👑" if st.session_state.get("role") == "admin" else ("👁️‍🗨️" if st.session_state.get("role") == "viewer" else "👤")
     role_title = "Administrador" if st.session_state.get("role") == "admin" else ("Visor" if st.session_state.get("role") == "viewer" else "Convidat")
@@ -2886,9 +2886,10 @@ def render():
         if os.path.exists("logoEXD.png"):
             st.image("logoEXD.png", width=65)
     with col_title:
-        st.markdown("<h2 style='margin:0; color:#f39c12;'>Dashboard Despeses</h2>", unsafe_allow_html=True)
+        title_text = "📊 Dashboard General" if view_mode == "dashboard" else "📈 Mòdul Econòmic"
+        st.markdown(f"<h2 style='margin:0; color:#f39c12;'>{title_text}</h2>", unsafe_allow_html=True)
     with col_super:
-        if st.button("🔙 Tornar a l'inici", use_container_width=True):
+        if st.button("🔙 Tornar a l'inici", use_container_width=True, key=f"btn_back_{view_mode}"):
             st.session_state.current_module = None
             st.rerun()
                 
@@ -3155,25 +3156,8 @@ def render():
                 except Exception as e:
                     st.error(f"Error guardant: {e}")
     
-    # ----------------- TABS SYSTEM -----------------
-    tabs_list = ["📊 Dashboard General", "📈 Detalls del Mes"]
-    if st.session_state.get("role") in ["admin", "guest"]:
-        tabs_list.extend(["📝 Intro Dades", "🤖 Xat IA"])
-    
-    tabs = st.tabs(tabs_list)
-    tab_dash = tabs[0]
-    tab_details = tabs[1]
-    
-    if st.session_state.get("role") in ["admin", "guest"]:
-        tab_intro = tabs[2]
-        tab_xat = tabs[3]
-    else:
-        tab_intro = None
-        tab_xat = None
-
-    
-    # ================= TAB 1: DASHBOARD GENERAL =================
-    with tab_dash:
+    # ----------------- VISTA DASHBOARD GENERAL -----------------
+    if view_mode == "dashboard":
         # 1. Container for bank metrics (physically at the top)
         bank_metrics_container = st.container()
         
@@ -3552,8 +3536,25 @@ def render():
                 yaxis=dict(gridcolor='#334155')
             )
             st.plotly_chart(fig_line, use_container_width=True, config={'staticPlot': True})
+        
+        return
+
+    # ================= MÒDUL ECONÒMIC (PESTANYES) =================
+    tabs_list = ["📈 Detalls del Mes"]
+    if st.session_state.get("role") in ["admin", "guest"]:
+        tabs_list.extend(["📝 Intro Dades", "🤖 Xat IA"])
     
-    # ================= TAB 2: DETALLS DEL MES =================
+    tabs = st.tabs(tabs_list)
+    tab_details = tabs[0]
+    
+    if st.session_state.get("role") in ["admin", "guest"]:
+        tab_intro = tabs[1]
+        tab_xat = tabs[2]
+    else:
+        tab_intro = None
+        tab_xat = None
+
+    # ================= PESTANYA 1 ECONÒMIC: DETALLS DEL MES =================
     
     @st.dialog("⚙️ Confirmar Operacions i Bancs", width="large")
     def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):

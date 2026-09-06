@@ -7,11 +7,12 @@ Aquest document descriu l'arquitectura, funcionalitats, estructura de fitxers i 
 ## 1. Visió General i Arquitectura (V2 Modular)
 L'aplicació ha transicionat d'un model monolític (`app.py`) a una **arquitectura modular V2** neta, extensible i optimitzada per a mòbils i escriptori.
 - **Frontend / Backend**: Construïda en **Streamlit** (Python).
-- **Entrada Principal (Router)**: L'arxiu **`app_v2.py`** actua com a menú principal (Landing Screen interactiva).
-- **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/fons xiquiHouse.jpg`), amb 12 punts d'accés (hotspots interactius) mapejats amb precisió sobre les icones de la casa.
+- **Entrada Principal (Router)**: L'arxiu **`app_v2.py`** actua com a menú principal (Landing Screen interactiva) i gestor de navegació global.
+- **Barra Superior de Menús**: Quan s'està dins de qualsevol mòdul, es mostra una barra de navegació superior amb accés ràpid a tots els mòduls (`st.pills`), botó `🏡 Inici` i botó `⚙️ Ajustos`.
+- **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/fons xiquiHouse.jpg`), amb 12 punts d'accés (hotspots interactius 100% transparents en repòs) mapejats amb precisió sobre les icones de la casa.
 - **Base de Dades**: **Supabase** (PostgreSQL). Tota la comunicació CRUD està centralitzada a `core/db.py`.
 - **Autenticació**: Gestionada a `core/auth.py`. Incorpora persistència de sessió mitjançant paràmetre de consulta (`?auth=<token>`) per evitar demanar contrasenya en recarregar la pàgina al fer clic als hotspots d'inici.
-- **Estat de Navegació**: Es controla mitjançant `st.session_state.current_module`. Per tornar enrere, cada mòdul disposa d'un botó `🔙 Tornar a l'inici` a la capçalera que restableix l'estat a `None`.
+- **Estat de Navegació**: Es controla mitjançant `st.session_state.current_module`. Per tornar enrere, cada mòdul disposa del botó `🏡 Inici` a la barra superior i `🔙 Tornar a l'inici` a la capçalera que restableix l'estat a `None`.
 
 ---
 
@@ -21,10 +22,10 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 
 ### 🌟 Part Superior (Sense rodona):
 1. **⚙️ Configuracions**: `modules/admin.py` *(Icona engranatge)* - Panell de control i configuració global.
-2. **📊 Dashboard General**: `modules/dashboard.py` *(Icona pantalla + gràfic)* - Vista resumida global de la llar.
+2. **📊 Dashboard General**: `modules/dashboard.py` *(Icona pantalla + gràfic)* - Vista de panell principal amb targetes de saldos bancaris (BBVA, La Caixa, etc.), resum mensual d'ingressos i despeses de l'any i gràfics comparatius.
 
 ### 🔵 Part Esquerra (5 nodes amb rodona):
-3. **📈 Mòdul Econòmic**: `modules/economic.py` *(Icona gràfic ascens)* - Control de despeses, ingressos, gràfics, extractes bancaris i Xat IA.
+3. **📈 Mòdul Econòmic**: `modules/economic.py` *(Icona gràfic ascens)* - Gestió econòmica detallada organitzada en pestanyes: Detalls del Mes (rebuts, pagaments, hipoteca), Intro Dades i Xat IA.
 4. **📹 Seguretat**: `modules/seguretat.py` *(Icona càmera)* - Estat de càmeres, accessos i alarmes.
 5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Tasques de la llar, reparacions i històric de manteniment.
 6. **📶 Domòtica**: `modules/domotica.py` *(Icona WiFi)* - Integració amb Home Assistant, llums i sensors.
