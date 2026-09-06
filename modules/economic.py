@@ -3201,7 +3201,7 @@ def render(view_mode="economic"):
         # 2. Row of Title and Filters Popover (in place of Juny 2026)
         col_sum_lbl, col_sum_btn = st.columns([11.4, 0.6], vertical_alignment="center")
         with col_sum_lbl:
-            st.markdown(f"<h4 style='margin: 4px 0 2px 0; font-size: 1.15rem; color:#f39c12;'>📅 Resum Mensual d'Ingressos i Despeses {selected_year}</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='margin: 14px 0 8px 0; font-size: 1.3rem; color:#f39c12; font-weight:700;'>📅 Resum Mensual d'Ingressos i Despeses {selected_year}</h3>", unsafe_allow_html=True)
         with col_sum_btn:
             with st.popover("🔍", use_container_width=False):
                 selected_year = st.selectbox("Any", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year")
@@ -3215,48 +3215,49 @@ def render(view_mode="economic"):
         total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
         
         with bank_metrics_container:
-            col_bal_title, col_bal_metrics = st.columns([1.5, 10.5], vertical_alignment="center")
+            st.markdown("<div style='margin-top: 8px; margin-bottom: 6px;'>", unsafe_allow_html=True)
+            col_bal_title, col_bal_metrics = st.columns([1.6, 10.4], vertical_alignment="center")
             with col_bal_title:
-                st.markdown(f"<h4 style='margin:0; font-size: 1.05rem; line-height:1.2;'>💰 Saldo Comptes:<br><span style='color: #22c55e; font-size:1.25rem;'>{total_accounts_balance:,.2f} €</span></h4>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='margin:0; font-size: 1.15rem; line-height:1.25;'>💰 Saldo Comptes:<br><span style='color: #22c55e; font-size:1.45rem; font-weight:800;'>{total_accounts_balance:,.2f} €</span></h3>", unsafe_allow_html=True)
             with col_bal_metrics:
                 # Apply custom styling to the nested horizontal block (the one containing the buttons)
                 st.markdown("""
                     <style>
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
-                        border-radius: 6px !important;
-                        min-height: 52px !important;
-                        min-width: 118px !important;
-                        box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.3) !important;
+                        border-radius: 8px !important;
+                        min-height: 72px !important;
+                        min-width: 125px !important;
+                        box-shadow: 0 3px 6px -1px rgb(0 0 0 / 0.35) !important;
                         height: 100% !important;
-                        padding: 3px 6px !important;
+                        padding: 8px 10px !important;
                     }
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button:hover {
                         border-color: #f39c12 !important;
                     }
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p {
                         text-transform: uppercase;
-                        font-size: 0.78rem;
-                        font-weight: 600;
-                        line-height: 1.3;
+                        font-size: 0.82rem;
+                        font-weight: 700;
+                        line-height: 1.35;
                         margin: 0;
                         display: flex;
                         flex-direction: column;
                         align-items: center;
                         justify-content: center;
                         text-align: center;
-                        gap: 1px;
+                        gap: 3px;
                         white-space: normal !important;
                     }
                     /* Make the green/red/zero value larger */
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span,
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p strong {
-                        font-size: 1.2rem;
+                        font-size: 1.35rem;
                         text-transform: none;
-                        font-weight: bold;
+                        font-weight: 800;
                     }
                     </style>
                 """, unsafe_allow_html=True)
-    
+                
                 col_ratios = [1] * len(current_balances)
                 cols = st.columns(col_ratios, gap="small")
                 for i, (b_name, b_val) in enumerate(current_balances.items()):
@@ -3270,6 +3271,7 @@ def render(view_mode="economic"):
                         label = f"{b_name}\n{val_str}"
                         if st.button(label, key=f"btn_bank_{b_name}", use_container_width=True):
                             show_bank_extract_modal(b_name, selected_year, selected_month_data)
+            st.markdown("</div>", unsafe_allow_html=True)
         
         # Pivot-like summary computation for the selected year
         summary_data = []
