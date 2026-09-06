@@ -149,13 +149,13 @@ if st.session_state.current_module is None:
     .logo-box {{
         width: 100% !important;
         max-width: 100% !important;
-        transform: scale(2.05) !important;
+        transform: scale(1.48) !important;
         transform-origin: center center !important;
     }}
     /* Mida tàctil còmoda i fàcil de prémer al mòbil */
     .hotspot {{
-        width: 12.5% !important;
-        height: 15.5% !important;
+        width: 10.5% !important;
+        height: 14.5% !important;
         background: rgba(2, 136, 209, 0.01) !important;
     }}
     .hotspot.pulse {{
@@ -168,35 +168,52 @@ if st.session_state.current_module is None:
 <div class="logo-box">
 <img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="XiquiHouse">
 
-<!-- 1. Dalt Esquerra: WiFi / Domòtica -->
-<a href="?mod=modules.domotica{auth_suffix}" target="_self" class="hotspot pulse" style="left: 27.5%; top: 26.0%; width: 7.2%; height: 10.8%;" title="📶 Domòtica i Llar"></a>
+<!-- ================= SENSE RODONA (SUPERIOR) ================= -->
+<!-- Icona engranatge: Configuracions -->
+<a href="?mod=modules.admin{auth_suffix}" target="_self" class="hotspot" style="left: 37.3%; top: 18.6%; width: 7.5%; height: 11.2%;" title="⚙️ Configuració Global"></a>
 
-<!-- 2. Centre Esquerra: Termòmetre / Climatització -->
-<a href="?mod=modules.domotica{auth_suffix}" target="_self" class="hotspot pulse" style="left: 27.6%; top: 41.7%; width: 7.2%; height: 10.8%;" title="🌡️ Climatització i Sensors"></a>
+<!-- Icona pantalla + gràfic: Dashboard -->
+<a href="?mod=modules.dashboard{auth_suffix}" target="_self" class="hotspot" style="left: 61.2%; top: 18.3%; width: 7.5%; height: 11.2%;" title="📊 Dashboard General"></a>
 
-<!-- 3. Baix Esquerra: Càmera / Seguretat -->
-<a href="?mod=modules.domotica{auth_suffix}" target="_self" class="hotspot pulse" style="left: 27.4%; top: 57.8%; width: 7.2%; height: 10.8%;" title="📹 Seguretat i Càmeres"></a>
+<!-- ================= AMB RODONA PART ESQUERRA (5 NODES) ================= -->
+<!-- 1. Icona gràfic: Econòmic -->
+<a href="?mod=modules.economic{auth_suffix}" target="_self" class="hotspot pulse" style="left: 27.4%; top: 25.9%; width: 7.2%; height: 10.8%;" title="📈 Mòdul Econòmic"></a>
 
-<!-- 4. Dalt Dreta: Cotxe / Transport / Gasolina -->
-<a href="?mod=modules.economic{auth_suffix}" target="_self" class="hotspot pulse" style="left: 72.2%; top: 26.2%; width: 7.2%; height: 10.8%;" title="🚗 Transport, Km i Gasolina"></a>
+<!-- 2. Icona càmara: Seguretat -->
+<a href="?mod=modules.seguretat{auth_suffix}" target="_self" class="hotspot pulse" style="left: 16.8%; top: 34.5%; width: 7.2%; height: 10.8%;" title="📹 Seguretat i Càmeres"></a>
 
-<!-- 5. Centre Dreta: Menjar i Rebost -->
-<a href="?mod=modules.menjar{auth_suffix}" target="_self" class="hotspot pulse" style="left: 72.1%; top: 41.6%; width: 7.2%; height: 10.8%;" title="🍽️ Menjar, Menús i Rebost"></a>
+<!-- 3. Icona casa amb eina: Manteniment -->
+<a href="?mod=modules.manteniment{auth_suffix}" target="_self" class="hotspot pulse" style="left: 27.4%; top: 41.5%; width: 7.2%; height: 10.8%;" title="🛠️ Manteniment de la Llar"></a>
 
-<!-- 6. Baix Dreta: Compres al Súper -->
-<a href="?mod=modules.compres{auth_suffix}" target="_self" class="hotspot pulse" style="left: 72.1%; top: 58.3%; width: 7.2%; height: 10.8%;" title="🛒 Compres al Súper i Tiquets"></a>
+<!-- 4. Icona wifi: Domòtica -->
+<a href="?mod=modules.domotica{auth_suffix}" target="_self" class="hotspot pulse" style="left: 17.1%; top: 51.5%; width: 7.2%; height: 10.8%;" title="📶 Domòtica (Home Assistant)"></a>
 
-<!-- 7. Engranatge Superior: Configuració Global -->
-<a href="?mod=modules.admin{auth_suffix}" target="_self" class="hotspot" style="left: 37.0%; top: 17.6%; width: 8.0%; height: 12.0%;" title="⚙️ Configuració Global"></a>
+<!-- 5. Icona daus: Jocs -->
+<a href="?mod=modules.jocs{auth_suffix}" target="_self" class="hotspot pulse" style="left: 27.4%; top: 57.6%; width: 7.2%; height: 10.8%;" title="🎲 Jocs i Oci Familiar"></a>
 
-<!-- 8. Gràfic Superior: Àrea Econòmica -->
-<a href="?mod=modules.economic{auth_suffix}" target="_self" class="hotspot" style="left: 60.7%; top: 17.6%; width: 8.0%; height: 12.0%;" title="📊 Àrea Econòmica i Finances"></a>
+<!-- ================= AMB RODONA PART DRETA (5 NODES) ================= -->
+<!-- 6. Icona calendari: Agenda -->
+<a href="?mod=modules.calendari{auth_suffix}" target="_self" class="hotspot pulse" style="left: 72.4%; top: 26.0%; width: 7.2%; height: 10.8%;" title="📅 Agenda i Calendari"></a>
 
-<!-- 9. Cos Casa Dreta: Manteniment i Agenda -->
-<a href="?mod=modules.calendari{auth_suffix}" target="_self" class="hotspot" style="left: 58.1%; top: 57.4%; width: 9.5%; height: 14.5%;" title="🗓️ Agenda i Manteniment"></a>
+<!-- 7. Icona pastilles: Control Medicació -->
+<a href="?mod=modules.medicacio{auth_suffix}" target="_self" class="hotspot pulse" style="left: 81.3%; top: 34.2%; width: 7.2%; height: 10.8%;" title="💊 Control de Medicació"></a>
 
-<!-- 10. Cos Casa Esquerra: Rebost -->
-<a href="?mod=modules.menjar{auth_suffix}" target="_self" class="hotspot" style="left: 46.3%; top: 57.4%; width: 9.5%; height: 14.5%;" title="🥕 Rebost i Productes"></a>
+<!-- 8. Icona cuberts: Menjar -->
+<a href="?mod=modules.menjar{auth_suffix}" target="_self" class="hotspot pulse" style="left: 72.0%; top: 41.6%; width: 7.2%; height: 10.8%;" title="🍽️ Menjar, Menús i Rebost"></a>
+
+<!-- 9. Icona cotxe: Cotxe -->
+<a href="?mod=modules.cotxe{auth_suffix}" target="_self" class="hotspot pulse" style="left: 81.1%; top: 51.3%; width: 7.2%; height: 10.8%;" title="🚗 Cotxe i Transport"></a>
+
+<!-- 10. Icona carro compra: Compres Super/Stock -->
+<a href="?mod=modules.compres{auth_suffix}" target="_self" class="hotspot pulse" style="left: 71.9%; top: 58.5%; width: 7.2%; height: 10.8%;" title="🛒 Compres al Súper i Stock"></a>
+
+<!-- ================= INTERIOR DE LA CASA ================= -->
+<!-- Rebost interior -->
+<a href="?mod=modules.menjar{auth_suffix}" target="_self" class="hotspot" style="left: 41.0%; top: 55.5%; width: 8.0%; height: 12.0%;" title="🥕 Rebost i Productes"></a>
+
+<!-- Eines interior -->
+<a href="?mod=modules.manteniment{auth_suffix}" target="_self" class="hotspot" style="left: 58.5%; top: 55.5%; width: 8.0%; height: 12.0%;" title="🛠️ Tasques i Reparacions"></a>
+
 </div>
 </div>""")
 
