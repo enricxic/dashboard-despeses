@@ -98,14 +98,14 @@ def render_traditional_menubar():
     
     menubar_html = f"""<style>
 div.block-container {{
-    padding-top: 1.8rem !important;
+    padding-top: 0.2rem !important;
     padding-bottom: 1.5rem !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;
     max-width: 100% !important;
 }}
 [data-testid="stVerticalBlock"] {{
-    gap: 0.5rem !important;
+    gap: 0.4rem !important;
 }}
 [data-testid="stHeader"] {{
     display: none !important;
@@ -116,7 +116,7 @@ div.block-container {{
     align-items: center;
     background: transparent;
     padding: 0px;
-    margin: -0.1rem 0 0.5rem 0;
+    margin: -0.6rem 0 0.2rem 0;
     gap: 18px;
     user-select: none;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
