@@ -281,34 +281,24 @@ def render():
                 st.markdown("##### 🏷️ Primera Paraula")
                 p1 = st.text_input("Text 1", value=casa_cfg.get("paraula1", "Xiqui"), key="input_p1")
                 
-                st.markdown("<div style='font-size:0.85rem; font-weight:600; margin-top:8px; margin-bottom:4px;'>Color de la primera paraula:</div>", unsafe_allow_html=True)
-                c_p1_btn1, c_p1_btn2, c_p1_pick = st.columns([1.2, 1.2, 1.2], vertical_alignment="center")
-                with c_p1_btn1:
-                    if st.button("🟦 #407faf\n(Blau)", key="btn_p1_blue", use_container_width=True):
+                c_pick1, c_preset1 = st.columns([1.2, 1.8], vertical_alignment="center")
+                with c_preset1:
+                    if st.button("🟦 #407faf (Blau original)", key="btn_preset_c1", use_container_width=True):
                         st.session_state["picker_c1"] = "#407faf"
                         st.rerun()
-                with c_p1_btn2:
-                    if st.button("🟩 #73ad69\n(Verd)", key="btn_p1_green", use_container_width=True):
-                        st.session_state["picker_c1"] = "#73ad69"
-                        st.rerun()
-                with c_p1_pick:
+                with c_pick1:
                     col1 = st.color_picker("Color 1", key="picker_c1")
                 
             with c2:
                 st.markdown("##### 🏷️ Segona Paraula (Opcional)")
                 p2 = st.text_input("Text 2", value=casa_cfg.get("paraula2", "House"), key="input_p2")
                 
-                st.markdown("<div style='font-size:0.85rem; font-weight:600; margin-top:8px; margin-bottom:4px;'>Color de la segona paraula:</div>", unsafe_allow_html=True)
-                c_p2_btn1, c_p2_btn2, c_p2_pick = st.columns([1.2, 1.2, 1.2], vertical_alignment="center")
-                with c_p2_btn1:
-                    if st.button("🟦 #407faf\n(Blau)", key="btn_p2_blue", use_container_width=True):
-                        st.session_state["picker_c2"] = "#407faf"
-                        st.rerun()
-                with c_p2_btn2:
-                    if st.button("🟩 #73ad69\n(Verd)", key="btn_p2_green", use_container_width=True):
+                c_pick2, c_preset2 = st.columns([1.2, 1.8], vertical_alignment="center")
+                with c_preset2:
+                    if st.button("🟩 #73ad69 (Verd original)", key="btn_preset_c2", use_container_width=True):
                         st.session_state["picker_c2"] = "#73ad69"
                         st.rerun()
-                with c_p2_pick:
+                with c_pick2:
                     col2 = st.color_picker("Color 2", key="picker_c2")
                 
             st.markdown("##### 🔤 Tamany del Text")
