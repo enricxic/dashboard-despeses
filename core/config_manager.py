@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {
         "color1": "#407faf",
         "paraula2": "House",
         "color2": "#73ad69",
-        "tamany_lletra": 58
+        "tamany_lletra": 60
     },
     "familia": [
         {"id": 1, "nom": "Enric", "rol": "Pare", "edat": "45", "circunstancies": "Cap al·lèrgia", "icona": "👨"},

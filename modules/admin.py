@@ -302,7 +302,8 @@ def render():
                     col2 = st.color_picker("Color 2", key="picker_c2")
                 
             st.markdown("##### 🔤 Tamany del Text")
-            tamany_lletra = st.slider("Tamany de la lletra del títol (píxels)", min_value=24, max_value=72, value=int(casa_cfg.get("tamany_lletra", 58)), step=2, key="slider_tamany")
+            current_tamany = max(60, min(120, int(casa_cfg.get("tamany_lletra", 60))))
+            tamany_lletra = st.slider("Tamany de la lletra del títol (píxels)", min_value=60, max_value=120, value=current_tamany, step=2, key="slider_tamany")
                 
             st.markdown("#### 👁️ Previsualització en directe")
             slogan_text = get_translation("slogan", lang)
