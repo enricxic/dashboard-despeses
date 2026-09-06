@@ -97,20 +97,20 @@ def render_traditional_menubar():
     icones_actives = app_cfg.get("icones_actives", {})
     
     menubar_html = f"""<style>
-div.block-container {
+div.block-container {{
     padding-top: 0.15rem !important;
     padding-bottom: 0.5rem !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
     max-width: 100% !important;
-}
-[data-testid="stVerticalBlock"] {
+}}
+[data-testid="stVerticalBlock"] {{
     gap: 0.2rem !important;
-}
-[data-testid="stHeader"] {
+}}
+[data-testid="stHeader"] {{
     display: none !important;
-}
-.desktop-menubar {
+}}
+.desktop-menubar {{
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -122,7 +122,7 @@ div.block-container {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 0.78rem;
     z-index: 9999;
-}
+}}
 .desktop-menubar .menu-item {{
     position: relative;
     cursor: pointer;
