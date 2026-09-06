@@ -337,6 +337,32 @@ def render(view_mode="economic"):
             self.last_update = datetime.now()
     
     @st.cache_resource
+    @st.cache_resource
+    def get_db_engine():
+        if "connection_string" in st.secrets:
+            try:
+                import sqlalchemy
+                return sqlalchemy.create_engine(
+                    st.secrets["connection_string"],
+                    pool_pre_ping=True,
+                    pool_size=10,
+                    max_overflow=5
+                )
+            except Exception:
+                return None
+        return None
+
+    def fetch_table_fast(table_name):
+        engine = get_db_engine()
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    return table_name, pd.read_sql(f'SELECT * FROM "{table_name}"', conn)
+            except Exception:
+                pass
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        return table_name, fetch_all_supabase(supabase, table_name)
+
     def get_db_tracker():
         return DBTracker()
     
@@ -386,18 +412,14 @@ def render(view_mode="economic"):
     @st.cache_data(ttl=600, show_spinner=False)
     def load_dashboard_data(mtimes=None):
         from concurrent.futures import ThreadPoolExecutor
-        supabase = get_supabase_client(st.session_state.get("role", "guest"))
         
         tables_to_fetch = [
             'despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe',
             'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'
         ]
-        
-        def _fetch_table(tbl):
-            return tbl, fetch_all_supabase(supabase, tbl)
             
         with ThreadPoolExecutor(max_workers=10) as executor:
-            fetched = dict(executor.map(_fetch_table, tables_to_fetch))
+            fetched = dict(executor.map(fetch_table_fast, tables_to_fetch))
         
         # Load tables from PostgreSQL
         df_desp = fix_mojibake_df(fetched['despeses'])
@@ -472,6 +494,7 @@ def render(view_mode="economic"):
     # Load categories_conceptes.json if exists
     import json
     
+    @st.cache_data(ttl=600, show_spinner=False)
     def load_categories_conceptes():
         try:
             supabase = get_supabase_client("guest")
@@ -3328,36 +3351,6 @@ def render(view_mode="economic"):
                 totals_row[col] = df_summary[col].sum()
         df_summary = pd.concat([df_summary, pd.DataFrame([totals_row])], ignore_index=True)
         
-        # Style formatter to highlight values exceeding limit in red
-        def highlight_exceeded_limits(df):
-            style_df = pd.DataFrame('', index=df.index, columns=df.columns)
-            col_mapping = {
-                'Menjar': 'menjar',
-                'Gasolina': 'gasolina',
-                'Restaurant': 'restaurant',
-                'Farmàcia': 'farmacia',
-                'Neteja': 'neteja',
-                'Varis': 'varis'
-            }
-            for idx, row in df.iterrows():
-                if row['Mes'] in ['TOTAL', 'LÍMITS']:
-                    continue
-                m_name = str(row['Mes']).lower()
-                m_data = month_translations.get(m_name, 'enero')
-                
-                # Highlight current selected month in yellow text (no background)
-                if m_name == selected_month_cat.lower():
-                    style_df.at[idx, 'Mes'] = 'color: #f1c40f; font-weight: bold;'
-                    
-                row_limits = get_limits_for(selected_year, m_data)
-                
-                for col_name, limit_key in col_mapping.items():
-                    val = row[col_name]
-                    lim = row_limits.get(limit_key, float('inf'))
-                    if val > lim:
-                        style_df.at[idx, col_name] = 'background-color: #7f1d1d; color: #fecaca; font-weight: bold;'
-            return style_df
-    
         # Check limits for selected month/year to show alert banner
         selected_limits = get_limits_for(selected_year, selected_month_data)
         selected_month_summary = df_summary[df_summary['Mes'].str.lower() == selected_month_cat.lower()]
@@ -3393,25 +3386,93 @@ def render(view_mode="economic"):
                     limits_row[col_name] = selected_limits[limit_key]
             df_summary = pd.concat([pd.DataFrame([limits_row]), df_summary], ignore_index=True)
     
-        def style_limits_row(row):
-            styles = [''] * len(row)
-            if row['Mes'] == 'LÍMITS':
-                for i in range(len(row)):
-                    if i == 0 or pd.notna(row.iloc[i]):
-                        styles[i] = 'color: #3498db; font-weight: bold; background-color: rgba(52, 152, 219, 0.1)'
-            return styles
-    
-        html_table = (
-            df_summary.style.hide(axis="index")
-            .format(precision=2, thousands=".", decimal=",", na_rep="")
-            .apply(highlight_exceeded_limits, axis=None)
-            .apply(style_limits_row, axis=1)
-            .background_gradient(subset=['Saldo'], cmap='RdYlGn', vmin=-1000, vmax=1000, text_color_threshold=0)
-            .map(lambda _: 'font-weight: bold; color: black !important;', subset=['Saldo'])
-            .highlight_max(subset=['Ing. Total'], color='#27ae60')
-            .highlight_max(subset=['Total Desp.'], color='#c0392b')
-            .to_html()
-        )
+        def get_saldo_gradient_rgb(val):
+            v = max(-1000.0, min(1000.0, float(val)))
+            norm = (v + 1000.0) / 2000.0
+            if norm < 0.5:
+                ratio = norm / 0.5
+                r = int(215 + (254 - 215) * ratio)
+                g = int(48 + (224 - 48) * ratio)
+                b = int(39 + (139 - 39) * ratio)
+            else:
+                ratio = (norm - 0.5) / 0.5
+                r = int(254 + (26 - 254) * ratio)
+                g = int(224 + (152 - 224) * ratio)
+                b = int(139 + (80 - 139) * ratio)
+            return f"rgb({r},{g},{b})"
+
+        def generate_fast_summary_table_html(df):
+            non_total_df = df[~df['Mes'].isin(['TOTAL', 'LÍMITS'])]
+            max_ing = non_total_df['Ing. Total'].max() if 'Ing. Total' in non_total_df.columns and not non_total_df.empty else None
+            max_desp = non_total_df['Total Desp.'].max() if 'Total Desp.' in non_total_df.columns and not non_total_df.empty else None
+
+            col_limits_keys = {
+                'Menjar': 'menjar', 'Gasolina': 'gasolina', 'Restaurant': 'restaurant',
+                'Farmàcia': 'farmacia', 'Neteja': 'neteja', 'Varis': 'varis'
+            }
+
+            rows_html = []
+            for _, row in df.iterrows():
+                mes_val = str(row['Mes'])
+                is_total = mes_val == 'TOTAL'
+                is_limits = mes_val == 'LÍMITS'
+                is_cur_month = mes_val.lower() == selected_month_cat.lower()
+                
+                m_data = month_translations.get(mes_val.lower(), 'enero')
+                row_limits = get_limits_for(selected_year, m_data) if not is_total and not is_limits else {}
+
+                tr_style = ""
+                if is_limits:
+                    tr_style = 'color: #3498db; font-weight: bold; background-color: rgba(52, 152, 219, 0.1);'
+                elif is_total:
+                    tr_style = 'font-weight: bold; border-top: 2px solid #555;'
+
+                cells_html = []
+                for col in df.columns:
+                    val = row[col]
+                    td_style = []
+                    
+                    if col == 'Mes':
+                        if is_cur_month:
+                            td_style.append('color: #f1c40f; font-weight: bold;')
+                        td_style.append('text-align: left; font-weight: bold;')
+                        formatted = mes_val
+                    else:
+                        td_style.append('text-align: right;')
+                        if pd.isna(val) or val == "":
+                            formatted = ""
+                        else:
+                            try:
+                                v_num = float(val)
+                                formatted = f"{v_num:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+                                
+                                if col == 'Saldo' and not is_limits:
+                                    bg = get_saldo_gradient_rgb(v_num)
+                                    td_style.append(f'background-color: {bg}; color: black !important; font-weight: bold;')
+                                
+                                if not is_total and not is_limits:
+                                    if col == 'Ing. Total' and max_ing is not None and v_num == max_ing:
+                                        td_style.append('background-color: #27ae60; color: white; font-weight: bold;')
+                                    elif col == 'Total Desp.' and max_desp is not None and v_num == max_desp:
+                                        td_style.append('background-color: #c0392b; color: white; font-weight: bold;')
+                                    
+                                    if col in col_limits_keys:
+                                        lim = row_limits.get(col_limits_keys[col], float('inf'))
+                                        if v_num > lim:
+                                            td_style.append('background-color: #7f1d1d; color: #fecaca; font-weight: bold;')
+                            except (ValueError, TypeError):
+                                formatted = str(val)
+
+                    style_str = f' style="padding: 2px 3px; border-bottom: 1px solid #333; {" ".join(td_style)}"'
+                    cells_html.append(f'<td{style_str}>{formatted}</td>')
+
+                tr_style_str = f' style="{tr_style}"' if tr_style else ''
+                rows_html.append(f'<tr{tr_style_str}>{"".join(cells_html)}</tr>')
+
+            headers_html = "".join([f'<th style="padding: 2px 3px; text-align: {"left" if c == "Mes" else "center"}; border-bottom: 1px solid #333; font-weight: bold; color: #bbb;">{c}</th>' for c in df.columns])
+            return f'<table style="width:100%; border-collapse:collapse; font-size:0.85em;"><thead><tr>{headers_html}</tr></thead><tbody>{"".join(rows_html)}</tbody></table>'
+
+        html_table = generate_fast_summary_table_html(df_summary)
         
         st.markdown(
             f"""<style>

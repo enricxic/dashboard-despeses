@@ -109,6 +109,31 @@ class DBTracker:
         self.last_update = datetime.now()
 
 @st.cache_resource
+def get_db_engine():
+    if "connection_string" in st.secrets:
+        try:
+            return sqlalchemy.create_engine(
+                st.secrets["connection_string"],
+                pool_pre_ping=True,
+                pool_size=10,
+                max_overflow=5
+            )
+        except Exception:
+            return None
+    return None
+
+def fetch_table_fast(table_name):
+    engine = get_db_engine()
+    if engine:
+        try:
+            with engine.connect() as conn:
+                return table_name, pd.read_sql(f'SELECT * FROM "{table_name}"', conn)
+        except Exception:
+            pass
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    return table_name, fetch_all_supabase(supabase, table_name)
+
+@st.cache_resource
 def get_db_tracker():
     return DBTracker()
 
@@ -158,18 +183,14 @@ def fix_mojibake_df(df):
 @st.cache_data(ttl=600, show_spinner=False)
 def load_dashboard_data(mtimes=None):
     from concurrent.futures import ThreadPoolExecutor
-    supabase = get_supabase_client(st.session_state.get("role", "guest"))
     
     tables_to_fetch = [
         'despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe',
         'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'
     ]
-    
-    def _fetch_table(tbl):
-        return tbl, fetch_all_supabase(supabase, tbl)
         
     with ThreadPoolExecutor(max_workers=10) as executor:
-        fetched = dict(executor.map(_fetch_table, tables_to_fetch))
+        fetched = dict(executor.map(fetch_table_fast, tables_to_fetch))
     
     # Load tables from PostgreSQL
     df_desp = fix_mojibake_df(fetched['despeses'])
@@ -244,6 +265,7 @@ def load_dashboard_data(mtimes=None):
 # Load categories_conceptes.json if exists
 import json
 
+@st.cache_data(ttl=600, show_spinner=False)
 def load_categories_conceptes():
     try:
         supabase = get_supabase_client("guest")
