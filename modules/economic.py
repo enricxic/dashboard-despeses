@@ -3509,28 +3509,75 @@ def render(view_mode="economic"):
         
         st.markdown("<div style='margin-top: 55px;'></div>", unsafe_allow_html=True)
         st.markdown("<h3 style='color:#f39c12; margin-top: 10px; margin-bottom: 8px; font-size:1.35rem; font-weight:700;'>📈 Previsió ingressos/despeses</h3>", unsafe_allow_html=True)
-        # Calculate summary for the last 2 years for the chart
+        # Calculate past average expense from operated months in selected_year
+        past_expenses = []
+        for m_cat in CATALAN_MONTHS:
+            m_data = month_translations[m_cat]
+            sub_desp_test = df_desp[(df_desp['any'] == selected_year) & (df_desp['clean_mes'] == m_data)]
+            sub_desp_test = sub_desp_test[(sub_desp_test['Idcategoria'] != 'op_banc') & (sub_desp_test['grup'] != 'op_banc')]
+            cat_series_test = sub_desp_test['Idcategoria'].astype(str)
+            exp_val = sub_desp_test[~cat_series_test.str.contains('op_banc|ingres_general|ingrés_general|ingres_extra|ingrés_extra', case=False, na=False)]['Import càrrec'].sum()
+            if exp_val > 100:
+                past_expenses.append(exp_val)
+        avg_monthly_expense = float(np.mean(past_expenses)) if past_expenses else 3100.0
+
+        today = datetime.today()
+        cur_year = today.year
+        cur_month_idx = today.month - 1
+
         chart_data = []
         for yr in [selected_year - 1, selected_year]:
             year_desp_c = df_desp[df_desp['any'] == yr]
-            year_ing_c = df_ing[(df_ing['any'] == yr) & (df_ing['cobrat'].astype(str).str.lower() == 'cobrat')]
+            year_ing_c = df_ing[df_ing['any'] == yr]
             
-            for m_cat in CATALAN_MONTHS:
+            for m_idx, m_cat in enumerate(CATALAN_MONTHS):
                 m_data = month_translations[m_cat]
                 
-                # Incomes
-                sub_ing = year_ing_c[year_ing_c['clean_mes'] == m_data]
-                ing_total = sub_ing['Import'].sum()
-                
-                # Expenses
+                # Check real expenses
                 sub_desp = year_desp_c[year_desp_c['clean_mes'] == m_data]
-                cat_series = sub_desp['Idcategoria'].astype(str)
-                exp_total = sub_desp[~cat_series.str.contains('op_banc|ingres_general|ingrés_general|ingres_extra|ingrés_extra', case=False, na=False)]['Import càrrec'].sum()
+                sub_desp_inflows = sub_desp[(sub_desp['Idcategoria'] != 'op_banc') & (sub_desp['grup'] != 'op_banc')]
+                cat_series = sub_desp_inflows['Idcategoria'].astype(str)
+                exp_real = sub_desp_inflows[~cat_series.str.contains('op_banc|ingres_general|ingrés_general|ingres_extra|ingrés_extra', case=False, na=False)]['Import càrrec'].sum()
+                
+                # Check real incomes
+                ing_real = sub_desp_inflows[sub_desp_inflows['Idcategoria'].isin(['ingres_general', 'ingrés_general', 'ingres_extra', 'ingrés_extra'])]['import ingrés'].sum()
+                if ing_real == 0:
+                    sub_ing_c = year_ing_c[(year_ing_c['clean_mes'] == m_data) & (year_ing_c['cobrat'].astype(str).str.lower() == 'cobrat')]
+                    ing_real = sub_ing_c['Import'].sum()
+                
+                # Determine if it is a current or future forecast month
+                is_forecast = (yr == cur_year and m_idx >= cur_month_idx) or (yr > cur_year) or (exp_real == 0 and ing_real == 0 and yr == selected_year)
+                
+                if is_forecast:
+                    # Forecast income from df_ing planned entries or monthly baseline
+                    sub_ing_all = year_ing_c[year_ing_c['clean_mes'] == m_data]
+                    ing_val = sub_ing_all['Import'].sum()
+                    if ing_val == 0:
+                        ing_val = 2850.0
+                    
+                    # Forecast expense
+                    exp_val = exp_real if exp_real > 500 else avg_monthly_expense
+                    
+                    ing_color = '#f1c40f'  # Groc per a previsió
+                    exp_color = '#e67e22'  # Taronja de previsió
+                    ing_hover = f"🟡 Ingressos (Previsió): <b>{ing_val:,.2f} €</b>"
+                    exp_hover = f"🟠 Despeses (Previsió): <b>{exp_val:,.2f} €</b>"
+                else:
+                    ing_val = ing_real
+                    exp_val = exp_real
+                    ing_color = '#2ecc71'  # Verd real
+                    exp_color = '#e74c3c'  # Vermell real
+                    ing_hover = f"🟢 Ingressos: <b>{ing_val:,.2f} €</b>"
+                    exp_hover = f"🔴 Despeses: <b>{exp_val:,.2f} €</b>"
                 
                 chart_data.append({
                     'Mes-Any': f"{m_cat.capitalize()[:3]} {str(yr)[2:]}",
-                    'Ingressos': ing_total,
-                    'Despeses': exp_total
+                    'Ingressos': ing_val,
+                    'Despeses': exp_val,
+                    'Ing_Color': ing_color,
+                    'Exp_Color': exp_color,
+                    'Ing_Hover': ing_hover,
+                    'Exp_Hover': exp_hover
                 })
         df_chart_2yrs = pd.DataFrame(chart_data)
         
@@ -3538,16 +3585,18 @@ def render(view_mode="economic"):
         fig_bar.add_trace(graph_objects.Bar(
             x=df_chart_2yrs['Mes-Any'],
             y=df_chart_2yrs['Ingressos'],
-            name='Ingressos',
-            marker_color='#2ecc71',
-            hovertemplate='🟢 Ingressos: <b>%{y:,.2f} €</b><extra></extra>'
+            name='Ingressos (Reals 🟢 / Previsió 🟡)',
+            marker_color=df_chart_2yrs['Ing_Color'],
+            customdata=df_chart_2yrs['Ing_Hover'],
+            hovertemplate='%{customdata}<extra></extra>'
         ))
         fig_bar.add_trace(graph_objects.Bar(
             x=df_chart_2yrs['Mes-Any'],
             y=df_chart_2yrs['Despeses'],
-            name='Despeses',
-            marker_color='#e74c3c',
-            hovertemplate='🔴 Despeses: <b>%{y:,.2f} €</b><extra></extra>'
+            name='Despeses (Reals 🔴 / Previsió 🟠)',
+            marker_color=df_chart_2yrs['Exp_Color'],
+            customdata=df_chart_2yrs['Exp_Hover'],
+            hovertemplate='%{customdata}<extra></extra>'
         ))
         fig_bar.update_layout(
             barmode='group',
