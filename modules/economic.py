@@ -3224,20 +3224,20 @@ def render(view_mode="economic"):
                     <style>
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
                         border-radius: 6px !important;
-                        min-height: 48px !important;
-                        min-width: 110px !important;
+                        min-height: 52px !important;
+                        min-width: 118px !important;
                         box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.3) !important;
                         height: 100% !important;
-                        padding: 2px 4px !important;
+                        padding: 3px 6px !important;
                     }
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button:hover {
                         border-color: #f39c12 !important;
                     }
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p {
                         text-transform: uppercase;
-                        font-size: 0.76rem;
+                        font-size: 0.78rem;
                         font-weight: 600;
-                        line-height: 1.25;
+                        line-height: 1.3;
                         margin: 0;
                         display: flex;
                         flex-direction: column;
@@ -3250,7 +3250,7 @@ def render(view_mode="economic"):
                     /* Make the green/red/zero value larger */
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p span,
                     div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button p strong {
-                        font-size: 1.15rem;
+                        font-size: 1.2rem;
                         text-transform: none;
                         font-weight: bold;
                     }
@@ -3539,10 +3539,12 @@ def render(view_mode="economic"):
             barmode='group',
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#f8fafc'),
+            font=dict(color='#f8fafc', size=11),
             xaxis=dict(gridcolor='#334155', tickangle=-45),
             yaxis=dict(gridcolor='#334155'),
-            margin=dict(t=20, b=20, l=10, r=10)
+            margin=dict(t=10, b=25, l=10, r=10),
+            height=240,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         st.plotly_chart(fig_bar, use_container_width=True, config={'staticPlot': True})
         
