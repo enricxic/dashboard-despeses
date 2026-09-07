@@ -269,7 +269,7 @@ def render():
                 st.success("✅ Sincronitzat!")
                 st.rerun()
         with c_btn_back:
-            if st.button("🔙 Tornar", use_container_width=True, key="btn_back_home"):
+            if st.button("🔙 Inici", use_container_width=True, key="btn_back_home"):
                 st.session_state.current_module = None
                 st.rerun()
 

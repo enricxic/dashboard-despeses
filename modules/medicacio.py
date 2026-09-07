@@ -142,7 +142,7 @@ def render():
                         st.info("ℹ️ Sincronitzat (sense nous canvis).")
                 st.rerun()
         with c_back:
-            if st.button("🔙 Tornar", use_container_width=True):
+            if st.button("🔙 Inici", use_container_width=True):
                 st.session_state.current_module = None
                 st.rerun()
 
