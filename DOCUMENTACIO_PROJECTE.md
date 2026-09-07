@@ -36,7 +36,7 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 9. **💊 Control Medicació**: `modules/medicacio.py` *(Icona pastilles / flascó)* - Pautes mèdiques, dosis, horaris i farmaciola.
 10. **🍽️ Menjar**: `modules/menjar.py` *(Icona coberts)* - Rebost, receptes, planificació de menús setmanals i inventari.
 11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Manteniment de vehicles, ITV, assegurança, revisions i consum de combustible.
-12. **🛒 Compres Super/Stock**: `modules/compres.py` *(Icona carro de compra)* - Centre unificat d'entrada de despeses i compres: Escàner Súper (OCR intel·ligent Gemini), Intro Dades (despeses reals, previsions, súper, km cotxe, TR Cartera), Llista de la Compra, Rebost / Stock i Estadístiques.
+12. **🛒 Compres**: `modules/compres.py` *(Icona carro de compra)* - Centre unificat d'entrada de despeses i compres: Compres Super (OCR intel·ligent Gemini), Compres generals (despeses reals, previsions, súper, km cotxe, TR Cartera), Llista de la Compra, Rebost / Stock i Estadístiques.
 
 ---
 
@@ -55,7 +55,7 @@ Dashboard/
 ├── modules/
 │   ├── admin.py              # ⚙️ Configuració global
 │   ├── calendari.py          # 📅 Agenda familiar
-│   ├── compres.py            # 🛒 Escàner súper, Intro dades, Llista compra, Rebost i Stats
+│   ├── compres.py            # 🛒 Compres Super, Compres generals, Llista compra, Rebost i Stats
 │   ├── cotxe.py              # 🚗 Control de vehicles
 │   ├── dashboard.py          # 📊 Dashboard general
 │   ├── domotica.py           # 📶 Domòtica (Home Assistant)

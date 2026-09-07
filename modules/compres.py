@@ -2280,7 +2280,7 @@ def render():
 
     col_t1, col_t2 = st.columns([8.5, 1.5], vertical_alignment="center")
     with col_t1:
-        st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres al Súper</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres</h2>", unsafe_allow_html=True)
     with col_t2:
         if st.button("🔙 Tornar a l'inici", use_container_width=True):
             st.session_state.current_module = None
@@ -2361,7 +2361,7 @@ def render():
             # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
             st.rerun()
 
-    tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Escàner Súper", "📝 Intro Dades", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
+    tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Compres Super", "📝 Compres generals", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
     
     with tab_scanner:
         render_compres_super_interface()
