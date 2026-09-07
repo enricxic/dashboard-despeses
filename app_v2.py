@@ -277,7 +277,7 @@ if st.session_state.current_module is None:
     icones_actives = app_cfg.get("icones_actives", {})
 
     def render_hotspot(mod_key, style_str, title_str, always_active=False):
-        is_active = always_active or icones_actives.get(mod_key, True)
+        is_active = always_active or icones_actives.get(mod_key, True) or (mod_key == "calendari" and icones_actives.get("agenda", True))
         if is_active:
             return f'<a href="?mod=modules.{mod_key}{auth_suffix}" target="_self" class="hotspot" style="{style_str}" title="{title_str}"></a>'
         return f'<div class="hotspot-disabled" style="{style_str}" title="{title_str} (Desactivat)"></div>'

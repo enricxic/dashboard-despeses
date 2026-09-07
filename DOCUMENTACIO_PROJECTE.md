@@ -77,6 +77,7 @@ Dashboard/
 │   ├── economic.py           # 📈 Detalls mes, Prev. Despeses, Prev. Ingressos, Inversions, Estalvis i Xat IA
 │   ├── jocs.py               # 🎲 Jocs i oci
 │   ├── manteniment.py        # 🛠️ Manteniment i reparacions
+│   ├── calendari.py          # 📅 Agenda i Calendari (Google Calendar sync & events)
 │   ├── medicacio.py          # 💊 Control de medicació
 │   ├── menjar.py             # 🍽️ Menús, rebost i cuina
 │   └── seguretat.py          # 📹 Seguretat i càmeres

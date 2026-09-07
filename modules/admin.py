@@ -412,12 +412,19 @@ def render():
                     with c4:
                         m_edat = st.text_input("Edat", value=str(mem.get("edat", "")), key=f"f_edat_{i}")
                         
-                    c_circ1, c_circ2 = st.columns([8.5, 1.5], vertical_alignment="center")
+                    c_circ1, c_del_t = st.columns([8.5, 1.5], vertical_alignment="center")
                     with c_circ1:
                         m_circ = st.text_input("Al·lèrgies, dietes o circumstàncies mèdiques/personals", value=mem.get("circunstancies", ""), key=f"f_circ_{i}")
-                    with c_circ2:
+                    with c_del_t:
                         st.write("")
                         del_btn = st.button("🗑️ Esborrar", key=f"f_del_{i}", use_container_width=True)
+                        
+                    c_gcal1, c_gcal2 = st.columns([7.5, 2.5])
+                    with c_gcal1:
+                        m_gcal = st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{i}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
+                    with c_gcal2:
+                        cur_col = mem.get("color", "#3b82f6" if i % 2 == 0 else "#ec4899")
+                        m_color = st.color_picker("Color al calendari", value=cur_col, key=f"f_col_{i}")
                         
                     if not del_btn:
                         updated_familia.append({
@@ -426,7 +433,9 @@ def render():
                             "rol": m_rol,
                             "edat": m_edat,
                             "circunstancies": m_circ,
-                            "icona": m_icon
+                            "icona": m_icon,
+                            "google_calendar_ical": m_gcal,
+                            "color": m_color
                         })
                     else:
                         cfg["familia"] = updated_familia + familia_list[i+1:]

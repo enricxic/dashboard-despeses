@@ -20,8 +20,8 @@ DEFAULT_CONFIG = {
         "tamany_lletra": 60
     },
     "familia": [
-        {"id": 1, "nom": "Enric", "rol": "Pare", "edat": "45", "circunstancies": "Cap al·lèrgia", "icona": "👨"},
-        {"id": 2, "nom": "Adult 2", "rol": "Mare", "edat": "42", "circunstancies": "Vegetariana", "icona": "👩"}
+        {"id": 1, "nom": "Enric", "rol": "Pare", "edat": "45", "circunstancies": "Cap al·lèrgia", "icona": "👨", "google_calendar_ical": "", "color": "#3b82f6"},
+        {"id": 2, "nom": "Adult 2", "rol": "Mare", "edat": "42", "circunstancies": "Vegetariana", "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"}
     ],
     "tutelats": [],
     "tema": "Fosc",
