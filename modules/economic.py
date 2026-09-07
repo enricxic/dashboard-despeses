@@ -4012,8 +4012,16 @@ def render(view_mode="economic"):
             if pendent_items:
                 st.write("**Pendents de pagament:**")
                 for it in pendent_items:
-                    amt = it['Import']
-                    if st.checkbox(f"{it['icon']} **{it['Concepte']}**: {amt:.2f} €", key=f"chk_pag_{it['idx']}"):
+                    amt = float(it['Import'])
+                    icon = it.get('icon', '💸')
+                    c_chk, c_name, c_amt = st.columns([0.10, 0.58, 0.32], gap="small")
+                    with c_chk:
+                        is_sel = st.checkbox(" ", key=f"chk_pag_{it['idx']}", label_visibility="collapsed")
+                    with c_name:
+                        st.markdown(f"<div style='font-size:0.95rem; white-space:nowrap; padding-top:4px;'>{icon} {it['Concepte']}</div>", unsafe_allow_html=True)
+                    with c_amt:
+                        st.markdown(f"<div style='font-size:0.95rem; font-weight:600; white-space:nowrap; text-align:right; padding-top:4px;'>{amt:,.2f} €</div>", unsafe_allow_html=True)
+                    if is_sel:
                         pagaments_a_processar.append({'idx': it['idx'], 'row': it['row']})
                 
                 if len(pagaments_a_processar) > 0:
@@ -4065,8 +4073,16 @@ def render(view_mode="economic"):
                 if not month_ing_pendent.empty:
                     st.write("**Pendents de cobrament:**")
                     for i_idx, i_row in month_ing_pendent.iterrows():
-                        amt = float(i_row['Import'])
-                        if st.checkbox(f"🟢 **{i_row['Concepte']}**: {amt:.2f} €", key=f"chk_ing_{i_idx}"):
+                        amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
+                        concepte = i_row['Concepte']
+                        c_chk, c_name, c_amt = st.columns([0.10, 0.58, 0.32], gap="small")
+                        with c_chk:
+                            is_sel = st.checkbox(" ", key=f"chk_ing_{i_idx}", label_visibility="collapsed")
+                        with c_name:
+                            st.markdown(f"<div style='font-size:0.95rem; white-space:nowrap; padding-top:4px;'>🟢 {concepte}</div>", unsafe_allow_html=True)
+                        with c_amt:
+                            st.markdown(f"<div style='font-size:0.95rem; font-weight:600; white-space:nowrap; text-align:right; padding-top:4px;'>{amt:,.2f} €</div>", unsafe_allow_html=True)
+                        if is_sel:
                             ingressos_a_processar.append({'idx': i_idx, 'row': i_row})
                     
                     if len(ingressos_a_processar) > 0:
