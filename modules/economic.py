@@ -28,6 +28,9 @@ if platform.system() == "Windows":
 # Custom styles for premium look (orange/slate dark theme)
 st.markdown("""
     <style>
+    [data-testid="stElementToolbar"], [data-testid="stDataFrameToolbar"] {
+        display: none !important;
+    }
     .metric-card {
         background-color: #1e293b;
         border: 1px solid #334155;
@@ -4026,12 +4029,17 @@ def render(view_mode="economic"):
             # --- Render Pagats ---
             if paid_items:
                 st.write("**Pagats:**")
-                df_paid_show = pd.DataFrame([{'Concepte': it['Concepte'], 'Import': it['Import'], 'pagat': 'pagat'} for it in paid_items])
+                df_paid_show = pd.DataFrame([{'Concepte': it['Concepte'], 'Import': float(it['Import']), 'pagat': 'pagat'} for it in paid_items])
                 try:
                     st.dataframe(
-                        df_paid_show[['Concepte', 'Import', 'pagat']].style.format({'Import': '{:,.2f} €'}),
+                        df_paid_show[['Concepte', 'Import', 'pagat']],
                         use_container_width=True,
-                        hide_index=True
+                        hide_index=True,
+                        column_config={
+                            "Concepte": st.column_config.TextColumn("Concepte"),
+                            "Import": st.column_config.NumberColumn("Import", format="%.2f €", width="small"),
+                            "pagat": st.column_config.TextColumn("pagat", width="small")
+                        }
                     )
                 except Exception as e:
                     st.error(f"Error renderitzant pagats: {e}")
@@ -4058,7 +4066,7 @@ def render(view_mode="economic"):
                 ingressos_a_processar = []
                 mask_pendent = month_ing['cobrat'].astype(str).str.strip().str.lower() == 'pendent'
                 month_ing_pendent = month_ing[mask_pendent]
-                month_ing_cobrat = month_ing[~mask_pendent]
+                month_ing_cobrat = month_ing[~mask_pendent].copy()
                 
                 if not month_ing_pendent.empty:
                     st.write("**Pendents de cobrament:**")
@@ -4076,10 +4084,16 @@ def render(view_mode="economic"):
                 if not month_ing_cobrat.empty:
                     st.write("**Cobrats:**")
                     try:
+                        month_ing_cobrat['Import'] = clean_numeric(month_ing_cobrat['Import'])
                         st.dataframe(
-                            month_ing_cobrat[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}),
+                            month_ing_cobrat[['Concepte', 'Import', 'cobrat']],
                             use_container_width=True,
-                            hide_index=True
+                            hide_index=True,
+                            column_config={
+                                "Concepte": st.column_config.TextColumn("Concepte"),
+                                "Import": st.column_config.NumberColumn("Import", format="%.2f €", width="small"),
+                                "cobrat": st.column_config.TextColumn("cobrat", width="small")
+                            }
                         )
                     except Exception as e:
                         st.error(f"Error rendering month_ing: {e}")
@@ -4114,11 +4128,15 @@ def render(view_mode="economic"):
                 
                 try:
                     event = st.dataframe(
-                        grouped_desp.style.format({'Import càrrec': '{:,.2f} €'}),
+                        grouped_desp[['Idcategoria', 'Import càrrec']],
                         use_container_width=True,
                         hide_index=True,
                         on_select="rerun",
-                        selection_mode="single-row"
+                        selection_mode="single-row",
+                        column_config={
+                            "Idcategoria": st.column_config.TextColumn("Idcategoria"),
+                            "Import càrrec": st.column_config.NumberColumn("Import càrrec", format="%.2f €", width="small")
+                        }
                     )
                 except Exception as e:
                     st.error(f"Error rendering grouped_desp: {e}")

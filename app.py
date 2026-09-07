@@ -4034,10 +4034,16 @@ with tab_details:
             if not month_ing_cobrat.empty:
                 st.write("**Cobrats:**")
                 try:
+                    month_ing_cobrat['Import'] = clean_numeric(month_ing_cobrat['Import'])
                     st.dataframe(
-                        month_ing_cobrat[['Concepte', 'Import', 'cobrat']].style.format({'Import': '{:,.2f} €'}),
+                        month_ing_cobrat[['Concepte', 'Import', 'cobrat']],
                         use_container_width=True,
-                        hide_index=True
+                        hide_index=True,
+                        column_config={
+                            "Concepte": st.column_config.TextColumn("Concepte"),
+                            "Import": st.column_config.NumberColumn("Import", format="%.2f €", width="small"),
+                            "cobrat": st.column_config.TextColumn("cobrat", width="small")
+                        }
                     )
                 except Exception as e:
                     st.error(f"Error rendering month_ing: {e}")

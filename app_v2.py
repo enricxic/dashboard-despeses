@@ -302,6 +302,9 @@ if st.session_state.current_module is None:
     margin: 0 auto !important;
     max-width: 100% !important;
 }}
+[data-testid="stElementToolbar"], [data-testid="stDataFrameToolbar"] {{
+    display: none !important;
+}}
 .role-badge {{
     position: fixed;
     top: 14px;
