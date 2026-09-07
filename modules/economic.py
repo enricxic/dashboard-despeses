@@ -2297,7 +2297,10 @@ def render(view_mode="economic"):
         st.session_state["manual_pct_num"] = 0.0
         st.session_state["editing_ticket_item_idx"] = None
         st.session_state["ticket_date"] = datetime.today().date()
+        st.session_state["ticket_date_widget"] = datetime.today().date()
         st.session_state["ticket_super_val"] = ""
+        if "ticket_super_widget" in st.session_state:
+            st.session_state["ticket_super_widget"] = ""
         st.session_state["ticket_bank_sel"] = ""
         st.session_state["ticket_pay_method_sel"] = ""
         st.session_state["processed_file_id"] = None
@@ -2417,7 +2420,7 @@ def render(view_mode="economic"):
                 st.session_state["ticket_pay_method_sel"] = st.session_state['pending_forma_pago']
                 
         if "ticket_date" not in st.session_state or st.session_state["ticket_date"] is None:
-            st.session_state["ticket_date"] = None
+            st.session_state["ticket_date"] = datetime.today().date()
         if "ticket_super_val" not in st.session_state:
             st.session_state["ticket_super_val"] = ""
         if "ticket_send_expense" not in st.session_state:
@@ -2653,7 +2656,7 @@ def render(view_mode="economic"):
         with col_row2_1:
             col_d1, col_d2 = st.columns([3, 1], vertical_alignment="bottom")
             with col_d1:
-                ticket_date = st.date_input("Data:", value=st.session_state.get("ticket_date", None), format="DD/MM/YYYY", key="ticket_date_widget")
+                ticket_date = st.date_input("Data:", value=st.session_state.get("ticket_date") or datetime.today().date(), format="DD/MM/YYYY", key="ticket_date_widget")
                 st.session_state["ticket_date"] = ticket_date
             with col_d2:
                 st.button("Avui", key="btn_avui", on_click=cb_set_date_today)
