@@ -426,7 +426,6 @@ BANK_MAPPING = {
     'TR Cartera': 'TR Cartera',
     'TradeRep.': 'TRADE REPUB.',
     'Trade Repub.': 'TRADE REPUB.',
-    'Efectiu': 'Casa',
     'Casa': 'Casa',
     'T.Moneder': 'Tg.Moneder',
     'Tg.Moneder': 'Tg.Moneder',

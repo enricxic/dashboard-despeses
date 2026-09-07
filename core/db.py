@@ -48,19 +48,24 @@ BANK_MAPPING = {
     'BBVA': 'BBVA',
     'LaCaixa': 'La Caixa',
     'La Caixa': 'La Caixa',
+    'LA CAIXA': 'La Caixa',
     'TR Cartera': 'TR Cartera',
     'TradeRep.': 'TRADE REPUB.',
     'Trade Repub.': 'TRADE REPUB.',
-    'Efectiu': 'Casa',
+    'TRADE REPUB.': 'TRADE REPUB.',
     'Casa': 'Casa',
+    'CASA': 'Casa',
     'T.Moneder': 'Tg.Moneder',
     'Tg.Moneder': 'Tg.Moneder',
+    'TG.MONEDER': 'Tg.Moneder',
     'T.CorteInglés': 'CORTEINGLÉS',
     't.CorteInglés': 'CORTEINGLÉS',
     'T.CorteIngles': 'CORTEINGLÉS',
     't.CorteIngles': 'CORTEINGLÉS',
     'CORTEINGLÉS': 'CORTEINGLÉS',
-    'Pago VISA': 'Pago VISA'
+    'CORTEINGLES': 'CORTEINGLÉS',
+    'Pago VISA': 'Pago VISA',
+    'PAGO VISA': 'Pago VISA'
 }
 
 def clean_numeric(series):

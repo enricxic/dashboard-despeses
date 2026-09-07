@@ -275,7 +275,6 @@ def render(view_mode="economic"):
         'TR Cartera': 'TR Cartera',
         'TradeRep.': 'TRADE REPUB.',
         'Trade Repub.': 'TRADE REPUB.',
-        'Efectiu': 'Casa',
         'Casa': 'Casa',
         'T.Moneder': 'Tg.Moneder',
         'Tg.Moneder': 'Tg.Moneder',
