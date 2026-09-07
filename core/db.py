@@ -303,12 +303,44 @@ cat_config = load_categories_conceptes()
 
 def get_config_categories():
     cfg = load_categories_conceptes()
-    if cfg:
-        special_keys = ["families_compres", "articles_compres", "bancs", "formes_pago", "supers_tickets"]
-        return sorted([k for k in cfg.keys() if k not in special_keys])
-    if "df_desp" in st.session_state and not st.session_state["df_desp"].empty:
-        return sorted(list(st.session_state["df_desp"]['Idcategoria'].dropna().unique()))
-    return []
+    special_keys = {"families_compres", "articles_compres", "bancs", "formes_pago", "supers_tickets"}
+    cats = set()
+    
+    if cfg and isinstance(cfg, dict):
+        for k in cfg.keys():
+            k_str = str(k).strip()
+            if k_str and k_str not in special_keys:
+                cats.add(k_str)
+                
+    filepath = "categories_conceptes.json"
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                local_cfg = json.load(f)
+                if local_cfg and isinstance(local_cfg, dict):
+                    for k in local_cfg.keys():
+                        k_str = str(k).strip()
+                        if k_str and k_str not in special_keys:
+                            cats.add(k_str)
+        except Exception:
+            pass
+
+    canon_map = {
+        "farmacia": "farmàcia",
+        "asseguranca": "assegurança",
+        "assegurana": "assegurança",
+        "ingrés_general": "ingres_general",
+        "ingrés_extra": "ingres_extra",
+        "parallar": "parallar",
+        "para_llar": "parallar",
+    }
+    cleaned_cats = set()
+    for c in cats:
+        c_clean = c.strip()
+        c_norm = canon_map.get(c_clean.lower(), c_clean)
+        cleaned_cats.add(c_norm)
+            
+    return sorted(list(cleaned_cats))
 
 def get_config_concepts(category):
     if not category:

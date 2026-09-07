@@ -533,10 +533,8 @@ def render(view_mode="economic"):
     cat_config = load_categories_conceptes()
     
     def get_config_categories():
-        if cat_config:
-            special_keys = ["families_compres", "articles_compres", "bancs", "formes_pago", "supers_tickets"]
-            return sorted([k for k in cat_config.keys() if k not in special_keys])
-        return sorted(list(df_desp['Idcategoria'].dropna().unique()))
+        from core.db import get_config_categories as core_get_cats
+        return core_get_cats()
     
     def get_config_concepts(category):
         cfg = load_categories_conceptes()

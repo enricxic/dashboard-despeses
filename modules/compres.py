@@ -2488,11 +2488,11 @@ def render():
                 all_cats = get_config_categories()
                 ingres_cats = ["ingres_general", "ingres_extra"]
                 if import_ing > 0 or grup_val == "Ingrés":
-                    categories_opt = [""] + [c for c in all_cats if c in ingres_cats]
+                    categories_opt = [""] + sorted(list(set([c for c in all_cats if c in ingres_cats])))
                 elif import_carg > 0 or grup_val == "Càrrec":
-                    categories_opt = [""] + [c for c in all_cats if c not in ingres_cats]
+                    categories_opt = [""] + sorted(list(set([c for c in all_cats if c not in ingres_cats])))
                 else:
-                    categories_opt = [""] + all_cats
+                    categories_opt = [""] + sorted(list(set(all_cats)))
             cat_val = st.selectbox("Categoria", categories_opt, index=0, key=f"desp_cat_{version}")
             
         with r2_col3:
