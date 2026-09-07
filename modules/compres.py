@@ -2497,28 +2497,28 @@ def render():
             
         with r2_col3:
             concept_options = [""] + get_config_concepts(cat_val) + ["➕ Afegir nou..."] if cat_val else [""]
-            concept_val = st.selectbox("Concepte", concept_options, index=0, key=f"desp_concepte_{version}")
+            is_new_mode = st.session_state.get(f"desp_is_new_concept_{version}", False)
+            
+            if not is_new_mode:
+                concept_val = st.selectbox("Concepte", concept_options, index=0, key=f"desp_concepte_{version}")
+                if concept_val == "➕ Afegir nou...":
+                    st.session_state[f"desp_is_new_concept_{version}"] = True
+                    st.rerun()
+            else:
+                c_lbl, c_btn = st.columns([6, 4])
+                with c_lbl:
+                    st.markdown("<label style='font-size:14px; font-weight:400; color:inherit;'>Concepte (nou)</label>", unsafe_allow_html=True)
+                with c_btn:
+                    if st.button("↩️ Llista", key=f"btn_back_list_{version}", help="Tornar a la llista"):
+                        st.session_state[f"desp_is_new_concept_{version}"] = False
+                        st.session_state[f"desp_concepte_{version}"] = ""
+                        st.rerun()
+                custom_concept_val = st.text_input("Concepte", placeholder="Escriu el nou concepte...", label_visibility="collapsed", key=f"desp_custom_concept_{version}")
+                concept_val = custom_concept_val.strip() if custom_concept_val else ""
+                save_new_concept = st.checkbox("Desar a la llista permanent?", value=True, key=f"desp_save_new_concept_{version}")
+                
         with r2_col4:
             comentari_val = st.text_input("Comentari", value="", key=f"desp_comentari_{version}")
-        
-        if concept_val == "➕ Afegir nou...":
-            custom_col1, custom_col2, custom_col3 = st.columns([4, 3, 4])
-            with custom_col1:
-                custom_concept = st.text_input("Nou Concepte (escriu el nom):", key=f"desp_custom_concept_{version}")
-            with custom_col2:
-                st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
-                if st.button("➕ Afegir a la llista", key=f"btn_add_concept_direct_{version}", use_container_width=True):
-                    c_name = custom_concept.strip() if custom_concept else ""
-                    if c_name:
-                        add_concept_to_config(cat_val, c_name)
-                        st.session_state[f"desp_concepte_{version}"] = c_name
-                        st.success(f"Concepte '{c_name}' afegit correctament a {cat_val}!")
-                        st.rerun()
-                    else:
-                        st.warning("Escriu el nom del nou concepte.")
-            with custom_col3:
-                st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
-                save_new_concept = st.checkbox("Desar a la llista permanent?", value=True, key=f"desp_save_new_concept_{version}")
 
         dest_banc = None
         if grup_val == "op_banc" and cat_val == "op_banc" and concept_val == "Traspàs comptes":
@@ -2562,13 +2562,23 @@ def render():
             clear_form_state("desp_")
             st.rerun()
         if submitted:
-            actual_concept = concept_val
-            if concept_val == "➕ Afegir nou...":
+            is_new_mode = st.session_state.get(f"desp_is_new_concept_{version}", False)
+            if is_new_mode:
                 custom_concept_val = st.session_state.get(f"desp_custom_concept_{version}", "").strip()
                 if not custom_concept_val:
                     st.error("⚠️ Heu d'escriure el nom del nou concepte.")
+                    actual_concept = ""
                 else:
                     actual_concept = custom_concept_val
+            else:
+                actual_concept = concept_val
+                if concept_val == "➕ Afegir nou...":
+                    custom_concept_val = st.session_state.get(f"desp_custom_concept_{version}", "").strip()
+                    if not custom_concept_val:
+                        st.error("⚠️ Heu d'escriure el nom del nou concepte.")
+                        actual_concept = ""
+                    else:
+                        actual_concept = custom_concept_val
             
             if grup_val == "Càrrec" and import_ing != 0.0:
                 st.error("⚠️ El grup és Càrrec, per tant l'Import Ingrés ha de ser 0.")
@@ -2587,7 +2597,7 @@ def render():
             elif is_gas_cat and st.session_state.get(f"desp_litres_{version}", 0.0) <= 0.0:
                 st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
             else:
-                if concept_val == "➕ Afegir nou..." and st.session_state.get(f"desp_save_new_concept_{version}", True):
+                if (is_new_mode or concept_val == "➕ Afegir nou...") and st.session_state.get(f"desp_save_new_concept_{version}", True) and actual_concept:
                     add_concept_to_config(cat_val, actual_concept)
                     
                 if vacances_pendent:
