@@ -4033,20 +4033,8 @@ def render(view_mode="economic"):
                 for it in paid_items:
                     amt = float(it['Import'])
                     icon = it.get('icon', '💸')
-                    rows_html.append(f"""
-                    <tr style="border: none;">
-                        <td style="padding: 3px 18px 3px 0; border: none; font-size: 0.95rem; white-space: nowrap;">{icon} {it['Concepte']}</td>
-                        <td style="padding: 3px 10px 3px 0; border: none; text-align: right; font-weight: 600; font-size: 0.95rem; white-space: nowrap;">{amt:,.2f} €</td>
-                        <td style="padding: 3px 0; border: none; color: #22c55e; font-size: 0.82rem; font-weight: 600; white-space: nowrap;">pagat</td>
-                    </tr>
-                    """)
-                table_html = f"""
-                <table style="width: auto; border: none; border-collapse: collapse; margin-bottom: 6px;">
-                    <tbody>
-                        {''.join(rows_html)}
-                    </tbody>
-                </table>
-                """
+                    rows_html.append(f"<tr style='border:none;'><td style='padding:3px 18px 3px 0; border:none; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</td><td style='padding:3px 10px 3px 0; border:none; text-align:right; font-weight:600; font-size:0.95rem; white-space:nowrap;'>{amt:,.2f} €</td><td style='padding:3px 0; border:none; color:#22c55e; font-size:0.82rem; font-weight:600; white-space:nowrap;'>pagat</td></tr>")
+                table_html = f"<table style='width:auto; border:none; border-collapse:collapse; margin-bottom:6px;'><tbody>{''.join(rows_html)}</tbody></table>"
                 st.markdown(table_html, unsafe_allow_html=True)
                 st.write("")
 
@@ -4094,20 +4082,8 @@ def render(view_mode="economic"):
                     for _, i_row in month_ing_cobrat.iterrows():
                         amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
                         concepte = i_row['Concepte']
-                        rows_ing_html.append(f"""
-                        <tr style="border: none;">
-                            <td style="padding: 3px 18px 3px 0; border: none; font-size: 0.95rem; white-space: nowrap;">🟢 {concepte}</td>
-                            <td style="padding: 3px 10px 3px 0; border: none; text-align: right; font-weight: 600; font-size: 0.95rem; white-space: nowrap;">{amt:,.2f} €</td>
-                            <td style="padding: 3px 0; border: none; color: #22c55e; font-size: 0.82rem; font-weight: 600; white-space: nowrap;">cobrat</td>
-                        </tr>
-                        """)
-                    table_ing_html = f"""
-                    <table style="width: auto; border: none; border-collapse: collapse; margin-bottom: 6px;">
-                        <tbody>
-                            {''.join(rows_ing_html)}
-                        </tbody>
-                    </table>
-                    """
+                        rows_ing_html.append(f"<tr style='border:none;'><td style='padding:3px 18px 3px 0; border:none; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</td><td style='padding:3px 10px 3px 0; border:none; text-align:right; font-weight:600; font-size:0.95rem; white-space:nowrap;'>{amt:,.2f} €</td><td style='padding:3px 0; border:none; color:#22c55e; font-size:0.82rem; font-weight:600; white-space:nowrap;'>cobrat</td></tr>")
+                    table_ing_html = f"<table style='width:auto; border:none; border-collapse:collapse; margin-bottom:6px;'><tbody>{''.join(rows_ing_html)}</tbody></table>"
                     st.markdown(table_ing_html, unsafe_allow_html=True)
                     st.write("")
                         
