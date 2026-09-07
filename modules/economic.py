@@ -4050,7 +4050,7 @@ def render(view_mode="economic"):
                 st.markdown(f"""
                 <div style="display: flex; gap: 40px; margin-top: 10px;">
                     <div data-testid="stMetric">
-                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total previst</div>
+                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a ingressar</div>
                         <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{total_programat:,.2f} €</div>
                     </div>
                     <div data-testid="stMetric">
