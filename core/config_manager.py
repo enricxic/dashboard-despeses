@@ -23,6 +23,7 @@ DEFAULT_CONFIG = {
         {"id": 1, "nom": "Enric", "rol": "Pare", "edat": "45", "circunstancies": "Cap al·lèrgia", "icona": "👨"},
         {"id": 2, "nom": "Adult 2", "rol": "Mare", "edat": "42", "circunstancies": "Vegetariana", "icona": "👩"}
     ],
+    "tutelats": [],
     "tema": "Fosc",
     "icones_actives": {
         "dashboard": True,

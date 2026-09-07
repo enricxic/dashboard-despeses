@@ -21,7 +21,7 @@ L'aplicació ha transicionat d'un model monolític (`app.py`) a una **arquitectu
 La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse:
 
 ### 🌟 Part Superior (Sense rodona):
-1. **⚙️ Configuracions**: `modules/admin.py` *(Icona engranatge)* - Panell de control i configuració global.
+1. **⚙️ Configuracions**: `modules/admin.py` *(Icona engranatge)* - Panell de control i configuració global (Admin, Títol de la casa, Membres de la llar i Persones tutelades externes per a medicació, Tema, Icones, Idiomes).
 2. **📊 Dashboard General**: `modules/dashboard.py` *(Icona pantalla + gràfic)* - Vista de panell principal amb targetes de saldos bancaris (BBVA, La Caixa, etc.), resum mensual d'ingressos i despeses de l'any i gràfics comparatius.
 
 ### 🔵 Part Esquerra (5 nodes amb rodona):
