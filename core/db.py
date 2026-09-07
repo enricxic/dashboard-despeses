@@ -386,19 +386,22 @@ def get_config_banks():
         from core.config_manager import get_active_bancs
         active_b = get_active_bancs()
         if active_b:
-            return [b["nom"] for b in active_b]
+            return [b["nom"] for b in active_b if b["nom"] not in ["Casa", "CASA", "Efectiu", "EFECTIU"]]
     except Exception:
         pass
     cfg = load_categories_conceptes()
     if cfg and "bancs" in cfg:
-        return cfg["bancs"]
-    return list(BANK_MAPPING.keys())
+        return [b for b in cfg["bancs"] if b not in ["Casa", "CASA", "Efectiu", "EFECTIU"]]
+    return [b for b in BANK_MAPPING.keys() if b not in ["Casa", "CASA", "Efectiu", "EFECTIU"]]
 
 def get_config_payment_methods():
     cfg = load_categories_conceptes()
     if cfg and "formes_pago" in cfg:
-        return [fp for fp in cfg["formes_pago"] if fp]
-    return ["Compte", "Dèbit", "VISA", "Efectiu"]
+        fps = [fp for fp in cfg["formes_pago"] if fp]
+        if "Efectiu" not in fps:
+            fps.insert(0, "Efectiu")
+        return fps
+    return ["Efectiu", "Compte", "Dèbit", "VISA"]
 
 @st.cache_data(ttl=300)
 def get_tb_supers_cached():

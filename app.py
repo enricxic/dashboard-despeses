@@ -2185,11 +2185,11 @@ def cb_finalize_ticket():
     pay_method_val_str = str(pay_method_val).strip()
     
     if send_expense:
-        if not bank_val_str or bank_val_str in ["None", "nan", "NaN", ""]:
-            st.session_state["finalize_error"] = "Si us plau, selecciona un Banc per a la despesa!"
-            return
         if not pay_method_val_str or pay_method_val_str in ["None", "nan", "NaN", ""]:
             st.session_state["finalize_error"] = "Si us plau, selecciona una Forma de Pagament per a la despesa!"
+            return
+        if pay_method_val_str != "Efectiu" and (not bank_val_str or bank_val_str in ["None", "nan", "NaN", ""]):
+            st.session_state["finalize_error"] = "Si us plau, selecciona un Banc per a la despesa!"
             return
     
     # Separate totals for menjar, neteja, and rebost
@@ -2508,16 +2508,9 @@ def render_compres_super_interface():
     pay_method_val = ""
     if send_expense:
         with col_hdr2:
-            bank_val = st.selectbox("Banc:", [""] + get_config_banks(), key="ticket_bank_sel")
+            bank_val = st.selectbox("Banc (Entitat):", [""] + get_config_banks(), key="ticket_bank_sel")
         with col_hdr3:
             pay_methods = [""] + get_config_payment_methods()
-            if bank_val == "Efectiu":
-                pay_methods = ["Efectiu"]
-                st.session_state["ticket_pay_method_sel"] = "Efectiu"
-            else:
-                pay_methods = [m for m in pay_methods if m != "Efectiu"]
-                if st.session_state.get("ticket_pay_method_sel") == "Efectiu":
-                    st.session_state["ticket_pay_method_sel"] = ""
             pay_method_val = st.selectbox("Forma de Pagament:", pay_methods, key="ticket_pay_method_sel")
     else:
         with col_hdr2:
@@ -2528,10 +2521,10 @@ def render_compres_super_interface():
     if send_expense and len(st.session_state.get("ticket_items", [])) > 0:
         b_val_str = str(bank_val).strip()
         p_val_str = str(pay_method_val).strip()
-        if not b_val_str or b_val_str in ["None", "nan", "NaN", ""]:
-            st.error("Si us plau, selecciona un Banc per a la despesa!")
         if not p_val_str or p_val_str in ["None", "nan", "NaN", ""]:
             st.error("Si us plau, selecciona una Forma de Pagament per a la despesa!")
+        elif p_val_str != "Efectiu" and (not b_val_str or b_val_str in ["None", "nan", "NaN", ""]):
+            st.error("Si us plau, selecciona un Banc (Entitat) per a la despesa!")
             
     with col_hdr4:
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
@@ -4410,8 +4403,8 @@ if tab_intro:
                     st.error("⚠️ Per a op_banc s'ha d'introduir un import (Càrrec o Ingrés).")
                 elif import_carg == 0.0 and import_ing == 0.0:
                     st.error("⚠️ S'ha d'introduir un import vàlid (Càrrec o Ingrés).")
-                elif not banc or (banc not in ["Efectiu", "Casa"] and not forma_pago) or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
-                    st.error("⚠️ Tots els camps (Banc, Forma de Pagament, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu o Casa).")
+                elif (forma_pago != "Efectiu" and not banc) or not forma_pago or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
+                    st.error("⚠️ Tots els camps (Forma de Pagament, Categoria, Concepte i Grup, i Banc si no és Efectiu) han d'estar omplerts.")
                 elif is_gas_cat and st.session_state.get(f"desp_litres_{version}", 0.0) <= 0.0:
                     st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
                 else:
