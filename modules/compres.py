@@ -776,7 +776,6 @@ def parse_novavenda_ticket(text_content):
 
 def parse_text_ticket(text_content):
     import re
-    from datetime import datetime
     
     # 1. Extract Date if possible
     found_date = None
@@ -1503,7 +1502,6 @@ def render_compres_super_interface():
                         import requests
                         import base64
                         import json
-                        from datetime import datetime
                         import pytesseract
                         from PIL import Image
                         import io
