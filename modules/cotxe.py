@@ -134,7 +134,9 @@ def render():
             df_km_show = df_km.copy()
             if 'parsed_date' not in df_km_show.columns:
                 df_km_show['parsed_date'] = df_km_show['data'].apply(parse_excel_date)
-            df_km_show = df_km_show.sort_values(by=['parsed_date', 'idRuta'], ascending=[False, False], errors='ignore')
+            sort_cols = [c for c in ['parsed_date', 'idRuta'] if c in df_km_show.columns]
+            if sort_cols:
+                df_km_show = df_km_show.sort_values(by=sort_cols, ascending=[False] * len(sort_cols))
             cols_avail = [c for c in ['data', 'cotxe', 'ruta', 'km', 'contador'] if c in df_km_show.columns]
             df_km_show = df_km_show[cols_avail].head(50)
             df_km_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'ruta': 'Ruta', 'km': 'Km trajecte', 'contador': 'Odòmetre'}, inplace=True)
