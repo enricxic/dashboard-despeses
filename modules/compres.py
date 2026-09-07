@@ -2363,7 +2363,7 @@ def render():
             # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
             st.rerun()
 
-        tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Escàner Súper", "📝 Intro Dades", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
+    tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Escàner Súper", "📝 Intro Dades", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
     
     with tab_scanner:
         render_compres_super_interface()
