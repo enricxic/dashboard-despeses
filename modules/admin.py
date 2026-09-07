@@ -333,7 +333,7 @@ def render():
                 <div style="font-size: {tamany_lletra}px; font-weight: 800; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.5px; line-height: 1.1; text-align: center;">
                     {preview_title_html}
                 </div>
-                <div style="font-size: {max(12, int(tamany_lletra * 0.36))}px; font-weight: 800; color: #407faf; letter-spacing: 1.8px; margin-top: 6px; text-transform: uppercase; text-align: center;">
+                <div style="font-size: {max(12, int(tamany_lletra * 0.36))}px; font-weight: 800; color: #407faf; letter-spacing: 1.8px; margin-top: 12px; text-transform: uppercase; text-align: center;">
                     {slogan_text}
                 </div>
             </div>

@@ -342,19 +342,27 @@ if st.session_state.current_module is None:
     object-fit: contain;
     filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
 }}
-.house-custom-title {{
+.house-title-container {{
     position: absolute;
-    top: 70.8%;
+    top: 74.5%;
     left: 50%;
     transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: calc(14 * min(98vw, 146vh) / 1024);
+    z-index: 50;
+    pointer-events: none;
+    user-select: none;
+    width: 100%;
+}}
+.house-custom-title {{
     font-size: calc({tamany_px} * min(98vw, 146vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     text-align: center;
     white-space: nowrap;
-    z-index: 50;
-    pointer-events: none;
-    user-select: none;
     letter-spacing: 0.5px;
     line-height: 1;
     display: inline-flex;
@@ -362,21 +370,14 @@ if st.session_state.current_module is None:
     align-items: center;
 }}
 .house-custom-slogan {{
-    position: absolute;
-    top: 79.2%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: calc({max(12, int(tamany_px * 0.36))} * min(98vw, 146vh) / 1024);
+    font-size: calc({max(11, int(tamany_px * 0.32))} * min(98vw, 146vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #407faf;
-    letter-spacing: 2px;
+    letter-spacing: calc(2.2 * min(98vw, 146vh) / 1024);
     text-transform: uppercase;
     text-align: center;
     white-space: nowrap;
-    z-index: 50;
-    pointer-events: none;
-    user-select: none;
     line-height: 1;
 }}
 .hotspot {{
@@ -423,11 +424,16 @@ if st.session_state.current_module is None:
         width: 100vw !important;
         max-width: 100vw !important;
     }}
+    .house-title-container {{
+        top: 75% !important;
+        gap: 6px !important;
+    }}
     .house-custom-title {{
-        font-size: calc({tamany_px} * 0.7px);
+        font-size: calc({tamany_px} * 98vw / 1024) !important;
     }}
     .house-custom-slogan {{
-        font-size: calc({max(12, int(tamany_px * 0.36))} * 0.7px);
+        font-size: calc({max(11, int(tamany_px * 0.32))} * 98vw / 1024) !important;
+        letter-spacing: 1.5px !important;
     }}
 }}
 </style>
@@ -441,14 +447,14 @@ if st.session_state.current_module is None:
 <div class="logo-box">
 <img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="XiquiHouse">
 
-<!-- Títol personalitzat de la casa en dues caselles, colors i tamany -->
-<div class="house-custom-title">
-    {title_html}
-</div>
-
-<!-- Eslògan traduït de la llar -->
-<div class="house-custom-slogan">
-    {slogan_text}
+<!-- Títol i Eslògan personalitzats de la casa -->
+<div class="house-title-container">
+    <div class="house-custom-title">
+        {title_html}
+    </div>
+    <div class="house-custom-slogan">
+        {slogan_text}
+    </div>
 </div>
 
 <!-- ================= SENSE RODONA (SUPERIOR) ================= -->
