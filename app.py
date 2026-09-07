@@ -3934,7 +3934,7 @@ def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
 with tab_details:
     st.markdown(f"### 🔍 Detalls de {selected_month_cat.capitalize()} del {selected_year}")
     
-    col_left, col_mid, col_right = st.columns([1, 1.5, 1.5])
+    col_left, col_mid, col_right = st.columns([1, 1, 1], gap="medium")
     
     with col_left:
         st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments Pendents</h4>", unsafe_allow_html=True)

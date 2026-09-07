@@ -3926,7 +3926,7 @@ def render(view_mode="economic"):
         selected_year = int(sel_y)
         st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
         
-        col_left, col_mid, col_right = st.columns([1, 1.5, 1.5])
+        col_left, col_mid, col_right = st.columns([1, 1, 1], gap="medium")
         
         with col_left:
             st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments</h4>", unsafe_allow_html=True)
