@@ -428,13 +428,21 @@ def render(view_mode="economic"):
         df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
         df_desp['Import càrrec'] = clean_numeric(df_desp['Import càrrec'])
         df_desp['parsed_date'] = df_desp['Data'].apply(parse_excel_date)
-        df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes'].astype(str).str.lower().map(MONTHS_MAP).fillna(12).astype(int)
+        if 'mes' in df_desp.columns:
+            df_desp['clean_mes'] = df_desp['mes'].astype(str).str.strip().str.lower()
+        else:
+            df_desp['clean_mes'] = ''
+        df_desp['date_score'] = df_desp['any'] * 12 + df_desp['clean_mes'].map(MONTHS_MAP).fillna(12).astype(int)
         
         df_ing = fix_mojibake_df(fetched['ingressos'])
         df_ing['idIngres'] = pd.to_numeric(df_ing['idIngres'], errors='coerce')
         df_ing = df_ing.dropna(subset=['idIngres']).sort_values(by='idIngres', ascending=False).reset_index(drop=True)
         df_ing['Import'] = clean_numeric(df_ing['Import'])
         df_ing['parsed_date'] = df_ing['Data'].apply(parse_excel_date)
+        if 'mes' in df_ing.columns:
+            df_ing['clean_mes'] = df_ing['mes'].astype(str).str.strip().str.lower()
+        else:
+            df_ing['clean_mes'] = ''
         
         df_super = fix_mojibake_df(fetched['compresSuper'])
         df_super['IdCompra'] = pd.to_numeric(df_super['IdCompra'], errors='coerce')
@@ -488,6 +496,10 @@ def render(view_mode="economic"):
         df_pag = df_pag.dropna(subset=['idPago'])
         df_pag['Import'] = clean_numeric(df_pag['Import'])
         df_pag['parsed_date'] = df_pag['Data'].apply(parse_excel_date)
+        if 'mes' in df_pag.columns:
+            df_pag['clean_mes'] = df_pag['mes'].astype(str).str.strip().str.lower()
+        else:
+            df_pag['clean_mes'] = ''
         
         return df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag, df_cartera
     
@@ -988,6 +1000,13 @@ def render(view_mode="economic"):
     df_limits = st.session_state["df_limits"]
     df_pag = st.session_state["df_pag"]
     df_cartera = st.session_state.get("df_cartera", pd.DataFrame())
+    
+    if 'clean_mes' not in df_desp.columns and 'mes' in df_desp.columns:
+        df_desp['clean_mes'] = df_desp['mes'].astype(str).str.strip().str.lower()
+    if 'clean_mes' not in df_ing.columns and 'mes' in df_ing.columns:
+        df_ing['clean_mes'] = df_ing['mes'].astype(str).str.strip().str.lower()
+    if 'clean_mes' not in df_pag.columns and 'mes' in df_pag.columns:
+        df_pag['clean_mes'] = df_pag['mes'].astype(str).str.strip().str.lower()
     
     def get_limits_for(year, month_name):
         month_idx = MONTHS_MAP.get(month_name.lower(), 12)
