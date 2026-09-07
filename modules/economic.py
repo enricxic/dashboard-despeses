@@ -261,9 +261,9 @@ def render(view_mode="economic"):
         'BBVA': -2157.00,  # Adjusted to match real bank balance of 2178.86 (after removing VISA duplicates)
         'La Caixa': 102.28,
         'Casa': 267.28,
+        'Tg.Moneder': 0.0,
         'CORTEINGLÉS': 1566.69,
         'TRADE REPUB.': 0.0,
-        'Tg.Moneder': 0.0,
         'Pago VISA': -2995.45  # Calibrated for correct Debt logic (charges increase, payments decrease)
     }
     
@@ -274,11 +274,11 @@ def render(view_mode="economic"):
         'TR Cartera': 'TR Cartera',
         'TradeRep.': 'TRADE REPUB.',
         'Casa': 'Casa',
+        'T.Moneder': 'Tg.Moneder',
         'T.CorteInglés': 'CORTEINGLÉS',
         't.CorteInglés': 'CORTEINGLÉS',
         'T.CorteIngles': 'CORTEINGLÉS',
         't.CorteIngles': 'CORTEINGLÉS',
-        'T.Moneder': 'Tg.Moneder',
     }
     
     def clean_numeric(series):
@@ -3259,11 +3259,25 @@ def render(view_mode="economic"):
     
         # 3. Re-calculate balances and render bank metrics at the top container
         current_balances = get_balances_up_to(selected_year, selected_month_data)
-        # Remove TR Cartera and any inactive banks from Dashboard General balances
+        # Remove TR Cartera and any inactive banks from Dashboard General balances and respect config order
         try:
             from core.config_manager import get_active_bancs
-            active_b_names = [b["nom"].strip().upper() for b in get_active_bancs()]
-            current_balances = {k: v for k, v in current_balances.items() if k.strip().upper() in active_b_names and k != 'TR Cartera'}
+            active_b = get_active_bancs()
+            active_b_names = [b["nom"].strip().upper() for b in active_b]
+            filtered_balances = {k: v for k, v in current_balances.items() if k.strip().upper() in active_b_names and k != 'TR Cartera'}
+            
+            # Sort according to active_b order
+            ordered_balances = {}
+            for b in active_b:
+                b_name_upper = b["nom"].strip().upper()
+                for k, v in filtered_balances.items():
+                    if k.strip().upper() == b_name_upper:
+                        ordered_balances[k] = v
+                        break
+            for k, v in filtered_balances.items():
+                if k not in ordered_balances:
+                    ordered_balances[k] = v
+            current_balances = ordered_balances
         except Exception:
             current_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera'}
         
