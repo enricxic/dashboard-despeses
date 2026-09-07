@@ -4026,17 +4026,28 @@ def render(view_mode="economic"):
             else:
                 st.info("No hi ha cap pagament pendent aquest mes.")
 
-            # --- Render Pagats (sense línies de taula) ---
+            # --- Render Pagats (sense línies de taula, espaiat reduït i alineat) ---
             if paid_items:
                 st.write("**Pagats:**")
+                rows_html = []
                 for it in paid_items:
                     amt = float(it['Import'])
                     icon = it.get('icon', '💸')
-                    st.markdown(f"""
-                    <div style="display: flex; align-items: center; padding: 3px 0; font-size: 0.95rem;">
-                        <span>{icon} <b>{it['Concepte']}</b>: {amt:,.2f} € <span style="color: #22c55e; font-size: 0.8rem; margin-left: 6px; font-weight: 600;">(pagat)</span></span>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    rows_html.append(f"""
+                    <tr style="border: none;">
+                        <td style="padding: 3px 18px 3px 0; border: none; font-size: 0.95rem; white-space: nowrap;">{icon} {it['Concepte']}</td>
+                        <td style="padding: 3px 10px 3px 0; border: none; text-align: right; font-weight: 600; font-size: 0.95rem; white-space: nowrap;">{amt:,.2f} €</td>
+                        <td style="padding: 3px 0; border: none; color: #22c55e; font-size: 0.82rem; font-weight: 600; white-space: nowrap;">pagat</td>
+                    </tr>
+                    """)
+                table_html = f"""
+                <table style="width: auto; border: none; border-collapse: collapse; margin-bottom: 6px;">
+                    <tbody>
+                        {''.join(rows_html)}
+                    </tbody>
+                </table>
+                """
+                st.markdown(table_html, unsafe_allow_html=True)
                 st.write("")
 
             if total_programat > 0 or total_pendent > 0:
@@ -4076,17 +4087,28 @@ def render(view_mode="economic"):
                     
                     st.write("") # spacer
                 
-                # --- Render Cobrats (sense línies de taula) ---
+                # --- Render Cobrats (sense línies de taula, espaiat reduït i alineat) ---
                 if not month_ing_cobrat.empty:
                     st.write("**Cobrats:**")
+                    rows_ing_html = []
                     for _, i_row in month_ing_cobrat.iterrows():
                         amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
                         concepte = i_row['Concepte']
-                        st.markdown(f"""
-                        <div style="display: flex; align-items: center; padding: 3px 0; font-size: 0.95rem;">
-                            <span>🟢 <b>{concepte}</b>: {amt:,.2f} € <span style="color: #22c55e; font-size: 0.8rem; margin-left: 6px; font-weight: 600;">(cobrat)</span></span>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        rows_ing_html.append(f"""
+                        <tr style="border: none;">
+                            <td style="padding: 3px 18px 3px 0; border: none; font-size: 0.95rem; white-space: nowrap;">🟢 {concepte}</td>
+                            <td style="padding: 3px 10px 3px 0; border: none; text-align: right; font-weight: 600; font-size: 0.95rem; white-space: nowrap;">{amt:,.2f} €</td>
+                            <td style="padding: 3px 0; border: none; color: #22c55e; font-size: 0.82rem; font-weight: 600; white-space: nowrap;">cobrat</td>
+                        </tr>
+                        """)
+                    table_ing_html = f"""
+                    <table style="width: auto; border: none; border-collapse: collapse; margin-bottom: 6px;">
+                        <tbody>
+                            {''.join(rows_ing_html)}
+                        </tbody>
+                    </table>
+                    """
+                    st.markdown(table_ing_html, unsafe_allow_html=True)
                     st.write("")
                         
                 # Sum the pending ingressos
