@@ -2987,12 +2987,12 @@ def render(view_mode="economic"):
         years_list.insert(0, 2026)
     
     # Access or default the values
-    selected_year = st.session_state.get("sel_year", datetime.today().year)
+    selected_year = st.session_state.get("detalls_sel_year", st.session_state.get("sel_year", datetime.today().year))
     
-    # Default month is always current month
+    # Default month is current month unless chosen
     current_month_index = datetime.today().month - 1
-    selected_month_cat = CATALAN_MONTHS[current_month_index]
-    selected_month_data = month_translations[selected_month_cat]
+    selected_month_cat = st.session_state.get("detalls_sel_mes", st.session_state.get("sel_mes", CATALAN_MONTHS[current_month_index]))
+    selected_month_data = month_translations.get(selected_month_cat.lower(), month_translations[CATALAN_MONTHS[current_month_index]])
     payment_filter = "Tots"
     
     # ----------------- ACCOUNT BALANCES CALCULATION -----------------
@@ -3901,81 +3901,147 @@ def render(view_mode="economic"):
                 st.rerun()
     
     with tab_details:
-        st.markdown(f"### 🔍 Detalls de {selected_month_cat.capitalize()} del {selected_year}")
+        col_det_title, col_det_mes, col_det_any = st.columns([6, 3, 3], vertical_alignment="center")
+        with col_det_mes:
+            cur_m_idx = CATALAN_MONTHS.index(selected_month_cat) if selected_month_cat in CATALAN_MONTHS else current_month_index
+            sel_m = st.selectbox("Mes", CATALAN_MONTHS, index=cur_m_idx, key="detalls_sel_mes")
+        with col_det_any:
+            cur_y_idx = years_list.index(selected_year) if selected_year in years_list else 0
+            sel_y = st.selectbox("Any", years_list, index=cur_y_idx, key="detalls_sel_year")
+        with col_det_title:
+            st.markdown(f"<h3 style='margin:0; font-size:1.45rem; color:#f39c12; font-weight:700;'>🔍 Detalls de {sel_m.capitalize()} del {sel_y}</h3>", unsafe_allow_html=True)
+            
+        selected_month_cat = sel_m
+        selected_month_data = month_translations.get(sel_m.lower(), sel_m.lower())
+        selected_year = int(sel_y)
+        st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
         
         col_left, col_mid, col_right = st.columns([1, 1.5, 1.5])
         
         with col_left:
-            st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments Pendents</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments</h4>", unsafe_allow_html=True)
             
             has_pending = False
             total_pendent = 0.0
+            total_programat = 0.0
             shown_concepts = set()
-            
             pagaments_a_processar = []
+            paid_records = []
             
             # 1. Hipoteca status
             sub_hip = df_hip[(df_hip['any'] == selected_year) & (df_hip['mes'].str.lower() == selected_month_data)]
             if not sub_hip.empty:
                 hip_row = sub_hip.iloc[0]
-                status_hip = "Pagat" if str(hip_row['pagat']).lower() == 'pagat' else "Pendent"
+                amt_hip = float(clean_numeric(pd.Series([hip_row.get('Quota fixa', 0.0)])).iloc[0])
+                total_programat += amt_hip
+                status_hip = "Pagat" if str(hip_row.get('pagat', '')).lower().strip() == 'pagat' else "Pendent"
                 if status_hip == "Pendent":
-                    amt = hip_row['Quota fixa']
-                    if st.checkbox(f"🏠 **Hipoteca**: {amt:.2f} €", key="chk_pag_hipoteca"):
-                        pagaments_a_processar.append({'idx': 'hipoteca', 'row': {'Concepte': 'Hipoteca', 'Import': amt, 'Categoria': 'manteniment'}})
                     has_pending = True
-                    total_pendent += float(amt)
-                    shown_concepts.add('hipoteca')
+                else:
+                    paid_records.append({'Concepte': 'Hipoteca', 'Import': amt_hip, 'pagat': 'pagat'})
             else:
-                st.write("🏠 **Hipoteca**: No programada")
+                status_hip = "No programada"
+                amt_hip = 0.0
                 
             # 2. Pagaments de la taula Previsió de Pagaments
-            sub_pag = df_pag[
+            sub_pag_all = df_pag[
                 (df_pag['any'] == selected_year) & 
-                (df_pag['mes'].astype(str).str.lower().str.strip() == selected_month_data.lower().strip()) & 
-                (df_pag['pagat'].astype(str).str.lower().str.strip() != 'pagat')
+                (df_pag['mes'].astype(str).str.lower().str.strip() == selected_month_data.lower().strip())
             ]
             
-            for p_idx, p_row in sub_pag.iterrows():
-                concept_lower = str(p_row['Concepte']).lower().strip()
-                if concept_lower in shown_concepts:
-                    continue
-                    
-                # Assignem icones segons el concepte
-                if any(k in concept_lower for k in ["hipoteca", "ajunt", "bbva asseg", "casa"]):
-                    icon = "🏠"
-                elif any(k in concept_lower for k in ["cotxe", "lloguer parking"]):
-                    icon = "🚗"
-                elif "piscina" in concept_lower:
-                    icon = "🏊‍♂️"
-                elif "pj isabel" in concept_lower:
-                    icon = "🐷"
-                elif any(k in concept_lower for k in ["lowi", "telefon", "mòbil"]):
-                    icon = "📱"
-                elif "accions" in concept_lower:
-                    icon = "💸"
-                elif any(k in concept_lower for k in ["morts", "ocaso"]):
-                    icon = "✝️"
-                else:
-                    icon = "💸"
-                    
-                amt = float(p_row['Import'])
-                if st.checkbox(f"{icon} **{p_row['Concepte']}**: {amt:.2f} €", key=f"chk_pag_{p_idx}"):
-                    pagaments_a_processar.append({'idx': p_idx, 'row': p_row})
-                    
-                has_pending = True
-                total_pendent += amt
-                shown_concepts.add(concept_lower)
+            if not sub_pag_all.empty:
+                sub_pag_work = sub_pag_all.copy()
+                sub_pag_work['import_num'] = clean_numeric(sub_pag_work['Import'])
+                total_programat += float(sub_pag_work['import_num'].sum())
                 
-            if not has_pending:
-                st.info("No hi ha cap pagament pendent aquest mes.")
+                mask_pag_pendent = sub_pag_work['pagat'].astype(str).str.lower().str.strip() != 'pagat'
+                sub_pag_pendent = sub_pag_work[mask_pag_pendent]
+                sub_pag_paid = sub_pag_work[~mask_pag_pendent]
+                
+                for _, p_row in sub_pag_paid.iterrows():
+                    paid_records.append({
+                        'Concepte': p_row.get('Concepte', ''),
+                        'Import': float(p_row.get('import_num', 0.0)),
+                        'pagat': 'pagat'
+                    })
             else:
-                st.markdown("---")
-                st.markdown(f"<div style='text-align:left; font-size:2.2rem; color:#ef4444; padding-top:0.5rem; line-height:1.2;'>{total_pendent:,.2f} €</div>", unsafe_allow_html=True)
-                
+                sub_pag_pendent = pd.DataFrame()
+            
+            # --- Render Pendents ---
+            if has_pending or not sub_pag_pendent.empty:
+                st.write("**Pendents de pagament:**")
+                if status_hip == "Pendent":
+                    if st.checkbox(f"🏠 **Hipoteca**: {amt_hip:.2f} €", key="chk_pag_hipoteca"):
+                        pagaments_a_processar.append({'idx': 'hipoteca', 'row': {'Concepte': 'Hipoteca', 'Import': amt_hip, 'Categoria': 'manteniment'}})
+                    total_pendent += amt_hip
+                    shown_concepts.add('hipoteca')
+
+                for p_idx, p_row in sub_pag_pendent.iterrows():
+                    concept_lower = str(p_row['Concepte']).lower().strip()
+                    if concept_lower in shown_concepts:
+                        continue
+                        
+                    # Assignem icones segons el concepte
+                    if any(k in concept_lower for k in ["hipoteca", "ajunt", "bbva asseg", "casa"]):
+                        icon = "🏠"
+                    elif any(k in concept_lower for k in ["cotxe", "lloguer parking"]):
+                        icon = "🚗"
+                    elif "piscina" in concept_lower:
+                        icon = "🏊‍♂️"
+                    elif "pj isabel" in concept_lower:
+                        icon = "🐷"
+                    elif any(k in concept_lower for k in ["lowi", "telefon", "mòbil"]):
+                        icon = "📱"
+                    elif "accions" in concept_lower:
+                        icon = "💸"
+                    elif any(k in concept_lower for k in ["morts", "ocaso"]):
+                        icon = "✝️"
+                    else:
+                        icon = "💸"
+                        
+                    amt = float(p_row['import_num'])
+                    if st.checkbox(f"{icon} **{p_row['Concepte']}**: {amt:.2f} €", key=f"chk_pag_{p_idx}"):
+                        pagaments_a_processar.append({'idx': p_idx, 'row': p_row})
+                        
+                    total_pendent += amt
+                    shown_concepts.add(concept_lower)
+                    
                 if len(pagaments_a_processar) > 0:
                     if st.button("📥 Passar seleccionats a la BBDD", key="btn_proc_pag"):
                         dialog_confirmar_operacions(pagaments_a_processar, [], selected_year, selected_month_cat)
+                
+                st.write("") # spacer
+            elif not paid_records and sub_hip.empty and sub_pag_all.empty:
+                st.info("No hi ha dades de pagaments per aquest mes.")
+            else:
+                st.info("No hi ha cap pagament pendent aquest mes.")
+                
+            # --- Render Pagats ---
+            if paid_records:
+                st.write("**Pagats:**")
+                df_paid_show = pd.DataFrame(paid_records)
+                try:
+                    st.dataframe(
+                        df_paid_show[['Concepte', 'Import', 'pagat']].style.format({'Import': '{:,.2f} €'}),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                except Exception as e:
+                    st.error(f"Error renderitzant pagats: {e}")
+                    
+            if total_programat > 0 or total_pendent > 0:
+                st.markdown(f"""
+                <div style="display: flex; gap: 40px; margin-top: 10px;">
+                    <div data-testid="stMetric">
+                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total previst</div>
+                        <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{total_programat:,.2f} €</div>
+                    </div>
+                    <div data-testid="stMetric">
+                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
+                        <div style="font-size: 2.25rem; font-weight: 400; color: #ef4444;">{total_pendent:,.2f} €</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
         with col_mid:
             st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
