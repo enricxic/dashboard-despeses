@@ -2872,36 +2872,66 @@ def render(view_mode="economic"):
             st.write("")
             st.markdown("##### 📝 Línies del Tiquet")
             
-            table_rows = []
-            for i, item in enumerate(items):
-                fam_display = "<span style='color:#ef4444; font-weight:bold;'>Pendent</span>" if item["familia"] == 'Pendent' else item["familia"]
-                art_display = "<span style='color:#ef4444; font-weight:bold;'>pendent</span>" if item["article"] == 'pendent' else item["article"]
-                p_str = str(item['pes']).strip()
-                pes_display = f"{p_str}g" if (p_str.replace('.', '', 1).isdigit() and float(p_str) > 0) else (p_str if p_str else "0g")
-                prom_display = f"<span style='color:#ef4444;'>-{item['prom']:.2f} €</span>" if item['prom'] > 0 else "0.00 €"
-                reb_display = "🧺" if item['rebost'] == 'rebost' else ""
-                
-                row_bg = "background-color: rgba(30, 41, 59, 0.7);" if i % 2 == 0 else "background-color: rgba(15, 23, 42, 0.7);"
-                table_rows.append(f"<tr style='border-bottom: 1px solid #334155; {row_bg}'><td style='padding: 6px 8px; font-weight:bold; color:#94a3b8; width:35px;'>{i+1}</td><td style='padding: 6px 8px;'>{fam_display}</td><td style='padding: 6px 8px; font-weight:600;'>{art_display}</td><td style='padding: 6px 8px; color:#94a3b8;'>{pes_display}</td><td style='padding: 6px 8px; text-align:center;'>{item['quantitat']}</td><td style='padding: 6px 8px; text-align:right;'>{item['preuUnit']:.2f} €</td><td style='padding: 6px 8px; text-align:right;'>{prom_display}</td><td style='padding: 6px 8px; text-align:right; font-weight:bold; color:#f8fafc;'>{item['totLinea']:.2f} €</td><td style='padding: 6px 8px; text-align:center;'>{reb_display}</td></tr>")
-                
-            rows_joined = "".join(table_rows)
-            html_table = f"<div style='max-height: 280px; overflow-y: auto; border: 1px solid #334155; border-radius: 8px; background-color: #0f172a; margin-bottom: 8px;'><table style='width: 100%; border-collapse: collapse; font-size: 0.88rem; color: #f8fafc;'><thead><tr style='background-color: #1e293b; position: sticky; top: 0; z-index: 2; border-bottom: 2px solid #475569; text-transform: uppercase; font-size: 0.78rem; color: #94a3b8;'><th style='padding: 8px;'>#</th><th style='padding: 8px;'>Família</th><th style='padding: 8px;'>Article</th><th style='padding: 8px;'>Pes</th><th style='padding: 8px; text-align:center;'>Qty</th><th style='padding: 8px; text-align:right;'>Preu U.</th><th style='padding: 8px; text-align:right;'>Prom.</th><th style='padding: 8px; text-align:right;'>Total</th><th style='padding: 8px; text-align:center;'>Reb.</th></tr></thead><tbody>{rows_joined}</tbody></table></div>"
-            st.markdown(html_table, unsafe_allow_html=True)
+            # Render Streamlit grid with row-level buttons
+            col_headers = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5])
+            with col_headers[0]: st.markdown("**#**")
+            with col_headers[1]: st.markdown("**FAMÍLIA**")
+            with col_headers[2]: st.markdown("**ARTICLE**")
+            with col_headers[3]: st.markdown("**PES**")
+            with col_headers[4]: st.markdown("**QTY**")
+            with col_headers[5]: st.markdown("**PREU U.**")
+            with col_headers[6]: st.markdown("**PROM.**")
+            with col_headers[7]: st.markdown("**TOTAL**")
+            with col_headers[8]: st.markdown("**REB.**")
+            with col_headers[9]: st.markdown("")
+            with col_headers[10]: st.markdown("")
             
-            # Action toolbar for modifying or deleting rows
-            col_mg1, col_mg2, col_mg3 = st.columns([5, 2.5, 2.5], vertical_alignment="bottom")
-            with col_mg1:
-                line_options = list(range(len(items)))
-                sel_manage_idx = st.selectbox(
-                    "Gestionar línia:",
-                    line_options,
-                    format_func=lambda idx: f"#{idx+1}: {items[idx]['article']} ({items[idx]['totLinea']:.2f} €)",
-                    key="sel_manage_ticket_line"
-                )
-            with col_mg2:
-                st.button("✏️ Modificar línia", key="btn_edit_selected_line", on_click=cb_edit_ticket_item, args=(sel_manage_idx,), use_container_width=True)
-            with col_mg3:
-                st.button("🗑️ Eliminar línia", key="btn_del_selected_line", on_click=cb_del_ticket_item, args=(sel_manage_idx,), use_container_width=True)
+            st.markdown("<hr style='margin: 4px 0 8px 0; border-color: #334155;'/>", unsafe_allow_html=True)
+            
+            def _cell(text, color="", bold=False):
+                fw = "font-weight:bold;" if bold else ""
+                c = f"color:{color};" if color else ""
+                st.markdown(f"<div style='padding-top:4px; font-size:0.9rem; {fw} {c}'>{text}</div>", unsafe_allow_html=True)
+
+            for i, item in enumerate(items):
+                cols = st.columns([0.4, 1.4, 2.0, 0.8, 0.6, 1.0, 0.8, 1.0, 0.6, 0.5, 0.5], vertical_alignment="center")
+                with cols[0]:
+                    _cell(f"{i+1}")
+                with cols[1]:
+                    if item["familia"] == 'Pendent':
+                        _cell("Pendent", color="#ef4444", bold=True)
+                    else:
+                        _cell(item["familia"])
+                with cols[2]:
+                    if item["article"] == 'pendent':
+                        _cell("pendent", color="#ef4444", bold=True)
+                    else:
+                        _cell(item["article"])
+                with cols[3]:
+                    p_str = str(item['pes']).strip()
+                    if p_str.replace('.', '', 1).isdigit() and float(p_str) > 0:
+                        _cell(f"{p_str}g")
+                    else:
+                        _cell(p_str if p_str else "0g")
+                with cols[4]:
+                    _cell(f"{item['quantitat']}")
+                with cols[5]:
+                    _cell(f"{item['preuUnit']:.2f} €")
+                with cols[6]:
+                    if item['prom'] > 0:
+                        _cell(f"-{item['prom']:.2f} €", color="#ef4444")
+                    else:
+                        _cell("0.00 €")
+                with cols[7]:
+                    _cell(f"{item['totLinea']:.2f} €", bold=True)
+                with cols[8]:
+                    _cell("🧺" if item['rebost'] == 'rebost' else "")
+                with cols[9]:
+                    st.button("✏️", key=f"btn_edit_row_{i}", on_click=cb_edit_ticket_item, args=(i,), help="Modificar línia")
+                with cols[10]:
+                    st.button("🗑️", key=f"btn_del_row_{i}", on_click=cb_del_ticket_item, args=(i,), help="Eliminar línia")
+                st.markdown("<hr style='margin: 4px 0; border-color: #1e293b;'/>", unsafe_allow_html=True)
+            st.write("")
         else:
             st.info("El tiquet està buit. Afegeix línies manualment o puja un tiquet per fitxer o càmara.")
     
