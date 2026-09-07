@@ -25,8 +25,54 @@ st.markdown('''
         height: 40px;
         font-size: 16px;
     }
+
+    /* Hide + and - stepper buttons on all quantity and number inputs */
+    button[data-testid="stNumberInputStepDown"],
+    button[data-testid="stNumberInputStepUp"],
+    div[data-testid="stNumberInputContainer"] button {
+        display: none !important;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
     </style>
 ''', unsafe_allow_html=True)
+
+import streamlit.components.v1 as components
+components.html('''
+<script>
+function attachSelectAllToNumberInputs() {
+    try {
+        const doc = window.parent.document;
+        if (!doc) return;
+        const inputs = doc.querySelectorAll('input[type="number"], div[data-testid="stNumberInputContainer"] input');
+        inputs.forEach(input => {
+            if (!input.dataset.hasSelectAll) {
+                input.dataset.hasSelectAll = "true";
+                input.addEventListener('focus', function() {
+                    setTimeout(() => { this.select(); }, 20);
+                });
+                input.addEventListener('mouseup', function(e) {
+                    if (doc.activeElement === this && this.selectionStart === this.selectionEnd) {
+                        this.select();
+                    }
+                });
+            }
+        });
+    } catch(e) {}
+}
+attachSelectAllToNumberInputs();
+try {
+    const observer = new MutationObserver(attachSelectAllToNumberInputs);
+    observer.observe(window.parent.document.body, { childList: true, subtree: true });
+} catch(e) {}
+</script>
+''', height=0, width=0)
 
 if not check_password():
     st.stop()

@@ -145,10 +145,10 @@ def get_db_tracker():
 @st.cache_resource
 def get_supabase_client(role: str) -> Client:
     url = st.secrets["SUPABASE_URL"]
-    if role == "admin":
+    if role == "admin" and "SUPABASE_KEY_SECRET" in st.secrets:
         key = st.secrets["SUPABASE_KEY_SECRET"]
     else:
-        key = st.secrets["SUPABASE_KEY_PUBLISHABLE"]
+        key = st.secrets.get("SUPABASE_KEY_PUBLISHABLE") or st.secrets.get("SUPABASE_KEY_SECRET")
     return create_client(url, key)
 
 def fetch_all_supabase(client, table_name):
@@ -270,13 +270,18 @@ def load_dashboard_data(mtimes=None):
 # Load categories_conceptes.json if exists
 import json
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=60, show_spinner=False)
 def load_categories_conceptes():
+    if "cached_cat_config" in st.session_state and isinstance(st.session_state["cached_cat_config"], dict):
+        return st.session_state["cached_cat_config"]
     try:
         supabase = get_supabase_client("guest")
         res = supabase.table("app_config").select("config_json").eq("id", 1).execute()
         if res.data and len(res.data) > 0:
-            return res.data[0]["config_json"]
+            cfg = res.data[0]["config_json"]
+            if isinstance(cfg, dict):
+                st.session_state["cached_cat_config"] = cfg
+                return cfg
     except Exception as e:
         print("Supabase config load failed:", e)
         pass
@@ -286,7 +291,10 @@ def load_categories_conceptes():
     if os.path.exists(filepath):
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                cfg = json.load(f)
+                if isinstance(cfg, dict):
+                    st.session_state["cached_cat_config"] = cfg
+                    return cfg
         except Exception:
             pass
     return {}
@@ -685,21 +693,27 @@ def add_super_to_config(super_name):
         save_categories_conceptes(cat_config)
 
 def save_categories_conceptes(config):
+    global cat_config
+    cat_config = config
+    st.session_state["cached_cat_config"] = config
     # Save to Supabase
     try:
         supabase = get_supabase_client("admin")
         supabase.table("app_config").upsert({"id": 1, "config_json": config}).execute()
         load_categories_conceptes.clear()
     except Exception as e:
-        print("Supabase config save failed:", e)
+        try:
+            supabase = get_supabase_client("guest")
+            supabase.table("app_config").upsert({"id": 1, "config_json": config}).execute()
+            load_categories_conceptes.clear()
+        except Exception as e2:
+            print("Supabase config save failed:", e, e2)
         
     # Also save to local fallback
     filepath = "categories_conceptes.json"
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
-    except Exception:
-        pass
         return True
     except Exception:
         return False

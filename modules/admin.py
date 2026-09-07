@@ -156,7 +156,7 @@ def render():
     with c_head2:
         search_query = st.text_input("🔍 Cercar ajustos", placeholder="Cercar a la configuració...", label_visibility="collapsed", key="cfg_search")
     with c_head3:
-        if st.button("🔙 Tornar a l'inici", use_container_width=True, key="btn_cfg_home"):
+        if st.button("🔙 Inici", use_container_width=True, key="btn_cfg_home"):
             st.session_state.current_module = None
             st.rerun()
             
