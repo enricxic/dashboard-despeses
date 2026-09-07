@@ -51,6 +51,7 @@ TRANSLATIONS = {
         "admin_title": "Administrador",
         "casa_title": "Títol de la casa",
         "familia_title": "Família",
+        "tutelats_title": "Persones Tutelades",
         "tema_title": "Aspecte i Tema",
         "icones_title": "Icones d'inici",
         "idioma_title": "Idiomes",

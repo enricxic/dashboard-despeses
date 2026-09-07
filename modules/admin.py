@@ -172,6 +172,7 @@ def render():
             ("admin", "👤 Administrador"),
             ("titol", "🏷️ Títol de la casa"),
             ("familia", "👨‍👩‍👧‍👦 Família"),
+            ("tutelats", "🤝 Tutelats"),
             ("tema", "🎨 Aspecte i Tema"),
             ("icones", "🔘 Icones pantalla d'inici"),
             ("idioma", "🌐 Idiomes")
@@ -353,182 +354,183 @@ def render():
             st.markdown("</div>", unsafe_allow_html=True)
 
         # =========================================================================
-        # 3. SECCIÓ: FAMÍLIA I TUTELATS
+        # 3. SECCIÓ: FAMÍLIA
         # =========================================================================
         elif active == "familia":
-            tab_fam_membres, tab_fam_tutelats = st.tabs(["👨‍👩‍👧‍👦 Membres de la Llar", "🤝 Persones Tutelades (Externes)"])
+            familia_list = list(cfg.get("familia", []))
+            num_membres = len(familia_list)
             
-            with tab_fam_membres:
-                familia_list = list(cfg.get("familia", []))
-                num_membres = len(familia_list)
-                
-                st.markdown(f"""
-                <div class="chrome-card">
-                    <div class="chrome-card-header">👨‍👩‍👧‍👦 Membres de la Família ({num_membres} / 10)</div>
-                    <div class="chrome-card-desc">Afegeix i gestiona els membres de la llar (fins a un màxim de 10). Aquesta informació s'utilitza pel control de medicació, menús familiars, preferències i assistent IA.</div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
-                
-                # Botó d'afegir membre
-                if num_membres < 10:
-                    col_add1, col_add2 = st.columns([8, 2])
-                    with col_add2:
-                        if st.button("➕ Afegir Membre", type="primary", use_container_width=True, key="btn_add_fam_mem"):
-                            next_id = max([m.get("id", 0) for m in familia_list] + [0]) + 1
-                            familia_list.append({
-                                "id": next_id,
-                                "nom": f"Membre {num_membres + 1}",
-                                "rol": "Familiar",
-                                "edat": "",
-                                "circunstancies": "",
-                                "icona": "👤"
-                            })
-                            cfg["familia"] = familia_list
-                            save_app_config(cfg)
-                            st.rerun()
-                else:
-                    st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
-                    
-                st.write("")
-                
-                # Llista de membres
-                updated_familia = []
-                icons_pool = ["👨", "👩", "👦", "👧", "👶", "👴", "👵", "🐶", "🐱", "🧑", "👑", "⭐"]
-                roles_pool = ["Pare", "Mare", "Fill", "Filla", "Avi", "Àvia", "Germà", "Germana", "Mascota", "Altres"]
-                
-                for i, mem in enumerate(familia_list):
-                    with st.expander(f"{mem.get('icona', '👤')} {mem.get('nom', f'Membre {i+1}')} ({mem.get('rol', 'Familiar')})", expanded=True):
-                        c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 1.5])
-                        with c1:
-                            cur_icon = mem.get("icona", "👤")
-                            ic_idx = icons_pool.index(cur_icon) if cur_icon in icons_pool else 0
-                            m_icon = st.selectbox("Icona", icons_pool, index=ic_idx, key=f"f_icon_{i}")
-                        with c2:
-                            m_nom = st.text_input("Nom", value=mem.get("nom", ""), key=f"f_nom_{i}")
-                        with c3:
-                            cur_r = mem.get("rol", "Familiar")
-                            r_idx = roles_pool.index(cur_r) if cur_r in roles_pool else len(roles_pool)-1
-                            m_rol = st.selectbox("Rol / Relació", roles_pool, index=r_idx, key=f"f_rol_{i}")
-                        with c4:
-                            m_edat = st.text_input("Edat", value=str(mem.get("edat", "")), key=f"f_edat_{i}")
-                            
-                        c_circ1, c_circ2 = st.columns([8.5, 1.5], vertical_alignment="center")
-                        with c_circ1:
-                            m_circ = st.text_input("Al·lèrgies, dietes o circumstàncies mèdiques/personals", value=mem.get("circunstancies", ""), key=f"f_circ_{i}")
-                        with c_circ2:
-                            st.write("")
-                            del_btn = st.button("🗑️ Esborrar", key=f"f_del_{i}", use_container_width=True)
-                            
-                        if not del_btn:
-                            updated_familia.append({
-                                "id": mem.get("id", i + 1),
-                                "nom": m_nom,
-                                "rol": m_rol,
-                                "edat": m_edat,
-                                "circunstancies": m_circ,
-                                "icona": m_icon
-                            })
-                        else:
-                            cfg["familia"] = updated_familia + familia_list[i+1:]
-                            save_app_config(cfg)
-                            st.success(f"Membre eliminat.")
-                            st.rerun()
-                            
-                st.write("")
-                if st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam"):
-                    cfg["familia"] = updated_familia
-                    if save_app_config(cfg):
-                        st.success("✅ Membres de la família desats correctament!")
-                        st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            with tab_fam_tutelats:
-                tutelats_list = list(cfg.get("tutelats", []))
-                num_tutelats = len(tutelats_list)
-                
-                st.markdown(f"""
-                <div class="chrome-card">
-                    <div class="chrome-card-header">🤝 Persones Tutelades ({num_tutelats})</div>
-                    <div class="chrome-card-desc">Afegeix i gestiona persones tutelades o familiars externs que no viuen a casa per controlar la seva medicació, pautes i informació de contacte.</div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
-                
-                col_add_t1, col_add_t2 = st.columns([8, 2])
-                with col_add_t2:
-                    if st.button("➕ Afegir Tutelat", type="primary", use_container_width=True, key="btn_add_tutelat"):
-                        next_id = max([t.get("id", 0) for t in tutelats_list] + [0]) + 1
-                        tutelats_list.append({
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">👨‍👩‍👧‍👦 Membres de la Família ({num_membres} / 10)</div>
+                <div class="chrome-card-desc">Afegeix i gestiona els membres de la llar (fins a un màxim de 10). Aquesta informació s'utilitza pel control de medicació, menús familiars, preferències i assistent IA.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            
+            # Botó d'afegir membre
+            if num_membres < 10:
+                col_add1, col_add2 = st.columns([8, 2])
+                with col_add2:
+                    if st.button("➕ Afegir Membre", type="primary", use_container_width=True, key="btn_add_fam_mem"):
+                        next_id = max([m.get("id", 0) for m in familia_list] + [0]) + 1
+                        familia_list.append({
                             "id": next_id,
-                            "nom": f"Persona {num_tutelats + 1}",
+                            "nom": f"Membre {num_membres + 1}",
+                            "rol": "Familiar",
                             "edat": "",
-                            "telefon": "",
-                            "adreca": "",
-                            "icona": "👴",
-                            "observacions": ""
+                            "circunstancies": "",
+                            "icona": "👤"
                         })
-                        cfg["tutelats"] = tutelats_list
+                        cfg["familia"] = familia_list
                         save_app_config(cfg)
                         st.rerun()
+            else:
+                st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
                 
-                st.write("")
-                
-                updated_tutelats = []
-                tut_icons_pool = ["👴", "👵", "🧑", "👤", "👨", "👩", "⭐", "🛡️", "💊"]
-                
-                if not tutelats_list:
-                    st.info("No hi ha cap persona tutelada registrada. Fes clic a '➕ Afegir Tutelat' per afegir-ne una.")
-                
-                for j, tut in enumerate(tutelats_list):
-                    t_tel_disp = f" · {tut.get('telefon')}" if tut.get('telefon') else ""
-                    with st.expander(f"{tut.get('icona', '👴')} {tut.get('nom', f'Tutelat {j+1}')}{t_tel_disp}", expanded=True):
-                        c1, c2, c3, c4 = st.columns([1.2, 4.0, 1.8, 3.0])
-                        with c1:
-                            cur_t_icon = tut.get("icona", "👴")
-                            t_ic_idx = tut_icons_pool.index(cur_t_icon) if cur_t_icon in tut_icons_pool else 0
-                            t_icon = st.selectbox("Icona", tut_icons_pool, index=t_ic_idx, key=f"t_icon_{j}")
-                        with c2:
-                            t_nom = st.text_input("Nom i cognoms", value=tut.get("nom", ""), key=f"t_nom_{j}")
-                        with c3:
-                            t_edat = st.text_input("Edat", value=str(tut.get("edat", "")), key=f"t_edat_{j}")
-                        with c4:
-                            t_tel = st.text_input("Telèfon", value=str(tut.get("telefon", "")), key=f"t_tel_{j}")
-                            
-                        c_adr1, c_del_t = st.columns([8.5, 1.5], vertical_alignment="center")
-                        with c_adr1:
-                            t_adr = st.text_input("Adreça", value=tut.get("adreca", ""), key=f"t_adr_{j}")
-                        with c_del_t:
-                            st.write("")
-                            del_t_btn = st.button("🗑️ Esborrar", key=f"t_del_{j}", use_container_width=True)
-                            
-                        t_obs = st.text_input("Observacions / Altres dades de contacte", value=tut.get("observacions", ""), key=f"t_obs_{j}")
+            st.write("")
+            
+            # Llista de membres
+            updated_familia = []
+            icons_pool = ["👨", "👩", "👦", "👧", "👶", "👴", "👵", "🐶", "🐱", "🧑", "👑", "⭐"]
+            roles_pool = ["Pare", "Mare", "Fill", "Filla", "Avi", "Àvia", "Germà", "Germana", "Mascota", "Altres"]
+            
+            for i, mem in enumerate(familia_list):
+                with st.expander(f"{mem.get('icona', '👤')} {mem.get('nom', f'Membre {i+1}')} ({mem.get('rol', 'Familiar')})", expanded=True):
+                    c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 1.5])
+                    with c1:
+                        cur_icon = mem.get("icona", "👤")
+                        ic_idx = icons_pool.index(cur_icon) if cur_icon in icons_pool else 0
+                        m_icon = st.selectbox("Icona", icons_pool, index=ic_idx, key=f"f_icon_{i}")
+                    with c2:
+                        m_nom = st.text_input("Nom", value=mem.get("nom", ""), key=f"f_nom_{i}")
+                    with c3:
+                        cur_r = mem.get("rol", "Familiar")
+                        r_idx = roles_pool.index(cur_r) if cur_r in roles_pool else len(roles_pool)-1
+                        m_rol = st.selectbox("Rol / Relació", roles_pool, index=r_idx, key=f"f_rol_{i}")
+                    with c4:
+                        m_edat = st.text_input("Edat", value=str(mem.get("edat", "")), key=f"f_edat_{i}")
                         
-                        if not del_t_btn:
-                            updated_tutelats.append({
-                                "id": tut.get("id", j + 1),
-                                "nom": t_nom,
-                                "edat": t_edat,
-                                "telefon": t_tel,
-                                "adreca": t_adr,
-                                "icona": t_icon,
-                                "observacions": t_obs
-                            })
-                        else:
-                            cfg["tutelats"] = updated_tutelats + tutelats_list[j+1:]
-                            save_app_config(cfg)
-                            st.success(f"Persona tutelada eliminada.")
-                            st.rerun()
-                            
-                st.write("")
-                if st.button("💾 Desar Persones Tutelades", type="primary", use_container_width=True, key="save_tutelats"):
-                    cfg["tutelats"] = updated_tutelats
-                    if save_app_config(cfg):
-                        st.success("✅ Dades de persones tutelades desades correctament!")
+                    c_circ1, c_circ2 = st.columns([8.5, 1.5], vertical_alignment="center")
+                    with c_circ1:
+                        m_circ = st.text_input("Al·lèrgies, dietes o circumstàncies mèdiques/personals", value=mem.get("circunstancies", ""), key=f"f_circ_{i}")
+                    with c_circ2:
+                        st.write("")
+                        del_btn = st.button("🗑️ Esborrar", key=f"f_del_{i}", use_container_width=True)
+                        
+                    if not del_btn:
+                        updated_familia.append({
+                            "id": mem.get("id", i + 1),
+                            "nom": m_nom,
+                            "rol": m_rol,
+                            "edat": m_edat,
+                            "circunstancies": m_circ,
+                            "icona": m_icon
+                        })
+                    else:
+                        cfg["familia"] = updated_familia + familia_list[i+1:]
+                        save_app_config(cfg)
+                        st.success(f"Membre eliminat.")
                         st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
+                        
+            st.write("")
+            if st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam"):
+                cfg["familia"] = updated_familia
+                if save_app_config(cfg):
+                    st.success("✅ Membres de la família desats correctament!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 4. SECCIÓ: TUTELATS (PERSONES TUTELADES)
+        # =========================================================================
+        elif active == "tutelats":
+            tutelats_list = list(cfg.get("tutelats", []))
+            num_tutelats = len(tutelats_list)
+            
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🤝 Persones Tutelades ({num_tutelats})</div>
+                <div class="chrome-card-desc">Gestiona persones tutelades o familiars externs que no viuen a casa per controlar la seva medicació i pautes de dosificació. Registra el seu nom i cognoms, edat, telèfon i adreça.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            
+            col_add_t1, col_add_t2 = st.columns([8, 2])
+            with col_add_t2:
+                if st.button("➕ Afegir Tutelat", type="primary", use_container_width=True, key="btn_add_tutelat_sec"):
+                    next_id = max([t.get("id", 0) for t in tutelats_list] + [0]) + 1
+                    tutelats_list.append({
+                        "id": next_id,
+                        "nom": f"Persona {num_tutelats + 1}",
+                        "edat": "",
+                        "telefon": "",
+                        "adreca": "",
+                        "icona": "👴",
+                        "observacions": ""
+                    })
+                    cfg["tutelats"] = tutelats_list
+                    save_app_config(cfg)
+                    st.rerun()
+            
+            st.write("")
+            
+            updated_tutelats = []
+            tut_icons_pool = ["👴", "👵", "🧑", "👤", "👨", "👩", "⭐", "🛡️", "💊"]
+            
+            if not tutelats_list:
+                st.info("No hi ha cap persona tutelada registrada. Fes clic a '➕ Afegir Tutelat' per afegir-ne una.")
+            
+            for j, tut in enumerate(tutelats_list):
+                t_tel_disp = f" · 📞 {tut.get('telefon')}" if tut.get('telefon') else ""
+                t_adr_disp = f" · 📍 {tut.get('adreca')}" if tut.get('adreca') else ""
+                with st.expander(f"{tut.get('icona', '👴')} {tut.get('nom', f'Tutelat {j+1}')}{t_tel_disp}{t_adr_disp}", expanded=True):
+                    c1, c2, c3, c4 = st.columns([1.2, 4.0, 1.8, 3.0])
+                    with c1:
+                        cur_t_icon = tut.get("icona", "👴")
+                        t_ic_idx = tut_icons_pool.index(cur_t_icon) if cur_t_icon in tut_icons_pool else 0
+                        t_icon = st.selectbox("Icona", tut_icons_pool, index=t_ic_idx, key=f"t_icon_sec_{j}")
+                    with c2:
+                        t_nom = st.text_input("Nom i cognoms", value=tut.get("nom", ""), key=f"t_nom_sec_{j}")
+                    with c3:
+                        t_edat = st.text_input("Edat", value=str(tut.get("edat", "")), key=f"t_edat_sec_{j}")
+                    with c4:
+                        t_tel = st.text_input("Telèfon", value=str(tut.get("telefon", "")), key=f"t_tel_sec_{j}")
+                        
+                    c_adr1, c_del_t = st.columns([8.5, 1.5], vertical_alignment="center")
+                    with c_adr1:
+                        t_adr = st.text_input("Adreça", value=tut.get("adreca", ""), key=f"t_adr_sec_{j}")
+                    with c_del_t:
+                        st.write("")
+                        del_t_btn = st.button("🗑️ Esborrar", key=f"t_del_sec_{j}", use_container_width=True)
+                        
+                    t_obs = st.text_input("Observacions / Altres dades mèdiques o de contacte", value=tut.get("observacions", ""), key=f"t_obs_sec_{j}")
+                    
+                    if not del_t_btn:
+                        updated_tutelats.append({
+                            "id": tut.get("id", j + 1),
+                            "nom": t_nom,
+                            "edat": t_edat,
+                            "telefon": t_tel,
+                            "adreca": t_adr,
+                            "icona": t_icon,
+                            "observacions": t_obs
+                        })
+                    else:
+                        cfg["tutelats"] = updated_tutelats + tutelats_list[j+1:]
+                        save_app_config(cfg)
+                        st.success(f"Persona tutelada eliminada.")
+                        st.rerun()
+                        
+            st.write("")
+            if st.button("💾 Desar Persones Tutelades", type="primary", use_container_width=True, key="save_tutelats_sec"):
+                cfg["tutelats"] = updated_tutelats
+                if save_app_config(cfg):
+                    st.success("✅ Dades de persones tutelades desades correctament!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # =========================================================================
         # 4. SECCIÓ: TEMA I ASPECTE
