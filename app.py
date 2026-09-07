@@ -418,18 +418,24 @@ INITIAL_BALANCES = {
     'Pago VISA': -2995.45  # Calibrated for correct Debt logic (charges increase, payments decrease)
 }
 
-# Bank names in CSV mapped to display names
+# Bank names in CSV / Supabase mapped to display names
 BANK_MAPPING = {
     'BBVA': 'BBVA',
     'LaCaixa': 'La Caixa',
+    'La Caixa': 'La Caixa',
     'TR Cartera': 'TR Cartera',
+    'TradeRep.': 'TRADE REPUB.',
+    'Trade Repub.': 'TRADE REPUB.',
+    'Efectiu': 'Casa',
     'Casa': 'Casa',
     'T.Moneder': 'Tg.Moneder',
-    'TradeRep.': 'TRADE REPUB.',
+    'Tg.Moneder': 'Tg.Moneder',
     'T.CorteInglés': 'CORTEINGLÉS',
     't.CorteInglés': 'CORTEINGLÉS',
     'T.CorteIngles': 'CORTEINGLÉS',
     't.CorteIngles': 'CORTEINGLÉS',
+    'CORTEINGLÉS': 'CORTEINGLÉS',
+    'Pago VISA': 'Pago VISA'
 }
 
 def clean_numeric(series):
@@ -5065,7 +5071,11 @@ if tab_intro:
             
             last_movs = []
             for bank_key in get_config_banks():
-                df_b = df_desp[df_desp['Banc'] == bank_key]
+                disp_name = BANK_MAPPING.get(bank_key, bank_key)
+                matching_banks = [k for k, v in BANK_MAPPING.items() if v == disp_name] or [bank_key]
+                if bank_key not in matching_banks:
+                    matching_banks.append(bank_key)
+                df_b = df_desp[df_desp['Banc'].isin(matching_banks)]
                 if not df_b.empty:
                     last_row = df_b.iloc[0]
                     is_charge = float(last_row['Import càrrec']) > 0

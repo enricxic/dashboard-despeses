@@ -2778,7 +2778,11 @@ def render():
         
         last_movs = []
         for bank_key in get_config_banks():
-            df_b = df_desp[df_desp['Banc'] == bank_key]
+            disp_name = BANK_MAPPING.get(bank_key, bank_key)
+            matching_banks = [k for k, v in BANK_MAPPING.items() if v == disp_name] or [bank_key]
+            if bank_key not in matching_banks:
+                matching_banks.append(bank_key)
+            df_b = df_desp[df_desp['Banc'].isin(matching_banks)]
             if not df_b.empty:
                 last_row = df_b.iloc[0]
                 is_charge = float(last_row['Import càrrec']) > 0

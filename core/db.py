@@ -43,18 +43,24 @@ INITIAL_BALANCES = {
     'Pago VISA': -2995.45  # Calibrated for correct Debt logic (charges increase, payments decrease)
 }
 
-# Bank names in CSV mapped to display names
+# Bank names in CSV / Supabase mapped to display names
 BANK_MAPPING = {
     'BBVA': 'BBVA',
     'LaCaixa': 'La Caixa',
+    'La Caixa': 'La Caixa',
     'TR Cartera': 'TR Cartera',
     'TradeRep.': 'TRADE REPUB.',
+    'Trade Repub.': 'TRADE REPUB.',
+    'Efectiu': 'Casa',
     'Casa': 'Casa',
     'T.Moneder': 'Tg.Moneder',
+    'Tg.Moneder': 'Tg.Moneder',
     'T.CorteInglés': 'CORTEINGLÉS',
     't.CorteInglés': 'CORTEINGLÉS',
     'T.CorteIngles': 'CORTEINGLÉS',
     't.CorteIngles': 'CORTEINGLÉS',
+    'CORTEINGLÉS': 'CORTEINGLÉS',
+    'Pago VISA': 'Pago VISA'
 }
 
 def clean_numeric(series):
