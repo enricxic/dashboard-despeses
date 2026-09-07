@@ -3707,14 +3707,22 @@ def render(view_mode="economic"):
     # ================= MÒDUL ECONÒMIC (PESTANYES) =================
     tabs_list = ["📈 Detalls del Mes"]
     if st.session_state.get("role") in ["admin", "guest"]:
-        tabs_list.extend(["🤖 Xat IA"])
+        tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🤖 Xat IA"])
     
     tabs = st.tabs(tabs_list)
     tab_details = tabs[0]
     
     if st.session_state.get("role") in ["admin", "guest"]:
-        tab_xat = tabs[1]
+        tab_prev_desp = tabs[1]
+        tab_prev_ing = tabs[2]
+        tab_inversions = tabs[3]
+        tab_estalvis = tabs[4]
+        tab_xat = tabs[5]
     else:
+        tab_prev_desp = None
+        tab_prev_ing = None
+        tab_inversions = None
+        tab_estalvis = None
         tab_xat = None
 
     # ================= PESTANYA 1 ECONÒMIC: DETALLS DEL MES =================
@@ -4066,7 +4074,433 @@ def render(view_mode="economic"):
             else:
                 st.info("No hi ha dades de despeses per aquest mes.")
     
-    # ================= TAB 4: XAT IA =================
+
+    # ================= TAB: PREVISIÓ DE DESPESES =================
+    if tab_prev_desp:
+        with tab_prev_desp:
+            st.markdown("<h3 style='color:#f39c12;'>🔴 Previsió de Despeses (Pagaments Programats)</h3>", unsafe_allow_html=True)
+            
+            with st.expander("➕ Nova Previsió de Pagament", expanded=True):
+                # Row 1 (4 columns)
+                r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+                with r1_col1:
+                    banc_pag = st.selectbox("Banc", [""] + get_config_banks(), index=0, key="pag_banc")
+                with r1_col2:
+                    forma_pago_pag = st.selectbox("Forma de Pagament", [""] + get_config_payment_methods(), index=0, key="pag_forma_pago")
+                with r1_col3:
+                    data_val_pag = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="pag_data")
+                    mes_val_pag = month_translations[CATALAN_MONTHS[data_val_pag.month - 1]]
+                    any_val_pag = data_val_pag.year
+                with r1_col4:
+                    import_carg_pag = st.number_input("Import (€)", min_value=0.0, value=None, step=0.01, key="pag_import")
+                    
+                # Row 2 (5 columns)
+                r2_col1, r2_col2, r2_col3, r2_col4, r2_col5 = st.columns([2.5, 2.5, 2.0, 2.5, 2.5])
+                with r2_col1:
+                    cat_val_pag = st.selectbox("Categoria", [""] + get_config_categories(), index=0, key="pag_cat")
+                with r2_col2:
+                    concept_options_pag = [""] + get_config_concepts(cat_val_pag) if cat_val_pag else [""]
+                    concept_val_pag = st.selectbox("Concepte", concept_options_pag, index=0, key="pag_concepte")
+                with r2_col3:
+                    pagat_val_pag = st.selectbox("Estat", ["pendent", "pagat"], key="pag_estat")
+                with r2_col4:
+                    repetir_pag = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="pag_repetir")
+                with r2_col5:
+                    repetir_any_limit_pag = st.selectbox("Fins a desembre de l'any:", [any_val_pag, any_val_pag + 1, any_val_pag + 2], index=0, key="rep_any_pag")
+                
+                # Row 3
+                r3_col1, r3_col2 = st.columns([1, 1])
+                with r3_col1:
+                    dest_banc_pag = st.selectbox("Banc de Destí (Opcional, només per Traspassos)", [""] + get_config_banks(), index=0, key="pag_dest_banc")
+                
+                col_btns_pag = st.columns([3.5, 2.0, 6.5])
+                with col_btns_pag[0]:
+                    submitted_pag = st.button("💾 Desar Previsió de Pagament", type="primary", use_container_width=True)
+                with col_btns_pag[1]:
+                    cancelled_pag = st.button("Cancel·lar", key="cancel_pag", use_container_width=True)
+                    
+                if cancelled_pag:
+                    for k in list(st.session_state.keys()):
+                        if k.startswith("pag_") or k == "rep_any_pag": del st.session_state[k]
+                    st.rerun()
+                    
+                if submitted_pag:
+                    if not concept_val_pag or not banc_pag or import_carg_pag is None or import_carg_pag <= 0:
+                        st.error("⚠️ Heu d'omplir Banc, Concepte i un Import vàlid.")
+                    else:
+                        if repetir_pag:
+                            current_max_id = int(df_pag['idPago'].max() + 1) if not df_pag.empty and 'idPago' in df_pag.columns else 1
+                            updated_count = 0
+                            added_count = 0
+                            for yr in range(any_val_pag, repetir_any_limit_pag + 1):
+                                start_month = data_val_pag.month if yr == any_val_pag else 1
+                                for m_idx in range(start_month, 13):
+                                    m_cat = CATALAN_MONTHS[m_idx - 1]
+                                    m_data = month_translations[m_cat]
+                                    
+                                    mask = (df_pag['any'] == yr) & (df_pag['mes'].astype(str).str.lower() == m_data) & (df_pag['Concepte'].astype(str).str.lower() == concept_val_pag.lower())
+                                    if mask.any():
+                                        df_pag.loc[mask, 'Import'] = import_carg_pag
+                                        df_pag.loc[mask, 'Banc'] = banc_pag
+                                        df_pag.loc[mask, 'Formapago'] = forma_pago_pag
+                                        df_pag.loc[mask, 'Categoria'] = cat_val_pag
+                                        df_pag.loc[mask, 'pagat'] = pagat_val_pag
+                                        df_pag.loc[mask, 'banc_desti_traspas'] = dest_banc_pag if dest_banc_pag else None
+                                        updated_count += 1
+                                    else:
+                                        new_row = {
+                                            'idPago': current_max_id,
+                                            'Banc': banc_pag,
+                                            'Formapago': forma_pago_pag,
+                                            'Data': f"{data_val_pag.day:02d}/{m_idx:02d}/{yr}",
+                                            'dia': data_val_pag.day,
+                                            'mes': m_data,
+                                            'any': yr,
+                                            'Categoria': cat_val_pag,
+                                            'Concepte': concept_val_pag,
+                                            'Import': import_carg_pag,
+                                            'pagat': pagat_val_pag,
+                                            'banc_desti_traspas': dest_banc_pag if dest_banc_pag else None
+                                        }
+                                        df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
+                                        current_max_id += 1
+                                        added_count += 1
+                            save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                            st.session_state["df_pag"] = df_pag
+                            st.success(f"Previsions desades: {added_count} creades i {updated_count} actualitzades!")
+                        else:
+                            new_row = {
+                                'idPago': int(df_pag['idPago'].max() + 1) if not df_pag.empty and 'idPago' in df_pag.columns else 1,
+                                'Banc': banc_pag,
+                                'Formapago': forma_pago_pag,
+                                'Data': data_val_pag.strftime('%d/%m/%Y'),
+                                'dia': data_val_pag.day,
+                                'mes': mes_val_pag,
+                                'any': any_val_pag,
+                                'Categoria': cat_val_pag,
+                                'Concepte': concept_val_pag,
+                                'Import': import_carg_pag,
+                                'pagat': pagat_val_pag,
+                                'banc_desti_traspas': dest_banc_pag if dest_banc_pag else None
+                            }
+                            df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
+                            save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                            st.session_state["df_pag"] = df_pag
+                            st.success("Previsió de pagament desada correctament!")
+                        for k in list(st.session_state.keys()):
+                            if k.startswith("pag_") or k == "rep_any_pag": del st.session_state[k]
+                        st.rerun()
+
+            st.markdown(f"#### 📋 Llistat de Pagaments Previstos ({selected_year})")
+            if not df_pag.empty:
+                df_pag_year = df_pag[df_pag['any'] == selected_year].copy()
+                cols_p = [c for c in ['mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_year.columns]
+                st.dataframe(
+                    df_pag_year[cols_p].style.format({'Import': '{:,.2f} €'}),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.info("No hi ha previsions de pagament.")
+
+    # ================= TAB: PREVISIÓ D'INGRESSOS =================
+    if tab_prev_ing:
+        with tab_prev_ing:
+            st.markdown("<h3 style='color:#f39c12;'>🟢 Previsió d'Ingressos (Nòmines i Altres)</h3>", unsafe_allow_html=True)
+            
+            with st.expander("➕ Nova Previsió d'Ingrés", expanded=True):
+                # Row 1 (4 columns)
+                r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+                with r1_col1:
+                    banc_ing = st.selectbox("Banc", [""] + get_config_banks(), index=0, key="ing_banc")
+                with r1_col2:
+                    data_val_ing = st.date_input("Data Previsió", value=datetime.today(), format="DD/MM/YYYY", key="ing_data")
+                    mes_val_ing = month_translations[CATALAN_MONTHS[data_val_ing.month - 1]]
+                    any_val_ing = data_val_ing.year
+                with r1_col3:
+                    import_ing_val = st.number_input("Import Ingrés (€)", min_value=0.0, value=None, step=0.01, key="ing_import")
+                with r1_col4:
+                    cat_val_ing = st.selectbox("Categoria", ["", "ingrés_general", "ingrés_extra"], index=0, key="ing_cat")
+                    
+                # Row 2 (4 columns)
+                r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+                with r2_col1:
+                    concept_options_ing = [""] + get_config_concepts(cat_val_ing) if cat_val_ing else [""]
+                    concept_val_ing = st.selectbox("Concepte", concept_options_ing, index=0, key="ing_concepte")
+                with r2_col2:
+                    cobrat_val_ing = st.selectbox("Estat", ["cobrat", "pendent"], key="ing_cobrat")
+                with r2_col3:
+                    repetir_ing = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="ing_repetir")
+                with r2_col4:
+                    repetir_any_limit_ing = st.selectbox("Fins a desembre de l'any:", [any_val_ing, any_val_ing + 1, any_val_ing + 2], index=0, key="rep_any_ing")
+                
+                col_btns_ing = st.columns([3.5, 2.0, 6.5])
+                with col_btns_ing[0]:
+                    submitted_ing = st.button("💾 Desar Previsió d'Ingrés", type="primary", use_container_width=True)
+                with col_btns_ing[1]:
+                    cancelled_ing = st.button("Cancel·lar", key="cancel_ing", use_container_width=True)
+                    
+                if cancelled_ing:
+                    for k in list(st.session_state.keys()):
+                        if k.startswith("ing_") or k == "rep_any_ing": del st.session_state[k]
+                    st.rerun()
+                    
+                if submitted_ing:
+                    if not concept_val_ing or not banc_ing or import_ing_val is None or import_ing_val <= 0:
+                        st.error("⚠️ Heu d'omplir Banc, Concepte i un Import vàlid.")
+                    else:
+                        if repetir_ing:
+                            current_max_id = int(df_ing['idIngres'].max() + 1) if not df_ing.empty and 'idIngres' in df_ing.columns else 1
+                            updated_count = 0
+                            added_count = 0
+                            for yr in range(any_val_ing, repetir_any_limit_ing + 1):
+                                start_month = data_val_ing.month if yr == any_val_ing else 1
+                                for m_idx in range(start_month, 13):
+                                    m_cat = CATALAN_MONTHS[m_idx - 1]
+                                    m_data = month_translations[m_cat]
+                                    
+                                    mask = (df_ing['any'] == yr) & (df_ing['mes'].astype(str).str.lower() == m_data) & (df_ing['Concepte'].astype(str).str.lower() == concept_val_ing.lower())
+                                    if mask.any():
+                                        df_ing.loc[mask, 'Import'] = import_ing_val
+                                        df_ing.loc[mask, 'Banc'] = banc_ing
+                                        df_ing.loc[mask, 'Categoria'] = cat_val_ing
+                                        df_ing.loc[mask, 'cobrat'] = cobrat_val_ing
+                                        updated_count += 1
+                                    else:
+                                        new_row = {
+                                            'idIngres': current_max_id,
+                                            'Banc': banc_ing,
+                                            'Data': f"{data_val_ing.day:02d}/{m_idx:02d}/{yr}",
+                                            'dia': data_val_ing.day,
+                                            'mes': m_data,
+                                            'any': yr,
+                                            'Categoria': cat_val_ing,
+                                            'Concepte': concept_val_ing,
+                                            'Import': import_ing_val,
+                                            'comentari': '',
+                                            'cobrat': cobrat_val_ing
+                                        }
+                                        df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
+                                        current_max_id += 1
+                                        added_count += 1
+                            save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                            st.session_state["df_ing"] = df_ing
+                            st.success(f"Previsions d'ingrés desades: {added_count} creades i {updated_count} actualitzades!")
+                        else:
+                            new_row = {
+                                'idIngres': int(df_ing['idIngres'].max() + 1) if not df_ing.empty and 'idIngres' in df_ing.columns else 1,
+                                'Banc': banc_ing,
+                                'Data': data_val_ing.strftime('%d/%m/%Y'),
+                                'dia': data_val_ing.day,
+                                'mes': mes_val_ing,
+                                'any': any_val_ing,
+                                'Categoria': cat_val_ing,
+                                'Concepte': concept_val_ing,
+                                'Import': import_ing_val,
+                                'comentari': '',
+                                'cobrat': cobrat_val_ing
+                            }
+                            df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
+                            save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                            st.session_state["df_ing"] = df_ing
+                            st.success("Previsió d'ingrés desada correctament!")
+                        for k in list(st.session_state.keys()):
+                            if k.startswith("ing_") or k == "rep_any_ing": del st.session_state[k]
+                        st.rerun()
+
+            st.markdown(f"#### 📋 Llistat d'Ingressos Previstos ({selected_year})")
+            if not df_ing.empty:
+                df_ing_year = df_ing[df_ing['any'] == selected_year].copy()
+                cols_i = [c for c in ['mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_year.columns]
+                st.dataframe(
+                    df_ing_year[cols_i].style.format({'Import': '{:,.2f} €'}),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.info("No hi ha previsions d'ingrés.")
+
+    # ================= TAB: INVERSIONS (TR CARTERA) =================
+    if tab_inversions:
+        with tab_inversions:
+            st.markdown("<h3 style='color:#f39c12;'>📈 Inversions (Trade Republic / TR Cartera)</h3>", unsafe_allow_html=True)
+            
+            with st.expander("➕ Nou Moviment TR Cartera", expanded=True):
+                r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+                with r1_col1:
+                    data_val_tr = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="tr_data_inv")
+                    mes_val_tr = month_translations[CATALAN_MONTHS[data_val_tr.month - 1]]
+                    any_val_tr = data_val_tr.year
+                with r1_col2:
+                    cartera_val_tr = st.selectbox("CARTERA", ["S&P500", "NVIDIA"], key="tr_cartera_inv")
+                with r1_col3:
+                    tr_concepte_inv = st.selectbox("CONCEPTE", ["Compra", "Venda", "Promoció", "CashBack"], key="tr_concepte_inv")
+                with r1_col4:
+                    tr_import_inv = st.number_input("Import (€)", min_value=0.0, value=0.0, step=0.01, key="tr_import_inv")
+                    
+                tr_comentari_inv = st.text_input("COMENTARI", value="", key="tr_comentari_inv")
+                
+                if st.button("💾 Desar Moviment TR Cartera", type="primary", use_container_width=True):
+                    if tr_import_inv <= 0 and tr_concepte_inv != "CashBack":
+                        st.error("L'import ha de ser superior a 0 €")
+                    else:
+                        with st.spinner("Desant moviment d'inversió..."):
+                            compra = tr_import_inv if tr_concepte_inv in ["Compra", "CashBack"] else 0.0
+                            venda = tr_import_inv if tr_concepte_inv in ["Venda", "Promoció"] else 0.0
+                            
+                            new_tr_row = {
+                                'DATA': data_val_tr.strftime('%Y-%m-%d'),
+                                'mes': mes_val_tr,
+                                'any': any_val_tr,
+                                'COMPRA': compra,
+                                'VENDA': venda,
+                                'CARTERA': cartera_val_tr,
+                                'CONCEPTE': tr_concepte_inv,
+                                'COMENTARI': tr_comentari_inv
+                            }
+                            
+                            supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                            supabase.table("tr_cartera").insert([new_tr_row]).execute()
+                            
+                            import_carg = tr_import_inv if tr_concepte_inv == "Compra" else 0.0
+                            import_ing = tr_import_inv if tr_concepte_inv != "Compra" else 0.0
+                            
+                            row_traderep = {
+                                'Data': data_val_tr.strftime('%Y-%m-%d'),
+                                'mes': mes_val_tr,
+                                'any': any_val_tr,
+                                'Banc': 'TradeRep.',
+                                'FormaPago': 'Compte',
+                                'Import càrrec': import_carg,
+                                'import ingrés': import_ing,
+                                'grup': 'op_banc',
+                                'Idcategoria': 'op_banc',
+                                'Concepte': tr_concepte_inv,
+                                'Descripcio': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(),
+                                'litres': 0.0,
+                                'Revisat': True
+                            }
+                            row_trcartera = {
+                                'Data': data_val_tr.strftime('%Y-%m-%d'),
+                                'mes': mes_val_tr,
+                                'any': any_val_tr,
+                                'Banc': 'TR Cartera',
+                                'FormaPago': 'Compte',
+                                'Import càrrec': import_ing,
+                                'import ingrés': import_carg,
+                                'grup': 'op_banc',
+                                'Idcategoria': 'op_banc',
+                                'Concepte': tr_concepte_inv,
+                                'Descripcio': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(),
+                                'litres': 0.0,
+                                'Revisat': True
+                            }
+                            supabase.table("despeses").insert([row_traderep, row_trcartera]).execute()
+                            
+                            st.success("Moviment TR Cartera desat correctament!")
+                            st.cache_data.clear()
+                            st.rerun()
+
+            st.markdown("#### 📊 Resum i Balanç d'Inversions")
+            if not df_cartera.empty:
+                col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
+                sp_compres = df_cartera[df_cartera['CARTERA'] == 'S&P500']['COMPRA'].sum()
+                nv_compres = df_cartera[df_cartera['CARTERA'] == 'NVIDIA']['COMPRA'].sum()
+                total_vendes = df_cartera['VENDA'].sum()
+                total_cashback = df_cartera[df_cartera['CONCEPTE'] == 'CashBack']['COMPRA'].sum()
+                
+                with col_kpi1:
+                    st.metric("Total S&P500", f"{sp_compres:,.2f} €")
+                with col_kpi2:
+                    st.metric("Total NVIDIA", f"{nv_compres:,.2f} €")
+                with col_kpi3:
+                    st.metric("Total Vendes", f"{total_vendes:,.2f} €")
+                with col_kpi4:
+                    st.metric("CashBack Acumulat", f"{total_cashback:,.2f} €")
+
+                st.markdown("#### 📋 Històric de Moviments TR Cartera")
+                cols_tr = [c for c in ['DATA', 'CARTERA', 'CONCEPTE', 'COMPRA', 'VENDA', 'COMENTARI'] if c in df_cartera.columns]
+                st.dataframe(
+                    df_cartera[cols_tr].style.format({'COMPRA': '{:,.2f} €', 'VENDA': '{:,.2f} €'}),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.info("No hi ha registres d'inversions a TR Cartera.")
+
+    # ================= TAB: ESTALVIS (ESTALVI DP) =================
+    if tab_estalvis:
+        with tab_estalvis:
+            st.markdown("<h3 style='color:#f39c12;'>💰 Pla d'Estalvi (Fons Estalvi DP)</h3>", unsafe_allow_html=True)
+            
+            if not df_est.empty:
+                df_est_work = df_est.copy()
+                df_est_work['quota_val'] = clean_numeric(df_est_work.get('quota', 0))
+                df_est_work['aport_val'] = clean_numeric(df_est_work.get('aportació', 0))
+                df_est_work['rescat_val'] = clean_numeric(df_est_work.get('rescat', 0))
+                
+                total_quotes = df_est_work['quota_val'].sum()
+                total_aports = df_est_work['aport_val'].sum()
+                total_rescats = df_est_work['rescat_val'].sum()
+                capital_acumulat = total_quotes + total_aports - total_rescats
+                
+                col_e1, col_e2, col_e3, col_e4 = st.columns(4)
+                with col_e1:
+                    st.metric("Capital Total Acumulat", f"{capital_acumulat:,.2f} €")
+                with col_e2:
+                    st.metric("Quotes Periòdiques", f"{total_quotes:,.2f} €")
+                with col_e3:
+                    st.metric("Aportacions Extra", f"{total_aports:,.2f} €")
+                with col_e4:
+                    st.metric("Rescats", f"{total_rescats:,.2f} €")
+
+                # Evolution chart of accumulated savings over time
+                st.markdown("#### 📈 Evolució del Capital Acumulat")
+                
+                # Sort chronological
+                if 'any' in df_est_work.columns and 'mes' in df_est_work.columns:
+                    month_order = {
+                        'gener': 1, 'febrer': 2, 'març': 3, 'abril': 4, 'maig': 5, 'juny': 6,
+                        'juliol': 7, 'agost': 8, 'setembre': 9, 'octubre': 10, 'novembre': 11, 'desembre': 12,
+                        'enero': 1, 'febrero': 2, 'marzo': 3, 'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8, 'septiembre': 9, 'noviembre': 11, 'diciembre': 12
+                    }
+                    df_est_work['m_num'] = df_est_work['mes'].astype(str).str.lower().map(month_order).fillna(1).astype(int)
+                    df_est_work['sort_score'] = df_est_work['any'].astype(int) * 100 + df_est_work['m_num']
+                    df_est_sorted = df_est_work.sort_values(by='sort_score', ascending=True).copy()
+                    
+                    df_est_sorted['net_monthly'] = df_est_sorted['quota_val'] + df_est_sorted['aport_val'] - df_est_sorted['rescat_val']
+                    df_est_sorted['Capital_Acumulat'] = df_est_sorted['net_monthly'].cumsum()
+                    df_est_sorted['Period'] = df_est_sorted['mes'].astype(str).str.capitalize() + " " + df_est_sorted['any'].astype(str)
+                    
+                    fig_est = px.area(
+                        df_est_sorted,
+                        x='Period',
+                        y='Capital_Acumulat',
+                        labels={'Period': 'Mes', 'Capital_Acumulat': 'Capital (€)'},
+                        color_discrete_sequence=['#22c55e']
+                    )
+                    fig_est.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='#f8fafc'),
+                        xaxis=dict(gridcolor='#334155'),
+                        yaxis=dict(gridcolor='#334155'),
+                        margin=dict(t=20, b=20, l=10, r=10)
+                    )
+                    st.plotly_chart(fig_est, use_container_width=True)
+
+                st.markdown("#### 📋 Detall Històric del Fons Estalvi DP")
+                cols_est = [c for c in ['any', 'mes', 'quota', 'aportació', 'rescat', 'pérdua', 'pagat'] if c in df_est.columns]
+                st.dataframe(
+                    df_est[cols_est].style.format({'quota': '{:,.2f} €', 'aportació': '{:,.2f} €', 'rescat': '{:,.2f} €', 'pérdua': '{:,.2f} €'}, na_rep=""),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.info("No hi ha dades registrades al pla d'estalvi.")
+
+
+        # ================= TAB 4: XAT IA =================
     if tab_xat:
         with tab_xat:
             st.markdown("<h3 style='color:#f39c12;'>💬 Xat IA amb Gemini</h3>", unsafe_allow_html=True)

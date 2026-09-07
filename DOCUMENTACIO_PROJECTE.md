@@ -25,7 +25,13 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 2. **📊 Dashboard General**: `modules/dashboard.py` *(Icona pantalla + gràfic)* - Vista de panell principal amb targetes de saldos bancaris (BBVA, La Caixa, etc.), resum mensual d'ingressos i despeses de l'any i gràfics comparatius.
 
 ### 🔵 Part Esquerra (5 nodes amb rodona):
-3. **📈 Mòdul Econòmic**: `modules/economic.py` *(Icona gràfic ascens)* - Gestió econòmica detallada organitzada en pestanyes: Detalls del Mes (rebuts, pagaments, hipoteca, taula anual i gràfic comparatiu mensual amb previsions/reals) i Xat IA.
+3. **📈 Mòdul Econòmic**: `modules/economic.py` *(Icona gràfic ascens)* - Gestió econòmica i financera organitzada en pestanyes especialitzades:
+   - `📈 Detalls del Mes`: Saldos bancaris, rebuts, pagaments, hipoteca, taula anual i gràfic comparatiu de barres amb previsions vs real.
+   - `🔴 Prev. Despeses`: Formulari d'alta i llistat de previsions de despeses amb recurrència mensual.
+   - `🟢 Prev. Ingressos`: Formulari d'alta i llistat de previsions d'ingressos amb recurrència mensual.
+   - `📈 Inversions`: Formulari de moviments de TR Cartera (S&P500, NVIDIA), KPIs i taula d'inversions.
+   - `💰 Estalvis`: Fons d'estalvi `estalviDP`, quotes, aportacions, rescats i **gràfic interactiu d'evolució del capital acumulat**.
+   - `🤖 Xat IA`: Assistent financer intel·ligent Gemini.
 4. **📹 Seguretat**: `modules/seguretat.py` *(Icona càmera)* - Estat de càmeres, accessos i alarmes.
 5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Tasques de la llar, reparacions i històric de manteniment.
 6. **📶 Domòtica**: `modules/domotica.py` *(Icona WiFi)* - Integració amb Home Assistant, llums i sensors.
@@ -35,8 +41,16 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari familiar, esdeveniments i sincronització.
 9. **💊 Control Medicació**: `modules/medicacio.py` *(Icona pastilles / flascó)* - Pautes mèdiques, dosis, horaris i farmaciola.
 10. **🍽️ Menjar**: `modules/menjar.py` *(Icona coberts)* - Rebost, receptes, planificació de menús setmanals i inventari.
-11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Manteniment de vehicles, ITV, assegurança, revisions i consum de combustible.
-12. **🛒 Compres**: `modules/compres.py` *(Icona carro de compra)* - Centre unificat d'entrada de despeses i compres: Compres Super (OCR intel·ligent Gemini), Compres generals (despeses reals, previsions, súper, km cotxe, TR Cartera), Llista de la Compra, Rebost / Stock i Estadístiques.
+11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Gestió del vehicle organitzada en pestanyes:
+   - `🛣️ Registre Km i Rutes`: Formulari per registrar lectures d'odòmetre, càlcul automàtic de km del trajecte, selector/plantilles de rutes i taula d'històric.
+   - `🔧 Canvi d'Oli`: Seguiment de km actuals, límit de canvi d'oli i km restants.
+   - `⛽ Consum i Proveïments`: Gràfic de consum anual L/100km i taula d'històric de gasolina.
+12. **🛒 Compres**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral de compres i despeses:
+   - `📄 Compres Super`: Escàner OCR intel·ligent Gemini Vision i introducció línia per línia de tiquets.
+   - `📝 Ingressos / Despeses`: Formulari directe de **Moviments Reals** (Despesa, Ingrés, Traspàs), proveïment de gasolina amb calculadora, tiquets pendents i taula d'últims moviments.
+   - `📋 Llista de la Compra`: Llista de productes sota stock mínim i peticions puntuals.
+   - `📦 Rebost / Stock`: Inventari de productes del rebost i control d'existències.
+   - `📊 Estadístiques`: Gràfics i mètriques de despesa en supermercats.
 
 ---
 
@@ -55,11 +69,11 @@ Dashboard/
 ├── modules/
 │   ├── admin.py              # ⚙️ Configuració global
 │   ├── calendari.py          # 📅 Agenda familiar
-│   ├── compres.py            # 🛒 Compres Super, Compres generals, Llista compra, Rebost i Stats
-│   ├── cotxe.py              # 🚗 Control de vehicles
+│   ├── compres.py            # 🛒 Compres Super, Ingressos/Despeses reals, Llista compra, Rebost i Stats
+│   ├── cotxe.py              # 🚗 Registre km/rutes, Canvi d'oli i Consum
 │   ├── dashboard.py          # 📊 Dashboard general
 │   ├── domotica.py           # 📶 Domòtica (Home Assistant)
-│   ├── economic.py           # 📈 Detalls econòmics mensuals i Xat IA
+│   ├── economic.py           # 📈 Detalls mes, Prev. Despeses, Prev. Ingressos, Inversions, Estalvis i Xat IA
 │   ├── jocs.py               # 🎲 Jocs i oci
 │   ├── manteniment.py        # 🛠️ Manteniment i reparacions
 │   ├── medicacio.py          # 💊 Control de medicació
