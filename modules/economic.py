@@ -222,14 +222,8 @@ def render(view_mode="economic"):
     st.markdown(
         f"""
         <style>
-        .st-key-settings_gear_popover {{
-            position: fixed !important;
-            top: 1.5rem !important;
-            right: 1.2rem !important;
-            z-index: 10000 !important;
-        }}
         </style>
-<div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 3.5rem; right: 1rem; z-index: 9999; 
+<div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 1.5rem; right: 1rem; z-index: 9999; 
                     font-size: 1.8rem; cursor: help; 
                     text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
 {role_icon}
@@ -2986,14 +2980,6 @@ def render(view_mode="economic"):
         if st.button("🔙 Inici", use_container_width=True, key=f"btn_back_{view_mode}"):
             st.session_state.current_module = None
             st.rerun()
-                
-    
-    # Global settings popover, positioned fixed at top right via CSS
-    with st.popover("⚙️", key="settings_gear_popover"):
-        st.markdown("<div style='margin-bottom:10px;'><a href='?' target='_self' style='text-decoration:none;'>🔄 Reiniciar App</a></div>", unsafe_allow_html=True)
-        def on_theme_change():
-            pass
-        st.radio("Tema", ["Fosc", "Clar"], key="app_theme", label_visibility="collapsed", on_change=on_theme_change)
     
     
     
