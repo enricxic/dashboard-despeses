@@ -32,7 +32,7 @@ def render():
     if "edit_event_data" not in st.session_state:
         st.session_state.edit_event_data = None
     if "selected_day_for_new" not in st.session_state:
-        st.session_state.selected_day_for_new = None
+        st.session_state.selected_day_for_new = today
 
     # Mesos en català
     mesos_cat = [
@@ -43,7 +43,6 @@ def render():
     # Membres disponibles
     familia = app_cfg.get("familia", [])
     membres_noms = [m.get("nom", "Familiar") for m in familia]
-    membres_map = {m.get("nom", "Familiar"): m for m in familia}
     
     # CSS avançat estil Google Calendar / Chrome Glassmorphism
     st.markdown(f"""
@@ -59,84 +58,117 @@ def render():
         padding: 14px 20px;
         margin-bottom: 16px;
     }}
-    .cal-title-month {{
-        font-size: 1.6rem;
-        font-weight: 800;
-        color: {text_primary};
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }}
-    .cal-grid-table {{
+    .cal-grid-container {{
         width: 100%;
-        border-collapse: separate;
-        border-spacing: 4px;
         margin-bottom: 20px;
+        user-select: none;
     }}
-    .cal-th {{
+    .cal-grid-header {{
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        margin-bottom: 6px;
+    }}
+    .cal-grid-th {{
         text-align: center;
-        padding: 10px 4px;
-        font-size: 0.85rem;
+        padding: 8px 2px;
+        font-size: 0.82rem;
         font-weight: 700;
         text-transform: uppercase;
-        color: {text_secondary};
         background: {bg_card_sub};
         border-radius: 8px;
+        border: 1px solid {border_color};
     }}
-    .cal-cell {{
+    .cal-grid-body {{
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+    }}
+    .cal-grid-cell {{
         background: {bg_card};
         border: 1px solid {border_color};
         border-radius: 12px;
-        padding: 8px;
-        min-height: 110px;
-        vertical-align: top;
+        padding: 6px;
+        min-height: 95px;
+        display: flex;
+        flex-direction: column;
         transition: all 0.2s ease;
+        overflow: hidden;
     }}
-    .cal-cell:hover {{
+    .cal-grid-cell:hover {{
         border-color: #38bdf8;
         background: {bg_card_sub};
     }}
-    .cal-cell-today {{
+    .cal-grid-cell.today {{
         border: 2px solid #38bdf8 !important;
         box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
     }}
-    .cal-cell-other-month {{
+    .cal-grid-cell.other-month {{
         opacity: 0.35;
     }}
+    .cal-cell-head {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }}
     .cal-day-num {{
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 800;
         color: {text_primary};
         display: inline-block;
-        width: 26px;
-        height: 26px;
-        line-height: 26px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
         text-align: center;
         border-radius: 50%;
-        margin-bottom: 6px;
     }}
-    .cal-day-num-today {{
+    .cal-day-num.today-num {{
         background: #0284c7;
         color: #ffffff !important;
     }}
-    .cal-event-badge {{
-        font-size: 0.75rem;
-        padding: 3px 6px;
-        border-radius: 6px;
-        margin-bottom: 4px;
+    .today-badge {{
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #38bdf8;
+    }}
+    .ev-count-badge {{
+        font-size: 0.65rem;
+        font-weight: 800;
+        background: #38bdf822;
+        color: #38bdf8;
+        border-radius: 10px;
+        padding: 1px 5px;
+    }}
+    .cal-cell-events {{
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex-grow: 1;
+    }}
+    .cal-ev-chip {{
+        font-size: 0.72rem;
+        padding: 2px 5px;
+        border-radius: 5px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 3px;
         font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.1s ease;
+        line-height: 1.2;
     }}
-    .cal-event-badge:hover {{
-        transform: scale(1.02);
-        filter: brightness(1.15);
+    .ev-chip-txt {{
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }}
+    .cal-ev-more {{
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #38bdf8;
+        text-align: center;
     }}
     .agenda-card {{
         background: {bg_card};
@@ -156,13 +188,13 @@ def render():
     .agenda-date-box {{
         background: {bg_card_sub};
         border-radius: 10px;
-        padding: 8px 14px;
+        padding: 8px 12px;
         text-align: center;
-        min-width: 65px;
+        min-width: 60px;
         margin-right: 16px;
     }}
     .agenda-date-day {{
-        font-size: 1.4rem;
+        font-size: 1.35rem;
         font-weight: 800;
         color: #38bdf8;
         line-height: 1;
@@ -172,6 +204,35 @@ def render():
         font-weight: 700;
         text-transform: uppercase;
         color: {text_secondary};
+    }}
+
+    @media (max-width: 768px) {{
+        .cal-grid-header {{
+            gap: 2px !important;
+        }}
+        .cal-grid-body {{
+            gap: 2px !important;
+        }}
+        .cal-grid-cell {{
+            min-height: 52px !important;
+            padding: 3px !important;
+            border-radius: 6px !important;
+        }}
+        .cal-day-num {{
+            font-size: 0.75rem !important;
+            width: 18px !important;
+            height: 18px !important;
+            line-height: 18px !important;
+        }}
+        .cal-ev-chip {{
+            padding: 1px 2px !important;
+        }}
+        .ev-chip-txt {{
+            display: none !important;
+        }}
+        .today-badge {{
+            display: none !important;
+        }}
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -231,7 +292,7 @@ def render():
             tab_manual, tab_quick = st.tabs(["📝 Formulari complet", "⚡ Creació ràpida intel·ligent"])
             
             with tab_quick:
-                st.markdown("<div style='font-size:0.85rem; color:#94a3b8; margin-bottom:6px;'>Escriu en llenguatge natural (ex: <i>'Demà a les 18:30 metge Enric a Terrassa'</i> o <i>'Dimecres sopar familiar 21h'</i>)</div>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size:0.85rem; color:#94a3b8; margin-bottom:6px;'>Escriu en llenguatge natural (ex: <i>'Demà dinar familiar 14h'</i>, <i>'Divendres sopar 21h'</i>, <i>'Demà 18:30 metge Enric'</i>)</div>", unsafe_allow_html=True)
                 c_q1, c_q2 = st.columns([8, 2])
                 with c_q1:
                     quick_txt = st.text_input("Descripció de l'esdeveniment", placeholder="Escriu aquí el que vols agendar...", label_visibility="collapsed", key="quick_input_txt")
@@ -270,7 +331,7 @@ def render():
                 
                 c_f1, c_f2 = st.columns([6, 4])
                 with c_f1:
-                    f_title = st.text_input("Títol de l'esdeveniment *", value=default_title, key="f_ev_title", placeholder="Ex: Cita dentista, Partit de bàsquet, Aniversari...")
+                    f_title = st.text_input("Títol de l'esdeveniment *", value=default_title, key="f_ev_title", placeholder="Ex: Cita dentista, Dinar familiar, Sopar amb amics...")
                 with c_f2:
                     all_member_options = ["Tota la família"] + membres_noms
                     idx_m = all_member_options.index(default_member) if default_member in all_member_options else 0
@@ -292,20 +353,19 @@ def render():
                         
                 c_f6, c_f7 = st.columns([6, 4])
                 with c_f6:
-                    f_loc = st.text_input("📍 Ubicació / Adreça", value=default_loc, placeholder="Ex: Hospital de Terrassa, Carrer Major 12...", key="f_ev_loc")
+                    f_loc = st.text_input("📍 Ubicació / Adreça", value=default_loc, placeholder="Ex: Restaurant Can Xic, Hospital de Terrassa...", key="f_ev_loc")
                 with c_f7:
                     rep_opts = ["Cap", "Setmanal", "Mensual", "Anual"]
                     idx_rep = rep_opts.index(default_rep) if default_rep in rep_opts else 0
                     f_rep = st.selectbox("🔁 Repetició", rep_opts, index=idx_rep, key="f_ev_rep")
                     
-                f_desc = st.text_area("📝 Notes i detalls", value=default_desc, placeholder="Indicacions mèdiques, documentació necessària, etc.", key="f_ev_desc", height=70)
+                f_desc = st.text_area("📝 Notes i detalls", value=default_desc, placeholder="Indicacions, reserves, menú, etc.", key="f_ev_desc", height=70)
                 
                 c_act1, c_act2, c_act3 = st.columns([3, 4, 3])
                 with c_act1:
                     if st.button("❌ Cancel·lar", use_container_width=True, key="btn_cancel_ev"):
                         st.session_state.show_event_modal = False
                         st.session_state.edit_event_data = None
-                        st.session_state.selected_day_for_new = None
                         st.rerun()
                 with c_act2:
                     if st.button("💾 Desar Esdeveniment", type="primary", use_container_width=True, key="btn_save_ev"):
@@ -332,7 +392,6 @@ def render():
                                 
                             st.session_state.show_event_modal = False
                             st.session_state.edit_event_data = None
-                            st.session_state.selected_day_for_new = None
                             st.rerun()
                 with c_act3:
                     # Enllaç ràpid a Google Calendar
@@ -425,109 +484,124 @@ def render():
     st.write("")
 
     # =========================================================================
-    # VISTA 1: CALENDARI (GOOGLE CALENDAR STYLE GRID)
+    # VISTA 1: CALENDARI (GOOGLE CALENDAR STYLE CSS GRID)
     # =========================================================================
     if st.session_state.cal_view_mode == "grid":
-        # Dies de la setmana en català
         setmana_dies = ["Dll", "Dmt", "Dmc", "Djs", "Dvd", "Dss", "Dmg"]
-        
-        # Matriu del mes (dilluns com a primer dia de la setmana)
         cal = calendar.Calendar(firstweekday=0)
         month_days = cal.monthdatescalendar(cur_year, cur_month)
         
-        # Renderitzar capçalera de dies
-        cols_th = st.columns(7)
+        # Construir tot el HTML de la graella en un únic bloc continu i segur
+        html_grid = []
+        html_grid.append('<div class="cal-grid-container">')
+        
+        # Capçalera dels 7 dies
+        html_grid.append('<div class="cal-grid-header">')
         for idx_th, d_nom in enumerate(setmana_dies):
-            with cols_th[idx_th]:
-                is_weekend = (idx_th >= 5)
-                th_color = "#38bdf8" if is_weekend else text_secondary
-                st.markdown(f"<div class='cal-th' style='color:{th_color};'>{d_nom}</div>", unsafe_allow_html=True)
-                
-        # Renderitzar graella de setmanes
+            is_weekend = (idx_th >= 5)
+            th_color = "#38bdf8" if is_weekend else text_secondary
+            html_grid.append(f'<div class="cal-grid-th" style="color:{th_color};">{d_nom}</div>')
+        html_grid.append('</div>')
+        
+        # Cos de les setmanes
+        html_grid.append('<div class="cal-grid-body">')
         for week in month_days:
-            cols_week = st.columns(7)
-            for idx_d, d_obj in enumerate(week):
-                with cols_week[idx_d]:
-                    d_str = d_obj.strftime("%Y-%m-%d")
-                    is_current_month = (d_obj.month == cur_month)
-                    is_today = (d_obj == today)
+            for d_obj in week:
+                d_str = d_obj.strftime("%Y-%m-%d")
+                is_current_month = (d_obj.month == cur_month)
+                is_today = (d_obj == today)
+                
+                cell_classes = ["cal-grid-cell"]
+                if not is_current_month:
+                    cell_classes.append("other-month")
+                if is_today:
+                    cell_classes.append("today")
                     
-                    cell_class = "cal-cell"
-                    if not is_current_month:
-                        cell_class += " cal-cell-other-month"
-                    if is_today:
-                        cell_class += " cal-cell-today"
-                        
-                    num_class = "cal-day-num"
-                    if is_today:
-                        num_class += " cal-day-num-today"
-                        
-                    day_evs = events_by_date.get(d_str, [])
-                    
-                    # Targeta del dia
-                    st.markdown(f"""
-                    <div class="{cell_class}">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span class="{num_class}">{d_obj.day}</span>
-                            {"<span style='font-size:0.68rem; font-weight:800; color:#38bdf8;'>AVUI</span>" if is_today else ""}
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Llista de xips d'esdeveniments
-                    max_show = 3
-                    for ev_idx, ev in enumerate(day_evs[:max_show]):
-                        cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
-                        ev_color = ev.get("color", cat_info["color"])
-                        ev_time_disp = ev.get("start_time", "")
-                        ev_time_prefix = f"<b>{ev_time_disp}</b> " if ev_time_disp else ""
-                        ev_icon = cat_info["icon"]
-                        ev_title = ev.get("title", "Esdeveniment")
-                        
+                day_evs = events_by_date.get(d_str, [])
+                num_class = "cal-day-num today-num" if is_today else "cal-day-num"
+                
+                html_grid.append(f'<div class="{" ".join(cell_classes)}">')
+                html_grid.append('<div class="cal-cell-head">')
+                html_grid.append(f'<span class="{num_class}">{d_obj.day}</span>')
+                if is_today:
+                    html_grid.append('<span class="today-badge">AVUI</span>')
+                elif len(day_evs) > 0:
+                    html_grid.append(f'<span class="ev-count-badge">{len(day_evs)}</span>')
+                html_grid.append('</div>')
+                
+                # Xips dels esdeveniments
+                html_grid.append('<div class="cal-cell-events">')
+                for ev in day_evs[:3]:
+                    cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
+                    ev_color = ev.get("color", cat_info["color"])
+                    ev_time = ev.get("start_time", "")
+                    time_pfx = f"<b>{ev_time}</b> " if ev_time else ""
+                    ev_icon = cat_info["icon"]
+                    ev_title = ev.get("title", "Esdeveniment")
+                    html_grid.append(
+                        f'<div class="cal-ev-chip" style="background:{ev_color}22; color:{ev_color}; border:1px solid {ev_color}55;" title="{ev_title} ({ev.get("member", "Família")})">'
+                        f'<span>{ev_icon}</span> <span class="ev-chip-txt">{time_pfx}{ev_title}</span>'
+                        f'</div>'
+                    )
+                if len(day_evs) > 3:
+                    html_grid.append(f'<div class="cal-ev-more">+{len(day_evs) - 3} més</div>')
+                html_grid.append('</div>') # end cal-cell-events
+                
+                html_grid.append('</div>') # end cal-grid-cell
+                
+        html_grid.append('</div>') # end cal-grid-body
+        html_grid.append('</div>') # end cal-grid-container
+        
+        # Renderitzar graella HTML pura
+        st.markdown("".join(html_grid), unsafe_allow_html=True)
+        
+        # Secció interactiva de Detalls del Dia i Creació Ràpida
+        st.markdown(f"#### 🔍 Consulta i Gestió del Dia")
+        c_sel_d1, c_sel_d2 = st.columns([6, 4], vertical_alignment="center")
+        with c_sel_d1:
+            sel_day = st.date_input("Tria un dia per veure/afegir esdeveniments", value=st.session_state.selected_day_for_new or today, key="picker_sel_day")
+            st.session_state.selected_day_for_new = sel_day
+        with c_sel_d2:
+            if st.button("➕ Nou Esdeveniment per a aquest dia", type="primary", use_container_width=True, key="btn_add_for_sel_day"):
+                st.session_state.show_event_modal = True
+                st.session_state.edit_event_data = None
+                st.rerun()
+                
+        sel_day_str = sel_day.strftime("%Y-%m-%d")
+        sel_day_evs = events_by_date.get(sel_day_str, [])
+        
+        if not sel_day_evs:
+            st.info(f"No hi ha cap esdeveniment agendat per al dia **{sel_day.strftime('%d/%m/%Y')}**.")
+        else:
+            for ev in sel_day_evs:
+                cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
+                time_disp = "Tot el dia" if ev.get("all_day", False) else (ev.get("start_time", "") or "Sense hora")
+                loc_disp = f" · 📍 {ev.get('location')}" if ev.get("location") else ""
+                
+                with st.container():
+                    c1, c2 = st.columns([7.5, 2.5], vertical_alignment="center")
+                    with c1:
                         st.markdown(f"""
-                        <div class="cal-event-badge" style="background:{ev_color}22; color:{ev_color}; border:1px solid {ev_color}55;" title="{ev_title} ({ev.get('member', 'Família')})">
-                            <span>{ev_icon}</span>
-                            <span style="overflow:hidden; text-overflow:ellipsis;">{ev_time_prefix}{ev_title}</span>
+                        <div style="font-size:1.05rem; font-weight:700; color:{text_primary};">
+                            {cat_info['icon']} {ev.get('title')}
+                        </div>
+                        <div style="font-size:0.85rem; color:{text_secondary};">
+                            ⏰ <b>{time_disp}</b> · 👤 {ev.get('member', 'Família')}{loc_disp}
                         </div>
                         """, unsafe_allow_html=True)
-                        
-                    if len(day_evs) > max_show:
-                        extra_count = len(day_evs) - max_show
-                        st.markdown(f"<div style='font-size:0.7rem; font-weight:700; color:#38bdf8; text-align:center;'>+{extra_count} més...</div>", unsafe_allow_html=True)
-                        
-                    st.markdown("</div>", unsafe_allow_html=True)
-                    
-                    # Botó ràpid per crear o veure detalls si hi ha esdeveniments
-                    if day_evs:
-                        with st.popover(f"👁️ Detalls ({len(day_evs)})", use_container_width=True):
-                            st.markdown(f"#### 📅 {d_obj.strftime('%d/%m/%Y')}")
-                            for d_ev in day_evs:
-                                d_cat = cm.CATEGORIES.get(d_ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
-                                st.markdown(f"**{d_cat['icon']} {d_ev.get('title')}**")
-                                st.caption(f"👤 {d_ev.get('member', 'Família')} · ⏰ {d_ev.get('start_time', 'Tot el dia')} · 📍 {d_ev.get('location', 'Sense ubicació')}")
-                                if d_ev.get("description"):
-                                    st.write(d_ev.get("description"))
-                                
-                                c_ev_act1, c_ev_act2 = st.columns(2)
-                                with c_ev_act1:
-                                    g_url = cm.generate_google_calendar_url(d_ev)
-                                    st.markdown(f'<a href="{g_url}" target="_blank"><button style="width:100%; border-radius:6px; border:none; background:#4285F4; color:#fff; font-size:0.75rem; padding:4px;">Google Cal</button></a>', unsafe_allow_html=True)
-                                with c_ev_act2:
-                                    if not d_ev.get("is_external", False):
-                                        if st.button("🗑️ Esborrar", key=f"del_ev_pop_{d_ev.get('id')}", use_container_width=True):
-                                            cm.delete_event(d_ev.get("id"))
-                                            st.rerun()
-                                st.markdown("---")
-                                
-                            if st.button("➕ Afegir esdeveniment", key=f"add_pop_{d_str}", use_container_width=True, type="primary"):
-                                st.session_state.selected_day_for_new = d_obj
-                                st.session_state.show_event_modal = True
-                                st.rerun()
-                    else:
-                        if is_current_month:
-                            if st.button("➕", key=f"quick_add_day_{d_str}", use_container_width=True, help=f"Afegir esdeveniment el dia {d_obj.day}"):
-                                st.session_state.selected_day_for_new = d_obj
-                                st.session_state.show_event_modal = True
-                                st.rerun()
+                        if ev.get("description"):
+                            st.caption(ev.get("description"))
+                    with c2:
+                        c_act1, c_act2 = st.columns(2)
+                        with c_act1:
+                            g_url = cm.generate_google_calendar_url(ev)
+                            st.markdown(f'<a href="{g_url}" target="_blank"><button style="width:100%; border-radius:6px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.75rem; padding:4px 0; cursor:pointer;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
+                        with c_act2:
+                            if not ev.get("is_external", False):
+                                if st.button("🗑️", key=f"del_sel_day_{ev.get('id')}", use_container_width=True, help="Esborrar esdeveniment"):
+                                    cm.delete_event(ev.get("id"))
+                                    st.rerun()
+                    st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:6px 0;'></div>", unsafe_allow_html=True)
 
     # =========================================================================
     # VISTA 2: AGENDA / LLISTA CRONOLÒGICA
