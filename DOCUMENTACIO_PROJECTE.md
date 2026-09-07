@@ -43,8 +43,8 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 10. **🍽️ Menjar**: `modules/menjar.py` *(Icona coberts)* - Rebost, receptes, planificació de menús setmanals i inventari.
 11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Gestió del vehicle organitzada en pestanyes:
    - `🛣️ Registre Km i Rutes`: Formulari per registrar lectures d'odòmetre, càlcul automàtic de km del trajecte, selector/plantilles de rutes i taula d'històric.
+   - `⛽ Repostatge`: Taula històrica de proveïments de la BBDD `gasolina` (alimentada des d'Ingressos/Despeses) amb mètriques de preu últim repostatge, preu més alt i més baix.
    - `🔧 Canvi d'Oli`: Seguiment de km actuals, límit de canvi d'oli i km restants.
-   - `⛽ Repostatge`: Taula històrica de proveïments de la BBDD `gasolina` (alimentada des d'Ingressos/Despeses).
    - `📊 Consum`: Gràfic de consum anual L/100km.
 12. **🛒 Compres**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral de compres i despeses:
    - `📄 Compres Super`: Escàner OCR intel·ligent Gemini Vision i introducció línia per línia de tiquets.
@@ -71,7 +71,7 @@ Dashboard/
 │   ├── admin.py              # ⚙️ Configuració global
 │   ├── calendari.py          # 📅 Agenda familiar
 │   ├── compres.py            # 🛒 Compres Super, Ingressos/Despeses reals, Llista compra, Rebost i Stats
-│   ├── cotxe.py              # 🚗 Registre km/rutes, Canvi d'oli, Repostatge i Consum
+│   ├── cotxe.py              # 🚗 Registre km/rutes, Repostatge, Canvi d'oli i Consum
 │   ├── dashboard.py          # 📊 Dashboard general
 │   ├── domotica.py           # 📶 Domòtica (Home Assistant)
 │   ├── economic.py           # 📈 Detalls mes, Prev. Despeses, Prev. Ingressos, Inversions, Estalvis i Xat IA

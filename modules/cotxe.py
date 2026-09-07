@@ -48,7 +48,7 @@ def render():
     df_km = st.session_state["df_km"]
     df_gas = st.session_state["df_gas"]
 
-    tab_km, tab_oli, tab_repostatge, tab_consum = st.tabs(["🛣️ Registre Km i Rutes", "🔧 Canvi d'Oli", "⛽ Repostatge", "📊 Consum"])
+    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(["🛣️ Registre Km i Rutes", "⛽ Repostatge", "🔧 Canvi d'Oli", "📊 Consum"])
 
     # ----------------------------------------------------
     # TAB 1: REGISTRE DE KM I RUTES
@@ -132,6 +132,9 @@ def render():
         st.markdown("<h4 style='color:#f39c12;'>📋 Històric de Rutes Registrades</h4>", unsafe_allow_html=True)
         if not df_km.empty:
             df_km_show = df_km.copy()
+            if 'parsed_date' not in df_km_show.columns:
+                df_km_show['parsed_date'] = df_km_show['data'].apply(parse_excel_date)
+            df_km_show = df_km_show.sort_values(by=['parsed_date', 'idRuta'], ascending=[False, False], errors='ignore')
             cols_avail = [c for c in ['data', 'cotxe', 'ruta', 'km', 'contador'] if c in df_km_show.columns]
             df_km_show = df_km_show[cols_avail].head(50)
             df_km_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'ruta': 'Ruta', 'km': 'Km trajecte', 'contador': 'Odòmetre'}, inplace=True)
@@ -140,7 +143,53 @@ def render():
             st.info("No hi ha rutes registrades.")
 
     # ----------------------------------------------------
-    # TAB 2: CANVI D'OLI I MANTENIMENT
+    # TAB 2: REPOSTATGE (BBDD GASOLINA)
+    # ----------------------------------------------------
+    with tab_repostatge:
+        st.markdown("<h4 style='color:#f39c12;'>⛽ Històric de Repostatges de Gasolina</h4>", unsafe_allow_html=True)
+        st.caption("💡 Les dades de proveïment s'alimenten automàticament des del formulari d'Ingressos / Despeses en seleccionar la categoria Gasolina.")
+        
+        if not df_gas.empty:
+            df_gas_work = df_gas.copy()
+            df_gas_work['parsed_date'] = df_gas_work['data'].apply(parse_excel_date)
+            df_gas_work['import_val'] = clean_numeric(df_gas_work.get('import', 0))
+            df_gas_work['litres_val'] = clean_numeric(df_gas_work.get('litres', 0))
+            df_gas_work['preu_l_val'] = clean_numeric(df_gas_work.get('€/l', 0))
+            
+            # Sort descending by date and idGasolina
+            sort_cols = [c for c in ['parsed_date', 'idGasolina'] if c in df_gas_work.columns]
+            df_gas_work = df_gas_work.sort_values(by=sort_cols, ascending=[False] * len(sort_cols))
+            
+            # Metrics: Preu últim repostatge, Preu més alt, Preu més baix
+            valid_preus = df_gas_work[df_gas_work['preu_l_val'] > 0.0]
+            
+            ultim_preu = df_gas_work.iloc[0]['preu_l_val'] if not df_gas_work.empty else 0.0
+            max_preu = valid_preus['preu_l_val'].max() if not valid_preus.empty else 0.0
+            min_preu = valid_preus['preu_l_val'].min() if not valid_preus.empty else 0.0
+            
+            c_k1, c_k2, c_k3 = st.columns(3)
+            with c_k1:
+                st.metric("Preu Últim Repostatge", f"{ultim_preu:.3f} €/l")
+            with c_k2:
+                st.metric("Preu Més Alt", f"{max_preu:.3f} €/l")
+            with c_k3:
+                st.metric("Preu Més Baix", f"{min_preu:.3f} €/l")
+
+            st.write("")
+            cols_g = [c for c in ['data', 'cotxe', 'lloc', 'import', '€/l', 'litres'] if c in df_gas_work.columns]
+            df_gas_show = df_gas_work[cols_g].copy()
+            df_gas_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'lloc': 'Benzinera', 'import': 'Import (€)', '€/l': 'Preu/L', 'litres': 'Litres'}, inplace=True)
+            
+            st.dataframe(
+                df_gas_show.style.format({'Import (€)': '{:,.2f} €', 'Preu/L': '{:.3f} €/l', 'Litres': '{:.2f} l'}, na_rep=""),
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.info("No hi ha registres de repostatge a la base de dades.")
+
+    # ----------------------------------------------------
+    # TAB 3: CANVI D'OLI I MANTENIMENT
     # ----------------------------------------------------
     with tab_oli:
         st.markdown("<h4 style='color:#f39c12;'>🔧 Estat del Canvi d'Oli</h4>", unsafe_allow_html=True)
@@ -166,45 +215,6 @@ def render():
             st.warning(f"⚠️ Atenció: Queden només {int(kms_left)} km per al proper canvi d'oli!")
         else:
             st.success("✅ El vehicle està dins dels marges òptims de quilometratge per a l'oli.")
-
-    # ----------------------------------------------------
-    # TAB 3: REPOSTATGE (BBDD GASOLINA)
-    # ----------------------------------------------------
-    with tab_repostatge:
-        st.markdown("<h4 style='color:#f39c12;'>⛽ Històric de Repostatges de Gasolina</h4>", unsafe_allow_html=True)
-        st.caption("💡 Les dades de proveïment s'alimenten automàticament des del formulari d'Ingressos / Despeses en seleccionar la categoria Gasolina.")
-        
-        if not df_gas.empty:
-            df_gas_work = df_gas.copy()
-            df_gas_work['import_val'] = clean_numeric(df_gas_work.get('import', 0))
-            df_gas_work['litres_val'] = clean_numeric(df_gas_work.get('litres', 0))
-            
-            tot_euros = df_gas_work['import_val'].sum()
-            tot_litres = df_gas_work['litres_val'].sum()
-            preu_mig = tot_euros / tot_litres if tot_litres > 0 else 0.0
-            
-            c_k1, c_k2, c_k3, c_k4 = st.columns(4)
-            with c_k1:
-                st.metric("Total Gastat", f"{tot_euros:,.2f} €")
-            with c_k2:
-                st.metric("Total Litres", f"{tot_litres:,.2f} l")
-            with c_k3:
-                st.metric("Preu Mitjà / Litre", f"{preu_mig:.3f} €/l")
-            with c_k4:
-                st.metric("Nº Repostatges", f"{len(df_gas_work)}")
-
-            st.write("")
-            cols_g = [c for c in ['data', 'cotxe', 'lloc', 'import', '€/l', 'litres'] if c in df_gas_work.columns]
-            df_gas_show = df_gas_work[cols_g].copy()
-            df_gas_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'lloc': 'Benzinera', 'import': 'Import (€)', '€/l': 'Preu/L', 'litres': 'Litres'}, inplace=True)
-            
-            st.dataframe(
-                df_gas_show.style.format({'Import (€)': '{:,.2f} €', 'Preu/L': '{:.3f} €/l', 'Litres': '{:.2f} l'}, na_rep=""),
-                use_container_width=True,
-                hide_index=True
-            )
-        else:
-            st.info("No hi ha registres de repostatge a la base de dades.")
 
     # ----------------------------------------------------
     # TAB 4: CONSUM ANUAL
