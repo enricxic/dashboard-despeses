@@ -3,6 +3,8 @@ import importlib
 import base64
 import os
 import textwrap
+import json
+from datetime import datetime
 from core.auth import check_password
 from core.config_manager import load_app_config
 
@@ -89,7 +91,7 @@ if "mod" in st.query_params:
         pass
     st.rerun()
 
-# Comprovar si s'ha sol·licitat una acció des del menú superior (Home, Reset, Logout, DB Actions)
+# Comprovar si s'ha sol·licitat una acció des del menú superior (Home, Reset, Logout, DB Actions, Edit JSON)
 if "action" in st.query_params:
     act = st.query_params.get("action")
     if act == "home":
@@ -103,6 +105,10 @@ if "action" in st.query_params:
             del st.session_state["password_correct"]
         if "auth" in st.query_params:
             del st.query_params["auth"]
+    elif act == "edit_json":
+        json_f = st.query_params.get("file", "")
+        if json_f:
+            st.session_state["editing_json_file"] = json_f
     elif act == "sync_db":
         st.cache_data.clear()
         st.session_state["db_synced_toast"] = True
@@ -122,6 +128,8 @@ if "action" in st.query_params:
         st.session_state["db_backup_toast"] = os.path.basename(zip_path)
     try:
         del st.query_params["action"]
+        if "file" in st.query_params:
+            del st.query_params["file"]
     except Exception:
         pass
     st.rerun()
@@ -137,10 +145,119 @@ if st.session_state.get("db_backup_toast"):
 if 'current_module' not in st.session_state:
     st.session_state.current_module = None
 
+def get_project_json_files():
+    json_files = []
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    exclude_dirs = {".git", "venv", ".venv", "app_menjar_pyside", "__pycache__", ".pytest_cache", ".idea", ".vscode", "build", "dist"}
+    for root, dirs, files in os.walk(base_dir):
+        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith(".")]
+        for f in files:
+            if f.endswith(".json"):
+                rel_path = os.path.relpath(os.path.join(root, f), base_dir).replace("\\", "/")
+                json_files.append(rel_path)
+    return sorted(json_files)
+
+@st.dialog("📝 Editor d'Arxius JSON", width="large")
+def show_json_editor_dialog(file_rel_path):
+    st.markdown(f"**📁 Fitxer:** `{file_rel_path}`")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    full_path = os.path.abspath(os.path.join(base_dir, file_rel_path))
+    
+    # Comprovació de seguretat de la ruta
+    if not full_path.startswith(base_dir) or not full_path.endswith(".json"):
+        st.error("Ruta de fitxer no permesa.")
+        if st.button("Tancar"):
+            if "editing_json_file" in st.session_state:
+                del st.session_state["editing_json_file"]
+            st.rerun()
+        return
+
+    content_key = f"json_content_{file_rel_path}"
+    
+    if content_key not in st.session_state:
+        if os.path.exists(full_path):
+            try:
+                with open(full_path, "r", encoding="utf-8") as f:
+                    raw_data = json.load(f)
+                    st.session_state[content_key] = json.dumps(raw_data, indent=2, ensure_ascii=False)
+            except Exception:
+                try:
+                    with open(full_path, "r", encoding="utf-8") as f:
+                        st.session_state[content_key] = f.read()
+                except Exception:
+                    st.session_state[content_key] = "{}"
+        else:
+            st.session_state[content_key] = "{}"
+
+    current_val = st.text_area(
+        "Contingut JSON",
+        value=st.session_state[content_key],
+        height=480,
+        label_visibility="collapsed",
+        key=f"ta_{content_key}"
+    )
+
+    c1, c2, c3 = st.columns([1.2, 1.2, 1])
+    with c1:
+        if st.button("💾 Desar canvis", use_container_width=True, type="primary"):
+            try:
+                parsed = json.loads(current_val)
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                with open(full_path, "w", encoding="utf-8") as f:
+                    json.dump(parsed, f, indent=2, ensure_ascii=False)
+                
+                # Sincronització especial si és categories_conceptes.json
+                if os.path.basename(full_path) == "categories_conceptes.json":
+                    try:
+                        from core.db import save_categories_conceptes
+                        save_categories_conceptes(parsed)
+                    except Exception:
+                        pass
+                
+                st.cache_data.clear()
+                st.toast("✅ Arxiu JSON desat correctament!", icon="💾")
+                if "editing_json_file" in st.session_state:
+                    del st.session_state["editing_json_file"]
+                if content_key in st.session_state:
+                    del st.session_state[content_key]
+                st.rerun()
+            except json.JSONDecodeError as err:
+                st.error(f"❌ Error de sintaxi JSON: {err}")
+            except Exception as e:
+                st.error(f"❌ Error en desar el fitxer: {e}")
+
+    with c2:
+        if st.button("🔄 Format / Validar", use_container_width=True):
+            try:
+                parsed = json.loads(current_val)
+                st.session_state[content_key] = json.dumps(parsed, indent=2, ensure_ascii=False)
+                st.toast("✅ JSON vàlid i formatat!", icon="✨")
+                st.rerun()
+            except json.JSONDecodeError as err:
+                st.error(f"❌ Error de sintaxi JSON: {err}")
+
+    with c3:
+        if st.button("❌ Tancar", use_container_width=True):
+            if "editing_json_file" in st.session_state:
+                del st.session_state["editing_json_file"]
+            if content_key in st.session_state:
+                del st.session_state[content_key]
+            st.rerun()
+
+if st.session_state.get("editing_json_file"):
+    show_json_editor_dialog(st.session_state["editing_json_file"])
+
 def render_traditional_menubar():
     auth_token = st.query_params.get("auth", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
     icones_actives = app_cfg.get("icones_actives", {})
+    
+    json_files = get_project_json_files()
+    json_items_html = ""
+    for jf in json_files:
+        json_items_html += f'<a href="?action=edit_json&file={jf}{auth_suffix}" target="_self">📄 {jf}</a>\n'
+    if not json_items_html:
+        json_items_html = '<span style="display:block; padding: 6px 14px; color: #64748b; font-size: 0.78rem;">Cap arxiu trobat</span>'
     
     menubar_html = f"""<style>
 div.block-container {{
@@ -214,6 +331,53 @@ div.block-container {{
     background-color: #0284c7 !important;
     color: #ffffff !important;
 }}
+.desktop-menubar .menu-dropdown .submenu-item {{
+    position: relative;
+}}
+.desktop-menubar .menu-dropdown .submenu-title {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 14px;
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s ease;
+}}
+.desktop-menubar .menu-dropdown .submenu-item:hover > .submenu-title {{
+    background-color: #0284c7;
+    color: #ffffff;
+}}
+.desktop-menubar .menu-dropdown .submenu-dropdown {{
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    min-width: 240px;
+    z-index: 1000000;
+    padding: 4px 0;
+}}
+.desktop-menubar .menu-dropdown .submenu-item:hover .submenu-dropdown {{
+    display: block;
+}}
+.desktop-menubar .submenu-dropdown a {{
+    display: block;
+    padding: 6px 14px;
+    color: #cbd5e1 !important;
+    text-decoration: none !important;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    transition: background 0.12s ease;
+}}
+.desktop-menubar .submenu-dropdown a:hover {{
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+}}
 </style>
 <nav class="desktop-menubar">
 <div class="menu-item">
@@ -222,6 +386,17 @@ div.block-container {{
 <a href="?action=home{auth_suffix}" target="_self">🏠 Pantalla d'inici</a>
 <a href="?action=reset{auth_suffix}" target="_self">🔄 Reiniciar aplicació / memòria cau</a>
 <a href="?action=logout" target="_self">🔒 Tancar sessió</a>
+</div>
+</div>
+<div class="menu-item">
+<span class="menu-title">Editar</span>
+<div class="menu-dropdown">
+<div class="submenu-item">
+<div class="submenu-title"><span>📂 Arxius JSON</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></div>
+<div class="submenu-dropdown">
+{json_items_html}
+</div>
+</div>
 </div>
 </div>
 <div class="menu-item">
