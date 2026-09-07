@@ -88,7 +88,7 @@ def render():
         if current_sel == "Nova ruta...":
             with r2_col2:
                 ruta_val = st.text_input("Escriu la nova ruta:", key=f"km_ruta_{km_version}")
-                save_ruta_template = st.checkbox("💾 Guardar com a plantilla permanent", value=True, key=f"km_save_ruta_{km_version}")
+                save_ruta_template = st.checkbox("💾 Afegir a la llista de rutes", value=True, key=f"km_save_ruta_{km_version}")
         else:
             with r2_col2:
                 st.write("")
