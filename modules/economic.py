@@ -543,6 +543,13 @@ def render(view_mode="economic"):
         return sorted(list(concepts))
     
     def get_config_banks():
+        try:
+            from core.config_manager import get_active_bancs
+            active_b = get_active_bancs()
+            if active_b:
+                return [b["nom"] for b in active_b]
+        except Exception:
+            pass
         if cat_config and "bancs" in cat_config:
             return cat_config["bancs"]
         return list(BANK_MAPPING.keys())
@@ -3252,8 +3259,13 @@ def render(view_mode="economic"):
     
         # 3. Re-calculate balances and render bank metrics at the top container
         current_balances = get_balances_up_to(selected_year, selected_month_data)
-        # Remove TR Cartera from Dashboard General balances as requested
-        current_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera'}
+        # Remove TR Cartera and any inactive banks from Dashboard General balances
+        try:
+            from core.config_manager import get_active_bancs
+            active_b_names = [b["nom"].strip().upper() for b in get_active_bancs()]
+            current_balances = {k: v for k, v in current_balances.items() if k.strip().upper() in active_b_names and k != 'TR Cartera'}
+        except Exception:
+            current_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera'}
         
         total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
         

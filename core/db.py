@@ -382,6 +382,13 @@ def get_config_concepts(category):
     return sorted(cleaned)
 
 def get_config_banks():
+    try:
+        from core.config_manager import get_active_bancs
+        active_b = get_active_bancs()
+        if active_b:
+            return [b["nom"] for b in active_b]
+    except Exception:
+        pass
     cfg = load_categories_conceptes()
     if cfg and "bancs" in cfg:
         return cfg["bancs"]

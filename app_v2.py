@@ -441,6 +441,8 @@ div.block-container {{
 <a href="?mod=modules.admin&tab=admin{auth_suffix}" target="_self">👤 Perfil Administrador</a>
 <a href="?mod=modules.admin&tab=titol{auth_suffix}" target="_self">🏷️ Títol de la casa</a>
 <a href="?mod=modules.admin&tab=familia{auth_suffix}" target="_self">👨‍👩‍👧‍👦 Membres de la família</a>
+<a href="?mod=modules.admin&tab=tutelats{auth_suffix}" target="_self">🤝 Persones Tutelades</a>
+<a href="?mod=modules.admin&tab=bancs{auth_suffix}" target="_self">🏦 Bancs i Comptes</a>
 <a href="?mod=modules.admin&tab=tema{auth_suffix}" target="_self">🎨 Aspecte i tema</a>
 <a href="?mod=modules.admin&tab=icones{auth_suffix}" target="_self">🔘 Icones actives d'inici</a>
 <a href="?mod=modules.admin&tab=idioma{auth_suffix}" target="_self">🌐 Idioma i traducció</a>

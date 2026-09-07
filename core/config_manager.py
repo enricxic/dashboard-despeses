@@ -24,6 +24,15 @@ DEFAULT_CONFIG = {
         {"id": 2, "nom": "Adult 2", "rol": "Mare", "edat": "42", "circunstancies": "Vegetariana", "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"}
     ],
     "tutelats": [],
+    "bancs": [
+        {"id": 1, "nom": "BBVA", "actiu": True, "icona": "🏦", "color": "#004481", "descripcio": "Compte Corrent BBVA", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 2, "nom": "LA CAIXA", "actiu": True, "icona": "🏦", "color": "#007eae", "descripcio": "Compte Corrent CaixaBank", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 3, "nom": "TRADE REPUB.", "actiu": True, "icona": "📈", "color": "#111827", "descripcio": "Compte Inversió Trade Republic", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 4, "nom": "CASA", "actiu": True, "icona": "🏠", "color": "#10b981", "descripcio": "Efectiu / Caixa de casa", "titular": "Llar", "compte_iban": ""},
+        {"id": 5, "nom": "CORTEINGLÉS", "actiu": True, "icona": "🛒", "color": "#047857", "descripcio": "Targeta El Corte Inglés", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 6, "nom": "TG.MONEDER", "actiu": True, "icona": "👛", "color": "#f59e0b", "descripcio": "Targeta Moneder / Prepago", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 7, "nom": "PAGO VISA", "actiu": True, "icona": "💳", "color": "#6366f1", "descripcio": "Targeta de Crèdit VISA", "titular": "Enric Xicars", "compte_iban": ""}
+    ],
     "tema": "Fosc",
     "icones_actives": {
         "dashboard": True,
@@ -52,6 +61,7 @@ TRANSLATIONS = {
         "casa_title": "Títol de la casa",
         "familia_title": "Família",
         "tutelats_title": "Persones Tutelades",
+        "bancs_title": "Bancs i Comptes",
         "tema_title": "Aspecte i Tema",
         "icones_title": "Icones d'inici",
         "idioma_title": "Idiomes",
@@ -66,6 +76,8 @@ TRANSLATIONS = {
         "admin_title": "Administrador",
         "casa_title": "Título de la casa",
         "familia_title": "Familia",
+        "tutelats_title": "Personas Tuteladas",
+        "bancs_title": "Bancos y Cuentas",
         "tema_title": "Aspecto y Tema",
         "icones_title": "Iconos de inicio",
         "idioma_title": "Idiomas",
@@ -80,6 +92,8 @@ TRANSLATIONS = {
         "admin_title": "Administrator",
         "casa_title": "House Title",
         "familia_title": "Family",
+        "tutelats_title": "Guarded Persons",
+        "bancs_title": "Banks and Accounts",
         "tema_title": "Appearance and Theme",
         "icones_title": "Home screen icons",
         "idioma_title": "Languages",
@@ -94,6 +108,8 @@ TRANSLATIONS = {
         "admin_title": "Administrateur",
         "casa_title": "Titre de la maison",
         "familia_title": "Famille",
+        "tutelats_title": "Personnes sous tutelle",
+        "bancs_title": "Banques et Comptes",
         "tema_title": "Apparence et Thème",
         "icones_title": "Icônes d'accueil",
         "idioma_title": "Langues",
@@ -131,6 +147,14 @@ def save_app_config(cfg_data):
     except Exception as e:
         print("Error saving config file:", e)
         return False
+
+def get_bancs_config():
+    cfg = load_app_config()
+    return cfg.get("bancs", DEFAULT_CONFIG.get("bancs", []))
+
+def get_active_bancs():
+    bancs = get_bancs_config()
+    return [b for b in bancs if b.get("actiu", True)]
 
 def get_translation(key, lang="ca"):
     lang_dict = TRANSLATIONS.get(lang, TRANSLATIONS["ca"])

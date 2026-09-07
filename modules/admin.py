@@ -173,6 +173,7 @@ def render():
             ("titol", "🏷️ Títol de la casa"),
             ("familia", "👨‍👩‍👧‍👦 Família"),
             ("tutelats", "🤝 Tutelats"),
+            ("bancs", "🏦 Bancs"),
             ("tema", "🎨 Aspecte i Tema"),
             ("icones", "🔘 Icones pantalla d'inici"),
             ("idioma", "🌐 Idiomes")
@@ -542,7 +543,118 @@ def render():
             st.markdown("</div>", unsafe_allow_html=True)
 
         # =========================================================================
-        # 4. SECCIÓ: TEMA I ASPECTE
+        # 5. SECCIÓ: BANCS I COMPTES
+        # =========================================================================
+        elif active == "bancs":
+            from core.config_manager import DEFAULT_CONFIG
+            bancs_list = list(cfg.get("bancs", DEFAULT_CONFIG.get("bancs", [])))
+            num_bancs = len(bancs_list)
+            num_actius = sum(1 for b in bancs_list if b.get("actiu", True))
+            
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🏦 Gestió de Bancs i Comptes ({num_actius} actius de {num_bancs})</div>
+                <div class="chrome-card-desc">Configura les entitats bancàries, targetes i caixes de la llar. <b>Important:</b> Si un banc té el check desactivat, quedarà ocult al Dashboard i no es podrà seleccionar per fer operacions ni despeses.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            
+            col_add_b1, col_add_b2 = st.columns([7.5, 2.5])
+            with col_add_b2:
+                if st.button("➕ Afegir Nou Banc", type="primary", use_container_width=True, key="btn_add_banc_sec"):
+                    next_id = max([b.get("id", 0) for b in bancs_list] + [0]) + 1
+                    bancs_list.append({
+                        "id": next_id,
+                        "nom": f"Banc {num_bancs + 1}",
+                        "actiu": True,
+                        "icona": "🏦",
+                        "color": "#3b82f6",
+                        "descripcio": "Compte o targeta",
+                        "titular": "Enric Xicars",
+                        "compte_iban": ""
+                    })
+                    cfg["bancs"] = bancs_list
+                    save_app_config(cfg)
+                    st.rerun()
+            
+            st.write("")
+            
+            updated_bancs = []
+            bank_icons_pool = ["🏦", "💳", "📈", "🏠", "🛒", "👛", "💰", "🪙", "💵", "🏢", "📱", "🛡️", "⭐"]
+            
+            if not bancs_list:
+                st.info("No hi ha cap entitat bancària configurada. Fes clic a '➕ Afegir Nou Banc' per començar.")
+            
+            for k, b_item in enumerate(bancs_list):
+                is_act = b_item.get("actiu", True)
+                status_badge = "🟢 ACTIU" if is_act else "⚪ INACTIU"
+                b_color = b_item.get("color", "#3b82f6")
+                b_icon = b_item.get("icona", "🏦")
+                b_nom = b_item.get("nom", f"Banc {k+1}")
+                b_desc = b_item.get("descripcio", "")
+                
+                header_title = f"{b_icon} {b_nom} — {status_badge}"
+                if b_desc:
+                    header_title += f" ({b_desc})"
+                
+                with st.expander(header_title, expanded=True):
+                    # Fila 1: Nom, Toggle Actiu, Icona
+                    c1, c2, c3 = st.columns([3.5, 3.5, 1.5], vertical_alignment="center")
+                    with c1:
+                        new_b_nom = st.text_input("Nom de l'entitat / compte", value=b_nom, key=f"b_nom_{k}")
+                    with c2:
+                        st.markdown("<div style='margin-bottom: 4px; font-size: 0.82rem; font-weight: 600;'>Estat operatiu</div>", unsafe_allow_html=True)
+                        new_b_actiu = st.toggle("Actiu (operar i mostrar)", value=is_act, key=f"b_act_{k}", help="Si està desactivat, no es veurà al Dashboard ni als formularis de despeses/ingressos.")
+                    with c3:
+                        cur_b_ic = b_icon
+                        b_ic_idx = bank_icons_pool.index(cur_b_ic) if cur_b_ic in bank_icons_pool else 0
+                        new_b_icon = st.selectbox("Icona", bank_icons_pool, index=b_ic_idx, key=f"b_icon_{k}")
+                    
+                    # Fila 2: Descripció, Titular, Color
+                    c4, c5, c6 = st.columns([4.0, 3.5, 1.5])
+                    with c4:
+                        new_b_desc = st.text_input("Tipus / Descripció", value=b_desc, key=f"b_desc_{k}", placeholder="ex: Compte corrent, Targeta crèdit, etc.")
+                    with c5:
+                        new_b_titular = st.text_input("Titular del compte", value=b_item.get("titular", ""), key=f"b_titular_{k}", placeholder="ex: Enric Xicars")
+                    with c6:
+                        new_b_color = st.color_picker("Color", value=b_color, key=f"b_color_{k}")
+                        
+                    # Fila 3: IBAN / Núm. Compte i Botó Esborrar
+                    c7, c8 = st.columns([8.2, 1.8], vertical_alignment="center")
+                    with c7:
+                        new_b_iban = st.text_input("IBAN / Núm. Compte o Targeta (opcional)", value=b_item.get("compte_iban", ""), key=f"b_iban_{k}", placeholder="ES00 0000 0000 0000 0000")
+                    with c8:
+                        st.write("")
+                        del_b_btn = st.button("🗑️ Eliminar", key=f"b_del_{k}", use_container_width=True)
+                    
+                    if not del_b_btn:
+                        updated_bancs.append({
+                            "id": b_item.get("id", k + 1),
+                            "nom": new_b_nom,
+                            "actiu": new_b_actiu,
+                            "icona": new_b_icon,
+                            "color": new_b_color,
+                            "descripcio": new_b_desc,
+                            "titular": new_b_titular,
+                            "compte_iban": new_b_iban
+                        })
+                    else:
+                        cfg["bancs"] = updated_bancs + bancs_list[k+1:]
+                        save_app_config(cfg)
+                        st.success(f"Entitat '{b_nom}' eliminada.")
+                        st.rerun()
+                        
+            st.write("")
+            if st.button("💾 Desar Configuració de Bancs", type="primary", use_container_width=True, key="save_bancs_sec"):
+                cfg["bancs"] = updated_bancs
+                if save_app_config(cfg):
+                    st.success("✅ Configuració de bancs i comptes desada correctament!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 6. SECCIÓ: TEMA I ASPECTE
         # =========================================================================
         elif active == "tema":
             cur_tema = cfg.get("tema", "Fosc")
