@@ -2502,10 +2502,21 @@ def render():
             comentari_val = st.text_input("Comentari", value="", key=f"desp_comentari_{version}")
         
         if concept_val == "➕ Afegir nou...":
-            custom_col1, custom_col2, custom_col3 = st.columns([4, 4, 4])
+            custom_col1, custom_col2, custom_col3 = st.columns([4, 3, 4])
             with custom_col1:
                 custom_concept = st.text_input("Nou Concepte (escriu el nom):", key=f"desp_custom_concept_{version}")
             with custom_col2:
+                st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                if st.button("➕ Afegir a la llista", key=f"btn_add_concept_direct_{version}", use_container_width=True):
+                    c_name = custom_concept.strip() if custom_concept else ""
+                    if c_name:
+                        add_concept_to_config(cat_val, c_name)
+                        st.session_state[f"desp_concepte_{version}"] = c_name
+                        st.success(f"Concepte '{c_name}' afegit correctament a {cat_val}!")
+                        st.rerun()
+                    else:
+                        st.warning("Escriu el nom del nou concepte.")
+            with custom_col3:
                 st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
                 save_new_concept = st.checkbox("Desar a la llista permanent?", value=True, key=f"desp_save_new_concept_{version}")
 

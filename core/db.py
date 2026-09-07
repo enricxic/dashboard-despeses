@@ -594,9 +594,10 @@ def append_to_db(df_new, table_name, state_key, extra_details=None):
 def add_concept_to_config(category, concept):
     global cat_config
     if cat_config is None:
-        cat_config = {}
+        cat_config = load_categories_conceptes() or {}
     if category not in cat_config:
-        cat_config[category] = []
+        existing = get_config_concepts(category)
+        cat_config[category] = list(existing)
     if concept not in cat_config[category]:
         cat_config[category].append(concept)
         cat_config[category].sort()
@@ -655,6 +656,7 @@ def save_categories_conceptes(config):
     try:
         supabase = get_supabase_client("admin")
         supabase.table("app_config").upsert({"id": 1, "config_json": config}).execute()
+        load_categories_conceptes.clear()
     except Exception as e:
         print("Supabase config save failed:", e)
         
@@ -663,6 +665,8 @@ def save_categories_conceptes(config):
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
         return True
     except Exception:
         return False
