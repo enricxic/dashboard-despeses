@@ -1040,11 +1040,14 @@ def cb_clear_ticket():
     st.session_state["manual_prom_num"] = 0.0
     st.session_state["manual_reb_chk"] = False
     st.session_state["manual_fam_selectbox"] = ""
-    st.session_state["manual_art_selectbox"] = ""
+    for k in list(st.session_state.keys()):
+        if k.startswith("btn_edit_row_") or k.startswith("btn_del_row_"):
+            del st.session_state[k]
     if "finalize_error" in st.session_state:
         del st.session_state["finalize_error"]
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
+    st.rerun()
 
 def cb_finalize_ticket():
     global df_desp, df_super
@@ -1309,6 +1312,11 @@ def cb_finalize_ticket():
     st.session_state["manual_fam_selectbox"] = ""
     st.session_state["manual_art_selectbox"] = ""
     
+    # Clear button keys for deleted rows
+    for k in list(st.session_state.keys()):
+        if k.startswith("btn_edit_row_") or k.startswith("btn_del_row_"):
+            del st.session_state[k]
+
     # Clear pending ticket state if any
     for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum', 'last_ocr_text']:
         if key in st.session_state:
@@ -1317,6 +1325,7 @@ def cb_finalize_ticket():
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
     st.session_state["viewing_compres_super"] = True
+    st.rerun()
 
 def render_compres_super_interface():
     global df_super, df_desp
@@ -1329,9 +1338,10 @@ def render_compres_super_interface():
         st.session_state["df_super"] = fetch_all_supabase(supabase, 'compresSuper')
     df_super = st.session_state["df_super"]
 
-    
+    if "finalize_success" in st.session_state:
+        st.toast(st.session_state["finalize_success"], icon="✅")
+        del st.session_state["finalize_success"]
 
-    
     if "ticket_msg_success" in st.session_state:
         st.toast(st.session_state["ticket_msg_success"], icon="✅")
         del st.session_state["ticket_msg_success"]
@@ -1966,7 +1976,7 @@ Notes importants:
 
 
     st.write("---")
-    col_desc, col_b1, col_b2, col_b3 = st.columns([3, 2, 2, 5], vertical_alignment="bottom")
+    col_desc, col_b1, col_b2 = st.columns([3, 2, 2], vertical_alignment="bottom")
     
     with col_desc:
         st.number_input("Descompte global del Tiquet (€):", min_value=0.0, step=0.01, key="ticket_discount")
