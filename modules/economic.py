@@ -547,20 +547,17 @@ def render(view_mode="economic"):
             from core.config_manager import get_active_bancs
             active_b = get_active_bancs()
             if active_b:
-                return [b["nom"] for b in active_b if b["nom"] not in ["Casa", "CASA", "Efectiu", "EFECTIU"]]
+                return [b["nom"] for b in active_b]
         except Exception:
             pass
         if cat_config and "bancs" in cat_config:
-            return [b for b in cat_config["bancs"] if b not in ["Casa", "CASA", "Efectiu", "EFECTIU"]]
-        return [b for b in BANK_MAPPING.keys() if b not in ["Casa", "CASA", "Efectiu", "EFECTIU"]]
+            return cat_config["bancs"]
+        return list(BANK_MAPPING.keys())
     
     def get_config_payment_methods():
         if cat_config and "formes_pago" in cat_config:
-            fps = [fp for fp in cat_config["formes_pago"] if fp]
-            if "Efectiu" not in fps:
-                fps.insert(0, "Efectiu")
-            return fps
-        return ["Efectiu", "Compte", "Dèbit", "VISA"]
+            return [fp for fp in cat_config["formes_pago"] if fp]
+        return ["Compte", "Dèbit", "VISA", "Efectiu"]
     
     @st.cache_data(ttl=300)
     def get_tb_supers_cached():
@@ -2135,11 +2132,11 @@ def render(view_mode="economic"):
         pay_method_val_str = str(pay_method_val).strip()
         
         if send_expense:
-            if not pay_method_val_str or pay_method_val_str in ["None", "nan", "NaN", ""]:
-                st.session_state["finalize_error"] = "Si us plau, selecciona una Forma de Pagament per a la despesa!"
-                return
-            if pay_method_val_str != "Efectiu" and (not bank_val_str or bank_val_str in ["None", "nan", "NaN", ""]):
+            if not bank_val_str or bank_val_str in ["None", "nan", "NaN", ""]:
                 st.session_state["finalize_error"] = "Si us plau, selecciona un Banc per a la despesa!"
+                return
+            if bank_val_str not in ["Efectiu", "Casa", "CASA"] and (not pay_method_val_str or pay_method_val_str in ["None", "nan", "NaN", ""]):
+                st.session_state["finalize_error"] = "Si us plau, selecciona una Forma de Pagament per a la despesa!"
                 return
         
         # Separate totals for menjar, neteja, and rebost
@@ -2467,7 +2464,7 @@ def render(view_mode="economic"):
         pay_method_val = ""
         if send_expense:
             with col_hdr2:
-                bank_val = st.selectbox("Banc (Entitat):", [""] + get_config_banks(), key="ticket_bank_sel")
+                bank_val = st.selectbox("Banc:", [""] + get_config_banks(), key="ticket_bank_sel")
             with col_hdr3:
                 pay_methods = [""] + get_config_payment_methods()
                 pay_method_val = st.selectbox("Forma de Pagament:", pay_methods, key="ticket_pay_method_sel")
@@ -2480,10 +2477,10 @@ def render(view_mode="economic"):
         if send_expense and len(st.session_state.get("ticket_items", [])) > 0:
             b_val_str = str(bank_val).strip()
             p_val_str = str(pay_method_val).strip()
-            if not p_val_str or p_val_str in ["None", "nan", "NaN", ""]:
+            if not b_val_str or b_val_str in ["None", "nan", "NaN", ""]:
+                st.error("Si us plau, selecciona un Banc per a la despesa!")
+            elif b_val_str not in ["Efectiu", "Casa", "CASA"] and (not p_val_str or p_val_str in ["None", "nan", "NaN", ""]):
                 st.error("Si us plau, selecciona una Forma de Pagament per a la despesa!")
-            elif p_val_str != "Efectiu" and (not b_val_str or b_val_str in ["None", "nan", "NaN", ""]):
-                st.error("Si us plau, selecciona un Banc (Entitat) per a la despesa!")
                 
         with col_hdr4:
             uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
