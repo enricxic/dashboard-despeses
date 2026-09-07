@@ -247,7 +247,6 @@ def render():
             <span style="font-size:2.2rem;">📅</span>
             <div>
                 <h2 style="margin:0; font-weight:800; color:{text_primary};">Agenda i Calendari Familiar</h2>
-                <div style="font-size:0.85rem; color:{text_secondary};">Sincronització amb Google Calendar, gestió d'esdeveniments i pautes familiars</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
