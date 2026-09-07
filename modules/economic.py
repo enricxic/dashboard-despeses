@@ -4014,13 +4014,11 @@ def render(view_mode="economic"):
                 for it in pendent_items:
                     amt = float(it['Import'])
                     icon = it.get('icon', '💸')
-                    c_chk, c_name, c_amt = st.columns([0.10, 0.58, 0.32], gap="small")
+                    c_chk, c_txt = st.columns([0.08, 0.92], gap="small")
                     with c_chk:
                         is_sel = st.checkbox(" ", key=f"chk_pag_{it['idx']}", label_visibility="collapsed")
-                    with c_name:
-                        st.markdown(f"<div style='font-size:0.95rem; white-space:nowrap; padding-top:4px;'>{icon} {it['Concepte']}</div>", unsafe_allow_html=True)
-                    with c_amt:
-                        st.markdown(f"<div style='font-size:0.95rem; font-weight:600; white-space:nowrap; text-align:right; padding-top:4px;'>{amt:,.2f} €</div>", unsafe_allow_html=True)
+                    with c_txt:
+                        st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:140px; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
                     if is_sel:
                         pagaments_a_processar.append({'idx': it['idx'], 'row': it['row']})
                 
@@ -4050,7 +4048,7 @@ def render(view_mode="economic"):
                 st.markdown(f"""
                 <div style="display: flex; gap: 40px; margin-top: 10px;">
                     <div data-testid="stMetric">
-                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a ingressar</div>
+                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a pagar</div>
                         <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{total_programat:,.2f} €</div>
                     </div>
                     <div data-testid="stMetric">
@@ -4075,13 +4073,11 @@ def render(view_mode="economic"):
                     for i_idx, i_row in month_ing_pendent.iterrows():
                         amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
                         concepte = i_row['Concepte']
-                        c_chk, c_name, c_amt = st.columns([0.10, 0.58, 0.32], gap="small")
+                        c_chk, c_txt = st.columns([0.08, 0.92], gap="small")
                         with c_chk:
                             is_sel = st.checkbox(" ", key=f"chk_ing_{i_idx}", label_visibility="collapsed")
-                        with c_name:
-                            st.markdown(f"<div style='font-size:0.95rem; white-space:nowrap; padding-top:4px;'>🟢 {concepte}</div>", unsafe_allow_html=True)
-                        with c_amt:
-                            st.markdown(f"<div style='font-size:0.95rem; font-weight:600; white-space:nowrap; text-align:right; padding-top:4px;'>{amt:,.2f} €</div>", unsafe_allow_html=True)
+                        with c_txt:
+                            st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:190px; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
                         if is_sel:
                             ingressos_a_processar.append({'idx': i_idx, 'row': i_row})
                     
