@@ -3932,7 +3932,7 @@ def render(view_mode="economic"):
         col_left, col_mid, col_right = st.columns([1, 1, 1], gap="medium")
         
         with col_left:
-            st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments del Mes</h4>", unsafe_allow_html=True)
             
             all_items = []
             seen_concepts = set()
@@ -4026,23 +4026,19 @@ def render(view_mode="economic"):
             else:
                 st.info("No hi ha cap pagament pendent aquest mes.")
 
-            # --- Render Pagats ---
+            # --- Render Pagats (sense línies de taula) ---
             if paid_items:
                 st.write("**Pagats:**")
-                df_paid_show = pd.DataFrame([{'Concepte': it['Concepte'], 'Import': float(it['Import']), 'pagat': 'pagat'} for it in paid_items])
-                try:
-                    st.dataframe(
-                        df_paid_show[['Concepte', 'Import', 'pagat']],
-                        use_container_width=True,
-                        hide_index=True,
-                        column_config={
-                            "Concepte": st.column_config.TextColumn("Concepte"),
-                            "Import": st.column_config.NumberColumn("Import", format="%.2f €", width="small"),
-                            "pagat": st.column_config.TextColumn("pagat", width="small")
-                        }
-                    )
-                except Exception as e:
-                    st.error(f"Error renderitzant pagats: {e}")
+                for it in paid_items:
+                    amt = float(it['Import'])
+                    icon = it.get('icon', '💸')
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; font-size: 0.95rem;">
+                        <span>{icon} {it['Concepte']}</span>
+                        <span><b>{amt:,.2f} €</b> <span style="color: #22c55e; font-size: 0.82rem; margin-left: 6px; font-weight: 600;">pagat</span></span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                st.write("")
 
             if total_programat > 0 or total_pendent > 0:
                 st.markdown(f"""
@@ -4081,22 +4077,19 @@ def render(view_mode="economic"):
                     
                     st.write("") # spacer
                 
+                # --- Render Cobrats (sense línies de taula) ---
                 if not month_ing_cobrat.empty:
                     st.write("**Cobrats:**")
-                    try:
-                        month_ing_cobrat['Import'] = clean_numeric(month_ing_cobrat['Import'])
-                        st.dataframe(
-                            month_ing_cobrat[['Concepte', 'Import', 'cobrat']],
-                            use_container_width=True,
-                            hide_index=True,
-                            column_config={
-                                "Concepte": st.column_config.TextColumn("Concepte"),
-                                "Import": st.column_config.NumberColumn("Import", format="%.2f €", width="small"),
-                                "cobrat": st.column_config.TextColumn("cobrat", width="small")
-                            }
-                        )
-                    except Exception as e:
-                        st.error(f"Error rendering month_ing: {e}")
+                    for _, i_row in month_ing_cobrat.iterrows():
+                        amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
+                        concepte = i_row['Concepte']
+                        st.markdown(f"""
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; font-size: 0.95rem;">
+                            <span>🟢 {concepte}</span>
+                            <span><b>{amt:,.2f} €</b> <span style="color: #22c55e; font-size: 0.82rem; margin-left: 6px; font-weight: 600;">cobrat</span></span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    st.write("")
                         
                 # Sum the pending ingressos
                 pendent_sum = month_ing_pendent['Import'].sum() if not month_ing_pendent.empty else 0.0

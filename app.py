@@ -3937,7 +3937,7 @@ with tab_details:
     col_left, col_mid, col_right = st.columns([1, 1, 1], gap="medium")
     
     with col_left:
-        st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments Pendents</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments del Mes</h4>", unsafe_allow_html=True)
         
         has_pending = False
         total_pendent = 0.0
@@ -4033,20 +4033,16 @@ with tab_details:
             
             if not month_ing_cobrat.empty:
                 st.write("**Cobrats:**")
-                try:
-                    month_ing_cobrat['Import'] = clean_numeric(month_ing_cobrat['Import'])
-                    st.dataframe(
-                        month_ing_cobrat[['Concepte', 'Import', 'cobrat']],
-                        use_container_width=True,
-                        hide_index=True,
-                        column_config={
-                            "Concepte": st.column_config.TextColumn("Concepte"),
-                            "Import": st.column_config.NumberColumn("Import", format="%.2f €", width="small"),
-                            "cobrat": st.column_config.TextColumn("cobrat", width="small")
-                        }
-                    )
-                except Exception as e:
-                    st.error(f"Error rendering month_ing: {e}")
+                for _, i_row in month_ing_cobrat.iterrows():
+                    amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
+                    concepte = i_row['Concepte']
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; font-size: 0.95rem;">
+                        <span>🟢 {concepte}</span>
+                        <span><b>{amt:,.2f} €</b> <span style="color: #22c55e; font-size: 0.82rem; margin-left: 6px; font-weight: 600;">cobrat</span></span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                st.write("")
                     
             # Sum the pending ingressos
             pendent_sum = month_ing_pendent['Import'].sum() if not month_ing_pendent.empty else 0.0
