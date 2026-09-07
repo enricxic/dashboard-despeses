@@ -311,12 +311,14 @@ def get_config_categories():
     return []
 
 def get_config_concepts(category):
+    if not category:
+        return []
     cfg = load_categories_conceptes()
     concepts = set()
     
     # 1. From active config
     if cfg and category in cfg:
-        concepts.update([c for c in cfg[category] if c])
+        concepts.update([str(c).strip() for c in cfg[category] if c and str(c).strip()])
         
     # 2. From local json file
     filepath = "categories_conceptes.json"
@@ -325,22 +327,27 @@ def get_config_concepts(category):
             with open(filepath, 'r', encoding='utf-8') as f:
                 local_cfg = json.load(f)
                 if local_cfg and category in local_cfg:
-                    concepts.update([c for c in local_cfg[category] if c])
+                    concepts.update([str(c).strip() for c in local_cfg[category] if c and str(c).strip()])
         except Exception:
             pass
             
     # 3. Ensure defaults for op_banc
     if category == "op_banc":
-        concepts.update(["Amortització", "Cashback TR", "Embargament", "Gestions Banc", "Pago ElCorteInglés", "Pago VISA", "Reintegre Caixer", "Transferència", "Traspàs comptes"])
+        concepts.update(["Amortització", "Cashback TR", "TR Cashback", "Embargament", "Gestions Banc", "Pago ElCorteInglés", "Pago VISA", "Reintegre Caixer", "Transferència", "Traspàs comptes"])
         
     # 4. From df_desp
     if "df_desp" in st.session_state and not st.session_state["df_desp"].empty:
         df_d = st.session_state["df_desp"]
         if 'Idcategoria' in df_d.columns and 'Idconcepte' in df_d.columns:
             desp_c = df_d[df_d['Idcategoria'] == category]['Idconcepte'].dropna().unique()
-            concepts.update(desp_c)
+            concepts.update([str(c).strip() for c in desp_c if c and str(c).strip()])
             
-    return sorted(list(concepts))
+    # Clean and filter: remove category name itself (e.g. 'op_banc'), empty items, and '+' items
+    cleaned = [
+        c for c in concepts 
+        if c and c.lower() != str(category).strip().lower() and not c.startswith("➕")
+    ]
+    return sorted(cleaned)
 
 def get_config_banks():
     cfg = load_categories_conceptes()
@@ -633,15 +640,22 @@ def append_to_db(df_new, table_name, state_key, extra_details=None):
         return False
 
 def add_concept_to_config(category, concept):
+    if not concept or not category:
+        return
+    c_str = str(concept).strip()
+    cat_str = str(category).strip()
+    if not c_str or c_str.lower() == cat_str.lower() or c_str.startswith("➕"):
+        return
     global cat_config
-    if cat_config is None:
+    if cat_config is None or not isinstance(cat_config, dict):
         cat_config = load_categories_conceptes() or {}
-    if category not in cat_config:
-        existing = get_config_concepts(category)
-        cat_config[category] = list(existing)
-    if concept not in cat_config[category]:
-        cat_config[category].append(concept)
-        cat_config[category].sort()
+    if cat_str not in cat_config:
+        existing = get_config_concepts(cat_str)
+        cat_config[cat_str] = list(existing)
+    if c_str not in cat_config[cat_str]:
+        cat_config[cat_str].append(c_str)
+        cat_config[cat_str] = [c for c in cat_config[cat_str] if c and c.lower() != cat_str.lower() and not c.startswith("➕")]
+        cat_config[cat_str].sort()
         save_categories_conceptes(cat_config)
 
 def get_config_routes(df_km):
