@@ -11,6 +11,8 @@ CACHE_FEEDS_FILE = "data/feeds_cache.json"
 
 CATEGORIES = {
     "Metge": {"icon": "🏥", "color": "#ef4444", "label": "Metge i Salut"},
+    "Dinar": {"icon": "🍽️", "color": "#f97316", "label": "Dinar"},
+    "Sopar": {"icon": "🍲", "color": "#6366f1", "label": "Sopar"},
     "Escola": {"icon": "🏫", "color": "#3b82f6", "label": "Escola i Estudis"},
     "Feina": {"icon": "💼", "color": "#8b5cf6", "label": "Feina i Tasques"},
     "Aniversari": {"icon": "🎂", "color": "#ec4899", "label": "Aniversari i Celebració"},
@@ -140,6 +142,10 @@ def parse_ics_content(ics_text, source_name="Google Calendar", default_member="T
                 title_lower = (cur.get("title", "") + " " + cur.get("description", "")).lower()
                 if any(w in title_lower for w in ["metge", "dentista", "hospital", "salut", "dr", "doctor", "analitica", "medic"]):
                     cur["category"] = "Metge"
+                elif any(w in title_lower for w in ["dinar", "almuerzo", "comida"]):
+                    cur["category"] = "Dinar"
+                elif any(w in title_lower for w in ["sopar", "cena"]):
+                    cur["category"] = "Sopar"
                 elif any(w in title_lower for w in ["escola", "cole", "classe", "curs", "examen", "universitat", "institut"]):
                     cur["category"] = "Escola"
                 elif any(w in title_lower for w in ["feina", "reunio", "meeting", "work", "projecte", "client"]):
@@ -412,13 +418,21 @@ def parse_natural_language_event(text_input, default_member="Tota la família"):
     cat = "Altres"
     if any(w in t_lower for w in ["metge", "dentista", "hospital", "salut", "dr", "doctor", "analitica", "oculista"]):
         cat = "Metge"
+    elif any(w in t_lower for w in ["dinar", "almuerzo", "comida"]):
+        cat = "Dinar"
+        if not time_match and not all_day:
+            extracted_time = "14:00"
+    elif any(w in t_lower for w in ["sopar", "cena"]):
+        cat = "Sopar"
+        if not time_match and not all_day:
+            extracted_time = "21:00"
     elif any(w in t_lower for w in ["escola", "cole", "classe", "curs", "examen", "reunio escola"]):
         cat = "Escola"
     elif any(w in t_lower for w in ["feina", "reunio", "meeting", "treball", "projecte", "client"]):
         cat = "Feina"
     elif any(w in t_lower for w in ["aniversari", "cumple", "festa", "celebracio"]):
         cat = "Aniversari"
-    elif any(w in t_lower for w in ["viatge", "vol", "hotel", "partit", "gimnas", "padel", "futbol", "sopar", "dinar"]):
+    elif any(w in t_lower for w in ["viatge", "vol", "hotel", "partit", "gimnas", "padel", "futbol"]):
         cat = "Oci"
     elif any(w in t_lower for w in ["llar", "reparacio", "itv", "assegurança", "neteja", "cotxe"]):
         cat = "Llar"
