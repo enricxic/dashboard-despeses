@@ -57,6 +57,10 @@ BANK_MAPPING = {
 }
 
 def clean_numeric(series):
+    if not isinstance(series, pd.Series):
+        if isinstance(series, (int, float, np.number)):
+            return float(series)
+        series = pd.Series(series if series is not None else [0.0])
     if pd.api.types.is_numeric_dtype(series):
         return series.fillna(0.0)
     

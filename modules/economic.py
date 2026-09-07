@@ -4519,10 +4519,10 @@ def render(view_mode="economic"):
                         col_rename[c] = 'perdua'
                 df_est_work.rename(columns=col_rename, inplace=True)
                 
-                df_est_work['quota_val'] = clean_numeric(df_est_work.get('quota', 0))
-                df_est_work['aport_val'] = clean_numeric(df_est_work.get('aportacio', 0))
-                df_est_work['rescat_val'] = clean_numeric(df_est_work.get('rescat', 0))
-                df_est_work['perdua_val'] = clean_numeric(df_est_work.get('perdua', 0))
+                df_est_work['quota_val'] = clean_numeric(df_est_work['quota']) if 'quota' in df_est_work.columns else pd.Series(0.0, index=df_est_work.index)
+                df_est_work['aport_val'] = clean_numeric(df_est_work['aportacio']) if 'aportacio' in df_est_work.columns else pd.Series(0.0, index=df_est_work.index)
+                df_est_work['rescat_val'] = clean_numeric(df_est_work['rescat']) if 'rescat' in df_est_work.columns else pd.Series(0.0, index=df_est_work.index)
+                df_est_work['perdua_val'] = clean_numeric(df_est_work['perdua']) if 'perdua' in df_est_work.columns else (df_est_work['aport_val'] - df_est_work['rescat_val'])
                 
                 # Sort chronologically
                 month_order = {
