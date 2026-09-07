@@ -4508,64 +4508,118 @@ def render(view_mode="economic"):
             
             if not df_est.empty:
                 df_est_work = df_est.copy()
-                df_est_work['quota_val'] = clean_numeric(df_est_work.get('quota', 0))
-                df_est_work['aport_val'] = clean_numeric(df_est_work.get('aportació', 0))
-                df_est_work['rescat_val'] = clean_numeric(df_est_work.get('rescat', 0))
                 
-                total_quotes = df_est_work['quota_val'].sum()
-                total_aports = df_est_work['aport_val'].sum()
-                total_rescats = df_est_work['rescat_val'].sum()
-                capital_acumulat = total_quotes + total_aports - total_rescats
+                # Normalize column names in case of encoding differences
+                col_rename = {}
+                for c in df_est_work.columns:
+                    c_clean = c.lower().strip()
+                    if 'aport' in c_clean:
+                        col_rename[c] = 'aportacio'
+                    elif 'perdu' in c_clean or 'psrdu' in c_clean:
+                        col_rename[c] = 'perdua'
+                df_est_work.rename(columns=col_rename, inplace=True)
+                
+                df_est_work['quota_val'] = clean_numeric(df_est_work.get('quota', 0))
+                df_est_work['aport_val'] = clean_numeric(df_est_work.get('aportacio', 0))
+                df_est_work['rescat_val'] = clean_numeric(df_est_work.get('rescat', 0))
+                df_est_work['perdua_val'] = clean_numeric(df_est_work.get('perdua', 0))
+                
+                # Sort chronologically
+                month_order = {
+                    'gener': 1, 'febrer': 2, 'març': 3, 'marc': 3, 'abril': 4, 'maig': 5, 'juny': 6,
+                    'juliol': 7, 'agost': 8, 'setembre': 9, 'octubre': 10, 'novembre': 11, 'desembre': 12,
+                    'enero': 1, 'febrero': 2, 'marzo': 3, 'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8, 'septiembre': 9, 'noviembre': 11, 'diciembre': 12
+                }
+                df_est_work['m_num'] = df_est_work['mes'].astype(str).str.lower().str.strip().map(month_order).fillna(1).astype(int)
+                df_est_work['any_num'] = pd.to_numeric(df_est_work['any'], errors='coerce').fillna(2026).astype(int)
+                df_est_work['sort_score'] = df_est_work['any_num'] * 100 + df_est_work['m_num']
+                df_est_sorted = df_est_work.sort_values(by='sort_score', ascending=True).copy()
+                
+                # Separate paid (actual) vs pending (future projection)
+                mask_pagat = df_est_sorted['pagat'].astype(str).str.lower().str.strip() == 'pagat'
+                df_pagats = df_est_sorted[mask_pagat]
+                
+                # Latest actual status (last paid record)
+                if not df_pagats.empty:
+                    last_paid_row = df_pagats.iloc[-1]
+                    capital_rescat_actual = float(last_paid_row['rescat_val'])
+                    total_aportat_actual = float(last_paid_row['aport_val'])
+                    perdua_actual = float(last_paid_row['perdua_val'])
+                else:
+                    first_row = df_est_sorted.iloc[0]
+                    capital_rescat_actual = float(first_row['rescat_val'])
+                    total_aportat_actual = float(first_row['aport_val'])
+                    perdua_actual = float(first_row['perdua_val'])
+                
+                # Final maturity objective (last row of table)
+                last_row = df_est_sorted.iloc[-1]
+                rescat_final = float(last_row['rescat_val'])
                 
                 col_e1, col_e2, col_e3, col_e4 = st.columns(4)
                 with col_e1:
-                    st.metric("Capital Total Acumulat", f"{capital_acumulat:,.2f} €")
+                    st.metric("Capital Acumulat (Rescat Actual)", f"{capital_rescat_actual:,.2f} €")
                 with col_e2:
-                    st.metric("Quotes Periòdiques", f"{total_quotes:,.2f} €")
+                    st.metric("Total Aportat Fins Ara", f"{total_aportat_actual:,.2f} €")
                 with col_e3:
-                    st.metric("Aportacions Extra", f"{total_aports:,.2f} €")
+                    st.metric("Rendiment / Pèrdua", f"-{perdua_actual:,.2f} €" if perdua_actual > 0 else f"+{abs(perdua_actual):,.2f} €")
                 with col_e4:
-                    st.metric("Rescats", f"{total_rescats:,.2f} €")
+                    st.metric("Previsió a Venciment", f"{rescat_final:,.2f} €", delta=f"Objectiu ({int(last_row['any_num'])})")
 
                 # Evolution chart of accumulated savings over time
-                st.markdown("#### 📈 Evolució del Capital Acumulat")
+                st.markdown("<h4 style='color:#f39c12; margin-top:20px;'>📈 Evolució del Pla d'Estalvi (Aportat vs Valor de Rescat)</h4>", unsafe_allow_html=True)
                 
-                # Sort chronological
-                if 'any' in df_est_work.columns and 'mes' in df_est_work.columns:
-                    month_order = {
-                        'gener': 1, 'febrer': 2, 'març': 3, 'abril': 4, 'maig': 5, 'juny': 6,
-                        'juliol': 7, 'agost': 8, 'setembre': 9, 'octubre': 10, 'novembre': 11, 'desembre': 12,
-                        'enero': 1, 'febrero': 2, 'marzo': 3, 'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8, 'septiembre': 9, 'noviembre': 11, 'diciembre': 12
-                    }
-                    df_est_work['m_num'] = df_est_work['mes'].astype(str).str.lower().map(month_order).fillna(1).astype(int)
-                    df_est_work['sort_score'] = df_est_work['any'].astype(int) * 100 + df_est_work['m_num']
-                    df_est_sorted = df_est_work.sort_values(by='sort_score', ascending=True).copy()
-                    
-                    df_est_sorted['net_monthly'] = df_est_sorted['quota_val'] + df_est_sorted['aport_val'] - df_est_sorted['rescat_val']
-                    df_est_sorted['Capital_Acumulat'] = df_est_sorted['net_monthly'].cumsum()
-                    df_est_sorted['Period'] = df_est_sorted['mes'].astype(str).str.capitalize() + " " + df_est_sorted['any'].astype(str)
-                    
-                    fig_est = px.area(
-                        df_est_sorted,
-                        x='Period',
-                        y='Capital_Acumulat',
-                        labels={'Period': 'Mes', 'Capital_Acumulat': 'Capital (€)'},
-                        color_discrete_sequence=['#22c55e']
-                    )
-                    fig_est.update_layout(
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='#f8fafc'),
-                        xaxis=dict(gridcolor='#334155'),
-                        yaxis=dict(gridcolor='#334155'),
-                        margin=dict(t=20, b=20, l=10, r=10)
-                    )
-                    st.plotly_chart(fig_est, use_container_width=True)
+                df_est_sorted['Period'] = df_est_sorted['mes'].astype(str).str.capitalize() + " " + df_est_sorted['any_num'].astype(str)
+                
+                fig_est = graph_objects.Figure()
+                fig_est.add_trace(graph_objects.Scatter(
+                    x=df_est_sorted['Period'],
+                    y=df_est_sorted['aport_val'],
+                    mode='lines',
+                    name='Total Aportat (€)',
+                    line=dict(color='#f1c40f', width=3),
+                    hovertemplate='<b>%{x}</b><br>Total Aportat: <b>%{y:,.2f} €</b><extra></extra>'
+                ))
+                fig_est.add_trace(graph_objects.Scatter(
+                    x=df_est_sorted['Period'],
+                    y=df_est_sorted['rescat_val'],
+                    mode='lines',
+                    name='Valor de Rescat (€)',
+                    line=dict(color='#22c55e', width=3),
+                    fill='tonexty',
+                    fillcolor='rgba(34, 197, 94, 0.1)',
+                    hovertemplate='<b>%{x}</b><br>Valor Rescat: <b>%{y:,.2f} €</b><extra></extra>'
+                ))
+                fig_est.update_layout(
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#f8fafc', size=12),
+                    hovermode='x unified',
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                    xaxis=dict(gridcolor='#334155', tickangle=-45),
+                    yaxis=dict(gridcolor='#334155', ticksuffix=' €', tickformat=',.0f'),
+                    margin=dict(t=20, b=30, l=10, r=10),
+                    height=380
+                )
+                st.plotly_chart(fig_est, use_container_width=True, config={'displayModeBar': False})
 
-                st.markdown("#### 📋 Detall Històric del Fons Estalvi DP")
-                cols_est = [c for c in ['any', 'mes', 'quota', 'aportació', 'rescat', 'pérdua', 'pagat'] if c in df_est.columns]
+                st.markdown("<h4 style='color:#f39c12; margin-top:20px;'>📋 Detall del Pla d'Amortització i Estalvi</h4>", unsafe_allow_html=True)
+                df_table_show = df_est_sorted[['any_num', 'mes', 'quota_val', 'aport_val', 'rescat_val', 'perdua_val', 'pagat']].copy()
+                df_table_show.rename(columns={
+                    'any_num': 'Any',
+                    'mes': 'Mes',
+                    'quota_val': 'Quota (€)',
+                    'aport_val': 'Total Aportat (€)',
+                    'rescat_val': 'Valor Rescat (€)',
+                    'perdua_val': 'Pèrdua/Rendiment (€)',
+                    'pagat': 'Estat'
+                }, inplace=True)
                 st.dataframe(
-                    df_est[cols_est].style.format({'quota': '{:,.2f} €', 'aportació': '{:,.2f} €', 'rescat': '{:,.2f} €', 'pérdua': '{:,.2f} €'}, na_rep=""),
+                    df_table_show.style.format({
+                        'Quota (€)': '{:,.2f} €',
+                        'Total Aportat (€)': '{:,.2f} €',
+                        'Valor Rescat (€)': '{:,.2f} €',
+                        'Pèrdua/Rendiment (€)': '{:,.2f} €'
+                    }),
                     use_container_width=True,
                     hide_index=True
                 )
