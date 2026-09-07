@@ -2882,43 +2882,10 @@ def render(view_mode="economic"):
                 reb_display = "🧺" if item['rebost'] == 'rebost' else ""
                 
                 row_bg = "background-color: rgba(30, 41, 59, 0.7);" if i % 2 == 0 else "background-color: rgba(15, 23, 42, 0.7);"
-                table_rows.append(f"""
-                <tr style='border-bottom: 1px solid #334155; {row_bg}'>
-                    <td style='padding: 6px 8px; font-weight:bold; color:#94a3b8; width:35px;'>{i+1}</td>
-                    <td style='padding: 6px 8px;'>{fam_display}</td>
-                    <td style='padding: 6px 8px; font-weight:600;'>{art_display}</td>
-                    <td style='padding: 6px 8px; color:#94a3b8;'>{pes_display}</td>
-                    <td style='padding: 6px 8px; text-align:center;'>{item['quantitat']}</td>
-                    <td style='padding: 6px 8px; text-align:right;'>{item['preuUnit']:.2f} €</td>
-                    <td style='padding: 6px 8px; text-align:right;'>{prom_display}</td>
-                    <td style='padding: 6px 8px; text-align:right; font-weight:bold; color:#f8fafc;'>{item['totLinea']:.2f} €</td>
-                    <td style='padding: 6px 8px; text-align:center;'>{reb_display}</td>
-                </tr>
-                """)
+                table_rows.append(f"<tr style='border-bottom: 1px solid #334155; {row_bg}'><td style='padding: 6px 8px; font-weight:bold; color:#94a3b8; width:35px;'>{i+1}</td><td style='padding: 6px 8px;'>{fam_display}</td><td style='padding: 6px 8px; font-weight:600;'>{art_display}</td><td style='padding: 6px 8px; color:#94a3b8;'>{pes_display}</td><td style='padding: 6px 8px; text-align:center;'>{item['quantitat']}</td><td style='padding: 6px 8px; text-align:right;'>{item['preuUnit']:.2f} €</td><td style='padding: 6px 8px; text-align:right;'>{prom_display}</td><td style='padding: 6px 8px; text-align:right; font-weight:bold; color:#f8fafc;'>{item['totLinea']:.2f} €</td><td style='padding: 6px 8px; text-align:center;'>{reb_display}</td></tr>")
                 
             rows_joined = "".join(table_rows)
-            html_table = f"""
-            <div style='max-height: 280px; overflow-y: auto; border: 1px solid #334155; border-radius: 8px; background-color: #0f172a; margin-bottom: 8px;'>
-                <table style='width: 100%; border-collapse: collapse; font-size: 0.88rem; color: #f8fafc;'>
-                    <thead>
-                        <tr style='background-color: #1e293b; position: sticky; top: 0; z-index: 2; border-bottom: 2px solid #475569; text-transform: uppercase; font-size: 0.78rem; color: #94a3b8;'>
-                            <th style='padding: 8px;'>#</th>
-                            <th style='padding: 8px;'>Família</th>
-                            <th style='padding: 8px;'>Article</th>
-                            <th style='padding: 8px;'>Pes</th>
-                            <th style='padding: 8px; text-align:center;'>Qty</th>
-                            <th style='padding: 8px; text-align:right;'>Preu U.</th>
-                            <th style='padding: 8px; text-align:right;'>Prom.</th>
-                            <th style='padding: 8px; text-align:right;'>Total</th>
-                            <th style='padding: 8px; text-align:center;'>Reb.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows_joined}
-                    </tbody>
-                </table>
-            </div>
-            """
+            html_table = f"<div style='max-height: 280px; overflow-y: auto; border: 1px solid #334155; border-radius: 8px; background-color: #0f172a; margin-bottom: 8px;'><table style='width: 100%; border-collapse: collapse; font-size: 0.88rem; color: #f8fafc;'><thead><tr style='background-color: #1e293b; position: sticky; top: 0; z-index: 2; border-bottom: 2px solid #475569; text-transform: uppercase; font-size: 0.78rem; color: #94a3b8;'><th style='padding: 8px;'>#</th><th style='padding: 8px;'>Família</th><th style='padding: 8px;'>Article</th><th style='padding: 8px;'>Pes</th><th style='padding: 8px; text-align:center;'>Qty</th><th style='padding: 8px; text-align:right;'>Preu U.</th><th style='padding: 8px; text-align:right;'>Prom.</th><th style='padding: 8px; text-align:right;'>Total</th><th style='padding: 8px; text-align:center;'>Reb.</th></tr></thead><tbody>{rows_joined}</tbody></table></div>"
             st.markdown(html_table, unsafe_allow_html=True)
             
             # Action toolbar for modifying or deleting rows
