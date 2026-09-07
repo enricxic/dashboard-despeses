@@ -489,6 +489,8 @@ if st.session_state.current_module is None:
 else:
     render_traditional_menubar()
     try:
+        from core.db import ensure_session_dfs
+        ensure_session_dfs()
         mod = importlib.import_module(st.session_state.current_module)
         mod.render()
     except Exception as e:

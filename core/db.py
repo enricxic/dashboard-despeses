@@ -758,35 +758,46 @@ def update_db_row(table_name, id_col, id_val, new_data):
         print(f"FAILED PAYLOAD FOR {table_name}:", update_payload)
         st.error(f"❌ Error a l'actualitzar Supabase ({table_name}): {str(e)}")
 
-tracker = get_db_tracker()
-if "last_synced_time" not in st.session_state or not isinstance(st.session_state["last_synced_time"], datetime) or st.session_state["last_synced_time"] < tracker.last_update:
-    st.session_state["dfs_initialized"] = False
+def ensure_session_dfs():
+    required_keys = ["df_desp", "df_ing", "df_super", "df_gas", "df_km", "df_hip", "df_est", "df_limits", "df_pag", "df_cartera"]
+    tracker = get_db_tracker()
+    needs_init = (
+        "dfs_initialized" not in st.session_state 
+        or not st.session_state.get("dfs_initialized", False)
+        or any(k not in st.session_state for k in required_keys)
+        or "last_synced_time" not in st.session_state 
+        or not isinstance(st.session_state.get("last_synced_time"), datetime) 
+        or st.session_state.get("last_synced_time") < tracker.last_update
+    )
+    if needs_init:
+        dfs = load_dashboard_data(get_csv_mtimes())
+        st.session_state["df_desp"] = dfs[0]
+        st.session_state["df_ing"] = dfs[1]
+        st.session_state["df_super"] = dfs[2]
+        st.session_state["df_gas"] = dfs[3]
+        st.session_state["df_km"] = dfs[4]
+        st.session_state["df_hip"] = dfs[5]
+        st.session_state["df_est"] = dfs[6]
+        st.session_state["df_limits"] = dfs[7]
+        st.session_state["df_pag"] = dfs[8]
+        if len(dfs) > 9:
+            st.session_state["df_cartera"] = dfs[9]
+        else:
+            st.session_state["df_cartera"] = pd.DataFrame()
+        st.session_state["dfs_initialized"] = True
+        st.session_state["last_synced_time"] = tracker.last_update
 
-if "dfs_initialized" not in st.session_state or not st.session_state["dfs_initialized"]:
-    dfs = load_dashboard_data(get_csv_mtimes())
-    st.session_state["df_desp"] = dfs[0]
-    st.session_state["df_ing"] = dfs[1]
-    st.session_state["df_super"] = dfs[2]
-    st.session_state["df_gas"] = dfs[3]
-    st.session_state["df_km"] = dfs[4]
-    st.session_state["df_hip"] = dfs[5]
-    st.session_state["df_est"] = dfs[6]
-    st.session_state["df_limits"] = dfs[7]
-    st.session_state["df_pag"] = dfs[8]
-    if len(dfs) > 9:
-        st.session_state["df_cartera"] = dfs[9]
-    st.session_state["dfs_initialized"] = True
-    st.session_state["last_synced_time"] = tracker.last_update
+ensure_session_dfs()
 
-df_desp = st.session_state["df_desp"]
-df_ing = st.session_state["df_ing"]
-df_super = st.session_state["df_super"]
-df_gas = st.session_state["df_gas"]
-df_km = st.session_state["df_km"]
-df_hip = st.session_state["df_hip"]
-df_est = st.session_state["df_est"]
-df_limits = st.session_state["df_limits"]
-df_pag = st.session_state["df_pag"]
+df_desp = st.session_state.get("df_desp", pd.DataFrame())
+df_ing = st.session_state.get("df_ing", pd.DataFrame())
+df_super = st.session_state.get("df_super", pd.DataFrame())
+df_gas = st.session_state.get("df_gas", pd.DataFrame())
+df_km = st.session_state.get("df_km", pd.DataFrame())
+df_hip = st.session_state.get("df_hip", pd.DataFrame())
+df_est = st.session_state.get("df_est", pd.DataFrame())
+df_limits = st.session_state.get("df_limits", pd.DataFrame())
+df_pag = st.session_state.get("df_pag", pd.DataFrame())
 df_cartera = st.session_state.get("df_cartera", pd.DataFrame())
 
 def get_limits_for(year, month_name):

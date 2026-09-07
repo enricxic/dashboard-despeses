@@ -38,15 +38,11 @@ def render():
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     
     # Ensure data is loaded
-    if "df_km" not in st.session_state or "df_gas" not in st.session_state:
-        dfs = load_dashboard_data(get_csv_mtimes())
-        (st.session_state["df_desp"], st.session_state["df_ing"], st.session_state["df_super"],
-         st.session_state["df_gas"], st.session_state["df_km"], st.session_state["df_hip"],
-         st.session_state["df_cartera"], st.session_state["df_est"], st.session_state["df_limits"],
-         st.session_state["df_pag"]) = dfs
+    from core.db import ensure_session_dfs
+    ensure_session_dfs()
 
-    df_km = st.session_state["df_km"]
-    df_gas = st.session_state["df_gas"]
+    df_km = st.session_state.get("df_km", pd.DataFrame())
+    df_gas = st.session_state.get("df_gas", pd.DataFrame())
 
     tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(["🛣️ Registre Km i Rutes", "⛽ Repostatge", "🔧 Canvi d'Oli", "📊 Consum"])
 

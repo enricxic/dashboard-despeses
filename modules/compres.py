@@ -2361,25 +2361,22 @@ def render():
             # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
             st.rerun()
 
-    tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Compres Super", "📝 Compres generals", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
+    tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Compres Super", "📝 Ingressos / Despeses", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
     
     with tab_scanner:
         render_compres_super_interface()
 
     with tab_intro:
-        if "df_desp" not in st.session_state:
-            dfs = load_dashboard_data(get_csv_mtimes())
-            (st.session_state["df_desp"], st.session_state["df_ing"], st.session_state["df_super"],
-             st.session_state["df_gas"], st.session_state["df_km"], st.session_state["df_hip"],
-             st.session_state["df_cartera"], st.session_state["df_est"], st.session_state["df_limits"],
-             st.session_state["df_pag"]) = dfs
-        df_desp = st.session_state["df_desp"]
-        df_ing = st.session_state["df_ing"]
-        df_pag = st.session_state["df_pag"]
-        df_gas = st.session_state["df_gas"]
-        df_km = st.session_state["df_km"]
-        df_hip = st.session_state["df_hip"]
-        df_est = st.session_state["df_est"]
+        from core.db import ensure_session_dfs
+        ensure_session_dfs()
+        
+        df_desp = st.session_state.get("df_desp", pd.DataFrame())
+        df_ing = st.session_state.get("df_ing", pd.DataFrame())
+        df_pag = st.session_state.get("df_pag", pd.DataFrame())
+        df_gas = st.session_state.get("df_gas", pd.DataFrame())
+        df_km = st.session_state.get("df_km", pd.DataFrame())
+        df_hip = st.session_state.get("df_hip", pd.DataFrame())
+        df_est = st.session_state.get("df_est", pd.DataFrame())
         df_cartera = st.session_state.get("df_cartera", pd.DataFrame())
 
         # Inject JavaScript to focus the next input when pressing Enter
