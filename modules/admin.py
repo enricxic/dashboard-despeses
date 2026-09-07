@@ -145,7 +145,7 @@ def render():
     """, unsafe_allow_html=True)
     
     # Header estil Google Chrome
-    c_head1, c_head2, c_head3 = st.columns([3, 5, 2], vertical_alignment="center")
+    c_head1, c_head2, c_head3 = st.columns([3, 6.2, 0.8], vertical_alignment="center")
     with c_head1:
         st.markdown(f"""
         <div class="chrome-title-group">

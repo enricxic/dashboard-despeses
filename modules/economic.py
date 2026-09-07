@@ -2969,7 +2969,7 @@ def render(view_mode="economic"):
         st.toast(st.session_state["finalize_success"], icon="✅")
         del st.session_state["finalize_success"]
     
-    col_logo, col_title, col_super = st.columns([0.85, 9.65, 1.5], vertical_alignment="center")
+    col_logo, col_title, col_super = st.columns([0.7, 8.5, 0.8], vertical_alignment="center")
     with col_logo:
         if os.path.exists("logoEXD.png"):
             st.image("logoEXD.png", width=60)
