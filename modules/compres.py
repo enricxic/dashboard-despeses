@@ -1844,7 +1844,7 @@ Notes importants:
             if force_art in art_options:
                 st.session_state["manual_art_selectbox"] = force_art
                 
-        curr_art = st.session_state["manual_art_selectbox"]
+        curr_art = st.session_state.get("manual_art_selectbox", "")
         if curr_art not in art_options:
             st.session_state["manual_art_selectbox"] = ""
             

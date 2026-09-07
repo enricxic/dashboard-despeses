@@ -569,28 +569,53 @@ def render(view_mode="economic"):
     @st.cache_data(ttl=300)
     def get_tb_productes_cached():
         try:
+            _, df = fetch_table_fast('tb_productes')
+            if df is not None and not df.empty:
+                return fix_mojibake_df(df)
+        except Exception:
+            pass
+        try:
             supabase = get_supabase_client("guest")
-            return fetch_all_supabase(supabase, 'tb_productes')
-        except:
-            return pd.DataFrame()
+            df = fetch_all_supabase(supabase, 'tb_productes')
+            if df is not None and not df.empty:
+                return fix_mojibake_df(df)
+        except Exception:
+            pass
+        return pd.DataFrame()
     
     def get_config_families():
+        families = set()
         df_prod = get_tb_productes_cached()
         if not df_prod.empty and 'familia' in df_prod.columns:
-            return sorted(list(df_prod['familia'].dropna().unique()))
+            families.update([str(f).strip() for f in df_prod['familia'].dropna().unique() if str(f).strip()])
         if cat_config and "families_compres" in cat_config:
-            return cat_config["families_compres"]
-        return sorted(list(df_super['familia'].dropna().unique())) if 'familia' in df_super.columns else []
+            families.update([str(f).strip() for f in cat_config["families_compres"] if str(f).strip()])
+        if cat_config and "articles_compres" in cat_config:
+            families.update([str(f).strip() for f in cat_config["articles_compres"].keys() if str(f).strip()])
+        families.discard('')
+        families.discard('nan')
+        return sorted(list(families))
     
     def get_config_articles(family):
+        if not family:
+            return []
+        fam_str = str(family).strip().lower()
+        articles = set()
+        
         df_prod = get_tb_productes_cached()
         if not df_prod.empty and 'familia' in df_prod.columns and 'nom_estandard' in df_prod.columns:
-            articles = df_prod[df_prod['familia'] == family]['nom_estandard'].dropna().unique()
-            if len(articles) > 0:
-                return sorted(list(articles))
-        if cat_config and "articles_compres" in cat_config and family in cat_config["articles_compres"]:
-            return cat_config["articles_compres"][family]
-        return sorted(list(df_super[df_super['familia'] == family]['article'].dropna().unique())) if 'article' in df_super.columns else []
+            mask = df_prod['familia'].astype(str).str.strip().str.lower() == fam_str
+            matched_arts = df_prod[mask]['nom_estandard'].dropna().unique()
+            articles.update([str(a).strip() for a in matched_arts if str(a).strip()])
+            
+        if cat_config and "articles_compres" in cat_config:
+            for k, v in cat_config["articles_compres"].items():
+                if str(k).strip().lower() == fam_str and isinstance(v, list):
+                    articles.update([str(a).strip() for a in v if str(a).strip()])
+                    
+        articles.discard('')
+        articles.discard('nan')
+        return sorted(list(articles))
     def save_to_csv(df, filename):
         import numpy as np
         table_name = filename.replace('.csv', '')
@@ -2779,7 +2804,7 @@ def render(view_mode="economic"):
                 if force_art in art_options:
                     st.session_state["manual_art_selectbox"] = force_art
                     
-            curr_art = st.session_state["manual_art_selectbox"]
+            curr_art = st.session_state.get("manual_art_selectbox", "")
             if curr_art not in art_options:
                 st.session_state["manual_art_selectbox"] = ""
                 
