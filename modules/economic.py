@@ -4033,9 +4033,8 @@ def render(view_mode="economic"):
                     amt = float(it['Import'])
                     icon = it.get('icon', '💸')
                     st.markdown(f"""
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; font-size: 0.95rem;">
-                        <span>{icon} {it['Concepte']}</span>
-                        <span><b>{amt:,.2f} €</b> <span style="color: #22c55e; font-size: 0.82rem; margin-left: 6px; font-weight: 600;">pagat</span></span>
+                    <div style="display: flex; align-items: center; padding: 3px 0; font-size: 0.95rem;">
+                        <span>{icon} <b>{it['Concepte']}</b>: {amt:,.2f} € <span style="color: #22c55e; font-size: 0.8rem; margin-left: 6px; font-weight: 600;">(pagat)</span></span>
                     </div>
                     """, unsafe_allow_html=True)
                 st.write("")
@@ -4084,9 +4083,8 @@ def render(view_mode="economic"):
                         amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
                         concepte = i_row['Concepte']
                         st.markdown(f"""
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; font-size: 0.95rem;">
-                            <span>🟢 {concepte}</span>
-                            <span><b>{amt:,.2f} €</b> <span style="color: #22c55e; font-size: 0.82rem; margin-left: 6px; font-weight: 600;">cobrat</span></span>
+                        <div style="display: flex; align-items: center; padding: 3px 0; font-size: 0.95rem;">
+                            <span>🟢 <b>{concepte}</b>: {amt:,.2f} € <span style="color: #22c55e; font-size: 0.8rem; margin-left: 6px; font-weight: 600;">(cobrat)</span></span>
                         </div>
                         """, unsafe_allow_html=True)
                     st.write("")
