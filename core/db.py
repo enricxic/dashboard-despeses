@@ -36,9 +36,9 @@ month_translations = {
 INITIAL_BALANCES = {
     'BBVA': -2157.00,  # Adjusted to match real bank balance of 2178.86 (after removing VISA duplicates)
     'La Caixa': 102.28,
+    'TRADE REPUB.': 0.0,
     'Casa': 267.28,
     'Tg.Moneder': 0.0,
-    'TRADE REPUB.': 0.0,
     'CORTEINGLÉS': 1566.69,
     'Pago VISA': -2995.45  # Calibrated for correct Debt logic (charges increase, payments decrease)
 }
@@ -48,9 +48,9 @@ BANK_MAPPING = {
     'BBVA': 'BBVA',
     'LaCaixa': 'La Caixa',
     'TR Cartera': 'TR Cartera',
+    'TradeRep.': 'TRADE REPUB.',
     'Casa': 'Casa',
     'T.Moneder': 'Tg.Moneder',
-    'TradeRep.': 'TRADE REPUB.',
     'T.CorteInglés': 'CORTEINGLÉS',
     't.CorteInglés': 'CORTEINGLÉS',
     'T.CorteIngles': 'CORTEINGLÉS',

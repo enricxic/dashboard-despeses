@@ -3367,8 +3367,21 @@ with tab_dash:
 
     # 3. Re-calculate balances and render bank metrics at the top container
     current_balances = get_balances_up_to(selected_year, selected_month_data)
-    # Remove TR Cartera from Dashboard General balances as requested
-    current_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera'}
+    
+    dashboard_bank_order = ['BBVA', 'La Caixa', 'TRADE REPUB.', 'Casa', 'Tg.Moneder', 'CORTEINGLÉS', 'Pago VISA']
+    filtered_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera'}
+    
+    ordered_balances = {}
+    for b_name in dashboard_bank_order:
+        b_upper = b_name.strip().upper()
+        for k, v in filtered_balances.items():
+            if k.strip().upper() == b_upper:
+                ordered_balances[k] = v
+                break
+    for k, v in filtered_balances.items():
+        if k not in ordered_balances:
+            ordered_balances[k] = v
+    current_balances = ordered_balances
     
     total_accounts_balance = sum(v for k, v in current_balances.items() if k != 'Pago VISA') + current_balances.get('Pago VISA', 0.0)
     
