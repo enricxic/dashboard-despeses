@@ -293,24 +293,56 @@ def load_categories_conceptes():
 cat_config = load_categories_conceptes()
 
 def get_config_categories():
-    if cat_config:
+    cfg = load_categories_conceptes()
+    if cfg:
         special_keys = ["families_compres", "articles_compres", "bancs", "formes_pago", "supers_tickets"]
-        return sorted([k for k in cat_config.keys() if k not in special_keys])
-    return sorted(list(df_desp['Idcategoria'].dropna().unique()))
+        return sorted([k for k in cfg.keys() if k not in special_keys])
+    if "df_desp" in st.session_state and not st.session_state["df_desp"].empty:
+        return sorted(list(st.session_state["df_desp"]['Idcategoria'].dropna().unique()))
+    return []
 
 def get_config_concepts(category):
-    if cat_config and category in cat_config:
-        return sorted(cat_config[category])
-    return sorted(list(df_desp[df_desp['Idcategoria'] == category]['Idconcepte'].dropna().unique()))
+    cfg = load_categories_conceptes()
+    concepts = set()
+    
+    # 1. From active config
+    if cfg and category in cfg:
+        concepts.update([c for c in cfg[category] if c])
+        
+    # 2. From local json file
+    filepath = "categories_conceptes.json"
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                local_cfg = json.load(f)
+                if local_cfg and category in local_cfg:
+                    concepts.update([c for c in local_cfg[category] if c])
+        except Exception:
+            pass
+            
+    # 3. Ensure defaults for op_banc
+    if category == "op_banc":
+        concepts.update(["Amortització", "Cashback TR", "Embargament", "Gestions Banc", "Pago ElCorteInglés", "Pago VISA", "Reintegre Caixer", "Transferència", "Traspàs comptes"])
+        
+    # 4. From df_desp
+    if "df_desp" in st.session_state and not st.session_state["df_desp"].empty:
+        df_d = st.session_state["df_desp"]
+        if 'Idcategoria' in df_d.columns and 'Idconcepte' in df_d.columns:
+            desp_c = df_d[df_d['Idcategoria'] == category]['Idconcepte'].dropna().unique()
+            concepts.update(desp_c)
+            
+    return sorted(list(concepts))
 
 def get_config_banks():
-    if cat_config and "bancs" in cat_config:
-        return cat_config["bancs"]
+    cfg = load_categories_conceptes()
+    if cfg and "bancs" in cfg:
+        return cfg["bancs"]
     return list(BANK_MAPPING.keys())
 
 def get_config_payment_methods():
-    if cat_config and "formes_pago" in cat_config:
-        return [fp for fp in cat_config["formes_pago"] if fp]
+    cfg = load_categories_conceptes()
+    if cfg and "formes_pago" in cfg:
+        return [fp for fp in cfg["formes_pago"] if fp]
     return ["Compte", "Dèbit", "VISA", "Efectiu"]
 
 @st.cache_data(ttl=300)

@@ -539,9 +539,16 @@ def render(view_mode="economic"):
         return sorted(list(df_desp['Idcategoria'].dropna().unique()))
     
     def get_config_concepts(category):
-        if cat_config and category in cat_config:
-            return sorted(cat_config[category])
-        return sorted(list(df_desp[df_desp['Idcategoria'] == category]['Idconcepte'].dropna().unique()))
+        cfg = load_categories_conceptes()
+        concepts = set()
+        if cfg and category in cfg:
+            concepts.update([c for c in cfg[category] if c])
+        if category == "op_banc":
+            concepts.update(["Amortització", "Cashback TR", "Embargament", "Gestions Banc", "Pago ElCorteInglés", "Pago VISA", "Reintegre Caixer", "Transferència", "Traspàs comptes"])
+        if 'df_desp' in locals() and not df_desp.empty and 'Idcategoria' in df_desp.columns and 'Idconcepte' in df_desp.columns:
+            desp_c = df_desp[df_desp['Idcategoria'] == category]['Idconcepte'].dropna().unique()
+            concepts.update(desp_c)
+        return sorted(list(concepts))
     
     def get_config_banks():
         if cat_config and "bancs" in cat_config:
