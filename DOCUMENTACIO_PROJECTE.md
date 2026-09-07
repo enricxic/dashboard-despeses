@@ -78,7 +78,7 @@ Dashboard/
 │   ├── jocs.py               # 🎲 Jocs i oci
 │   ├── manteniment.py        # 🛠️ Manteniment i reparacions
 │   ├── calendari.py          # 📅 Agenda i Calendari (Google Calendar sync & events)
-│   ├── medicacio.py          # 💊 Control de medicació
+│   ├── medicacio.py          # 💊 Control de medicació i tutelats (Pla de dosificació & sync bidireccional ✅)
 │   ├── menjar.py             # 🍽️ Menús, rebost i cuina
 │   └── seguretat.py          # 📹 Seguretat i càmeres
 └── DOCUMENTACIO_PROJECTE.md  # Aquest document
