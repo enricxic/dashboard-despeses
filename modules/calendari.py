@@ -343,7 +343,7 @@ def render():
                     cat_idx = cat_keys.index(default_cat) if default_cat in cat_keys else len(cat_keys)-1
                     f_cat = st.selectbox("Categoria", cat_keys, index=cat_idx, format_func=lambda k: f"{cm.CATEGORIES[k]['icon']} {cm.CATEGORIES[k]['label']}", key="f_ev_cat")
                 with c_f4:
-                    f_date = st.date_input("Data de l'esdeveniment", value=init_date, key="f_ev_date")
+                    f_date = st.date_input("Data de l'esdeveniment", value=init_date, format="DD/MM/YYYY", key="f_ev_date")
                 with c_f5:
                     f_allday = st.checkbox("Tot el dia", value=default_all_day, key="f_ev_allday")
                     if not f_allday:
@@ -559,7 +559,7 @@ def render():
         st.markdown(f"#### 🔍 Consulta i Gestió del Dia")
         c_sel_d1, c_sel_d2 = st.columns([6, 4], vertical_alignment="center")
         with c_sel_d1:
-            sel_day = st.date_input("Tria un dia per veure/afegir esdeveniments", value=st.session_state.selected_day_for_new or today, key="picker_sel_day")
+            sel_day = st.date_input("Tria un dia per veure/afegir esdeveniments", value=st.session_state.selected_day_for_new or today, format="DD/MM/YYYY", key="picker_sel_day")
             st.session_state.selected_day_for_new = sel_day
         with c_sel_d2:
             if st.button("➕ Nou Esdeveniment per a aquest dia", type="primary", use_container_width=True, key="btn_add_for_sel_day"):
