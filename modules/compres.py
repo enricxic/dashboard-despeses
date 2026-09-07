@@ -3307,37 +3307,139 @@ def render():
             st.error(f"Error carregant dades del rebost: {e}")
 
     with tab_stats:
-        st.markdown("<h3 style='color:#f39c12;'>🍕 Distribució de Compres per Família</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#f39c12;'>📊 Estadístiques i Distribució de Compres</h3>", unsafe_allow_html=True)
         try:
-            supabase = get_supabase_client(st.session_state.get("role", "guest"))
-            df_super_stats = fetch_all_supabase(supabase, 'compresSuper')
-            if not df_super_stats.empty and 'familia' in df_super_stats.columns:
+            from core.db import ensure_session_dfs
+            ensure_session_dfs()
+            df_super_stats = st.session_state.get("df_super", pd.DataFrame()).copy()
+            
+            if df_super_stats.empty:
+                supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                df_super_stats = fix_mojibake_df(fetch_all_supabase(supabase, 'compresSuper'))
+                
+            if not df_super_stats.empty:
+                df_super_stats['totLinea'] = clean_numeric(df_super_stats.get('totLinea', 0))
+                if 'parsed_date' not in df_super_stats.columns or df_super_stats['parsed_date'].isna().all():
+                    df_super_stats['parsed_date'] = df_super_stats['data'].apply(parse_excel_date)
+                    
+                # Extract year and month safely
+                df_super_stats['any_calc'] = df_super_stats['parsed_date'].dt.year
+                if 'any' in df_super_stats.columns:
+                    df_super_stats['any_calc'] = df_super_stats['any_calc'].fillna(pd.to_numeric(df_super_stats['any'], errors='coerce'))
+                df_super_stats['any_calc'] = df_super_stats['any_calc'].fillna(datetime.today().year).astype(int)
+                
+                df_super_stats['mes_calc'] = df_super_stats['parsed_date'].dt.month
+                
+                # Available years
+                available_years = sorted(list(df_super_stats['any_calc'].dropna().unique()), reverse=True)
+                if not available_years:
+                    available_years = [datetime.today().year]
+                cur_yr = datetime.today().year
+                
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
-                    available_years = sorted([int(y) for y in df_super_stats['any'].dropna().unique() if str(y).isdigit()], reverse=True)
-                    cur_yr = datetime.today().year
                     sel_year = st.selectbox("Any", available_years, index=available_years.index(cur_yr) if cur_yr in available_years else 0, key="stats_super_year")
                 with col_f2:
                     months_opts = ["Tots els mesos"] + CATALAN_MONTHS
                     sel_month = st.selectbox("Mes", months_opts, index=0, key="stats_super_month")
 
-                filtered_df = df_super_stats[df_super_stats['any'].astype(str) == str(sel_year)]
+                # Filter by year
+                filtered_df = df_super_stats[df_super_stats['any_calc'] == int(sel_year)].copy()
+                
+                # Filter by month
                 if sel_month != "Tots els mesos":
-                    m_val = month_translations.get(sel_month, sel_month.lower())
-                    filtered_df = filtered_df[filtered_df['mes'].astype(str).str.lower() == m_val.lower()]
+                    m_idx = CATALAN_MONTHS.index(sel_month) + 1
+                    m_val = month_translations.get(sel_month.lower(), sel_month.lower())
+                    
+                    mask_m = (filtered_df['mes_calc'] == m_idx)
+                    if 'mes' in filtered_df.columns:
+                        mask_m = mask_m | (filtered_df['mes'].astype(str).str.lower().str.strip() == m_val)
+                    if 'clean_mes' in filtered_df.columns:
+                        mask_m = mask_m | (filtered_df['clean_mes'].astype(str).str.lower().str.strip() == m_val)
+                    filtered_df = filtered_df[mask_m]
 
-                if not filtered_df.empty:
-                    df_pie = filtered_df.groupby('familia')['totLinea'].sum().reset_index()
-                    fig_pie = px.pie(df_pie, values='totLinea', names='familia', hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
-                    fig_pie.update_layout(
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='#f8fafc'),
-                        margin=dict(t=20, b=20, l=10, r=10)
-                    )
-                    st.plotly_chart(fig_pie, use_container_width=True, config={'staticPlot': True})
+                if not filtered_df.empty and filtered_df['totLinea'].sum() > 0:
+                    total_exp = filtered_df['totLinea'].sum()
+                    n_articles = len(filtered_df)
+                    top_super = filtered_df['super'].mode().iloc[0] if 'super' in filtered_df.columns and not filtered_df['super'].dropna().empty else "-"
+                    
+                    # Top metric cards
+                    k1, k2, k3 = st.columns(3)
+                    with k1:
+                        st.metric("Total Despesa Súper", f"{total_exp:,.2f} €")
+                    with k2:
+                        st.metric("Nº Línies / Articles", f"{n_articles:,}")
+                    with k3:
+                        st.metric("Súper Principal", f"{top_super}")
+                    
+                    st.markdown("<div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
+                    
+                    # Distribution by family
+                    if 'familia' in filtered_df.columns:
+                        st.markdown("<h4 style='color:#f39c12;'>🍕 Distribució per Família de Productes</h4>", unsafe_allow_html=True)
+                        df_pie = filtered_df.groupby('familia')['totLinea'].sum().reset_index()
+                        df_pie = df_pie[df_pie['totLinea'] > 0].sort_values(by='totLinea', ascending=False)
+                        
+                        col_chart, col_tbl = st.columns([1.4, 1.0])
+                        with col_chart:
+                            fig_pie = px.pie(
+                                df_pie, 
+                                values='totLinea', 
+                                names='familia', 
+                                hole=0.45, 
+                                color_discrete_sequence=px.colors.qualitative.Pastel
+                            )
+                            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+                            fig_pie.update_layout(
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                plot_bgcolor='rgba(0,0,0,0)',
+                                font=dict(color='#f8fafc', size=12),
+                                margin=dict(t=10, b=10, l=10, r=10),
+                                showlegend=False,
+                                height=340
+                            )
+                            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+                        
+                        with col_tbl:
+                            df_pie_show = df_pie.copy()
+                            df_pie_show['% del Total'] = (df_pie_show['totLinea'] / total_exp) * 100.0
+                            df_pie_show.rename(columns={'familia': 'Família', 'totLinea': 'Import (€)'}, inplace=True)
+                            st.dataframe(
+                                df_pie_show.style.format({'Import (€)': '{:,.2f} €', '% del Total': '{:.1f} %'}),
+                                use_container_width=True,
+                                hide_index=True
+                            )
+                    
+                    # Distribution by supermarket
+                    if 'super' in filtered_df.columns and len(filtered_df['super'].dropna().unique()) > 1:
+                        st.markdown("<h4 style='color:#f39c12; margin-top:20px;'>🛒 Despesa per Supermercat</h4>", unsafe_allow_html=True)
+                        df_super_grp = filtered_df.groupby('super')['totLinea'].sum().reset_index()
+                        df_super_grp = df_super_grp[df_super_grp['totLinea'] > 0].sort_values(by='totLinea', ascending=False)
+                        
+                        fig_bar_super = px.bar(
+                            df_super_grp, 
+                            x='super', 
+                            y='totLinea',
+                            color='super',
+                            labels={'super': 'Supermercat', 'totLinea': 'Import (€)'},
+                            color_discrete_sequence=px.colors.qualitative.Safe
+                        )
+                        fig_bar_super.update_layout(
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='#f8fafc', size=12),
+                            margin=dict(t=10, b=20, l=10, r=10),
+                            showlegend=False,
+                            height=300,
+                            yaxis=dict(ticksuffix=' €')
+                        )
+                        st.plotly_chart(fig_bar_super, use_container_width=True, config={'displayModeBar': False})
+
                 else:
-                    st.info(f"No hi ha dades de compres per al període seleccionat.")
+                    st.info("No hi ha dades de compres al súper per al període seleccionat.")
             else:
-                st.info("No s'han trobat dades de compres al súper.")
+                st.info("No s'han trobat dades de compres al súper a la base de dades.")
         except Exception as e:
+            import traceback
             st.error(f"Error carregant estadístiques de compres: {e}")
+            st.code(traceback.format_exc())
