@@ -53,7 +53,7 @@
     <div class="card">
         <div style="display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; -webkit-align-items: center; align-items: center; margin-bottom: 10px;">
             <span class="card-title" style="margin-bottom:0;">📝 Darrers 15 Moviments Reals</span>
-            <a href="/nou" class="nav-link" style="padding: 6px 12px; font-size: 13px; background-color: #f39c12; color: #0f172a;">➕ Afegir Moviment</a>
+            <a href="/nou" class="btn btn-inline" style="background-color: #f39c12; color: #0f172a;">➕ Afegir Moviment</a>
         </div>
         <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
             <table class="retro-table">
@@ -76,14 +76,14 @@
                         <td><strong>{{ m['Idconcepte'] }}</strong></td>
                         <td>
                             {% if m['Import càrrec'] > 0 %}
-                                <span class="badge badge-expense">-{{ "%.2f"|format(m['Import càrrec']) }} €</span>
+                                <span class="badge" style="background-color: #7f1d1d; color: #fca5a5;">-{{ "%.2f"|format(m['Import càrrec']) }} €</span>
                             {% elif m['import ingrés'] > 0 %}
-                                <span class="badge badge-income">+{{ "%.2f"|format(m['import ingrés']) }} €</span>
+                                <span class="badge" style="background-color: #064e3b; color: #6ee7b7;">+{{ "%.2f"|format(m['import ingrés']) }} €</span>
                             {% else %}
                                 0.00 €
                             {% endif %}
                         </td>
-                        <td><span class="text-muted">{{ m['Comentari'] or '' }}</span></td>
+                        <td><span style="color: #94a3b8;">{{ m['Comentari'] or '' }}</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>

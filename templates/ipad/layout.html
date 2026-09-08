@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{ title|default("Dashboard Despeses - iPad") }}</title>
+    <title>{{ title|default("Cuina & Receptari - iPad") }}</title>
     <style>
         * { box-sizing: border-box; -webkit-box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
             background-color: #0f172a;
             color: #f8fafc;
-            padding-bottom: 40px;
+            padding-bottom: 50px;
             font-size: 16px;
         }
         .header {
@@ -25,7 +25,7 @@
             align-items: center;
         }
         .header h1 {
-            font-size: 20px;
+            font-size: 22px;
             color: #f39c12;
             font-weight: 700;
         }
@@ -43,7 +43,7 @@
         }
         .nav-link {
             display: inline-block;
-            padding: 10px 16px;
+            padding: 10px 18px;
             margin-right: 8px;
             color: #94a3b8;
             text-decoration: none;
@@ -72,11 +72,189 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         .card-title {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             color: #f39c12;
             margin-bottom: 12px;
             display: block;
+        }
+        .grid-cards {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-wrap: wrap;
+            flex-wrap: wrap;
+            margin: -8px;
+        }
+        .recipe-col {
+            -webkit-flex: 0 0 33.333%;
+            flex: 0 0 33.333%;
+            max-width: 33.333%;
+            padding: 8px;
+        }
+        @media (max-width: 800px) {
+            .recipe-col {
+                -webkit-flex: 0 0 50%;
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+        }
+        .recipe-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            overflow: hidden;
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+            height: 100%;
+        }
+        .recipe-card:active {
+            border-color: #f39c12;
+        }
+        .recipe-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background-color: #0f172a;
+            display: block;
+        }
+        .recipe-img-placeholder {
+            width: 100%;
+            height: 160px;
+            background-color: #0f172a;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 16px;
+        }
+        .recipe-body {
+            padding: 12px;
+        }
+        .recipe-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #f8fafc;
+            margin-bottom: 6px;
+            line-height: 1.3;
+            height: 42px;
+            overflow: hidden;
+        }
+        .recipe-meta {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 4px;
+        }
+        .badge-cat { background-color: #f39c12; color: #0f172a; }
+        .badge-dif { background-color: #334155; color: #f8fafc; }
+        .badge-time { background-color: #064e3b; color: #6ee7b7; }
+        .badge-bank { background-color: #1e3a8a; color: #93c5fd; }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            background-color: #0f172a;
+            border: 1px solid #475569;
+            color: #ffffff;
+            border-radius: 8px;
+            font-size: 16px;
+            -webkit-appearance: none;
+            outline: none;
+        }
+        .form-control:focus {
+            border-color: #f39c12;
+        }
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 14px 20px;
+            background-color: #f39c12;
+            color: #0f172a;
+            font-weight: bold;
+            font-size: 17px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            -webkit-appearance: none;
+        }
+        .btn:active {
+            background-color: #d97706;
+        }
+        .btn-secondary {
+            background-color: #334155;
+            color: #ffffff;
+        }
+        .btn-inline {
+            width: auto;
+            display: inline-block;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .alert {
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .alert-success {
+            background-color: #064e3b;
+            color: #6ee7b7;
+            border: 1px solid #059669;
+        }
+        .alert-danger {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+            border: 1px solid #dc2626;
+        }
+        
+        .ingredient-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid #334155;
+            font-size: 16px;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+        }
+        .ingredient-item input[type="checkbox"] {
+            margin-right: 12px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        .instruction-box {
+            background-color: #0f172a;
+            border-left: 4px solid #f39c12;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 15px;
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-line;
         }
         .grid-2 {
             display: -webkit-flex;
@@ -127,123 +305,49 @@
         .text-red { color: #ef4444; }
         .text-orange { color: #f39c12; }
         .text-blue { color: #38bdf8; }
-        .text-muted { color: #64748b; }
         
         table.retro-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            font-size: 14px;
+            font-size: 15px;
         }
         table.retro-table th {
             background-color: #0f172a;
             color: #94a3b8;
             text-align: left;
-            padding: 10px 8px;
+            padding: 12px 10px;
             border-bottom: 2px solid #334155;
             font-weight: 600;
         }
         table.retro-table td {
-            padding: 10px 8px;
+            padding: 12px 10px;
             border-bottom: 1px solid #334155;
             color: #e2e8f0;
         }
         table.retro-table tr:hover {
             background-color: #273549;
         }
-        
-        /* Form inputs styled for touch on iPad */
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 14px;
-            color: #cbd5e1;
-            font-weight: 600;
-        }
-        .form-control {
-            width: 100%;
-            padding: 12px 14px;
-            background-color: #0f172a;
-            border: 1px solid #475569;
-            color: #ffffff;
-            border-radius: 8px;
-            font-size: 16px;
-            -webkit-appearance: none;
-            outline: none;
-        }
-        .form-control:focus {
-            border-color: #f39c12;
-        }
-        .btn {
-            display: inline-block;
-            width: 100%;
-            padding: 14px 20px;
-            background-color: #f39c12;
-            color: #0f172a;
-            font-weight: bold;
-            font-size: 17px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            -webkit-appearance: none;
-        }
-        .btn:active {
-            background-color: #d97706;
-        }
-        .btn-secondary {
-            background-color: #334155;
-            color: #ffffff;
-        }
-        .alert {
-            padding: 14px 16px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-        .alert-success {
-            background-color: #064e3b;
-            color: #6ee7b7;
-            border: 1px solid #059669;
-        }
-        .alert-danger {
-            background-color: #7f1d1d;
-            color: #fca5a5;
-            border: 1px solid #dc2626;
-        }
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .badge-income { background-color: #064e3b; color: #6ee7b7; }
-        .badge-expense { background-color: #7f1d1d; color: #fca5a5; }
-        .badge-bank { background-color: #1e3a8a; color: #93c5fd; }
     </style>
 </head>
 <body>
     <div class="header">
         <div>
-            <h1>📊 Dashboard Despeses</h1>
-            <div class="header-sub">Versió lleugera optimitzada per a iPad 2 (iOS 9)</div>
+            <h1>🍽️ Cuina & Receptari</h1>
+            <div class="header-sub">Optimitzat per a iPad 2 (Cuina en directe)</div>
         </div>
         <div>
-            <span style="font-size: 13px; color: #10b981; font-weight: bold;">● Supabase Online</span>
+            <span style="font-size: 13px; color: #10b981; font-weight: bold;">● {{ total_recipes|default(0) }} Receptes</span>
         </div>
     </div>
     
     <div class="nav-bar">
-        <a href="/" class="nav-link {% if active_page == 'resum' %}active{% endif %}">🏠 Resum</a>
-        <a href="/nou" class="nav-link {% if active_page == 'nou' %}active{% endif %}">➕ Nou Moviment</a>
-        <a href="/gasolina" class="nav-link {% if active_page == 'gasolina' %}active{% endif %}">⛽ Gasolina</a>
-        <a href="/km" class="nav-link {% if active_page == 'km' %}active{% endif %}">🛣️ Km Cotxe</a>
+        <a href="/" class="nav-link {% if active_page == 'receptes' %}active{% endif %}">📖 Receptes</a>
+        <a href="/menu" class="nav-link {% if active_page == 'menu' %}active{% endif %}">🧠 Previsió Menús</a>
         <a href="/llista" class="nav-link {% if active_page == 'llista' %}active{% endif %}">📋 Llista Compra</a>
+        <a href="/receptes/nova" class="nav-link {% if active_page == 'nova_recepta' %}active{% endif %}">➕ Nova Recepta</a>
+        <a href="/despeses" class="nav-link {% if active_page == 'despeses' %}active{% endif %}">💰 Despeses</a>
+        <a href="/nou" class="nav-link {% if active_page == 'nou' %}active{% endif %}">➕ Nou Moviment</a>
     </div>
 
     <div class="container">

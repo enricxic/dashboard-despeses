@@ -1,0 +1,91 @@
+{% extends "ipad/layout.html" %}
+{% block content %}
+    <div class="card">
+        <span class="card-title">➕ Afegir Nova Recepta</span>
+
+        {% if error_msg %}
+            <div class="alert alert-danger">{{ error_msg }}</div>
+        {% endif %}
+        {% if success_msg %}
+            <div class="alert alert-success">{{ success_msg }}</div>
+        {% endif %}
+
+        <form action="/receptes/nova" method="POST">
+            <div class="form-group">
+                <label class="form-label">Títol de la Recepta *</label>
+                <input type="text" name="titol" class="form-control" placeholder="Ex: Paella de marisc" required>
+            </div>
+
+            <div class="grid-2">
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Categoria</label>
+                        <select name="categoria" class="form-control">
+                            <option value="Primer">Primer</option>
+                            <option value="Segon">Segon</option>
+                            <option value="Plat únic">Plat únic</option>
+                            <option value="Postre">Postre</option>
+                            <option value="Complement">Complement</option>
+                            <option value="Guarnició">Guarnició</option>
+                            <option value="Salsa">Salsa</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Àpat</label>
+                        <select name="apat" class="form-control">
+                            <option value="Dinar">Dinar</option>
+                            <option value="Sopar">Sopar</option>
+                            <option value="Dinar/Sopar">Dinar/Sopar</option>
+                            <option value="Esmorzar">Esmorzar</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Temps de preparació (minuts)</label>
+                        <input type="number" step="5" min="0" name="temps" class="form-control" value="30">
+                    </div>
+                </div>
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Dificultat</label>
+                        <select name="dificultat" class="form-control">
+                            <option value="Fàcil">Fàcil</option>
+                            <option value="Mitjana">Mitjana</option>
+                            <option value="Difícil">Difícil</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">URL de la Imatge (opcional)</label>
+                <input type="url" name="imatge_url" class="form-control" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🛒 Ingredients (Un per línia)</label>
+                <textarea name="ingredients" rows="6" class="form-control" placeholder="- 400g arròs&#10;- 1 ceba&#10;- 2 grans d'all..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🔪 Mise en place (Preparació prèvia, opcional)</label>
+                <textarea name="mise_en_place" rows="3" class="form-control" placeholder="Tallar la verdura a dauets, netejar el peix..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">👨‍🍳 Instruccions de preparació pas a pas</label>
+                <textarea name="instruccions" rows="8" class="form-control" placeholder="1. Sofregir la ceba...&#10;2. Afegir l'arròs..."></textarea>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn">💾 Guardar Recepta a Supabase</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

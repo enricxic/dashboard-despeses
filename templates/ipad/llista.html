@@ -1,38 +1,76 @@
 {% extends "ipad/layout.html" %}
 {% block content %}
     <div class="card">
-        <span class="card-title">📋 Llista de la Compra / Articles</span>
-        
+        <span class="card-title">📋 Llista de la Compra</span>
+        <p style="color: #94a3b8; margin-bottom: 15px;">Afegeix articles que falten o marca'ls directament mentre compres.</p>
+
+        <!-- Formulari per afegir nou article -->
         <form action="/llista/afegir" method="POST" style="margin-bottom: 20px;">
             <div class="grid-2">
                 <div class="grid-col" style="-webkit-flex: 3; flex: 3;">
-                    <input type="text" name="article" class="form-control" placeholder="Nou article a comprar..." required>
+                    <label class="form-label">Nou Article a Comprar</label>
+                    <input type="text" name="article" class="form-control" placeholder="Ex: Llet sencera, Ous, Tomàquets..." required>
                 </div>
-                <div class="grid-col" style="-webkit-flex: 1; flex: 1;">
-                    <button type="submit" class="btn">➕ Afegir</button>
+                <div class="grid-col" style="-webkit-flex: 2; flex: 2;">
+                    <label class="form-label">Supermercat / Categoria</label>
+                    <select name="super" class="form-control">
+                        <option value="General">General</option>
+                        <option value="Mercadona">Mercadona</option>
+                        <option value="Dia">Dia</option>
+                        <option value="Novavenda">Novavenda</option>
+                        <option value="AreaGuissona">AreaGuissona</option>
+                        <option value="BonPreu">BonPreu</option>
+                        <option value="LIDL">LIDL</option>
+                        <option value="Carnisseria">Carnisseria</option>
+                        <option value="Fruiteria">Fruiteria</option>
+                        <option value="Peixeteria">Peixeteria</option>
+                    </select>
+                </div>
+                <div class="grid-col" style="-webkit-flex: 1; flex: 1; display: -webkit-flex; display: flex; -webkit-align-items: flex-end; align-items: flex-end;">
+                    <button type="submit" class="btn" style="height: 48px;">➕ Afegir</button>
                 </div>
             </div>
         </form>
 
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-            <table class="retro-table">
-                <thead>
-                    <tr>
-                        <th>Article</th>
-                        <th>Supermercat / Categoria</th>
-                        <th>Data / Estat</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in items_list %}
-                    <tr>
-                        <td><strong>{{ item.get('article', item.get('nom', '')) }}</strong></td>
-                        <td><span class="badge badge-bank">{{ item.get('super', item.get('categoria', 'General')) }}</span></td>
-                        <td><span class="text-muted">{{ item.get('data', 'Pendent') }}</span></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        {% if items_list %}
+            <div style="background-color: #0f172a; border-radius: 8px; border: 1px solid #334155; overflow: hidden;">
+                {% for item in items_list %}
+                    <div class="ingredient-item" style="display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between;">
+                        <label style="display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; cursor: pointer; -webkit-flex: 1; flex: 1;">
+                            <input type="checkbox" onchange="toggleStrike(this)">
+                            <span style="font-size: 17px; font-weight: 600;">{{ item.get('nom_estandard', item.get('article', item.get('nom', ''))) }}</span>
+                        </label>
+                        <div>
+                            <span class="badge badge-bank" style="font-size: 12px; padding: 4px 8px;">
+                                {{ item.get('super_habitual', item.get('super', item.get('familia', 'General'))) }}
+                            </span>
+                            {% if item.get('stock_actual') is not none and item.get('stock_minim') is not none %}
+                                <span class="badge" style="background-color: #7f1d1d; color: #fca5a5; font-size: 12px;">
+                                    Stock: {{ item['stock_actual']|int }}/{{ item['stock_minim']|int }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 30px; color: #94a3b8;">
+                <div style="font-size: 35px; margin-bottom: 8px;">🛒</div>
+                Tot en ordre! No hi ha articles pendents a la llista de la compra.
+            </div>
+        {% endif %}
     </div>
+
+    <script>
+        function toggleStrike(cb) {
+            var span = cb.parentNode.querySelector("span");
+            if (cb.checked) {
+                span.style.textDecoration = "line-through";
+                span.style.color = "#64748b";
+            } else {
+                span.style.textDecoration = "none";
+                span.style.color = "#f8fafc";
+            }
+        }
+    </script>
 {% endblock %}

@@ -1,0 +1,91 @@
+{% extends "ipad/layout.html" %}
+{% block content %}
+    <div style="margin-bottom: 12px; display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between;">
+        <a href="/" class="btn btn-inline btn-secondary">🔙 Tornar al Receptari</a>
+        <button onclick="window.print()" class="btn btn-inline btn-secondary">🖨️ Imprimir / Guardar</button>
+    </div>
+
+    <div class="card">
+        <div class="grid-2">
+            <div class="grid-col" style="-webkit-flex: 1.2; flex: 1.2;">
+                <h2 style="font-size: 26px; color: #f39c12; margin-bottom: 10px; line-height: 1.2;">{{ r['titol'] }}</h2>
+                <div style="margin-bottom: 14px;">
+                    <span class="badge badge-cat" style="font-size: 13px; padding: 4px 10px;">{{ r['categoria'] }}</span>
+                    <span class="badge badge-time" style="font-size: 13px; padding: 4px 10px;">⏱️ {{ r['temps_prep_minuts'] }} minuts</span>
+                    <span class="badge badge-dif" style="font-size: 13px; padding: 4px 10px;">⚖️ {{ r['dificultat'] }}</span>
+                    <span class="badge" style="background-color: #1e3a8a; color: #93c5fd; font-size: 13px; padding: 4px 10px;">🍽️ {{ r['apat'] }}</span>
+                </div>
+                {% if r['temporada'] %}
+                    <div style="font-size: 14px; color: #94a3b8; margin-bottom: 6px;">🌱 Temporada: <strong>{{ r['temporada'] }}</strong></div>
+                {% endif %}
+                {% if r['puntuacio_salut'] %}
+                    <div style="font-size: 14px; color: #10b981; margin-bottom: 10px;">🥗 Puntuació Salut: <strong>{{ r['puntuacio_salut'] }}/10</strong></div>
+                {% endif %}
+            </div>
+            <div class="grid-col" style="-webkit-flex: 0.8; flex: 0.8;">
+                {% if r['imatge_url'] %}
+                    <img src="{{ r['imatge_url'] }}" style="width: 100%; height: 220px; object-fit: cover; border-radius: 8px;" alt="{{ r['titol'] }}">
+                {% else %}
+                    <div style="width: 100%; height: 220px; background-color: #0f172a; border-radius: 8px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; color: #64748b;">
+                        📷 Sense imatge
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="grid-col" style="-webkit-flex: 1; flex: 1;">
+            <div class="card">
+                <span class="card-title">🛒 Ingredients (Toca per marcar)</span>
+                {% if ingredients_list %}
+                    <div style="background-color: #0f172a; border-radius: 8px; border: 1px solid #334155;">
+                        {% for ing in ingredients_list %}
+                            <label class="ingredient-item">
+                                <input type="checkbox" onchange="toggleStrike(this)">
+                                <span>{{ ing }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="color: #94a3b8;">No s'han detallat ingredients.</p>
+                {% endif %}
+            </div>
+
+            {% if r['mise_en_place'] %}
+                <div class="card">
+                    <span class="card-title">🔪 Mise en place (Preparació prèvia)</span>
+                    <div class="instruction-box" style="border-left-color: #38bdf8;">
+                        {{ r['mise_en_place'] }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="grid-col" style="-webkit-flex: 1.2; flex: 1.2;">
+            <div class="card">
+                <span class="card-title">👨‍🍳 Instruccions de Preparació</span>
+                {% if r['instruccions'] %}
+                    <div class="instruction-box">
+                        {{ r['instruccions'] }}
+                    </div>
+                {% else %}
+                    <p style="color: #94a3b8;">No s'han detallat instruccions.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleStrike(cb) {
+            var span = cb.parentNode.querySelector("span");
+            if (cb.checked) {
+                span.style.textDecoration = "line-through";
+                span.style.color = "#64748b";
+            } else {
+                span.style.textDecoration = "none";
+                span.style.color = "#f8fafc";
+            }
+        }
+    </script>
+{% endblock %}

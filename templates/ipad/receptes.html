@@ -1,0 +1,68 @@
+{% extends "ipad/layout.html" %}
+{% block content %}
+    <div class="card" style="margin-bottom: 15px; padding: 12px 16px;">
+        <form action="/" method="GET">
+            <div class="grid-2" style="align-items: center;">
+                <div class="grid-col" style="-webkit-flex: 3; flex: 3;">
+                    <input type="text" name="q" class="form-control" placeholder="🔍 Cercar per nom o ingredient..." value="{{ query }}">
+                </div>
+                <div class="grid-col" style="-webkit-flex: 1.5; flex: 1.5;">
+                    <select name="cat" class="form-control" onchange="this.form.submit()">
+                        <option value="">-- Totes les Categories --</option>
+                        {% for c in categories %}
+                            <option value="{{ c }}" {% if sel_cat == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="grid-col" style="-webkit-flex: 1.5; flex: 1.5;">
+                    <select name="apat" class="form-control" onchange="this.form.submit()">
+                        <option value="">-- Tots els Àpats --</option>
+                        {% for a in apats %}
+                            <option value="{{ a }}" {% if sel_apat == a %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="grid-col" style="-webkit-flex: 1; flex: 1;">
+                    <button type="submit" class="btn">Filtrar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if not receptes %}
+        <div class="card" style="text-align: center; padding: 40px;">
+            <div style="font-size: 40px; margin-bottom: 10px;">🍳</div>
+            <h3>No s'ha trobat cap recepta amb aquests criteris</h3>
+            <p style="color: #94a3b8; margin-top: 8px;">Prova de canviar el filtre de cerca o afegeix-ne una de nova.</p>
+            <div style="margin-top: 20px;">
+                <a href="/" class="btn btn-inline btn-secondary">Veure totes</a>
+                <a href="/receptes/nova" class="btn btn-inline" style="background-color: #f39c12; color: #0f172a;">➕ Nova Recepta</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="grid-cards">
+            {% for r in receptes %}
+            <div class="recipe-col">
+                <a href="/recepta/{{ r['id'] }}" class="recipe-card">
+                    {% if r['imatge_url'] %}
+                        <img src="{{ r['imatge_url'] }}" class="recipe-img" alt="{{ r['titol'] }}" loading="lazy">
+                    {% else %}
+                        <div class="recipe-img-placeholder">📷 Sense imatge</div>
+                    {% endif %}
+                    <div class="recipe-body">
+                        <div class="recipe-title">{{ r['titol'] }}</div>
+                        <div style="margin-bottom: 6px;">
+                            <span class="badge badge-cat">{{ r['categoria'] or 'Plat' }}</span>
+                            <span class="badge badge-time">⏱️ {{ r['temps_prep_minuts'] or 0 }} min</span>
+                            <span class="badge badge-dif">⚖️ {{ r['dificultat'] or 'Fàcil' }}</span>
+                        </div>
+                        <div class="recipe-meta">
+                            🍽️ {{ r['apat'] or 'Dinar/Sopar' }}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "ipad/layout.html" %}
+{% block content %}
+    <div class="card">
+        <span class="card-title">🧠 Previsió & Planificador de Menús Setmanal</span>
+        <p style="color: #94a3b8; margin-bottom: 15px;">Genera una proposta equilibrada de dinars i sopars a partir del teu receptari de Supabase.</p>
+        
+        <form action="/menu" method="POST">
+            <div class="grid-2">
+                <div class="grid-col">
+                    <label class="form-label">Temporada</label>
+                    <select name="temporada" class="form-control">
+                        <option value="Tot l'any">Tot l'any</option>
+                        <option value="Primavera">Primavera</option>
+                        <option value="Estiu">Estiu</option>
+                        <option value="Tardor" selected>Tardor</option>
+                        <option value="Hivern">Hivern</option>
+                    </select>
+                </div>
+                <div class="grid-col">
+                    <label class="form-label">Comensals</label>
+                    <input type="number" name="comensals" value="2" min="1" class="form-control">
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <button type="submit" class="btn">🔄 Generar Proposta de Menú</button>
+            </div>
+        </form>
+    </div>
+
+    {% if menu_plan %}
+        <div class="card">
+            <span class="card-title">📅 Proposta de Menú Setmanal (Toca una recepta per obrir-la)</span>
+            
+            {% set dies = ['Dilluns', 'Dimarts', 'Dimecres', 'Dijous', 'Divendres', 'Dissabte', 'Diumenge'] %}
+            <div class="grid-cards">
+                {% for item in menu_plan %}
+                <div class="recipe-col" style="-webkit-flex: 0 0 50%; flex: 0 0 50%; max-width: 50%;">
+                    <div class="card" style="background-color: #0f172a; margin-bottom: 10px; border-color: #334155; padding: 14px;">
+                        <div style="font-weight: bold; color: #f39c12; font-size: 18px; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 4px;">
+                            {{ dies[loop.index0] if loop.index0 < 7 else 'Dia ' ~ loop.index }}
+                        </div>
+                        
+                        <!-- Dinar -->
+                        <div style="margin-bottom: 10px;">
+                            <span style="color: #38bdf8; font-weight: bold; font-size: 13px;">☀️ DINAR:</span>
+                            <div style="margin-top: 4px; padding-left: 6px;">
+                                {% if item.get('dinar_1') %}
+                                    <div style="margin-bottom: 3px;">
+                                        <a href="/recepta/{{ item['dinar_1']['id'] }}" style="color: #f8fafc; font-weight: bold; text-decoration: underline;">
+                                            1r: {{ item['dinar_1']['titol'] }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                                {% if item.get('dinar_2') %}
+                                    <div style="margin-bottom: 3px;">
+                                        <a href="/recepta/{{ item['dinar_2']['id'] }}" style="color: #cbd5e1; text-decoration: underline;">
+                                            2n: {{ item['dinar_2']['titol'] }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                                {% if item.get('dinar_postre') %}
+                                    <div style="color: #94a3b8; font-size: 13px;">
+                                        🍰 Postre: {{ item['dinar_postre']['titol'] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Sopar -->
+                        <div>
+                            <span style="color: #a855f7; font-weight: bold; font-size: 13px;">🌙 SOPAR:</span>
+                            <div style="margin-top: 4px; padding-left: 6px;">
+                                {% if item.get('sopar') %}
+                                    <div>
+                                        <a href="/recepta/{{ item['sopar']['id'] }}" style="color: #f8fafc; font-weight: bold; text-decoration: underline;">
+                                            {{ item['sopar']['titol'] }}
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <span style="color: #64748b;">Sopar lleuger / Lliure</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

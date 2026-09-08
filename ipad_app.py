@@ -1,5 +1,6 @@
 import os
 import json
+import random
 import toml
 from datetime import datetime
 import psycopg2
@@ -57,24 +58,256 @@ def get_db_connection():
         raise ValueError("No s'ha trobat la cadena de connexió a la base de dades.")
     return psycopg2.connect(conn_str)
 
-def load_categories_and_concepts():
-    cats = []
-    cat_concept_map = {}
-    if os.path.exists("categories_conceptes.json"):
-        try:
-            with open("categories_conceptes.json", "r", encoding="utf-8") as f:
-                data = json.load(f)
-                for k, v in data.items():
-                    if k not in ["families_compres", "articles_compres", "bancs", "formes_pago", "supers_tickets"]:
-                        cats.append(k)
-                        cat_concept_map[k] = v if isinstance(v, list) else []
-        except Exception:
-            pass
-    cats = sorted(list(set(cats)))
-    return cats, cat_concept_map
+def get_total_recipes_count():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT COUNT(*) FROM "tb_receptes_pro";')
+        cnt = cur.fetchone()[0]
+        conn.close()
+        return cnt
+    except Exception:
+        return 0
 
+# ----------------------------------------------------
+# 1. LLIBRE DE RECEPTES (PÀGINA PRINCIPAL)
+# ----------------------------------------------------
 @app.route("/")
-def index():
+def receptes():
+    query = request.args.get("q", "").strip()
+    sel_cat = request.args.get("cat", "").strip()
+    sel_apat = request.args.get("apat", "").strip()
+
+    receptes_list = []
+    categories = ["Primer", "Segon", "Plat únic", "Postre", "Complement", "Guarnició", "Salsa"]
+    apats = ["Dinar", "Sopar", "Dinar/Sopar", "Esmorzar"]
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        sql = 'SELECT * FROM "tb_receptes_pro" WHERE 1=1'
+        params = []
+
+        if query:
+            sql += ' AND (LOWER("titol") LIKE %s OR LOWER("ingredients") LIKE %s)'
+            params.extend([f"%{query.lower()}%", f"%{query.lower()}%"])
+        if sel_cat:
+            sql += ' AND "categoria" = %s'
+            params.append(sel_cat)
+        if sel_apat:
+            sql += ' AND ("apat" = %s OR "apat" = \'Dinar/Sopar\')'
+            params.append(sel_apat)
+
+        sql += ' ORDER BY "titol" ASC;'
+        cur.execute(sql, params)
+        receptes_list = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Error carregant receptes: {e}")
+
+    total_cnt = get_total_recipes_count()
+
+    return render_template(
+        "ipad/receptes.html",
+        active_page="receptes",
+        receptes=receptes_list,
+        query=query,
+        sel_cat=sel_cat,
+        sel_apat=sel_apat,
+        categories=categories,
+        apats=apats,
+        total_recipes=total_cnt
+    )
+
+# ----------------------------------------------------
+# 2. DETALL DE RECEPTA (MODE CUINA)
+# ----------------------------------------------------
+@app.route("/recepta/<int:recipe_id>")
+def recepta_detall(recipe_id):
+    recipe = None
+    ingredients_list = []
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM "tb_receptes_pro" WHERE "id" = %s;', (recipe_id,))
+        recipe = cur.fetchone()
+        conn.close()
+
+        if recipe and recipe.get("ingredients"):
+            raw_ing = recipe["ingredients"]
+            for line in raw_ing.split("\n"):
+                line_clean = line.strip()
+                if line_clean.startswith("-") or line_clean.startswith("*"):
+                    line_clean = line_clean[1:].strip()
+                if line_clean:
+                    ingredients_list.append(line_clean)
+    except Exception as e:
+        print(f"Error recepta: {e}")
+
+    if not recipe:
+        flash("No s'ha trobat la recepta.")
+        return redirect(url_for("receptes"))
+
+    total_cnt = get_total_recipes_count()
+
+    return render_template(
+        "ipad/recepta_detall.html",
+        active_page="receptes",
+        r=recipe,
+        ingredients_list=ingredients_list,
+        total_recipes=total_cnt
+    )
+
+# ----------------------------------------------------
+# 3. PREVISIÓ / GENERADOR DE MENÚS SETMANALS
+# ----------------------------------------------------
+@app.route("/menu", methods=["GET", "POST"])
+def menu():
+    menu_plan = []
+    total_cnt = get_total_recipes_count()
+    
+    if request.method == "POST":
+        sel_temp = request.form.get("temporada", "Tot l'any")
+        
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute('SELECT * FROM "tb_receptes_pro";')
+            all_recipes = cur.fetchall()
+            conn.close()
+
+            # Pools per categoria i apat
+            pool_dinar_1 = [r for r in all_recipes if r.get('categoria') == 'Primer' and (r.get('apat') in ['Dinar', 'Dinar/Sopar', None])]
+            pool_dinar_2 = [r for r in all_recipes if r.get('categoria') in ['Segon', 'Plat únic'] and (r.get('apat') in ['Dinar', 'Dinar/Sopar', None])]
+            pool_postres = [r for r in all_recipes if r.get('categoria') == 'Postre']
+            pool_sopar = [r for r in all_recipes if r.get('apat') in ['Sopar', 'Dinar/Sopar', None]]
+
+            random.shuffle(pool_dinar_1)
+            random.shuffle(pool_dinar_2)
+            random.shuffle(pool_postres)
+            random.shuffle(pool_sopar)
+
+            for i in range(7):
+                d1 = pool_dinar_1[i % len(pool_dinar_1)] if pool_dinar_1 else None
+                d2 = pool_dinar_2[i % len(pool_dinar_2)] if pool_dinar_2 else None
+                dp = pool_postres[i % len(pool_postres)] if pool_postres else None
+                sp = pool_sopar[i % len(pool_sopar)] if pool_sopar else None
+
+                menu_plan.append({
+                    "dinar_1": d1,
+                    "dinar_2": d2,
+                    "dinar_postre": dp,
+                    "sopar": sp
+                })
+        except Exception as e:
+            print(f"Error generant menu: {e}")
+
+    return render_template(
+        "ipad/menu.html",
+        active_page="menu",
+        menu_plan=menu_plan,
+        total_recipes=total_cnt
+    )
+
+# ----------------------------------------------------
+# 4. LLISTA DE LA COMPRA
+# ----------------------------------------------------
+@app.route("/llista", methods=["GET"])
+def llista():
+    items_list = []
+    total_cnt = get_total_recipes_count()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Select items where stock_actual <= stock_minim or all products
+        cur.execute('SELECT * FROM "tb_productes" ORDER BY "nom_estandard" ASC LIMIT 50;')
+        items_list = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Error llista: {e}")
+
+    return render_template("ipad/llista.html", active_page="llista", items_list=items_list, total_recipes=total_cnt)
+
+@app.route("/llista/afegir", methods=["POST"])
+def llista_afegir():
+    article = request.form.get("article", "").strip()
+    super_habitual = request.form.get("super", "General").strip()
+
+    if article:
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute('SELECT COALESCE(MAX("idProducte"), 0) FROM "tb_productes";')
+            next_id = cur.fetchone()[0] + 1
+
+            cur.execute(
+                """
+                INSERT INTO "tb_productes" ("idProducte", "nom_estandard", "familia", "unitat", "stock_actual", "stock_minim", "super_habitual")
+                VALUES (%s, %s, %s, %s, %s, %s, %s);
+                """,
+                (next_id, article, "General", "unitat", 0, 1, super_habitual)
+            )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Error afegint article: {e}")
+
+    return redirect(url_for("llista"))
+
+# ----------------------------------------------------
+# 5. AFEGIR NOVA RECEPTA
+# ----------------------------------------------------
+@app.route("/receptes/nova", methods=["GET", "POST"])
+def recepta_nova():
+    total_cnt = get_total_recipes_count()
+    error_msg = None
+    success_msg = None
+
+    if request.method == "POST":
+        titol = request.form.get("titol", "").strip()
+        categoria = request.form.get("categoria", "Primer")
+        apat = request.form.get("apat", "Dinar")
+        temps = int(request.form.get("temps") or 30)
+        dificultat = request.form.get("dificultat", "Fàcil")
+        imatge_url = request.form.get("imatge_url", "").strip() or None
+        ingredients = request.form.get("ingredients", "").strip()
+        mise_en_place = request.form.get("mise_en_place", "").strip()
+        instruccions = request.form.get("instruccions", "").strip()
+
+        if not titol:
+            error_msg = "⚠️ El títol de la recepta és obligatori."
+        else:
+            try:
+                conn = get_db_connection()
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    INSERT INTO "tb_receptes_pro" ("titol", "categoria", "temps_prep_minuts", "dificultat", "apat", "ingredients", "mise_en_place", "instruccions", "imatge_url", "temporada", "puntuacio_salut")
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """,
+                    (titol, categoria, temps, dificultat, apat, ingredients, mise_en_place, instruccions, imatge_url, "Tot l'any", 7)
+                )
+                conn.commit()
+                conn.close()
+                success_msg = f"✅ Recepta '{titol}' guardada correctament a Supabase!"
+            except Exception as e:
+                error_msg = f"❌ Error guardant la recepta: {e}"
+
+    return render_template(
+        "ipad/recepta_nova.html",
+        active_page="nova_recepta",
+        error_msg=error_msg,
+        success_msg=success_msg,
+        total_recipes=total_cnt
+    )
+
+# ----------------------------------------------------
+# 6. RESUM FINANCES / DESPESES (INTEGRAT)
+# ----------------------------------------------------
+@app.route("/despeses")
+def despeses():
+    total_cnt = get_total_recipes_count()
     now = datetime.now()
     mes_idx = now.month - 1
     mes_actual_nom = CATALAN_MONTHS[mes_idx]
@@ -89,11 +322,9 @@ def index():
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
-        # 1. Darrers 15 moviments
         cur.execute('SELECT * FROM "despeses" ORDER BY "ID_mov" DESC LIMIT 15;')
         moviments = cur.fetchall()
 
-        # 2. Resum del mes actual
         cur.execute(
             'SELECT "import ingrés", "Import càrrec" FROM "despeses" WHERE "any" = %s AND (LOWER("mes") = %s OR LOWER("mes") = %s);',
             (any_actual, mes_actual_nom.lower(), mes_actual_nom[:3].lower())
@@ -102,7 +333,6 @@ def index():
             total_ing_mes += float(r.get('import ingrés') or 0.0)
             total_desp_mes += float(r.get('Import càrrec') or 0.0)
 
-        # 3. Càlcul de saldos bancaris totals
         cur.execute('SELECT "Banc", "FormaPago", "import ingrés", "Import càrrec", "Idcategoria", "Idconcepte" FROM "despeses";')
         all_desp = cur.fetchall()
 
@@ -138,14 +368,14 @@ def index():
 
         conn.close()
     except Exception as e:
-        print(f"Error carregant dades: {e}")
+        print(f"Error despeses: {e}")
 
     total_balance = sum(v for k, v in balances.items() if k != 'Pago VISA') + balances.get('Pago VISA', 0.0)
     estalvi_net_mes = total_ing_mes - total_desp_mes
 
     return render_template(
         "ipad/resum.html",
-        active_page="resum",
+        active_page="despeses",
         balances=balances,
         total_balance=total_balance,
         mes_actual_nom=mes_actual_nom.capitalize(),
@@ -153,12 +383,29 @@ def index():
         total_ing_mes=total_ing_mes,
         total_desp_mes=total_desp_mes,
         estalvi_net_mes=estalvi_net_mes,
-        moviments=moviments
+        moviments=moviments,
+        total_recipes=total_cnt
     )
 
+# ----------------------------------------------------
+# 7. NOU MOVIMENT REAL
+# ----------------------------------------------------
 @app.route("/nou", methods=["GET", "POST"])
 def nou_moviment():
-    categories_list, cat_concept_map = load_categories_and_concepts()
+    total_cnt = get_total_recipes_count()
+    categories_list = []
+    cat_concept_map = {}
+    if os.path.exists("categories_conceptes.json"):
+        try:
+            with open("categories_conceptes.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                for k, v in data.items():
+                    if k not in ["families_compres", "articles_compres", "bancs", "formes_pago", "supers_tickets"]:
+                        categories_list.append(k)
+                        cat_concept_map[k] = v if isinstance(v, list) else []
+        except Exception:
+            pass
+    categories_list = sorted(list(set(categories_list)))
     bancs_list = ["BBVA", "LaCaixa", "TradeRep.", "Efectiu", "T.Moneder", "T.CorteInglés", "Pago VISA"]
 
     error_msg = None
@@ -174,7 +421,6 @@ def nou_moviment():
         import_val = float(request.form.get("import_val") or 0.0)
         comentari = request.form.get("comentari", "").strip()
 
-        # Extra gasolina
         gas_cotxe = request.form.get("gas_cotxe") or "tívoli"
         gas_preu_l = float(request.form.get("gas_preu_l") or 0.0)
 
@@ -197,11 +443,9 @@ def nou_moviment():
                 conn = get_db_connection()
                 cur = conn.cursor()
 
-                # Get max ID_mov
                 cur.execute('SELECT COALESCE(MAX("ID_mov"), 0) FROM "despeses";')
                 next_id_mov = cur.fetchone()[0] + 1
 
-                # Insert despeses
                 cur.execute(
                     """
                     INSERT INTO "despeses" ("ID_mov", "Banc", "FormaPago", "Data", "mes", "any", "import ingrés", "Import càrrec", "grup", "Idcategoria", "Idconcepte", "Comentari", "ticketPendent")
@@ -210,7 +454,6 @@ def nou_moviment():
                     (next_id_mov, banc, forma_pago, data_formatted, mes_str, any_int, import_ing, import_carg, grup, cat, concepte, comentari, False)
                 )
 
-                # If gasolina, insert into gasolina table too
                 if "gasolina" in cat.lower():
                     cur.execute('SELECT COALESCE(MAX("idGasolina"), 0) FROM "gasolina";')
                     next_id_gas = cur.fetchone()[0] + 1
@@ -240,90 +483,9 @@ def nou_moviment():
         cat_concept_json=json.dumps(cat_concept_map),
         default_date=default_date,
         error_msg=error_msg,
-        success_msg=success_msg
+        success_msg=success_msg,
+        total_recipes=total_cnt
     )
-
-@app.route("/gasolina")
-def gasolina():
-    gasolina_list = []
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute('SELECT * FROM "gasolina" ORDER BY "idGasolina" DESC LIMIT 30;')
-        for r in cur.fetchall():
-            preu_raw = r.get("euros/litre")
-            try:
-                preu_f = float(str(preu_raw).replace(",", ".")) if preu_raw is not None else 0.0
-            except:
-                preu_f = 0.0
-            r["euros/litre"] = preu_f
-            gasolina_list.append(r)
-        conn.close()
-    except Exception as e:
-        print(f"Error gasolina: {e}")
-
-    return render_template("ipad/gasolina.html", active_page="gasolina", gasolina_list=gasolina_list)
-
-@app.route("/km", methods=["GET", "POST"])
-def km():
-    msg = None
-    last_km = 0
-    rutes_list = []
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        if request.method == "POST":
-            data_str = request.form.get("data")
-            contador_val = int(request.form.get("contador") or 0)
-            ruta_val = request.form.get("ruta", "").strip()
-
-            dt = datetime.strptime(data_str, "%Y-%m-%d")
-            data_formatted = dt.strftime("%d/%m/%Y")
-
-            cur.execute('SELECT COALESCE(MAX("contador"), 0) FROM "kmCotxe";')
-            prev_km = cur.fetchone()['coalesce']
-            km_trajecte = max(0, contador_val - prev_km)
-
-            cur.execute('SELECT COALESCE(MAX("idRuta"), 0) FROM "kmCotxe";')
-            next_id = cur.fetchone()['coalesce'] + 1
-
-            cur.execute(
-                """
-                INSERT INTO "kmCotxe" ("idRuta", "cotxe", "data", "ruta", "contador", "km")
-                VALUES (%s, %s, %s, %s, %s, %s);
-                """,
-                (next_id, "tívoli", data_formatted, ruta_val, contador_val, km_trajecte)
-            )
-            conn.commit()
-            msg = f"✅ Lectura de {contador_val} km (+{km_trajecte} km) desada correctament!"
-
-        cur.execute('SELECT COALESCE(MAX("contador"), 0) FROM "kmCotxe";')
-        last_km = int(cur.fetchone()['coalesce'])
-
-        cur.execute('SELECT * FROM "kmCotxe" ORDER BY "idRuta" DESC LIMIT 25;')
-        rutes_list = cur.fetchall()
-
-        conn.close()
-    except Exception as e:
-        print(f"Error km: {e}")
-
-    default_date = datetime.today().strftime("%Y-%m-%d")
-    return render_template("ipad/km.html", active_page="km", last_km=last_km, rutes_list=rutes_list, default_date=default_date, msg=msg)
-
-@app.route("/llista", methods=["GET"])
-def llista():
-    items_list = []
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute('SELECT * FROM "tb_productes" LIMIT 40;')
-        items_list = cur.fetchall()
-        conn.close()
-    except Exception as e:
-        print(f"Error llista: {e}")
-    return render_template("ipad/llista.html", active_page="llista", items_list=items_list)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
