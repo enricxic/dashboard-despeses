@@ -186,6 +186,7 @@ def render():
                                 
                                 if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
                                     st.session_state[f"editing_{row['id']}"] = False
+                                    st.session_state[f"rec_comensals_{row['id']}"] = 3
                                     modal_recepta(row)
             
             with subtab_add:
