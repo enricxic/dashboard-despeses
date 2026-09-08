@@ -2546,11 +2546,14 @@ def render():
                 default_car_idx = cars_list.index("tívoli") if "tívoli" in cars_list else 0
                 gas_cotxe = st.selectbox("Cotxe", cars_list, index=default_car_idx, key=f"desp_gas_cotxe_{version}")
             with gas_col2:
-                gas_preu_l = st.number_input("Preu per litre (€/l)", min_value=0.0, value=1.214, step=0.001, format="%.3f", key=f"desp_gas_preu_l_{version}")
+                gas_preu_l = st.number_input("Preu per litre (€/l)", min_value=0.0, value=None, step=0.001, format="%.3f", key=f"desp_gas_preu_l_{version}")
             with gas_col3:
-                calculated_litres = import_carg / gas_preu_l if gas_preu_l > 0 else 0.0
+                calculated_litres = (import_carg / gas_preu_l) if (gas_preu_l is not None and gas_preu_l > 0) else 0.0
                 st.session_state[f"desp_litres_{version}"] = calculated_litres
-                st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>Litres: {calculated_litres:.2f} l</div>", unsafe_allow_html=True)
+                if gas_preu_l is not None and gas_preu_l > 0:
+                    st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#f39c12;'>Litres: {calculated_litres:.2f} l</div>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"<div style='margin-top:28px; font-weight:bold; font-size:0.95rem; color:#888888;'>Litres: --</div>", unsafe_allow_html=True)
             with gas_col4:
                 st.write("")
             
@@ -2595,7 +2598,7 @@ def render():
                 st.error("⚠️ S'ha d'introduir un import vàlid (Càrrec o Ingrés).")
             elif not banc or (banc not in ["Efectiu", "Casa", "CASA"] and not forma_pago) or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
                 st.error("⚠️ Tots els camps (Banc, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu o Casa).")
-            elif is_gas_cat and st.session_state.get(f"desp_litres_{version}", 0.0) <= 0.0:
+            elif is_gas_cat and (gas_preu_l is None or gas_preu_l <= 0.0):
                 st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
             else:
                 if (is_new_mode or concept_val == "➕ Afegir nou...") and st.session_state.get(f"desp_save_new_concept_{version}", True) and actual_concept:
@@ -2626,7 +2629,7 @@ def render():
                 
                 new_row_gas = {}
                 if is_gas_cat:
-                    preu_l_saved = st.session_state.get(f"desp_gas_preu_l_{version}", 1.214)
+                    preu_l_saved = float(st.session_state.get(f"desp_gas_preu_l_{version}") or (gas_preu_l if gas_preu_l else 0.0))
                     litres_saved = round(import_carg / preu_l_saved, 2) if preu_l_saved > 0 else 0.0
                     new_row_gas = {
                         'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty and 'idGasolina' in df_gas.columns else 1,
