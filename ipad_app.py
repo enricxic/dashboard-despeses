@@ -53,7 +53,14 @@ def get_db_connection():
         except Exception:
             pass
     if not conn_str:
-        conn_str = os.environ.get("DATABASE_URL") or os.environ.get("connection_string")
+        raw_env = os.environ.get("DATABASE_URL") or os.environ.get("connection_string")
+        if raw_env:
+            import re
+            m = re.search(r'(postgresql://[^\s"\']+)', raw_env)
+            if m:
+                conn_str = m.group(1).strip()
+            else:
+                conn_str = raw_env.strip()
     if not conn_str:
         raise ValueError("No s'ha trobat la cadena de connexió a la base de dades.")
     return psycopg2.connect(conn_str)
