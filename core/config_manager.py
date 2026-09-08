@@ -26,12 +26,12 @@ DEFAULT_CONFIG = {
     "tutelats": [],
     "bancs": [
         {"id": 1, "nom": "BBVA", "actiu": True, "icona": "🏦", "color": "#004481", "descripcio": "Compte Corrent BBVA", "titular": "Enric Xicars", "compte_iban": ""},
-        {"id": 2, "nom": "LA CAIXA", "actiu": True, "icona": "🏦", "color": "#007eae", "descripcio": "Compte Corrent CaixaBank", "titular": "Enric Xicars", "compte_iban": ""},
-        {"id": 3, "nom": "TRADE REPUB.", "actiu": True, "icona": "📈", "color": "#111827", "descripcio": "Compte Inversió Trade Republic", "titular": "Enric Xicars", "compte_iban": ""},
-        {"id": 4, "nom": "CASA", "actiu": True, "icona": "🏠", "color": "#10b981", "descripcio": "Efectiu / Caixa de casa", "titular": "Llar", "compte_iban": ""},
-        {"id": 5, "nom": "TG.MONEDER", "actiu": True, "icona": "👛", "color": "#f59e0b", "descripcio": "Targeta Moneder / Prepago", "titular": "Enric Xicars", "compte_iban": ""},
-        {"id": 6, "nom": "CORTEINGLÉS", "actiu": True, "icona": "🛒", "color": "#047857", "descripcio": "Targeta El Corte Inglés", "titular": "Enric Xicars", "compte_iban": ""},
-        {"id": 7, "nom": "PAGO VISA", "actiu": True, "icona": "💳", "color": "#6366f1", "descripcio": "Targeta de Crèdit VISA", "titular": "Enric Xicars", "compte_iban": ""}
+        {"id": 2, "nom": "LaCaixa", "actiu": True, "icona": "🏦", "color": "#007eae", "descripcio": "Compte Corrent CaixaBank", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 3, "nom": "TradeRep.", "actiu": True, "icona": "📈", "color": "#111827", "descripcio": "Compte Inversió Trade Republic", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 4, "nom": "Efectiu", "actiu": True, "icona": "💵", "color": "#10b981", "descripcio": "Efectiu / Caixa de casa", "titular": "Llar", "compte_iban": ""},
+        {"id": 5, "nom": "T.Moneder", "actiu": True, "icona": "👛", "color": "#f59e0b", "descripcio": "Targeta Moneder / Prepago", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 6, "nom": "T.CorteInglés", "actiu": True, "icona": "🛒", "color": "#047857", "descripcio": "Targeta El Corte Inglés", "titular": "Enric Xicars", "compte_iban": ""},
+        {"id": 7, "nom": "Pago VISA", "actiu": True, "icona": "💳", "color": "#6366f1", "descripcio": "Targeta de Crèdit VISA", "titular": "Enric Xicars", "compte_iban": ""}
     ],
     "tema": "Fosc",
     "icones_actives": {

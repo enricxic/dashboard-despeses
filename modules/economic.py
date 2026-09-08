@@ -3265,7 +3265,7 @@ def render(view_mode="economic"):
         try:
             from core.config_manager import get_active_bancs
             active_b = get_active_bancs()
-            active_b_names = [b["nom"].strip().upper() for b in active_b]
+            active_b_names = [BANK_MAPPING.get(b["nom"], b["nom"]).strip().upper() for b in active_b]
         except Exception:
             active_b_names = [b.strip().upper() for b in dashboard_bank_order]
             

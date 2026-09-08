@@ -1,0 +1,128 @@
+{
+    "admin": {
+        "nom": "Enric Xicars",
+        "email": "enricxicars@gmail.com",
+        "telefon": "+34 600 000 000",
+        "avatar": "👑",
+        "rol": "Administrador",
+        "pin": "1234"
+    },
+    "casa": {
+        "paraula1": "Xiqui",
+        "color1": "#407faf",
+        "paraula2": "House",
+        "color2": "#73ad69",
+        "tamany_lletra": 60
+    },
+    "familia": [
+        {
+            "id": 1,
+            "nom": "Enric",
+            "rol": "Pare",
+            "edat": "45",
+            "circunstancies": "Cap al·lèrgia",
+            "icona": "👨",
+            "google_calendar_ical": "",
+            "color": "#3b82f6"
+        },
+        {
+            "id": 2,
+            "nom": "Adult 2",
+            "rol": "Mare",
+            "edat": "42",
+            "circunstancies": "Vegetariana",
+            "icona": "👩",
+            "google_calendar_ical": "",
+            "color": "#ec4899"
+        }
+    ],
+    "tutelats": [],
+    "bancs": [
+        {
+            "id": 1,
+            "nom": "BBVA",
+            "actiu": true,
+            "icona": "🏦",
+            "color": "#004481",
+            "descripcio": "Compte Corrent BBVA",
+            "titular": "Enric Xicars",
+            "compte_iban": ""
+        },
+        {
+            "id": 2,
+            "nom": "LaCaixa",
+            "actiu": true,
+            "icona": "🏦",
+            "color": "#007eae",
+            "descripcio": "Compte Corrent CaixaBank",
+            "titular": "Enric Xicars",
+            "compte_iban": ""
+        },
+        {
+            "id": 3,
+            "nom": "TradeRep.",
+            "actiu": true,
+            "icona": "📈",
+            "color": "#111827",
+            "descripcio": "Compte Inversió Trade Republic",
+            "titular": "Enric Xicars",
+            "compte_iban": ""
+        },
+        {
+            "id": 4,
+            "nom": "Efectiu",
+            "actiu": true,
+            "icona": "💵",
+            "color": "#10b981",
+            "descripcio": "Efectiu / Caixa de casa",
+            "titular": "Llar",
+            "compte_iban": ""
+        },
+        {
+            "id": 5,
+            "nom": "T.Moneder",
+            "actiu": true,
+            "icona": "👛",
+            "color": "#f59e0b",
+            "descripcio": "Targeta Moneder / Prepago",
+            "titular": "Enric Xicars",
+            "compte_iban": ""
+        },
+        {
+            "id": 6,
+            "nom": "T.CorteInglés",
+            "actiu": true,
+            "icona": "🛒",
+            "color": "#047857",
+            "descripcio": "Targeta El Corte Inglés",
+            "titular": "Enric Xicars",
+            "compte_iban": ""
+        },
+        {
+            "id": 7,
+            "nom": "Pago VISA",
+            "actiu": true,
+            "icona": "💳",
+            "color": "#6366f1",
+            "descripcio": "Targeta de Crèdit VISA",
+            "titular": "Enric Xicars",
+            "compte_iban": ""
+        }
+    ],
+    "tema": "Fosc",
+    "icones_actives": {
+        "dashboard": true,
+        "economic": true,
+        "seguretat": true,
+        "manteniment": true,
+        "domotica": true,
+        "jocs": true,
+        "agenda": true,
+        "medicacio": true,
+        "menjar": true,
+        "cotxe": true,
+        "compres": true,
+        "admin": true
+    },
+    "idioma": "ca"
+}
