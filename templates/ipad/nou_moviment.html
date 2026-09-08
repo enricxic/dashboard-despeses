@@ -1,0 +1,179 @@
+{% extends "ipad/layout.html" %}
+{% block content %}
+    <div class="card">
+        <span class="card-title">➕ Nou Moviment Real (Despesa / Ingrés)</span>
+
+        {% if error_msg %}
+            <div class="alert alert-danger">{{ error_msg }}</div>
+        {% endif %}
+        {% if success_msg %}
+            <div class="alert alert-success">{{ success_msg }}</div>
+        {% endif %}
+
+        <form action="/nou" method="POST" id="movForm">
+            <div class="grid-2">
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Data</label>
+                        <input type="date" name="data" class="form-control" value="{{ default_date }}" required>
+                    </div>
+                </div>
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Banc</label>
+                        <select name="banc" id="bancSel" class="form-control" required onchange="handleBancChange()">
+                            <option value="">-- Selecciona Banc --</option>
+                            {% for b in bancs_list %}
+                                <option value="{{ b }}">{{ b }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Forma de Pagament</label>
+                        <select name="forma_pago" id="formaPagoSel" class="form-control">
+                            <option value="Dèbit">Dèbit</option>
+                            <option value="VISA">VISA</option>
+                            <option value="Compte">Compte</option>
+                            <option value="Efectiu">Efectiu</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Tipus / Grup</label>
+                        <select name="grup" id="grupSel" class="form-control" required onchange="handleGrupChange()">
+                            <option value="Càrrec">Càrrec (Despesa)</option>
+                            <option value="Ingrés">Ingrés</option>
+                            <option value="op_banc">Operació Bancària (op_banc)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Categoria</label>
+                        <select name="categoria" id="catSel" class="form-control" required onchange="updateConcepts()">
+                            <option value="">-- Selecciona Categoria --</option>
+                            {% for c in categories_list %}
+                                <option value="{{ c }}">{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-col">
+                    <div class="form-group">
+                        <label class="form-label">Concepte</label>
+                        <select name="concepte" id="concepteSel" class="form-control" required>
+                            <option value="">-- Selecciona Categoria primer --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Import (€)</label>
+                <input type="number" step="0.01" min="0.01" name="import_val" id="importInput" class="form-control" placeholder="0.00" required oninput="calcLitres()">
+            </div>
+
+            <!-- Secció específica de Gasolina si s'escull categoria gasolina -->
+            <div id="gasolinaSection" style="display:none; background-color: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #f39c12; margin-bottom: 15px;">
+                <div style="font-weight: bold; color: #f39c12; margin-bottom: 10px;">⛽ Paràmetres de Proveïment de Gasolina</div>
+                <div class="grid-2">
+                    <div class="grid-col">
+                        <div class="form-group">
+                            <label class="form-label">Cotxe</label>
+                            <select name="gas_cotxe" class="form-control">
+                                <option value="tívoli">tívoli</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid-col">
+                        <div class="form-group">
+                            <label class="form-label">Preu per litre (€/l)</label>
+                            <input type="number" step="0.001" min="0.001" name="gas_preu_l" id="gasPreuL" class="form-control" placeholder="Ex: 1.345" oninput="calcLitres()">
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 5px; font-weight: bold; color: #f39c12;" id="litresText">Litres estimats: --</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Comentari (Opcional)</label>
+                <input type="text" name="comentari" class="form-control" placeholder="Anotacions...">
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn">💾 Desar Moviment</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Mapping de categories a conceptes generat pel servidor
+        var categoryConceptsMap = {{ cat_concept_json|safe }};
+
+        function updateConcepts() {
+            var cat = document.getElementById("catSel").value;
+            var conSel = document.getElementById("concepteSel");
+            conSel.innerHTML = "";
+            
+            var gasSec = document.getElementById("gasolinaSection");
+            if (cat.toLowerCase().indexOf("gasolina") !== -1) {
+                gasSec.style.display = "block";
+            } else {
+                gasSec.style.display = "none";
+            }
+
+            var concepts = categoryConceptsMap[cat] || [];
+            if (concepts.length === 0) {
+                var opt = document.createElement("option");
+                opt.value = cat;
+                opt.text = cat;
+                conSel.appendChild(opt);
+            } else {
+                for (var i = 0; i < concepts.length; i++) {
+                    var opt = document.createElement("option");
+                    opt.value = concepts[i];
+                    opt.text = concepts[i];
+                    conSel.appendChild(opt);
+                }
+            }
+        }
+
+        function handleBancChange() {
+            var banc = document.getElementById("bancSel").value;
+            var formaPagoSel = document.getElementById("formaPagoSel");
+            if (banc === "Efectiu" || banc === "Casa") {
+                formaPagoSel.value = "Efectiu";
+            }
+        }
+
+        function handleGrupChange() {
+            var grup = document.getElementById("grupSel").value;
+            var catSel = document.getElementById("catSel");
+            if (grup === "op_banc") {
+                catSel.value = "op_banc";
+                updateConcepts();
+            }
+        }
+
+        function calcLitres() {
+            var imp = parseFloat(document.getElementById("importInput").value) || 0;
+            var preu = parseFloat(document.getElementById("gasPreuL").value) || 0;
+            var txt = document.getElementById("litresText");
+            if (preu > 0 && imp > 0) {
+                var litres = (imp / preu).toFixed(2);
+                txt.innerHTML = "Litres calculats: <strong>" + litres + " l</strong> (" + imp.toFixed(2) + " € / " + preu.toFixed(3) + " €/l)";
+            } else {
+                txt.innerHTML = "Litres estimats: --";
+            }
+        }
+    </script>
+{% endblock %}

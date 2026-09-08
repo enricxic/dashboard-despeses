@@ -1,0 +1,93 @@
+{% extends "ipad/layout.html" %}
+{% block content %}
+    <div class="card">
+        <span class="card-title">💰 Saldos dels Comptes Bancaris</span>
+        <div class="grid-4">
+            {% for banc, saldo in balances.items() %}
+            <div class="grid-col-4">
+                <div class="kpi-box">
+                    <div class="kpi-title">{{ banc }}</div>
+                    <div class="kpi-val {% if saldo < 0 %}text-red{% else %}text-green{% endif %}">
+                        {{ "%.2f"|format(saldo) }} €
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            <div class="grid-col-4">
+                <div class="kpi-box" style="border-color: #f39c12;">
+                    <div class="kpi-title" style="color: #f39c12;">TOTAL LIQUIDITAT</div>
+                    <div class="kpi-val text-orange">
+                        {{ "%.2f"|format(total_balance) }} €
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <span class="card-title">📅 Resum del Mes Actual ({{ mes_actual_nom }} {{ any_actual }})</span>
+        <div class="grid-4">
+            <div class="grid-col-4">
+                <div class="kpi-box">
+                    <div class="kpi-title">Ingressos</div>
+                    <div class="kpi-val text-green">+{{ "%.2f"|format(total_ing_mes) }} €</div>
+                </div>
+            </div>
+            <div class="grid-col-4">
+                <div class="kpi-box">
+                    <div class="kpi-title">Despeses</div>
+                    <div class="kpi-val text-red">-{{ "%.2f"|format(total_desp_mes) }} €</div>
+                </div>
+            </div>
+            <div class="grid-col-4">
+                <div class="kpi-box">
+                    <div class="kpi-title">Estalvi Net</div>
+                    <div class="kpi-val {% if estalvi_net_mes >= 0 %}text-green{% else %}text-red{% endif %}">
+                        {{ "%.2f"|format(estalvi_net_mes) }} €
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; -webkit-align-items: center; align-items: center; margin-bottom: 10px;">
+            <span class="card-title" style="margin-bottom:0;">📝 Darrers 15 Moviments Reals</span>
+            <a href="/nou" class="nav-link" style="padding: 6px 12px; font-size: 13px; background-color: #f39c12; color: #0f172a;">➕ Afegir Moviment</a>
+        </div>
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <table class="retro-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Banc</th>
+                        <th>Categoria</th>
+                        <th>Concepte</th>
+                        <th>Import</th>
+                        <th>Comentari</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in moviments %}
+                    <tr>
+                        <td>{{ m['Data'] }}</td>
+                        <td><span class="badge badge-bank">{{ m['Banc'] }}</span></td>
+                        <td>{{ m['Idcategoria'] }}</td>
+                        <td><strong>{{ m['Idconcepte'] }}</strong></td>
+                        <td>
+                            {% if m['Import càrrec'] > 0 %}
+                                <span class="badge badge-expense">-{{ "%.2f"|format(m['Import càrrec']) }} €</span>
+                            {% elif m['import ingrés'] > 0 %}
+                                <span class="badge badge-income">+{{ "%.2f"|format(m['import ingrés']) }} €</span>
+                            {% else %}
+                                0.00 €
+                            {% endif %}
+                        </td>
+                        <td><span class="text-muted">{{ m['Comentari'] or '' }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

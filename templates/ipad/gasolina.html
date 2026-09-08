@@ -1,0 +1,32 @@
+{% extends "ipad/layout.html" %}
+{% block content %}
+    <div class="card">
+        <span class="card-title">⛽ Històric de Repostatges de Gasolina</span>
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <table class="retro-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cotxe</th>
+                        <th>Benzinera</th>
+                        <th>Import (€)</th>
+                        <th>Preu/L</th>
+                        <th>Litres</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for g in gasolina_list %}
+                    <tr>
+                        <td>{{ g['data'] }}</td>
+                        <td>{{ g['cotxe'] }}</td>
+                        <td><strong>{{ g['lloc'] }}</strong></td>
+                        <td class="text-orange"><strong>{{ "%.2f"|format(g['import']) }} €</strong></td>
+                        <td>{{ "%.3f"|format(g['euros/litre']) if g['euros/litre'] else '--' }} €/l</td>
+                        <td class="text-blue">{{ "%.2f"|format(g['litres']) if g['litres'] else '--' }} l</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

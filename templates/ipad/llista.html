@@ -1,0 +1,38 @@
+{% extends "ipad/layout.html" %}
+{% block content %}
+    <div class="card">
+        <span class="card-title">📋 Llista de la Compra / Articles</span>
+        
+        <form action="/llista/afegir" method="POST" style="margin-bottom: 20px;">
+            <div class="grid-2">
+                <div class="grid-col" style="-webkit-flex: 3; flex: 3;">
+                    <input type="text" name="article" class="form-control" placeholder="Nou article a comprar..." required>
+                </div>
+                <div class="grid-col" style="-webkit-flex: 1; flex: 1;">
+                    <button type="submit" class="btn">➕ Afegir</button>
+                </div>
+            </div>
+        </form>
+
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <table class="retro-table">
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th>Supermercat / Categoria</th>
+                        <th>Data / Estat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items_list %}
+                    <tr>
+                        <td><strong>{{ item.get('article', item.get('nom', '')) }}</strong></td>
+                        <td><span class="badge badge-bank">{{ item.get('super', item.get('categoria', 'General')) }}</span></td>
+                        <td><span class="text-muted">{{ item.get('data', 'Pendent') }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
