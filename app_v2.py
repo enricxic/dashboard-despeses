@@ -722,45 +722,10 @@ def render_module_view(module_name):
     from core.db import ensure_session_dfs
     ensure_session_dfs()
     
-    if module_name == "modules.compres":
-        import modules.compres as mod
-        mod.render()
-    elif module_name == "modules.cotxe":
-        import modules.cotxe as mod
-        mod.render()
-    elif module_name == "modules.economic":
-        import modules.economic as mod
-        mod.render()
-    elif module_name == "modules.dashboard":
-        import modules.dashboard as mod
-        mod.render()
-    elif module_name == "modules.menjar":
-        import modules.menjar as mod
-        mod.render()
-    elif module_name == "modules.medicacio":
-        import modules.medicacio as mod
-        mod.render()
-    elif module_name == "modules.calendari":
-        import modules.calendari as mod
-        mod.render()
-    elif module_name == "modules.admin":
-        import modules.admin as mod
-        mod.render()
-    elif module_name == "modules.seguretat":
-        import modules.seguretat as mod
-        mod.render()
-    elif module_name == "modules.manteniment":
-        import modules.manteniment as mod
-        mod.render()
-    elif module_name == "modules.domotica":
-        import modules.domotica as mod
-        mod.render()
-    elif module_name == "modules.jocs":
-        import modules.jocs as mod
-        mod.render()
-    else:
-        mod = importlib.import_module(module_name)
-        mod.render()
+    mod = importlib.import_module(module_name)
+    importlib.reload(mod)
+    mod.render()
+
 
 if st.session_state.current_module is None:
     pass
