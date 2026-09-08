@@ -13,6 +13,85 @@ def clear_form_state(prefix: str):
         if key.startswith(prefix):
             del st.session_state[key]
 
+def scale_single_ingredient(line: str, base: float = 3.0, target: float = 3.0) -> str:
+    line = line.strip()
+    if not line:
+        return ""
+    if base <= 0:
+        base = 3.0
+    if target <= 0:
+        target = 3.0
+        
+    factor = target / base
+    if abs(factor - 1.0) < 1e-4:
+        return line
+
+    # Ignore items that should not scale linearly
+    unscalable_keywords = ['al gust', 'al gusto', 'raig', 'pessic', 'mica', 'opcional', 'polsim', 'fulla', 'fulles', 'ramet', 'branqueta', 'aigua per']
+    if any(k in line.lower() for k in unscalable_keywords):
+        return line
+
+    # Match fraction (e.g. 1/2, 1/4, 3/4)
+    frac_match = re.match(r'^(\d+)/(\d+)\s*(.*)$', line)
+    if frac_match:
+        num = int(frac_match.group(1))
+        den = int(frac_match.group(2))
+        val = (num / den) * factor
+        val_str = f"{val:.1f}".rstrip('0').rstrip('.')
+        rest = frac_match.group(3)
+        return f"{val_str} {rest}".strip()
+
+    # Match range (e.g. 1 a 1.5 kg, 3-4 carxofes, 3 a 4)
+    range_match = re.match(r'^(\d+(?:[\.,]\d+)?)\s*(?:a|-)\s*(\d+(?:[\.,]\d+)?)\s*([a-zA-Zà-ÿÀ-Ý%]+.*)$', line)
+    if range_match:
+        v1 = float(range_match.group(1).replace(',', '.')) * factor
+        v2 = float(range_match.group(2).replace(',', '.')) * factor
+        v1_str = f"{v1:.1f}".rstrip('0').rstrip('.') if v1 < 10 else f"{round(v1)}"
+        v2_str = f"{v2:.1f}".rstrip('0').rstrip('.') if v2 < 10 else f"{round(v2)}"
+        unit_rest = range_match.group(3)
+        return f"{v1_str}-{v2_str} {unit_rest}".strip()
+
+    # Match number + optional unit + rest (e.g. 250g, 250 g, 4 ous, 1.5 kg, 1 gra d'all)
+    num_match = re.match(r'^(\d+(?:[\.,]\d+)?)\s*([a-zA-Zà-ÿÀ-Ý\']*)(.*)$', line)
+    if num_match:
+        num_val = float(num_match.group(1).replace(',', '.'))
+        unit = num_match.group(2)
+        rest = num_match.group(3)
+        
+        scaled_val = num_val * factor
+        
+        # Format the number nicely
+        if scaled_val >= 10:
+            val_str = str(round(scaled_val))
+        elif scaled_val >= 1:
+            val_str = f"{scaled_val:.1f}".rstrip('0').rstrip('.')
+        else:
+            val_str = f"{scaled_val:.2f}".rstrip('0').rstrip('.')
+            
+        if unit:
+            if unit.lower() in ['g', 'gr', 'kg', 'ml', 'cl', 'l', 'mg']:
+                return f"{val_str}{unit}{rest}".strip()
+            else:
+                return f"{val_str} {unit}{rest}".strip()
+        else:
+            return f"{val_str}{rest}".strip()
+
+    return line
+
+def scale_ingredients(raw_ingredients: str, base: float = 3.0, target: float = 3.0) -> str:
+    if not raw_ingredients or str(raw_ingredients).strip().lower() == 'nan':
+        return "Sense ingredients"
+    
+    if '\n' in raw_ingredients:
+        raw_lines = [re.sub(r'^[\-\*•\·]\s*', '', l.strip()).strip() for l in raw_ingredients.split('\n') if l.strip()]
+    elif '*' in raw_ingredients:
+        raw_lines = [re.sub(r'^[\-\*•\·]\s*', '', l.strip()).strip() for l in raw_ingredients.split('*') if l.strip()]
+    else:
+        raw_lines = [raw_ingredients.strip()]
+        
+    scaled_lines = [scale_single_ingredient(line, base=base, target=target) for line in raw_lines]
+    return " * ".join(scaled_lines)
+
 def render():
     col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
     with col_t1:
@@ -200,7 +279,7 @@ def render():
                 with st.expander("⚙️ Configuració del Perfil Familiar", expanded=True):
                     c1, c2, c3 = st.columns(3)
                     with c1:
-                        num_comensals = st.number_input("Nombre de comensals", min_value=1, value=2, step=1)
+                        num_comensals = st.number_input("Nombre de comensals", min_value=1, value=3, step=1)
                         st.session_state['num_comensals'] = num_comensals
                         temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
                         month = pd.Timestamp.now().month
@@ -329,7 +408,7 @@ def render():
                     st.dataframe(pd.DataFrame(st.session_state['gen_menu_data']), use_container_width=True, hide_index=True)
                     
                     st.markdown("#### ⏱️ Timing i Organització (Batch Cooking)")
-                    c_n = st.session_state.get('num_comensals', 2)
+                    c_n = st.session_state.get('num_comensals', 3)
                     st.info(f"**Suggeriment d'organització per {c_n} comensals:**\n- **Mise en place:** Revisa el diumenge els ingredients necessaris pels primers plats de la setmana.\n- **Preparació prèvia:** Pots tallar verdures i deixar sofregits a la nevera per accelerar els sopars entre setmana.\n- **Congelació:** Si fas guisats per dinar, planteja't doblar la recepta i congelar els tàpers restants per estalviar temps la setmana vinent.")
 
         except Exception as e:
@@ -464,16 +543,16 @@ def modal_recepta(row):
                     st.video(vid_str)
         
         with col_d:
-            st.markdown("### Ingredients:")
+            c_ing_title, c_com = st.columns([2.2, 1.8], vertical_alignment="center")
+            with c_ing_title:
+                st.markdown("### Ingredients:")
+            with c_com:
+                num_c = st.number_input("Comensals", min_value=1, max_value=30, value=3, step=1, key=f"rec_comensals_{row['id']}")
+            
+            st.caption(f"Quantitats calculades per a **{num_c} comensals** (recepta base: 3 persones):")
             ing_val = row.get('ingredients', '')
-            ing_raw = str(ing_val) if pd.notna(ing_val) and str(ing_val).strip().lower() != 'nan' else ''
-            if ing_raw.strip():
-                import re
-                lines = [re.sub(r'^[\-\*•\·]\s*', '', line.strip()).strip() for line in ing_raw.split('\n') if line.strip()]
-                ing_format = " * ".join(lines)
-            else:
-                ing_format = "Sense ingredients"
-            st.info(ing_format)
+            scaled_ing = scale_ingredients(ing_val, base=3, target=num_c)
+            st.info(scaled_ing)
             
             mise = row.get('mise_en_place', '')
             if pd.notna(mise) and str(mise).strip() != '' and str(mise).strip().lower() != 'nan':
