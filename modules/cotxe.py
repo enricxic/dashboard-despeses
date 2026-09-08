@@ -152,7 +152,7 @@ def render():
             df_gas_work['parsed_date'] = df_gas_work['data'].apply(parse_excel_date)
             df_gas_work['import_val'] = clean_numeric(df_gas_work.get('import', 0))
             df_gas_work['litres_val'] = clean_numeric(df_gas_work.get('litres', 0))
-            df_gas_work['preu_l_val'] = clean_numeric(df_gas_work.get('€/l', 0))
+            df_gas_work['preu_l_val'] = clean_numeric(df_gas_work.get('euros/litre', df_gas_work.get('€/l', 0)))
             
             # Sort descending by date and idGasolina
             sort_cols = [c for c in ['parsed_date', 'idGasolina'] if c in df_gas_work.columns]
@@ -174,9 +174,9 @@ def render():
                 st.metric("Preu Més Baix", f"{min_preu:.3f} €/l")
 
             st.write("")
-            cols_g = [c for c in ['data', 'cotxe', 'lloc', 'import', '€/l', 'litres'] if c in df_gas_work.columns]
+            cols_g = [c for c in ['data', 'cotxe', 'lloc', 'import', 'euros/litre', '€/l', 'litres'] if c in df_gas_work.columns]
             df_gas_show = df_gas_work[cols_g].copy()
-            df_gas_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'lloc': 'Benzinera', 'import': 'Import (€)', '€/l': 'Preu/L', 'litres': 'Litres'}, inplace=True)
+            df_gas_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'lloc': 'Benzinera', 'import': 'Import (€)', 'euros/litre': 'Preu/L', '€/l': 'Preu/L', 'litres': 'Litres'}, inplace=True)
             
             st.dataframe(
                 df_gas_show.style.format({'Import (€)': '{:,.2f} €', 'Preu/L': '{:.3f} €/l', 'Litres': '{:.2f} l'}, na_rep=""),

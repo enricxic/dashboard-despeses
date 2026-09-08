@@ -2638,7 +2638,7 @@ def render():
                         'mes': mes_val,
                         'any': any_val,
                         'import': import_carg,
-                        '€/l': preu_l_saved,
+                        'euros/litre': preu_l_saved,
                         'litres': litres_saved,
                         'lloc': actual_concept
                     }
