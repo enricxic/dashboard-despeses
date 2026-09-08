@@ -1501,15 +1501,23 @@ def render_compres_super_interface():
                         
                         api_key = st.secrets.get("GEMINI_API_KEY", "")
                         
-                        if "Híbrid" in ocr_mode:
+                        use_hybrid = "Híbrid" in ocr_mode
+                        raw_text = ""
+                        if use_hybrid:
                             with st.spinner("1/2 - Llegint tiquet amb Tesseract OCR..."):
                                 uploaded_file.seek(0)
                                 img = Image.open(io.BytesIO(uploaded_file.read()))
                                 try:
                                     raw_text = pytesseract.image_to_string(img, lang='cat+spa')
                                 except Exception:
-                                    raw_text = pytesseract.image_to_string(img)
+                                    try:
+                                        raw_text = pytesseract.image_to_string(img)
+                                    except Exception as e_tess:
+                                        raw_text = ""
+                                        print(f"Tesseract OCR no disponible: {e_tess}. S'utilitzarà Gemini Vision.")
+                                        use_hybrid = False
                                 
+                        if use_hybrid and raw_text.strip():
                             with st.spinner("2/2 - Endreçant i raonant dades amb IA (Gemini Text)..."):
                                 prompt = f"""Ets un expert en extracció de dades de tiquets de compra.
 T'han donat aquest text OCR brut d'un tiquet de supermercat (conté errors i soroll):
