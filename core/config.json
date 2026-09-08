@@ -70,11 +70,11 @@
         },
         {
             "id": 4,
-            "nom": "Efectiu",
+            "nom": "Casa",
             "actiu": true,
-            "icona": "💵",
+            "icona": "🏠",
             "color": "#10b981",
-            "descripcio": "Efectiu / Caixa de casa",
+            "descripcio": "Diners guardats a casa",
             "titular": "Llar",
             "compte_iban": ""
         },
@@ -106,6 +106,16 @@
             "color": "#6366f1",
             "descripcio": "Targeta de Crèdit VISA",
             "titular": "Enric Xicars",
+            "compte_iban": ""
+        },
+        {
+            "id": 8,
+            "nom": "Efectiu",
+            "actiu": true,
+            "icona": "💵",
+            "color": "#059669",
+            "descripcio": "Pagaments en efectiu",
+            "titular": "Llar",
             "compte_iban": ""
         }
     ],

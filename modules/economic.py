@@ -3269,7 +3269,7 @@ def render(view_mode="economic"):
         except Exception:
             active_b_names = [b.strip().upper() for b in dashboard_bank_order]
             
-        filtered_balances = {k: v for k, v in current_balances.items() if k.strip().upper() in active_b_names and k != 'TR Cartera'}
+        filtered_balances = {k: v for k, v in current_balances.items() if k.strip().upper() in active_b_names and k != 'TR Cartera' and k.strip().upper() != 'EFECTIU'}
         
         ordered_balances = {}
         for b_name in dashboard_bank_order:

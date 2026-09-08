@@ -31,7 +31,6 @@ BANK_MAPPING = {
     'TRADE REPUB.': 'TRADE REPUB.',
     'Casa': 'Casa',
     'CASA': 'Casa',
-    'Efectiu': 'Casa',
     'T.Moneder': 'Tg.Moneder',
     'Tg.Moneder': 'Tg.Moneder',
     'T.CorteInglés': 'CORTEINGLÉS',
@@ -413,7 +412,7 @@ def nou_moviment():
         except Exception:
             pass
     categories_list = sorted(list(set(categories_list)))
-    bancs_list = ["BBVA", "LaCaixa", "TradeRep.", "Efectiu", "T.Moneder", "T.CorteInglés", "Pago VISA"]
+    bancs_list = ["BBVA", "LaCaixa", "TradeRep.", "Casa", "T.Moneder", "T.CorteInglés", "Pago VISA", "Efectiu"]
 
     error_msg = None
     success_msg = None

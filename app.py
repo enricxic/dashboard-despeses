@@ -3367,7 +3367,7 @@ with tab_dash:
     current_balances = get_balances_up_to(selected_year, selected_month_data)
     
     dashboard_bank_order = ['BBVA', 'La Caixa', 'TRADE REPUB.', 'Casa', 'Tg.Moneder', 'CORTEINGLÉS', 'Pago VISA']
-    filtered_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera'}
+    filtered_balances = {k: v for k, v in current_balances.items() if k != 'TR Cartera' and k.strip().upper() != 'EFECTIU'}
     
     ordered_balances = {}
     for b_name in dashboard_bank_order:
