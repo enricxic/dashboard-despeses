@@ -169,6 +169,22 @@ def parse_and_clean_json(raw_text: str) -> Tuple[bool, Dict[str, Any], str]:
 # GRADERS DETERMINISTES (AVALUADORS LÒGICS)
 # =========================================================================
 
+def netejar_termes_segurs(text: str) -> str:
+    """Substitueix combinacions segures com 'sense gluten', 'blat de moro' o 'llet de coco' per evitar falsos positius."""
+    t = text.lower()
+    safe_terms = [
+        "sense gluten", "sin gluten", "gluten-free", "gluten free", "farina sense gluten", "pa sense gluten", "pasta sense gluten", "macarrons sense gluten", "fideus sense gluten", "salsa de soja sense gluten", "tamari",
+        "sense lactosa", "sin lactosa", "lactose-free", "llet sense lactosa", "formatge sense lactosa", "iogurt sense lactosa",
+        "blat de moro", "farina de blat de moro", "tortitas de blat de moro", "pa de blat de moro",
+        "llet de coco", "llet d'ametlla", "llet d'ametlles", "llet de civada", "llet de soja", "llet d'arròs", "llet d'arros", "llet vegetal",
+        "iogurt vegetal", "iogurt de soja", "iogurt de coco", "iogurt d'ametlla",
+        "formatge vegà", "formatge vega", "formatge vegetal",
+        "nata vegetal", "nata de coco", "mantega vegetal", "margarina vegetal"
+    ]
+    for st in safe_terms:
+        t = t.replace(st, "[TERME_SEGUR]")
+    return t
+
 def grade_alergies(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tuple[float, List[str]]:
     """Comprova que CAP ingredient contingui al·lèrgens prohibits (Tolerància 0%)."""
     criteris = test_case.get("criteris_esperats", {})
@@ -180,9 +196,9 @@ def grade_alergies(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tupl
             for al in m.get("alergies", []):
                 al_low = al.lower()
                 if "gluten" in al_low or "celiac" in al_low:
-                    alergens.extend(["gluten", "blat", "farina de blat", "pa amb gluten", "pasta de blat", "fideus de blat"])
+                    alergens.extend(["gluten", "blat", "farina de blat", "pa de blat", "pasta de blat", "fideus de blat", "espelta", "ordi", "centen"])
                 if "lactosa" in al_low:
-                    alergens.extend(["llet", "formatge", "nata", "mantega", "iogurt", "crema de llet"])
+                    alergens.extend(["llet", "formatge", "nata", "mantega", "iogurt", "crema de llet", "parmesà", "mozzarella"])
                 if "fruits secs" in al_low:
                     alergens.extend(["ametlla", "nou", "avellana", "cacauet", "pistatxo", "anacard"])
     
@@ -200,16 +216,19 @@ def grade_alergies(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tupl
             plat = apat.get("plat", "")
             ingredients = apat.get("ingredients_principals", [])
             
-            # Comprovar nom del plat
+            # Comprovar nom del plat netejat de termes segurs
+            plat_net = netejar_termes_segurs(plat)
             for a in alergens:
-                if a in plat.lower():
+                pattern = r'\b' + re.escape(a) + r'\b'
+                if re.search(pattern, plat_net):
                     infraccions.append(f"{dia_nom} ({apat_k}): '{plat}' conté el terme prohibit '{a}'")
             
-            # Comprovar ingredients
+            # Comprovar ingredients netejats de termes segurs
             for ing in ingredients:
-                ing_low = str(ing).lower()
+                ing_net = netejar_termes_segurs(str(ing))
                 for a in alergens:
-                    if a in ing_low:
+                    pattern = r'\b' + re.escape(a) + r'\b'
+                    if re.search(pattern, ing_net):
                         infraccions.append(f"{dia_nom} ({apat_k}): ingredient '{ing}' conté '{a}'")
 
     if infraccions:
@@ -228,7 +247,6 @@ def grade_vetos_i_desdoblament(menu_data: Dict[str, Any], test_case: Dict[str, A
     for m in membres_veto:
         nom_m = m.get("nom")
         vetos = [v.lower() for v in m.get("vetos", [])]
-        comodins = [c.lower() for c in m.get("comodins", [])]
         
         for dia_obj in menu_data.get("menu_setmanal", []):
             dia_nom = dia_obj.get("dia", "")
@@ -238,20 +256,19 @@ def grade_vetos_i_desdoblament(menu_data: Dict[str, Any], test_case: Dict[str, A
                 
                 plat = apat.get("plat", "").lower()
                 ingredients = [str(i).lower() for i in apat.get("ingredients_principals", [])]
-                apte_per = apat.get("apte_per", [])
                 alt = apat.get("plat_alternatiu")
                 
-                conte_veto = any(v in plat for v in vetos) or any(any(v in ing for v in vetos) for ing in ingredients)
+                # Cerca amb paraula exacta
+                conte_veto = any(re.search(r'\b' + re.escape(v) + r'\b', plat) for v in vetos) or \
+                             any(any(re.search(r'\b' + re.escape(v) + r'\b', ing) for v in vetos) for ing in ingredients)
                 
                 if conte_veto:
-                    # El plat principal té un aliment vetat per aquest membre
-                    if alt is None or not isinstance(alt, dict):
+                    if alt is None or not isinstance(alt, dict) or not alt.get("plat"):
                         infraccions.append(f"{dia_nom} ({apat_k}): '{apat.get('plat')}' té ingredients vetats per a {nom_m} però NO s'ha generat cap 'plat_alternatiu'")
                     else:
                         alt_plat = alt.get("plat", "").lower()
-                        # Comprovar que l'alternativa NO contingui tampoc el veto
-                        if any(v in alt_plat for v in vetos):
-                            infraccions.append(f"{dia_nom} ({apat_k}): El plat alternatiu '{alt_plat}' també conté el veto '{vetos}'")
+                        if any(re.search(r'\b' + re.escape(v) + r'\b', alt_plat) for v in vetos):
+                            infraccions.append(f"{dia_nom} ({apat_k}): El plat alternatiu '{alt.get('plat')}' per a {nom_m} conté el veto")
 
     if infraccions:
         return 0.0, infraccions
