@@ -1,0 +1,501 @@
+{
+  "version": "1.0",
+  "descripcio": "Dataset mestre de proves d'avaluació de menús intel·ligents per a XiquiHouse (Harness)",
+  "test_cases": [
+    {
+      "id": "TC-01-Alergies-Lactosa-Gluten",
+      "titol": "Seguretat Mèdica Estricta: Celiaquia i Intolerància a la Lactosa",
+      "descripcio": "Família amb 2 membres (un celíac estricte i un intolerant a la lactosa). Cap plat ni ingredient secundari o salsa pot contenir gluten o lactis.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": ["Sense Gluten"],
+          "vetos": [],
+          "comodins": ["pit de pollastre a la planxa", "truita"]
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": ["Sense Lactosa"],
+          "vetos": [],
+          "comodins": ["salmó a la planxa"]
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 2
+      },
+      "criteris_esperats": {
+        "alergens_prohibits": ["gluten", "blat", "farina de blat", "pa amb gluten", "pasta de blat", "llet", "formatge", "nata", "mantega", "iogurt"],
+        "min_dies_peix": 2,
+        "min_dies_llegum": 2,
+        "max_carn_vermella": 1,
+        "zero_repeticions_hidrats": true,
+        "desdoblament_requerit": false
+      }
+    },
+    {
+      "id": "TC-02-Veto-Personal-Desdoblament",
+      "titol": "Veto Personal i Desdoblament Culinari (Fetge / Casqueria)",
+      "descripcio": "La família vol menjar fetge amb ceba (plat amb 5 estrelles per a la resta), però l'Enric té vetada la casqueria. La IA ha de mantenir el plat familiar i generar un plat alternatiu ràpid per a l'Enric.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": ["fetge", "casqueria", "ronyons", "conill"],
+          "comodins": ["pit de pollastre a la planxa", "truita francesa"]
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Fill",
+          "rol": "Fill",
+          "edat": 14,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [
+        {
+          "comensal": "Adult 2",
+          "plat": "Fetge de vedella amb ceba",
+          "dia_preferit": "Dimecres",
+          "aprovat_consens": true
+        }
+      ],
+      "valoracions_previes": {
+        "Fetge de vedella amb ceba": {
+          "Adult 2": 5,
+          "Fill": 4,
+          "Enric": 0
+        }
+      },
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 3
+      },
+      "criteris_esperats": {
+        "plat_principal_dia": "Fetge de vedella amb ceba",
+        "dia_assignat": "Dimecres",
+        "desdoblament_requerit": true,
+        "membre_alternativa": "Enric",
+        "alternativa_acceptada": ["pit de pollastre", "truita"],
+        "ingredients_prohibits_per_enric": ["fetge", "casqueria", "ronyons", "conill"]
+      }
+    },
+    {
+      "id": "TC-03-Peticio-Consens-Sardines",
+      "titol": "Petició d'Usuari Consensuada: Sardines a la Planxa",
+      "descripcio": "L'Enric demana menjar sardines dijous. La petició ha estat aprovada per consens familiar. La IA ha d'integrar les sardines i ajustar la resta de la setmana per no excedir el màxim de dies de peix.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Fill",
+          "rol": "Fill",
+          "edat": 14,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "max_peix": 3,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [
+        {
+          "comensal": "Enric",
+          "plat": "Sardines a la planxa amb amanida",
+          "dia_preferit": "Dijous",
+          "aprovat_consens": true
+        }
+      ],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 3
+      },
+      "criteris_esperats": {
+        "plat_dijous": "Sardines",
+        "total_dies_peix_min": 2,
+        "total_dies_peix_max": 3,
+        "balanc_proteines_correcte": true
+      }
+    },
+    {
+      "id": "TC-04-Regles-Nutricionals-Llar",
+      "titol": "Compliment Estricte de Freqüències Nutricionals de la Llar",
+      "descripcio": "El menú de 7 dies ha de complir estrictament els límits de carns vermelles (màx 1 cop), peix (mín 2 cops), llegums (mín 2 cops) i embotits nocturns (màx 2 cops).",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Fill",
+          "rol": "Fill",
+          "edat": 14,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 3
+      },
+      "criteris_esperats": {
+        "max_carn_vermella_obtinguda": 1,
+        "min_peix_obtingut": 2,
+        "min_llegums_obtingut": 2,
+        "max_embotits_sopar_obtingut": 2
+      }
+    },
+    {
+      "id": "TC-05-Ponderacio-Estrelles",
+      "titol": "Optimització per Puntuacions i Gustos Reals (Estrelles 0-5)",
+      "descripcio": "El menú ha de maximitzar la mitjana de satisfacció de la família triant plats amb 4-5 estrelles i evitant absolutament els plats amb puntuació 0-2 estrelles.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [],
+      "valoracions_previes": {
+        "Fideuà de marisc": {"Enric": 5, "Adult 2": 5},
+        "Pollastre rostit amb patates": {"Enric": 5, "Adult 2": 4},
+        "Llenties estofades": {"Enric": 4, "Adult 2": 5},
+        "Espinacs bullits amb patata": {"Enric": 1, "Adult 2": 1},
+        "Col bullida amb cansalada": {"Enric": 0, "Adult 2": 2}
+      },
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 2
+      },
+      "criteris_esperats": {
+        "plats_vetats_per_estrelles_baixes": ["Espinacs bullits amb patata", "Col bullida amb cansalada"],
+        "mitjana_minima_estrelles_menu": 4.0
+      }
+    },
+    {
+      "id": "TC-06-Aprofitament-Stock-Bases",
+      "titol": "Aprofitament d'Stock i Bases de Congelador (Zero Malbaratament)",
+      "descripcio": "A l'stock del congelador hi ha 1 litre de caldo de peix i al rebost 1 paquet d'arròs bomba. El menú ha d'aprofitar aquests productes i NO afegir-los a la llista de la compra.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [
+        {"producte": "Caldo de peix casolà", "quantitat": "1 Litre", "ubicacio": "Congelador"},
+        {"producte": "Arròs bomba", "quantitat": "1 kg", "ubicacio": "Rebost"}
+      ],
+      "peticions_setmanals": [],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 2
+      },
+      "criteris_esperats": {
+        "utilitza_caldo_peix_existent": true,
+        "exclusio_compra_caldo_peix": true,
+        "exclusio_compra_arros": true
+      }
+    },
+    {
+      "id": "TC-07-Mise-En-Place-Setmanal",
+      "titol": "Derivació de la Guia de Batch Prep (Mise en Place de Diumenge)",
+      "descripcio": "El menú setmanal ha de permetre derivar una guia de preparació de bases de diumenge agrupant elements comuns (patates probiòtiques, caldo, sofregit concentrat).",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Fill",
+          "rol": "Fill",
+          "edat": 14,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 3
+      },
+      "criteris_esperats": {
+        "genera_guia_batch_prep": true,
+        "bases_minimes": ["patates_probiotiques", "caldo_base", "sofregit_base"]
+      }
+    },
+    {
+      "id": "TC-08-Zero-Repeticions-Consecutives",
+      "titol": "Control de Varietat: Zero Repeticions d'Hidrats en Dies Consecutius",
+      "descripcio": "Comprovar que arròs, pasta o llegums no apareguin en dos dies seguits.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 2
+      },
+      "criteris_esperats": {
+        "max_arros_dies_consecutius": 1,
+        "max_pasta_dies_consecutius": 1,
+        "max_llegum_dies_consecutius": 1
+      }
+    },
+    {
+      "id": "TC-09-Membres-Actius-vs-Fora",
+      "titol": "Flexibilitat de Comensals: Filla Fora de la Llar (Inactiva)",
+      "descripcio": "La filla té estat 'actiu: false' (viu fora). El menú s'ha de calcular per a 3 persones i no ha de bloquejar els ingredients que ella no menja. Si s'activa, s'escala a 4 comensals.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Fill 1",
+          "rol": "Fill",
+          "edat": 14,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Filla Fora",
+          "rol": "Filla",
+          "edat": 21,
+          "actiu": false,
+          "alergies": ["Vegetariana"],
+          "vetos": ["peix"],
+          "comodins": ["hamburguesa vegetal"]
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 3
+      },
+      "criteris_esperats": {
+        "comensals_calculats": 3,
+        "permet_peix_i_carn_per_als_actius": true,
+        "ignora_restriccions_inactius_per_defecte": true
+      }
+    }
+  ]
+}
