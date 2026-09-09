@@ -45,7 +45,12 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 ### 🟢 Part Dreta (5 nodes amb rodona):
 8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari familiar, esdeveniments i sincronització.
 9. **💊 Control Medicació**: `modules/medicacio.py` *(Icona pastilles / flascó)* - Pautes mèdiques, dosis, horaris i farmaciola.
-10. **🍽️ Menús i Cuina**: `modules/menjar.py` *(Icona coberts)* - Llibre de receptes amb escalat dinàmic de comensals, planificador setmanal intel·ligent i batch cooking.
+10. **🍽️ Menús i Cuina**: `modules/menjar.py` *(Icona coberts)* - Gestió gastronòmica i nutricional intel·ligent:
+   - `🧠 Recomanador de Menús`: Generació setmanal amb IA (`gemini-3.8-flash`) seguint al·lèrgies mèdiques estrictes, desdoblament de vetos personals (assignació automàtica de plat comodí sense imposar-lo a la resta), regles de freqüència nutricional (carn vermella, peix, llegums, hidrats no consecutius) i membres actius/fora de la llar.
+   - `📲 Consens Familiar per WhatsApp`: Botó d'un sol clic (`wa.me/?text=...`) per compartir el resum del menú amb el grup familiar abans de validar la compra.
+   - `⏱️ Batch Cooking & Mise en Place`: Guia de preparacions base de diumenge (patates probiòtiques amb midó resistent, brous concentrats, sofregits) i sincronització d'ingredients a comprar.
+   - `📖 Llibre de Receptes`: Escalat automàtic d'ingredients per nombre de comensals (base 3) i valoració d'estrelles (0-5) per membre de la família.
+   - `➕ Afegir Recepta`: Formulari amb càrrega d'imatges a Supabase Storage (`imatges-receptes`).
 11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Gestió del vehicle organitzada en pestanyes:
    - `🛣️ Registre Km i Rutes`: Formulari per registrar lectures d'odòmetre, càlcul automàtic de km del trajecte, selector/plantilles de rutes i taula d'històric.
    - `⛽ Repostatge`: Taula històrica de proveïments de la BBDD `gasolina` (alimentada des d'Ingressos/Despeses) amb mètriques de preu últim repostatge, preu més alt i més baix.
@@ -68,12 +73,16 @@ Dashboard/
 ├── core/
 │   ├── auth.py               # Autenticació amb contrasenya i token hash
 │   ├── db.py                 # Connexió i operacions CRUD a Supabase
-│   └── config.json           # Configuració de categories, comptes i paràmetres
+│   ├── config_manager.py     # Gestor de configuració JSON i perfil familiar
+│   ├── config.json           # Configuració de categories, comptes, família i paràmetres
+│   └── harness.py            # Motor d'avaluació i generació de menús intel·ligents amb Gemini IA
+├── data/
+│   └── harness_menu_cases.json # Banc de 9 casos de prova exhaustius per al test de menús
 ├── imatges/
 │   ├── logo xiquiHouse.png   # Logotip interactiu transparent (1024x682)
 │   └── fons xiquiHouse.jpg   # Fons de pantalla complet per a la Home
 ├── modules/
-│   ├── admin.py              # ⚙️ Configuració global
+│   ├── admin.py              # ⚙️ Configuració global i 🧪 Laboratori IA (Harness)
 │   ├── calendari.py          # 📅 Agenda familiar (Google Calendar sync & events)
 │   ├── compres.py            # 🛒 Compres Super (OCR), Ingressos/Despeses reals, Llista compra, Rebost i Stats
 │   ├── cotxe.py              # 🚗 Registre km/rutes, Repostatge, Canvi d'oli i Consum
@@ -83,7 +92,7 @@ Dashboard/
 │   ├── jocs.py               # 🎲 Jocs i oci
 │   ├── manteniment.py        # 🛠️ Manteniment i reparacions
 │   ├── medicacio.py          # 💊 Control de medicació i tutelats (Pla de dosificació & sync)
-│   ├── menjar.py             # 🍽️ Receptari (Escalat de comensals base 3), menús setmanals i batch cooking
+│   ├── menjar.py             # 🍽️ Receptari (Escalat de comensals base 3), Planificador IA i Batch Cooking
 │   └── seguretat.py          # 📹 Seguretat i càmeres
 └── DOCUMENTACIO_PROJECTE.md  # Aquest document
 ```

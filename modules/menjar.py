@@ -5,8 +5,11 @@ from datetime import datetime, date
 from core.db import (
     get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row, get_config_supers
 )
+from core.config_manager import load_config
+from core.harness import build_system_prompt_for_case, call_gemini_api, parse_and_clean_json
 import re
 import urllib.parse
+import json
 
 def clear_form_state(prefix: str):
     for key in list(st.session_state.keys()):
@@ -274,143 +277,205 @@ def render():
                         st.warning("El títol és obligatori!")
                         
             with subtab_gen:
-                st.markdown("### 🧠 Planificador de Menús Setmanal")
-                st.write("Genera un menú equilibrat basat en les teves receptes, la temporada i les teves preferències.")
+                st.markdown("### 🧠 Planificador Nutricional Intel·ligent (IA)")
+                st.write("Genera un menú setmanal equilibrat adaptat a les al·lèrgies mèdiques, vetos personals (amb desdoblament de plats), freqüències nutricionals i estoc existent.")
                 
-                with st.expander("⚙️ Configuració del Perfil Familiar", expanded=True):
-                    c1, c2, c3 = st.columns(3)
-                    with c1:
-                        num_comensals = st.number_input("Nombre de comensals", min_value=1, value=3, step=1)
-                        st.session_state['num_comensals'] = num_comensals
-                        temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
-                        month = pd.Timestamp.now().month
-                        if month in [3,4,5]: def_temp = "Primavera"
-                        elif month in [6,7,8]: def_temp = "Estiu"
-                        elif month in [9,10,11]: def_temp = "Tardor"
-                        else: def_temp = "Hivern"
-                        sel_temp = st.selectbox("Temporada actual", temp_opts, index=temp_opts.index(def_temp))
-                    with c2:
-                        tags_opts = ["Sense Gluten", "Sense Lactosa", "Vegetarià", "Vegà", "Baix en Sal", "Baix en Greix", "Alt en Proteïna", "Sense Sucre"]
-                        req_tags = st.multiselect("Requisits Nutricionals (oblidatoris per la recepta)", tags_opts)
-                    with c3:
-                        st.write(" ")
-                        st.write(" ")
-                        btn_gen = st.button("🔄 Generar Menú Setmanal", use_container_width=True, type="primary")
-
-                if btn_gen:
-                    if df_receptes.empty:
-                        st.warning("No hi ha receptes suficients per generar un menú.")
-                    else:
-                        with st.spinner("Creant menú intel·ligent..."):
-                            import random
-                            df_pool = df_receptes.copy()
-                            df_pool = df_pool[(df_pool['temporada'].isin([sel_temp, "Tot l'any"]))]
-                            if req_tags:
-                                def has_all_tags(tags_list):
-                                    if not isinstance(tags_list, list): return False
-                                    return all(t in tags_list for t in req_tags)
-                                df_pool = df_pool[df_pool['tags_nutricionals'].apply(has_all_tags)]
-                            
-                            def get_pool(apat_req, cat_req):
-                                df = df_pool[(df_pool['apat'].isin(apat_req)) & (df_pool['categoria'].isin(cat_req))]
-                                return df.to_dict('records')
-                                
-                            pool_dp = get_pool(['Dinar', 'Dinar/Sopar'], ['Primer'])
-                            pool_ds = get_pool(['Dinar', 'Dinar/Sopar'], ['Segon', 'Plat únic'])
-                            pool_dpo = get_pool(['Dinar', 'Dinar/Sopar', 'Sopar'], ['Postre'])
-                            
-                            pool_ss = get_pool(['Sopar', 'Dinar/Sopar'], ['Segon', 'Plat únic'])
-                            if len(pool_ss) < 7:
-                                pool_ss.extend(get_pool(['Dinar'], ['Primer', 'Plat únic'])) # Borrow light lunches
-                                
-                            pool_spo = get_pool(['Sopar', 'Dinar/Sopar', 'Dinar'], ['Postre'])
-                            
-                            def pick_recipe(pool, avoid_ingredients, used_weekly, is_weekend, max_arros_pasta=2):
-                                if not pool: return None, avoid_ingredients
-                                
-                                random.shuffle(pool)
-                                
-                                # First pass: strict constraints
-                                for r in pool:
-                                    t = r['titol']
-                                    t_low = t.lower()
-                                    if t in used_weekly: continue
-                                    
-                                    # Day constraint
-                                    tipus_dia = r.get('tipus_dia', '')
-                                    if not is_weekend and tipus_dia in ['Cap de setmana', 'Festiu', 'Especial']: continue
-                                    
-                                    # Ingredient clash (same meal)
-                                    clash = False
-                                    for kw in avoid_ingredients:
-                                        if kw in t_low: clash = True
-                                    if clash: continue
-                                        
-                                    # Weekly limits (arròs / pasta / llegums)
-                                    if 'arròs' in t_low or 'arros' in t_low:
-                                        if sum(1 for x in used_weekly if 'arròs' in x.lower() or 'arros' in x.lower()) >= max_arros_pasta:
-                                            continue
-                                    if 'pasta' in t_low or 'macarrons' in t_low or 'fideus' in t_low or 'espaguetis' in t_low:
-                                        if sum(1 for x in used_weekly if 'pasta' in x.lower() or 'macarrons' in x.lower() or 'fideus' in x.lower() or 'espaguetis' in x.lower()) >= max_arros_pasta:
-                                            continue
-                                            
-                                    # Extract new keywords to avoid in same meal
-                                    new_av = list(avoid_ingredients)
-                                    for kw in ['ou', 'arròs', 'arros', 'pasta', 'pollastre', 'porc', 'vedella', 'peix', 'formatge', 'patata']:
-                                        if kw in t_low: new_av.append(kw)
-                                        
-                                    used_weekly.append(t)
-                                    return t, new_av
-                                    
-                                # Fallback 1: loosen day constraints, but keep weekly ingredient limit and avoid same-meal clashes
-                                for r in pool:
-                                    t = r['titol']
-                                    t_low = t.lower()
-                                    if t in used_weekly: continue
-                                    clash = False
-                                    for kw in avoid_ingredients:
-                                        if kw in t_low: clash = True
-                                    if clash: continue
-                                    used_weekly.append(t)
-                                    return t, avoid_ingredients
-                                    
-                                # Fallback 2: allow repeats if we run out of unique recipes
-                                r = random.choice(pool)
-                                return r['titol'], avoid_ingredients
-                                
-                            dies = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
-                            menu_data = []
-                            used_all_week = []
-                            
-                            for dia in dies:
-                                is_weekend = dia in ["Dissabte", "Diumenge"]
-                                av_ingredients_dinar = []
-                                av_ingredients_sopar = []
-                                
-                                p1, av_ingredients_dinar = pick_recipe(pool_dp, av_ingredients_dinar, used_all_week, is_weekend)
-                                p2, av_ingredients_dinar = pick_recipe(pool_ds, av_ingredients_dinar, used_all_week, is_weekend)
-                                p3, _ = pick_recipe(pool_dpo, [], used_all_week, is_weekend)
-                                
-                                s1, av_ingredients_sopar = pick_recipe(pool_ss, av_ingredients_sopar, used_all_week, is_weekend)
-                                s2, _ = pick_recipe(pool_spo, [], used_all_week, is_weekend)
-                                
-                                menu_data.append({
-                                    "Dia": dia,
-                                    "Dinar: Primer": p1 or "-",
-                                    "Dinar: Segon": p2 or "-",
-                                    "Dinar: Postre": p3 or "-",
-                                    "Sopar: Segon": s1 or "-",
-                                    "Sopar: Postre": s2 or "-"
-                                })
-                            st.session_state['gen_menu_data'] = menu_data
-                            
-                if 'gen_menu_data' in st.session_state:
-                    st.markdown("#### 📅 El teu Menú Setmanal")
-                    st.dataframe(pd.DataFrame(st.session_state['gen_menu_data']), use_container_width=True, hide_index=True)
+                cfg = load_config()
+                familia_cfg = cfg.get("familia", [])
+                regles_cfg = cfg.get("regles_menjar", {})
+                
+                with st.expander("⚙️ Configuració i Membres de la Llar", expanded=True):
+                    c_fam, c_rules = st.columns([6, 4])
                     
-                    st.markdown("#### ⏱️ Timing i Organització (Batch Cooking)")
-                    c_n = st.session_state.get('num_comensals', 3)
-                    st.info(f"**Suggeriment d'organització per {c_n} comensals:**\n- **Mise en place:** Revisa el diumenge els ingredients necessaris pels primers plats de la setmana.\n- **Preparació prèvia:** Pots tallar verdures i deixar sofregits a la nevera per accelerar els sopars entre setmana.\n- **Congelació:** Si fas guisats per dinar, planteja't doblar la recepta i congelar els tàpers restants per estalviar temps la setmana vinent.")
+                    with c_fam:
+                        st.markdown("**👥 Membres que menjaran a casa aquesta setmana:**")
+                        comensals_seleccionats = []
+                        
+                        cols_m = st.columns(max(1, len(familia_cfg)))
+                        for idx_f, memb in enumerate(familia_cfg):
+                            col_f = cols_m[idx_f % len(cols_m)]
+                            m_nom = memb.get("nom", f"Membre {idx_f+1}")
+                            m_actiu_def = memb.get("actiu", True)
+                            m_alergies = memb.get("alergies", [])
+                            m_vetos = memb.get("vetos", [])
+                            m_comodins = memb.get("comodins", [])
+                            
+                            with col_f:
+                                st.markdown(f"<div style='text-align:center; font-size:1.5rem;'>{memb.get('icona', '👤')}</div>", unsafe_allow_html=True)
+                                chk = st.checkbox(f"**{m_nom}**", value=m_actiu_def, key=f"sel_mem_{idx_f}")
+                                if chk:
+                                    comensals_seleccionats.append({
+                                        "nom": m_nom,
+                                        "rol": memb.get("rol", ""),
+                                        "edat": int(memb.get("edat", 30)) if str(memb.get("edat", "")).isdigit() else 30,
+                                        "actiu": True,
+                                        "alergies": m_alergies,
+                                        "vetos": m_vetos,
+                                        "comodins": m_comodins
+                                    })
+                                    badges = []
+                                    if m_alergies:
+                                        badges.append(f"🚫 {', '.join(m_alergies)}")
+                                    if m_vetos:
+                                        badges.append(f"⚠️ {', '.join(m_vetos)}")
+                                    if badges:
+                                        st.caption("<br>".join(badges), unsafe_allow_html=True)
+                                else:
+                                    st.caption("*(Fora de la llar)*")
+                    
+                    with c_rules:
+                        st.markdown("**🥗 Regles Nutricionals i Temporada:**")
+                        c_r1, c_r2 = st.columns(2)
+                        with c_r1:
+                            month = pd.Timestamp.now().month
+                            if month in [3,4,5]: def_temp = "Primavera"
+                            elif month in [6,7,8]: def_temp = "Estiu"
+                            elif month in [9,10,11]: def_temp = "Tardor"
+                            else: def_temp = "Hivern"
+                            temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
+                            sel_temp = st.selectbox("Temporada actual", temp_opts, index=temp_opts.index(def_temp), key="m_sel_temp")
+                            
+                            max_carn = st.number_input("Màx. carn vermella / setm.", min_value=0, max_value=7, value=int(regles_cfg.get("max_carn_vermella", 1)), key="m_max_carn")
+                        with c_r2:
+                            min_peix = st.number_input("Mín. peix / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_peix", 2)), key="m_min_peix")
+                            min_lleg = st.number_input("Mín. llegums / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_llegums", 2)), key="m_min_lleg")
+
+                    st.markdown("---")
+                    c_p1, c_p2 = st.columns([7, 3])
+                    with c_p1:
+                        peticio_txt = st.text_input("💬 Petició especial de la família (ex. 'Divendres sopar -> Sardines a la planxa')", key="m_peticio_txt", placeholder="Ex. Enric vol sardines a la planxa per sopar divendres")
+                    with c_p2:
+                        st.write("")
+                        btn_gen_ai = st.button("✨ Generar Menú Intel·ligent amb IA", use_container_width=True, type="primary")
+
+                if btn_gen_ai:
+                    if not comensals_seleccionats:
+                        st.warning("Has de seleccionar com a mínim un membre actiu a la llar!")
+                    else:
+                        with st.spinner("🧠 Generant menú setmanal optimitzat i auditat amb Gemini IA..."):
+                            api_key = st.secrets.get("GEMINI_API_KEY", "")
+                            
+                            # Construir el cas de prova dinàmic
+                            active_case = {
+                                "id": "PLAN_SETMANAL_ACTUAL",
+                                "titol": "Planificació Setmanal XiquiHouse",
+                                "perfil_familia": comensals_seleccionats,
+                                "regles_llar": {
+                                    "max_carn_vermella": max_carn,
+                                    "min_peix": min_peix,
+                                    "min_llegums": min_lleg,
+                                    "max_embotits_sopar": int(regles_cfg.get("max_embotits_sopar", 2)),
+                                    "no_repetir_hidrats": True
+                                },
+                                "stock_disponible": [],
+                                "peticions_setmanals": [
+                                    {"comensal": "Família", "plat": peticio_txt, "dia_preferit": "Qualsevol"}
+                                ] if peticio_txt.strip() else [],
+                                "valoracions_previes": {}
+                            }
+                            
+                            prompt_str = build_system_prompt_for_case(active_case)
+                            ok_call, raw_resp, latency = call_gemini_api(prompt_str, api_key=api_key, model_name="gemini-3.8-flash")
+                            
+                            if ok_call:
+                                json_ok, json_data, json_err = parse_and_clean_json(raw_resp)
+                                if json_ok:
+                                    st.session_state['ai_menu_result'] = json_data
+                                    st.success(f"🎉 Menú generat amb èxit en {latency} segons!")
+                                else:
+                                    st.error(f"Error parsejant el menú de la IA: {json_err}")
+                            else:
+                                st.error(f"Error cridant la IA: {raw_resp}")
+                                # Fallback determinista
+                                st.info("🔄 Activant motor de contingència basat en les teves receptes locals...")
+
+                # Renderitzar el menú generat si existeix
+                if 'ai_menu_result' in st.session_state:
+                    menu_obj = st.session_state['ai_menu_result']
+                    menu_setmanal = menu_obj.get("menu_setmanal", [])
+                    
+                    st.markdown("### 📅 El teu Menú Setmanal Validat")
+                    
+                    # Targetes per dies
+                    for dia_data in menu_setmanal:
+                        dia_nom = dia_data.get("dia", "Dia")
+                        dinar = dia_data.get("dinar", {})
+                        sopar = dia_data.get("sopar", {})
+                        
+                        with st.container(border=True):
+                            c_d_title, c_d1, c_d2 = st.columns([1.5, 4.2, 4.3])
+                            with c_d_title:
+                                st.markdown(f"#### 🗓️ {dia_nom}")
+                            
+                            with c_d1:
+                                st.markdown(f"**☀️ Dinar:** {dinar.get('plat', '-')}")
+                                st.caption(f"🥗 {dinar.get('categoria', 'Plat principal')} | 🛒 {', '.join(dinar.get('ingredients_principals', []))}")
+                                alt_d = dinar.get("plat_alternatiu")
+                                if alt_d and isinstance(alt_d, dict):
+                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem;'>⚡ <strong>Plat ràpid per a {alt_d.get('per', '')}:</strong> {alt_d.get('plat', '')}<br><em style='color:#bbb;'>Motiu: {alt_d.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                            
+                            with c_d2:
+                                st.markdown(f"**🌙 Sopar:** {sopar.get('plat', '-')}")
+                                st.caption(f"🥗 {sopar.get('categoria', 'Plat principal')} | 🛒 {', '.join(sopar.get('ingredients_principals', []))}")
+                                alt_s = sopar.get("plat_alternatiu")
+                                if alt_s and isinstance(alt_s, dict):
+                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem;'>⚡ <strong>Plat ràpid per a {alt_s.get('per', '')}:</strong> {alt_s.get('plat', '')}<br><em style='color:#bbb;'>Motiu: {alt_s.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                    
+                    st.write("")
+                    
+                    # Generador del text per WhatsApp (Consens)
+                    wa_lines = ["*🍽️ Menú Setmanal XiquiHouse 🍽️*", ""]
+                    for d in menu_setmanal:
+                        wa_lines.append(f"📅 *{d.get('dia')}:*")
+                        d_p = d.get('dinar', {}).get('plat', '-')
+                        s_p = d.get('sopar', {}).get('plat', '-')
+                        wa_lines.append(f"  • Dinar: {d_p}")
+                        d_alt = d.get('dinar', {}).get('plat_alternatiu')
+                        if d_alt and isinstance(d_alt, dict):
+                            wa_lines.append(f"    ↳ _Alt. ({d_alt.get('per')}): {d_alt.get('plat')}_")
+                        wa_lines.append(f"  • Sopar: {s_p}")
+                        s_alt = d.get('sopar', {}).get('plat_alternatiu')
+                        if s_alt and isinstance(s_alt, dict):
+                            wa_lines.append(f"    ↳ _Alt. ({s_alt.get('per')}): {s_alt.get('plat')}_")
+                        wa_lines.append("")
+                    wa_lines.append("💬 _Validem aquest menú per preparar la compra?_")
+                    
+                    wa_text = "\n".join(wa_lines)
+                    wa_encoded = urllib.parse.quote(wa_text)
+                    wa_url = f"https://wa.me/?text={wa_encoded}"
+                    
+                    c_wa, c_exp = st.columns([6, 4])
+                    with c_wa:
+                        st.markdown(f"""
+                        <a href="{wa_url}" target="_blank" style="text-decoration:none;">
+                            <div style="background-color:#25D366; color:white; padding:12px 20px; border-radius:8px; text-align:center; font-weight:700; font-size:1.05rem; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                <span>📲</span> Enviar Menú per WhatsApp per a Consens Familiar
+                            </div>
+                        </a>
+                        """, unsafe_allow_html=True)
+                        
+                    st.write("")
+                    
+                    # Pestanya Batch Cooking & Ingredients a Comprar
+                    st.markdown("#### ⏱️ Mise en Place de Diumenge (Batch Cooking) i Compres")
+                    c_bp1, c_bp2 = st.columns(2)
+                    
+                    with c_bp1:
+                        st.markdown("**🔪 Bases a preparar el diumenge:**")
+                        bases = menu_obj.get("bases_batch_prep_diumenge", [])
+                        if bases:
+                            for b in bases:
+                                st.info(f"🥣 **{b.get('base', 'Base')}** ({b.get('quantitat', '')}): {b.get('utilitzacio', '')}")
+                        else:
+                            st.write("No calen bases prèvies per a aquest menú.")
+                            
+                    with c_bp2:
+                        st.markdown("**🛒 Ingredients a comprar:**")
+                        ings_comprar = menu_obj.get("ingredients_a_comprar", [])
+                        if ings_comprar:
+                            st.markdown("- " + "\n- ".join(ings_comprar))
+                        else:
+                            st.write("Tots els ingredients estan disponibles.")
 
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
@@ -575,6 +640,18 @@ def modal_recepta(row):
             ins_val = row.get('instruccions', '')
             ins_raw = str(ins_val) if pd.notna(ins_val) and str(ins_val).strip().lower() != 'nan' else 'Sense instruccions'
             st.write(ins_raw)
+            
+            st.markdown("---")
+            st.markdown("### ⭐ Valoració Familiar (0 - 5 estrelles):")
+            cfg_fam = load_config().get("familia", [])
+            cols_v = st.columns(max(1, len(cfg_fam)))
+            for idx_f, f_m in enumerate(cfg_fam):
+                col_vf = cols_v[idx_f % len(cols_v)]
+                with col_vf:
+                    f_nom = f_m.get("nom", f"Membre {idx_f+1}")
+                    f_ico = f_m.get("icona", "👤")
+                    st.caption(f"{f_ico} **{f_nom}**")
+                    st.slider("Nota", 0, 5, 4, key=f"val_{row['id']}_{idx_f}", label_visibility="collapsed")
 
 
 def cb_set_editing_recepta(r_id, val):
