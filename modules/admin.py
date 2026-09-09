@@ -210,6 +210,7 @@ def render():
             ("titol", "🏷️ Títol de la casa"),
             ("familia", "👨‍👩‍👧‍👦 Família"),
             ("menjar", "🍽️ Menús i Nutrició"),
+            ("harness", "🧪 Laboratori IA (Harness)"),
             ("tutelats", "🤝 Tutelats"),
             ("bancs", "🏦 Bancs"),
             ("tema", "🎨 Aspecte i Tema"),
@@ -604,7 +605,124 @@ def render():
             st.markdown("</div>", unsafe_allow_html=True)
 
         # =========================================================================
-        # 4. SECCIÓ: TUTELATS (PERSONES TUTELADES)
+        # SECCIÓ: LABORATORI IA / HARNESS
+        # =========================================================================
+        elif active == "harness":
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🧪 Laboratori d'Avaluació IA (Harness)</div>
+                <div class="chrome-card-desc">Banc de proves automatitzat per mesurar la seguretat d'al·lèrgies, desdoblament de vetos personals, regles de la llar, zero repeticions d'hidrats i format JSON abans de posar els menús en marxa.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            st.markdown("#### ⚙️ Configuració de la Prova")
+            
+            c_m1, c_m2 = st.columns([6, 4])
+            with c_m1:
+                model_options = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+                selected_model = st.selectbox("Model d'IA a avaluar:", model_options, index=0, key="harness_model_sel")
+            with c_m2:
+                default_key = st.secrets.get("GEMINI_API_KEY", "")
+                if default_key:
+                    st.success("🔑 Clau GEMINI_API_KEY detectada als Secrets")
+                    active_api_key = default_key
+                else:
+                    active_api_key = st.text_input("🔑 Clau d'API Gemini:", type="password", key="harness_key_input")
+            
+            from core.harness import load_harness_cases, run_harness_suite, run_harness_single_test
+            cases = load_harness_cases()
+            
+            st.write("")
+            c_btn1, c_btn2 = st.columns([5, 5])
+            with c_btn1:
+                run_all = st.button("▶️ Executar Bateria Completa (9 Tests)", type="primary", use_container_width=True, key="btn_run_harness_all")
+            with c_btn2:
+                selected_single = st.selectbox("O provar un cas concret:", [f"{c['id']}: {c['titol']}" for c in cases], key="sel_single_test", label_visibility="collapsed")
+                run_single = st.button("🎯 Executar només aquest cas", use_container_width=True, key="btn_run_harness_single")
+                
+            if run_all:
+                if not active_api_key:
+                    st.error("❌ Cal disposar d'una clau d'API per executar les proves.")
+                else:
+                    progress_bar = st.progress(0)
+                    status_txt = st.empty()
+                    
+                    def on_progress(current, total, title):
+                        pct = current / total
+                        progress_bar.progress(pct)
+                        status_txt.markdown(f"⏳ **Executant test {current}/{total}:** *{title}*...")
+                        
+                    with st.spinner("Executant avaluacions deterministes del Harness..."):
+                        suite_res = run_harness_suite(api_key=active_api_key, model_name=selected_model, progress_callback=on_progress)
+                        st.session_state.harness_results = suite_res
+                        progress_bar.progress(1.0)
+                        status_txt.success("✅ Bateria de proves completada!")
+                        
+            elif run_single:
+                if not active_api_key:
+                    st.error("❌ Cal disposar d'una clau d'API per executar la prova.")
+                else:
+                    target_id = selected_single.split(":")[0].strip()
+                    target_case = next((c for c in cases if c["id"] == target_id), None)
+                    if target_case:
+                        with st.spinner(f"Avaluant {target_case['titol']}..."):
+                            single_res = run_harness_single_test(target_case, api_key=active_api_key, model_name=selected_model)
+                            st.session_state.harness_single_result = single_res
+                            st.success("✅ Prova individual finalitzada!")
+            
+            # Mostra de Resultats Globals
+            if "harness_results" in st.session_state and isinstance(st.session_state.harness_results, dict):
+                res = st.session_state.harness_results
+                st.markdown("---")
+                st.markdown("### 📊 Resultats del Benchmarking")
+                
+                k1, k2, k3, k4 = st.columns(4)
+                with k1:
+                    st.metric("🏆 Èxit Global", f"{res.get('percentatge_exit', 0)}%", f"{res.get('proves_superades', 0)}/{res.get('total_proves', 0)} passats")
+                with k2:
+                    st.metric("🛡️ Seguretat Al·lèrgies", f"{res.get('taxa_seguretat_alergies', 0)}%", "Tolerància 0%")
+                with k3:
+                    st.metric("🚫 Desdoblament Vetos", f"{res.get('taxa_desdoblament_vetos', 0)}%", "Plats comodí")
+                with k4:
+                    st.metric("⚡ Latència Mitjana", f"{res.get('latencia_mitjana_s', 0)} s", selected_model)
+                    
+                st.markdown("#### 📋 Detall de cada Test")
+                for r in res.get("detall_resultats", []):
+                    icon = "✅" if r.get("exit_global") else "❌"
+                    with st.expander(f"{icon} **{r.get('id')}**: {r.get('titol')} ({r.get('latencia_s')}s)", expanded=not r.get("exit_global")):
+                        if r.get("exit_global"):
+                            st.success("✨ **Test superat amb èxit.** Cap al·lèrgen, vetos degudament desdoblats i regles nutricionals respectades.")
+                        else:
+                            st.error(f"⚠️ **Infraccions detectades:**")
+                            for err in r.get("errors", []):
+                                st.markdown(f"- 🔴 {err}")
+                                
+                        if r.get("resposta_json"):
+                            with st.expander("👁️ Veure JSON generat per la IA", expanded=False):
+                                st.json(r.get("resposta_json"))
+                                
+            # Mostra de Resultat Individual
+            elif "harness_single_result" in st.session_state and isinstance(st.session_state.harness_single_result, dict):
+                sr = st.session_state.harness_single_result
+                st.markdown("---")
+                st.markdown(f"### 🎯 Resultat de la Prova: `{sr.get('id')}`")
+                
+                if sr.get("exit_global"):
+                    st.success(f"✅ **ÈXIT:** El test s'ha superat en {sr.get('latencia_s')} segons.")
+                else:
+                    st.error(f"❌ **FALLAT:** S'han detectat infraccions (Temps: {sr.get('latencia_s')}s).")
+                    for err in sr.get("errors", []):
+                        st.markdown(f"- 🔴 {err}")
+                        
+                if sr.get("resposta_json"):
+                    st.markdown("#### 🍽️ Menú generat per la IA:")
+                    st.json(sr.get("resposta_json"))
+                    
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 5. SECCIÓ: TUTELATS (PERSONES TUTELADES)
         # =========================================================================
         elif active == "tutelats":
             tutelats_list = list(cfg.get("tutelats", []))
