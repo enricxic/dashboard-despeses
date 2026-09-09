@@ -113,36 +113,56 @@ Has de respondre ÚNICAMENT amb un objecte JSON sense blocs markdown extres, amb
     return prompt
 
 def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-flash") -> Tuple[bool, str, float]:
-    """Realitza una crida a l'API de Google Gemini i retorna (èxit, text_resposta, temps_segons)."""
+    """Realitza una crida a l'API de Google Gemini amb reintents automàtics i gestió d'errors 503/429."""
     start_time = time.time()
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-    payload = {
-        "contents": [
-            {
-                "parts": [{"text": prompt}]
-            }
-        ],
-        "generationConfig": {
-            "responseMimeType": "application/json",
-            "temperature": 0.2
-        }
-    }
     
-    try:
-        resp = requests.post(url, json=payload, timeout=45)
-        elapsed = round(time.time() - start_time, 2)
-        if resp.status_code == 200:
-            data = resp.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                return True, content, elapsed
-            return False, "Resposta buida de Gemini", elapsed
-        else:
-            return False, f"Error HTTP {resp.status_code}: {resp.text}", elapsed
-    except Exception as e:
-        elapsed = round(time.time() - start_time, 2)
-        return False, f"Excepció en cridar Gemini: {str(e)}", elapsed
+    models_to_try = [model_name]
+    if "2.5" in model_name:
+        models_to_try.append("gemini-1.5-flash")
+    elif "1.5-pro" in model_name:
+        models_to_try.append("gemini-1.5-flash")
+        
+    last_error = ""
+    for current_model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent?key={api_key}"
+        payload = {
+            "contents": [
+                {
+                    "parts": [{"text": prompt}]
+                }
+            ],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "temperature": 0.2
+            }
+        }
+        
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                resp = requests.post(url, json=payload, timeout=50)
+                elapsed = round(time.time() - start_time, 2)
+                
+                if resp.status_code == 200:
+                    data = resp.json()
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                        return True, content, elapsed
+                    return False, "Resposta buida de Gemini", elapsed
+                elif resp.status_code in [503, 429]:
+                    # Model sobrecarregat temporalment -> esperar i reintentar
+                    time.sleep(1.5 * (attempt + 1))
+                    last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
+                    continue
+                else:
+                    return False, f"Error HTTP {resp.status_code}: {resp.text}", elapsed
+            except Exception as e:
+                time.sleep(1.5)
+                last_error = f"Excepció en cridar Gemini: {str(e)}"
+                
+    elapsed = round(time.time() - start_time, 2)
+    return False, last_error, elapsed
 
 def parse_and_clean_json(raw_text: str) -> Tuple[bool, Dict[str, Any], str]:
     """Neteja delimitadors markdown i parseja el text com a diccionari JSON."""
@@ -461,6 +481,7 @@ def run_harness_suite(api_key: str, model_name: str = "gemini-2.5-flash", progre
             
         res = run_harness_single_test(tc, api_key=api_key, model_name=model_name)
         results.append(res)
+        time.sleep(0.8)
         
     passed_total = sum(1 for r in results if r["exit_global"])
     passed_json = sum(1 for r in results if r["json_valid"])
