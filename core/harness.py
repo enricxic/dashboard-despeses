@@ -20,9 +20,13 @@ def load_harness_cases(file_path: str = DEFAULT_CASES_PATH) -> List[Dict[str, An
         print(f"Error carregant casos de prova: {e}")
         return []
 
-def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Optional[List[Dict[str, Any]]] = None) -> str:
+def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Optional[List[Any]] = None, recipes_sample: Optional[List[Any]] = None, **kwargs) -> str:
     """Construeix el prompt del sistema optimitzat per generar un menú estricte en format JSON."""
     
+    cataleg_utilitzar = recipes_catalog if recipes_catalog is not None else recipes_sample
+    if cataleg_utilitzar is None:
+        cataleg_utilitzar = kwargs.get("cataleg_receptes", [])
+
     perfil_txt = ""
     for m in test_case.get("perfil_familia", []):
         actiu_str = "Present a la llar" if m.get("actiu", True) else "FORA DE LA LLAR (NO COMPUTA COMENSAL)"
@@ -55,17 +59,21 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
 
     # Catàleg de receptes de la família
     receptari_txt = "No hi ha receptari predefinit."
-    if recipes_catalog:
+    if cataleg_utilitzar:
         primers = []
         segons = []
         altres = []
-        for r in recipes_catalog:
-            titol = r.get("titol", "")
-            cat = str(r.get("categoria", "")).lower()
+        for r in cataleg_utilitzar:
+            if isinstance(r, dict):
+                titol = r.get("titol", "")
+                cat = str(r.get("categoria", "")).lower()
+            else:
+                titol = str(r)
+                cat = "primer"
             if not titol: continue
             if "primer" in cat:
                 primers.append(titol)
-            elif "segon" in cat or "únic" in cat:
+            elif "segon" in cat or "únic" in cat or "plat" in cat:
                 segons.append(titol)
             else:
                 altres.append(titol)
