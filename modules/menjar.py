@@ -278,13 +278,13 @@ def render():
                         
             with subtab_gen:
                 st.markdown("### 🧠 Planificador Nutricional Intel·ligent (IA)")
-                st.write("Genera un menú setmanal equilibrat adaptat a les al·lèrgies mèdiques, vetos personals (amb desdoblament de plats), freqüències nutricionals i estoc existent.")
+                st.write("Genera un menú setmanal complet (Primer, Segon i Postre) adaptat a les al·lèrgies mèdiques, vetos personals amb desdoblament de plats, regles nutricionals i estoc existent.")
                 
                 cfg = load_config()
                 familia_cfg = cfg.get("familia", [])
                 regles_cfg = cfg.get("regles_menjar", {})
                 
-                with st.expander("⚙️ Configuració i Membres de la Llar", expanded=True):
+                with st.expander("⚙️ Configuració, Membres i Modificacions Prèvies", expanded=True):
                     c_fam, c_rules = st.columns([6, 4])
                     
                     with c_fam:
@@ -324,7 +324,7 @@ def render():
                                     st.caption("*(Fora de la llar)*")
                     
                     with c_rules:
-                        st.markdown("**🥗 Regles Nutricionals i Temporada:**")
+                        st.markdown("**🥗 Regles Nutricionals i Format d'Àpat:**")
                         c_r1, c_r2 = st.columns(2)
                         with c_r1:
                             month = pd.Timestamp.now().month
@@ -341,19 +341,32 @@ def render():
                             min_lleg = st.number_input("Mín. llegums / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_llegums", 2)), key="m_min_lleg")
 
                     st.markdown("---")
-                    c_p1, c_p2 = st.columns([7, 3])
-                    with c_p1:
-                        peticio_txt = st.text_input("💬 Petició especial de la família (ex. 'Divendres sopar -> Sardines a la planxa')", key="m_peticio_txt", placeholder="Ex. Enric vol sardines a la planxa per sopar divendres")
-                    with c_p2:
-                        st.write("")
-                        btn_gen_ai = st.button("✨ Generar Menú Intel·ligent amb IA", use_container_width=True, type="primary")
+                    st.markdown("**📌 Fixar o Demanar Plats Especials per a Dies Concrets (Opcional):**")
+                    c_fix1, c_fix2 = st.columns(2)
+                    with c_fix1:
+                        peticio_general = st.text_input("💬 Petició general de la setmana:", key="m_peticio_gen", placeholder="Ex. Volem sardines divendres i paella diumenge")
+                    with c_fix2:
+                        dia_fixat_sel = st.selectbox("Fixar plat per un dia concret:", ["Cap", "Dilluns dinar", "Dilluns sopar", "Dimarts dinar", "Dimarts sopar", "Dimecres dinar", "Dimecres sopar", "Dijous dinar", "Dijous sopar", "Divendres dinar", "Divendres sopar", "Dissabte dinar", "Dissabte sopar", "Diumenge dinar", "Diumenge sopar"], key="m_dia_fixat")
+                    
+                    plat_fixat_txt = ""
+                    if dia_fixat_sel != "Cap":
+                        plat_fixat_txt = st.text_input(f"Plat que vols exactament per a {dia_fixat_sel}:", key="m_plat_fixat_txt", placeholder="Ex. Llenties estofades")
+
+                    st.write("")
+                    btn_gen_ai = st.button("✨ Generar Menú Setmanal Complet (Primer + Segon + Postre)", use_container_width=True, type="primary")
 
                 if btn_gen_ai:
                     if not comensals_seleccionats:
                         st.warning("Has de seleccionar com a mínim un membre actiu a la llar!")
                     else:
-                        with st.spinner("🧠 Generant menú setmanal optimitzat i auditat amb Gemini IA..."):
+                        with st.spinner("🧠 Generant menú setmanal estructurat amb Gemini IA..."):
                             api_key = st.secrets.get("GEMINI_API_KEY", "")
+                            
+                            peticions_list = []
+                            if peticio_general.strip():
+                                peticions_list.append({"comensal": "Família", "plat": peticio_general.strip(), "dia_preferit": "Qualsevol"})
+                            if dia_fixat_sel != "Cap" and plat_fixat_txt.strip():
+                                peticions_list.append({"comensal": "Família", "plat": plat_fixat_txt.strip(), "dia_preferit": dia_fixat_sel})
                             
                             # Construir el cas de prova dinàmic
                             active_case = {
@@ -368,9 +381,7 @@ def render():
                                     "no_repetir_hidrats": True
                                 },
                                 "stock_disponible": [],
-                                "peticions_setmanals": [
-                                    {"comensal": "Família", "plat": peticio_txt, "dia_preferit": "Qualsevol"}
-                                ] if peticio_txt.strip() else [],
+                                "peticions_setmanals": peticions_list,
                                 "valoracions_previes": {}
                             }
                             
@@ -386,40 +397,65 @@ def render():
                                     st.error(f"Error parsejant el menú de la IA: {json_err}")
                             else:
                                 st.error(f"Error cridant la IA: {raw_resp}")
-                                # Fallback determinista
-                                st.info("🔄 Activant motor de contingència basat en les teves receptes locals...")
+                                st.info("🔄 Revisa la connexió o les regles seleccionades.")
 
                 # Renderitzar el menú generat si existeix
                 if 'ai_menu_result' in st.session_state:
                     menu_obj = st.session_state['ai_menu_result']
                     menu_setmanal = menu_obj.get("menu_setmanal", [])
                     
-                    st.markdown("### 📅 El teu Menú Setmanal Validat")
+                    st.markdown("### 📅 El teu Menú Setmanal (Primer, Segon i Postre)")
+                    
+                    # Commutador de Mode Edició en viu
+                    mode_edit = st.toggle("✏️ Mode Edició: Modificar / Canviar plats directament", value=False, key="toggle_edit_menu")
                     
                     # Targetes per dies
-                    for dia_data in menu_setmanal:
-                        dia_nom = dia_data.get("dia", "Dia")
+                    for idx_d, dia_data in enumerate(menu_setmanal):
+                        dia_nom = dia_data.get("dia", f"Dia {idx_d+1}")
                         dinar = dia_data.get("dinar", {})
                         sopar = dia_data.get("sopar", {})
                         
                         with st.container(border=True):
-                            c_d_title, c_d1, c_d2 = st.columns([1.5, 4.2, 4.3])
-                            with c_d_title:
-                                st.markdown(f"#### 🗓️ {dia_nom}")
+                            st.markdown(f"#### 🗓️ {dia_nom}")
+                            c_d1, c_d2 = st.columns(2)
                             
                             with c_d1:
-                                st.markdown(f"**☀️ Dinar:** {dinar.get('plat', '-')}")
-                                st.caption(f"🥗 {dinar.get('categoria', 'Plat principal')} | 🛒 {', '.join(dinar.get('ingredients_principals', []))}")
+                                st.markdown("##### ☀️ Dinar")
+                                if not mode_edit:
+                                    p_prim = dinar.get('primer', dinar.get('plat', '-'))
+                                    p_seg = dinar.get('segon', '-')
+                                    p_post = dinar.get('postre', 'Fruita de temporada')
+                                    st.markdown(f"🥣 **1r Plat:** {p_prim}")
+                                    if p_seg and p_seg != '-':
+                                        st.markdown(f"🥩/🐟 **2n Plat:** {p_seg}")
+                                    st.markdown(f"🍏 **Postre:** {p_post}")
+                                else:
+                                    dinar['primer'] = st.text_input("1r Plat Dinar", value=dinar.get('primer', dinar.get('plat', '')), key=f"ed_d_prim_{idx_d}")
+                                    dinar['segon'] = st.text_input("2n Plat Dinar", value=dinar.get('segon', ''), key=f"ed_d_seg_{idx_d}")
+                                    dinar['postre'] = st.text_input("Postre Dinar", value=dinar.get('postre', 'Fruita de temporada'), key=f"ed_d_post_{idx_d}")
+                                
                                 alt_d = dinar.get("plat_alternatiu")
                                 if alt_d and isinstance(alt_d, dict):
-                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem;'>⚡ <strong>Plat ràpid per a {alt_d.get('per', '')}:</strong> {alt_d.get('plat', '')}<br><em style='color:#bbb;'>Motiu: {alt_d.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:6px;'>⚡ <strong>Plat ràpid per a {alt_d.get('per', '')}:</strong> {alt_d.get('plat', '')}<br><em style='color:#bbb;'>Motiu: {alt_d.get('motiu', '')}</em></div>", unsafe_allow_html=True)
                             
                             with c_d2:
-                                st.markdown(f"**🌙 Sopar:** {sopar.get('plat', '-')}")
-                                st.caption(f"🥗 {sopar.get('categoria', 'Plat principal')} | 🛒 {', '.join(sopar.get('ingredients_principals', []))}")
+                                st.markdown("##### 🌙 Sopar")
+                                if not mode_edit:
+                                    s_prim = sopar.get('primer', '')
+                                    s_seg = sopar.get('segon', sopar.get('plat', '-'))
+                                    s_post = sopar.get('postre', 'Iogurt')
+                                    if s_prim and s_prim.strip():
+                                        st.markdown(f"🥣 **1r Plat:** {s_prim}")
+                                    st.markdown(f"🍳 **Plat principal:** {s_seg}")
+                                    st.markdown(f"🥛 **Postre:** {s_post}")
+                                else:
+                                    sopar['primer'] = st.text_input("1r Plat Sopar (opcional)", value=sopar.get('primer', ''), key=f"ed_s_prim_{idx_d}")
+                                    sopar['segon'] = st.text_input("Plat principal Sopar", value=sopar.get('segon', sopar.get('plat', '')), key=f"ed_s_seg_{idx_d}")
+                                    sopar['postre'] = st.text_input("Postre Sopar", value=sopar.get('postre', 'Iogurt'), key=f"ed_s_post_{idx_d}")
+                                
                                 alt_s = sopar.get("plat_alternatiu")
                                 if alt_s and isinstance(alt_s, dict):
-                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem;'>⚡ <strong>Plat ràpid per a {alt_s.get('per', '')}:</strong> {alt_s.get('plat', '')}<br><em style='color:#bbb;'>Motiu: {alt_s.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:6px;'>⚡ <strong>Plat ràpid per a {alt_s.get('per', '')}:</strong> {alt_s.get('plat', '')}<br><em style='color:#bbb;'>Motiu: {alt_s.get('motiu', '')}</em></div>", unsafe_allow_html=True)
                     
                     st.write("")
                     
@@ -427,14 +463,25 @@ def render():
                     wa_lines = ["*🍽️ Menú Setmanal XiquiHouse 🍽️*", ""]
                     for d in menu_setmanal:
                         wa_lines.append(f"📅 *{d.get('dia')}:*")
-                        d_p = d.get('dinar', {}).get('plat', '-')
-                        s_p = d.get('sopar', {}).get('plat', '-')
-                        wa_lines.append(f"  • Dinar: {d_p}")
-                        d_alt = d.get('dinar', {}).get('plat_alternatiu')
+                        d_obj = d.get('dinar', {})
+                        d_p1 = d_obj.get('primer', d_obj.get('plat', '-'))
+                        d_p2 = d_obj.get('segon', '')
+                        d_pos = d_obj.get('postre', '')
+                        d_txt = f"{d_p1}" + (f" + {d_p2}" if d_p2 and d_p2 != '-' else "") + (f" | 🍏 {d_pos}" if d_pos else "")
+                        wa_lines.append(f"  • *Dinar:* {d_txt}")
+                        
+                        d_alt = d_obj.get('plat_alternatiu')
                         if d_alt and isinstance(d_alt, dict):
                             wa_lines.append(f"    ↳ _Alt. ({d_alt.get('per')}): {d_alt.get('plat')}_")
-                        wa_lines.append(f"  • Sopar: {s_p}")
-                        s_alt = d.get('sopar', {}).get('plat_alternatiu')
+                        
+                        s_obj = d.get('sopar', {})
+                        s_p1 = s_obj.get('primer', '')
+                        s_p2 = s_obj.get('segon', s_obj.get('plat', '-'))
+                        s_pos = s_obj.get('postre', '')
+                        s_txt = (f"{s_p1} + " if s_p1 and s_p1.strip() else "") + f"{s_p2}" + (f" | 🥛 {s_pos}" if s_pos else "")
+                        wa_lines.append(f"  • *Sopar:* {s_txt}")
+                        
+                        s_alt = s_obj.get('plat_alternatiu')
                         if s_alt and isinstance(s_alt, dict):
                             wa_lines.append(f"    ↳ _Alt. ({s_alt.get('per')}): {s_alt.get('plat')}_")
                         wa_lines.append("")

@@ -84,6 +84,16 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 1. Si la família menja un plat que conté un aliment vetat per un sol membre (ex. fetge), programa el plat per a la família i genera OBLIGATÒRIAMENT un 'plat_alternatiu' ràpid (usant els seus comodins favorits) per a aquell membre, compartint la mateixa guarnició.
 2. Si un membre està 'FORA DE LA LLAR', NO comptabilitzis les seves restriccions personals per defecte ni el sumis al nombre de racions.
 
+### ESTRUCTURA D'ÀPATS TRADICIONAL CATALANA:
+- DINAR:
+  - "primer": Primer plat (ex. Amanida, Sopa, Crema de verdures, Llenties, Macarrons, Arròs de verdures)
+  - "segon": Segon plat (ex. Lluç al forn amb patates, Pit de pollastre amb xampinyons, Bistec amb guarnició)
+  - "postre": Postre saludable (ex. Fruita de temporada, Poma, Iogurt natural)
+- SOPAR:
+  - "primer": Primer plat lleuger (ex. Sopa de brou, Crema de carbassó, Amanida verda) o null
+  - "segon": Segon plat lleuger (ex. Truita francesa, Salmó a la planxa, Hamburguesa de verdures)
+  - "postre": Postre lleuger (ex. Iogurt, Fruita)
+
 ### RESPOSTA EN FORMAT JSON ESTRICTE:
 Has de respondre ÚNICAMENT amb un objecte JSON sense blocs markdown extres, amb aquesta estructura:
 {{
@@ -93,28 +103,30 @@ Has de respondre ÚNICAMENT amb un objecte JSON sense blocs markdown extres, amb
     {{
       "dia": "Dilluns",
       "dinar": {{
-        "plat": "Nom del plat principal",
-        "categoria": "Primer / Segon / Plat únic",
-        "ingredients_principals": ["ing1", "ing2"],
+        "primer": "Crema de carbassó amb crostons",
+        "segon": "Lluç a la planxa amb verdures saltades",
+        "postre": "Poma de temporada",
+        "ingredients_principals": ["carbassó", "ceba", "lluç", "verdures", "poma"],
         "apte_per": ["Nom1", "Nom2"],
         "plat_alternatiu": null
       }},
       "sopar": {{
-        "plat": "Nom del plat",
-        "categoria": "Segon / Plat únic",
-        "ingredients_principals": ["ing1", "ing2"],
+        "primer": "Amanida verda de tomàquet",
+        "segon": "Truita francesa amb tomàquet amanit",
+        "postre": "Iogurt natural",
+        "ingredients_principals": ["enciam", "tomàquet", "ous", "iogurt"],
         "apte_per": ["Nom1", "Nom2"],
         "plat_alternatiu": {{
           "per": "Enric",
-          "plat": "Pit de pollastre a la planxa",
-          "motiu": "Veto a fetge"
+          "plat": "Pit de pollastre a la planxa amb amanida",
+          "motiu": "Veto personal a fetge i casqueria"
         }}
       }}
     }}
   ],
   "bases_batch_prep_diumenge": [
     {{"base": "Patates probiòtiques", "quantitat": "1.5 kg", "utilitzacio": "Dinars de dimarts i dijous"}},
-    {{"base": "Caldo de peix concentrat", "quantitat": "1.5 L", "utilitzacio": "Arròs de dimarts i sopa de dijous"}}
+    {{"base": "Caldo de peix / verdures concentrat", "quantitat": "1.5 L", "utilitzacio": "Arròs i sopes"}}
   ],
   "ingredients_a_comprar": ["llista d'ingredients que NO estan a l'stock"]
 }}"""
@@ -249,6 +261,32 @@ def grade_alergies(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tupl
                 if "fruits secs" in al_low:
                     alergens.extend(["ametlla", "nou", "avellana", "cacauet", "pistatxo", "anacard"])
     
+def extract_apat_text(apat: Dict[str, Any]) -> str:
+    """Extreu tot el text dels plats de l'àpat (primer, segon, postre i plat general)."""
+    parts = []
+    for k in ["plat", "primer", "segon", "postre"]:
+        val = apat.get(k)
+        if val and isinstance(val, str):
+            parts.append(val)
+    return " - ".join(parts) if parts else ""
+
+def grade_alergies(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tuple[float, List[str]]:
+    """Comprova que CAP ingredient contingui al·lèrgens prohibits (Tolerància 0%)."""
+    criteris = test_case.get("criteris_esperats", {})
+    alergens = [a.lower() for a in criteris.get("alergens_prohibits", [])]
+    
+    # Recollir també al·lèrgies dels membres actius
+    for m in test_case.get("perfil_familia", []):
+        if m.get("actiu", True):
+            for al in m.get("alergies", []):
+                al_low = al.lower()
+                if "gluten" in al_low or "celiac" in al_low:
+                    alergens.extend(["gluten", "blat", "farina de blat", "pa de blat", "pasta de blat", "fideus de blat", "espelta", "ordi", "centen"])
+                if "lactosa" in al_low:
+                    alergens.extend(["llet", "formatge", "nata", "mantega", "iogurt", "crema de llet", "parmesà", "mozzarella"])
+                if "fruits secs" in al_low:
+                    alergens.extend(["ametlla", "nou", "avellana", "cacauet", "pistatxo", "anacard"])
+    
     alergens = list(set(alergens))
     if not alergens:
         return 1.0, []
@@ -260,15 +298,15 @@ def grade_alergies(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tupl
             apat = dia_obj.get(apat_k, {})
             if not isinstance(apat, dict): continue
             
-            plat = apat.get("plat", "")
+            plat_text = extract_apat_text(apat)
             ingredients = apat.get("ingredients_principals", [])
             
             # Comprovar nom del plat netejat de termes segurs
-            plat_net = netejar_termes_segurs(plat)
+            plat_net = netejar_termes_segurs(plat_text)
             for a in alergens:
                 pattern = r'\b' + re.escape(a) + r'\b'
                 if re.search(pattern, plat_net):
-                    infraccions.append(f"{dia_nom} ({apat_k}): '{plat}' conté el terme prohibit '{a}'")
+                    infraccions.append(f"{dia_nom} ({apat_k}): '{plat_text}' conté el terme prohibit '{a}'")
             
             # Comprovar ingredients netejats de termes segurs
             for ing in ingredients:
@@ -301,17 +339,17 @@ def grade_vetos_i_desdoblament(menu_data: Dict[str, Any], test_case: Dict[str, A
                 apat = dia_obj.get(apat_k, {})
                 if not isinstance(apat, dict): continue
                 
-                plat = apat.get("plat", "").lower()
+                plat_text = extract_apat_text(apat).lower()
                 ingredients = [str(i).lower() for i in apat.get("ingredients_principals", [])]
                 alt = apat.get("plat_alternatiu")
                 
                 # Cerca amb paraula exacta
-                conte_veto = any(re.search(r'\b' + re.escape(v) + r'\b', plat) for v in vetos) or \
+                conte_veto = any(re.search(r'\b' + re.escape(v) + r'\b', plat_text) for v in vetos) or \
                              any(any(re.search(r'\b' + re.escape(v) + r'\b', ing) for v in vetos) for ing in ingredients)
                 
                 if conte_veto:
                     if alt is None or not isinstance(alt, dict) or not alt.get("plat"):
-                        infraccions.append(f"{dia_nom} ({apat_k}): '{apat.get('plat')}' té ingredients vetats per a {nom_m} però NO s'ha generat cap 'plat_alternatiu'")
+                        infraccions.append(f"{dia_nom} ({apat_k}): '{plat_text}' té ingredients vetats per a {nom_m} però NO s'ha generat cap 'plat_alternatiu'")
                     else:
                         alt_plat = alt.get("plat", "").lower()
                         if any(re.search(r'\b' + re.escape(v) + r'\b', alt_plat) for v in vetos):
@@ -344,9 +382,9 @@ def grade_regles_llar(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> T
             apat = dia_obj.get(apat_k, {})
             if not isinstance(apat, dict): continue
             
-            plat = apat.get("plat", "").lower()
+            plat_text = extract_apat_text(apat).lower()
             ings = " ".join([str(i).lower() for i in apat.get("ingredients_principals", [])])
-            full_text = f"{plat} {ings}"
+            full_text = f"{plat_text} {ings}"
             
             if any(k in full_text for k in carn_vermella_kw):
                 count_carn += 1
@@ -384,11 +422,11 @@ def grade_repeticions_hidrats(menu_data: Dict[str, Any], test_case: Dict[str, An
         for apat_k in ["dinar", "sopar"]:
             apat = dia_obj.get(apat_k, {})
             if not isinstance(apat, dict): continue
-            plat = apat.get("plat", "").lower()
+            plat = extract_apat_text(apat).lower()
             
             if "arròs" in plat or "arros" in plat or "paella" in plat:
                 hidrats_avui.append("arròs")
-            if "pasta" in plat or "macarrons" in plat or "fideus" in plat or "espaguetis" in plat:
+            if "pasta" in plat or "macarrons" in plat or "fideus" in plat or "espaguetis" in plat or "espirals" in plat or "pizza" in plat:
                 hidrats_avui.append("pasta")
                 
         if darrers_hidrats:
@@ -412,7 +450,7 @@ def grade_puntuacions_estrelles(menu_data: Dict[str, Any], test_case: Dict[str, 
         for apat_k in ["dinar", "sopar"]:
             apat = dia_obj.get(apat_k, {})
             if not isinstance(apat, dict): continue
-            plat = apat.get("plat", "")
+            plat = extract_apat_text(apat)
             apte_per = [str(u).lower() for u in apat.get("apte_per", [])]
             plat_alt = apat.get("plat_alternatiu")
             alt_per = str(plat_alt.get("per", "")).lower() if isinstance(plat_alt, dict) else ""
