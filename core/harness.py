@@ -70,7 +70,15 @@ La teva missió és dissenyar un menú setmanal equilibrat, deliciós, segur i o
 
 ### HISTÒRIC DE PUNTUACIONS (ESTRELLES 0-5):
 {val_txt}
-NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats que tinguin 0, 1 o 2 estrelles.
+NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats que tinguin 0, 1 o 2 estrelles (excepte si és per a la resta de la família i assignes un 'plat_alternatiu' al membre afectat).
+
+### ⚠️ COMPLIMENT ESTRICTE DE FREQÜÈNCIES NUTRICIONALS (AUDITORIA FINAL):
+1. CARN VERMELLA (vedella, bou, hamburguesa): Màxim el límit indicat (habitualment MÀXIM 1 COP en tota la setmana). Si ja has posat carn vermella un dia, la resta de dies utilitza aus (pollastre, gall dindi), peix, ous o llegums.
+2. SOPARS FREDS / EMBOTITS: Màxim el límit indicat (habitualment MÀXIM 2 COPS per setmana).
+3. PEIX I LLEGUMS: Assegura el mínim de cops setmanals (habitualment mínim 2 de peix i mínim 2 de llegums).
+4. ZERO REPETICIONS D'HIDRATS EN DIES CONSECUTIUS: Està TOTALMENT PROHIBIT posar pasta (o pizza/fideus/macarrons) o arròs en dos dies consecutius.
+   - Exemple prohibit: Dimecres pasta i Dijous pasta -> PROHIBIT.
+   - Exemple prohibit: Dilluns arròs i Dimarts arròs -> PROHIBIT.
 
 ### REGLES CRÍTIQUES DE DESDOBLAMENT I VETOS:
 1. Si la família menja un plat que conté un aliment vetat per un sol membre (ex. fetge), programa el plat per a la família i genera OBLIGATÒRIAMENT un 'plat_alternatiu' ràpid (usant els seus comodins favorits) per a aquell membre, compartint la mateixa guarnició.
@@ -112,15 +120,14 @@ Has de respondre ÚNICAMENT amb un objecte JSON sense blocs markdown extres, amb
 }}"""
     return prompt
 
-def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-flash") -> Tuple[bool, str, float]:
+def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-3.8-flash") -> Tuple[bool, str, float]:
     """Realitza una crida a l'API de Google Gemini amb reintents automàtics i gestió d'errors 503/429."""
     start_time = time.time()
     
     models_to_try = [model_name]
-    if "2.5" in model_name:
-        models_to_try.append("gemini-2.0-flash")
-    elif "2.0" in model_name:
-        models_to_try.append("gemini-2.5-flash")
+    for alt in ["gemini-3.8-flash", "gemini-flash-lite-latest"]:
+        if alt not in models_to_try:
+            models_to_try.append(alt)
         
     last_error = ""
     for current_model in models_to_try:
@@ -133,11 +140,12 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
             ],
             "generationConfig": {
                 "responseMimeType": "application/json",
-                "temperature": 0.2
+                "temperature": 0.2,
+                "maxOutputTokens": 4096
             }
         }
         
-        max_attempts = 3
+        max_attempts = 2
         for attempt in range(max_attempts):
             try:
                 resp = requests.post(url, json=payload, timeout=50)
@@ -152,20 +160,21 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
                     return False, "Resposta buida de Gemini", elapsed
                 elif resp.status_code in [503, 429]:
                     # Model sobrecarregat temporalment -> esperar i reintentar
-                    time.sleep(1.5 * (attempt + 1))
+                    time.sleep(1.2 * (attempt + 1))
                     last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
                     continue
                 else:
-                    return False, f"Error HTTP {resp.status_code}: {resp.text}", elapsed
+                    last_error = f"Error HTTP {resp.status_code} ({current_model}): {resp.text}"
+                    break
             except Exception as e:
-                time.sleep(1.5)
-                last_error = f"Excepció en cridar Gemini: {str(e)}"
+                time.sleep(1.0)
+                last_error = f"Excepció en cridar Gemini ({current_model}): {str(e)}"
                 
     elapsed = round(time.time() - start_time, 2)
     return False, last_error, elapsed
 
 def parse_and_clean_json(raw_text: str) -> Tuple[bool, Dict[str, Any], str]:
-    """Neteja delimitadors markdown i parseja el text com a diccionari JSON."""
+    """Neteja delimitadors markdown i parseja el text com a diccionari JSON de manera resilient."""
     if not raw_text:
         return False, {}, "Text buit"
     try:
@@ -178,11 +187,25 @@ def parse_and_clean_json(raw_text: str) -> Tuple[bool, Dict[str, Any], str]:
             clean = clean[:-3]
         clean = clean.strip()
         
+        # Eliminar comes finals abans de claudàtors de tancament (trailing commas)
+        clean = re.sub(r',\s*([\]}])', r'\1', clean)
+        
         parsed = json.loads(clean)
         if isinstance(parsed, dict) and "menu_setmanal" in parsed:
             return True, parsed, ""
         return False, parsed if isinstance(parsed, dict) else {}, "JSON vàlid però no conté 'menu_setmanal'"
     except Exception as e:
+        # Segon intent: buscar el bloc {...} principal
+        match = re.search(r'(\{[\s\S]*\})', clean)
+        if match:
+            try:
+                candidate = match.group(1)
+                candidate = re.sub(r',\s*([\]}])', r'\1', candidate)
+                parsed = json.loads(candidate)
+                if isinstance(parsed, dict) and "menu_setmanal" in parsed:
+                    return True, parsed, ""
+            except Exception:
+                pass
         return False, {}, f"Error parsejant JSON: {str(e)}"
 
 # =========================================================================
@@ -190,17 +213,21 @@ def parse_and_clean_json(raw_text: str) -> Tuple[bool, Dict[str, Any], str]:
 # =========================================================================
 
 def netejar_termes_segurs(text: str) -> str:
-    """Substitueix combinacions segures com 'sense gluten', 'blat de moro' o 'llet de coco' per evitar falsos positius."""
+    """Substitueix combinacions segures com 'sense gluten', 'blat de moro', 'blat sarraí' o 'llet de coco' per evitar falsos positius."""
     t = text.lower()
     safe_terms = [
-        "sense gluten", "sin gluten", "gluten-free", "gluten free", "farina sense gluten", "pa sense gluten", "pasta sense gluten", "macarrons sense gluten", "fideus sense gluten", "salsa de soja sense gluten", "tamari",
-        "sense lactosa", "sin lactosa", "lactose-free", "llet sense lactosa", "formatge sense lactosa", "iogurt sense lactosa",
-        "blat de moro", "farina de blat de moro", "tortitas de blat de moro", "pa de blat de moro",
+        "sense gluten", "sin gluten", "gluten-free", "gluten free", "farina sense gluten", "pa sense gluten", "pasta sense gluten", "macarrons sense gluten", "fideus sense gluten", "espirals sense gluten", "salsa de soja sense gluten", "tamari",
+        "sense lactosa", "sin lactosa", "lactose-free", "llet sense lactosa", "formatge sense lactosa", "iogurt sense lactosa", "nata sense lactosa", "mantega sense lactosa",
+        "sense llet", "sin leche", "dairy-free", "dairy free", "sense làctics", "sense lactics", "sense proteïna de llet", "sense proteina de llet",
+        "blat sarraí", "blat sarrai", "blat sarraïnat", "blat sarrainat", "blat sarraït", "blat sarrait", "blat sarracè", "blat sarrace", "farina de blat sarraí", "farina de blat sarraïnat", "pasta de blat sarraí", "pasta de blat sarraïnat", "espirals de blat sarraí", "espirals de blat sarraïnat", "espirals de blat sarraït", "trigo sarraceno", "buckwheat",
+        "blat de moro", "farina de blat de moro", "tortitas de blat de moro", "pa de blat de moro", "farina de blat de moro", "midó de blat de moro", "maizena",
         "llet de coco", "llet d'ametlla", "llet d'ametlles", "llet de civada", "llet de soja", "llet d'arròs", "llet d'arros", "llet vegetal",
         "iogurt vegetal", "iogurt de soja", "iogurt de coco", "iogurt d'ametlla",
         "formatge vegà", "formatge vega", "formatge vegetal",
         "nata vegetal", "nata de coco", "mantega vegetal", "margarina vegetal"
     ]
+    # Important: ordenar de més llarg a més curt per substituir frases compostes abans que termes curts
+    safe_terms.sort(key=len, reverse=True)
     for st in safe_terms:
         t = t.replace(st, "[TERME_SEGUR]")
     return t
@@ -375,7 +402,7 @@ def grade_repeticions_hidrats(menu_data: Dict[str, Any], test_case: Dict[str, An
     return 1.0, []
 
 def grade_puntuacions_estrelles(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tuple[float, List[str]]:
-    """Comprova que no s'incloguin plats vetats per puntuació baixa (0-2 estrelles)."""
+    """Comprova que no s'incloguin plats vetats per puntuació baixa (0-2 estrelles) sense alternativa."""
     valoracions = test_case.get("valoracions_previes", {})
     if not valoracions:
         return 1.0, []
@@ -386,14 +413,21 @@ def grade_puntuacions_estrelles(menu_data: Dict[str, Any], test_case: Dict[str, 
             apat = dia_obj.get(apat_k, {})
             if not isinstance(apat, dict): continue
             plat = apat.get("plat", "")
+            apte_per = [str(u).lower() for u in apat.get("apte_per", [])]
+            plat_alt = apat.get("plat_alternatiu")
+            alt_per = str(plat_alt.get("per", "")).lower() if isinstance(plat_alt, dict) else ""
             
             # Comprovar si aquest plat té puntuació baixa
             for plat_val, notes in valoracions.items():
                 if plat_val.lower() in plat.lower() or plat.lower() in plat_val.lower():
                     # Si alguna nota és <= 2
                     for user, score in notes.items():
+                        user_low = user.lower()
                         if score <= 2:
-                            infraccions.append(f"Plat desaconsellat inclòs: '{plat}' (puntuat amb {score} estrelles per {user})")
+                            # Si l'usuari que no li agrada té un plat alternatiu o està exclòs d'apte_per, no és infracció
+                            if user_low == alt_per or (apte_per and user_low not in apte_per):
+                                continue
+                            infraccions.append(f"Plat desaconsellat inclòs sense alternativa: '{plat}' (puntuat amb {score} estrelles per {user})")
 
     if infraccions:
         return 0.0, infraccions
@@ -403,7 +437,7 @@ def grade_puntuacions_estrelles(menu_data: Dict[str, Any], test_case: Dict[str, 
 # EXECUTOR PRINCIPAL DEL HARNESS
 # =========================================================================
 
-def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name: str = "gemini-2.5-flash") -> Dict[str, Any]:
+def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name: str = "gemini-3.8-flash") -> Dict[str, Any]:
     """Executa un cas de prova complet i retorna el resultat i la targeta de puntuació."""
     prompt = build_system_prompt_for_case(test_case)
     ok_call, raw_resp, latency = call_gemini_api(prompt, api_key=api_key, model_name=model_name)
@@ -466,7 +500,7 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
         "resposta_json": json_data
     }
 
-def run_harness_suite(api_key: str, model_name: str = "gemini-2.5-flash", progress_callback: Optional[Callable[[int, int, str], None]] = None) -> Dict[str, Any]:
+def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", progress_callback: Optional[Callable[[int, int, str], None]] = None) -> Dict[str, Any]:
     """Executa la bateria completa de proves i retorna un resum global de rendiment."""
     cases = load_harness_cases()
     if not cases:
