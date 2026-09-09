@@ -479,7 +479,7 @@ def render():
                             p_iso = init_naix.split('-')
                             if len(p_iso) == 3 and len(p_iso[0]) == 4:
                                 init_naix = f"{p_iso[2]}/{p_iso[1]}/{p_iso[0]}"
-                        m_naix = st.text_input("🎂 Data naixement (DD/MM/AAAA)", value=init_naix, placeholder="ex: 15/05/1980", key=f"f_naix_{i}")
+                        m_naix = st.text_input("🎂 Data naixement", value=init_naix, placeholder="ex: 15/05/1980", key=f"f_naix_{i}")
                         calc_now = calcular_edat(m_naix if m_naix else mem.get("edat", ""))
                         if str(calc_now).isdigit():
                             st.caption(f"🎂 Edat: **{calc_now} anys** (recalculada)")
