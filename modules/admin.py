@@ -1,7 +1,44 @@
 import streamlit as st
 import json
 import os
+from datetime import datetime, date
 from core.config_manager import load_app_config, save_app_config, get_translation
+
+def calcular_edat(data_naix_val):
+    if not data_naix_val:
+        return ""
+    try:
+        if isinstance(data_naix_val, (datetime, date)):
+            b_date = data_naix_val if isinstance(data_naix_val, date) else data_naix_val.date()
+        else:
+            s = str(data_naix_val).strip()
+            if not s:
+                return ""
+            if '/' in s:
+                p = [int(x) for x in s.split('/')]
+                if len(p) == 3:
+                    if p[0] > 1000:  # YYYY/MM/DD
+                        b_date = date(p[0], p[1], p[2])
+                    else:            # DD/MM/YYYY
+                        b_date = date(p[2], p[1], p[0])
+                else:
+                    return str(data_naix_val)
+            elif '-' in s:
+                p = [int(x) for x in s.split('-')]
+                if len(p) == 3:
+                    if p[0] > 1000:  # YYYY-MM-DD
+                        b_date = date(p[0], p[1], p[2])
+                    else:            # DD-MM-YYYY
+                        b_date = date(p[2], p[1], p[0])
+                else:
+                    return str(data_naix_val)
+            else:
+                return str(data_naix_val)
+        today = date.today()
+        age = today.year - b_date.year - ((today.month, today.day) < (b_date.month, b_date.day))
+        return age
+    except Exception:
+        return str(data_naix_val)
 
 def render():
     cfg = load_app_config()
@@ -172,6 +209,7 @@ def render():
             ("admin", "👤 Administrador"),
             ("titol", "🏷️ Títol de la casa"),
             ("familia", "👨‍👩‍👧‍👦 Família"),
+            ("menjar", "🍽️ Menús i Nutrició"),
             ("tutelats", "🤝 Tutelats"),
             ("bancs", "🏦 Bancs"),
             ("tema", "🎨 Aspecte i Tema"),
@@ -364,7 +402,7 @@ def render():
             st.markdown(f"""
             <div class="chrome-card">
                 <div class="chrome-card-header">👨‍👩‍👧‍👦 Membres de la Família ({num_membres} / 10)</div>
-                <div class="chrome-card-desc">Afegeix i gestiona els membres de la llar (fins a un màxim de 10). Aquesta informació s'utilitza pel control de medicació, menús familiars, preferències i assistent IA.</div>
+                <div class="chrome-card-desc">Afegeix i gestiona els membres de la llar (fins a un màxim de 10). Aquesta informació s'utilitza pel control de medicació, menús familiars, al·lèrgies, vetos personals i assistent IA.</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -380,8 +418,11 @@ def render():
                             "id": next_id,
                             "nom": f"Membre {num_membres + 1}",
                             "rol": "Familiar",
+                            "data_naixement": "",
                             "edat": "",
-                            "circunstancies": "",
+                            "alergies": "",
+                            "vetos": "",
+                            "comodins": "",
                             "icona": "👤"
                         })
                         cfg["familia"] = familia_list
@@ -398,8 +439,24 @@ def render():
             roles_pool = ["Pare", "Mare", "Fill", "Filla", "Avi", "Àvia", "Germà", "Germana", "Mascota", "Altres"]
             
             for i, mem in enumerate(familia_list):
-                with st.expander(f"{mem.get('icona', '👤')} {mem.get('nom', f'Membre {i+1}')} ({mem.get('rol', 'Familiar')})", expanded=True):
-                    c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 1.5])
+                raw_naix = mem.get("data_naixement", "")
+                raw_edat = mem.get("edat", "")
+                calc_e = calcular_edat(raw_naix if raw_naix else raw_edat)
+                edat_badge = f" - 🎂 {calc_e} anys" if str(calc_e).isdigit() else ""
+                is_mem_actiu = mem.get("actiu", True)
+                estat_badge = "🟢 Present a la llar" if is_mem_actiu else "⚪ Fora de la llar"
+                
+                with st.expander(f"{mem.get('icona', '👤')} {mem.get('nom', f'Membre {i+1}')} ({mem.get('rol', 'Familiar')}){edat_badge} · {estat_badge}", expanded=True):
+                    c_act1, c_del_top = st.columns([8.2, 1.8], vertical_alignment="center")
+                    with c_act1:
+                        m_actiu = st.toggle("🏠 Membre actiu a la llar (Participa en menús i rutines diàries)", value=is_mem_actiu, key=f"f_actiu_{i}")
+                        if not m_actiu:
+                            st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les seves dades però no es computarà per defecte als menús setmanals.*")
+                    with c_del_top:
+                        del_btn = st.button("🗑️ Esborrar", key=f"f_del_{i}", use_container_width=True)
+                    
+                    st.write("")
+                    c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 2.3])
                     with c1:
                         cur_icon = mem.get("icona", "👤")
                         ic_idx = icons_pool.index(cur_icon) if cur_icon in icons_pool else 0
@@ -411,29 +468,55 @@ def render():
                         r_idx = roles_pool.index(cur_r) if cur_r in roles_pool else len(roles_pool)-1
                         m_rol = st.selectbox("Rol / Relació", roles_pool, index=r_idx, key=f"f_rol_{i}")
                     with c4:
-                        m_edat = st.text_input("Edat", value=str(mem.get("edat", "")), key=f"f_edat_{i}")
+                        init_naix = mem.get("data_naixement", "")
+                        if not init_naix and str(mem.get("edat", "")).count("-") == 2:
+                            p_old = str(mem.get("edat", "")).split("-")
+                            if len(p_old) == 3 and len(p_old[0]) == 4:
+                                init_naix = f"{p_old[2]}/{p_old[1]}/{p_old[0]}"
+                            else:
+                                init_naix = str(mem.get("edat", ""))
+                        elif init_naix and '-' in init_naix:
+                            p_iso = init_naix.split('-')
+                            if len(p_iso) == 3 and len(p_iso[0]) == 4:
+                                init_naix = f"{p_iso[2]}/{p_iso[1]}/{p_iso[0]}"
+                        m_naix = st.text_input("🎂 Data naixement (DD/MM/AAAA)", value=init_naix, placeholder="ex: 15/05/1980", key=f"f_naix_{i}")
+                        calc_now = calcular_edat(m_naix if m_naix else mem.get("edat", ""))
+                        if str(calc_now).isdigit():
+                            st.caption(f"🎂 Edat: **{calc_now} anys** (recalculada)")
+                        elif mem.get("edat"):
+                            st.caption(f"Edat registrada: {mem.get('edat')} anys")
                         
-                    c_circ1, c_del_t = st.columns([8.5, 1.5], vertical_alignment="center")
-                    with c_circ1:
-                        m_circ = st.text_input("Al·lèrgies, dietes o circumstàncies mèdiques/personals", value=mem.get("circunstancies", ""), key=f"f_circ_{i}")
-                    with c_del_t:
-                        st.write("")
-                        del_btn = st.button("🗑️ Esborrar", key=f"f_del_{i}", use_container_width=True)
+                    c_al1, c_vt1 = st.columns(2)
+                    with c_al1:
+                        cur_al = mem.get("alergies", mem.get("circunstancies", ""))
+                        m_alergies = st.text_input("🏥 Al·lèrgies mèdiques i intoleràncies (bloqueig)", value=cur_al, placeholder="ex: Sense Gluten, Sense Lactosa, Diabètic...", key=f"f_al_{i}")
+                    with c_vt1:
+                        cur_vt = mem.get("vetos", "")
+                        m_vetos = st.text_input("🚫 Vetos i aversions personals (no li agrada)", value=cur_vt, placeholder="ex: fetge, casqueria, conill, bledes...", key=f"f_vt_{i}")
                         
-                    c_gcal1, c_gcal2 = st.columns([7.5, 2.5])
-                    with c_gcal1:
-                        m_gcal = st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{i}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
-                    with c_gcal2:
+                    c_com1, c_gcal2_col = st.columns([6.5, 3.5])
+                    with c_com1:
+                        cur_com = mem.get("comodins", "")
+                        m_comodins = st.text_input("🍗 Plats Comodí Favorits (alternatives ràpides)", value=cur_com, placeholder="ex: pit de pollastre a la planxa, truita francesa...", key=f"f_com_{i}")
+                    with c_gcal2_col:
                         cur_col = mem.get("color", "#3b82f6" if i % 2 == 0 else "#ec4899")
                         m_color = st.color_picker("Color al calendari", value=cur_col, key=f"f_col_{i}")
                         
+                    m_gcal = st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{i}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
+                        
                     if not del_btn:
+                        calc_edat_final = str(calcular_edat(m_naix)) if str(calcular_edat(m_naix)).isdigit() else str(mem.get("edat", ""))
                         updated_familia.append({
                             "id": mem.get("id", i + 1),
                             "nom": m_nom,
                             "rol": m_rol,
-                            "edat": m_edat,
-                            "circunstancies": m_circ,
+                            "actiu": m_actiu,
+                            "data_naixement": m_naix,
+                            "edat": calc_edat_final,
+                            "circunstancies": m_alergies,
+                            "alergies": m_alergies,
+                            "vetos": m_vetos,
+                            "comodins": m_comodins,
                             "icona": m_icon,
                             "google_calendar_ical": m_gcal,
                             "color": m_color
@@ -449,6 +532,74 @@ def render():
                 cfg["familia"] = updated_familia
                 if save_app_config(cfg):
                     st.success("✅ Membres de la família desats correctament!")
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 4. SECCIÓ: MENÚS I NUTRICIÓ
+        # =========================================================================
+        elif active == "menjar":
+            regles = cfg.get("regles_menjar", {
+                "max_carn_vermella": 1,
+                "min_peix": 2,
+                "min_llegums": 2,
+                "max_embotits_sopar": 2,
+                "no_repetir_hidrats": True,
+                "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+                "comensals_defecte": 3
+            })
+            
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🍽️ Menús i Regles Nutricionals de la Llar</div>
+                <div class="chrome-card-desc">Defineix els límits i directrius setmanals d'alimentació, la rotació d'ingredients i el format de planificació per defecte de XiquiHouse.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            st.markdown("#### 🥗 Regles de Salut i Freqüències Setmanals")
+            st.markdown("<div style='font-size:0.86rem; color:#94a3b8; margin-bottom:12px;'>Aquestes regles les avaluarà automàticament el generador de menús i el banc de proves (Harness).</div>", unsafe_allow_html=True)
+            
+            c_r1, c_r2 = st.columns(2)
+            with c_r1:
+                r_carn = st.slider("🔴 Màxim de dies de Carn Vermella / setmana", min_value=0, max_value=7, value=int(regles.get("max_carn_vermella", 1)), help="Limita els àpats amb vedella, bou, porc o carn vermella.")
+                r_lleg = st.slider("🌱 Mínim de dies de Llegums / setmana", min_value=0, max_value=7, value=int(regles.get("min_llegums", 2)), help="Garanteix plats amb llenties, cigrons, mongetes o pèsols.")
+            with c_r2:
+                r_peix = st.slider("🐟 Mínim de dies de Peix / setmana", min_value=0, max_value=7, value=int(regles.get("min_peix", 2)), help="Promou el consum de peix blanc i blau.")
+                r_emb = st.slider("🥪 Màxim de sopars d'Embotits / Freds / setmana", min_value=0, max_value=7, value=int(regles.get("max_embotits_sopar", 2)), help="Evita abusar de sopars a base d'embotits processats.")
+            
+            st.markdown("---")
+            st.markdown("#### 🔄 Control de Repeticions i Varietat")
+            r_no_rep = st.toggle("🚫 Evitar hidrats de carboni idèntics dos dies seguits (Arròs / Pasta)", value=bool(regles.get("no_repetir_hidrats", True)), help="Si dilluns es menja arròs, dimarts no es podrà programar arròs de nou.")
+            
+            st.markdown("---")
+            st.markdown("#### 📅 Format i Hàbits de Planificació")
+            c_p1, c_p2 = st.columns([7, 3])
+            with c_p1:
+                mode_options = [
+                    "Tota la setmana (Dinars i Sopars - 14 àpats)",
+                    "Feiners només Sopars + Cap de setmana complet (9 àpats)",
+                    "Dinars de carmanyola per a la feina + Sopars a casa"
+                ]
+                cur_mode = regles.get("mode_apats", mode_options[0])
+                mode_idx = mode_options.index(cur_mode) if cur_mode in mode_options else 0
+                r_mode = st.selectbox("Format per defecte del menú", mode_options, index=mode_idx)
+            with c_p2:
+                r_com = st.number_input("👥 Comensals per defecte", min_value=1, max_value=20, value=int(regles.get("comensals_defecte", 3)), step=1)
+                
+            st.write("")
+            if st.button("💾 Desar Regles de Menús i Nutrició", type="primary", use_container_width=True, key="save_regles_menjar"):
+                cfg["regles_menjar"] = {
+                    "max_carn_vermella": r_carn,
+                    "min_peix": r_peix,
+                    "min_llegums": r_lleg,
+                    "max_embotits_sopar": r_emb,
+                    "no_repetir_hidrats": r_no_rep,
+                    "mode_apats": r_mode,
+                    "comensals_defecte": r_com
+                }
+                if save_app_config(cfg):
+                    st.success("✅ Regles de menús i nutrició desades correctament!")
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 

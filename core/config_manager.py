@@ -35,6 +35,15 @@ DEFAULT_CONFIG = {
         {"id": 8, "nom": "Efectiu", "actiu": True, "icona": "💵", "color": "#059669", "descripcio": "Pagaments en efectiu", "titular": "Llar", "compte_iban": ""}
     ],
     "tema": "Fosc",
+    "regles_menjar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": True,
+        "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_defecte": 3
+    },
     "icones_actives": {
         "dashboard": True,
         "economic": True,
@@ -61,6 +70,7 @@ TRANSLATIONS = {
         "admin_title": "Administrador",
         "casa_title": "Títol de la casa",
         "familia_title": "Família",
+        "menjar_title": "Menús i Nutrició",
         "tutelats_title": "Persones Tutelades",
         "bancs_title": "Bancs i Comptes",
         "tema_title": "Aspecte i Tema",

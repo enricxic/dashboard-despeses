@@ -120,6 +120,15 @@
         }
     ],
     "tema": "Fosc",
+    "regles_menjar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true,
+        "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_defecte": 3
+    },
     "icones_actives": {
         "dashboard": true,
         "economic": true,
