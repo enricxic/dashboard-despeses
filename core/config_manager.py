@@ -170,3 +170,7 @@ def get_active_bancs():
 def get_translation(key, lang="ca"):
     lang_dict = TRANSLATIONS.get(lang, TRANSLATIONS["ca"])
     return lang_dict.get(key, key)
+
+# Àlies per compatibilitat
+load_config = load_app_config
+save_config = save_app_config
