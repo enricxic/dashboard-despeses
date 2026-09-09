@@ -118,9 +118,9 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
     
     models_to_try = [model_name]
     if "2.5" in model_name:
-        models_to_try.append("gemini-1.5-flash")
-    elif "1.5-pro" in model_name:
-        models_to_try.append("gemini-1.5-flash")
+        models_to_try.append("gemini-2.0-flash")
+    elif "2.0" in model_name:
+        models_to_try.append("gemini-2.5-flash")
         
     last_error = ""
     for current_model in models_to_try:
