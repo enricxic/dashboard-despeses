@@ -20,7 +20,7 @@ def load_harness_cases(file_path: str = DEFAULT_CASES_PATH) -> List[Dict[str, An
         print(f"Error carregant casos de prova: {e}")
         return []
 
-def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_sample: Optional[List[str]] = None) -> str:
+def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Optional[List[Dict[str, Any]]] = None) -> str:
     """Construeix el prompt del sistema optimitzat per generar un menú estricte en format JSON."""
     
     perfil_txt = ""
@@ -53,8 +53,32 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_sample: Opti
     if valoracions:
         val_txt = json.dumps(valoracions, ensure_ascii=False, indent=2)
 
+    # Catàleg de receptes de la família
+    receptari_txt = "No hi ha receptari predefinit."
+    if recipes_catalog:
+        primers = []
+        segons = []
+        altres = []
+        for r in recipes_catalog:
+            titol = r.get("titol", "")
+            cat = str(r.get("categoria", "")).lower()
+            if not titol: continue
+            if "primer" in cat:
+                primers.append(titol)
+            elif "segon" in cat or "únic" in cat:
+                segons.append(titol)
+            else:
+                altres.append(titol)
+        receptari_txt = f"""- PRIMERS PLATS DISPONIBLES AL LLIBRE ({len(primers)} receptes): {', '.join(primers[:60])}
+- SEGONS PLATS DISPONIBLES AL LLIBRE ({len(segons)} receptes): {', '.join(segons[:60])}
+- ALTRES / COMPLEMENTS: {', '.join(altres[:30])}"""
+
     prompt = f"""Ets el planificador nutricional intel·ligent de XiquiHouse.
 La teva missió és dissenyar un menú setmanal equilibrat, deliciós, segur i optimitzat per a la família seguint estrictament aquestes dades:
+
+### 📖 LLIBRE DE RECEPTES DE LA FAMÍLIA (OBLIGATORI PRIORITZAR):
+{receptari_txt}
+⚠️ PRIORITZACIÓ OBLIGATÒRIA: Sempre que un plat encaixi amb la temporada, comensals i regles nutricionals, UTILITZA ELS PLATS DEL LLIBRE DE RECEPTES amb el seu títol exacte! Només proposa plats nous si cap recepta del llibre compleix els requisits.
 
 ### PERFIL FAMILIAR:
 {perfil_txt}
@@ -77,8 +101,12 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 2. SOPARS FREDS / EMBOTITS: Màxim el límit indicat (habitualment MÀXIM 2 COPS per setmana).
 3. PEIX I LLEGUMS: Assegura el mínim de cops setmanals (habitualment mínim 2 de peix i mínim 2 de llegums).
 4. ZERO REPETICIONS D'HIDRATS EN DIES CONSECUTIUS: Està TOTALMENT PROHIBIT posar pasta (o pizza/fideus/macarrons) o arròs en dos dies consecutius.
-   - Exemple prohibit: Dimecres pasta i Dijous pasta -> PROHIBIT.
-   - Exemple prohibit: Dilluns arròs i Dimarts arròs -> PROHIBIT.
+
+### 🚫 PROHIBICIÓ ESTRICTA: EL 2N PLAT MAI POT SER FRUITA NI IOGURT:
+- El camp "segon" ÉS SEMPRE UNA PROTEÏNA O PLAT PRINCIPAL (peix, aus, carn magra, ous, tofu o llegums).
+- MAI, sota cap concepte, posis "Fruita de temporada", "Poma", "Plàtan", "Iogurt" com a "segon" plat.
+- Totes les fruites i lactis de postre han d'anar EXCLUSIVAMENT al camp "postre".
+- Si el primer plat és molt contundent (com ara unes llenties estofades o paella), com a segon plat pots posar una proteïna lleugera (ex. Ou dur amb amanida, Lluç a la planxa) o bé "-" (plat únic), PERÒ MAI FRUITA.
 
 ### REGLES CRÍTIQUES DE DESDOBLAMENT I VETOS:
 1. Si la família menja un plat que conté un aliment vetat per un sol membre (ex. fetge), programa el plat per a la família i genera OBLIGATÒRIAMENT un 'plat_alternatiu' ràpid (usant els seus comodins favorits) per a aquell membre, compartint la mateixa guarnició.

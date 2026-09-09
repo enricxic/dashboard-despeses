@@ -95,6 +95,246 @@ def scale_ingredients(raw_ingredients: str, base: float = 3.0, target: float = 3
     scaled_lines = [scale_single_ingredient(line, base=base, target=target) for line in raw_lines]
     return " * ".join(scaled_lines)
 
+def cb_set_editing_recepta(r_id, val):
+    st.session_state[f"editing_{r_id}"] = val
+
+@st.dialog(" ", width="large")
+def modal_recepta(row):
+    is_editing = st.session_state.get(f"editing_{row['id']}", False)
+    
+    if is_editing:
+        st.markdown("### ✏️ Editar Recepta")
+        c_fields, c_img = st.columns([3, 1])
+        with c_fields:
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                e_titol = st.text_input("Títol", value=row.get('titol', ''))
+                cat_opts = ["Primer", "Segon", "Plat únic", "Postre", "Complement", "Guarnició", "Salsa"]
+                e_cat = st.selectbox("Categoria", cat_opts, index=cat_opts.index(row.get('categoria')) if row.get('categoria') in cat_opts else 0)
+                val_temps = row.get('temps_prep_minuts', 0)
+                e_temps = st.number_input("Temps (min)", value=int(val_temps) if pd.notna(val_temps) else 0, step=5)
+            with c2:
+                apat_opts = ["Esmorzar", "Dinar", "Sopar", "Dinar/Sopar"]
+                e_apat = st.selectbox("Àpat", apat_opts, index=apat_opts.index(row.get('apat')) if row.get('apat') in apat_opts else 0)
+                dif_opts = ["Fàcil", "Mitjana", "Difícil"]
+                e_dif = st.selectbox("Dificultat", dif_opts, index=dif_opts.index(row.get('dificultat')) if row.get('dificultat') in dif_opts else 0)
+                dia_opts = ["Entre setmana", "Cap de setmana", "Festiu", "Especial"]
+                e_dia = st.selectbox("Tipus de dia", dia_opts, index=dia_opts.index(row.get('tipus_dia')) if row.get('tipus_dia') in dia_opts else 0)
+                temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
+                e_temp = st.selectbox("Temporada", temp_opts, index=temp_opts.index(row.get('temporada')) if row.get('temporada') in temp_opts else 0)
+            with c3:
+                ori_opts = ["Biblioteca/Pròpia", "Externa/Internet"]
+                e_ori = st.selectbox("Origen", ori_opts, index=ori_opts.index(row.get('origen')) if row.get('origen') in ori_opts else 0)
+                val_salut = row.get('puntuacio_salut', 5)
+                e_salut = st.slider("Salut (0-10)", 0, 10, int(val_salut) if pd.notna(val_salut) else 5)
+                e_img_url = st.text_input("URL Imatge", value=str(row.get('imatge_url', '')).strip() if pd.notna(row.get('imatge_url')) else "")
+                e_vid_url = st.text_input("URL Vídeo", value=str(row.get('video_url', '')).strip() if pd.notna(row.get('video_url')) else "")
+                
+            tags_opts = ["Sense Gluten", "Sense Lactosa", "Vegetarià", "Vegà", "Baix en Sal", "Baix en Greix", "Alt en Proteïna", "Sense Sucre"]
+            curr_tags = row.get('tags_nutricionals')
+            if not isinstance(curr_tags, list): curr_tags = []
+            curr_tags = [t for t in curr_tags if t in tags_opts]
+            e_tags = st.multiselect("Etiquetes / Al·lèrgies (Nutrició)", tags_opts, default=curr_tags, key=f"e_tags_{row['id']}")
+            
+            e_ing = st.text_area("Ingredients", value=row.get('ingredients', ''))
+            e_mise = st.text_area("Mise en place (Preparació prèvia)", value=row.get('mise_en_place', ''))
+            e_ins = st.text_area("Instruccions", value=row.get('instruccions', ''))
+            
+        with c_img:
+            st.markdown("**Imatge Actual**")
+            if e_img_url:
+                st.image(e_img_url, use_container_width=True)
+            else:
+                st.info("Sense imatge")
+                
+            e_uploaded = st.file_uploader("Substituir imatge", type=["jpg", "jpeg", "png", "webp"], key=f"e_up_{row['id']}")
+            
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("❌ Cancel·lar", use_container_width=True):
+                st.session_state[f"editing_{row['id']}"] = False
+                st.rerun()
+        with col_btn2:
+            if st.button("💾 Desar Canvis", use_container_width=True):
+                supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                final_img = e_img_url
+                if e_uploaded is not None:
+                    try:
+                        import uuid
+                        file_ext = e_uploaded.name.split(".")[-1]
+                        file_name = f"{uuid.uuid4()}.{file_ext}"
+                        supabase.storage.from_("imatges-receptes").upload(file_name, e_uploaded.getvalue())
+                        final_img = supabase.storage.from_("imatges-receptes").get_public_url(file_name)
+                    except Exception as e:
+                        st.error(f"Error pujant la imatge: {e}")
+                
+                update_data = {
+                    "titol": e_titol, "categoria": e_cat, "temps_prep_minuts": e_temps,
+                    "temporada": e_temp, "puntuacio_salut": e_salut, "ingredients": e_ing,
+                    "mise_en_place": e_mise,
+                    "instruccions": e_ins, "imatge_url": final_img, "video_url": e_vid_url,
+                    "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori, "apat": e_apat,
+                    "tags_nutricionals": e_tags
+                }
+                
+                res = supabase.table('tb_receptes_pro').update(update_data).eq('id', row['id']).execute()
+                if res.data:
+                    st.session_state[f"editing_{row['id']}"] = False
+                    st.success("Recepta actualitzada!")
+                    st.rerun()
+                else:
+                    st.error("Error al actualitzar.")
+
+    else:
+        # Mode Lectura
+        col_titol, col_btn = st.columns([4, 1])
+        with col_titol:
+            st.markdown(f"## {row.get('titol', '')}")
+            t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
+            d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'No definida'
+            t_dia = row['tipus_dia'] if pd.notna(row.get('tipus_dia')) else 'Qualsevol'
+            t_apat = row['apat'] if pd.notna(row.get('apat')) else 'Sense definir'
+            st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif} | 📅 {t_dia} | 🍽️ {t_apat}")
+        with col_btn:
+            st.button("✏️ Editar", key=f"edit_top_{row['id']}", on_click=cb_set_editing_recepta, args=(row['id'], True), use_container_width=True)
+                
+        col_i, col_d = st.columns([1, 1])
+        with col_i:
+            img_url = row.get('imatge_url')
+            if pd.notna(img_url) and str(img_url).strip() != '':
+                st.image(img_url, use_container_width=True)
+                
+            vid_url = row.get('video_url')
+            if pd.notna(vid_url) and str(vid_url).strip() != '':
+                vid_str = str(vid_url).strip()
+                if "3cat.cat" in vid_str or "ccma.cat" in vid_str:
+                    import urllib.request
+                    import re
+                    import streamlit.components.v1 as components
+                    try:
+                        req = urllib.request.Request(vid_str, headers={'User-Agent': 'Mozilla/5.0'})
+                        html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
+                        match = re.search(r'"embedUrl":\s*"//(www\.3cat\.cat/video/embed/\d+/)"', html)
+                        if match:
+                            embed_url = f"https://{match.group(1)}"
+                            components.iframe(embed_url, height=300)
+                        else:
+                            st.video(vid_str)
+                    except:
+                        st.video(vid_str)
+                else:
+                    st.video(vid_str)
+        
+        with col_d:
+            c_ing_title, c_com = st.columns([2.2, 1.8], vertical_alignment="center")
+            with c_ing_title:
+                st.markdown("### Ingredients:")
+            with c_com:
+                num_c = st.number_input("Comensals", min_value=1, max_value=30, value=3, step=1, key=f"rec_comensals_{row['id']}")
+            
+            st.caption(f"Quantitats calculades per a **{num_c} comensals** (recepta base: 3 persones):")
+            ing_val = row.get('ingredients', '')
+            scaled_ing = scale_ingredients(ing_val, base=3, target=num_c)
+            st.info(scaled_ing)
+            
+            mise = row.get('mise_en_place', '')
+            if pd.notna(mise) and str(mise).strip() != '' and str(mise).strip().lower() != 'nan':
+                st.markdown("### Mise en place:")
+                st.info(str(mise).strip())
+                
+            st.markdown("### Info Addicional:")
+            salut = row.get('puntuacio_salut', 0)
+            salut_str = int(salut) if pd.notna(salut) and str(salut).strip().lower() != 'nan' else 0
+            temp = row.get('temporada', '')
+            temp_str = temp if pd.notna(temp) and str(temp).strip().lower() != 'nan' else "Tot l'any"
+            ori = row.get('origen', 'Desconegut')
+            ori_str = ori if pd.notna(ori) and str(ori).strip().lower() != 'nan' else 'Desconegut'
+            
+            st.write(f"**Salut:** {salut_str}/10 | **Temporada:** {temp_str}")
+            st.write(f"**Origen:** {ori_str}")
+            
+            st.markdown("### Instruccions:")
+            ins_val = row.get('instruccions', '')
+            ins_raw = str(ins_val) if pd.notna(ins_val) and str(ins_val).strip().lower() != 'nan' else 'Sense instruccions'
+            st.write(ins_raw)
+            
+            st.markdown("---")
+            st.markdown("### ⭐ Valoració Familiar (0 - 5 estrelles):")
+            cfg_fam = load_config().get("familia", [])
+            cols_v = st.columns(max(1, len(cfg_fam)))
+            for idx_f, f_m in enumerate(cfg_fam):
+                col_vf = cols_v[idx_f % len(cols_v)]
+                with col_vf:
+                    f_nom = f_m.get("nom", f"Membre {idx_f+1}")
+                    f_ico = f_m.get("icona", "👤")
+                    st.caption(f"{f_ico} **{f_nom}**")
+                    st.slider("Nota", 0, 5, 4, key=f"val_{row['id']}_{idx_f}", label_visibility="collapsed")
+
+def cercar_recepta_per_nom(nom_plat: str, df_receptes: pd.DataFrame):
+    """Cerca de forma tolerant una recepta al DataFrame pel nom o paraules clau."""
+    if not nom_plat or df_receptes is None or df_receptes.empty or str(nom_plat).strip() in ['-', '', 'null', 'None']:
+        return None
+    nom_clean = nom_plat.lower().strip()
+    
+    # 1. Coincidència exacta
+    exact = df_receptes[df_receptes['titol'].str.lower().str.strip() == nom_clean]
+    if not exact.empty:
+        return exact.iloc[0]
+        
+    # 2. Conté el títol o viceversa
+    for _, row in df_receptes.iterrows():
+        t_clean = str(row.get('titol', '')).lower().strip()
+        if t_clean and (t_clean in nom_clean or nom_clean in t_clean):
+            return row
+            
+    # 3. Paraules clau significatives
+    words = [w for w in re.split(r'\W+', nom_clean) if len(w) > 3 and w not in ['amb', 'dels', 'deles', 'sense', 'plat', 'estofat', 'estofada', 'planxa', 'forn', 'salsa', 'feta', 'estil']]
+    if words:
+        for _, row in df_receptes.iterrows():
+            t_clean = str(row.get('titol', '')).lower()
+            if any(w in t_clean for w in words):
+                return row
+                
+    return None
+
+def sanitize_segon(p_seg: str) -> str:
+    """Evita que cap fruita o postre aparegui com a segon plat."""
+    if not p_seg or str(p_seg).strip() in ['-', 'null', 'None']:
+        return '-'
+    p_seg_lower = str(p_seg).lower()
+    if any(k in p_seg_lower for k in ['fruita', 'iogurt', 'postre', 'poma', 'plàtan', 'pera', 'taronja', 'maduixa', 'mandarina']):
+        return '-'
+    return p_seg
+
+def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame, key_btn: str, n_comensals: int = 3):
+    """Renderitza una targeta visual amb miniatura i botó per obrir la recepta."""
+    if not nom_plat or str(nom_plat).strip() in ['-', '', 'null', 'None']:
+        return
+    
+    rec = cercar_recepta_per_nom(nom_plat, df_receptes)
+    
+    with st.container(border=True):
+        col_img, col_txt = st.columns([1.3, 3.7], vertical_alignment="center")
+        
+        with col_img:
+            if rec is not None and pd.notna(rec.get('imatge_url')) and str(rec.get('imatge_url')).strip():
+                st.markdown(f'<img src="{rec.get("imatge_url")}" loading="lazy" style="width:100%; height:64px; object-fit:cover; border-radius:6px;">', unsafe_allow_html=True)
+            else:
+                emoji_cat = "🥣" if "1r" in tipus_label else ("🥩" if "2n" in tipus_label else "🍳")
+                st.markdown(f'<div style="width:100%; height:64px; background:#1b222d; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:#888;">{emoji_cat}</div>', unsafe_allow_html=True)
+        
+        with col_txt:
+            st.markdown(f"**{tipus_label}:** {nom_plat}")
+            if rec is not None:
+                t_prep = int(rec['temps_prep_minuts']) if pd.notna(rec.get('temps_prep_minuts')) else 0
+                st.caption(f"📖 *{rec.get('titol')}* | ⏱️ {t_prep} min")
+                if st.button("🔍 Veure Recepta", key=key_btn, use_container_width=True):
+                    st.session_state[f"editing_{rec['id']}"] = False
+                    st.session_state[f"rec_comensals_{rec['id']}"] = n_comensals
+                    modal_recepta(rec)
+            else:
+                st.caption("✨ *Proposta de la IA*")
+
 def render():
     col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
     with col_t1:
@@ -415,14 +655,18 @@ def render():
                                 "valoracions_previes": {}
                             }
                             
-                            prompt_str = build_system_prompt_for_case(active_case)
+                            rec_list = []
+                            if not df_receptes.empty:
+                                rec_list = df_receptes[['id', 'titol', 'categoria', 'apat', 'tags_nutricionals']].to_dict('records')
+                            
+                            prompt_str = build_system_prompt_for_case(active_case, recipes_catalog=rec_list)
                             ok_call, raw_resp, latency = call_gemini_api(prompt_str, api_key=api_key, model_name="gemini-3.8-flash")
                             
                             if ok_call:
                                 json_ok, json_data, json_err = parse_and_clean_json(raw_resp)
                                 if json_ok:
                                     st.session_state['ai_menu_result'] = json_data
-                                    st.success(f"🎉 Menú generat amb èxit en {latency} segons!")
+                                    st.success(f"🎉 Menú generat amb èxit en {latency} segons utilitzant el teu receptari!")
                                 else:
                                     st.error(f"Error parsejant el menú de la IA: {json_err}")
                             else:
@@ -435,6 +679,7 @@ def render():
                     menu_setmanal = menu_obj.get("menu_setmanal", [])
                     
                     st.markdown("### 📅 El teu Menú Setmanal (Primer, Segon i Postre)")
+                    st.caption("Fes clic a **🔍 Veure Recepta** a qualsevol plat per obrir la fitxa sencera amb quantitats i instruccions.")
                     
                     # Commutador de Mode Edició en viu
                     mode_edit = st.toggle("✏️ Mode Edició: Modificar / Canviar plats directament", value=False, key="toggle_edit_menu")
@@ -453,39 +698,67 @@ def render():
                                 st.markdown("##### ☀️ Dinar")
                                 if not mode_edit:
                                     p_prim = dinar.get('primer', dinar.get('plat', '-'))
-                                    p_seg = dinar.get('segon', '-')
+                                    p_seg = sanitize_segon(dinar.get('segon', '-'))
                                     p_post = dinar.get('postre', 'Fruita de temporada')
-                                    st.markdown(f"🥣 **1r Plat:** {p_prim}")
+                                    
+                                    # 1r Plat amb miniatura i botó de recepta
+                                    if p_prim and p_prim != '-':
+                                        render_plat_card("🥣 1r Plat", p_prim, df_receptes, f"btn_d_p1_{idx_d}", n_comensals=len(comensals_seleccionats))
+                                    
+                                    # 2n Plat amb miniatura i botó de recepta
                                     if p_seg and p_seg != '-':
-                                        st.markdown(f"🥩/🐟 **2n Plat:** {p_seg}")
-                                    st.markdown(f"🍏 **Postre:** {p_post}")
+                                        render_plat_card("🥩/🐟 2n Plat", p_seg, df_receptes, f"btn_d_p2_{idx_d}", n_comensals=len(comensals_seleccionats))
+                                        
+                                    # Postre
+                                    st.markdown(f"<div style='margin-top:6px; padding:6px 10px; background:#18221e; border-radius:6px; font-size:0.9rem;'>🍏 <strong>Postre:</strong> {p_post}</div>", unsafe_allow_html=True)
                                 else:
                                     dinar['primer'] = st.text_input("1r Plat Dinar", value=dinar.get('primer', dinar.get('plat', '')), key=f"ed_d_prim_{idx_d}")
-                                    dinar['segon'] = st.text_input("2n Plat Dinar", value=dinar.get('segon', ''), key=f"ed_d_seg_{idx_d}")
+                                    dinar['segon'] = st.text_input("2n Plat Dinar", value=sanitize_segon(dinar.get('segon', '')), key=f"ed_d_seg_{idx_d}")
                                     dinar['postre'] = st.text_input("Postre Dinar", value=dinar.get('postre', 'Fruita de temporada'), key=f"ed_d_post_{idx_d}")
                                 
                                 alt_d = dinar.get("plat_alternatiu")
-                                if alt_d and isinstance(alt_d, dict):
-                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:6px;'>⚡ <strong>Plat ràpid per a {alt_d.get('per', '')}:</strong> {alt_d.get('plat', '')}<br><em style='color:#bbb;'>Motiu: {alt_d.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                                if alt_d and isinstance(alt_d, dict) and alt_d.get('plat'):
+                                    alt_plat_nom = alt_d.get('plat')
+                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:8px;'>⚡ <strong>Plat ràpid per a {alt_d.get('per', '')}:</strong> {alt_plat_nom}<br><em style='color:#bbb;'>Motiu: {alt_d.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                                    rec_alt_d = cercar_recepta_per_nom(alt_plat_nom, df_receptes)
+                                    if rec_alt_d is not None:
+                                        if st.button(f"🔍 Recepta per a {alt_d.get('per', '')}", key=f"btn_d_alt_{idx_d}", use_container_width=True):
+                                            st.session_state[f"editing_{rec_alt_d['id']}"] = False
+                                            st.session_state[f"rec_comensals_{rec_alt_d['id']}"] = 1
+                                            modal_recepta(rec_alt_d)
                             
                             with c_d2:
                                 st.markdown("##### 🌙 Sopar")
                                 if not mode_edit:
                                     s_prim = sopar.get('primer', '')
-                                    s_seg = sopar.get('segon', sopar.get('plat', '-'))
+                                    s_seg = sanitize_segon(sopar.get('segon', sopar.get('plat', '-')))
                                     s_post = sopar.get('postre', 'Iogurt')
-                                    if s_prim and s_prim.strip():
-                                        st.markdown(f"🥣 **1r Plat:** {s_prim}")
-                                    st.markdown(f"🍳 **Plat principal:** {s_seg}")
-                                    st.markdown(f"🥛 **Postre:** {s_post}")
+                                    
+                                    # 1r Plat Sopar (si existeix)
+                                    if s_prim and s_prim.strip() and s_prim != '-':
+                                        render_plat_card("🥣 1r Plat", s_prim, df_receptes, f"btn_s_p1_{idx_d}", n_comensals=len(comensals_seleccionats))
+                                    
+                                    # 2n Plat / Principal Sopar
+                                    if s_seg and s_seg != '-':
+                                        render_plat_card("🍳 Plat principal", s_seg, df_receptes, f"btn_s_p2_{idx_d}", n_comensals=len(comensals_seleccionats))
+                                        
+                                    # Postre
+                                    st.markdown(f"<div style='margin-top:6px; padding:6px 10px; background:#18221e; border-radius:6px; font-size:0.9rem;'>🥛 <strong>Postre:</strong> {s_post}</div>", unsafe_allow_html=True)
                                 else:
                                     sopar['primer'] = st.text_input("1r Plat Sopar (opcional)", value=sopar.get('primer', ''), key=f"ed_s_prim_{idx_d}")
-                                    sopar['segon'] = st.text_input("Plat principal Sopar", value=sopar.get('segon', sopar.get('plat', '')), key=f"ed_s_seg_{idx_d}")
+                                    sopar['segon'] = st.text_input("Plat principal Sopar", value=sanitize_segon(sopar.get('segon', sopar.get('plat', ''))), key=f"ed_s_seg_{idx_d}")
                                     sopar['postre'] = st.text_input("Postre Sopar", value=sopar.get('postre', 'Iogurt'), key=f"ed_s_post_{idx_d}")
                                 
                                 alt_s = sopar.get("plat_alternatiu")
-                                if alt_s and isinstance(alt_s, dict):
-                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:6px;'>⚡ <strong>Plat ràpid per a {alt_s.get('per', '')}:</strong> {alt_s.get('plat', '')}<br><em style='color:#bbb;'>Motiu: {alt_s.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                                if alt_s and isinstance(alt_s, dict) and alt_s.get('plat'):
+                                    alt_plat_nom = alt_s.get('plat')
+                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:8px;'>⚡ <strong>Plat ràpid per a {alt_s.get('per', '')}:</strong> {alt_plat_nom}<br><em style='color:#bbb;'>Motiu: {alt_s.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                                    rec_alt_s = cercar_recepta_per_nom(alt_plat_nom, df_receptes)
+                                    if rec_alt_s is not None:
+                                        if st.button(f"🔍 Recepta per a {alt_s.get('per', '')}", key=f"btn_s_alt_{idx_d}", use_container_width=True):
+                                            st.session_state[f"editing_{rec_alt_s['id']}"] = False
+                                            st.session_state[f"rec_comensals_{rec_alt_s['id']}"] = 1
+                                            modal_recepta(rec_alt_s)
                     
                     st.write("")
                     
@@ -495,7 +768,7 @@ def render():
                         wa_lines.append(f"📅 *{d.get('dia')}:*")
                         d_obj = d.get('dinar', {})
                         d_p1 = d_obj.get('primer', d_obj.get('plat', '-'))
-                        d_p2 = d_obj.get('segon', '')
+                        d_p2 = sanitize_segon(d_obj.get('segon', ''))
                         d_pos = d_obj.get('postre', '')
                         d_txt = f"{d_p1}" + (f" + {d_p2}" if d_p2 and d_p2 != '-' else "") + (f" | 🍏 {d_pos}" if d_pos else "")
                         wa_lines.append(f"  • *Dinar:* {d_txt}")
@@ -506,7 +779,7 @@ def render():
                         
                         s_obj = d.get('sopar', {})
                         s_p1 = s_obj.get('primer', '')
-                        s_p2 = s_obj.get('segon', s_obj.get('plat', '-'))
+                        s_p2 = sanitize_segon(s_obj.get('segon', s_obj.get('plat', '-')))
                         s_pos = s_obj.get('postre', '')
                         s_txt = (f"{s_p1} + " if s_p1 and s_p1.strip() else "") + f"{s_p2}" + (f" | 🥛 {s_pos}" if s_pos else "")
                         wa_lines.append(f"  • *Sopar:* {s_txt}")
@@ -556,181 +829,4 @@ def render():
 
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
-            st.error(f"Error carregant Menjar: {e}")
-
-@st.dialog(" ", width="large")
-def modal_recepta(row):
-    is_editing = st.session_state.get(f"editing_{row['id']}", False)
-    
-    if is_editing:
-        st.markdown("### ✏️ Editar Recepta")
-        c_fields, c_img = st.columns([3, 1])
-        with c_fields:
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                e_titol = st.text_input("Títol", value=row.get('titol', ''))
-                cat_opts = ["Primer", "Segon", "Plat únic", "Postre", "Complement", "Guarnició", "Salsa"]
-                e_cat = st.selectbox("Categoria", cat_opts, index=cat_opts.index(row.get('categoria')) if row.get('categoria') in cat_opts else 0)
-                val_temps = row.get('temps_prep_minuts', 0)
-                e_temps = st.number_input("Temps (min)", value=int(val_temps) if pd.notna(val_temps) else 0, step=5)
-            with c2:
-                apat_opts = ["Esmorzar", "Dinar", "Sopar", "Dinar/Sopar"]
-                e_apat = st.selectbox("Àpat", apat_opts, index=apat_opts.index(row.get('apat')) if row.get('apat') in apat_opts else 0)
-                dif_opts = ["Fàcil", "Mitjana", "Difícil"]
-                e_dif = st.selectbox("Dificultat", dif_opts, index=dif_opts.index(row.get('dificultat')) if row.get('dificultat') in dif_opts else 0)
-                dia_opts = ["Entre setmana", "Cap de setmana", "Festiu", "Especial"]
-                e_dia = st.selectbox("Tipus de dia", dia_opts, index=dia_opts.index(row.get('tipus_dia')) if row.get('tipus_dia') in dia_opts else 0)
-                temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
-                e_temp = st.selectbox("Temporada", temp_opts, index=temp_opts.index(row.get('temporada')) if row.get('temporada') in temp_opts else 0)
-            with c3:
-                ori_opts = ["Biblioteca/Pròpia", "Externa/Internet"]
-                e_ori = st.selectbox("Origen", ori_opts, index=ori_opts.index(row.get('origen')) if row.get('origen') in ori_opts else 0)
-                val_salut = row.get('puntuacio_salut', 5)
-                e_salut = st.slider("Salut (0-10)", 0, 10, int(val_salut) if pd.notna(val_salut) else 5)
-                e_img_url = st.text_input("URL Imatge", value=str(row.get('imatge_url', '')).strip() if pd.notna(row.get('imatge_url')) else "")
-                e_vid_url = st.text_input("URL Vídeo", value=str(row.get('video_url', '')).strip() if pd.notna(row.get('video_url')) else "")
-                
-            tags_opts = ["Sense Gluten", "Sense Lactosa", "Vegetarià", "Vegà", "Baix en Sal", "Baix en Greix", "Alt en Proteïna", "Sense Sucre"]
-            curr_tags = row.get('tags_nutricionals')
-            if not isinstance(curr_tags, list): curr_tags = []
-            curr_tags = [t for t in curr_tags if t in tags_opts]
-            e_tags = st.multiselect("Etiquetes / Al·lèrgies (Nutrició)", tags_opts, default=curr_tags, key=f"e_tags_{row['id']}")
-            
-            e_ing = st.text_area("Ingredients", value=row.get('ingredients', ''))
-            e_mise = st.text_area("Mise en place (Preparació prèvia)", value=row.get('mise_en_place', ''))
-            e_ins = st.text_area("Instruccions", value=row.get('instruccions', ''))
-            
-        with c_img:
-            st.markdown("**Imatge Actual**")
-            if e_img_url:
-                st.image(e_img_url, use_container_width=True)
-            else:
-                st.info("Sense imatge")
-                
-            e_uploaded = st.file_uploader("Substituir imatge", type=["jpg", "jpeg", "png", "webp"], key=f"e_up_{row['id']}")
-            
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            if st.button("❌ Cancel·lar", use_container_width=True):
-                st.session_state[f"editing_{row['id']}"] = False
-                st.rerun()
-        with col_btn2:
-            if st.button("💾 Desar Canvis", use_container_width=True):
-                supabase = get_supabase_client(st.session_state.get("role", "guest"))
-                final_img = e_img_url
-                if e_uploaded is not None:
-                    try:
-                        import uuid
-                        file_ext = e_uploaded.name.split(".")[-1]
-                        file_name = f"{uuid.uuid4()}.{file_ext}"
-                        supabase.storage.from_("imatges-receptes").upload(file_name, e_uploaded.getvalue())
-                        final_img = supabase.storage.from_("imatges-receptes").get_public_url(file_name)
-                    except Exception as e:
-                        st.error(f"Error pujant la imatge: {e}")
-                
-                update_data = {
-                    "titol": e_titol, "categoria": e_cat, "temps_prep_minuts": e_temps,
-                    "temporada": e_temp, "puntuacio_salut": e_salut, "ingredients": e_ing,
-                    "mise_en_place": e_mise,
-                    "instruccions": e_ins, "imatge_url": final_img, "video_url": e_vid_url,
-                    "dificultat": e_dif, "tipus_dia": e_dia, "origen": e_ori, "apat": e_apat,
-                    "tags_nutricionals": e_tags
-                }
-                
-                res = supabase.table('tb_receptes_pro').update(update_data).eq('id', row['id']).execute()
-                if res.data:
-                    st.session_state[f"editing_{row['id']}"] = False
-                    st.success("Recepta actualitzada!")
-                    st.rerun()
-                else:
-                    st.error("Error al actualitzar.")
-
-    else:
-        # Mode Lectura
-        col_titol, col_btn = st.columns([4, 1])
-        with col_titol:
-            st.markdown(f"## {row.get('titol', '')}")
-            t_prep = int(row['temps_prep_minuts']) if pd.notna(row.get('temps_prep_minuts')) else 0
-            d_dif = row['dificultat'] if pd.notna(row.get('dificultat')) else 'No definida'
-            t_dia = row['tipus_dia'] if pd.notna(row.get('tipus_dia')) else 'Qualsevol'
-            t_apat = row['apat'] if pd.notna(row.get('apat')) else 'Sense definir'
-            st.caption(f"🥗 {row.get('categoria', '')} | ⏱️ {t_prep} min | 🔪 {d_dif} | 📅 {t_dia} | 🍽️ {t_apat}")
-        with col_btn:
-            st.button("✏️ Editar", key=f"edit_top_{row['id']}", on_click=cb_set_editing_recepta, args=(row['id'], True), use_container_width=True)
-                
-        col_i, col_d = st.columns([1, 1])
-        with col_i:
-            img_url = row.get('imatge_url')
-            if pd.notna(img_url) and str(img_url).strip() != '':
-                st.image(img_url, use_container_width=True)
-                
-            vid_url = row.get('video_url')
-            if pd.notna(vid_url) and str(vid_url).strip() != '':
-                vid_str = str(vid_url).strip()
-                if "3cat.cat" in vid_str or "ccma.cat" in vid_str:
-                    import urllib.request
-                    import re
-                    import streamlit.components.v1 as components
-                    try:
-                        req = urllib.request.Request(vid_str, headers={'User-Agent': 'Mozilla/5.0'})
-                        html = urllib.request.urlopen(req, timeout=5).read().decode('utf-8')
-                        match = re.search(r'"embedUrl":\s*"//(www\.3cat\.cat/video/embed/\d+/)"', html)
-                        if match:
-                            embed_url = f"https://{match.group(1)}"
-                            components.iframe(embed_url, height=300)
-                        else:
-                            st.video(vid_str)
-                    except:
-                        st.video(vid_str)
-                else:
-                    st.video(vid_str)
-        
-        with col_d:
-            c_ing_title, c_com = st.columns([2.2, 1.8], vertical_alignment="center")
-            with c_ing_title:
-                st.markdown("### Ingredients:")
-            with c_com:
-                num_c = st.number_input("Comensals", min_value=1, max_value=30, value=3, step=1, key=f"rec_comensals_{row['id']}")
-            
-            st.caption(f"Quantitats calculades per a **{num_c} comensals** (recepta base: 3 persones):")
-            ing_val = row.get('ingredients', '')
-            scaled_ing = scale_ingredients(ing_val, base=3, target=num_c)
-            st.info(scaled_ing)
-            
-            mise = row.get('mise_en_place', '')
-            if pd.notna(mise) and str(mise).strip() != '' and str(mise).strip().lower() != 'nan':
-                st.markdown("### Mise en place:")
-                st.info(str(mise).strip())
-                
-            st.markdown("### Info Addicional:")
-            salut = row.get('puntuacio_salut', 0)
-            salut_str = int(salut) if pd.notna(salut) and str(salut).strip().lower() != 'nan' else 0
-            temp = row.get('temporada', '')
-            temp_str = temp if pd.notna(temp) and str(temp).strip().lower() != 'nan' else "Tot l'any"
-            ori = row.get('origen', 'Desconegut')
-            ori_str = ori if pd.notna(ori) and str(ori).strip().lower() != 'nan' else 'Desconegut'
-            
-            st.write(f"**Salut:** {salut_str}/10 | **Temporada:** {temp_str}")
-            st.write(f"**Origen:** {ori_str}")
-            
-            st.markdown("### Instruccions:")
-            ins_val = row.get('instruccions', '')
-            ins_raw = str(ins_val) if pd.notna(ins_val) and str(ins_val).strip().lower() != 'nan' else 'Sense instruccions'
-            st.write(ins_raw)
-            
-            st.markdown("---")
-            st.markdown("### ⭐ Valoració Familiar (0 - 5 estrelles):")
-            cfg_fam = load_config().get("familia", [])
-            cols_v = st.columns(max(1, len(cfg_fam)))
-            for idx_f, f_m in enumerate(cfg_fam):
-                col_vf = cols_v[idx_f % len(cols_v)]
-                with col_vf:
-                    f_nom = f_m.get("nom", f"Membre {idx_f+1}")
-                    f_ico = f_m.get("icona", "👤")
-                    st.caption(f"{f_ico} **{f_nom}**")
-                    st.slider("Nota", 0, 5, 4, key=f"val_{row['id']}_{idx_f}", label_visibility="collapsed")
-
-
-def cb_set_editing_recepta(r_id, val):
-    st.session_state[f"editing_{r_id}"] = val
 
