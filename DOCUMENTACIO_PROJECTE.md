@@ -21,7 +21,12 @@ L'aplicació ha transicionat d'un model monolític (`app.py`) a una **arquitectu
 La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse:
 
 ### 🌟 Part Superior (Sense rodona):
-1. **⚙️ Configuracions**: `modules/admin.py` *(Icona engranatge)* - Panell de control i configuració global (Admin, Títol de la casa, Membres de la llar i Persones tutelades externes per a medicació, Tema, Icones, Idiomes).
+1. **⚙️ Configuracions**: `modules/admin.py` *(Icona engranatge)* - Panell de control i configuració global:
+   - `👤 Administrador`: Dades de contacte, avatar i PIN mestre.
+   - `🏷️ Títol de la casa`: Paraules, colors i tamany del títol d'inici.
+   - `👨‍👩‍👧‍👦 Família`: Membres de la llar amb data de naixement europea (`DD/MM/AAAA`), recàlcul automàtic d'edat en anys, al·lèrgies mèdiques (bloqueig estricte), vetos/aversions personals (desdoblament), plats comodí favorits i interruptor d'activació (`🟢 Present a la llar` vs `⚪ Fora de la llar`).
+   - `🍽️ Menús i Nutrició`: Regles de salut (màxim carns vermelles, mínim peix i llegums, màxim sopars d'embotits), control d'hidrats consecutius i format habitual de planificació.
+   - `🤝 Tutelats`, `🏦 Bancs`, `🎨 Aspecte i Tema`, `🔘 Icones d'inici`, `🌐 Idiomes`.
 2. **📊 Dashboard General**: `modules/dashboard.py` *(Icona pantalla + gràfic)* - Vista de panell principal amb targetes de saldos bancaris (BBVA, La Caixa, etc.), resum mensual d'ingressos i despeses de l'any i gràfics comparatius.
 
 ### 🔵 Part Esquerra (5 nodes amb rodona):
@@ -103,6 +108,19 @@ Dashboard/
 - **Aspect Ratio:** Proporció **4:3** per adaptar-se perfectament a les targetes horitzontals del llibre de receptes sense retalls estranys.
 - **Fidelitat als ingredients:** La imatge ha de reflectir exclusivament els ingredients reals de la recepta (evitant elements aliens com pebrots o llimones si el plat no en porta).
 - **Ambientació:** Taula rústica de fusta, llum natural càlida lateral i estris tradicionals de cuina.
+
+### 4.4 Perfils Familiars, Vetos Personals i Desdoblament d'Àpats
+- **Diferenciació d'Al·lèrgia vs Veto Personal:**
+  - *Al·lèrgia mèdica:* Bloqueig estricte de la recepta completa per a tothom.
+  - *Veto personal:* Quan un membre no menja un aliment (ex. fetge o casqueria) però la família sí, el planificador no bloqueja el plat familiar i assigna automàticament un **plat alternatiu ràpid parellat** (*comodí*, ex. pit de pollastre o truita) per a aquell membre, compartint la mateixa guarnició per no duplicar temps de cuina.
+- **Membres Actius vs Fora de la Llar:** Permet activar o desactivar la participació de membres als menús (ex. fills que viuen fora i només venen de visita).
+
+### 4.5 Mise en Place Setmanal de Bases i Connexió amb l'Stock (`modules/compres.py`)
+- **Derivació Top-Down:** A partir del menú setmanal aprovat, el sistema genera la guia de *Batch Prep* de diumenge (patates probiòtiques amb midó resistent, caldos casolans concentrats, sofregit mare, verdures rostides).
+- **Sincronització amb l'Stock:**
+  - Si hi ha bases o caldos al congelador/nevera, es descompten de la guia de preparació de diumenge i de la llista de la compra.
+  - Les quantitats de compra es calculen restant l'stock real existent: $\text{Compra} = \max(0, \text{Necessari} - \text{Stock})$.
+- **Consens Familiar via WhatsApp:** Generació automàtica d'enllaços de petició i consens per a desitjos de comensals (ex. sardines).
 
 ---
 
