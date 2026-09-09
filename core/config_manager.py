@@ -20,8 +20,10 @@ DEFAULT_CONFIG = {
         "tamany_lletra": 60
     },
     "familia": [
-        {"id": 1, "nom": "Enric", "rol": "Pare", "edat": "45", "circunstancies": "Cap al·lèrgia", "icona": "👨", "google_calendar_ical": "", "color": "#3b82f6"},
-        {"id": 2, "nom": "Adult 2", "rol": "Mare", "edat": "42", "circunstancies": "Vegetariana", "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"}
+        {"id": 1, "nom": "Enric", "rol": "Pare", "data_naixement": "15/04/1978", "edat": "47", "actiu": True, "alergies": [], "vetos": ["fetge", "casqueria"], "comodins": ["Pit de pollastre a la planxa", "Truita francesa"], "icona": "👨", "google_calendar_ical": "", "color": "#3b82f6"},
+        {"id": 2, "nom": "Mare", "rol": "Mare", "data_naixement": "20/08/1980", "edat": "45", "actiu": True, "alergies": [], "vetos": [], "comodins": ["Amanida completa", "Salmó a la planxa"], "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"},
+        {"id": 3, "nom": "Fill", "rol": "Fill", "data_naixement": "10/05/2010", "edat": "15", "actiu": True, "alergies": [], "vetos": [], "comodins": ["Macarrons", "Hamburguesa"], "icona": "👦", "google_calendar_ical": "", "color": "#10b981"},
+        {"id": 4, "nom": "Filla (viu fora)", "rol": "Filla", "data_naixement": "12/03/2004", "edat": "21", "actiu": False, "alergies": ["Lactosa"], "vetos": ["Carn vermella"], "comodins": ["Wok de verdures amb tofu", "Arròs vegetal"], "icona": "👧", "google_calendar_ical": "", "color": "#f59e0b"}
     ],
     "tutelats": [],
     "bancs": [

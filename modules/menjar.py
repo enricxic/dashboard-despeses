@@ -284,76 +284,100 @@ def render():
                 familia_cfg = cfg.get("familia", [])
                 regles_cfg = cfg.get("regles_menjar", {})
                 
-                with st.expander("⚙️ Configuració, Membres i Modificacions Prèvies", expanded=True):
-                    c_fam, c_rules = st.columns([6, 4])
+                with st.expander("⚙️ 1. Membres de la Llar, Al·lèrgies i Vetos", expanded=True):
+                    st.markdown("**👥 Selecció i ajust de comensals per a aquesta setmana:**")
+                    st.caption("Pots activar/desactivar qui menjarà a casa i ajustar les seves al·lèrgies o vetos directament per a aquesta planificació:")
                     
-                    with c_fam:
-                        st.markdown("**👥 Membres que menjaran a casa aquesta setmana:**")
-                        comensals_seleccionats = []
+                    comensals_seleccionats = []
+                    cols_fam = st.columns(max(1, len(familia_cfg)))
+                    
+                    for idx_f, memb in enumerate(familia_cfg):
+                        col_f = cols_fam[idx_f % len(cols_fam)]
+                        m_nom = memb.get("nom", f"Membre {idx_f+1}")
+                        m_actiu_def = memb.get("actiu", True)
+                        raw_al = memb.get("alergies", [])
+                        m_alergies_list = raw_al if isinstance(raw_al, list) else [x.strip() for x in str(raw_al).split(",") if x.strip()]
+                        raw_vt = memb.get("vetos", [])
+                        m_vetos_list = raw_vt if isinstance(raw_vt, list) else [x.strip() for x in str(raw_vt).split(",") if x.strip()]
+                        raw_com = memb.get("comodins", [])
+                        m_comodins_list = raw_com if isinstance(raw_com, list) else [x.strip() for x in str(raw_com).split(",") if x.strip()]
                         
-                        cols_m = st.columns(max(1, len(familia_cfg)))
-                        for idx_f, memb in enumerate(familia_cfg):
-                            col_f = cols_m[idx_f % len(cols_m)]
-                            m_nom = memb.get("nom", f"Membre {idx_f+1}")
-                            m_actiu_def = memb.get("actiu", True)
-                            m_alergies = memb.get("alergies", [])
-                            m_vetos = memb.get("vetos", [])
-                            m_comodins = memb.get("comodins", [])
-                            
-                            with col_f:
-                                st.markdown(f"<div style='text-align:center; font-size:1.5rem;'>{memb.get('icona', '👤')}</div>", unsafe_allow_html=True)
+                        with col_f:
+                            with st.container(border=True):
+                                st.markdown(f"<div style='text-align:center; font-size:1.8rem;'>{memb.get('icona', '👤')}</div>", unsafe_allow_html=True)
                                 chk = st.checkbox(f"**{m_nom}**", value=m_actiu_def, key=f"sel_mem_{idx_f}")
+                                
+                                # Edició ràpida de restriccions per membre
+                                al_opts = ["Gluten", "Lactosa", "Fruits secs", "Marisc", "Ou", "Peix", "Soja"]
+                                sel_al = st.multiselect("Al·lèrgies mèdiques", al_opts, default=[a for a in m_alergies_list if a in al_opts], key=f"al_m_{idx_f}")
+                                
+                                vet_input = st.text_input("Vetos personals", value=", ".join(m_vetos_list), key=f"vet_m_{idx_f}", placeholder="Ex. fetge, bledes")
+                                cur_vetos = [v.strip() for v in vet_input.split(",") if v.strip()]
+                                
+                                comod_input = st.text_input("Plats comodí", value=", ".join(m_comodins_list), key=f"com_m_{idx_f}", placeholder="Ex. Pit de pollastre, Truita")
+                                cur_comodins = [c.strip() for c in comod_input.split(",") if c.strip()]
+                                
                                 if chk:
                                     comensals_seleccionats.append({
                                         "nom": m_nom,
                                         "rol": memb.get("rol", ""),
                                         "edat": int(memb.get("edat", 30)) if str(memb.get("edat", "")).isdigit() else 30,
                                         "actiu": True,
-                                        "alergies": m_alergies,
-                                        "vetos": m_vetos,
-                                        "comodins": m_comodins
+                                        "alergies": sel_al,
+                                        "vetos": cur_vetos,
+                                        "comodins": cur_comodins
                                     })
-                                    badges = []
-                                    if m_alergies:
-                                        badges.append(f"🚫 {', '.join(m_alergies)}")
-                                    if m_vetos:
-                                        badges.append(f"⚠️ {', '.join(m_vetos)}")
-                                    if badges:
-                                        st.caption("<br>".join(badges), unsafe_allow_html=True)
                                 else:
-                                    st.caption("*(Fora de la llar)*")
-                    
-                    with c_rules:
-                        st.markdown("**🥗 Regles Nutricionals i Format d'Àpat:**")
-                        c_r1, c_r2 = st.columns(2)
-                        with c_r1:
-                            month = pd.Timestamp.now().month
-                            if month in [3,4,5]: def_temp = "Primavera"
-                            elif month in [6,7,8]: def_temp = "Estiu"
-                            elif month in [9,10,11]: def_temp = "Tardor"
-                            else: def_temp = "Hivern"
-                            temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
-                            sel_temp = st.selectbox("Temporada actual", temp_opts, index=temp_opts.index(def_temp), key="m_sel_temp")
-                            
-                            max_carn = st.number_input("Màx. carn vermella / setm.", min_value=0, max_value=7, value=int(regles_cfg.get("max_carn_vermella", 1)), key="m_max_carn")
-                        with c_r2:
-                            min_peix = st.number_input("Mín. peix / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_peix", 2)), key="m_min_peix")
-                            min_lleg = st.number_input("Mín. llegums / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_llegums", 2)), key="m_min_lleg")
+                                    st.caption("*(Fora de la llar aquesta setmana)*")
+                
+                with st.expander("🥗 2. Regles Nutricionals de la Llar", expanded=False):
+                    c_r1, c_r2, c_r3 = st.columns(3)
+                    with c_r1:
+                        month = pd.Timestamp.now().month
+                        if month in [3,4,5]: def_temp = "Primavera"
+                        elif month in [6,7,8]: def_temp = "Estiu"
+                        elif month in [9,10,11]: def_temp = "Tardor"
+                        else: def_temp = "Hivern"
+                        temp_opts = ["Tot l'any", "Primavera", "Estiu", "Tardor", "Hivern"]
+                        sel_temp = st.selectbox("Temporada actual", temp_opts, index=temp_opts.index(def_temp), key="m_sel_temp")
+                        max_carn = st.number_input("Màx. carn vermella / setm.", min_value=0, max_value=7, value=int(regles_cfg.get("max_carn_vermella", 1)), key="m_max_carn")
+                    with c_r2:
+                        min_peix = st.number_input("Mín. peix / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_peix", 2)), key="m_min_peix")
+                        min_lleg = st.number_input("Mín. llegums / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_llegums", 2)), key="m_min_lleg")
+                    with c_r3:
+                        max_embotits = st.number_input("Màx. sopars embotits / freds", min_value=0, max_value=7, value=int(regles_cfg.get("max_embotits_sopar", 2)), key="m_max_embotits")
+                        chk_hidrats = st.checkbox("🚫 Zero repeticions d'hidrats en dies consecutius", value=True, key="m_chk_hidrats")
 
+                with st.expander("📌 3. Fixar Plats per Dies, Estoc de Rebost i Peticions (Poder Total)", expanded=True):
+                    st.markdown("**🗓️ Fixació de plats o preferències per a cada dia de la setmana:**")
+                    st.caption("Pots fixar plats concrets per als dies que vulguis (ex. Llenties dilluns, Sardines divendres, Paella diumenge). La IA respectarà aquests plats obligatòriament.")
+                    
+                    dies_setmana = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
+                    peticions_dies = {}
+                    
+                    tabs_dies = st.tabs([f"🗓️ {d}" for d in dies_setmana])
+                    for idx_d, tab_d in enumerate(tabs_dies):
+                        dia_nom = dies_setmana[idx_d]
+                        with tab_d:
+                            col_pd1, col_pd2 = st.columns(2)
+                            with col_pd1:
+                                fix_dinar = st.text_input(f"☀️ Plat fixat per Dinar ({dia_nom}):", key=f"fix_din_{idx_d}", placeholder="Ex. Arròs de verdures / Llenties estofades / Lliure")
+                                if fix_dinar.strip():
+                                    peticions_dies[f"{dia_nom} dinar"] = fix_dinar.strip()
+                            with col_pd2:
+                                fix_sopar = st.text_input(f"🌙 Plat fixat per Sopar ({dia_nom}):", key=f"fix_sop_{idx_d}", placeholder="Ex. Sardines a la planxa / Truita de patates / Lliure")
+                                if fix_sopar.strip():
+                                    peticions_dies[f"{dia_nom} sopar"] = fix_sopar.strip()
+                    
                     st.markdown("---")
-                    st.markdown("**📌 Fixar o Demanar Plats Especials per a Dies Concrets (Opcional):**")
-                    c_fix1, c_fix2 = st.columns(2)
-                    with c_fix1:
-                        peticio_general = st.text_input("💬 Petició general de la setmana:", key="m_peticio_gen", placeholder="Ex. Volem sardines divendres i paella diumenge")
-                    with c_fix2:
-                        dia_fixat_sel = st.selectbox("Fixar plat per un dia concret:", ["Cap", "Dilluns dinar", "Dilluns sopar", "Dimarts dinar", "Dimarts sopar", "Dimecres dinar", "Dimecres sopar", "Dijous dinar", "Dijous sopar", "Divendres dinar", "Divendres sopar", "Dissabte dinar", "Dissabte sopar", "Diumenge dinar", "Diumenge sopar"], key="m_dia_fixat")
-                    
-                    plat_fixat_txt = ""
-                    if dia_fixat_sel != "Cap":
-                        plat_fixat_txt = st.text_input(f"Plat que vols exactament per a {dia_fixat_sel}:", key="m_plat_fixat_txt", placeholder="Ex. Llenties estofades")
+                    c_stk, c_pet = st.columns(2)
+                    with c_stk:
+                        stock_input = st.text_area("🧊 Estoc existent a aprofitar (Congelador / Nevera):", key="m_stock_input", placeholder="Ex. Caldo de peix al congelador, 500g de carn picada, carbassons de l'hort", height=85)
+                    with c_pet:
+                        peticio_general = st.text_area("💬 Petició especial o comentaris addicionals:", key="m_peticio_gen", placeholder="Ex. Diumenge dinar serem 6 comensals per la paella. Sopars de dimarts i dijous molt lleugers.", height=85)
 
-                    st.write("")
-                    btn_gen_ai = st.button("✨ Generar Menú Setmanal Complet (Primer + Segon + Postre)", use_container_width=True, type="primary")
+                st.write("")
+                btn_gen_ai = st.button("✨ Generar Menú Setmanal Intel·ligent (Primer + Segon + Postre)", use_container_width=True, type="primary")
 
                 if btn_gen_ai:
                     if not comensals_seleccionats:
@@ -365,8 +389,14 @@ def render():
                             peticions_list = []
                             if peticio_general.strip():
                                 peticions_list.append({"comensal": "Família", "plat": peticio_general.strip(), "dia_preferit": "Qualsevol"})
-                            if dia_fixat_sel != "Cap" and plat_fixat_txt.strip():
-                                peticions_list.append({"comensal": "Família", "plat": plat_fixat_txt.strip(), "dia_preferit": dia_fixat_sel})
+                            for k_dia, p_plat in peticions_dies.items():
+                                peticions_list.append({"comensal": "Família", "plat": p_plat, "dia_preferit": k_dia})
+                            
+                            stock_list = []
+                            if stock_input.strip():
+                                for s_line in stock_input.split("\n"):
+                                    if s_line.strip():
+                                        stock_list.append({"producte": s_line.strip(), "quantitat": "Disponible", "ubicacio": "Rebost/Congelador"})
                             
                             # Construir el cas de prova dinàmic
                             active_case = {
@@ -377,10 +407,10 @@ def render():
                                     "max_carn_vermella": max_carn,
                                     "min_peix": min_peix,
                                     "min_llegums": min_lleg,
-                                    "max_embotits_sopar": int(regles_cfg.get("max_embotits_sopar", 2)),
-                                    "no_repetir_hidrats": True
+                                    "max_embotits_sopar": max_embotits,
+                                    "no_repetir_hidrats": chk_hidrats
                                 },
-                                "stock_disponible": [],
+                                "stock_disponible": stock_list,
                                 "peticions_setmanals": peticions_list,
                                 "valoracions_previes": {}
                             }
