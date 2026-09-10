@@ -496,6 +496,135 @@
         "permet_peix_i_carn_per_als_actius": true,
         "ignora_restriccions_inactius_per_defecte": true
       }
+    },
+    {
+      "id": "TC-10-Equipament-Eines-Cuina",
+      "titol": "Adaptació Estricta a l'Equipament: Eines de Cuina Disponibles",
+      "descripcio": "La llar NO disposa de Sifó N2O, Robot de cuina (Thermomix) ni Airfryer. La IA ha de garantir que el nivell de les receptes s'adapta als estris bàsics i no proposa tècniques que requereixin aquests aparells.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true,
+        "us_forn": "Cada dia / Qualsevol dia"
+      },
+      "eines_disponibles": {
+        "forn": true,
+        "microones": true,
+        "airfryer": false,
+        "bascula": true,
+        "minipimer": true,
+        "batedora_vas": true,
+        "motlles_silicona": true,
+        "olla_pressio": false,
+        "liquadora": false,
+        "tallafiambres": false,
+        "robot_cuina": false,
+        "picadora": true,
+        "sifo_n2o": false,
+        "mandolina": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 2
+      },
+      "criteris_esperats": {
+        "eines_prohibides": ["sifo_n2o", "robot_cuina", "airfryer", "liquadora"],
+        "termes_prohibits": ["espuma al sifó", "sifó n2o", "sifó de cuina", "passos thermomix", "velocitat cullera", "airfryer", "fregidora d'aire", "liquat de polpa"]
+      }
+    },
+    {
+      "id": "TC-11-Us-Forn-i-Peticio-Familiar",
+      "titol": "Regla d'Ús del Forn vs Petició Familiar Expressa per Consens",
+      "descripcio": "El forn està configurat 'Només cap de setmana'. No obstant, l'Adult 2 demana 'Solomillo de porc al forn' per a dimecres amb consens aprovat. La voluntat familiar preval com a excepció única entre setmana, i la resta de dies feiners no s'ha de fer servir el forn.",
+      "perfil_familia": [
+        {
+          "nom": "Enric",
+          "rol": "Pare",
+          "edat": 45,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        },
+        {
+          "nom": "Adult 2",
+          "rol": "Mare",
+          "edat": 42,
+          "actiu": true,
+          "alergies": [],
+          "vetos": [],
+          "comodins": []
+        }
+      ],
+      "regles_llar": {
+        "max_carn_vermella": 1,
+        "min_peix": 2,
+        "min_llegums": 2,
+        "max_embotits_sopar": 2,
+        "no_repetir_hidrats": true,
+        "us_forn": "Només cap de setmana (Dissabte i Diumenge)"
+      },
+      "eines_disponibles": {
+        "forn": true,
+        "microones": true,
+        "airfryer": true,
+        "bascula": true,
+        "minipimer": true,
+        "batedora_vas": true,
+        "motlles_silicona": true,
+        "olla_pressio": true,
+        "liquadora": false,
+        "tallafiambres": false,
+        "robot_cuina": false,
+        "picadora": true,
+        "sifo_n2o": false,
+        "mandolina": true
+      },
+      "stock_disponible": [],
+      "peticions_setmanals": [
+        {
+          "comensal": "Adult 2",
+          "plat": "Solomillo de porc al forn amb patates",
+          "dia_preferit": "Dimecres",
+          "aprovat_consens": true
+        }
+      ],
+      "valoracions_previes": {},
+      "configuracio_apats": {
+        "dies": 7,
+        "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+        "comensals_base": 2
+      },
+      "criteris_esperats": {
+        "peticio_inclosa_dimecres": "Solomillo de porc al forn",
+        "forn_feiners_permès_només_per_peticio": true
+      }
     }
   ]
 }

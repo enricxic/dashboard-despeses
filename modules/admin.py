@@ -831,7 +831,7 @@ def render():
             st.write("")
             c_btn1, c_btn2 = st.columns([5, 5])
             with c_btn1:
-                run_all = st.button("▶️ Executar Bateria Completa (9 Tests)", type="primary", use_container_width=True, key="btn_run_harness_all")
+                run_all = st.button(f"▶️ Executar Bateria Completa ({len(cases)} Tests)", type="primary", use_container_width=True, key="btn_run_harness_all")
             with c_btn2:
                 selected_single = st.selectbox("O provar un cas concret:", [f"{c['id']}: {c['titol']}" for c in cases], key="sel_single_test", label_visibility="collapsed")
                 run_single = st.button("🎯 Executar només aquest cas", use_container_width=True, key="btn_run_harness_single")
@@ -872,15 +872,17 @@ def render():
                 st.markdown("---")
                 st.markdown("### 📊 Resultats del Benchmarking")
                 
-                k1, k2, k3, k4 = st.columns(4)
+                k1, k2, k3, k4, k5 = st.columns(5)
                 with k1:
                     st.metric("🏆 Èxit Global", f"{res.get('percentatge_exit', 0)}%", f"{res.get('proves_superades', 0)}/{res.get('total_proves', 0)} passats")
                 with k2:
-                    st.metric("🛡️ Seguretat Al·lèrgies", f"{res.get('taxa_seguretat_alergies', 0)}%", "Tolerància 0%")
+                    st.metric("🛡️ Al·lèrgies", f"{res.get('taxa_seguretat_alergies', 0)}%", "Tolerància 0%")
                 with k3:
-                    st.metric("🚫 Desdoblament Vetos", f"{res.get('taxa_desdoblament_vetos', 0)}%", "Plats comodí")
+                    st.metric("🚫 Vetos", f"{res.get('taxa_desdoblament_vetos', 0)}%", "Plats comodí")
                 with k4:
-                    st.metric("⚡ Latència Mitjana", f"{res.get('latencia_mitjana_s', 0)} s", selected_model)
+                    st.metric("🍳 Eines i Forn", f"{res.get('taxa_equipament_forn', 100)}%", "Adaptació 100%")
+                with k5:
+                    st.metric("⚡ Latència", f"{res.get('latencia_mitjana_s', 0)} s", selected_model)
                     
                 st.markdown("#### 📋 Detall de cada Test")
                 for r in res.get("detall_resultats", []):

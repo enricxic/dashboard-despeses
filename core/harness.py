@@ -531,6 +531,65 @@ def grade_puntuacions_estrelles(menu_data: Dict[str, Any], test_case: Dict[str, 
         return 0.0, infraccions
     return 1.0, []
 
+def grade_eines_i_forn(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tuple[float, List[str]]:
+    """Comprova que no s'utilitzin aparells no disponibles i que es respecti la disponibilitat del forn."""
+    infraccions = []
+    
+    eines_disp = test_case.get("eines_disponibles", {})
+    if isinstance(eines_disp, list):
+        eines_disp_dict = {k: True for k in eines_disp}
+    elif isinstance(eines_disp, dict):
+        eines_disp_dict = eines_disp
+    else:
+        eines_disp_dict = {}
+        
+    regles = test_case.get("regles_llar", {})
+    us_forn = regles.get("us_forn", "Cada dia / Qualsevol dia")
+    nom_forn_cap_setmana = "Només cap de setmana" in us_forn
+    
+    peticions_aprovades = [p.get("plat", "").lower() for p in test_case.get("peticions_setmanals", []) if p.get("aprovat_consens", True) or p.get("consens", True)]
+    
+    restriccions_eines = {
+        "sifo_n2o": ["sifó", "sifo", "n2o", "espuma al sifó", "escuma al sifó"],
+        "robot_cuina": ["thermomix", "mambo", "velocitat cullera", "varoma", "robot de cuina"],
+        "airfryer": ["airfryer", "air fryer", "fregidora d'aire", "fregidora de aire"],
+        "liquadora": ["liquadora", "extracte de suc amb liquadora", "liquat de polpa"],
+        "tallafiambres": ["tallafiambres", "tallat a màquina fiambre"],
+    }
+    
+    dies_feiners = ["dilluns", "dimarts", "dimecres", "dijous", "divendres"]
+    
+    for dia_obj in menu_data.get("menu_setmanal", []):
+        dia_nom = str(dia_obj.get("dia", "")).lower()
+        is_feiner = any(df in dia_nom for df in dies_feiners)
+        
+        for apat_k in ["dinar", "sopar"]:
+            apat = dia_obj.get(apat_k, {})
+            if not isinstance(apat, dict): continue
+            
+            plat_text = extract_apat_text(apat).lower()
+            ings_text = " ".join([str(i).lower() for i in apat.get("ingredients_principals", [])])
+            full_text = f"{plat_text} {ings_text}"
+            
+            # 1. Comprovar eines absents
+            for e_key, terms in restriccions_eines.items():
+                if e_key in eines_disp_dict and not eines_disp_dict[e_key]:
+                    for t in terms:
+                        if t in full_text:
+                            infraccions.append(f"{dia_obj.get('dia')} ({apat_k}): Requereix l'aparell absent '{e_key}' (detectat terme '{t}')")
+            
+            # 2. Comprovar regla del forn
+            if nom_forn_cap_setmana and is_feiner:
+                te_forn = "al forn" in full_text or "rostida al forn" in full_text or "gratinat al forn" in full_text
+                if te_forn:
+                    es_peticio_consens = any(p in plat_text or plat_text in p for p in peticions_aprovades)
+                    if not es_peticio_consens:
+                        infraccions.append(f"{dia_obj.get('dia')} ({apat_k}): Plats al forn NO permesos entre setmana ('{plat_text}'), ja que la regla és '{us_forn}' i no és una petició familiar expressa")
+
+    if infraccions:
+        return 0.0, infraccions
+    return 1.0, []
+
 # =========================================================================
 # EXECUTOR PRINCIPAL DEL HARNESS
 # =========================================================================
@@ -551,6 +610,7 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
             "puntuacio_regles": 0.0,
             "puntuacio_varietat": 0.0,
             "puntuacio_estrelles": 0.0,
+            "puntuacio_eines": 0.0,
             "latencia_s": latency,
             "errors": [raw_resp],
             "resposta_json": {}
@@ -568,6 +628,7 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
             "puntuacio_regles": 0.0,
             "puntuacio_varietat": 0.0,
             "puntuacio_estrelles": 0.0,
+            "puntuacio_eines": 0.0,
             "latencia_s": latency,
             "errors": [f"Error estructural: {json_err}"],
             "resposta_json": {}
@@ -579,9 +640,10 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
     score_regles, err_regles = grade_regles_llar(json_data, test_case)
     score_varietat, err_varietat = grade_repeticions_hidrats(json_data, test_case)
     score_estrelles, err_estrelles = grade_puntuacions_estrelles(json_data, test_case)
+    score_eines, err_eines = grade_eines_i_forn(json_data, test_case)
     
-    all_errors = err_alergies + err_vetos + err_regles + err_varietat + err_estrelles
-    exit_global = (score_alergies == 1.0 and score_vetos == 1.0 and score_regles >= 0.75 and score_varietat == 1.0 and score_estrelles == 1.0)
+    all_errors = err_alergies + err_vetos + err_regles + err_varietat + err_estrelles + err_eines
+    exit_global = (score_alergies == 1.0 and score_vetos == 1.0 and score_regles >= 0.75 and score_varietat == 1.0 and score_estrelles == 1.0 and score_eines == 1.0)
     
     return {
         "id": test_case.get("id"),
@@ -593,6 +655,7 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
         "puntuacio_regles": score_regles,
         "puntuacio_varietat": score_varietat,
         "puntuacio_estrelles": score_estrelles,
+        "puntuacio_eines": score_eines,
         "latencia_s": latency,
         "errors": all_errors,
         "resposta_json": json_data
@@ -619,6 +682,7 @@ def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", progre
     passed_json = sum(1 for r in results if r["json_valid"])
     passed_seguretat = sum(1 for r in results if r["puntuacio_seguretat"] == 1.0)
     passed_vetos = sum(1 for r in results if r["puntuacio_vetos"] == 1.0)
+    passed_eines = sum(1 for r in results if r.get("puntuacio_eines", 1.0) == 1.0)
     avg_latency = round(sum(r["latencia_s"] for r in results) / total_cases, 2) if total_cases > 0 else 0.0
     
     return {
@@ -628,6 +692,7 @@ def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", progre
         "taxa_json_valid": round((passed_json / total_cases) * 100, 1),
         "taxa_seguretat_alergies": round((passed_seguretat / total_cases) * 100, 1),
         "taxa_desdoblament_vetos": round((passed_vetos / total_cases) * 100, 1),
+        "taxa_equipament_forn": round((passed_eines / total_cases) * 100, 1),
         "latencia_mitjana_s": avg_latency,
         "model_avaluat": model_name,
         "detall_resultats": results
