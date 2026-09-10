@@ -29,70 +29,27 @@ def _get_eina_foto_src(foto_val):
     return foto_val
 
 def _render_eina_thumb_html(eina, foto_src):
-    nom_safe = eina['nom'].replace("'", "\\'")
-    desc_safe = eina['desc'].replace("'", "\\'")
-    return f"""
-    <div style='display:flex; justify-content:center; align-items:center;'>
-        <img src='{foto_src}' 
-             alt='{eina['nom']}' 
-             loading='lazy' 
-             title='Fes doble clic per ampliar {eina['nom']}' 
-             ondblclick="
-                (function(){{
-                    var old = document.getElementById('eina_global_modal');
-                    if(old) old.remove();
-                    var m = document.createElement('div');
-                    m.id = 'eina_global_modal';
-                    m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); backdrop-filter:blur(6px); z-index:999999; display:flex; justify-content:center; align-items:center; cursor:pointer;';
-                    m.onclick = function(e){{ if(e.target===m || e.target.id==='eina_close_btn') m.remove(); }};
-                    
-                    var box = document.createElement('div');
-                    box.style.cssText = 'background:#0f172a; border:1px solid #334155; border-radius:16px; padding:24px; max-width:480px; width:90vw; box-shadow:0 25px 50px rgba(0,0,0,0.8); color:#f8fafc; position:relative; text-align:center; cursor:default;';
-                    
-                    var closeBtn = document.createElement('button');
-                    closeBtn.id = 'eina_close_btn';
-                    closeBtn.innerHTML = '&times;';
-                    closeBtn.style.cssText = 'position:absolute; top:14px; right:14px; background:#1e293b; border:1px solid #475569; color:#94a3b8; border-radius:50%; width:32px; height:32px; font-size:1.3rem; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;';
-                    
-                    var title = document.createElement('h3');
-                    title.style.cssText = 'margin:0 0 14px 0; color:#f8fafc; font-size:1.25rem;';
-                    title.innerHTML = '🍳 {nom_safe}';
-                    
-                    var imgBox = document.createElement('div');
-                    imgBox.style.cssText = 'background:#020617; border-radius:12px; padding:14px; border:1px solid #1e293b; margin-bottom:14px; display:flex; justify-content:center; align-items:center;';
-                    
-                    var img = document.createElement('img');
-                    img.src = '{foto_src}';
-                    img.alt = '{nom_safe}';
-                    img.style.cssText = 'max-width:100%; max-height:420px; object-fit:contain; border-radius:8px;';
-                    
-                    var desc = document.createElement('div');
-                    desc.style.cssText = 'color:#94a3b8; font-size:0.92rem; line-height:1.4;';
-                    desc.innerHTML = '{desc_safe}';
-                    
-                    imgBox.appendChild(img);
-                    box.appendChild(closeBtn);
-                    box.appendChild(title);
-                    box.appendChild(imgBox);
-                    box.appendChild(desc);
-                    m.appendChild(box);
-                    document.body.appendChild(m);
-                    
-                    var escHandler = function(evt){{
-                        if(evt.key === 'Escape'){{
-                            m.remove();
-                            document.removeEventListener('keydown', escHandler);
-                        }}
-                    }};
-                    document.addEventListener('keydown', escHandler);
-                }})();
-             "
-             style='width:56px; height:56px; min-width:56px; min-height:56px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15); cursor:pointer; transition:transform 0.15s ease, box-shadow 0.15s ease;'
-             onmouseover="this.style.transform='scale(1.06)'; this.style.boxShadow='0 4px 10px rgba(59,130,246,0.3)';"
-             onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.15)';"
-        />
-    </div>
-    """
+    nom_safe = eina['nom'].replace('"', '&quot;').replace("'", "&#39;")
+    desc_safe = eina['desc'].replace('"', '&quot;').replace("'", "&#39;")
+    js_action = (
+        "var old=document.getElementById('eina_modal');if(old)old.remove();"
+        "var m=document.createElement('div');m.id='eina_modal';"
+        "m.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);z-index:999999;display:flex;justify-content:center;align-items:center;cursor:pointer;';"
+        "m.onclick=function(e){if(e.target===m||e.target.id==='eina_c')m.remove();};"
+        "var b=document.createElement('div');"
+        "b.style.cssText='background:#0f172a;border:1px solid #334155;border-radius:16px;padding:24px;max-width:480px;width:90vw;color:#f8fafc;position:relative;text-align:center;cursor:default;box-shadow:0 25px 50px rgba(0,0,0,0.8);';"
+        "b.innerHTML='<button id=\"eina_c\" style=\"position:absolute;top:14px;right:14px;background:#1e293b;border:1px solid #475569;color:#94a3b8;border-radius:50%;width:32px;height:32px;font-size:1.3rem;cursor:pointer;\">&times;</button><h3 style=\"margin:0 0 14px 0;\">🍳 '+this.getAttribute('data-nom')+'</h3><div style=\"background:#020617;border-radius:12px;padding:14px;border:1px solid #1e293b;margin-bottom:14px;display:flex;justify-content:center;\"><img src=\"'+this.src+'\" style=\"max-width:100%;max-height:420px;object-fit:contain;border-radius:8px;\" /></div><div style=\"color:#94a3b8;font-size:0.92rem;line-height:1.4;\">'+this.getAttribute('data-desc')+'</div>';"
+        "m.appendChild(b);document.body.appendChild(m);"
+    )
+    return (
+        f"<div style='display:flex; justify-content:center; align-items:center;'>"
+        f"<img src='{foto_src}' alt='{nom_safe}' data-nom='{nom_safe}' data-desc='{desc_safe}' "
+        f"loading='lazy' title='Fes doble clic per ampliar {nom_safe}' "
+        f"ondblclick='{js_action}' "
+        f"style='width:56px; height:56px; min-width:56px; min-height:56px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15); cursor:pointer; transition:transform 0.15s ease;' "
+        f"onmouseover='this.style.transform=\"scale(1.06)\"' onmouseout='this.style.transform=\"scale(1)\"' />"
+        f"</div>"
+    )
 
 def calcular_edat(data_naix_val):
     if not data_naix_val:
