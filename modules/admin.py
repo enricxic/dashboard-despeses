@@ -825,7 +825,14 @@ def render():
                 else:
                     active_api_key = st.text_input("🔑 Clau d'API Gemini:", type="password", key="harness_key_input")
             
-            from core.harness import load_harness_cases, run_harness_suite, run_harness_single_test, generate_harness_markdown_report
+            try:
+                from core.harness import load_harness_cases, run_harness_suite, run_harness_single_test, generate_harness_markdown_report
+            except ImportError:
+                import importlib
+                import core.harness as ch
+                importlib.reload(ch)
+                from core.harness import load_harness_cases, run_harness_suite, run_harness_single_test, generate_harness_markdown_report
+
             from datetime import datetime
             cases = load_harness_cases()
             
