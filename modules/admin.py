@@ -91,6 +91,41 @@ def calcular_edat(data_naix_val):
     except Exception:
         return str(data_naix_val)
 
+def _format_list_to_comma_str(val):
+    if isinstance(val, list):
+        return ", ".join([str(x).strip() for x in val if str(x).strip()])
+    elif isinstance(val, str):
+        val_clean = val.strip()
+        if val_clean.startswith("[") and val_clean.endswith("]"):
+            try:
+                parsed = json.loads(val_clean.replace("'", '"'))
+                if isinstance(parsed, list):
+                    return ", ".join([str(x).strip() for x in parsed if str(x).strip()])
+            except Exception:
+                pass
+        return val_clean
+    return ""
+
+def _parse_comma_str_to_list(val):
+    if isinstance(val, list):
+        return [str(x).strip() for x in val if str(x).strip()]
+    if not val or not isinstance(val, str):
+        return []
+    val_clean = val.strip()
+    if val_clean.startswith("[") and val_clean.endswith("]"):
+        try:
+            parsed = json.loads(val_clean.replace("'", '"'))
+            if isinstance(parsed, list):
+                return [str(x).strip() for x in parsed if str(x).strip()]
+        except Exception:
+            pass
+    return [x.strip() for x in val_clean.split(",") if x.strip()]
+
+def _clear_section_session_keys(prefix):
+    keys_to_del = [k for k in st.session_state.keys() if k.startswith(prefix)]
+    for k in keys_to_del:
+        del st.session_state[k]
+
 def render():
     cfg = load_app_config()
     lang = cfg.get("idioma", "ca")
@@ -472,13 +507,17 @@ def render():
                             "rol": "Familiar",
                             "data_naixement": "",
                             "edat": "",
-                            "alergies": "",
-                            "vetos": "",
-                            "comodins": "",
-                            "icona": "👤"
+                            "actiu": True,
+                            "alergies": [],
+                            "vetos": [],
+                            "comodins": [],
+                            "icona": "👤",
+                            "google_calendar_ical": "",
+                            "color": "#3b82f6"
                         })
                         cfg["familia"] = familia_list
                         save_app_config(cfg)
+                        _clear_section_session_keys("f_")
                         st.rerun()
             else:
                 st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
@@ -491,6 +530,7 @@ def render():
             roles_pool = ["Pare", "Mare", "Fill", "Filla", "Avi", "Àvia", "Germà", "Germana", "Mascota", "Altres"]
             
             for i, mem in enumerate(familia_list):
+                mem_id = mem.get("id", i + 1)
                 raw_naix = mem.get("data_naixement", "")
                 raw_edat = mem.get("edat", "")
                 calc_e = calcular_edat(raw_naix if raw_naix else raw_edat)
@@ -501,24 +541,24 @@ def render():
                 with st.expander(f"{mem.get('icona', '👤')} {mem.get('nom', f'Membre {i+1}')} ({mem.get('rol', 'Familiar')}){edat_badge} · {estat_badge}", expanded=True):
                     c_act1, c_del_top = st.columns([8.2, 1.8], vertical_alignment="center")
                     with c_act1:
-                        m_actiu = st.toggle("🏠 Membre actiu a la llar (Participa en menús i rutines diàries)", value=is_mem_actiu, key=f"f_actiu_{i}")
+                        m_actiu = st.toggle("🏠 Membre actiu a la llar (Participa en menús i rutines diàries)", value=is_mem_actiu, key=f"f_actiu_{mem_id}")
                         if not m_actiu:
                             st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les seves dades però no es computarà per defecte als menús setmanals.*")
                     with c_del_top:
-                        del_btn = st.button("🗑️ Esborrar", key=f"f_del_{i}", use_container_width=True)
+                        del_btn = st.button("🗑️ Esborrar", key=f"f_del_{mem_id}", use_container_width=True)
                     
                     st.write("")
                     c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 2.3])
                     with c1:
                         cur_icon = mem.get("icona", "👤")
                         ic_idx = icons_pool.index(cur_icon) if cur_icon in icons_pool else 0
-                        m_icon = st.selectbox("Icona", icons_pool, index=ic_idx, key=f"f_icon_{i}")
+                        m_icon = st.selectbox("Icona", icons_pool, index=ic_idx, key=f"f_icon_{mem_id}")
                     with c2:
-                        m_nom = st.text_input("Nom", value=mem.get("nom", ""), key=f"f_nom_{i}")
+                        m_nom = st.text_input("Nom", value=mem.get("nom", ""), key=f"f_nom_{mem_id}")
                     with c3:
                         cur_r = mem.get("rol", "Familiar")
                         r_idx = roles_pool.index(cur_r) if cur_r in roles_pool else len(roles_pool)-1
-                        m_rol = st.selectbox("Rol / Relació", roles_pool, index=r_idx, key=f"f_rol_{i}")
+                        m_rol = st.selectbox("Rol / Relació", roles_pool, index=r_idx, key=f"f_rol_{mem_id}")
                     with c4:
                         init_naix = mem.get("data_naixement", "")
                         if not init_naix and str(mem.get("edat", "")).count("-") == 2:
@@ -531,7 +571,7 @@ def render():
                             p_iso = init_naix.split('-')
                             if len(p_iso) == 3 and len(p_iso[0]) == 4:
                                 init_naix = f"{p_iso[2]}/{p_iso[1]}/{p_iso[0]}"
-                        m_naix = st.text_input("🎂 Data naixement", value=init_naix, placeholder="ex: 15/05/1980", key=f"f_naix_{i}")
+                        m_naix = st.text_input("🎂 Data naixement", value=init_naix, placeholder="ex: 15/05/1980", key=f"f_naix_{mem_id}")
                         calc_now = calcular_edat(m_naix if m_naix else mem.get("edat", ""))
                         if str(calc_now).isdigit():
                             st.caption(f"🎂 Edat: **{calc_now} anys** (recalculada)")
@@ -540,49 +580,55 @@ def render():
                         
                     c_al1, c_vt1 = st.columns(2)
                     with c_al1:
-                        cur_al = mem.get("alergies", mem.get("circunstancies", ""))
-                        m_alergies = st.text_input("🏥 Al·lèrgies mèdiques i intoleràncies (bloqueig)", value=cur_al, placeholder="ex: Sense Gluten, Sense Lactosa, Diabètic...", key=f"f_al_{i}")
+                        cur_al_str = _format_list_to_comma_str(mem.get("alergies", mem.get("circunstancies", [])))
+                        m_alergies_input = st.text_input("🏥 Al·lèrgies mèdiques i intoleràncies (bloqueig)", value=cur_al_str, placeholder="ex: Sense Gluten, Sense Lactosa, Diabètic...", key=f"f_al_{mem_id}")
+                        m_alergies_list = _parse_comma_str_to_list(m_alergies_input)
                     with c_vt1:
-                        cur_vt = mem.get("vetos", "")
-                        m_vetos = st.text_input("🚫 Vetos i aversions personals (no li agrada)", value=cur_vt, placeholder="ex: fetge, casqueria, conill, bledes...", key=f"f_vt_{i}")
+                        cur_vt_str = _format_list_to_comma_str(mem.get("vetos", []))
+                        m_vetos_input = st.text_input("🚫 Vetos i aversions personals (no li agrada)", value=cur_vt_str, placeholder="ex: fetge, casqueria, conill, bledes...", key=f"f_vt_{mem_id}")
+                        m_vetos_list = _parse_comma_str_to_list(m_vetos_input)
                         
                     c_com1, c_gcal2_col = st.columns([6.5, 3.5])
                     with c_com1:
-                        cur_com = mem.get("comodins", "")
-                        m_comodins = st.text_input("🍗 Plats Comodí Favorits (alternatives ràpides)", value=cur_com, placeholder="ex: pit de pollastre a la planxa, truita francesa...", key=f"f_com_{i}")
+                        cur_com_str = _format_list_to_comma_str(mem.get("comodins", []))
+                        m_comodins_input = st.text_input("🍗 Plats Comodí Favorits (alternatives ràpides)", value=cur_com_str, placeholder="ex: pit de pollastre a la planxa, truita francesa...", key=f"f_com_{mem_id}")
+                        m_comodins_list = _parse_comma_str_to_list(m_comodins_input)
                     with c_gcal2_col:
                         cur_col = mem.get("color", "#3b82f6" if i % 2 == 0 else "#ec4899")
-                        m_color = st.color_picker("Color al calendari", value=cur_col, key=f"f_col_{i}")
+                        m_color = st.color_picker("Color al calendari", value=cur_col, key=f"f_col_{mem_id}")
                         
-                    m_gcal = st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{i}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
+                    m_gcal = st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{mem_id}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
                         
                     if not del_btn:
                         calc_edat_final = str(calcular_edat(m_naix)) if str(calcular_edat(m_naix)).isdigit() else str(mem.get("edat", ""))
                         updated_familia.append({
-                            "id": mem.get("id", i + 1),
+                            "id": mem_id,
                             "nom": m_nom,
                             "rol": m_rol,
                             "actiu": m_actiu,
                             "data_naixement": m_naix,
                             "edat": calc_edat_final,
-                            "circunstancies": m_alergies,
-                            "alergies": m_alergies,
-                            "vetos": m_vetos,
-                            "comodins": m_comodins,
+                            "circunstancies": m_alergies_list,
+                            "alergies": m_alergies_list,
+                            "vetos": m_vetos_list,
+                            "comodins": m_comodins_list,
                             "icona": m_icon,
                             "google_calendar_ical": m_gcal,
                             "color": m_color
                         })
                     else:
-                        cfg["familia"] = updated_familia + familia_list[i+1:]
+                        new_fam = [m for m in updated_familia if m.get("id") != mem_id] + familia_list[i+1:]
+                        cfg["familia"] = new_fam
                         save_app_config(cfg)
-                        st.success(f"Membre eliminat.")
+                        _clear_section_session_keys("f_")
+                        st.success("Membre eliminat.")
                         st.rerun()
                         
             st.write("")
             if st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam"):
                 cfg["familia"] = updated_familia
                 if save_app_config(cfg):
+                    _clear_section_session_keys("f_")
                     st.success("✅ Membres de la família desats correctament!")
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
@@ -1044,6 +1090,7 @@ def render():
                     })
                     cfg["tutelats"] = tutelats_list
                     save_app_config(cfg)
+                    _clear_section_session_keys("t_")
                     st.rerun()
             
             st.write("")
@@ -1055,6 +1102,7 @@ def render():
                 st.info("No hi ha cap persona tutelada registrada. Fes clic a '➕ Afegir Tutelat' per afegir-ne una.")
             
             for j, tut in enumerate(tutelats_list):
+                tut_id = tut.get("id", j + 1)
                 t_tel_disp = f" · 📞 {tut.get('telefon')}" if tut.get('telefon') else ""
                 t_adr_disp = f" · 📍 {tut.get('adreca')}" if tut.get('adreca') else ""
                 with st.expander(f"{tut.get('icona', '👴')} {tut.get('nom', f'Tutelat {j+1}')}{t_tel_disp}{t_adr_disp}", expanded=True):
@@ -1062,26 +1110,26 @@ def render():
                     with c1:
                         cur_t_icon = tut.get("icona", "👴")
                         t_ic_idx = tut_icons_pool.index(cur_t_icon) if cur_t_icon in tut_icons_pool else 0
-                        t_icon = st.selectbox("Icona", tut_icons_pool, index=t_ic_idx, key=f"t_icon_sec_{j}")
+                        t_icon = st.selectbox("Icona", tut_icons_pool, index=t_ic_idx, key=f"t_icon_sec_{tut_id}")
                     with c2:
-                        t_nom = st.text_input("Nom i cognoms", value=tut.get("nom", ""), key=f"t_nom_sec_{j}")
+                        t_nom = st.text_input("Nom i cognoms", value=tut.get("nom", ""), key=f"t_nom_sec_{tut_id}")
                     with c3:
-                        t_edat = st.text_input("Edat", value=str(tut.get("edat", "")), key=f"t_edat_sec_{j}")
+                        t_edat = st.text_input("Edat", value=str(tut.get("edat", "")), key=f"t_edat_sec_{tut_id}")
                     with c4:
-                        t_tel = st.text_input("Telèfon", value=str(tut.get("telefon", "")), key=f"t_tel_sec_{j}")
+                        t_tel = st.text_input("Telèfon", value=str(tut.get("telefon", "")), key=f"t_tel_sec_{tut_id}")
                         
                     c_adr1, c_del_t = st.columns([8.5, 1.5], vertical_alignment="center")
                     with c_adr1:
-                        t_adr = st.text_input("Adreça", value=tut.get("adreca", ""), key=f"t_adr_sec_{j}")
+                        t_adr = st.text_input("Adreça", value=tut.get("adreca", ""), key=f"t_adr_sec_{tut_id}")
                     with c_del_t:
                         st.write("")
-                        del_t_btn = st.button("🗑️ Esborrar", key=f"t_del_sec_{j}", use_container_width=True)
+                        del_t_btn = st.button("🗑️ Esborrar", key=f"t_del_sec_{tut_id}", use_container_width=True)
                         
-                    t_obs = st.text_input("Observacions / Altres dades mèdiques o de contacte", value=tut.get("observacions", ""), key=f"t_obs_sec_{j}")
+                    t_obs = st.text_input("Observacions / Altres dades mèdiques o de contacte", value=tut.get("observacions", ""), key=f"t_obs_sec_{tut_id}")
                     
                     if not del_t_btn:
                         updated_tutelats.append({
-                            "id": tut.get("id", j + 1),
+                            "id": tut_id,
                             "nom": t_nom,
                             "edat": t_edat,
                             "telefon": t_tel,
@@ -1090,15 +1138,18 @@ def render():
                             "observacions": t_obs
                         })
                     else:
-                        cfg["tutelats"] = updated_tutelats + tutelats_list[j+1:]
+                        new_tut = [t for t in updated_tutelats if t.get("id") != tut_id] + tutelats_list[j+1:]
+                        cfg["tutelats"] = new_tut
                         save_app_config(cfg)
-                        st.success(f"Persona tutelada eliminada.")
+                        _clear_section_session_keys("t_")
+                        st.success("Persona tutelada eliminada.")
                         st.rerun()
                         
             st.write("")
             if st.button("💾 Desar Persones Tutelades", type="primary", use_container_width=True, key="save_tutelats_sec"):
                 cfg["tutelats"] = updated_tutelats
                 if save_app_config(cfg):
+                    _clear_section_session_keys("t_")
                     st.success("✅ Dades de persones tutelades desades correctament!")
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
@@ -1137,6 +1188,7 @@ def render():
                     })
                     cfg["bancs"] = bancs_list
                     save_app_config(cfg)
+                    _clear_section_session_keys("b_")
                     st.rerun()
             
             st.write("")
@@ -1148,6 +1200,7 @@ def render():
                 st.info("No hi ha cap entitat bancària configurada. Fes clic a '➕ Afegir Nou Banc' per començar.")
             
             for k, b_item in enumerate(bancs_list):
+                b_id = b_item.get("id", k + 1)
                 is_act = b_item.get("actiu", True)
                 status_badge = "🟢 ACTIU" if is_act else "⚪ INACTIU"
                 b_color = b_item.get("color", "#3b82f6")
@@ -1163,35 +1216,35 @@ def render():
                     # Fila 1: Nom, Toggle Actiu, Icona
                     c1, c2, c3 = st.columns([3.5, 3.5, 1.5], vertical_alignment="center")
                     with c1:
-                        new_b_nom = st.text_input("Nom de l'entitat / compte", value=b_nom, key=f"b_nom_{k}")
+                        new_b_nom = st.text_input("Nom de l'entitat / compte", value=b_nom, key=f"b_nom_{b_id}")
                     with c2:
                         st.markdown("<div style='margin-bottom: 4px; font-size: 0.82rem; font-weight: 600;'>Estat operatiu</div>", unsafe_allow_html=True)
-                        new_b_actiu = st.toggle("Actiu (operar i mostrar)", value=is_act, key=f"b_act_{k}", help="Si està desactivat, no es veurà al Dashboard ni als formularis de despeses/ingressos.")
+                        new_b_actiu = st.toggle("Actiu (operar i mostrar)", value=is_act, key=f"b_act_{b_id}", help="Si està desactivat, no es veurà al Dashboard ni als formularis de despeses/ingressos.")
                     with c3:
                         cur_b_ic = b_icon
                         b_ic_idx = bank_icons_pool.index(cur_b_ic) if cur_b_ic in bank_icons_pool else 0
-                        new_b_icon = st.selectbox("Icona", bank_icons_pool, index=b_ic_idx, key=f"b_icon_{k}")
+                        new_b_icon = st.selectbox("Icona", bank_icons_pool, index=b_ic_idx, key=f"b_icon_{b_id}")
                     
                     # Fila 2: Descripció, Titular, Color
                     c4, c5, c6 = st.columns([4.0, 3.5, 1.5])
                     with c4:
-                        new_b_desc = st.text_input("Tipus / Descripció", value=b_desc, key=f"b_desc_{k}", placeholder="ex: Compte corrent, Targeta crèdit, etc.")
+                        new_b_desc = st.text_input("Tipus / Descripció", value=b_desc, key=f"b_desc_{b_id}", placeholder="ex: Compte corrent, Targeta crèdit, etc.")
                     with c5:
-                        new_b_titular = st.text_input("Titular del compte", value=b_item.get("titular", ""), key=f"b_titular_{k}", placeholder="ex: Enric Xicars")
+                        new_b_titular = st.text_input("Titular del compte", value=b_item.get("titular", ""), key=f"b_titular_{b_id}", placeholder="ex: Enric Xicars")
                     with c6:
-                        new_b_color = st.color_picker("Color", value=b_color, key=f"b_color_{k}")
+                        new_b_color = st.color_picker("Color", value=b_color, key=f"b_color_{b_id}")
                         
                     # Fila 3: IBAN / Núm. Compte i Botó Esborrar
                     c7, c8 = st.columns([8.2, 1.8], vertical_alignment="center")
                     with c7:
-                        new_b_iban = st.text_input("IBAN / Núm. Compte o Targeta (opcional)", value=b_item.get("compte_iban", ""), key=f"b_iban_{k}", placeholder="ES00 0000 0000 0000 0000")
+                        new_b_iban = st.text_input("IBAN / Núm. Compte o Targeta (opcional)", value=b_item.get("compte_iban", ""), key=f"b_iban_{b_id}", placeholder="ES00 0000 0000 0000 0000")
                     with c8:
                         st.write("")
-                        del_b_btn = st.button("🗑️ Eliminar", key=f"b_del_{k}", use_container_width=True)
+                        del_b_btn = st.button("🗑️ Eliminar", key=f"b_del_{b_id}", use_container_width=True)
                     
                     if not del_b_btn:
                         updated_bancs.append({
-                            "id": b_item.get("id", k + 1),
+                            "id": b_id,
                             "nom": new_b_nom,
                             "actiu": new_b_actiu,
                             "icona": new_b_icon,
@@ -1201,8 +1254,10 @@ def render():
                             "compte_iban": new_b_iban
                         })
                     else:
-                        cfg["bancs"] = updated_bancs + bancs_list[k+1:]
+                        new_bancs = [b for b in updated_bancs if b.get("id") != b_id] + bancs_list[k+1:]
+                        cfg["bancs"] = new_bancs
                         save_app_config(cfg)
+                        _clear_section_session_keys("b_")
                         st.success(f"Entitat '{b_nom}' eliminada.")
                         st.rerun()
                         
@@ -1210,6 +1265,7 @@ def render():
             if st.button("💾 Desar Configuració de Bancs", type="primary", use_container_width=True, key="save_bancs_sec"):
                 cfg["bancs"] = updated_bancs
                 if save_app_config(cfg):
+                    _clear_section_session_keys("b_")
                     st.success("✅ Configuració de bancs i comptes desada correctament!")
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
