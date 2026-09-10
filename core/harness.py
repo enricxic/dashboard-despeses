@@ -5,19 +5,32 @@ import re
 import requests
 from typing import Dict, List, Any, Optional, Tuple, Callable
 
-# Fitxer per defecte del dataset de proves
-DEFAULT_CASES_PATH = "data/harness_menu_cases.json"
-
-def load_harness_cases(file_path: str = DEFAULT_CASES_PATH) -> List[Dict[str, Any]]:
-    """Carrega la col·lecció de casos de prova del banc de dades JSON."""
-    if not os.path.exists(file_path):
+def load_harness_cases(file_path: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Carrega la col·lecció de casos de prova del banc de dades JSON resolent rutes absolutes."""
+    target_path = file_path
+    if not target_path or not os.path.exists(target_path):
+        curr_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(curr_dir, ".."))
+        candidates = [
+            os.path.join(project_root, "data", "harness_menu_cases.json"),
+            os.path.join(os.getcwd(), "data", "harness_menu_cases.json"),
+            os.path.join(curr_dir, "..", "data", "harness_menu_cases.json"),
+            "data/harness_menu_cases.json"
+        ]
+        for c in candidates:
+            if os.path.exists(c) and os.path.isfile(c):
+                target_path = c
+                break
+                
+    if not target_path or not os.path.exists(target_path):
         return []
+        
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(target_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             return data.get("test_cases", [])
     except Exception as e:
-        print(f"Error carregant casos de prova: {e}")
+        print(f"Error carregant casos de prova des de {target_path}: {e}")
         return []
 
 def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Optional[List[Any]] = None, recipes_sample: Optional[List[Any]] = None, **kwargs) -> str:

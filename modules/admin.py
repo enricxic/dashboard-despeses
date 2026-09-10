@@ -859,8 +859,10 @@ def render():
                     with st.spinner("Executant avaluacions deterministes del Harness..."):
                         suite_res = run_harness_suite(api_key=active_api_key, model_name=selected_model, progress_callback=on_progress)
                         st.session_state.harness_results = suite_res
+                        st.session_state.harness_single_result = None
                         progress_bar.progress(1.0)
                         status_txt.success("✅ Bateria de proves completada!")
+                        st.rerun()
                         
             elif run_single:
                 if not active_api_key:
@@ -872,54 +874,58 @@ def render():
                         with st.spinner(f"Avaluant {target_case['titol']}..."):
                             single_res = run_harness_single_test(target_case, api_key=active_api_key, model_name=selected_model)
                             st.session_state.harness_single_result = single_res
-                            st.success("✅ Prova individual finalitzada!")
+                            st.session_state.harness_results = None
+                            st.rerun()
             
             # Mostra de Resultats Globals
             if "harness_results" in st.session_state and isinstance(st.session_state.harness_results, dict):
                 res = st.session_state.harness_results
                 st.markdown("---")
                 
-                c_res_header, c_res_dl = st.columns([7, 3])
-                with c_res_header:
-                    st.markdown("### 📊 Resultats del Benchmarking")
-                with c_res_dl:
-                    md_report = generate_harness_markdown_report(res, is_single=False)
-                    st.download_button(
-                        label="📥 Descarregar Informe (.md)",
-                        data=md_report,
-                        file_name=f"informe_laboratori_ia_{res.get('model_avaluat', 'gemini')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-                        mime="text/markdown",
-                        use_container_width=True,
-                        key="btn_download_harness_md"
-                    )
-                
-                k1, k2, k3, k4, k5 = st.columns(5)
-                with k1:
-                    st.metric("🏆 Èxit Global", f"{res.get('percentatge_exit', 0)}%", f"{res.get('proves_superades', 0)}/{res.get('total_proves', 0)} passats")
-                with k2:
-                    st.metric("🛡️ Al·lèrgies", f"{res.get('taxa_seguretat_alergies', 0)}%", "Tolerància 0%")
-                with k3:
-                    st.metric("🚫 Vetos", f"{res.get('taxa_desdoblament_vetos', 0)}%", "Plats comodí")
-                with k4:
-                    st.metric("🍳 Eines i Forn", f"{res.get('taxa_equipament_forn', 100)}%", "Adaptació 100%")
-                with k5:
-                    st.metric("⚡ Latència", f"{res.get('latencia_mitjana_s', 0)} s", selected_model)
+                if "error" in res:
+                    st.error(f"❌ Error en executar la bateria de proves: {res.get('error')}")
+                else:
+                    c_res_header, c_res_dl = st.columns([7, 3])
+                    with c_res_header:
+                        st.markdown("### 📊 Resultats del Benchmarking")
+                    with c_res_dl:
+                        md_report = generate_harness_markdown_report(res, is_single=False)
+                        st.download_button(
+                            label="📥 Descarregar Informe (.md)",
+                            data=md_report,
+                            file_name=f"informe_laboratori_ia_{res.get('model_avaluat', 'gemini')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                            mime="text/markdown",
+                            use_container_width=True,
+                            key="btn_download_harness_md"
+                        )
                     
-                st.markdown("#### 📋 Detall de cada Test")
-                for r in res.get("detall_resultats", []):
-                    icon = "✅" if r.get("exit_global") else "❌"
-                    with st.expander(f"{icon} **{r.get('id')}**: {r.get('titol')} ({r.get('latencia_s')}s)", expanded=not r.get("exit_global")):
-                        if r.get("exit_global"):
-                            st.success("✨ **Test superat amb èxit.** Cap al·lèrgen, vetos degudament desdoblats i regles nutricionals respectades.")
-                        else:
-                            st.error(f"⚠️ **Infraccions detectades:**")
-                            for err in r.get("errors", []):
-                                st.markdown(f"- 🔴 {err}")
-                                
-                        if r.get("resposta_json"):
-                            with st.expander("👁️ Veure JSON generat per la IA", expanded=False):
-                                st.json(r.get("resposta_json"))
-                                
+                    k1, k2, k3, k4, k5 = st.columns(5)
+                    with k1:
+                        st.metric("🏆 Èxit Global", f"{res.get('percentatge_exit', 0)}%", f"{res.get('proves_superades', 0)}/{res.get('total_proves', 0)} passats")
+                    with k2:
+                        st.metric("🛡️ Al·lèrgies", f"{res.get('taxa_seguretat_alergies', 0)}%", "Tolerància 0%")
+                    with k3:
+                        st.metric("🚫 Vetos", f"{res.get('taxa_desdoblament_vetos', 0)}%", "Plats comodí")
+                    with k4:
+                        st.metric("🍳 Eines i Forn", f"{res.get('taxa_equipament_forn', 100)}%", "Adaptació 100%")
+                    with k5:
+                        st.metric("⚡ Latència", f"{res.get('latencia_mitjana_s', 0)} s", selected_model)
+                        
+                    st.markdown("#### 📋 Detall de cada Test")
+                    for r in res.get("detall_resultats", []):
+                        icon = "✅" if r.get("exit_global") else "❌"
+                        with st.expander(f"{icon} **{r.get('id')}**: {r.get('titol')} ({r.get('latencia_s')}s)", expanded=not r.get("exit_global")):
+                            if r.get("exit_global"):
+                                st.success("✨ **Test superat amb èxit.** Cap al·lèrgen, vetos degudament desdoblats i regles nutricionals respectades.")
+                            else:
+                                st.error(f"⚠️ **Infraccions detectades:**")
+                                for err in r.get("errors", []):
+                                    st.markdown(f"- 🔴 {err}")
+                                    
+                            if r.get("resposta_json"):
+                                with st.expander("👁️ Veure JSON generat per la IA", expanded=False):
+                                    st.json(r.get("resposta_json"))
+                                    
             # Mostra de Resultat Individual
             elif "harness_single_result" in st.session_state and isinstance(st.session_state.harness_single_result, dict):
                 sr = st.session_state.harness_single_result
