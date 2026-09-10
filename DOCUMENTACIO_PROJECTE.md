@@ -29,8 +29,7 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
    - `👨‍👩‍👧‍👦 Família`: Membres de la llar amb data de naixement europea (`DD/MM/AAAA`), recàlcul automàtic d'edat en anys, al·lèrgies mèdiques (bloqueig estricte), vetos/aversions personals (desdoblament), plats comodí favorits i interruptor d'activació (`🟢 Present a la llar` vs `⚪ Fora de la llar`).
    - `🍽️ Menús i Nutrició`: 
      * Regles de salut (màxim carns vermelles, mínim peix i llegums, màxim sopars d'embotits), control d'hidrats consecutius, disponibilitat del forn i format de planificació.
-     * **🍳 Aparells i Eines Disponibles**: Selector visual amb 14 eines de cuina clau (`forn`, `microones`, `airfryer`, `bascula`, `minipimer`, `batedora_vas`, `motlles_silicona`, `olla_pressio`, `liquadora`, `tallafiambres`, `robot_cuina`, `picadora`, `sifo_n2o`, `mandolina`) amb miniatures d'estudi homogènies i ampliació modal interactiva al fer clic. El nivell culinari de les receptes proposades per la IA s'adapta directament a les eines disponibles.
-   - `🧪 Laboratori IA (Harness)`: Banc de proves integrat per avaluar la precisió, seguretat d'al·lèrgies mèdiques, gestió de vetos i adaptació a l'equipament dels models Gemini, amb **descàrrega d'informes en format Markdown (.md)**.
+     * **🍳 Aparells i Eines Disponibles**: Selector visual amb 14 eines de cuina clau (`forn`, `microones`, `airfryer`, `bascula`, `minipimer`, `batedora_vas`, `motlles_silicona`, `olla_pressio`, `liquadora`, `tallafiambres`, `robot_cuina`, `picadora`, `sifo_n2o`, `mandolina`) amb miniatures d'estudi homogènies i ampliació modal interactiva   - `🧪 Laboratori IA (Harness)`: Banc de proves integrat per avaluar la precisió, seguretat d'al·lèrgies mèdiques, gestió de vetos i adaptació a l'equipament dels models Gemini, amb **execució en segon pla (asíncrona)** i **descàrrega d'informes en format Text (.txt)**.
    - `🤝 Tutelats`, `🏦 Bancs`, `🎨 Aspecte i Tema`, `🔘 Icones d'inici`, `🌐 Idiomes`.
 2. **📊 Dashboard General**: `modules/dashboard.py` *(Icona pantalla + gràfic)* - Vista de panell principal amb targetes de saldos bancaris (BBVA, La Caixa, etc.), resum mensual d'ingressos i despeses de l'any i gràfics comparatius.
 
@@ -51,7 +50,7 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari familiar, esdeveniments i sincronització.
 9. **💊 Control Medicació**: `modules/medicacio.py` *(Icona pastilles / flascó)* - Pautes mèdiques, dosis, horaris i farmaciola.
 10. **🍽️ Menús i Cuina**: `modules/menjar.py` *(Icona coberts)* - Gestió gastronòmica i nutricional intel·ligent:
-    - `🧠 Recomanador de Menús`: Generació setmanal amb IA (`gemini-2.5-flash`) seguint al·lèrgies mèdiques estrictes, desdoblament de vetos personals (assignació automàtica de plat comodí sense imposar-lo a la resta), regles de freqüència nutricional (carn vermella, peix, llegums, hidrats no consecutius), eines de cuina disponibles i membres actius/fora de la llar.
+    - `🧠 Recomanador de Menús`: Generació setmanal amb IA (`gemini-2.5-flash`) seguint al·lèrgies mèdiques strictly, desdoblament de vetos personals (assignació automàtica de plat comodí sense imposar-lo a la resta), regles de freqüència nutricional (carn vermella, peix, llegums, hidrats no consecutius), eines de cuina disponibles i membres actius/fora de la llar.
     - `📲 Consens Familiar per WhatsApp`: Botó d'un sol clic (`wa.me/?text=...`) per compartir el resum del menú amb el grup familiar abans de validar la compra.
     - `⏱️ Batch Cooking & Mise en Place`: Guia de preparacions base de diumenge (patates probiòtiques amb midó resistent, brous concentrats, sofregits) i sincronització d'ingredients a comprar.
     - `📖 Llibre de Receptes`: Escalat automàtic d'ingredients per nombre de comensals (base 3) i valoració d'estrelles (0-5) per membre de la família.
@@ -79,11 +78,12 @@ Dashboard/
 ├── core/
 │   ├── auth.py               # Autenticació amb contrasenya i token hash
 │   ├── db.py                 # Connexió i operacions CRUD a Supabase
-│   ├── config_manager.py     # Gestor de configuració JSON i perfil familiar
+│   ├── config_manager.py     # Gestor de configuració JSON i perfil familiar (Ruta absoluta garanteix focalització a core/config.json)
 │   ├── config.json           # Configuració de categories, comptes, família, eines i paràmetres
-│   └── harness.py            # Motor d'avaluació, generació de menús IA i exportador d'informes Markdown
+│   └── harness.py            # Motor d'avaluació IA, execució asíncrona en segon pla i generador d'informes .txt
 ├── data/
-│   └── harness_menu_cases.json # Banc d'11 casos de prova exhaustius per al test de menús
+│   ├── harness_menu_cases.json # Banc d'11 casos de prova exhaustius per al test de menús
+│   └── harness_status.json     # Estat de progrés en temps real per a l'execució de proves en segon pla
 ├── imatges/
 │   ├── logo xiquiHouse.png   # Logotip interactiu transparent (1024x682)
 │   ├── fons xiquiHouse.jpg   # Fons de pantalla complet per a la Home
@@ -134,6 +134,9 @@ Dashboard/
   - *Al·lèrgia mèdica:* Bloqueig estricte de la recepta completa per a tothom.
   - *Veto personal:* Quan un membre no menja un aliment (ex. fetge o casqueria) però la família sí, el planificador no bloqueja el plat familiar i assigna automàticament un **plat alternatiu ràpid parellat** (*comodí*, ex. pit de pollastre o truita) per a aquell membre, compartint la mateixa guarnició per no duplicar temps de cuina.
 - **Membres Actius vs Fora de la Llar:** Permet activar o desactivar la participació de membres als menús.
+- **Persistència i Neteja d'Estat a Admin (`modules/admin.py`):**
+  - Per evitar que Streamlit restableixi valors erronis residuals o caducats en editar membres de la família (noms, naixement, al·lèrgies o vetos), el formulari de família neteja les claus de sessió (`f_`) de `st.session_state` en desar, afegir o esborrar, forçant una lectura neta des de `core/config.json`.
+  - Utilitza IDs únics i estables (`mem_id`) i conversió bidireccional entre cadenes de text i llistes estructurades Python.
 
 ### 4.5 Mise en Place Setmanal de Bases i Connexió amb l'Stock (`modules/compres.py`)
 - **Derivació Top-Down:** A partir del menú setmanal aprovat, el sistema genera la guia de *Batch Prep* de diumenge (patates probiòtiques amb midó resistent, caldos casolans concentrats, sofregit mare, verdures rostides).
@@ -146,13 +149,19 @@ Dashboard/
 
 ## 5. Laboratori IA (Harness) i Benchmarking (`core/harness.py`)
 - **Dataset mestre:** 11 casos de prova a `data/harness_menu_cases.json` que cobreixen al·lèrgies creuades, desdoblament de vetos, stock disponible, peticions per consens, puntuacions històriques baixes, disponibilitat del forn i restriccions d'equipament de cuina.
-- **Avaluadors deterministes:**
-  - *Seguretat Mèdica:* Tolerància 0 a al·lèrgens (amb neteja d'adaptacions parentètiques com `(sense lactosa...)` i alternatives veganes com `mozzarella vegana`).
+- **Execució Asíncrona en Segon Pla (Background Execution):**
+  - Permet llançar la bateria de proves en un fil secundari (`threading.Thread`) i continuar utilitzant l'aplicació lliurement sense bloquejar la interfície.
+  - Registra l'estat de progrés en temps real, l'hora d'inici i la durada transcorreguda (`_format_duration_s`) a `data/harness_status.json`.
+- **Avaluadors deterministes i Correccions de Regex:**
+  - *Seguretat Mèdica:* Tolerància 0 a al·lèrgens. S'ha millorat `netejar_termes_segurs()` a `core/harness.py` per desestimar compostos aptes (com `formatge sense lactosa`, `mozzarella sense lactosa`, `llet sense lactosa`, `formatge vega`) ABANS de processar expressions prohibides generics, evitant falsos positius en la qualificació de seguretat.
   - *Desdoblament:* Comprovació de creació obligatòria de plat alternatiu quan hi ha un veto.
   - *Calendari d'Hidrats:* Prohibició de dies consecutius de pasta o arròs (fins i tot en fideus de sopa).
   - *Equipament:* Verificació que no es proposin tècniques d'aparells absents (`sifo_n2o`, `robot_cuina`, `airfryer`, `liquadora`, `tallafiambres`, `olla_pressio`).
-- **Exportació d'Informes Markdown (.md):** Funció `generate_harness_markdown_report` per descarregar informes complets del rendiment del model amb taules de mètriques i desglossament per test.
-- **Configuració de Tokens:** `maxOutputTokens: 16384` i `thinkingBudget: 512` a `gemini-2.5-flash` per evitar truncaments estructurals del JSON.
+- **Exportació d'Informes en Text (.txt):** Funció `generate_harness_txt_report` per descarregar informes complets i tests individuals en format `.txt` pla, aptes per compartir fàcilment.
+- **Optimització de Models i Latències:**
+  - Suport per a models actius: `gemini-2.5-flash` (recomanat), `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-flash-latest`.
+  - Eliminació de models obsolets que donaven error HTTP 404 (`gemini-2.0-flash`, `gemini-1.5-flash`).
+  - Retirada del paràmetre `thinkingBudget` per eliminar la latència innecessària i accelerar les respostes.
 
 ---
 
