@@ -589,24 +589,24 @@ def render():
             st.markdown("<div style='font-size:0.86rem; color:#94a3b8; margin-bottom:12px;'>El nivell de complexitat i les tècniques de les receptes proposades per la IA s'adaptaran exclusivament a l'equipament disponible a la llar.</div>", unsafe_allow_html=True)
             
             CATALEG_EINES_CUINA = [
-                {"id": "forn", "nom": "Forn", "icona": "🥧", "desc": "Rostits, gratinats, pastissos i pizzes"},
-                {"id": "microones", "nom": "Microones", "icona": "🍲", "desc": "Escalfat ràpid i vapor"},
-                {"id": "airfryer", "nom": "Airfryer", "icona": "🍟", "desc": "Fregits saludables i cruixents"},
-                {"id": "nevera", "nom": "Nevera", "icona": "🥛", "desc": "Conservació i postres freds"},
-                {"id": "congelador", "nom": "Congelador", "icona": "🧊", "desc": "Batch cooking i estoc llarg"},
-                {"id": "bascula", "nom": "Bàscula de cuina", "icona": "⚖️", "desc": "Pesat precís de racions"},
-                {"id": "minipimer", "nom": "Minipimer", "icona": "🪄", "desc": "Cremes, purés i maioneses"},
-                {"id": "batedora_vas", "nom": "Batedora de vas", "icona": "🥤", "desc": "Batuts, smoothies i gaspatxos"},
-                {"id": "motlles_silicona", "nom": "Motlles de silicona", "icona": "🧁", "desc": "Rebosteria i flameres"},
-                {"id": "morter", "nom": "Morter", "icona": "🌿", "desc": "Picades tradicionals i allioli"},
-                {"id": "olla_pressio", "nom": "Olla a pressió", "icona": "♨️", "desc": "Llegums i estofats exprés"},
-                {"id": "liquadora", "nom": "Liquadora", "icona": "🥕", "desc": "Sucs naturals i liquats"},
-                {"id": "tallafiambres", "nom": "Tallafiambres", "icona": "🥓", "desc": "Talls fins d'embotits"},
-                {"id": "robot_cuina", "nom": "Robot de cuina", "icona": "🤖", "desc": "Emulsions i cocció guiada"},
-                {"id": "picadora", "nom": "Picadora", "icona": "🥩", "desc": "Picar carn i sofregits"},
-                {"id": "sifo_n2o", "nom": "Sifó N2O", "icona": "🍾", "desc": "Espumes d'avantguarda"},
-                {"id": "expremedor", "nom": "Espremedor", "icona": "🍊", "desc": "Sucs de cítrics i marinats"},
-                {"id": "mandolina", "nom": "Mandolina", "icona": "🥔", "desc": "Talls laminats precisos"},
+                {"id": "forn", "nom": "Forn", "foto": "https://images.unsplash.com/photo-1584990347449-397a61d19b78?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Rostits, gratinats, pastissos i pizzes"},
+                {"id": "microones", "nom": "Microones", "foto": "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Escalfat ràpid i vapor"},
+                {"id": "airfryer", "nom": "Airfryer", "foto": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Fregits saludables i cruixents"},
+                {"id": "nevera", "nom": "Nevera", "foto": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Conservació i postres freds"},
+                {"id": "congelador", "nom": "Congelador", "foto": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Batch cooking i estoc llarg"},
+                {"id": "bascula", "nom": "Bàscula de cuina", "foto": "https://images.unsplash.com/photo-1594911772125-07fc7a2d8d9f?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Pesat precís de racions"},
+                {"id": "minipimer", "nom": "Minipimer", "foto": "https://images.unsplash.com/photo-1585515320310-259814833e62?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Cremes, purés i maioneses"},
+                {"id": "batedora_vas", "nom": "Batedora de vas", "foto": "https://images.unsplash.com/photo-1570222094114-d054a817e56b?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Batuts, smoothies i gaspatxos"},
+                {"id": "motlles_silicona", "nom": "Motlles de silicona", "foto": "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Rebosteria i flameres"},
+                {"id": "morter", "nom": "Morter", "foto": "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Picades tradicionals i allioli"},
+                {"id": "olla_pressio", "nom": "Olla a pressió", "foto": "https://images.unsplash.com/photo-1544233726-9f1d2b27be8b?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Llegums i estofats exprés"},
+                {"id": "liquadora", "nom": "Liquadora", "foto": "https://images.unsplash.com/photo-1622484216802-5365e905d419?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Sucs naturals i liquats"},
+                {"id": "tallafiambres", "nom": "Tallafiambres", "foto": "https://images.unsplash.com/photo-1608039755401-742074f0548d?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Talls fins d'embotits"},
+                {"id": "robot_cuina", "nom": "Robot de cuina", "foto": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Emulsions i cocció guiada"},
+                {"id": "picadora", "nom": "Picadora", "foto": "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Picar carn i sofregits"},
+                {"id": "sifo_n2o", "nom": "Sifó N2O", "foto": "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Espumes d'avantguarda"},
+                {"id": "expremedor", "nom": "Espremedor", "foto": "https://images.unsplash.com/photo-1589733955941-5eeaf752f6dd?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Sucs de cítrics i marinats"},
+                {"id": "mandolina", "nom": "Mandolina", "foto": "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Talls laminats precisos"},
             ]
             
             cur_eines = cfg.get("eines_cuina", {})
@@ -619,9 +619,14 @@ def render():
                 val_def = cur_eines.get(e_id, True if e_id in ["forn", "microones", "airfryer", "nevera", "congelador", "bascula", "minipimer", "batedora_vas", "motlles_silicona", "morter", "olla_pressio", "picadora", "expremedor", "mandolina"] else False)
                 with col_e:
                     with st.container(border=True):
-                        c_ico, c_chk = st.columns([1, 3.5], vertical_alignment="center")
+                        c_ico, c_chk = st.columns([1.1, 3.4], vertical_alignment="center")
                         with c_ico:
-                            st.markdown(f"<div style='font-size:1.8rem; text-align:center;'>{eina['icona']}</div>", unsafe_allow_html=True)
+                            st.markdown(
+                                f"""<div style='display:flex; justify-content:center; align-items:center;'>
+                                    <img src='{eina['foto']}' alt='{eina['nom']}' loading='lazy' style='width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15);' />
+                                </div>""",
+                                unsafe_allow_html=True
+                            )
                         with c_chk:
                             chk_val = st.checkbox(f"**{eina['nom']}**", value=bool(val_def), key=f"chk_eina_{e_id}")
                             st.caption(eina["desc"])
