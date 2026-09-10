@@ -642,19 +642,19 @@ def render():
             
             CATALEG_EINES_CUINA = [
                 {"id": "forn", "nom": "Forn", "foto": "imatges/forn.png", "desc": "Rostits, gratinats, pastissos i pizzes"},
-                {"id": "microones", "nom": "Microones", "foto": "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Escalfat ràpid i vapor"},
-                {"id": "airfryer", "nom": "Airfryer", "foto": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Fregits saludables i cruixents"},
-                {"id": "bascula", "nom": "Bàscula de cuina", "foto": "https://images.unsplash.com/photo-1594911772125-07fc7a2d8d9f?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Pesat precís de racions"},
-                {"id": "minipimer", "nom": "Minipimer", "foto": "https://images.unsplash.com/photo-1585515320310-259814833e62?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Cremes, purés i maioneses"},
-                {"id": "batedora_vas", "nom": "Batedora de vas", "foto": "https://images.unsplash.com/photo-1570222094114-d054a817e56b?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Batuts, smoothies i gaspatxos"},
-                {"id": "motlles_silicona", "nom": "Motlles de silicona", "foto": "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Rebosteria i flameres"},
-                {"id": "olla_pressio", "nom": "Olla a pressió", "foto": "https://images.unsplash.com/photo-1544233726-9f1d2b27be8b?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Llegums i estofats exprés"},
-                {"id": "liquadora", "nom": "Liquadora", "foto": "https://images.unsplash.com/photo-1622484216802-5365e905d419?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Sucs naturals i liquats"},
-                {"id": "tallafiambres", "nom": "Tallafiambres", "foto": "https://images.unsplash.com/photo-1608039755401-742074f0548d?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Talls fins d'embotits"},
-                {"id": "robot_cuina", "nom": "Robot de cuina", "foto": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Emulsions i cocció guiada"},
-                {"id": "picadora", "nom": "Picadora", "foto": "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Picar carn i sofregits"},
-                {"id": "sifo_n2o", "nom": "Sifó N2O", "foto": "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Espumes d'avantguarda"},
-                {"id": "mandolina", "nom": "Mandolina", "foto": "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=200&h=200&q=80", "desc": "Talls laminats precisos"},
+                {"id": "microones", "nom": "Microones", "foto": "imatges/microones.jpg", "desc": "Escalfat ràpid i vapor"},
+                {"id": "airfryer", "nom": "Airfryer", "foto": "imatges/airfryer.jpg", "desc": "Fregits saludables i cruixents"},
+                {"id": "bascula", "nom": "Bàscula de cuina", "foto": "imatges/bascula.jpg", "desc": "Pesat precís de racions"},
+                {"id": "minipimer", "nom": "Minipimer", "foto": "imatges/minipimer.jpg", "desc": "Cremes, purés i maioneses"},
+                {"id": "batedora_vas", "nom": "Batedora de vas", "foto": "imatges/batedora_vas.jpg", "desc": "Batuts, smoothies i gaspatxos"},
+                {"id": "motlles_silicona", "nom": "Motlles de silicona", "foto": "imatges/motlles_silicona.jpg", "desc": "Rebosteria i flameres"},
+                {"id": "olla_pressio", "nom": "Olla a pressió", "foto": "imatges/olla_pressio.jpg", "desc": "Llegums i estofats exprés"},
+                {"id": "liquadora", "nom": "Liquadora", "foto": "imatges/liquadora.jpg", "desc": "Sucs naturals i liquats"},
+                {"id": "tallafiambres", "nom": "Tallafiambres", "foto": "imatges/tallafiambres.jpg", "desc": "Talls fins d'embotits"},
+                {"id": "robot_cuina", "nom": "Robot de cuina", "foto": "imatges/robot_cuina.jpg", "desc": "Emulsions i cocció guiada"},
+                {"id": "picadora", "nom": "Picadora", "foto": "imatges/picadora.jpg", "desc": "Picar carn i sofregits"},
+                {"id": "sifo_n2o", "nom": "Sifó N2O", "foto": "imatges/sifo_n2o.jpg", "desc": "Espumes d'avantguarda"},
+                {"id": "mandolina", "nom": "Mandolina", "foto": "imatges/mandolina.jpg", "desc": "Talls laminats precisos"},
             ]
             
             cur_eines = cfg.get("eines_cuina", {})
