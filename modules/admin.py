@@ -815,7 +815,7 @@ def render():
             
             c_m1, c_m2 = st.columns([6, 4])
             with c_m1:
-                model_options = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]
+                model_options = ["gemini-2.5-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]
                 selected_model = st.selectbox("Model d'IA a avaluar:", model_options, index=0, key="harness_model_sel", help="Selecciona el model de Google Gemini per al test. Si un model dóna límit de quota (429), pots provar-ne un altre.")
             with c_m2:
                 default_key = st.secrets.get("GEMINI_API_KEY", "")

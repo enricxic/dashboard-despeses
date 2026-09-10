@@ -225,7 +225,7 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
     start_time = time.time()
     
     models_to_try = [model_name]
-    for alt in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]:
+    for alt in ["gemini-2.5-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]:
         if alt not in models_to_try:
             models_to_try.append(alt)
         
@@ -240,18 +240,15 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
             ],
             "generationConfig": {
                 "responseMimeType": "application/json",
-                "temperature": 0.2,
-                "maxOutputTokens": 16384,
-                "thinkingConfig": {
-                    "thinkingBudget": 512
-                }
+                "temperature": 0.1,
+                "maxOutputTokens": 8192
             }
         }
         
-        max_attempts = 4
+        max_attempts = 2
         for attempt in range(max_attempts):
             try:
-                resp = requests.post(url, json=payload, timeout=60)
+                resp = requests.post(url, json=payload, timeout=45)
                 elapsed = round(time.time() - start_time, 2)
                 
                 if resp.status_code == 200:
@@ -262,14 +259,16 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
                         return True, content, elapsed
                     return False, "Resposta buida de Gemini", elapsed
                 elif resp.status_code in [503, 429]:
-                    time.sleep(5.0 * (attempt + 1))
+                    if attempt < max_attempts - 1:
+                        time.sleep(2.0)
                     last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
                     continue
                 else:
                     last_error = f"Error HTTP {resp.status_code} ({current_model}): {resp.text}"
                     break
             except Exception as e:
-                time.sleep(1.5 * (attempt + 1))
+                if attempt < max_attempts - 1:
+                    time.sleep(1.0)
                 last_error = f"Excepció en cridar Gemini ({current_model}): {str(e)}"
                 
     elapsed = round(time.time() - start_time, 2)
@@ -340,8 +339,9 @@ def netejar_termes_segurs(text: str) -> str:
     t = text.lower()
     
     # 1. Netejar qualsevol indicació adaptativa entre parèntesis
-    t = re.sub(r'\([^\)]*sense\s+(?:lactosa|gluten|llet|l[àa]ctics|prote[ïi]na de llet|fruits secs)[^\)]*\)', '[TERME_SEGUR]', t)
+    t = re.sub(r'\([^\)]*sense\s+[^\)]*\)', '[TERME_SEGUR]', t)
     t = re.sub(r'\([^\)]*(?:cel[íi]ac|veg[àa]|vegana|apte|adaptat|sense lactosa)[^\)]*\)', '[TERME_SEGUR]', t)
+    t = re.sub(r'\bsense\s+[a-zà-ú0-9_\'-]+', '[TERME_SEGUR]', t)
     
     # 2. Netejar combinacions de nom d'aliment seguit de 'vegà/vegana/vegetal/sense lactosa/gluten'
     t = re.sub(r'\b(mozzarella|parmes[àa]|formatge|iogurt|llet|nata|mantega|crema de llet)\s+(?:veg[àa]|vegana|vegetal|sense lactosa|de coco|de soja|d\'ametlla|d\'avena|de civada|d\'arr[òo]s)', '[TERME_SEGUR]', t)
