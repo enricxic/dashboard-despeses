@@ -1,3 +1,4 @@
+# Dashboard XiquiHouse v2 - Build 2026.09.10-v3
 import streamlit as st
 import importlib
 import base64
