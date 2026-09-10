@@ -43,6 +43,7 @@ DEFAULT_CONFIG = {
         "min_llegums": 2,
         "max_embotits_sopar": 2,
         "no_repetir_hidrats": True,
+        "us_forn": "Només cap de setmana (Dissabte i Diumenge)",
         "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
         "comensals_defecte": 3
     },

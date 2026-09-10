@@ -587,6 +587,9 @@ def render():
                     with c_r3:
                         max_embotits = st.number_input("Màx. sopars embotits / freds", min_value=0, max_value=7, value=int(regles_cfg.get("max_embotits_sopar", 2)), key="m_max_embotits")
                         chk_hidrats = st.checkbox("🚫 Zero repeticions d'hidrats en dies consecutius", value=True, key="m_chk_hidrats")
+                        forn_options = ["Cada dia / Qualsevol dia", "Només cap de setmana (Dissabte i Diumenge)"]
+                        def_forn = regles_cfg.get("us_forn", forn_options[1])
+                        sel_forn = st.selectbox("🔥 Disponibilitat del forn", forn_options, index=forn_options.index(def_forn) if def_forn in forn_options else 1, key="m_sel_forn")
 
                 with st.expander("📌 3. Fixar Plats per Dies, Estoc de Rebost i Peticions (Poder Total)", expanded=True):
                     st.markdown("**🗓️ Fixació de plats o preferències per a cada dia de la setmana:**")
@@ -648,7 +651,8 @@ def render():
                                     "min_peix": min_peix,
                                     "min_llegums": min_lleg,
                                     "max_embotits_sopar": max_embotits,
-                                    "no_repetir_hidrats": chk_hidrats
+                                    "no_repetir_hidrats": chk_hidrats,
+                                    "us_forn": sel_forn
                                 },
                                 "stock_disponible": stock_list,
                                 "peticions_setmanals": peticions_list,

@@ -36,11 +36,13 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
         perfil_txt += f"- {m.get('nom')} ({m.get('rol')}, {m.get('edat')} anys) [{actiu_str}]: Al·lèrgies mèdiques: {alergies_str} | Vetos personals: {vetos_str} | Plats comodí: {comodins_str}\n"
 
     regles = test_case.get("regles_llar", {})
+    us_forn = regles.get("us_forn", "Només cap de setmana (Dissabte i Diumenge)")
     regles_txt = f"""- Màxim carn vermella: {regles.get('max_carn_vermella', 1)} cop per setmana.
 - Mínim peix: {regles.get('min_peix', 2)} cops per setmana.
 - Mínim llegums: {regles.get('min_llegums', 2)} cops per setmana.
 - Màxim sopars d'embotits/freds: {regles.get('max_embotits_sopar', 2)} cops per setmana.
-- No repetir hidrats de carboni (arròs, pasta, patata com a base) en dies consecutius."""
+- No repetir hidrats de carboni (arròs, pasta, patata com a base) en dies consecutius.
+- Disponibilitat del forn: {us_forn}."""
 
     stock_list = test_case.get("stock_disponible", [])
     stock_txt = "Cap"
@@ -109,6 +111,11 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 2. SOPARS FREDS / EMBOTITS: Màxim el límit indicat (habitualment MÀXIM 2 COPS per setmana).
 3. PEIX I LLEGUMS: Assegura el mínim de cops setmanals (habitualment mínim 2 de peix i mínim 2 de llegums).
 4. ZERO REPETICIONS D'HIDRATS EN DIES CONSECUTIUS: Està TOTALMENT PROHIBIT posar pasta (o pizza/fideus/macarrons) o arròs en dos dies consecutius.
+
+### 🔥 REGLA D'ÚS DEL FORN I PRIORITAT DE PETICIONS:
+1. Regla d'ús del forn configurada: '{us_forn}'.
+2. Si la regla és 'Només cap de setmana (Dissabte i Diumenge)': Els plats automàtics que requereixin forn (rostits, peix al forn, gratinats, pastissos al forn, etc.) s'han de programar EXCLUSIVAMENT en dissabte o diumenge. De dilluns a divendres prioritza coccions ràpides (planxa, cassola, vapor, saltats).
+3. ⚡ EXCEPCIÓ DE PRIORITAT ABSOLUTA (PETICIÓ FAMILIAR): Si un membre de la família ha demanat un plat o s'ha fixat un plat que requereix forn per a un dia entre setmana (com ara 'Solomillo al forn dimecres' o 'Lluç al forn dijous'), la voluntat de la família TÉ PRIORITAT ABSOLUTA. En aquest cas, OBVIA la limitació del forn per a aquest àpat concret i programa obligatòriament el plat sol·licitat.
 
 ### 🚫 PROHIBICIÓ ESTRICTA: EL 2N PLAT MAI POT SER FRUITA NI IOGURT:
 - El camp "segon" ÉS SEMPRE UNA PROTEÏNA O PLAT PRINCIPAL (peix, aus, carn magra, ous, tofu o llegums).

@@ -574,6 +574,17 @@ def render():
             r_no_rep = st.toggle("🚫 Evitar hidrats de carboni idèntics dos dies seguits (Arròs / Pasta)", value=bool(regles.get("no_repetir_hidrats", True)), help="Si dilluns es menja arròs, dimarts no es podrà programar arròs de nou.")
             
             st.markdown("---")
+            st.markdown("#### 🔥 Ús del Forn")
+            st.markdown("<div style='font-size:0.86rem; color:#94a3b8; margin-bottom:8px;'>Configura la disponibilitat habitual del forn. Si un membre de la família fa una petició concreta d'un plat al forn entre setmana (ex. solomillo al forn dimecres), aquesta petició tindrà prioritat absoluta i obviarà la limitació.</div>", unsafe_allow_html=True)
+            forn_options = [
+                "Cada dia / Qualsevol dia",
+                "Només cap de setmana (Dissabte i Diumenge)"
+            ]
+            cur_forn = regles.get("us_forn", forn_options[1])
+            forn_idx = forn_options.index(cur_forn) if cur_forn in forn_options else 1
+            r_forn = st.selectbox("Disponibilitat habitual del forn", forn_options, index=forn_idx, help="Si es tria 'Només cap de setmana', els plats automàtics que requereixen forn només es programaran dissabte o diumenge, excepte si hi ha petició expressa.")
+            
+            st.markdown("---")
             st.markdown("#### 📅 Format i Hàbits de Planificació")
             c_p1, c_p2 = st.columns([7, 3])
             with c_p1:
@@ -596,6 +607,7 @@ def render():
                     "min_llegums": r_lleg,
                     "max_embotits_sopar": r_emb,
                     "no_repetir_hidrats": r_no_rep,
+                    "us_forn": r_forn,
                     "mode_apats": r_mode,
                     "comensals_defecte": r_com
                 }
