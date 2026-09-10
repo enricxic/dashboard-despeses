@@ -728,3 +728,150 @@ def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", progre
         "model_avaluat": model_name,
         "detall_resultats": results
     }
+
+def generate_harness_markdown_report(data: Dict[str, Any], is_single: bool = False) -> str:
+    """Genera un informe exhaustiu en format Markdown (.md) a partir dels resultats del benchmarking."""
+    from datetime import datetime
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    lines = []
+    lines.append("# 🧪 Informe d'Avaluació del Laboratori IA (Harness) - XiquiHouse")
+    lines.append(f"\n- **Data i hora de generació:** `{now_str}`")
+    
+    if is_single:
+        # Informe d'un sol cas
+        tc_id = data.get("id", "Cas desconegut")
+        titol = data.get("titol", "")
+        exit_str = "✅ SUPERAT (PASS)" if data.get("exit_global") else "❌ FALLAT (FAIL)"
+        lines.append(f"- **Tipus d'execució:** Test Individual (`{tc_id}`)")
+        lines.append(f"- **Resultat Global:** **{exit_str}**")
+        lines.append(f"- **Temps de resposta (Latència):** `{data.get('latencia_s', 0)} s`")
+        lines.append("\n---\n")
+        
+        lines.append("## 📊 Puntuacions per Criteri")
+        lines.append("| Criteri d'Avaluació | Puntuació | Estat |")
+        lines.append("| :--- | :---: | :---: |")
+        
+        def format_score(sc: float) -> str:
+            if sc == 1.0: return f"100% | ✅ Correcte"
+            elif sc >= 0.75: return f"{int(sc*100)}% | ⚠️ Acceptable"
+            return f"{int(sc*100)}% | ❌ Infracció"
+            
+        lines.append(f"| **Seguretat Mèdica d'Al·lèrgies** | {format_score(data.get('puntuacio_seguretat', 0.0))}")
+        lines.append(f"| **Gestió de Vetos i Desdoblament** | {format_score(data.get('puntuacio_vetos', 0.0))}")
+        lines.append(f"| **Freqüències Nutricionals de la Llar** | {format_score(data.get('puntuacio_regles', 0.0))}")
+        lines.append(f"| **Varietat i Calendari d'Hidrats** | {format_score(data.get('puntuacio_varietat', 0.0))}")
+        lines.append(f"| **Adaptació a Eines de Cuina i Forn** | {format_score(data.get('puntuacio_eines', 1.0))}")
+        
+        lines.append("\n---\n")
+        lines.append("## 🔍 Detall d'Infraccions i Observacions")
+        errors = data.get("errors", [])
+        if not errors:
+            lines.append("✨ **Cap incidència detectada.** El model ha complert tots els requisits i restriccions mèdiques.")
+        else:
+            for err in errors:
+                lines.append(f"- ⚠️ {err}")
+                
+        # Menú
+        resp_json = data.get("resposta_json", {})
+        if resp_json and "menu_setmanal" in resp_json:
+            lines.append("\n---\n")
+            lines.append("## 🍽️ Proposta de Menú Setmanal Generat")
+            lines.append("| Dia | Dinar (1r - 2n - Postre) | Sopar (1r - 2n - Postre) | Plat Alternatiu |")
+            lines.append("| :--- | :--- | :--- | :--- |")
+            for dia_obj in resp_json.get("menu_setmanal", []):
+                dia_nom = dia_obj.get("dia", "")
+                d = dia_obj.get("dinar", {})
+                s = dia_obj.get("sopar", {})
+                d_str = f"{d.get('primer', '-')} / {d.get('segon', '-')} / {d.get('postre', '-')}"
+                s_str = f"{s.get('primer', '-')} / {s.get('segon', '-')} / {s.get('postre', '-')}"
+                
+                alt_d = d.get("plat_alternatiu")
+                alt_s = s.get("plat_alternatiu")
+                alt_parts = []
+                if alt_d and isinstance(alt_d, dict):
+                    alt_parts.append(f"Dinar: {alt_d.get('per')} ({alt_d.get('plat')})")
+                if alt_s and isinstance(alt_s, dict):
+                    alt_parts.append(f"Sopar: {alt_s.get('per')} ({alt_s.get('plat')})")
+                alt_str = " <br> ".join(alt_parts) if alt_parts else "-"
+                
+                lines.append(f"| **{dia_nom}** | {d_str} | {s_str} | {alt_str} |")
+                
+    else:
+        # Informe de bateria completa
+        model_name = data.get("model_avaluat", "gemini-2.5-flash")
+        total_p = data.get("total_proves", 0)
+        passats = data.get("proves_superades", 0)
+        pct_exit = data.get("percentatge_exit", 0)
+        
+        lines.append(f"- **Model d'IA Avaluat:** `{model_name}`")
+        lines.append(f"- **Total de Proves Executades:** `{total_p}`")
+        lines.append(f"- **Proves Superades amb Èxit:** **`{passats} / {total_p} ({pct_exit}%)`**")
+        lines.append(f"- **Latència Mitjana per Prova:** `{data.get('latencia_mitjana_s', 0)} s`")
+        lines.append("\n---\n")
+        
+        lines.append("## 📊 Resum de Mètriques Globals")
+        lines.append("| Mètrica d'Avaluació | Resultat Global | Objectiu | Estat |")
+        lines.append("| :--- | :---: | :---: | :---: |")
+        
+        def eval_status(val: float, target: float = 100.0) -> str:
+            if val >= target: return "✅ Excel·lent"
+            elif val >= 75.0: return "⚠️ Acceptable"
+            return "❌ A millorar"
+            
+        lines.append(f"| **Taxa d'Èxit Global** | **{pct_exit}%** | 100% | {eval_status(pct_exit)}")
+        lines.append(f"| **Validesa Estructural JSON** | {data.get('taxa_json_valid', 0)}% | 100% | {eval_status(data.get('taxa_json_valid', 0))}")
+        lines.append(f"| **Seguretat Mèdica d'Al·lèrgies** | {data.get('taxa_seguretat_alergies', 0)}% | 100% (Tolerància 0%) | {eval_status(data.get('taxa_seguretat_alergies', 0))}")
+        lines.append(f"| **Desdoblament de Vetos Personals** | {data.get('taxa_desdoblament_vetos', 0)}% | 100% | {eval_status(data.get('taxa_desdoblament_vetos', 0))}")
+        lines.append(f"| **Adaptació a Eines de Cuina i Forn** | {data.get('taxa_equipament_forn', 0)}% | 100% | {eval_status(data.get('taxa_equipament_forn', 0))}")
+        
+        lines.append("\n---\n")
+        lines.append("## 📋 Taula Resum de Casos de Prova")
+        lines.append("| ID | Títol del Cas de Prova | Estat | Latència | Incidències |")
+        lines.append("| :--- | :--- | :---: | :---: | :--- |")
+        
+        for r in data.get("detall_resultats", []):
+            st_icon = "✅ PASS" if r.get("exit_global") else "❌ FAIL"
+            err_count = len(r.get("errors", []))
+            err_txt = f"{err_count} incidències" if err_count > 0 else "Cap"
+            lines.append(f"| `{r.get('id')}` | {r.get('titol')} | **{st_icon}** | `{r.get('latencia_s')}s` | {err_txt} |")
+            
+        lines.append("\n---\n")
+        lines.append("## 🔍 Desglossament Detallat per Cas de Prova")
+        for idx, r in enumerate(data.get("detall_resultats", [])):
+            icon = "✅" if r.get("exit_global") else "❌"
+            lines.append(f"\n### {idx+1}. {icon} {r.get('id')}: {r.get('titol')}")
+            lines.append(f"- **Estat:** `{'SUPERAT' if r.get('exit_global') else 'FALLAT'}` | **Latència:** `{r.get('latencia_s')}s`")
+            
+            errs = r.get("errors", [])
+            if errs:
+                lines.append("- **⚠️ Infraccions detectades:**")
+                for e in errs:
+                    lines.append(f"  - 🔴 {e}")
+            else:
+                lines.append("- **✨ Compliment:** 100% dels criteris i regles de seguretat respectats.")
+                
+            resp_json = r.get("resposta_json", {})
+            if resp_json and "menu_setmanal" in resp_json:
+                lines.append("\n**Menú Generat:**")
+                lines.append("| Dia | Dinar | Sopar | Plat Alternatiu |")
+                lines.append("| :--- | :--- | :--- | :--- |")
+                for dia_obj in resp_json.get("menu_setmanal", []):
+                    dia_nom = dia_obj.get("dia", "")
+                    d = dia_obj.get("dinar", {})
+                    s = dia_obj.get("sopar", {})
+                    d_str = f"{d.get('primer', '-')} / {d.get('segon', '-')}"
+                    s_str = f"{s.get('primer', '-')} / {s.get('segon', '-')}"
+                    
+                    alt_d = d.get("plat_alternatiu")
+                    alt_s = s.get("plat_alternatiu")
+                    alt_parts = []
+                    if alt_d and isinstance(alt_d, dict):
+                        alt_parts.append(f"Dinar: {alt_d.get('per')} ({alt_d.get('plat')})")
+                    if alt_s and isinstance(alt_s, dict):
+                        alt_parts.append(f"Sopar: {alt_s.get('per')} ({alt_s.get('plat')})")
+                    alt_str = " <br> ".join(alt_parts) if alt_parts else "-"
+                    lines.append(f"| {dia_nom} | {d_str} | {s_str} | {alt_str} |")
+                    
+    lines.append("\n\n---\n*Informe generat automàticament pel Laboratori d'IA i Harness Nutricional de XiquiHouse.*")
+    return "\n".join(lines)

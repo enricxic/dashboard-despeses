@@ -825,7 +825,8 @@ def render():
                 else:
                     active_api_key = st.text_input("🔑 Clau d'API Gemini:", type="password", key="harness_key_input")
             
-            from core.harness import load_harness_cases, run_harness_suite, run_harness_single_test
+            from core.harness import load_harness_cases, run_harness_suite, run_harness_single_test, generate_harness_markdown_report
+            from datetime import datetime
             cases = load_harness_cases()
             
             st.write("")
@@ -870,7 +871,20 @@ def render():
             if "harness_results" in st.session_state and isinstance(st.session_state.harness_results, dict):
                 res = st.session_state.harness_results
                 st.markdown("---")
-                st.markdown("### 📊 Resultats del Benchmarking")
+                
+                c_res_header, c_res_dl = st.columns([7, 3])
+                with c_res_header:
+                    st.markdown("### 📊 Resultats del Benchmarking")
+                with c_res_dl:
+                    md_report = generate_harness_markdown_report(res, is_single=False)
+                    st.download_button(
+                        label="📥 Descarregar Informe (.md)",
+                        data=md_report,
+                        file_name=f"informe_laboratori_ia_{res.get('model_avaluat', 'gemini')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                        mime="text/markdown",
+                        use_container_width=True,
+                        key="btn_download_harness_md"
+                    )
                 
                 k1, k2, k3, k4, k5 = st.columns(5)
                 with k1:
@@ -903,7 +917,20 @@ def render():
             elif "harness_single_result" in st.session_state and isinstance(st.session_state.harness_single_result, dict):
                 sr = st.session_state.harness_single_result
                 st.markdown("---")
-                st.markdown(f"### 🎯 Resultat de la Prova: `{sr.get('id')}`")
+                
+                c_s_header, c_s_dl = st.columns([7, 3])
+                with c_s_header:
+                    st.markdown(f"### 🎯 Resultat de la Prova: `{sr.get('id')}`")
+                with c_s_dl:
+                    md_single_report = generate_harness_markdown_report(sr, is_single=True)
+                    st.download_button(
+                        label="📥 Descarregar Test (.md)",
+                        data=md_single_report,
+                        file_name=f"informe_test_{sr.get('id', 'cas')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                        mime="text/markdown",
+                        use_container_width=True,
+                        key="btn_download_single_md"
+                    )
                 
                 if sr.get("exit_global"):
                     st.success(f"✅ **ÈXIT:** El test s'ha superat en {sr.get('latencia_s')} segons.")
