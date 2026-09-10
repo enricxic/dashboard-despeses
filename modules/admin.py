@@ -815,8 +815,8 @@ def render():
             
             c_m1, c_m2 = st.columns([6, 4])
             with c_m1:
-                model_options = ["gemini-2.5-flash", "gemini-flash-latest"]
-                selected_model = st.selectbox("Model d'IA a avaluar:", model_options, index=0, key="harness_model_sel")
+                model_options = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]
+                selected_model = st.selectbox("Model d'IA a avaluar:", model_options, index=0, key="harness_model_sel", help="Selecciona el model de Google Gemini per al test. Si un model dóna límit de quota (429), pots provar-ne un altre.")
             with c_m2:
                 default_key = st.secrets.get("GEMINI_API_KEY", "")
                 if default_key:
@@ -840,6 +840,13 @@ def render():
                 )
 
             from datetime import datetime
+            import time
+            
+            def _format_duration_s(sec: float) -> str:
+                m = int(sec // 60)
+                s = int(sec % 60)
+                return f"{m}m {s:02d}s" if m > 0 else f"{s}s"
+
             cases = load_harness_cases()
             harness_bg = get_harness_status()
             bg_status = harness_bg.get("status", "idle")
@@ -854,13 +861,21 @@ def render():
                 title = prog.get("current_title", "Executant...")
                 pct = float(prog.get("pct", 0.0))
                 
+                # Càlcul del temps transcorregut
+                start_ts = harness_bg.get("start_ts")
+                if start_ts:
+                    elapsed_val = max(0.0, time.time() - float(start_ts))
+                else:
+                    elapsed_val = float(harness_bg.get("elapsed_s", 0.0))
+                elapsed_txt = _format_duration_s(elapsed_val)
+                
                 st.info(f"⏳ **Bateria de proves en curs en segon pla ({curr}/{tot}):** *{title}*")
                 st.progress(pct)
-                st.caption(f"🚀 **Model actiu:** `{harness_bg.get('model_name', selected_model)}` | **Iniciat a:** `{harness_bg.get('started_at', '-')}`\n\n💡 *Pots navegar lliurement per qualsevol altra secció de l'app (despeses, receptes, etc.). L'anàlisi continuarà treballant en segon pla i en tornar aquí trobaràs els resultats a punt.*")
+                st.caption(f"🚀 **Model actiu:** `{harness_bg.get('model_name', selected_model)}` | 🕒 **Iniciat:** `{harness_bg.get('started_at', '-')}` | ⏱️ **Temps transcorregut:** `{elapsed_txt}`\n\n💡 *Pots navegar lliurement per qualsevol altra secció de l'app (despeses, receptes, etc.). L'anàlisi continuarà treballant en segon pla. Fes clic a **Actualitzar Progrés** per veure l'estat actual.*")
                 
                 c_bg_btn1, c_bg_btn2 = st.columns([5, 5])
                 with c_bg_btn1:
-                    if st.button("🔄 Actualitzar Progrés", type="primary", use_container_width=True, key="btn_refresh_harness_bg"):
+                    if st.button("🔄 Actualitzar Progrés", type="primary", use_container_width=True, key="btn_refresh_harness_bg", help="Refresca l'estat des del fil en segon pla"):
                         st.rerun()
                 with c_bg_btn2:
                     if st.button("🛑 Cancel·lar / Reiniciar estat", use_container_width=True, key="btn_clear_harness_bg"):
@@ -929,8 +944,11 @@ def render():
                             st.session_state.harness_results = None
                             st.rerun()
                     
+                    tot_s = float(res.get("durada_total_s", harness_bg.get("total_duration_s", 0.0)))
+                    tot_dur_txt = _format_duration_s(tot_s) if tot_s > 0 else f"{res.get('latencia_mitjana_s', 0)}s / prova"
+                    
                     if harness_bg.get("finished_at"):
-                        st.caption(f"🕒 Darrer benchmarking completat el: **{harness_bg.get('finished_at')}** (Model: `{res.get('model_avaluat', selected_model)}`)")
+                        st.caption(f"🕒 Darrer benchmarking completat el: **{harness_bg.get('finished_at')}** | ⏱️ **Durada total del procés:** `{tot_dur_txt}` (Model: `{res.get('model_avaluat', selected_model)}`)")
                     
                     k1, k2, k3, k4, k5 = st.columns(5)
                     with k1:

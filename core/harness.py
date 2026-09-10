@@ -225,7 +225,7 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
     start_time = time.time()
     
     models_to_try = [model_name]
-    for alt in ["gemini-2.5-flash", "gemini-flash-latest"]:
+    for alt in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]:
         if alt not in models_to_try:
             models_to_try.append(alt)
         
@@ -789,16 +789,20 @@ def _harness_background_worker(api_key: str, model_name: str):
             "progress": None,
             "results": None,
             "error": "No s'han trobat casos de prova a 'data/harness_menu_cases.json'",
-            "finished_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "finished_at": datetime.now().strftime("%H:%M:%S (%d/%m/%Y)")
         })
         return
         
     total_cases = len(cases)
     results = []
+    start_ts = time.time()
+    started_at_str = datetime.now().strftime("%H:%M:%S (%d/%m/%Y)")
     
     save_harness_status({
         "status": "running",
-        "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "started_at": started_at_str,
+        "start_ts": start_ts,
+        "elapsed_s": 0.0,
         "model_name": model_name,
         "progress": {
             "current": 0,
@@ -811,9 +815,12 @@ def _harness_background_worker(api_key: str, model_name: str):
     })
     
     for idx, tc in enumerate(cases):
+        elapsed_now = round(time.time() - start_ts, 1)
         save_harness_status({
             "status": "running",
-            "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "started_at": started_at_str,
+            "start_ts": start_ts,
+            "elapsed_s": elapsed_now,
             "model_name": model_name,
             "progress": {
                 "current": idx + 1,
@@ -829,6 +836,7 @@ def _harness_background_worker(api_key: str, model_name: str):
         results.append(res)
         time.sleep(1.0)
         
+    total_duration_s = round(time.time() - start_ts, 1)
     passed_total = sum(1 for r in results if r["exit_global"])
     passed_json = sum(1 for r in results if r["json_valid"])
     passed_seguretat = sum(1 for r in results if r["puntuacio_seguretat"] == 1.0)
@@ -846,12 +854,15 @@ def _harness_background_worker(api_key: str, model_name: str):
         "taxa_equipament_forn": round((passed_eines / total_cases) * 100, 1),
         "latencia_mitjana_s": avg_latency,
         "model_avaluat": model_name,
+        "durada_total_s": total_duration_s,
         "detall_resultats": results
     }
     
     save_harness_status({
         "status": "completed",
-        "finished_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "started_at": started_at_str,
+        "finished_at": datetime.now().strftime("%H:%M:%S (%d/%m/%Y)"),
+        "total_duration_s": total_duration_s,
         "model_name": model_name,
         "progress": {
             "current": total_cases,
