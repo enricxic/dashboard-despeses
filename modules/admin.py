@@ -635,6 +635,29 @@ def render():
                     -webkit-box-orient: vertical;
                     margin-top: 1px;
                 }
+                dialog.eina-modal::backdrop {
+                    background: rgba(15, 23, 42, 0.82);
+                    backdrop-filter: blur(4px);
+                }
+                dialog.eina-modal {
+                    border: 1px solid #475569;
+                    border-radius: 16px;
+                    background: #0f172a;
+                    color: #f8fafc;
+                    padding: 22px;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+                    max-width: 480px;
+                    width: 90vw;
+                    margin: auto;
+                }
+                .eina-thumb-btn {
+                    cursor: pointer;
+                    transition: transform 0.18s ease, box-shadow 0.18s ease;
+                }
+                .eina-thumb-btn:hover {
+                    transform: scale(1.08);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+                }
                 </style>
                 """,
                 unsafe_allow_html=True
@@ -672,9 +695,28 @@ def render():
                         with c_ico:
                             foto_src = _get_eina_foto_src(eina["foto"])
                             st.markdown(
-                                f"""<div style='display:flex; justify-content:center; align-items:center;'>
-                                    <img src='{foto_src}' alt='{eina['nom']}' loading='lazy' style='width:56px; height:56px; min-width:56px; min-height:56px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15);' />
-                                </div>""",
+                                f"""
+                                <div style='display:flex; justify-content:center; align-items:center;'>
+                                    <img class='eina-thumb-btn' 
+                                         src='{foto_src}' 
+                                         alt='{eina['nom']}' 
+                                         title='Fes clic per ampliar {eina['nom']}' 
+                                         loading='lazy' 
+                                         onclick="document.getElementById('modal_eina_{e_id}').showModal()"
+                                         style='width:56px; height:56px; min-width:56px; min-height:56px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15);' />
+                                </div>
+                                <dialog id='modal_eina_{e_id}' class='eina-modal' onclick='if(event.target===this)this.close()'>
+                                    <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;'>
+                                        <div style='font-size:1.2rem; font-weight:700; color:#f8fafc;'>🍳 {eina['nom']}</div>
+                                        <button onclick="document.getElementById('modal_eina_{e_id}').close()" 
+                                                style='background:#1e293b; border:1px solid #475569; color:#94a3b8; border-radius:50%; width:30px; height:30px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;'>&times;</button>
+                                    </div>
+                                    <div style='display:flex; justify-content:center; align-items:center; background:#020617; border-radius:12px; padding:12px; border:1px solid #1e293b; margin-bottom:14px;'>
+                                        <img src='{foto_src}' alt='{eina['nom']}' style='max-width:100%; max-height:380px; object-fit:contain; border-radius:8px;' />
+                                    </div>
+                                    <div style='color:#94a3b8; font-size:0.9rem; text-align:center; line-height:1.4;'>{eina['desc']}</div>
+                                </dialog>
+                                """,
                                 unsafe_allow_html=True
                             )
                         with c_chk:
