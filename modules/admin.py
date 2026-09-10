@@ -28,6 +28,21 @@ def _get_eina_foto_src(foto_val):
                 pass
     return foto_val
 
+@st.dialog("Vista d'Equipament", width="small")
+def modal_veure_eina(nom, foto_src, desc):
+    st.markdown(f"<h3 style='margin:0 0 12px 0; text-align:center;'>🍳 {nom}</h3>", unsafe_allow_html=True)
+    if foto_src:
+        st.markdown(
+            f"""
+            <div style='display:flex; justify-content:center; align-items:center; background:#020617; border-radius:12px; padding:16px; border:1px solid #334155; margin-bottom:14px; box-shadow:0 8px 24px rgba(0,0,0,0.4);'>
+                <img src='{foto_src}' alt='{nom}' style='max-width:100%; max-height:420px; object-fit:contain; border-radius:8px;' />
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    if desc:
+        st.markdown(f"<div style='color:#94a3b8; font-size:0.95rem; text-align:center; line-height:1.4;'>{desc}</div>", unsafe_allow_html=True)
+
 def calcular_edat(data_naix_val):
     if not data_naix_val:
         return ""
@@ -616,8 +631,8 @@ def render():
                 """
                 <style>
                 div[data-testid="stVerticalBlockBorderWrapper"]:has(.eina-marker) {
-                    min-height: 108px !important;
-                    height: 108px !important;
+                    min-height: 124px !important;
+                    height: 124px !important;
                     display: flex !important;
                     flex-direction: column !important;
                     justify-content: center !important;
@@ -634,29 +649,6 @@ def render():
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
                     margin-top: 1px;
-                }
-                dialog.eina-modal::backdrop {
-                    background: rgba(15, 23, 42, 0.82);
-                    backdrop-filter: blur(4px);
-                }
-                dialog.eina-modal {
-                    border: 1px solid #475569;
-                    border-radius: 16px;
-                    background: #0f172a;
-                    color: #f8fafc;
-                    padding: 22px;
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-                    max-width: 480px;
-                    width: 90vw;
-                    margin: auto;
-                }
-                .eina-thumb-btn {
-                    cursor: pointer;
-                    transition: transform 0.18s ease, box-shadow 0.18s ease;
-                }
-                .eina-thumb-btn:hover {
-                    transform: scale(1.08);
-                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
                 }
                 </style>
                 """,
@@ -691,34 +683,22 @@ def render():
                 with col_e:
                     with st.container(border=True):
                         st.markdown("<span class='eina-marker' style='display:none;'></span>", unsafe_allow_html=True)
-                        c_ico, c_chk = st.columns([1.1, 3.4], vertical_alignment="center")
+                        foto_src = _get_eina_foto_src(eina["foto"])
+                        c_ico, c_chk = st.columns([1.25, 3.15], vertical_alignment="center")
                         with c_ico:
-                            foto_src = _get_eina_foto_src(eina["foto"])
                             st.markdown(
                                 f"""
-                                <div style='display:flex; justify-content:center; align-items:center;'>
-                                    <img class='eina-thumb-btn' 
-                                         src='{foto_src}' 
+                                <div style='display:flex; justify-content:center; align-items:center; margin-bottom:4px;'>
+                                    <img src='{foto_src}' 
                                          alt='{eina['nom']}' 
-                                         title='Fes clic per ampliar {eina['nom']}' 
                                          loading='lazy' 
-                                         onclick="document.getElementById('modal_eina_{e_id}').showModal()"
-                                         style='width:56px; height:56px; min-width:56px; min-height:56px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15);' />
+                                         style='width:52px; height:52px; min-width:52px; min-height:52px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15);' />
                                 </div>
-                                <dialog id='modal_eina_{e_id}' class='eina-modal' onclick='if(event.target===this)this.close()'>
-                                    <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;'>
-                                        <div style='font-size:1.2rem; font-weight:700; color:#f8fafc;'>🍳 {eina['nom']}</div>
-                                        <button onclick="document.getElementById('modal_eina_{e_id}').close()" 
-                                                style='background:#1e293b; border:1px solid #475569; color:#94a3b8; border-radius:50%; width:30px; height:30px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;'>&times;</button>
-                                    </div>
-                                    <div style='display:flex; justify-content:center; align-items:center; background:#020617; border-radius:12px; padding:12px; border:1px solid #1e293b; margin-bottom:14px;'>
-                                        <img src='{foto_src}' alt='{eina['nom']}' style='max-width:100%; max-height:380px; object-fit:contain; border-radius:8px;' />
-                                    </div>
-                                    <div style='color:#94a3b8; font-size:0.9rem; text-align:center; line-height:1.4;'>{eina['desc']}</div>
-                                </dialog>
                                 """,
                                 unsafe_allow_html=True
                             )
+                            if st.button("🔍 Veure", key=f"btn_eina_zoom_{e_id}", help=f"Fes clic per veure {eina['nom']} en gran", use_container_width=True):
+                                modal_veure_eina(eina["nom"], foto_src, eina["desc"])
                         with c_chk:
                             chk_val = st.checkbox(f"**{eina['nom']}**", value=bool(val_def), key=f"chk_eina_{e_id}")
                             st.markdown(f"<div class='eina-desc-fixed'>{eina['desc']}</div>", unsafe_allow_html=True)
