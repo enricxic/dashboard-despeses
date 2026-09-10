@@ -341,10 +341,10 @@ def netejar_termes_segurs(text: str) -> str:
     # 1. Netejar qualsevol indicació adaptativa entre parèntesis
     t = re.sub(r'\([^\)]*sense\s+[^\)]*\)', '[TERME_SEGUR]', t)
     t = re.sub(r'\([^\)]*(?:cel[íi]ac|veg[àa]|vegana|apte|adaptat|sense lactosa)[^\)]*\)', '[TERME_SEGUR]', t)
-    t = re.sub(r'\bsense\s+[a-zà-ú0-9_\'-]+', '[TERME_SEGUR]', t)
     
-    # 2. Netejar combinacions de nom d'aliment seguit de 'vegà/vegana/vegetal/sense lactosa/gluten'
-    t = re.sub(r'\b(mozzarella|parmes[àa]|formatge|iogurt|llet|nata|mantega|crema de llet)\s+(?:veg[àa]|vegana|vegetal|sense lactosa|de coco|de soja|d\'ametlla|d\'avena|de civada|d\'arr[òo]s)', '[TERME_SEGUR]', t)
+    # 2. Netejar combinacions de nom d'aliment seguit de 'sense lactosa/gluten/llet' o 'vegà/vegana/vegetal'
+    t = re.sub(r'\b(mozzarella|parmes[àa]|formatge|iogurt|llet|nata|mantega|crema de llet)\s+sense\s+(?:lactosa|llet|l[àa]ctics|prote[ïi]na de llet)', '[TERME_SEGUR]', t)
+    t = re.sub(r'\b(mozzarella|parmes[àa]|formatge|iogurt|llet|nata|mantega|crema de llet)\s+(?:veg[àa]|vegana|vegetal|de coco|de soja|d\'ametlla|d\'avena|de civada|d\'arr[òo]s)', '[TERME_SEGUR]', t)
     t = re.sub(r'\b(pa|pasta|farina|fideus|macarrons|espaguetis|espirals|galetes|torrades|pizza)\s+[^\.,;\n\(\)]*sense\s+gluten', '[TERME_SEGUR]', t)
     t = re.sub(r'\b(formatge|iogurt|llet|nata|mantega|crema de llet|parmes[àa]|mozzarella)\s+[^\.,;\n\(\)]*sense\s+(?:lactosa|llet|l[àa]ctics|prote[ïi]na de llet)', '[TERME_SEGUR]', t)
     
@@ -362,6 +362,9 @@ def netejar_termes_segurs(text: str) -> str:
     safe_terms.sort(key=len, reverse=True)
     for st in safe_terms:
         t = t.replace(st, "[TERME_SEGUR]")
+        
+    # 4. Neteja genèrica final de 'sense <paraula>'
+    t = re.sub(r'\bsense\s+[a-zà-ú0-9_\'-]+', '[TERME_SEGUR]', t)
     return t
 
 def extract_apat_text(apat: Dict[str, Any]) -> str:
