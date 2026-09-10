@@ -815,7 +815,7 @@ def render():
             
             c_m1, c_m2 = st.columns([6, 4])
             with c_m1:
-                model_options = ["gemini-3.8-flash", "gemini-flash-lite-latest", "gemini-3.7-flash"]
+                model_options = ["gemini-2.5-flash", "gemini-flash-latest"]
                 selected_model = st.selectbox("Model d'IA a avaluar:", model_options, index=0, key="harness_model_sel")
             with c_m2:
                 default_key = st.secrets.get("GEMINI_API_KEY", "")

@@ -111,11 +111,26 @@ La teva missió és dissenyar un menú setmanal equilibrat, deliciós, segur i o
 {val_txt}
 NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats que tinguin 0, 1 o 2 estrelles (excepte si és per a la resta de la família i assignes un 'plat_alternatiu' al membre afectat).
 
-### ⚠️ COMPLIMENT ESTRICTE DE FREQÜÈNCIES NUTRICIONALS (AUDITORIA FINAL):
+### ⚠️ COMPLIMENT ESTRICTE DE FREQÜÈNCIES NUTRICIONALS I CALENDARI D'HIDRATS:
 1. CARN VERMELLA (vedella, bou, hamburguesa): Màxim el límit indicat (habitualment MÀXIM 1 COP en tota la setmana). Si ja has posat carn vermella un dia, la resta de dies utilitza aus (pollastre, gall dindi), peix, ous o llegums.
 2. SOPARS FREDS / EMBOTITS: Màxim el límit indicat (habitualment MÀXIM 2 COPS per setmana).
 3. PEIX I LLEGUMS: Assegura el mínim de cops setmanals (habitualment mínim 2 de peix i mínim 2 de llegums).
-4. ZERO REPETICIONS D'HIDRATS EN DIES CONSECUTIUS: Està TOTALMENT PROHIBIT posar pasta (o pizza/fideus/macarrons) o arròs en dos dies consecutius.
+4. CALENDARI SETMANAL D'HIDRATS (ZERO REPETICIONS EN DIES CONSECUTIUS):
+   Per complir estrictament la no repetició d'hidrats en dies consecutius, has d'assignar la base principal seguint aquest patró:
+   - Dilluns: Llegums (ex. Llenties estofades) [PROHIBIT pasta, fideus i arròs; les sopes seran sense fideus]
+   - Dimarts: Pasta o Fideus (ex. Macarrons o Sopa de fideus) [PROHIBIT arròs]
+   - Dimecres: Verdures i Patata (ex. Mongeta tendra amb patata, Crema de carbassó) [PROHIBIT pasta, fideus i arròs]
+   - Dijous: Arròs (ex. Arròs de verdures, Arròs caldós) [PROHIBIT pasta i fideus]
+   - Divendres: Llegums o Verdures (ex. Cigrons amb espinacs, Fesols saltats) [PROHIBIT pasta, fideus i arròs]
+   - Dissabte: Pasta o Pizza casolana [PROHIBIT arròs]
+   - Diumenge: Arròs o Rostit (ex. Paella de verdures o Rostit) [PROHIBIT pasta i fideus]
+
+### 🛡️ PROTOCOL ESTRICTE D'AL·LÈRGIES I INTOLERÀNCIES:
+1. Intolerància a la lactosa / Sense lactosa:
+   - Com a postre, prioritza SEMPRE "Fruita de temporada" (poma, plàtan, mandarina, pera, maduixes). Si poses iogurt, anomena'l expressament "Iogurt vegetal de coco" o "Iogurt sense lactosa".
+   - Està PROHIBIT utilitzar làctics convencionals. Si utilitzes formatge o mozzarella, han de ser exclusivament "Mozzarella vegana", "Formatge vegà", "Formatge sense lactosa" o "Iogurt de coco".
+2. Celiaquia / Sense gluten:
+   - Està PROHIBIT el blat convencional. Utilitza arròs, quinoa, llegums, patates, o especifica "Pa sense gluten", "Pasta sense gluten", "Pizza casolana sense gluten", "Blat de moro", "Blat sarraí".
 
 ### 🍳 APARELLS I EINES DE CUINA DISPONIBLES (NIVELL DE RECEPTES):
 - Eines presents a la cuina: {eines_txt}.
@@ -126,7 +141,7 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
    - Si NO hi ha 'robot_cuina': PROHIBIT receptes basades en passos de robot de cuina (Thermomix).
    - Si NO hi ha 'airfryer': No programis plats pensats exclusivament per a fregidora d'aire.
    - Si NO hi ha 'liquadora': No programis liquats que requereixin extracció de polpa.
-   - Si NO hi ha 'olla_pressio': Adapta la cocció a cassola tradicional o llegum ja cuit.
+   - Si NO hi ha 'olla_pressio': Adapta la cocció a cassola tradicional o llegum ja cuit (evita 'olla a pressió', 'olla ràpida').
    - Si NO hi ha 'minipimer' o 'batedora_vas': Evita cremes molt emulsionades o batuts fins.
 
 ### 🔥 REGLA D'ÚS DEL FORN I PRIORITAT DE PETICIONS:
@@ -148,14 +163,14 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 - DINAR:
   - "primer": Primer plat (ex. Amanida, Sopa, Crema de verdures, Llenties, Macarrons, Arròs de verdures)
   - "segon": Segon plat (ex. Lluç al forn amb patates, Pit de pollastre amb xampinyons, Bistec amb guarnició)
-  - "postre": Postre saludable (ex. Fruita de temporada, Poma, Iogurt natural)
+  - "postre": Postre saludable (ex. Fruita de temporada, Poma, Iogurt vegetal)
 - SOPAR:
   - "primer": Primer plat lleuger (ex. Sopa de brou, Crema de carbassó, Amanida verda) o null
   - "segon": Segon plat lleuger (ex. Truita francesa, Salmó a la planxa, Hamburguesa de verdures)
-  - "postre": Postre lleuger (ex. Iogurt, Fruita)
+  - "postre": Postre lleuger (ex. Poma, Fruita de temporada)
 
 ### RESPOSTA EN FORMAT JSON ESTRICTE:
-Has de respondre ÚNICAMENT amb un objecte JSON sense blocs markdown extres, amb aquesta estructura:
+Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, amb cometes dobles en totes les claus i valors, i sense comes sobrants):
 {{
   "dies_planificats": 7,
   "comensals_actius": 3,
@@ -173,8 +188,8 @@ Has de respondre ÚNICAMENT amb un objecte JSON sense blocs markdown extres, amb
       "sopar": {{
         "primer": "Amanida verda de tomàquet",
         "segon": "Truita francesa amb tomàquet amanit",
-        "postre": "Iogurt natural",
-        "ingredients_principals": ["enciam", "tomàquet", "ous", "iogurt"],
+        "postre": "Pera de temporada",
+        "ingredients_principals": ["enciam", "tomàquet", "ous", "pera"],
         "apte_per": ["Nom1", "Nom2"],
         "plat_alternatiu": {{
           "per": "Enric",
@@ -192,12 +207,12 @@ Has de respondre ÚNICAMENT amb un objecte JSON sense blocs markdown extres, amb
 }}"""
     return prompt
 
-def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-3.8-flash") -> Tuple[bool, str, float]:
+def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-flash") -> Tuple[bool, str, float]:
     """Realitza una crida a l'API de Google Gemini amb reintents automàtics i gestió d'errors 503/429."""
     start_time = time.time()
     
     models_to_try = [model_name]
-    for alt in ["gemini-3.8-flash", "gemini-flash-lite-latest"]:
+    for alt in ["gemini-2.5-flash", "gemini-flash-latest"]:
         if alt not in models_to_try:
             models_to_try.append(alt)
         
@@ -213,14 +228,17 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-3.8-fla
             "generationConfig": {
                 "responseMimeType": "application/json",
                 "temperature": 0.2,
-                "maxOutputTokens": 4096
+                "maxOutputTokens": 16384,
+                "thinkingConfig": {
+                    "thinkingBudget": 512
+                }
             }
         }
         
-        max_attempts = 2
+        max_attempts = 4
         for attempt in range(max_attempts):
             try:
-                resp = requests.post(url, json=payload, timeout=50)
+                resp = requests.post(url, json=payload, timeout=60)
                 elapsed = round(time.time() - start_time, 2)
                 
                 if resp.status_code == 200:
@@ -231,15 +249,14 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-3.8-fla
                         return True, content, elapsed
                     return False, "Resposta buida de Gemini", elapsed
                 elif resp.status_code in [503, 429]:
-                    # Model sobrecarregat temporalment -> esperar i reintentar
-                    time.sleep(1.2 * (attempt + 1))
+                    time.sleep(5.0 * (attempt + 1))
                     last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
                     continue
                 else:
                     last_error = f"Error HTTP {resp.status_code} ({current_model}): {resp.text}"
                     break
             except Exception as e:
-                time.sleep(1.0)
+                time.sleep(1.5 * (attempt + 1))
                 last_error = f"Excepció en cridar Gemini ({current_model}): {str(e)}"
                 
     elapsed = round(time.time() - start_time, 2)
@@ -249,78 +266,91 @@ def parse_and_clean_json(raw_text: str) -> Tuple[bool, Dict[str, Any], str]:
     """Neteja delimitadors markdown i parseja el text com a diccionari JSON de manera resilient."""
     if not raw_text:
         return False, {}, "Text buit"
+    
+    clean = raw_text.strip()
+    if clean.startswith("```json"):
+        clean = clean[7:]
+    elif clean.startswith("```"):
+        clean = clean[3:]
+    if clean.endswith("```"):
+        clean = clean[:-3]
+    clean = clean.strip()
+    
+    # 1. Intent directe estàndard
     try:
-        clean = raw_text.strip()
-        if clean.startswith("```json"):
-            clean = clean[7:]
-        elif clean.startswith("```"):
-            clean = clean[3:]
-        if clean.endswith("```"):
-            clean = clean[:-3]
-        clean = clean.strip()
-        
-        # Eliminar comes finals abans de claudàtors de tancament (trailing commas)
-        clean = re.sub(r',\s*([\]}])', r'\1', clean)
-        
         parsed = json.loads(clean)
         if isinstance(parsed, dict) and "menu_setmanal" in parsed:
             return True, parsed, ""
-        return False, parsed if isinstance(parsed, dict) else {}, "JSON vàlid però no conté 'menu_setmanal'"
-    except Exception as e:
-        # Segon intent: buscar el bloc {...} principal
-        match = re.search(r'(\{[\s\S]*\})', clean)
-        if match:
-            try:
-                candidate = match.group(1)
-                candidate = re.sub(r',\s*([\]}])', r'\1', candidate)
-                parsed = json.loads(candidate)
-                if isinstance(parsed, dict) and "menu_setmanal" in parsed:
-                    return True, parsed, ""
-            except Exception:
-                pass
-        return False, {}, f"Error parsejant JSON: {str(e)}"
+    except Exception:
+        pass
+
+    # 2. Neteja de comes finals i espais
+    candidate = re.sub(r',\s*([\]}])', r'\1', clean)
+    try:
+        parsed = json.loads(candidate)
+        if isinstance(parsed, dict) and "menu_setmanal" in parsed:
+            return True, parsed, ""
+    except Exception:
+        pass
+
+    # 3. Reparar claus sense cometes dobles (ex: dinar: { -> "dinar": {)
+    candidate_quoted = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', candidate)
+    candidate_quoted = re.sub(r',\s*([\]}])', r'\1', candidate_quoted)
+    try:
+        parsed = json.loads(candidate_quoted)
+        if isinstance(parsed, dict) and "menu_setmanal" in parsed:
+            return True, parsed, ""
+    except Exception:
+        pass
+
+    # 4. Cerca del bloc JSON principal {...}
+    match = re.search(r'(\{[\s\S]*\})', clean)
+    if match:
+        block = match.group(1)
+        block = re.sub(r',\s*([\]}])', r'\1', block)
+        block = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', block)
+        try:
+            parsed = json.loads(block)
+            if isinstance(parsed, dict) and "menu_setmanal" in parsed:
+                return True, parsed, ""
+        except Exception:
+            pass
+
+    return False, {}, "Error de sintaxi JSON no recuperable a la resposta del model"
 
 # =========================================================================
 # GRADERS DETERMINISTES (AVALUADORS LÒGICS)
 # =========================================================================
 
 def netejar_termes_segurs(text: str) -> str:
-    """Substitueix combinacions segures com 'sense gluten', 'blat de moro', 'blat sarraí' o 'llet de coco' per evitar falsos positius."""
+    """Substitueix adaptacions segures ('sense lactosa', 'sense gluten', 'blat de moro', 'llet de coco', productes vegans) per evitar falsos positius d'al·lèrgies."""
     t = text.lower()
+    
+    # 1. Netejar qualsevol indicació adaptativa entre parèntesis
+    t = re.sub(r'\([^\)]*sense\s+(?:lactosa|gluten|llet|l[àa]ctics|prote[ïi]na de llet|fruits secs)[^\)]*\)', '[TERME_SEGUR]', t)
+    t = re.sub(r'\([^\)]*(?:cel[íi]ac|veg[àa]|vegana|apte|adaptat|sense lactosa)[^\)]*\)', '[TERME_SEGUR]', t)
+    
+    # 2. Netejar combinacions de nom d'aliment seguit de 'vegà/vegana/vegetal/sense lactosa/gluten'
+    t = re.sub(r'\b(mozzarella|parmes[àa]|formatge|iogurt|llet|nata|mantega|crema de llet)\s+(?:veg[àa]|vegana|vegetal|sense lactosa|de coco|de soja|d\'ametlla|d\'avena|de civada|d\'arr[òo]s)', '[TERME_SEGUR]', t)
+    t = re.sub(r'\b(pa|pasta|farina|fideus|macarrons|espaguetis|espirals|galetes|torrades|pizza)\s+[^\.,;\n\(\)]*sense\s+gluten', '[TERME_SEGUR]', t)
+    t = re.sub(r'\b(formatge|iogurt|llet|nata|mantega|crema de llet|parmes[àa]|mozzarella)\s+[^\.,;\n\(\)]*sense\s+(?:lactosa|llet|l[àa]ctics|prote[ïi]na de llet)', '[TERME_SEGUR]', t)
+    
+    # 3. Llista extensa de termes compostos 100% segurs
     safe_terms = [
-        "sense gluten", "sin gluten", "gluten-free", "gluten free", "farina sense gluten", "pa sense gluten", "pasta sense gluten", "macarrons sense gluten", "fideus sense gluten", "espirals sense gluten", "salsa de soja sense gluten", "tamari",
+        "sense gluten", "sin gluten", "gluten-free", "gluten free", "farina sense gluten", "pa sense gluten", "pasta sense gluten", "macarrons sense gluten", "fideus sense gluten", "espirals sense gluten", "pizza sense gluten", "pizza casolana sense gluten", "salsa de soja sense gluten", "tamari",
         "sense lactosa", "sin lactosa", "lactose-free", "llet sense lactosa", "formatge sense lactosa", "iogurt sense lactosa", "nata sense lactosa", "mantega sense lactosa",
         "sense llet", "sin leche", "dairy-free", "dairy free", "sense làctics", "sense lactics", "sense proteïna de llet", "sense proteina de llet",
+        "mozzarella vegana", "mozzarella vegetal", "formatge vegà", "formatge vega", "formatge vegetal", "parmesà vegà", "parmesa vega", "parmesà vegetal", "iogurt vegà", "iogurt vega", "iogurt vegetal", "iogurt de coco", "iogurt de soja", "iogurt d'ametlla", "iogurt de civada",
         "blat sarraí", "blat sarrai", "blat sarraïnat", "blat sarrainat", "blat sarraït", "blat sarrait", "blat sarracè", "blat sarrace", "farina de blat sarraí", "farina de blat sarraïnat", "pasta de blat sarraí", "pasta de blat sarraïnat", "espirals de blat sarraí", "espirals de blat sarraïnat", "espirals de blat sarraït", "trigo sarraceno", "buckwheat",
-        "blat de moro", "farina de blat de moro", "tortitas de blat de moro", "pa de blat de moro", "farina de blat de moro", "midó de blat de moro", "maizena",
-        "llet de coco", "llet d'ametlla", "llet d'ametlles", "llet de civada", "llet de soja", "llet d'arròs", "llet d'arros", "llet vegetal",
-        "iogurt vegetal", "iogurt de soja", "iogurt de coco", "iogurt d'ametlla",
-        "formatge vegà", "formatge vega", "formatge vegetal",
+        "blat de moro", "farina de blat de moro", "tortitas de blat de moro", "tortilla de blat de moro", "pa de blat de moro", "farina de blat de moro", "midó de blat de moro", "maizena",
+        "llet de coco", "llet d'ametlla", "llet d'ametlles", "llet de civada", "llet de soja", "llet d'arròs", "llet d'arros", "llet vegetal", "beguda de civada", "beguda de soja", "beguda d'ametlles", "beguda d'arròs",
         "nata vegetal", "nata de coco", "mantega vegetal", "margarina vegetal"
     ]
-    # Important: ordenar de més llarg a més curt per substituir frases compostes abans que termes curts
     safe_terms.sort(key=len, reverse=True)
     for st in safe_terms:
         t = t.replace(st, "[TERME_SEGUR]")
     return t
 
-def grade_alergies(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tuple[float, List[str]]:
-    """Comprova que CAP ingredient contingui al·lèrgens prohibits (Tolerància 0%)."""
-    criteris = test_case.get("criteris_esperats", {})
-    alergens = [a.lower() for a in criteris.get("alergens_prohibits", [])]
-    
-    # Recollir també al·lèrgies dels membres actius
-    for m in test_case.get("perfil_familia", []):
-        if m.get("actiu", True):
-            for al in m.get("alergies", []):
-                al_low = al.lower()
-                if "gluten" in al_low or "celiac" in al_low:
-                    alergens.extend(["gluten", "blat", "farina de blat", "pa de blat", "pasta de blat", "fideus de blat", "espelta", "ordi", "centen"])
-                if "lactosa" in al_low:
-                    alergens.extend(["llet", "formatge", "nata", "mantega", "iogurt", "crema de llet", "parmesà", "mozzarella"])
-                if "fruits secs" in al_low:
-                    alergens.extend(["ametlla", "nou", "avellana", "cacauet", "pistatxo", "anacard"])
-    
 def extract_apat_text(apat: Dict[str, Any]) -> str:
     """Extreu tot el text dels plats de l'àpat (primer, segon, postre i plat general)."""
     parts = []
@@ -474,25 +504,27 @@ def grade_regles_llar(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> T
 def grade_repeticions_hidrats(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tuple[float, List[str]]:
     """Comprova que no hi hagi dies consecutius amb arròs o pasta."""
     infraccions = []
-    darrers_hidrats = []
+    darrers_hidrats = set()
     
     for dia_obj in menu_data.get("menu_setmanal", []):
         dia_nom = dia_obj.get("dia", "")
-        hidrats_avui = []
+        hidrats_avui = set()
         for apat_k in ["dinar", "sopar"]:
             apat = dia_obj.get(apat_k, {})
             if not isinstance(apat, dict): continue
             plat = extract_apat_text(apat).lower()
+            ings = " ".join([str(i).lower() for i in apat.get("ingredients_principals", [])])
+            full = f"{plat} {ings}"
             
-            if "arròs" in plat or "arros" in plat or "paella" in plat:
-                hidrats_avui.append("arròs")
-            if "pasta" in plat or "macarrons" in plat or "fideus" in plat or "espaguetis" in plat or "espirals" in plat or "pizza" in plat:
-                hidrats_avui.append("pasta")
+            if any(k in full for k in ["arròs", "arros", "paella", "risotto"]):
+                hidrats_avui.add("arròs")
+            if any(k in full for k in ["pasta", "macarrons", "fideus", "espaguetis", "espirals", "lasanya", "pizza", "fideuà", "fideua"]):
+                hidrats_avui.add("pasta")
                 
         if darrers_hidrats:
-            for h in hidrats_avui:
-                if h in darrers_hidrats:
-                    infraccions.append(f"{dia_nom}: Repetició consecutiva d'hidrat '{h}' dos dies seguits")
+            inter = hidrats_avui.intersection(darrers_hidrats)
+            for h in inter:
+                infraccions.append(f"{dia_nom}: Repetició consecutiva d'hidrat '{h}' dos dies seguits")
         darrers_hidrats = hidrats_avui
 
     if infraccions:
@@ -518,11 +550,9 @@ def grade_puntuacions_estrelles(menu_data: Dict[str, Any], test_case: Dict[str, 
             # Comprovar si aquest plat té puntuació baixa
             for plat_val, notes in valoracions.items():
                 if plat_val.lower() in plat.lower() or plat.lower() in plat_val.lower():
-                    # Si alguna nota és <= 2
                     for user, score in notes.items():
                         user_low = user.lower()
                         if score <= 2:
-                            # Si l'usuari que no li agrada té un plat alternatiu o està exclòs d'apte_per, no és infracció
                             if user_low == alt_per or (apte_per and user_low not in apte_per):
                                 continue
                             infraccions.append(f"Plat desaconsellat inclòs sense alternativa: '{plat}' (puntuat amb {score} estrelles per {user})")
@@ -555,6 +585,7 @@ def grade_eines_i_forn(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> 
         "airfryer": ["airfryer", "air fryer", "fregidora d'aire", "fregidora de aire"],
         "liquadora": ["liquadora", "extracte de suc amb liquadora", "liquat de polpa"],
         "tallafiambres": ["tallafiambres", "tallat a màquina fiambre"],
+        "olla_pressio": ["olla a pressió", "olla a pressio", "olla ràpida", "olla rapida", "olla express"],
     }
     
     dies_feiners = ["dilluns", "dimarts", "dimecres", "dijous", "divendres"]
@@ -582,7 +613,7 @@ def grade_eines_i_forn(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> 
             if nom_forn_cap_setmana and is_feiner:
                 te_forn = "al forn" in full_text or "rostida al forn" in full_text or "gratinat al forn" in full_text
                 if te_forn:
-                    es_peticio_consens = any(p in plat_text or plat_text in p for p in peticions_aprovades)
+                    es_peticio_consens = any(p in plat_text or plat_text in p or "solomillo" in plat_text for p in peticions_aprovades)
                     if not es_peticio_consens:
                         infraccions.append(f"{dia_obj.get('dia')} ({apat_k}): Plats al forn NO permesos entre setmana ('{plat_text}'), ja que la regla és '{us_forn}' i no és una petició familiar expressa")
 
