@@ -827,7 +827,7 @@ def render():
             
             try:
                 from core.harness import (
-                    load_harness_cases, run_harness_single_test, generate_harness_markdown_report,
+                    load_harness_cases, run_harness_single_test, generate_harness_markdown_report, generate_harness_txt_report,
                     get_harness_status, start_harness_suite_background, clear_harness_status
                 )
             except ImportError:
@@ -835,7 +835,7 @@ def render():
                 import core.harness as ch
                 importlib.reload(ch)
                 from core.harness import (
-                    load_harness_cases, run_harness_single_test, generate_harness_markdown_report,
+                    load_harness_cases, run_harness_single_test, generate_harness_markdown_report, generate_harness_txt_report,
                     get_harness_status, start_harness_suite_background, clear_harness_status
                 )
 
@@ -929,14 +929,14 @@ def render():
                     with c_res_header:
                         st.markdown("### 📊 Resultats del Benchmarking")
                     with c_res_dl:
-                        md_report = generate_harness_markdown_report(res, is_single=False)
+                        txt_report = generate_harness_txt_report(res, is_single=False)
                         st.download_button(
-                            label="📥 Descarregar Informe (.md)",
-                            data=md_report,
-                            file_name=f"informe_laboratori_ia_{res.get('model_avaluat', 'gemini')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-                            mime="text/markdown",
+                            label="📥 Descarregar Informe (.txt)",
+                            data=txt_report,
+                            file_name=f"informe_laboratori_ia_{res.get('model_avaluat', 'gemini')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                            mime="text/plain",
                             use_container_width=True,
-                            key="btn_download_harness_md"
+                            key="btn_download_harness_txt"
                         )
                     with c_res_clear:
                         if st.button("🗑️ Netejar Resultats", use_container_width=True, key="btn_clear_suite_res"):
@@ -986,14 +986,14 @@ def render():
                 with c_s_header:
                     st.markdown(f"### 🎯 Resultat de la Prova: `{sr.get('id')}`")
                 with c_s_dl:
-                    md_single_report = generate_harness_markdown_report(sr, is_single=True)
+                    txt_single_report = generate_harness_txt_report(sr, is_single=True)
                     st.download_button(
-                        label="📥 Descarregar Test (.md)",
-                        data=md_single_report,
-                        file_name=f"informe_test_{sr.get('id', 'cas')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-                        mime="text/markdown",
+                        label="📥 Descarregar Test (.txt)",
+                        data=txt_single_report,
+                        file_name=f"informe_test_{sr.get('id', 'cas')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                        mime="text/plain",
                         use_container_width=True,
-                        key="btn_download_single_md"
+                        key="btn_download_single_txt"
                     )
                 with c_s_clear:
                     if st.button("🗑️ Tancar Resultat", use_container_width=True, key="btn_close_single_res"):

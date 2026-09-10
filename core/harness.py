@@ -884,6 +884,88 @@ def start_harness_suite_background(api_key: str, model_name: str = "gemini-2.5-f
     th.start()
     return True
 
+def generate_harness_txt_report(data: Dict[str, Any], is_single: bool = False) -> str:
+    """Genera un informe exhaustiu en format Text Pla (.txt) a partir dels resultats del benchmarking."""
+    from datetime import datetime
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    lines = []
+    lines.append("================================================================================")
+    lines.append("        INFORME D'AVALUACIÓ DEL LABORATORI IA (HARNESS) - XIQUIHOUSE            ")
+    lines.append("================================================================================")
+    lines.append(f"Data i hora de generacio: {now_str}")
+    
+    if is_single:
+        tc_id = data.get("id", "Cas desconegut")
+        titol = data.get("titol", "")
+        exit_str = "SUPERAT (PASS)" if data.get("exit_global") else "FALLAT (FAIL)"
+        lines.append(f"Tipus d'execucio: Test Individual ({tc_id})")
+        lines.append(f"Titol del cas: {titol}")
+        lines.append(f"Resultat Global: {exit_str}")
+        lines.append(f"Temps de resposta (Latencia): {data.get('latencia_s', 0)} s")
+        lines.append("\n--------------------------------------------------------------------------------")
+        lines.append("PUNTUACIONS PER CRITERI:")
+        lines.append(f"  - Seguretat Medica d'Alergies: {int(data.get('puntuacio_seguretat', 0)*100)}%")
+        lines.append(f"  - Gestio de Vetos i Desdoblament: {int(data.get('puntuacio_vetos', 0)*100)}%")
+        lines.append(f"  - Frequencies Nutricionals de la Llar: {int(data.get('puntuacio_regles', 0)*100)}%")
+        lines.append(f"  - Varietat i Calendari d'Hidrats: {int(data.get('puntuacio_varietat', 0)*100)}%")
+        lines.append(f"  - Adaptacio a Eines de Cuina i Forn: {int(data.get('puntuacio_eines', 1)*100)}%")
+        lines.append("--------------------------------------------------------------------------------")
+        lines.append("INCIDÈNCIES I INCIDÈNCIES:")
+        errors = data.get("errors", [])
+        if not errors:
+            lines.append("  [OK] Cap incidencia detectada. El model ha complert tots els requisits.")
+        else:
+            for err in errors:
+                lines.append(f"  [ERROR] {err}")
+    else:
+        model_name = data.get("model_avaluat", "gemini-2.5-flash")
+        total_p = data.get("total_proves", 0)
+        passats = data.get("proves_superades", 0)
+        pct_exit = data.get("percentatge_exit", 0)
+        tot_s = float(data.get("durada_total_s", 0))
+        dur_txt = f"{int(tot_s//60)}m {int(tot_s%60)}s" if tot_s > 0 else f"{data.get('latencia_mitjana_s', 0)}s / prova"
+        
+        lines.append(f"Model d'IA Avaluat: {model_name}")
+        lines.append(f"Total de Proves Executades: {total_p}")
+        lines.append(f"Proves Superades amb Exit: {passats} / {total_p} ({pct_exit}%)")
+        lines.append(f"Durada Total del Proces: {dur_txt}")
+        lines.append(f"Latencia Mitjana per Prova: {data.get('latencia_mitjana_s', 0)} s")
+        lines.append("\n--------------------------------------------------------------------------------")
+        lines.append("RESUM DE MÈTRIQUES GLOBALS:")
+        lines.append(f"  - Taxa d'Exit Global: {pct_exit}% (Objectiu: 100%)")
+        lines.append(f"  - Validesa Estructural JSON: {data.get('taxa_json_valid', 0)}% (Objectiu: 100%)")
+        lines.append(f"  - Seguretat Medica d'Alergies: {data.get('taxa_seguretat_alergies', 0)}% (Objectiu: 100%)")
+        lines.append(f"  - Desdoblament de Vetos Personals: {data.get('taxa_desdoblament_vetos', 0)}% (Objectiu: 100%)")
+        lines.append(f"  - Adaptacio a Eines i Forn: {data.get('taxa_equipament_forn', 0)}% (Objectiu: 100%)")
+        lines.append("--------------------------------------------------------------------------------")
+        lines.append("TAULA RESUM DE CASOS DE PROVA:")
+        lines.append(f"{'ID':<35} | {'ESTAT':<6} | {'LATÈNCIA':<10} | INCIDÈNCIES")
+        lines.append("-" * 80)
+        for r in data.get("detall_resultats", []):
+            st_icon = "PASS" if r.get("exit_global") else "FAIL"
+            err_count = len(r.get("errors", []))
+            err_txt = f"{err_count} incidencies" if err_count > 0 else "Cap"
+            lines.append(f"{r.get('id', ''):<35} | {st_icon:<6} | {r.get('latencia_s', 0):>6.2f}s   | {err_txt}")
+            
+        lines.append("\n--------------------------------------------------------------------------------")
+        lines.append("DETALL DETALLAT PER CAS DE PROVA:")
+        for idx, r in enumerate(data.get("detall_resultats", [])):
+            st_str = "SUPERAT" if r.get("exit_global") else "FALLAT"
+            lines.append(f"\n[{idx+1}] {r.get('id')}: {r.get('titol')}")
+            lines.append(f"    Estat: {st_str} | Latencia: {r.get('latencia_s')}s")
+            errs = r.get("errors", [])
+            if errs:
+                lines.append("    Infraccions detectades:")
+                for e in errs:
+                    lines.append(f"      - {e}")
+            else:
+                lines.append("    Compliment: 100% dels criteris i regles de seguretat respectats.")
+
+    lines.append("\n================================================================================")
+    lines.append("Informe generat automatitzadament pel Laboratori IA de XiquiHouse.")
+    return "\n".join(lines)
+
 def generate_harness_markdown_report(data: Dict[str, Any], is_single: bool = False) -> str:
     """Genera un informe exhaustiu en format Markdown (.md) a partir dels resultats del benchmarking."""
     from datetime import datetime
