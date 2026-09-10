@@ -47,6 +47,26 @@ DEFAULT_CONFIG = {
         "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
         "comensals_defecte": 3
     },
+    "eines_cuina": {
+        "forn": True,
+        "microones": True,
+        "airfryer": True,
+        "nevera": True,
+        "congelador": True,
+        "bascula": True,
+        "minipimer": True,
+        "batedora_vas": True,
+        "motlles_silicona": True,
+        "morter": True,
+        "olla_pressio": True,
+        "liquadora": False,
+        "tallafiambres": False,
+        "robot_cuina": False,
+        "picadora": True,
+        "sifo_n2o": False,
+        "expremedor": True,
+        "mandolina": True
+    },
     "icones_actives": {
         "dashboard": True,
         "economic": True,

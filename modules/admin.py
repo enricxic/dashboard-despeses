@@ -585,6 +585,49 @@ def render():
             r_forn = st.selectbox("Disponibilitat habitual del forn", forn_options, index=forn_idx, help="Si es tria 'Només cap de setmana', els plats automàtics que requereixen forn només es programaran dissabte o diumenge, excepte si hi ha petició expressa.")
             
             st.markdown("---")
+            st.markdown("#### 🍳 Aparells i Eines de Cuina Disponibles a la Llar")
+            st.markdown("<div style='font-size:0.86rem; color:#94a3b8; margin-bottom:12px;'>El nivell de complexitat i les tècniques de les receptes proposades per la IA s'adaptaran exclusivament a l'equipament disponible a la llar.</div>", unsafe_allow_html=True)
+            
+            CATALEG_EINES_CUINA = [
+                {"id": "forn", "nom": "Forn", "icona": "🥧", "desc": "Rostits, gratinats, pastissos i pizzes"},
+                {"id": "microones", "nom": "Microones", "icona": "🍲", "desc": "Escalfat ràpid i vapor"},
+                {"id": "airfryer", "nom": "Airfryer", "icona": "🍟", "desc": "Fregits saludables i cruixents"},
+                {"id": "nevera", "nom": "Nevera", "icona": "🥛", "desc": "Conservació i postres freds"},
+                {"id": "congelador", "nom": "Congelador", "icona": "🧊", "desc": "Batch cooking i estoc llarg"},
+                {"id": "bascula", "nom": "Bàscula de cuina", "icona": "⚖️", "desc": "Pesat precís de racions"},
+                {"id": "minipimer", "nom": "Minipimer", "icona": "🪄", "desc": "Cremes, purés i maioneses"},
+                {"id": "batedora_vas", "nom": "Batedora de vas", "icona": "🥤", "desc": "Batuts, smoothies i gaspatxos"},
+                {"id": "motlles_silicona", "nom": "Motlles de silicona", "icona": "🧁", "desc": "Rebosteria i flameres"},
+                {"id": "morter", "nom": "Morter", "icona": "🌿", "desc": "Picades tradicionals i allioli"},
+                {"id": "olla_pressio", "nom": "Olla a pressió", "icona": "♨️", "desc": "Llegums i estofats exprés"},
+                {"id": "liquadora", "nom": "Liquadora", "icona": "🥕", "desc": "Sucs naturals i liquats"},
+                {"id": "tallafiambres", "nom": "Tallafiambres", "icona": "🥓", "desc": "Talls fins d'embotits"},
+                {"id": "robot_cuina", "nom": "Robot de cuina", "icona": "🤖", "desc": "Emulsions i cocció guiada"},
+                {"id": "picadora", "nom": "Picadora", "icona": "🥩", "desc": "Picar carn i sofregits"},
+                {"id": "sifo_n2o", "nom": "Sifó N2O", "icona": "🍾", "desc": "Espumes d'avantguarda"},
+                {"id": "expremedor", "nom": "Espremedor", "icona": "🍊", "desc": "Sucs de cítrics i marinats"},
+                {"id": "mandolina", "nom": "Mandolina", "icona": "🥔", "desc": "Talls laminats precisos"},
+            ]
+            
+            cur_eines = cfg.get("eines_cuina", {})
+            updated_eines = {}
+            
+            cols_eines = st.columns(3)
+            for idx_e, eina in enumerate(CATALEG_EINES_CUINA):
+                col_e = cols_eines[idx_e % 3]
+                e_id = eina["id"]
+                val_def = cur_eines.get(e_id, True if e_id in ["forn", "microones", "airfryer", "nevera", "congelador", "bascula", "minipimer", "batedora_vas", "motlles_silicona", "morter", "olla_pressio", "picadora", "expremedor", "mandolina"] else False)
+                with col_e:
+                    with st.container(border=True):
+                        c_ico, c_chk = st.columns([1, 3.5], vertical_alignment="center")
+                        with c_ico:
+                            st.markdown(f"<div style='font-size:1.8rem; text-align:center;'>{eina['icona']}</div>", unsafe_allow_html=True)
+                        with c_chk:
+                            chk_val = st.checkbox(f"**{eina['nom']}**", value=bool(val_def), key=f"chk_eina_{e_id}")
+                            st.caption(eina["desc"])
+                        updated_eines[e_id] = chk_val
+            
+            st.markdown("---")
             st.markdown("#### 📅 Format i Hàbits de Planificació")
             c_p1, c_p2 = st.columns([7, 3])
             with c_p1:
@@ -611,8 +654,9 @@ def render():
                     "mode_apats": r_mode,
                     "comensals_defecte": r_com
                 }
+                cfg["eines_cuina"] = updated_eines
                 if save_app_config(cfg):
-                    st.success("✅ Regles de menús i nutrició desades correctament!")
+                    st.success("✅ Regles de menús, nutrició i eines de cuina desades correctament!")
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 

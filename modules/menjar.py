@@ -591,6 +591,10 @@ def render():
                         def_forn = regles_cfg.get("us_forn", forn_options[1])
                         sel_forn = st.selectbox("🔥 Disponibilitat del forn", forn_options, index=forn_options.index(def_forn) if def_forn in forn_options else 1, key="m_sel_forn")
 
+                    eines_cfg = cfg.get("eines_cuina", {})
+                    eines_actives_llista = [k for k, v in eines_cfg.items() if v]
+                    st.caption(f"🍳 **Equipament de cuina actiu:** {', '.join(eines_actives_llista) if eines_actives_llista else 'Bàsic'}")
+
                 with st.expander("📌 3. Fixar Plats per Dies, Estoc de Rebost i Peticions (Poder Total)", expanded=True):
                     st.markdown("**🗓️ Fixació de plats o preferències per a cada dia de la setmana:**")
                     st.caption("Pots fixar plats concrets per als dies que vulguis (ex. Llenties dilluns, Sardines divendres, Paella diumenge). La IA respectarà aquests plats obligatòriament.")
@@ -654,6 +658,7 @@ def render():
                                     "no_repetir_hidrats": chk_hidrats,
                                     "us_forn": sel_forn
                                 },
+                                "eines_disponibles": eines_actives_llista,
                                 "stock_disponible": stock_list,
                                 "peticions_setmanals": peticions_list,
                                 "valoracions_previes": {}

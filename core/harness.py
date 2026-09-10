@@ -59,6 +59,11 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
     if valoracions:
         val_txt = json.dumps(valoracions, ensure_ascii=False, indent=2)
 
+    eines_list = test_case.get("eines_disponibles", [])
+    if isinstance(eines_list, dict):
+        eines_list = [k for k, v in eines_list.items() if v]
+    eines_txt = ", ".join(eines_list) if eines_list else "Forn, Microones, Nevera, Congelador, Minipimer, Morter, Olla a pressió, Picadora, Espremedor, Mandolina"
+
     # Catàleg de receptes de la família
     receptari_txt = "No hi ha receptari predefinit."
     if cataleg_utilitzar:
@@ -111,6 +116,18 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 2. SOPARS FREDS / EMBOTITS: Màxim el límit indicat (habitualment MÀXIM 2 COPS per setmana).
 3. PEIX I LLEGUMS: Assegura el mínim de cops setmanals (habitualment mínim 2 de peix i mínim 2 de llegums).
 4. ZERO REPETICIONS D'HIDRATS EN DIES CONSECUTIUS: Està TOTALMENT PROHIBIT posar pasta (o pizza/fideus/macarrons) o arròs en dos dies consecutius.
+
+### 🍳 APARELLS I EINES DE CUINA DISPONIBLES (NIVELL DE RECEPTES):
+- Eines presents a la cuina: {eines_txt}.
+⚠️ ADAPTACIÓ STRICTA A LES EINES:
+1. El nivell de complexitat i les tècniques culinàries de les receptes han d'anar en funció de les eines disponibles a la llar.
+2. MAI proposis cap recepta o tècnica que requereixi un aparell absent:
+   - Si NO hi ha 'sifo_n2o': PROHIBIT proposar espumes culinàries amb sifó.
+   - Si NO hi ha 'robot_cuina': PROHIBIT receptes basades en passos de robot de cuina (Thermomix).
+   - Si NO hi ha 'airfryer': No programis plats pensats exclusivament per a fregidora d'aire.
+   - Si NO hi ha 'liquadora': No programis liquats que requereixin extracció de polpa.
+   - Si NO hi ha 'olla_pressio': Adapta la cocció a cassola tradicional o llegum ja cuit.
+   - Si NO hi ha 'minipimer' o 'batedora_vas': Evita cremes molt emulsionades o batuts fins.
 
 ### 🔥 REGLA D'ÚS DEL FORN I PRIORITAT DE PETICIONS:
 1. Regla d'ús del forn configurada: '{us_forn}'.

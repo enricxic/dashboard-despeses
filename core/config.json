@@ -185,6 +185,26 @@
         "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
         "comensals_defecte": 3
     },
+    "eines_cuina": {
+        "forn": true,
+        "microones": true,
+        "airfryer": true,
+        "nevera": true,
+        "congelador": true,
+        "bascula": true,
+        "minipimer": true,
+        "batedora_vas": true,
+        "motlles_silicona": true,
+        "morter": true,
+        "olla_pressio": true,
+        "liquadora": false,
+        "tallafiambres": false,
+        "robot_cuina": false,
+        "picadora": true,
+        "sifo_n2o": false,
+        "expremedor": true,
+        "mandolina": true
+    },
     "icones_actives": {
         "dashboard": true,
         "economic": true,
