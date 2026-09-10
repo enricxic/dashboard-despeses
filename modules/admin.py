@@ -826,66 +826,91 @@ def render():
                     active_api_key = st.text_input("🔑 Clau d'API Gemini:", type="password", key="harness_key_input")
             
             try:
-                from core.harness import load_harness_cases, run_harness_suite, run_harness_single_test, generate_harness_markdown_report
+                from core.harness import (
+                    load_harness_cases, run_harness_single_test, generate_harness_markdown_report,
+                    get_harness_status, start_harness_suite_background, clear_harness_status
+                )
             except ImportError:
                 import importlib
                 import core.harness as ch
                 importlib.reload(ch)
-                from core.harness import load_harness_cases, run_harness_suite, run_harness_single_test, generate_harness_markdown_report
+                from core.harness import (
+                    load_harness_cases, run_harness_single_test, generate_harness_markdown_report,
+                    get_harness_status, start_harness_suite_background, clear_harness_status
+                )
 
             from datetime import datetime
             cases = load_harness_cases()
+            harness_bg = get_harness_status()
+            bg_status = harness_bg.get("status", "idle")
             
             st.write("")
-            c_btn1, c_btn2 = st.columns([5, 5])
-            with c_btn1:
-                run_all = st.button(f"▶️ Executar Bateria Completa ({len(cases)} Tests)", type="primary", use_container_width=True, key="btn_run_harness_all")
-            with c_btn2:
-                selected_single = st.selectbox("O provar un cas concret:", [f"{c['id']}: {c['titol']}" for c in cases], key="sel_single_test", label_visibility="collapsed")
-                run_single = st.button("🎯 Executar només aquest cas", use_container_width=True, key="btn_run_harness_single")
+            
+            # 1. Si hi ha una bateria executant-se en segon pla
+            if bg_status == "running":
+                prog = harness_bg.get("progress") or {}
+                curr = prog.get("current", 0)
+                tot = prog.get("total", len(cases))
+                title = prog.get("current_title", "Executant...")
+                pct = float(prog.get("pct", 0.0))
                 
-            if run_all:
-                if not active_api_key:
-                    st.error("❌ Cal disposar d'una clau d'API per executar les proves.")
-                else:
-                    progress_bar = st.progress(0)
-                    status_txt = st.empty()
-                    
-                    def on_progress(current, total, title):
-                        pct = current / total
-                        progress_bar.progress(pct)
-                        status_txt.markdown(f"⏳ **Executant test {current}/{total}:** *{title}*...")
-                        
-                    with st.spinner("Executant avaluacions deterministes del Harness..."):
-                        suite_res = run_harness_suite(api_key=active_api_key, model_name=selected_model, progress_callback=on_progress)
-                        st.session_state.harness_results = suite_res
-                        st.session_state.harness_single_result = None
-                        progress_bar.progress(1.0)
-                        status_txt.success("✅ Bateria de proves completada!")
+                st.info(f"⏳ **Bateria de proves en curs en segon pla ({curr}/{tot}):** *{title}*")
+                st.progress(pct)
+                st.caption(f"🚀 **Model actiu:** `{harness_bg.get('model_name', selected_model)}` | **Iniciat a:** `{harness_bg.get('started_at', '-')}`\n\n💡 *Pots navegar lliurement per qualsevol altra secció de l'app (despeses, receptes, etc.). L'anàlisi continuarà treballant en segon pla i en tornar aquí trobaràs els resultats a punt.*")
+                
+                c_bg_btn1, c_bg_btn2 = st.columns([5, 5])
+                with c_bg_btn1:
+                    if st.button("🔄 Actualitzar Progrés", type="primary", use_container_width=True, key="btn_refresh_harness_bg"):
+                        st.rerun()
+                with c_bg_btn2:
+                    if st.button("🛑 Cancel·lar / Reiniciar estat", use_container_width=True, key="btn_clear_harness_bg"):
+                        clear_harness_status()
                         st.rerun()
                         
-            elif run_single:
-                if not active_api_key:
-                    st.error("❌ Cal disposar d'una clau d'API per executar la prova.")
-                else:
-                    target_id = selected_single.split(":")[0].strip()
-                    target_case = next((c for c in cases if c["id"] == target_id), None)
-                    if target_case:
-                        with st.spinner(f"Avaluant {target_case['titol']}..."):
-                            single_res = run_harness_single_test(target_case, api_key=active_api_key, model_name=selected_model)
-                            st.session_state.harness_single_result = single_res
-                            st.session_state.harness_results = None
+            else:
+                # 2. Controls d'execució normals
+                c_btn1, c_btn2 = st.columns([5, 5])
+                with c_btn1:
+                    run_all = st.button(f"▶️ Executar Bateria Completa ({len(cases)} Tests)", type="primary", use_container_width=True, key="btn_run_harness_all")
+                with c_btn2:
+                    selected_single = st.selectbox("O provar un cas concret:", [f"{c['id']}: {c['titol']}" for c in cases], key="sel_single_test", label_visibility="collapsed")
+                    run_single = st.button("🎯 Executar només aquest cas", use_container_width=True, key="btn_run_harness_single")
+                    
+                if run_all:
+                    if not active_api_key:
+                        st.error("❌ Cal disposar d'una clau d'API per executar les proves.")
+                    else:
+                        st.session_state.harness_single_result = None
+                        ok_start = start_harness_suite_background(api_key=active_api_key, model_name=selected_model)
+                        if ok_start:
+                            st.success("🚀 Bateria iniciada en segon pla!")
                             st.rerun()
+                        else:
+                            st.warning("⚠️ Ja hi ha una execució en curs.")
+                            
+                elif run_single:
+                    if not active_api_key:
+                        st.error("❌ Cal disposar d'una clau d'API per executar la prova.")
+                    else:
+                        target_id = selected_single.split(":")[0].strip()
+                        target_case = next((c for c in cases if c["id"] == target_id), None)
+                        if target_case:
+                            with st.spinner(f"Avaluant {target_case['titol']}..."):
+                                single_res = run_harness_single_test(target_case, api_key=active_api_key, model_name=selected_model)
+                                st.session_state.harness_single_result = single_res
+                                st.rerun()
             
-            # Mostra de Resultats Globals
-            if "harness_results" in st.session_state and isinstance(st.session_state.harness_results, dict):
-                res = st.session_state.harness_results
+            # Mostra de Resultats Globals (de segon pla o de sessió)
+            suite_data = harness_bg.get("results") if bg_status == "completed" else st.session_state.get("harness_results")
+            
+            if suite_data and isinstance(suite_data, dict):
+                res = suite_data
                 st.markdown("---")
                 
                 if "error" in res:
                     st.error(f"❌ Error en executar la bateria de proves: {res.get('error')}")
                 else:
-                    c_res_header, c_res_dl = st.columns([7, 3])
+                    c_res_header, c_res_dl, c_res_clear = st.columns([5, 3, 2])
                     with c_res_header:
                         st.markdown("### 📊 Resultats del Benchmarking")
                     with c_res_dl:
@@ -898,6 +923,14 @@ def render():
                             use_container_width=True,
                             key="btn_download_harness_md"
                         )
+                    with c_res_clear:
+                        if st.button("🗑️ Netejar Resultats", use_container_width=True, key="btn_clear_suite_res"):
+                            clear_harness_status()
+                            st.session_state.harness_results = None
+                            st.rerun()
+                    
+                    if harness_bg.get("finished_at"):
+                        st.caption(f"🕒 Darrer benchmarking completat el: **{harness_bg.get('finished_at')}** (Model: `{res.get('model_avaluat', selected_model)}`)")
                     
                     k1, k2, k3, k4, k5 = st.columns(5)
                     with k1:
@@ -909,7 +942,7 @@ def render():
                     with k4:
                         st.metric("🍳 Eines i Forn", f"{res.get('taxa_equipament_forn', 100)}%", "Adaptació 100%")
                     with k5:
-                        st.metric("⚡ Latència", f"{res.get('latencia_mitjana_s', 0)} s", selected_model)
+                        st.metric("⚡ Latència", f"{res.get('latencia_mitjana_s', 0)} s", res.get('model_avaluat', selected_model))
                         
                     st.markdown("#### 📋 Detall de cada Test")
                     for r in res.get("detall_resultats", []):
@@ -931,7 +964,7 @@ def render():
                 sr = st.session_state.harness_single_result
                 st.markdown("---")
                 
-                c_s_header, c_s_dl = st.columns([7, 3])
+                c_s_header, c_s_dl, c_s_clear = st.columns([5, 3, 2])
                 with c_s_header:
                     st.markdown(f"### 🎯 Resultat de la Prova: `{sr.get('id')}`")
                 with c_s_dl:
@@ -944,6 +977,10 @@ def render():
                         use_container_width=True,
                         key="btn_download_single_md"
                     )
+                with c_s_clear:
+                    if st.button("🗑️ Tancar Resultat", use_container_width=True, key="btn_close_single_res"):
+                        st.session_state.harness_single_result = None
+                        st.rerun()
                 
                 if sr.get("exit_global"):
                     st.success(f"✅ **ÈXIT:** El test s'ha superat en {sr.get('latencia_s')} segons.")

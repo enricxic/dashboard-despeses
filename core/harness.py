@@ -742,6 +742,137 @@ def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", progre
         "detall_resultats": results
     }
 
+# =========================================================================
+# BACKGROUND WORKER & PERSISTÈNCIA D'ESTAT DEL HARNESS
+# =========================================================================
+
+import threading
+
+def _get_status_file_path() -> str:
+    curr_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(curr_dir, ".."))
+    data_dir = os.path.join(project_root, "data")
+    os.makedirs(data_dir, exist_ok=True)
+    return os.path.join(data_dir, "harness_status.json")
+
+def get_harness_status() -> Dict[str, Any]:
+    """Retorna l'estat actual del background worker del Harness."""
+    path = _get_status_file_path()
+    if not os.path.exists(path):
+        return {"status": "idle", "progress": None, "results": None, "error": None}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"status": "idle", "progress": None, "results": None, "error": None}
+
+def save_harness_status(status_data: Dict[str, Any]):
+    """Desa l'estat actual del Harness al disc."""
+    path = _get_status_file_path()
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(status_data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Error desant l'estat del harness: {e}")
+
+def clear_harness_status():
+    """Restableix l'estat del harness."""
+    save_harness_status({"status": "idle", "progress": None, "results": None, "error": None})
+
+def _harness_background_worker(api_key: str, model_name: str):
+    """Executa la suite en un fil separat i actualitza l'estat progressivament."""
+    from datetime import datetime
+    cases = load_harness_cases()
+    if not cases:
+        save_harness_status({
+            "status": "error",
+            "progress": None,
+            "results": None,
+            "error": "No s'han trobat casos de prova a 'data/harness_menu_cases.json'",
+            "finished_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        return
+        
+    total_cases = len(cases)
+    results = []
+    
+    save_harness_status({
+        "status": "running",
+        "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "model_name": model_name,
+        "progress": {
+            "current": 0,
+            "total": total_cases,
+            "current_title": "Iniciant bateria...",
+            "pct": 0.0
+        },
+        "results": None,
+        "error": None
+    })
+    
+    for idx, tc in enumerate(cases):
+        save_harness_status({
+            "status": "running",
+            "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "model_name": model_name,
+            "progress": {
+                "current": idx + 1,
+                "total": total_cases,
+                "current_title": tc.get("titol", f"Test {idx+1}"),
+                "pct": round((idx) / total_cases, 2)
+            },
+            "results": None,
+            "error": None
+        })
+        
+        res = run_harness_single_test(tc, api_key=api_key, model_name=model_name)
+        results.append(res)
+        time.sleep(1.0)
+        
+    passed_total = sum(1 for r in results if r["exit_global"])
+    passed_json = sum(1 for r in results if r["json_valid"])
+    passed_seguretat = sum(1 for r in results if r["puntuacio_seguretat"] == 1.0)
+    passed_vetos = sum(1 for r in results if r["puntuacio_vetos"] == 1.0)
+    passed_eines = sum(1 for r in results if r.get("puntuacio_eines", 1.0) == 1.0)
+    avg_latency = round(sum(r["latencia_s"] for r in results) / total_cases, 2) if total_cases > 0 else 0.0
+    
+    suite_res = {
+        "total_proves": total_cases,
+        "proves_superades": passed_total,
+        "percentatge_exit": round((passed_total / total_cases) * 100, 1),
+        "taxa_json_valid": round((passed_json / total_cases) * 100, 1),
+        "taxa_seguretat_alergies": round((passed_seguretat / total_cases) * 100, 1),
+        "taxa_desdoblament_vetos": round((passed_vetos / total_cases) * 100, 1),
+        "taxa_equipament_forn": round((passed_eines / total_cases) * 100, 1),
+        "latencia_mitjana_s": avg_latency,
+        "model_avaluat": model_name,
+        "detall_resultats": results
+    }
+    
+    save_harness_status({
+        "status": "completed",
+        "finished_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "model_name": model_name,
+        "progress": {
+            "current": total_cases,
+            "total": total_cases,
+            "current_title": "Finalitzat!",
+            "pct": 1.0
+        },
+        "results": suite_res,
+        "error": None
+    })
+
+def start_harness_suite_background(api_key: str, model_name: str = "gemini-2.5-flash") -> bool:
+    """Inicia la suite en un fil en segon pla (Daemon Thread) si no n'hi ha cap en curs."""
+    st_data = get_harness_status()
+    if st_data.get("status") == "running":
+        return False
+        
+    th = threading.Thread(target=_harness_background_worker, args=(api_key, model_name), daemon=True)
+    th.start()
+    return True
+
 def generate_harness_markdown_report(data: Dict[str, Any], is_single: bool = False) -> str:
     """Genera un informe exhaustiu en format Markdown (.md) a partir dels resultats del benchmarking."""
     from datetime import datetime
