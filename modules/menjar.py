@@ -336,92 +336,86 @@ def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame,
                 st.caption("✨ *Proposta de la IA*")
 
 DEFAULT_PANTRY_CATALOG = [
-    # Verdures / Hortalisses
-    {"nom": "Ceba", "categoria": "Verdures", "stock_actual": 2.0, "unitat": "kg"},
-    {"nom": "All / Alls", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "cap"},
-    {"nom": "Patata", "categoria": "Verdures", "stock_actual": 3.0, "unitat": "kg"},
-    {"nom": "Zanahoria / Pastanaga", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "kg"},
-    {"nom": "Carbassó", "categoria": "Verdures", "stock_actual": 2.0, "unitat": "u"},
-    {"nom": "Albergínia", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "u"},
-    {"nom": "Pimentó / Pebrot", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "u"},
-    {"nom": "Tomàquet", "categoria": "Verdures", "stock_actual": 1.5, "unitat": "kg"},
-    {"nom": "Carbassa", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "u"},
-    {"nom": "Porró / All porró", "categoria": "Verdures", "stock_actual": 2.0, "unitat": "u"},
-    {"nom": "Bròcoli", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "u"},
-    {"nom": "Coliflor", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "u"},
-    {"nom": "Espinacs", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "bossa"},
-    {"nom": "Bledes / Acelgas", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "bossa"},
-    {"nom": "Enciam / Amanida", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "u"},
-    {"nom": "Canonges", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "bossa"},
-    {"nom": "Xampinyons / Bolets", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "bandeja"},
-    {"nom": "Carxofes", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "kg"},
-    {"nom": "Calçots", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "manat"},
-    {"nom": "Cogombre", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "u"},
-    {"nom": "Espàrrecs", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "manat"},
-    {"nom": "Api", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "u"},
-
-    # Proteïnes
-    {"nom": "Ous", "categoria": "Proteïnes", "stock_actual": 6.0, "unitat": "u"},
-    {"nom": "Pollastre", "categoria": "Proteïnes", "stock_actual": 500.0, "unitat": "g"},
-    {"nom": "Carn picada", "categoria": "Proteïnes", "stock_actual": 400.0, "unitat": "g"},
-    {"nom": "Gall dindi / Pavo", "categoria": "Proteïnes", "stock_actual": 0.0, "unitat": "g"},
-    {"nom": "Tonyina en conserva", "categoria": "Proteïnes", "stock_actual": 3.0, "unitat": "llaunes"},
-    {"nom": "Cigrons cuits", "categoria": "Proteïnes", "stock_actual": 2.0, "unitat": "pots"},
-    {"nom": "Llenties cuites", "categoria": "Proteïnes", "stock_actual": 2.0, "unitat": "pots"},
-    {"nom": "Fesols / Alubias", "categoria": "Proteïnes", "stock_actual": 1.0, "unitat": "pots"},
-    {"nom": "Lluç / Peix blanc", "categoria": "Proteïnes", "stock_actual": 4.0, "unitat": "filets"},
-    {"nom": "Salmó", "categoria": "Proteïnes", "stock_actual": 2.0, "unitat": "filets"},
-    {"nom": "Bacallà", "categoria": "Proteïnes", "stock_actual": 0.0, "unitat": "g"},
-    {"nom": "Sèpia / Calamar", "categoria": "Proteïnes", "stock_actual": 0.0, "unitat": "u"},
-    {"nom": "Gambes", "categoria": "Proteïnes", "stock_actual": 1.0, "unitat": "caixa"},
-    {"nom": "Pernil / Bacon / Xorís", "categoria": "Proteïnes", "stock_actual": 1.0, "unitat": "paquet"},
-    {"nom": "Botifarra", "categoria": "Proteïnes", "stock_actual": 0.0, "unitat": "u"},
-    {"nom": "Tofu", "categoria": "Proteïnes", "stock_actual": 0.0, "unitat": "paquet"},
-
-    # Cereals i Pa
-    {"nom": "Arròs bomba", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "kg"},
-    {"nom": "Arròs basmati / integral", "categoria": "Cereals i Pa", "stock_actual": 0.0, "unitat": "kg"},
-    {"nom": "Pasta / Macarrons / Espaguetis", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
-    {"nom": "Fideus", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
-    {"nom": "Farina de blat", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "kg"},
-    {"nom": "Farina sense gluten", "categoria": "Cereals i Pa", "stock_actual": 0.0, "unitat": "kg"},
-    {"nom": "Civada / Avena", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
-    {"nom": "Tortilles de blat de moro", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
-    {"nom": "Cuscús / Quinoa", "categoria": "Cereals i Pa", "stock_actual": 0.0, "unitat": "paquet"},
-    {"nom": "Galetes / Torrades", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
+    # Verdura
+    {"nom": "Ceba", "categoria": "verdura", "stock_actual": 2.0, "unitat": "kg"},
+    {"nom": "All / Alls", "categoria": "verdura", "stock_actual": 1.0, "unitat": "cap"},
+    {"nom": "Patata", "categoria": "verdura", "stock_actual": 3.0, "unitat": "kg"},
+    {"nom": "Zanahoria / Pastanaga", "categoria": "verdura", "stock_actual": 1.0, "unitat": "kg"},
+    {"nom": "Carbassó", "categoria": "verdura", "stock_actual": 2.0, "unitat": "u"},
+    {"nom": "Albergínia", "categoria": "verdura", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Pimentó / Pebrot", "categoria": "verdura", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Tomàquet", "categoria": "verdura", "stock_actual": 1.5, "unitat": "kg"},
+    {"nom": "Carbassa", "categoria": "verdura", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Porró / All porró", "categoria": "verdura", "stock_actual": 2.0, "unitat": "u"},
+    {"nom": "Bròcoli", "categoria": "verdura", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Coliflor", "categoria": "verdura", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Espinacs", "categoria": "verdura", "stock_actual": 1.0, "unitat": "bossa"},
+    {"nom": "Bledes / Acelgas", "categoria": "verdura", "stock_actual": 0.0, "unitat": "bossa"},
+    {"nom": "Enciam / Amanida", "categoria": "verdura", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Canonges", "categoria": "verdura", "stock_actual": 1.0, "unitat": "bossa"},
+    {"nom": "Xampinyons / Bolets", "categoria": "verdura", "stock_actual": 1.0, "unitat": "bandeja"},
+    {"nom": "Carxofes", "categoria": "verdura", "stock_actual": 0.0, "unitat": "kg"},
+    {"nom": "Calçots", "categoria": "verdura", "stock_actual": 0.0, "unitat": "manat"},
+    {"nom": "Cogombre", "categoria": "verdura", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Espàrrecs", "categoria": "verdura", "stock_actual": 1.0, "unitat": "manat"},
+    {"nom": "Api", "categoria": "verdura", "stock_actual": 0.0, "unitat": "u"},
 
     # Fruita
-    {"nom": "Llimona", "categoria": "Fruita", "stock_actual": 3.0, "unitat": "u"},
-    {"nom": "Taronja", "categoria": "Fruita", "stock_actual": 2.0, "unitat": "kg"},
-    {"nom": "Poma", "categoria": "Fruita", "stock_actual": 1.0, "unitat": "kg"},
-    {"nom": "Plàtan", "categoria": "Fruita", "stock_actual": 4.0, "unitat": "u"},
-    {"nom": "Pera", "categoria": "Fruita", "stock_actual": 0.0, "unitat": "kg"},
-    {"nom": "Aguacate / Alvocat", "categoria": "Fruita", "stock_actual": 2.0, "unitat": "u"},
-    {"nom": "Maduixes", "categoria": "Fruita", "stock_actual": 0.0, "unitat": "caixa"},
-    {"nom": "Meló / Sandía", "categoria": "Fruita", "stock_actual": 0.0, "unitat": "u"},
-    {"nom": "Kiwi", "categoria": "Fruita", "stock_actual": 0.0, "unitat": "u"},
-    {"nom": "Pinya", "categoria": "Fruita", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Llimona", "categoria": "fruita", "stock_actual": 3.0, "unitat": "u"},
+    {"nom": "Taronja", "categoria": "fruita", "stock_actual": 2.0, "unitat": "kg"},
+    {"nom": "Poma", "categoria": "fruita", "stock_actual": 1.0, "unitat": "kg"},
+    {"nom": "Plàtan", "categoria": "fruita", "stock_actual": 4.0, "unitat": "u"},
+    {"nom": "Pera", "categoria": "fruita", "stock_actual": 0.0, "unitat": "kg"},
+    {"nom": "Aguacate / Alvocat", "categoria": "fruita", "stock_actual": 2.0, "unitat": "u"},
+    {"nom": "Maduixes", "categoria": "fruita", "stock_actual": 0.0, "unitat": "caixa"},
+    {"nom": "Meló / Sandía", "categoria": "fruita", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Kiwi", "categoria": "fruita", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Pinya", "categoria": "fruita", "stock_actual": 0.0, "unitat": "u"},
 
-    # Làctics
-    {"nom": "Llet", "categoria": "Làctics", "stock_actual": 2.0, "unitat": "L"},
-    {"nom": "Iogurt natural", "categoria": "Làctics", "stock_actual": 4.0, "unitat": "u"},
-    {"nom": "Iogurt grec", "categoria": "Làctics", "stock_actual": 0.0, "unitat": "u"},
-    {"nom": "Formatge curat", "categoria": "Làctics", "stock_actual": 200.0, "unitat": "g"},
-    {"nom": "Formatge fresc / Feta", "categoria": "Làctics", "stock_actual": 1.0, "unitat": "u"},
-    {"nom": "Formatge ratllat / Mozzarella", "categoria": "Làctics", "stock_actual": 1.0, "unitat": "paquet"},
-    {"nom": "Mantega", "categoria": "Làctics", "stock_actual": 1.0, "unitat": "paquet"},
-    {"nom": "Nata de cuina", "categoria": "Làctics", "stock_actual": 1.0, "unitat": "bric"},
-
-    # Rebost
-    {"nom": "Tomàquet triturat / Frit", "categoria": "Rebost", "stock_actual": 2.0, "unitat": "pots"},
-    {"nom": "Caldo de peix", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "L"},
-    {"nom": "Caldo de pollastre / verdures", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "L"},
-    {"nom": "Ametlles / Nous / Fruits secs", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "bossa"},
-    {"nom": "Olives", "categoria": "Rebost", "stock_actual": 2.0, "unitat": "pots"},
-    {"nom": "Vinagre / Saboritzants", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "ampolla"},
-    {"nom": "Sal / Pebre / Espècies", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "pot"},
-    {"nom": "Mel / Sucre", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "pot"},
-    {"nom": "Salses (Maionesa / Mostassa / Soja)", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "pot"},
+    # Bàsics (Proteïnes, Cereals, Làctics, Conserves, Espècies, Caldos)
+    {"nom": "Ous", "categoria": "bàsics", "stock_actual": 6.0, "unitat": "u"},
+    {"nom": "Pollastre", "categoria": "bàsics", "stock_actual": 500.0, "unitat": "g"},
+    {"nom": "Carn picada", "categoria": "bàsics", "stock_actual": 400.0, "unitat": "g"},
+    {"nom": "Gall dindi / Pavo", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "g"},
+    {"nom": "Tonyina en conserva", "categoria": "bàsics", "stock_actual": 3.0, "unitat": "llaunes"},
+    {"nom": "Cigrons cuits", "categoria": "bàsics", "stock_actual": 2.0, "unitat": "pots"},
+    {"nom": "Llenties cuites", "categoria": "bàsics", "stock_actual": 2.0, "unitat": "pots"},
+    {"nom": "Fesols / Alubias", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "pots"},
+    {"nom": "Lluç / Peix blanc", "categoria": "bàsics", "stock_actual": 4.0, "unitat": "filets"},
+    {"nom": "Salmó", "categoria": "bàsics", "stock_actual": 2.0, "unitat": "filets"},
+    {"nom": "Bacallà", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "g"},
+    {"nom": "Sèpia / Calamar", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Gambes", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "caixa"},
+    {"nom": "Pernil / Bacon / Xorís", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Botifarra", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Tofu", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "paquet"},
+    {"nom": "Arròs bomba", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "kg"},
+    {"nom": "Arròs basmati / integral", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "kg"},
+    {"nom": "Pasta / Macarrons / Espaguetis", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Fideus", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Farina de blat", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "kg"},
+    {"nom": "Farina sense gluten", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "kg"},
+    {"nom": "Civada / Avena", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Tortilles de blat de moro", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Cuscús / Quinoa", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "paquet"},
+    {"nom": "Galetes / Torrades", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Llet", "categoria": "bàsics", "stock_actual": 2.0, "unitat": "L"},
+    {"nom": "Iogurt natural", "categoria": "bàsics", "stock_actual": 4.0, "unitat": "u"},
+    {"nom": "Iogurt grec", "categoria": "bàsics", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Formatge curat", "categoria": "bàsics", "stock_actual": 200.0, "unitat": "g"},
+    {"nom": "Formatge fresc / Feta", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Formatge ratllat / Mozzarella", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Mantega", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Nata de cuina", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "bric"},
+    {"nom": "Tomàquet triturat / Frit", "categoria": "bàsics", "stock_actual": 2.0, "unitat": "pots"},
+    {"nom": "Caldo de peix", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "L"},
+    {"nom": "Caldo de pollastre / verdures", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "L"},
+    {"nom": "Ametlles / Nous / Fruits secs", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "bossa"},
+    {"nom": "Olives", "categoria": "bàsics", "stock_actual": 2.0, "unitat": "pots"},
+    {"nom": "Vinagre / Saboritzants", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "ampolla"},
+    {"nom": "Sal / Pebre / Espècies", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "pot"},
+    {"nom": "Mel / Sucre", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "pot"},
+    {"nom": "Salses (Maionesa / Mostassa / Soja)", "categoria": "bàsics", "stock_actual": 1.0, "unitat": "pot"},
 ]
 
 def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
@@ -554,35 +548,28 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
             st.session_state["pantry_selected_items"] = []
             st.rerun()
 
-    # Agrupar per Categoria
-    categories_map = {
-        "Verdures": ["Verdures", "Hortalisses", "Verdura"],
-        "Proteïnes": ["Proteïnes", "Proteína", "Carns", "Peix", "Llegums", "Ous"],
-        "Cereals i Pa": ["Cereals i Pa", "Cereales", "Pasta", "Farines"],
-        "Fruita": ["Fruita", "Frutas", "Fruites"],
-        "Làctics": ["Làctics", "Lácteos", "Formatges"],
-        "Rebost": ["Rebost", "Despensa", "Conserves", "Altres"]
-    }
-
-    grouped = {cat: [] for cat in categories_map.keys()}
+    # Agrupar dinàmicament per la família de la BD (tb_productes)
+    grouped = {}
     for item in catalog_items:
         # Filtrar productes sense estoc positiu (només mostrar productes amb estoc actual > 0)
         if item.get("stock_actual", 0) <= 0:
             continue
         if search_q.strip() and search_q.lower() not in item["nom"].lower():
             continue
-        i_cat = item.get("categoria", "Rebost")
-        matched = False
-        for main_cat, synonyms in categories_map.items():
-            if any(s.lower() in i_cat.lower() for s in synonyms):
-                grouped[main_cat].append(item)
-                matched = True
-                break
-        if not matched:
-            grouped["Rebost"].append(item)
+        fam = str(item.get("categoria", "Bàsics")).strip().capitalize()
+        if not fam or fam.lower() in ["none", "nan", "null"]:
+            fam = "Bàsics"
+        if fam not in grouped:
+            grouped[fam] = []
+        grouped[fam].append(item)
 
-    # Renderitzar etiquetes clickables per categoria
-    for cat_name, cat_items in grouped.items():
+    # Ordre de preferència visual de les famílies
+    fam_order = ["Fruita", "Verdura", "Bàsics", "Carn", "Peix", "Lactics", "Llaunes", "Congelats", "Preparacions"]
+    sorted_families = sorted(grouped.keys(), key=lambda f: fam_order.index(f) if f in fam_order else 99)
+
+    # Renderitzar etiquetes clickables per família
+    for cat_name in sorted_families:
+        cat_items = grouped[cat_name]
         if not cat_items: continue
         pos_count = sum(1 for it in cat_items if it.get("stock_actual", 0) > 0)
         sel_count = sum(1 for it in cat_items if it["nom"] in selected_set)
