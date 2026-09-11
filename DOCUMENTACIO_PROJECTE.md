@@ -194,3 +194,11 @@ Si inicies una conversa nova amb un assistent d'IA, indica-li:
 **"Abans de res, llegeix l'arxiu `DOCUMENTACIO_PROJECTE.md` per entendre l'arquitectura modular de la meva app."**
 Això assegurarà que treballi directament sobre `app.py`, el nucli a `core/` i els fitxers de `modules/`.
 
+---
+
+## 10. Directriu Obligatòria de Desplegament i GitHub (`git push`)
+⚠️ **DIRECTRIU CRÍTICA D'EXECUCIÓ PER A L'ASSISTENT D'IA**:
+- L'aplicació es carrega i s'executa directament des del núvol (desplegament automatitzat a **Streamlit Community Cloud** sincroitzat amb el repositori GitHub `enricxicars/dashboard-despeses`).
+- En qualsevol tasca o modificació de codi completada, l'assistent d'IA **TÉ L'OBLIGACIÓ STRICTA DE DESAR I PUJAR SEMPRE ELS CANVIS A GITHUB** (`git add`, `git commit`, `git push origin main`).
+- Mai s'ha de declarar una tasca com a finalitzada només modificant els fitxers locals: **SEMPRE CAL PUJAR ELS CANVIS A GITHUB** perquè la versió del núvol actualitzi la interfície de l'usuari immediatament.
+
