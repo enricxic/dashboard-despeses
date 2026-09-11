@@ -468,14 +468,15 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
     ]
 
     excluded_cats = [
-        'begudes', 'bebidas', 'extres', 'extras', 'aperitius', 'snacks', 'neteja', 'limpieza', 'higiene', 'hogar', 'drogeria', 'drogería'
+        'begudes', 'bebidas', 'extres', 'extras', 'aperitius', 'snacks', 'neteja', 'limpieza', 'higiene', 'hogar', 'drogeria', 'drogería', 'esmorzar', 'desayuno', 'desayunos'
     ]
 
     name_patterns = [
         r'\b(pa|pans|pan|panes)\b',
         r'\b(oli|olis|aceite|aceites)\b',
         r'\b(aigua|agua|cervesa|cerveza|vi|vins|vino|vinos|refresc|refrescs|refresco|refrescos|suc|sucs|zumo|zumos|beguda|begudes|bebida|bebidas|coca-cola|fanta|aquarius|nestea|kombucha|tònica|tonica)\b',
-        r'\b(xips|chips|snack|snacks|llaminadura|llaminadures|caramel|caramels|xocolata|chocolate|cafè|cafe|cafès|cafes|aperitiu|aperitius|aperitivo|aperitivos)\b'
+        r'\b(xips|chips|snack|snacks|llaminadura|llaminadures|caramel|caramels|xocolata|chocolate|cafè|cafe|cafès|cafes|aperitiu|aperitius|aperitivo|aperitivos)\b',
+        r'\b(esmorzar|esmorzars|desayuno|desayunos|mermelada|melmelada|colacao|nesquik|cacao)\b'
     ]
 
     def is_excluded_pantry_product(name: str, cat: str) -> bool:
@@ -504,6 +505,13 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
                 for _, r in df_prods.iterrows():
                     nom = str(r.get('nom_estandard', '')).strip()
                     if not nom: continue
+                    
+                    # Suport per a la columna 'x_etiqueta' a la BD tb_productes (si és False/0, s'amaga)
+                    x_etq = r.get('x_etiqueta')
+                    if pd.notna(x_etq):
+                        if x_etq is False or x_etq == 0 or str(x_etq).strip().lower() in ['false', 'f', '0']:
+                            continue
+
                     cat = str(r.get('familia', 'Rebost')).strip()
                     if is_excluded_pantry_product(nom, cat):
                         continue
@@ -581,10 +589,10 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
         
         st.markdown(f"<div class='pantry-cat-title'>{cat_name.upper()} ({sel_count} PREFERENTS / {pos_count} amb estoc)</div>", unsafe_allow_html=True)
         
-        # Renderitzar en quadrícula de botons pastilla (6 columnes)
-        cols = st.columns(6)
+        # Renderitzar en quadrícula de botons pastilla (8 columnes)
+        cols = st.columns(8)
         for idx_it, it in enumerate(cat_items):
-            col_idx = cols[idx_it % 6]
+            col_idx = cols[idx_it % 8]
             name = it["nom"]
             is_sel = name in selected_set
             has_stock = it.get("stock_actual", 0) > 0
