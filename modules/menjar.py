@@ -458,11 +458,28 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
     st.markdown("#### 📦 Núvol d'Etiquetes del Rebost (Fes clic per donar Preferència)")
     st.caption("👈 **Fes clic sobre qualsevol etiqueta per canviar-la de color!** Les etiquetes ressaltades en verd amb **`⭐ PREFERENT`** seran utilitzades de manera prioritària per la IA per elaborar el menú setmanal.")
 
-    # Fusionar el catàleg per defecte amb la base de dades Supabase per garantir que surtin TOTS els ingredients
+    # Funció auxiliar per filtrar productes de neteja, llar i higiene de les etiquetes d'alimentació
+    clean_terms = [
+        "neteja", "limpieza", "detergent", "detergente", "sabó", "jabon", "suavitzant", "suavizante",
+        "fregasuelos", "lejía", "lleixiu", "papel", "paper", "servilleta", "servilletes", "champú", "champu",
+        "xampú", "xampu", "gel", "dentifric", "dentifrico", "pastilla", "rentavaixelles", "lavavajillas",
+        "bayeta", "estropajo", "fregall", "basura", "brossa", "higienico", "higiènic", "drogeria", "drogería",
+        "higiene", "hogar", "llavavaixelles", "insecticida", "desinfectant", "desinfectante", "fregar", "bayetas",
+        "scottex", "colgate", "fairy", "ariel", "skip", "mistol", "kh7", "kh-7", "don limpio", "harpic", "dodot",
+        "compresa", "tampón", "tampon", "desodorant", "desodorante"
+    ]
+
+    def is_cleaning_product(name: str, cat: str) -> bool:
+        n_low = str(name).lower()
+        c_low = str(cat).lower()
+        return any(term in n_low or term in c_low for term in clean_terms)
+
+    # Fusionar el catàleg per defecte amb Supabase garantint que només surtin ingredients d'alimentació
     catalog_dict = {}
     for item in DEFAULT_PANTRY_CATALOG:
-        k = item["nom"].lower().strip()
-        catalog_dict[k] = dict(item)
+        if not is_cleaning_product(item["nom"], item.get("categoria", "")):
+            k = item["nom"].lower().strip()
+            catalog_dict[k] = dict(item)
 
     if supabase_client is not None:
         try:
@@ -472,6 +489,8 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
                     nom = str(r.get('nom_estandard', '')).strip()
                     if not nom: continue
                     cat = str(r.get('familia', 'Rebost')).strip()
+                    if is_cleaning_product(nom, cat):
+                        continue
                     stk = float(r.get('stock_actual', 0.0)) if pd.notna(r.get('stock_actual')) else 0.0
                     k = nom.lower().strip()
                     if k in catalog_dict:
