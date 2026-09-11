@@ -340,7 +340,7 @@ DEFAULT_PANTRY_CATALOG = [
     {"nom": "Ceba", "categoria": "verdura", "stock_actual": 2.0, "unitat": "kg"},
     {"nom": "All / Alls", "categoria": "verdura", "stock_actual": 1.0, "unitat": "cap"},
     {"nom": "Patata", "categoria": "verdura", "stock_actual": 3.0, "unitat": "kg"},
-    {"nom": "Zanahoria / Pastanaga", "categoria": "verdura", "stock_actual": 1.0, "unitat": "kg"},
+    {"nom": "Pastanaga", "categoria": "verdura", "stock_actual": 1.0, "unitat": "kg"},
     {"nom": "Carbassó", "categoria": "verdura", "stock_actual": 2.0, "unitat": "u"},
     {"nom": "Albergínia", "categoria": "verdura", "stock_actual": 0.0, "unitat": "u"},
     {"nom": "Pimentó / Pebrot", "categoria": "verdura", "stock_actual": 1.0, "unitat": "u"},
@@ -487,11 +487,6 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
 
     # Fusionar el catàleg per defecte amb Supabase garantint que només surtin ingredients d'alimentació
     catalog_dict = {}
-    for item in DEFAULT_PANTRY_CATALOG:
-        if not is_excluded_pantry_product(item["nom"], item.get("categoria", "")):
-            k = item["nom"].lower().strip()
-            catalog_dict[k] = dict(item)
-
     if supabase_client is not None:
         try:
             df_prods = fetch_all_supabase(supabase_client, 'tb_productes')
@@ -506,24 +501,26 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
                         if x_etq is False or x_etq == 0 or str(x_etq).strip().lower() in ['false', 'f', '0']:
                             continue
 
-                    cat = str(r.get('familia', 'Rebost')).strip()
+                    cat = str(r.get('familia', 'Bàsics')).strip()
                     if is_excluded_pantry_product(nom, cat):
                         continue
                     stk = float(r.get('stock_actual', 0.0)) if pd.notna(r.get('stock_actual')) else 0.0
                     k = nom.lower().strip()
-                    if k in catalog_dict:
-                        catalog_dict[k]["stock_actual"] = max(catalog_dict[k].get("stock_actual", 0.0), stk)
-                        if cat and cat != 'Rebost':
-                            catalog_dict[k]["categoria"] = cat
-                    else:
-                        catalog_dict[k] = {
-                            "nom": nom,
-                            "categoria": cat if cat else "Rebost",
-                            "stock_actual": stk,
-                            "unitat": "disponible"
-                        }
+                    catalog_dict[k] = {
+                        "nom": nom,
+                        "categoria": cat if cat else "Bàsics",
+                        "stock_actual": stk,
+                        "unitat": "disponible"
+                    }
         except Exception:
             pass
+
+    # Utilitzar el catàleg per defecte ÚNICAMENT en cas que no hi hagi dades a Supabase
+    if not catalog_dict:
+        for item in DEFAULT_PANTRY_CATALOG:
+            if not is_excluded_pantry_product(item["nom"], item.get("categoria", "")):
+                k = item["nom"].lower().strip()
+                catalog_dict[k] = dict(item)
             
     catalog_items = list(catalog_dict.values())
 
