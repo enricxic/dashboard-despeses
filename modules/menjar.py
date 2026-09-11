@@ -383,7 +383,6 @@ DEFAULT_PANTRY_CATALOG = [
     {"nom": "Arròs basmati / integral", "categoria": "Cereals i Pa", "stock_actual": 0.0, "unitat": "kg"},
     {"nom": "Pasta / Macarrons / Espaguetis", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
     {"nom": "Fideus", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
-    {"nom": "Pa de motlle / Pa integral", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
     {"nom": "Farina de blat", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "kg"},
     {"nom": "Farina sense gluten", "categoria": "Cereals i Pa", "stock_actual": 0.0, "unitat": "kg"},
     {"nom": "Civada / Avena", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
@@ -419,7 +418,6 @@ DEFAULT_PANTRY_CATALOG = [
     {"nom": "Caldo de pollastre / verdures", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "L"},
     {"nom": "Ametlles / Nous / Fruits secs", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "bossa"},
     {"nom": "Olives", "categoria": "Rebost", "stock_actual": 2.0, "unitat": "pots"},
-    {"nom": "Oli d'oliva", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "ampolla"},
     {"nom": "Vinagre / Saboritzants", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "ampolla"},
     {"nom": "Sal / Pebre / Espècies", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "pot"},
     {"nom": "Mel / Sucre", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "pot"},
@@ -458,7 +456,7 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
     st.markdown("#### 📦 Núvol d'Etiquetes del Rebost (Fes clic per donar Preferència)")
     st.caption("👈 **Fes clic sobre qualsevol etiqueta per canviar-la de color!** Les etiquetes ressaltades en verd amb **`⭐ PREFERENT`** seran utilitzades de manera prioritària per la IA per elaborar el menú setmanal.")
 
-    # Funció auxiliar per filtrar productes de neteja, llar i higiene de les etiquetes d'alimentació
+    # Funció auxiliar per filtrar productes no gastronòmics (neteja, llar, higiene, begudes, extres, olis i pa)
     clean_terms = [
         "neteja", "limpieza", "detergent", "detergente", "sabó", "jabon", "suavitzant", "suavizante",
         "fregasuelos", "lejía", "lleixiu", "papel", "paper", "servilleta", "servilletes", "champú", "champu",
@@ -469,15 +467,33 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
         "compresa", "tampón", "tampon", "desodorant", "desodorante"
     ]
 
-    def is_cleaning_product(name: str, cat: str) -> bool:
+    excluded_cats = [
+        'begudes', 'bebidas', 'extres', 'extras', 'aperitius', 'snacks', 'neteja', 'limpieza', 'higiene', 'hogar', 'drogeria', 'drogería'
+    ]
+
+    name_patterns = [
+        r'\b(pa|pans|pan|panes)\b',
+        r'\b(oli|olis|aceite|aceites)\b',
+        r'\b(aigua|agua|cervesa|cerveza|vi|vins|vino|vinos|refresc|refrescs|refresco|refrescos|suc|sucs|zumo|zumos|beguda|begudes|bebida|bebidas|coca-cola|fanta|aquarius|nestea|kombucha|tònica|tonica)\b',
+        r'\b(xips|chips|snack|snacks|llaminadura|llaminadures|caramel|caramels|xocolata|chocolate|cafè|cafe|cafès|cafes|aperitiu|aperitius|aperitivo|aperitivos)\b'
+    ]
+
+    def is_excluded_pantry_product(name: str, cat: str) -> bool:
         n_low = str(name).lower()
         c_low = str(cat).lower()
-        return any(term in n_low or term in c_low for term in clean_terms)
+        if any(term in n_low or term in c_low for term in clean_terms):
+            return True
+        if any(ec in c_low for ec in excluded_cats):
+            return True
+        for pat in name_patterns:
+            if re.search(pat, n_low):
+                return True
+        return False
 
     # Fusionar el catàleg per defecte amb Supabase garantint que només surtin ingredients d'alimentació
     catalog_dict = {}
     for item in DEFAULT_PANTRY_CATALOG:
-        if not is_cleaning_product(item["nom"], item.get("categoria", "")):
+        if not is_excluded_pantry_product(item["nom"], item.get("categoria", "")):
             k = item["nom"].lower().strip()
             catalog_dict[k] = dict(item)
 
@@ -489,7 +505,7 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
                     nom = str(r.get('nom_estandard', '')).strip()
                     if not nom: continue
                     cat = str(r.get('familia', 'Rebost')).strip()
-                    if is_cleaning_product(nom, cat):
+                    if is_excluded_pantry_product(nom, cat):
                         continue
                     stk = float(r.get('stock_actual', 0.0)) if pd.notna(r.get('stock_actual')) else 0.0
                     k = nom.lower().strip()
