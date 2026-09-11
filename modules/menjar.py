@@ -513,7 +513,7 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
     in_stock_names = [item["nom"] for item in in_stock_items]
 
     if "pantry_selected_items" not in st.session_state:
-        st.session_state["pantry_selected_items"] = list(in_stock_names)
+        st.session_state["pantry_selected_items"] = []
 
     selected_set = set(st.session_state["pantry_selected_items"])
 
