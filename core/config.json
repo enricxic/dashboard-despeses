@@ -193,7 +193,7 @@
         "minipimer": true,
         "batedora_vas": true,
         "motlles_silicona": true,
-        "olla_pressio": true,
+        "olla_pressio": false,
         "liquadora": false,
         "tallafiambres": false,
         "robot_cuina": false,

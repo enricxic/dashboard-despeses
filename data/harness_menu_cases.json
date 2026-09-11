@@ -290,8 +290,8 @@
     },
     {
       "id": "TC-06-Aprofitament-Stock-Bases",
-      "titol": "Aprofitament d'Stock i Bases de Congelador (Zero Malbaratament)",
-      "descripcio": "A l'stock del congelador hi ha 1 litre de caldo de peix i al rebost 1 paquet d'arròs bomba. El menú ha d'aprofitar aquests productes i NO afegir-los a la llista de la compra.",
+      "titol": "Aprofitament d'Estoc de Rebost i Tag Cloud (Zero Malbaratament)",
+      "descripcio": "Avaluació del prioritzat d'ingredients de l'estoc positiu del rebost (Caldo de peix, Arròs bomba, Carbassó, Llenties cuites i Pit de pollastre). La IA ha de prioritzar la seva incorporació als menús setmanals.",
       "perfil_familia": [
         {
           "nom": "Enric",
@@ -321,7 +321,10 @@
       },
       "stock_disponible": [
         {"producte": "Caldo de peix casolà", "quantitat": "1 Litre", "ubicacio": "Congelador"},
-        {"producte": "Arròs bomba", "quantitat": "1 kg", "ubicacio": "Rebost"}
+        {"producte": "Arròs bomba", "quantitat": "1 kg", "ubicacio": "Rebost"},
+        {"producte": "Carbassó", "quantitat": "2 unitats", "ubicacio": "Nevera"},
+        {"producte": "Llenties cuites", "quantitat": "2 pots", "ubicacio": "Rebost"},
+        {"producte": "Pit de pollastre", "quantitat": "500g", "ubicacio": "Nevera"}
       ],
       "peticions_setmanals": [],
       "valoracions_previes": {},
@@ -333,7 +336,8 @@
       "criteris_esperats": {
         "utilitza_caldo_peix_existent": true,
         "exclusio_compra_caldo_peix": true,
-        "exclusio_compra_arros": true
+        "exclusio_compra_arros": true,
+        "prioritat_estoc_positiu": true
       }
     },
     {

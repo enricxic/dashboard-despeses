@@ -335,6 +335,215 @@ def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame,
             else:
                 st.caption("✨ *Proposta de la IA*")
 
+DEFAULT_PANTRY_CATALOG = [
+    {"nom": "Ceba", "categoria": "Verdures", "stock_actual": 2.0, "unitat": "kg"},
+    {"nom": "All", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "cap"},
+    {"nom": "Patata", "categoria": "Verdures", "stock_actual": 3.0, "unitat": "kg"},
+    {"nom": "Zanahoria", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "kg"},
+    {"nom": "Carbassó", "categoria": "Verdures", "stock_actual": 2.0, "unitat": "u"},
+    {"nom": "Berenjena", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Pimentó", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Tomàquet", "categoria": "Verdures", "stock_actual": 1.5, "unitat": "kg"},
+    {"nom": "Carbassa", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Porró", "categoria": "Verdures", "stock_actual": 2.0, "unitat": "u"},
+    {"nom": "Bròcoli", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Coliflor", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Espinacs", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "bossa"},
+    {"nom": "Acelgas", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "bossa"},
+    {"nom": "Enciam / Amanida", "categoria": "Verdures", "stock_actual": 1.0, "unitat": "u"},
+    {"nom": "Xampinyons", "categoria": "Verdures", "stock_actual": 0.0, "unitat": "bandeja"},
+    {"nom": "Ous", "categoria": "Proteïnes", "stock_actual": 6.0, "unitat": "u"},
+    {"nom": "Pollastre", "categoria": "Proteïnes", "stock_actual": 500.0, "unitat": "g"},
+    {"nom": "Carn picada", "categoria": "Proteïnes", "stock_actual": 400.0, "unitat": "g"},
+    {"nom": "Tonyina en conserva", "categoria": "Proteïnes", "stock_actual": 3.0, "unitat": "llaunes"},
+    {"nom": "Cigrons cuits", "categoria": "Proteïnes", "stock_actual": 2.0, "unitat": "pots"},
+    {"nom": "Llenties cuites", "categoria": "Proteïnes", "stock_actual": 2.0, "unitat": "pots"},
+    {"nom": "Fesols / Alubias", "categoria": "Proteïnes", "stock_actual": 0.0, "unitat": "pots"},
+    {"nom": "Lluç / Peix blanc", "categoria": "Proteïnes", "stock_actual": 4.0, "unitat": "filets"},
+    {"nom": "Salmó", "categoria": "Proteïnes", "stock_actual": 0.0, "unitat": "filets"},
+    {"nom": "Xorís / Pernil / Bacon", "categoria": "Proteïnes", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Arròs bomba", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "kg"},
+    {"nom": "Pasta / Macarrons", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Pa integral", "categoria": "Cereals i Pa", "stock_actual": 0.0, "unitat": "barra"},
+    {"nom": "Farina de blat / sense gluten", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Civada", "categoria": "Cereals i Pa", "stock_actual": 0.0, "unitat": "paquet"},
+    {"nom": "Tortilles de blat de moro", "categoria": "Cereals i Pa", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Cuscús / Quinoa", "categoria": "Cereals i Pa", "stock_actual": 0.0, "unitat": "paquet"},
+    {"nom": "Llimona", "categoria": "Fruita", "stock_actual": 3.0, "unitat": "u"},
+    {"nom": "Taronja", "categoria": "Fruita", "stock_actual": 0.0, "unitat": "kg"},
+    {"nom": "Poma", "categoria": "Fruita", "stock_actual": 1.0, "unitat": "kg"},
+    {"nom": "Plàtan", "categoria": "Fruita", "stock_actual": 4.0, "unitat": "u"},
+    {"nom": "Aguacate", "categoria": "Fruita", "stock_actual": 2.0, "unitat": "u"},
+    {"nom": "Maduixes", "categoria": "Fruita", "stock_actual": 0.0, "unitat": "caixa"},
+    {"nom": "Llet", "categoria": "Làctics", "stock_actual": 2.0, "unitat": "L"},
+    {"nom": "Iogurt natural", "categoria": "Làctics", "stock_actual": 4.0, "unitat": "u"},
+    {"nom": "Formatge curat", "categoria": "Làctics", "stock_actual": 200.0, "unitat": "g"},
+    {"nom": "Formatge fresc / Feta", "categoria": "Làctics", "stock_actual": 0.0, "unitat": "u"},
+    {"nom": "Mantega", "categoria": "Làctics", "stock_actual": 1.0, "unitat": "paquet"},
+    {"nom": "Nata de cuina", "categoria": "Làctics", "stock_actual": 0.0, "unitat": "bric"},
+    {"nom": "Tomàquet triturat", "categoria": "Rebost", "stock_actual": 2.0, "unitat": "pots"},
+    {"nom": "Caldo de peix", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "L"},
+    {"nom": "Caldo de pollastre / verdures", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "L"},
+    {"nom": "Ametlles / Nous", "categoria": "Rebost", "stock_actual": 1.0, "unitat": "bossa"},
+    {"nom": "Olives", "categoria": "Rebost", "stock_actual": 2.0, "unitat": "pots"},
+]
+
+def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
+    """Renderitza el núvol d'etiquetes del rebost interactiu (imatges 1 i 2).
+    En fer clic sobre qualsevol etiqueta, aquesta canvia de color (verd vibrant amb estrella ⭐)
+    per indicar que té PREFERÈNCIA ABSOLUTA per ser utilitzada per la IA."""
+    
+    st.markdown('''
+    <style>
+    .pantry-card-box {
+        background: #0d131d;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 10px;
+        margin-bottom: 16px;
+    }
+    .pantry-cat-title {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #38bdf8;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        margin-top: 12px;
+        margin-bottom: 8px;
+        border-bottom: 1px dashed #334155;
+        padding-bottom: 4px;
+    }
+    </style>
+    ''', unsafe_allow_html=True)
+    
+    st.markdown("#### 📦 Núvol d'Etiquetes del Rebost (Fes clic per donar Preferència)")
+    st.caption("👈 **Fes clic sobre qualsevol etiqueta per canviar-la de color!** Les etiquetes ressaltades en verd amb **`⭐ PREFERENT`** seran utilitzades de manera prioritària per la IA per elaborar el menú setmanal.")
+
+    catalog_items = []
+    if supabase_client is not None:
+        try:
+            df_prods = fetch_all_supabase(supabase_client, 'tb_productes')
+            if df_prods is not None and not df_prods.empty:
+                for _, r in df_prods.iterrows():
+                    nom = str(r.get('nom_estandard', '')).strip()
+                    if not nom: continue
+                    cat = str(r.get('familia', 'Rebost')).strip()
+                    stk = float(r.get('stock_actual', 0.0)) if pd.notna(r.get('stock_actual')) else 0.0
+                    catalog_items.append({
+                        "nom": nom,
+                        "categoria": cat if cat else "Rebost",
+                        "stock_actual": stk,
+                        "unitat": "disponible"
+                    })
+        except Exception:
+            pass
+            
+    if not catalog_items:
+        catalog_items = DEFAULT_PANTRY_CATALOG
+
+    in_stock_items = [item for item in catalog_items if item.get("stock_actual", 0) > 0]
+    in_stock_names = [item["nom"] for item in in_stock_items]
+
+    if "pantry_selected_items" not in st.session_state:
+        st.session_state["pantry_selected_items"] = list(in_stock_names)
+
+    selected_set = set(st.session_state["pantry_selected_items"])
+
+    # Barra d'accions ràpides i cerca
+    col_search, col_act1, col_act2 = st.columns([5, 3.5, 3.5])
+    with col_search:
+        search_q = st.text_input("🔍 Cercar aliment al rebost...", key="pantry_search_input", label_visibility="collapsed", placeholder="🔍 Cercar aliment (ex. Carbassó, Tomàquet, Pollastre...)")
+    with col_act1:
+        if st.button("⭐ Seleccionar Tots d'Estoc Positiu", key="btn_sel_all_stock", use_container_width=True):
+            st.session_state["pantry_selected_items"] = list(in_stock_names)
+            st.rerun()
+    with col_act2:
+        if st.button("✨ Desmarcar Tots", key="btn_deselect_all_stock", use_container_width=True):
+            st.session_state["pantry_selected_items"] = []
+            st.rerun()
+
+    # Agrupar per Categoria
+    categories_map = {
+        "Verdures": ["Verdures", "Hortalisses", "Verdura"],
+        "Proteïnes": ["Proteïnes", "Proteína", "Carns", "Peix", "Llegums", "Ous"],
+        "Cereals i Pa": ["Cereals i Pa", "Cereales", "Pasta", "Farines"],
+        "Fruita": ["Fruita", "Frutas", "Fruites"],
+        "Làctics": ["Làctics", "Lácteos", "Formatges"],
+        "Rebost": ["Rebost", "Despensa", "Conserves", "Altres"]
+    }
+
+    grouped = {cat: [] for cat in categories_map.keys()}
+    for item in catalog_items:
+        if search_q.strip() and search_q.lower() not in item["nom"].lower():
+            continue
+        i_cat = item.get("categoria", "Rebost")
+        matched = False
+        for main_cat, synonyms in categories_map.items():
+            if any(s.lower() in i_cat.lower() for s in synonyms):
+                grouped[main_cat].append(item)
+                matched = True
+                break
+        if not matched:
+            grouped["Rebost"].append(item)
+
+    # Renderitzar etiquetes clickables per categoria
+    for cat_name, cat_items in grouped.items():
+        if not cat_items: continue
+        pos_count = sum(1 for it in cat_items if it.get("stock_actual", 0) > 0)
+        sel_count = sum(1 for it in cat_items if it["nom"] in selected_set)
+        
+        st.markdown(f"<div class='pantry-cat-title'>{cat_name.upper()} ({sel_count} PREFERENTS / {pos_count} amb estoc)</div>", unsafe_allow_html=True)
+        
+        # Renderitzar en quadrícula de botons pastilla (4 columnes)
+        cols = st.columns(4)
+        for idx_it, it in enumerate(cat_items):
+            col_idx = cols[idx_it % 4]
+            name = it["nom"]
+            is_sel = name in selected_set
+            has_stock = it.get("stock_actual", 0) > 0
+            stk_val = it.get("stock_actual", 0)
+            u_str = it.get("unitat", "")
+            
+            with col_idx:
+                if is_sel:
+                    lbl = f"⭐ {name}"
+                    if has_stock and stk_val > 0:
+                        lbl += f" ({stk_val} {u_str})"
+                    btn_type = "primary"
+                else:
+                    icon = "🟢 " if has_stock else "⚪ "
+                    lbl = f"{icon}{name}"
+                    if has_stock and stk_val > 0:
+                        lbl += f" ({stk_val} {u_str})"
+                    btn_type = "secondary"
+
+                if st.button(lbl, key=f"btn_pantry_tag_{cat_name}_{idx_it}_{name}", type=btn_type, use_container_width=True):
+                    if is_sel:
+                        st.session_state["pantry_selected_items"].remove(name)
+                    else:
+                        st.session_state["pantry_selected_items"].append(name)
+                    st.rerun()
+
+    # Resum d'ingredients preferents
+    sel_count_tot = len(st.session_state["pantry_selected_items"])
+    if sel_count_tot > 0:
+        st.success(f"⭐ **{sel_count_tot} ingredients marcats com a PREFERENTS de l'estoc.** La IA els donarà prioritat absoluta al menú setmanal.")
+    else:
+        st.info("ℹ️ Cap ingredient marcat com a preferent. Fes clic a les etiquetes per seleccionar els productes a aprofitar.")
+
+    final_stock_list = []
+    for s_name in st.session_state["pantry_selected_items"]:
+        matching_item = next((it for it in catalog_items if it["nom"] == s_name), None)
+        stk_info = f"Estoc actual: {matching_item['stock_actual']} {matching_item.get('unitat', '')}" if matching_item and matching_item.get("stock_actual", 0) > 0 else "Disponible al rebost"
+        final_stock_list.append({
+            "producte": f"⭐ {s_name} [INGREDIENT PREFERENT DE L'ESTOC]",
+            "quantitat": stk_info,
+            "ubicacio": "Rebost / Nevera / Congelador (Prioritat Alta)"
+        })
+
+    return final_stock_list
+
 def render():
     col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
     with col_t1:
@@ -595,7 +804,7 @@ def render():
                     eines_actives_llista = [k for k, v in eines_cfg.items() if v]
                     st.caption(f"🍳 **Equipament de cuina actiu:** {', '.join(eines_actives_llista) if eines_actives_llista else 'Bàsic'}")
 
-                with st.expander("📌 3. Fixar Plats per Dies, Estoc de Rebost i Peticions (Poder Total)", expanded=True):
+                with st.expander("📌 3. Fixar Plats per Dies i Peticions Familiars", expanded=False):
                     st.markdown("**🗓️ Fixació de plats o preferències per a cada dia de la setmana:**")
                     st.caption("Pots fixar plats concrets per als dies que vulguis (ex. Llenties dilluns, Sardines divendres, Paella diumenge). La IA respectarà aquests plats obligatòriament.")
                     
@@ -617,11 +826,12 @@ def render():
                                     peticions_dies[f"{dia_nom} sopar"] = fix_sopar.strip()
                     
                     st.markdown("---")
-                    c_stk, c_pet = st.columns(2)
-                    with c_stk:
-                        stock_input = st.text_area("🧊 Estoc existent a aprofitar (Congelador / Nevera):", key="m_stock_input", placeholder="Ex. Caldo de peix al congelador, 500g de carn picada, carbassons de l'hort", height=85)
-                    with c_pet:
-                        peticio_general = st.text_area("💬 Petició especial o comentaris addicionals:", key="m_peticio_gen", placeholder="Ex. Diumenge dinar serem 6 comensals per la paella. Sopars de dimarts i dijous molt lleugers.", height=85)
+                    peticio_general = st.text_area("💬 Petició especial o comentaris addicionals:", key="m_peticio_gen", placeholder="Ex. Diumenge dinar serem 6 comensals per la paella. Sopars de dimarts i dijous molt lleugers.", height=85)
+
+                with st.expander("📦 4. Estoc del Rebost i Ingredients Preferents (Zero Malbaratament)", expanded=True):
+                    pantry_tag_stock = render_pantry_tag_cloud(supabase)
+                    st.markdown("---")
+                    stock_input = st.text_area("🧊 Altres ingredients o notes d'estoc manuals (Congelador / Nevera):", key="m_stock_input", placeholder="Ex. Caldo de peix al congelador, 500g de carn picada, carbassons de l'hort", height=85)
 
                 st.write("")
                 btn_gen_ai = st.button("✨ Generar Menú Setmanal Intel·ligent (Primer + Segon + Postre)", use_container_width=True, type="primary")
@@ -639,7 +849,7 @@ def render():
                             for k_dia, p_plat in peticions_dies.items():
                                 peticions_list.append({"comensal": "Família", "plat": p_plat, "dia_preferit": k_dia})
                             
-                            stock_list = []
+                            stock_list = list(pantry_tag_stock)
                             if stock_input.strip():
                                 for s_line in stock_input.split("\n"):
                                     if s_line.strip():

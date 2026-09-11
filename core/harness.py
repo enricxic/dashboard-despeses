@@ -114,8 +114,9 @@ La teva missió és dissenyar un menú setmanal equilibrat, deliciós, segur i o
 ### REGLES NUTRICIONALS DE LA LLAR:
 {regles_txt}
 
-### STOCK EXISTENT AL CONGELADOR / REBOST (UTILITZA'L PER NO COMPRAR NI LLENÇAR):
+### 🧊 ESTOC EXISTENT AL REBOST / CONGELADOR (PRIORITAT ABSOLUTA D'APROFITAMENT "ZERO WASTE"):
 {stock_txt}
+⚠️ OBLIGACIÓ D'APROFITAMENT D'ESTOC: Els ingredients llistats a l'estoc tenen presència física positiva al rebost/congelador. TENS LA PREFERÈNCIA ABSOLUTA D'INCORPORAR-LOS als primers o segons plats del menú setmanal per evitar el malbaratament d'aliments i reduir la llista de la compra.
 
 ### PETICIONS APROVADES DE LA FAMÍLIA:
 {peticions_txt}
@@ -637,6 +638,53 @@ def grade_eines_i_forn(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> 
         return 0.0, infraccions
     return 1.0, []
 
+def grade_aprofitament_estoc(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tuple[float, List[str]]:
+    """Avalua l'aprofitament de l'estoc de rebost disponible al menú generat."""
+    stock_items = test_case.get("stock_disponible", [])
+    if not stock_items:
+        return 1.0, []
+        
+    stock_names = []
+    for s in stock_items:
+        prod_name = str(s.get("producte", "")).strip().lower()
+        if prod_name:
+            stock_names.append(prod_name)
+            
+    if not stock_names:
+        return 1.0, []
+        
+    all_menu_text = ""
+    for dia_obj in menu_data.get("menu_setmanal", []):
+        for apat_k in ["dinar", "sopar"]:
+            apat = dia_obj.get(apat_k, {})
+            if isinstance(apat, dict):
+                plat_t = extract_apat_text(apat).lower()
+                ings_t = " ".join([str(i).lower() for i in apat.get("ingredients_principals", [])])
+                all_menu_text += f" {plat_t} {ings_t}"
+                
+    all_menu_text = all_menu_text.lower()
+    used_count = 0
+    missing_items = []
+    
+    for s_name in stock_names:
+        keywords = [w for w in re.split(r'\W+', s_name) if len(w) >= 3 and w not in ['casolà', 'casola', 'paquet', 'unitats', 'bossa', 'litre', 'pots', 'congelador', 'rebost', 'nevera', 'ingredient', 'preferent', 'estoc', 'prioritat', 'alta']]
+        if not keywords:
+            keywords = [s_name]
+            
+        found = any(kw in all_menu_text for kw in keywords)
+        if found:
+            used_count += 1
+        else:
+            missing_items.append(s_name)
+            
+    ratio = used_count / len(stock_names) if stock_names else 1.0
+    infraccions = []
+    if missing_items and ratio < 0.5:
+        infraccions.append(f"Només s'ha aprofitat el {int(ratio*100)}% de l'estoc de rebost positiu (no s'ha utilitzat: {', '.join(missing_items[:3])})")
+        return round(ratio, 2), infraccions
+        
+    return 1.0, []
+
 # =========================================================================
 # EXECUTOR PRINCIPAL DEL HARNESS
 # =========================================================================
@@ -688,9 +736,10 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
     score_varietat, err_varietat = grade_repeticions_hidrats(json_data, test_case)
     score_estrelles, err_estrelles = grade_puntuacions_estrelles(json_data, test_case)
     score_eines, err_eines = grade_eines_i_forn(json_data, test_case)
+    score_estoc, err_estoc = grade_aprofitament_estoc(json_data, test_case)
     
-    all_errors = err_alergies + err_vetos + err_regles + err_varietat + err_estrelles + err_eines
-    exit_global = (score_alergies == 1.0 and score_vetos == 1.0 and score_regles >= 0.75 and score_varietat == 1.0 and score_estrelles == 1.0 and score_eines == 1.0)
+    all_errors = err_alergies + err_vetos + err_regles + err_varietat + err_estrelles + err_eines + err_estoc
+    exit_global = (score_alergies == 1.0 and score_vetos == 1.0 and score_regles >= 0.75 and score_varietat == 1.0 and score_estrelles == 1.0 and score_eines == 1.0 and score_estoc >= 0.5)
     
     return {
         "id": test_case.get("id"),
@@ -703,6 +752,7 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
         "puntuacio_varietat": score_varietat,
         "puntuacio_estrelles": score_estrelles,
         "puntuacio_eines": score_eines,
+        "puntuacio_estoc": score_estoc,
         "latencia_s": latency,
         "errors": all_errors,
         "resposta_json": json_data
@@ -913,6 +963,7 @@ def generate_harness_txt_report(data: Dict[str, Any], is_single: bool = False) -
         lines.append(f"  - Frequencies Nutricionals de la Llar: {int(data.get('puntuacio_regles', 0)*100)}%")
         lines.append(f"  - Varietat i Calendari d'Hidrats: {int(data.get('puntuacio_varietat', 0)*100)}%")
         lines.append(f"  - Adaptacio a Eines de Cuina i Forn: {int(data.get('puntuacio_eines', 1)*100)}%")
+        lines.append(f"  - Aprofitament d'Estoc de Rebost: {int(data.get('puntuacio_estoc', 1)*100)}%")
         lines.append("--------------------------------------------------------------------------------")
         lines.append("INCIDÈNCIES I INCIDÈNCIES:")
         errors = data.get("errors", [])
@@ -1002,6 +1053,7 @@ def generate_harness_markdown_report(data: Dict[str, Any], is_single: bool = Fal
         lines.append(f"| **Freqüències Nutricionals de la Llar** | {format_score(data.get('puntuacio_regles', 0.0))}")
         lines.append(f"| **Varietat i Calendari d'Hidrats** | {format_score(data.get('puntuacio_varietat', 0.0))}")
         lines.append(f"| **Adaptació a Eines de Cuina i Forn** | {format_score(data.get('puntuacio_eines', 1.0))}")
+        lines.append(f"| **Aprofitament d'Estoc de Rebost** | {format_score(data.get('puntuacio_estoc', 1.0))}")
         
         lines.append("\n---\n")
         lines.append("## 🔍 Detall d'Infraccions i Observacions")

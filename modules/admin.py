@@ -121,10 +121,51 @@ def _parse_comma_str_to_list(val):
             pass
     return [x.strip() for x in val_clean.split(",") if x.strip()]
 
-def _clear_section_session_keys(prefix):
-    keys_to_del = [k for k in st.session_state.keys() if k.startswith(prefix)]
+def _clear_all_admin_widget_keys():
+    """Neteja totes les claus de sessió de widgets d'Admin per forçar Streamlit a llegir des del disc (config.json)."""
+    prefixes = (
+        "f_", "t_", "b_", "adm_", "tit_", "mn_", "chk_eina_", "tog_", 
+        "input_p", "picker_c", "slider_tamany", "radio_tema", "sel_idioma", 
+        "r_carn", "r_lleg", "r_peix", "r_emb", "r_no_rep", "r_forn", "r_mode", "r_com",
+        "save_", "btn_preset_c", "chk_val", "harness_"
+    )
+    keys_to_del = [
+        k for k in list(st.session_state.keys()) 
+        if any(k.startswith(p) for p in prefixes) and k not in ("cfg_active_tab", "harness_single_result", "harness_results")
+    ]
     for k in keys_to_del:
         del st.session_state[k]
+
+def _clear_section_session_keys(prefix):
+    keys_to_del = [k for k in list(st.session_state.keys()) if k.startswith(prefix)]
+    for k in keys_to_del:
+        del st.session_state[k]
+
+def _render_flash_message():
+    if "flash_success" in st.session_state:
+        msg = st.session_state.pop("flash_success")
+        st.toast(msg, icon="💾")
+        st.success(msg)
+
+def _on_eina_change(e_id):
+    val = st.session_state.get(f"chk_eina_{e_id}")
+    cur_cfg = load_app_config()
+    if "eines_cuina" not in cur_cfg:
+        cur_cfg["eines_cuina"] = {}
+    cur_cfg["eines_cuina"][e_id] = bool(val)
+    if save_app_config(cur_cfg):
+        status_txt = "activada" if val else "desactivada"
+        st.session_state["flash_success"] = f"✅ Eina de cuina {status_txt} i desada correctament!"
+
+def _on_icona_change(key_m):
+    val = st.session_state.get(f"tog_{key_m}")
+    cur_cfg = load_app_config()
+    if "icones_actives" not in cur_cfg:
+        cur_cfg["icones_actives"] = {}
+    cur_cfg["icones_actives"][key_m] = bool(val)
+    if save_app_config(cur_cfg):
+        status_txt = "activada" if val else "desactivada"
+        st.session_state["flash_success"] = f"✅ Icona d'inici {status_txt} i desada correctament!"
 
 def render():
     cfg = load_app_config()
@@ -327,10 +368,14 @@ def render():
             is_active = (st.session_state.cfg_active_tab == key_s)
             btn_type = "primary" if is_active else "secondary"
             if st.button(label_s, key=f"nav_btn_{key_s}", use_container_width=True, type=btn_type):
+                if st.session_state.cfg_active_tab != key_s:
+                    _clear_all_admin_widget_keys()
                 st.session_state.cfg_active_tab = key_s
                 st.rerun()
                 
     with col_body:
+        _render_flash_message()
+
         active = st.session_state.get("cfg_active_tab", "admin")
         
         # =========================================================================
@@ -376,8 +421,10 @@ def render():
                     new_rol = st.selectbox("Rol per defecte", ["Administrador", "Usuari Avançat", "Convidat"], index=0)
                 
                 st.write("")
+                _render_flash_message()
                 if st.button("💾 Desar Dades d'Administrador", type="primary", use_container_width=True, key="save_admin"):
-                    cfg["admin"] = {
+                    cur_cfg = load_app_config()
+                    cur_cfg["admin"] = {
                         "nom": new_nom,
                         "email": new_email,
                         "telefon": new_tel,
@@ -385,8 +432,8 @@ def render():
                         "pin": new_pin,
                         "rol": new_rol
                     }
-                    if save_app_config(cfg):
-                        st.success("✅ Dades d'administrador actualitzades correctament!")
+                    if save_app_config(cur_cfg):
+                        st.session_state["flash_success"] = "✅ Dades d'administrador actualitzades correctament!"
                         st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -466,16 +513,18 @@ def render():
             """, unsafe_allow_html=True)
             
             st.write("")
+            _render_flash_message()
             if st.button("💾 Desar Títol de la Casa", type="primary", use_container_width=True, key="save_titol"):
-                cfg["casa"] = {
+                cur_cfg = load_app_config()
+                cur_cfg["casa"] = {
                     "paraula1": p1,
                     "color1": col1,
                     "paraula2": p2,
                     "color2": col2,
                     "tamany_lletra": tamany_lletra
                 }
-                if save_app_config(cfg):
-                    st.success("✅ Títol de la casa desat correctament!")
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = "✅ Títol de la casa desat correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -625,11 +674,12 @@ def render():
                         st.rerun()
                         
             st.write("")
+            _render_flash_message()
             if st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam"):
-                cfg["familia"] = updated_familia
-                if save_app_config(cfg):
-                    _clear_section_session_keys("f_")
-                    st.success("✅ Membres de la família desats correctament!")
+                cur_cfg = load_app_config()
+                cur_cfg["familia"] = updated_familia
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = "✅ Membres de la família desats correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -808,7 +858,7 @@ def render():
                         with c_ico:
                             st.markdown(_render_eina_thumb_html(eina, foto_src), unsafe_allow_html=True)
                         with c_chk:
-                            chk_val = st.checkbox(f"**{eina['nom']}**", value=bool(val_def), key=f"chk_eina_{e_id}")
+                            chk_val = st.checkbox(f"**{eina['nom']}**", value=bool(val_def), key=f"chk_eina_{e_id}", on_change=_on_eina_change, args=(e_id,))
                             st.markdown(f"<div class='eina-desc-fixed'>{eina['desc']}</div>", unsafe_allow_html=True)
                         updated_eines[e_id] = chk_val
             
@@ -828,8 +878,10 @@ def render():
                 r_com = st.number_input("👥 Comensals per defecte", min_value=1, max_value=20, value=int(regles.get("comensals_defecte", 3)), step=1)
                 
             st.write("")
+            _render_flash_message()
             if st.button("💾 Desar Regles de Menús i Nutrició", type="primary", use_container_width=True, key="save_regles_menjar"):
-                cfg["regles_menjar"] = {
+                cur_cfg = load_app_config()
+                cur_cfg["regles_menjar"] = {
                     "max_carn_vermella": r_carn,
                     "min_peix": r_peix,
                     "min_llegums": r_lleg,
@@ -839,9 +891,9 @@ def render():
                     "mode_apats": r_mode,
                     "comensals_defecte": r_com
                 }
-                cfg["eines_cuina"] = updated_eines
-                if save_app_config(cfg):
-                    st.success("✅ Regles de menús, nutrició i eines de cuina desades correctament!")
+                cur_cfg["eines_cuina"] = updated_eines
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = "✅ Regles de menús, nutrició i eines de cuina desades correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1146,11 +1198,12 @@ def render():
                         st.rerun()
                         
             st.write("")
+            _render_flash_message()
             if st.button("💾 Desar Persones Tutelades", type="primary", use_container_width=True, key="save_tutelats_sec"):
-                cfg["tutelats"] = updated_tutelats
-                if save_app_config(cfg):
-                    _clear_section_session_keys("t_")
-                    st.success("✅ Dades de persones tutelades desades correctament!")
+                cur_cfg = load_app_config()
+                cur_cfg["tutelats"] = updated_tutelats
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = "✅ Dades de persones tutelades desades correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1186,9 +1239,9 @@ def render():
                         "titular": "Enric Xicars",
                         "compte_iban": ""
                     })
-                    cfg["bancs"] = bancs_list
-                    save_app_config(cfg)
-                    _clear_section_session_keys("b_")
+                    cur_cfg = load_app_config()
+                    cur_cfg["bancs"] = bancs_list
+                    save_app_config(cur_cfg)
                     st.rerun()
             
             st.write("")
@@ -1255,18 +1308,19 @@ def render():
                         })
                     else:
                         new_bancs = [b for b in updated_bancs if b.get("id") != b_id] + bancs_list[k+1:]
-                        cfg["bancs"] = new_bancs
-                        save_app_config(cfg)
-                        _clear_section_session_keys("b_")
+                        cur_cfg = load_app_config()
+                        cur_cfg["bancs"] = new_bancs
+                        save_app_config(cur_cfg)
                         st.success(f"Entitat '{b_nom}' eliminada.")
                         st.rerun()
                         
             st.write("")
+            _render_flash_message()
             if st.button("💾 Desar Configuració de Bancs", type="primary", use_container_width=True, key="save_bancs_sec"):
-                cfg["bancs"] = updated_bancs
-                if save_app_config(cfg):
-                    _clear_section_session_keys("b_")
-                    st.success("✅ Configuració de bancs i comptes desada correctament!")
+                cur_cfg = load_app_config()
+                cur_cfg["bancs"] = updated_bancs
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = "✅ Configuració de bancs i comptes desada correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1299,11 +1353,13 @@ def render():
             )
             
             st.write("")
+            _render_flash_message()
             if st.button("💾 Aplicar i Desar Tema", type="primary", use_container_width=True, key="save_tema"):
-                cfg["tema"] = sel_tema
+                cur_cfg = load_app_config()
+                cur_cfg["tema"] = sel_tema
                 st.session_state["app_theme"] = sel_tema
-                if save_app_config(cfg):
-                    st.success("✅ Tema visual actualitzat!")
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = "✅ Tema visual actualitzat!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1348,15 +1404,17 @@ def render():
                         st.toggle("Actiu", value=True, disabled=True, key=f"tog_{key_m}", label_visibility="collapsed")
                         new_icones_state[key_m] = True
                     else:
-                        tog_val = st.toggle("Actiu", value=val_m, key=f"tog_{key_m}", label_visibility="collapsed")
+                        tog_val = st.toggle("Actiu", value=val_m, key=f"tog_{key_m}", label_visibility="collapsed", on_change=_on_icona_change, args=(key_m,))
                         new_icones_state[key_m] = tog_val
                 st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:8px 0;'></div>", unsafe_allow_html=True)
                 
             st.write("")
+            _render_flash_message()
             if st.button("💾 Desar Configuració d'Icones", type="primary", use_container_width=True, key="save_icones"):
-                cfg["icones_actives"] = new_icones_state
-                if save_app_config(cfg):
-                    st.success("✅ Configuració d'icones de la pantalla d'inici desada correctament!")
+                cur_cfg = load_app_config()
+                cur_cfg["icones_actives"] = new_icones_state
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = "✅ Configuració d'icones de la pantalla d'inici desada correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1398,9 +1456,11 @@ def render():
             st.dataframe(df_trans, use_container_width=True, hide_index=True)
             
             st.write("")
+            _render_flash_message()
             if st.button("💾 Desar Preferència d'Idioma", type="primary", use_container_width=True, key="save_lang"):
-                cfg["idioma"] = sel_lang
-                if save_app_config(cfg):
-                    st.success(f"✅ Idioma canviat a {idiomes_map[sel_lang]}!")
+                cur_cfg = load_app_config()
+                cur_cfg["idioma"] = sel_lang
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = f"✅ Idioma canviat a {idiomes_map[sel_lang]}!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
