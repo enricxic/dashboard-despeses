@@ -542,6 +542,9 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
 
     grouped = {cat: [] for cat in categories_map.keys()}
     for item in catalog_items:
+        # Filtrar productes sense estoc positiu (només mostrar productes amb estoc actual > 0)
+        if item.get("stock_actual", 0) <= 0:
+            continue
         if search_q.strip() and search_q.lower() not in item["nom"].lower():
             continue
         i_cat = item.get("categoria", "Rebost")
