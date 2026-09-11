@@ -543,10 +543,10 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
         
         st.markdown(f"<div class='pantry-cat-title'>{cat_name.upper()} ({sel_count} PREFERENTS / {pos_count} amb estoc)</div>", unsafe_allow_html=True)
         
-        # Renderitzar en quadrícula de botons pastilla (4 columnes)
-        cols = st.columns(4)
+        # Renderitzar en quadrícula de botons pastilla (6 columnes)
+        cols = st.columns(6)
         for idx_it, it in enumerate(cat_items):
-            col_idx = cols[idx_it % 4]
+            col_idx = cols[idx_it % 6]
             name = it["nom"]
             is_sel = name in selected_set
             has_stock = it.get("stock_actual", 0) > 0
