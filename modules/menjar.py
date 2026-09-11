@@ -434,7 +434,7 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
         margin-bottom: 16px;
     }
     .pantry-cat-title {
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         font-weight: 800;
         color: #38bdf8;
         text-transform: uppercase;
@@ -443,6 +443,13 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
         margin-bottom: 8px;
         border-bottom: 1px dashed #334155;
         padding-bottom: 4px;
+    }
+    div[data-testid="stColumn"] button {
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        padding: 2px 4px !important;
+        height: auto !important;
+        min-height: 32px !important;
     }
     </style>
     ''', unsafe_allow_html=True)
@@ -579,22 +586,12 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
             col_idx = cols[idx_it % 8]
             name = it["nom"]
             is_sel = name in selected_set
-            has_stock = it.get("stock_actual", 0) > 0
             stk_val = it.get("stock_actual", 0)
-            u_str = it.get("unitat", "")
+            stk_int = int(round(stk_val)) if round(stk_val) >= 1 else 1
             
             with col_idx:
-                if is_sel:
-                    lbl = f"⭐ {name}"
-                    if has_stock and stk_val > 0:
-                        lbl += f" ({stk_val} {u_str})"
-                    btn_type = "primary"
-                else:
-                    icon = "🟢 " if has_stock else "⚪ "
-                    lbl = f"{icon}{name}"
-                    if has_stock and stk_val > 0:
-                        lbl += f" ({stk_val} {u_str})"
-                    btn_type = "secondary"
+                lbl = f"{name} ({stk_int})"
+                btn_type = "primary" if is_sel else "secondary"
 
                 if st.button(lbl, key=f"btn_pantry_tag_{cat_name}_{idx_it}_{name}", type=btn_type, use_container_width=True):
                     if is_sel:
