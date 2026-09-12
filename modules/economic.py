@@ -4698,9 +4698,17 @@ def render(view_mode="economic"):
                 if "messages" not in st.session_state:
                     st.session_state.messages = []
     
+                from PIL import Image
+                avatar_admin_img = "💼"
+                if os.path.exists("imatges/avatars/avatar_administrativa.png"):
+                    try:
+                        avatar_admin_img = Image.open("imatges/avatars/avatar_administrativa.png")
+                    except Exception:
+                        pass
+
                 # Display chat messages from history on app rerun
                 for message in st.session_state.messages:
-                    av = "imatges/avatars/avatar_administrativa.png" if message["role"] == "assistant" else "👤"
+                    av = avatar_admin_img if message["role"] == "assistant" else "👤"
                     with st.chat_message(message["role"], avatar=av):
                         st.markdown(message["content"])
     

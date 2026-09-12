@@ -161,3 +161,20 @@ def render_avatar_widget(current_module: str = None, container=None):
             elif reset_btn:
                 st.session_state["avatar_last_response"] = None
                 st.rerun()
+
+def render_floating_avatar(current_module: str = None):
+    """Renderitza un botó Popover destacat de l'Avatar Anime directament a la pantalla principal."""
+    role_info = get_avatar_role_for_module(current_module)
+    badge_color = role_info["badge_color"]
+    
+    st.markdown(f"""
+    <style>
+    .avatar-floating-container {{
+        margin-bottom: 12px;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    with st.expander(f"✨ Xiqui AI Avatar ({role_info['title']})", expanded=False):
+        render_avatar_widget(current_module=current_module)
+
