@@ -649,6 +649,7 @@ def render():
     
     if True:
         try:
+            supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_receptes = get_tb_receptes_cached()
             if df_receptes.empty and "df_receptes_fallback" in st.session_state:
                 df_receptes = st.session_state["df_receptes_fallback"]
