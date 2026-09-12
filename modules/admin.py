@@ -174,6 +174,56 @@ def _get_updated_member_from_state(mem):
         m["color"] = st.session_state[f"f_col_{m_id}"]
     return m
 
+def _on_delete_family_member(mem_id):
+    cur_cfg = load_app_config()
+    current_fam = cur_cfg.get("familia", [])
+    del_nom = ""
+    new_fam = []
+    for m in current_fam:
+        m_id = m.get("id")
+        if m_id == mem_id:
+            del_nom = m.get("nom", "")
+            continue
+        new_fam.append(_get_updated_member_from_state(m))
+    cur_cfg["familia"] = new_fam
+    if save_app_config(cur_cfg):
+        _clear_section_session_keys("f_")
+        st.session_state["flash_success"] = f"🗑️ Membre '{del_nom}' eliminat i desat a config.json!"
+
+def _on_add_family_member():
+    cur_cfg = load_app_config()
+    current_fam = cur_cfg.get("familia", [])
+    updated_fam = [_get_updated_member_from_state(m) for m in current_fam]
+    next_id = max([m.get("id", 0) for m in updated_fam] + [0]) + 1
+    updated_fam.append({
+        "id": next_id,
+        "nom": f"Membre {len(updated_fam) + 1}",
+        "rol": "Familiar",
+        "data_naixement": "",
+        "edat": "",
+        "actiu": True,
+        "alergies": [],
+        "circunstancies": [],
+        "vetos": [],
+        "comodins": [],
+        "icona": "👤",
+        "google_calendar_ical": "",
+        "color": "#3b82f6"
+    })
+    cur_cfg["familia"] = updated_fam
+    if save_app_config(cur_cfg):
+        _clear_section_session_keys("f_")
+        st.session_state["flash_success"] = "✅ Nou membre afegit i desat a config.json!"
+
+def _on_save_family_members():
+    cur_cfg = load_app_config()
+    current_fam = cur_cfg.get("familia", [])
+    updated_fam = [_get_updated_member_from_state(m) for m in current_fam]
+    cur_cfg["familia"] = updated_fam
+    if save_app_config(cur_cfg):
+        _clear_section_session_keys("f_")
+        st.session_state["flash_success"] = "✅ Membres de la família desats correctament a config.json!"
+
 def _render_flash_message():
     if "flash_success" in st.session_state:
         msg = st.session_state.pop("flash_success")
@@ -572,37 +622,13 @@ def render():
             if num_membres < 10:
                 col_add1, col_add2 = st.columns([8, 2])
                 with col_add2:
-                    if st.button("➕ Afegir Membre", type="primary", use_container_width=True, key="btn_add_fam_mem"):
-                        updated_current_fam = [_get_updated_member_from_state(m) for m in familia_list]
-                        next_id = max([m.get("id", 0) for m in updated_current_fam] + [0]) + 1
-                        updated_current_fam.append({
-                            "id": next_id,
-                            "nom": f"Membre {len(updated_current_fam) + 1}",
-                            "rol": "Familiar",
-                            "data_naixement": "",
-                            "edat": "",
-                            "actiu": True,
-                            "alergies": [],
-                            "circunstancies": [],
-                            "vetos": [],
-                            "comodins": [],
-                            "icona": "👤",
-                            "google_calendar_ical": "",
-                            "color": "#3b82f6"
-                        })
-                        cur_cfg = load_app_config()
-                        cur_cfg["familia"] = updated_current_fam
-                        if save_app_config(cur_cfg):
-                            _clear_section_session_keys("f_")
-                            st.session_state["flash_success"] = "✅ Nou membre afegit i desat correctament!"
-                            st.rerun()
+                    st.button("➕ Afegir Membre", type="primary", use_container_width=True, key="btn_add_fam_mem", on_click=_on_add_family_member)
             else:
                 st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
                 
             st.write("")
             
             # Llista de membres
-            updated_familia = []
             icons_pool = ["👨", "👩", "👦", "👧", "👶", "👴", "👵", "🐶", "🐱", "🧑", "👑", "⭐"]
             roles_pool = ["Pare", "Mare", "Fill", "Filla", "Avi", "Àvia", "Germà", "Germana", "Mascota", "Altres"]
             
@@ -622,20 +648,20 @@ def render():
                         if not m_actiu:
                             st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les meves dades però no es computarà per defecte als menús setmanals.*")
                     with c_del_top:
-                        del_btn = st.button("🗑️ Esborrar", key=f"f_del_{mem_id}", use_container_width=True)
+                        st.button("🗑️ Esborrar", key=f"f_del_{mem_id}", use_container_width=True, on_click=_on_delete_family_member, args=(mem_id,))
                     
                     st.write("")
                     c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 2.3])
                     with c1:
                         cur_icon = mem.get("icona", "👤")
                         ic_idx = icons_pool.index(cur_icon) if cur_icon in icons_pool else 0
-                        m_icon = st.selectbox("Icona", icons_pool, index=ic_idx, key=f"f_icon_{mem_id}")
+                        st.selectbox("Icona", icons_pool, index=ic_idx, key=f"f_icon_{mem_id}")
                     with c2:
-                        m_nom = st.text_input("Nom", value=mem.get("nom", ""), key=f"f_nom_{mem_id}")
+                        st.text_input("Nom", value=mem.get("nom", ""), key=f"f_nom_{mem_id}")
                     with c3:
                         cur_r = mem.get("rol", "Familiar")
                         r_idx = roles_pool.index(cur_r) if cur_r in roles_pool else len(roles_pool)-1
-                        m_rol = st.selectbox("Rol / Relació", roles_pool, index=r_idx, key=f"f_rol_{mem_id}")
+                        st.selectbox("Rol / Relació", roles_pool, index=r_idx, key=f"f_rol_{mem_id}")
                     with c4:
                         init_naix = mem.get("data_naixement", "")
                         if not init_naix and str(mem.get("edat", "")).count("-") == 2:
@@ -658,59 +684,25 @@ def render():
                     c_al1, c_vt1 = st.columns(2)
                     with c_al1:
                         cur_al_str = _format_list_to_comma_str(mem.get("alergies", mem.get("circunstancies", [])))
-                        m_alergies_input = st.text_input("🏥 Al·lèrgies mèdiques i intoleràncies (bloqueig)", value=cur_al_str, placeholder="ex: Sense Gluten, Sense Lactosa, Diabètic...", key=f"f_al_{mem_id}")
-                        m_alergies_list = _parse_comma_str_to_list(m_alergies_input)
+                        st.text_input("🏥 Al·lèrgies mèdiques i intoleràncies (bloqueig)", value=cur_al_str, placeholder="ex: Sense Gluten, Sense Lactosa, Diabètic...", key=f"f_al_{mem_id}")
                     with c_vt1:
                         cur_vt_str = _format_list_to_comma_str(mem.get("vetos", []))
-                        m_vetos_input = st.text_input("🚫 Vetos i aversions personals (no li agrada)", value=cur_vt_str, placeholder="ex: fetge, casqueria, conill, bledes...", key=f"f_vt_{mem_id}")
-                        m_vetos_list = _parse_comma_str_to_list(m_vetos_input)
+                        st.text_input("🚫 Vetos i aversions personals (no li agrada)", value=cur_vt_str, placeholder="ex: fetge, casqueria, conill, bledes...", key=f"f_vt_{mem_id}")
                         
                     c_com1, c_gcal2_col = st.columns([6.5, 3.5])
                     with c_com1:
                         cur_com_str = _format_list_to_comma_str(mem.get("comodins", []))
-                        m_comodins_input = st.text_input("🍗 Plats Comodí Favorits (alternatives ràpides)", value=cur_com_str, placeholder="ex: pit de pollastre a la planxa, truita francesa...", key=f"f_com_{mem_id}")
-                        m_comodins_list = _parse_comma_str_to_list(m_comodins_input)
+                        st.text_input("🍗 Plats Comodí Favorits (alternatives ràpides)", value=cur_com_str, placeholder="ex: pit de pollastre a la planxa, truita francesa...", key=f"f_com_{mem_id}")
                     with c_gcal2_col:
                         cur_col = mem.get("color", "#3b82f6" if i % 2 == 0 else "#ec4899")
-                        m_color = st.color_picker("Color al calendari", value=cur_col, key=f"f_col_{mem_id}")
+                        st.color_picker("Color al calendari", value=cur_col, key=f"f_col_{mem_id}")
                         
-                    m_gcal = st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{mem_id}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
-                        
-                    if not del_btn:
-                        calc_edat_final = str(calcular_edat(m_naix)) if str(calcular_edat(m_naix)).isdigit() else str(mem.get("edat", ""))
-                        updated_familia.append({
-                            "id": mem_id,
-                            "nom": m_nom,
-                            "rol": m_rol,
-                            "actiu": m_actiu,
-                            "data_naixement": m_naix,
-                            "edat": calc_edat_final,
-                            "circunstancies": m_alergies_list,
-                            "alergies": m_alergies_list,
-                            "vetos": m_vetos_list,
-                            "comodins": m_comodins_list,
-                            "icona": m_icon,
-                            "google_calendar_ical": m_gcal,
-                            "color": m_color
-                        })
-                    else:
-                        new_fam = [_get_updated_member_from_state(m) for m in familia_list if m.get("id") != mem_id]
-                        cur_cfg = load_app_config()
-                        cur_cfg["familia"] = new_fam
-                        if save_app_config(cur_cfg):
-                            _clear_section_session_keys("f_")
-                            st.session_state["flash_success"] = f"🗑️ Membre '{mem.get('nom', '')}' eliminat correctament!"
-                            st.rerun()
+                    st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{mem_id}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
                         
             st.write("")
             _render_flash_message()
-            if st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam"):
-                cur_cfg = load_app_config()
-                cur_cfg["familia"] = updated_familia
-                if save_app_config(cur_cfg):
-                    _clear_section_session_keys("f_")
-                    st.session_state["flash_success"] = "✅ Membres de la família desats correctament a config.json!"
-                    st.rerun()
+            st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam", on_click=_on_save_family_members)
+            st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         # =========================================================================
