@@ -165,8 +165,8 @@ def render_floating_avatar(current_module: str = None):
     pass
 
 def render_header_with_avatar(title_html: str, module_name: str = None, extra_button_fn=None):
-    """Renderitza la capçalera del mòdul amb el títol, la imatge petita transparent de l'avatar a 1/3 de la mida (si està activa),
-    el botó estrella ✨ per activar/desactivar la visibilitat i el botó 🔙 Inici intacte."""
+    """Renderitza la capçalera del mòdul amb el títol, la imatge petita transparent de l'avatar a tamany ampliat (~105px) sense brillo,
+    el botó estrella ✨ per activar/desactivar la visibilitat i el botó 🔙 Inici intacte en mides originals."""
     
     if "show_avatar_overlay" not in st.session_state:
         st.session_state["show_avatar_overlay"] = True
@@ -174,24 +174,23 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
     show_avatar = st.session_state["show_avatar_overlay"]
     role_info = get_avatar_role_for_module(module_name)
     img_b64 = get_avatar_image_base64(role_info["image_file"])
-    badge_color = role_info["badge_color"]
     
-    st.markdown(f"""
+    st.markdown("""
     <style>
-    .hdr-avatar-img-standalone {{
-        height: 68px;
-        max-height: 68px;
+    .hdr-avatar-img-standalone {
+        height: 105px;
+        max-height: 105px;
         width: auto;
         object-fit: contain;
-        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 10px {badge_color}aa);
-        transition: transform 0.25s ease, filter 0.25s ease;
+        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+        transition: transform 0.2s ease;
         vertical-align: middle;
         user-select: none;
-    }}
-    .hdr-avatar-img-standalone:hover {{
-        transform: scale(1.12) translateY(-2px);
-        filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 18px {badge_color});
-    }}
+        background: transparent !important;
+    }
+    .hdr-avatar-img-standalone:hover {
+        transform: scale(1.06);
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -201,16 +200,16 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
         st.markdown(title_html, unsafe_allow_html=True)
         
     with c_controls:
-        # Calcular columnes dinàmiques
+        # Calcular columnes dinàmiques amb proporció ajustada per no modificar la mida del botó Inici
         cols_spec = []
         if extra_button_fn:
             cols_spec.append(2.6)
             
         if show_avatar and img_b64:
-            cols_spec.append(1.8) # Només la imatge transparent de l'avatar a 1/3 de tamany
+            cols_spec.append(3.2) # Imatge transparent de l'avatar a 105px
             
         cols_spec.append(1.0) # Botó Estrella ✨
-        cols_spec.append(2.1) # Botó 🔙 Inici intacte en mides
+        cols_spec.append(1.8) # Botó 🔙 Inici intacte
         
         cols = st.columns(cols_spec, vertical_alignment="center")
         
@@ -231,11 +230,11 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
             
         with cols[col_idx]:
             star_type = "primary" if show_avatar else "secondary"
-            if st.button("✨", key=f"btn_toggle_avatar_star_{module_name}", type=star_type, help="Activar / Desactivar visibilitat de l'avatar transparent Xiqui"):
+            if st.button("✨", key=f"btn_toggle_avatar_star_{module_name}", type=star_type, help="Activar / Desactivar visibilitat de l'avatar transparent Xiqui", use_container_width=False):
                 st.session_state["show_avatar_overlay"] = not show_avatar
                 st.rerun()
                 
         with cols[col_idx + 1]:
-            if st.button("🔙 Inici", use_container_width=True, key=f"btn_nav_inici_{module_name}"):
+            if st.button("🔙 Inici", use_container_width=False, key=f"btn_nav_inici_{module_name}"):
                 st.session_state.current_module = None
                 st.rerun()
