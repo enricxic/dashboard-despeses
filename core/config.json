@@ -89,6 +89,21 @@
             "icona": "👧",
             "google_calendar_ical": "",
             "color": "#f59e0b"
+        },
+        {
+            "id": 5,
+            "nom": "Miquel",
+            "rol": "Altres",
+            "data_naixement": "01/01/1999",
+            "edat": "27",
+            "actiu": true,
+            "alergies": [],
+            "circunstancies": [],
+            "vetos": [],
+            "comodins": [],
+            "icona": "👲",
+            "google_calendar_ical": "",
+            "color": "#3b82f6"
         }
     ],
     "tutelats": [],
