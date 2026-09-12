@@ -1333,6 +1333,9 @@ def cb_finalize_ticket():
 
 def render_compres_super_interface():
     global df_super, df_desp
+    from modules.avatar_widget import render_header_with_avatar
+    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛒 Compres al Súper i Stock</h2>", "compres")
+    
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     if "df_desp" not in st.session_state:
         st.session_state["df_desp"] = fetch_all_supabase(supabase, 'despeses')

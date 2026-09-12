@@ -1,12 +1,7 @@
 def render():
     import streamlit as st
-    col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
-    with col_t1:
-        st.markdown("<h2 style='margin:0; color:#f39c12;'>🛠️ Manteniment de la Llar</h2>", unsafe_allow_html=True)
-    with col_t2:
-        if st.button("🔙 Inici", use_container_width=True):
-            st.session_state.current_module = None
-            st.rerun()
+    from modules.avatar_widget import render_header_with_avatar
+    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛠️ Manteniment de la Llar</h2>", "manteniment")
 
     st.write("---")
     st.info("Seguiment de tasques de manteniment, reparacions i revisions.")

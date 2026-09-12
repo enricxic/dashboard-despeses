@@ -729,12 +729,9 @@ def render_module_view(module_name):
 
 
 if st.session_state.current_module is None:
-    from modules.avatar_widget import render_floating_avatar
-    render_floating_avatar(current_module="base")
+    pass
 else:
     render_traditional_menubar()
-    from modules.avatar_widget import render_floating_avatar
-    render_floating_avatar(current_module=st.session_state.current_module)
         
     try:
         render_module_view(st.session_state.current_module)

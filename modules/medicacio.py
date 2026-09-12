@@ -119,32 +119,28 @@ def render():
     # =========================================================================
     # CAPÇALERA SUPERIOR
     # =========================================================================
-    c_head1, c_head2 = st.columns([7, 3], vertical_alignment="center")
-    with c_head1:
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; gap:12px;">
-            <span style="font-size:2.2rem;">💊</span>
-            <div>
-                <h2 style="margin:0; font-weight:800; color:{text_primary};">Control de Medicació i Tutelats</h2>
-                <div style="font-size:0.85rem; color:{text_secondary};">Plans de dosificació, alarmes i sincronització bidireccional amb Google Calendar</div>
-            </div>
+    from modules.avatar_widget import render_header_with_avatar
+    
+    def _render_sync_med_btn():
+        if st.button("🔄 Comprovar ✅", type="primary", use_container_width=True, help="Sincronitzar amb Google Calendar"):
+            with st.spinner("Comprovant Google Calendar..."):
+                changes = mm.sync_all_plans_with_google_calendar()
+                if changes:
+                    st.success("✅ Preses confirmades actualitzades!")
+                else:
+                    st.info("ℹ️ Sincronitzat (sense nous canvis).")
+            st.rerun()
+
+    title_med_html = f"""
+    <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:2.2rem;">💊</span>
+        <div>
+            <h2 style="margin:0; font-weight:800; color:{text_primary};">Control de Medicació i Tutelats</h2>
+            <div style="font-size:0.85rem; color:{text_secondary};">Plans de dosificació, alarmes i sincronització amb Google Calendar</div>
         </div>
-        """, unsafe_allow_html=True)
-    with c_head2:
-        c_sync, c_back = st.columns([1.5, 1])
-        with c_sync:
-            if st.button("🔄 Comprovar ✅", type="primary", use_container_width=True, help="Sincronitzar amb Google Calendar i detectar preses confirmades"):
-                with st.spinner("Comprovant Google Calendar..."):
-                    changes = mm.sync_all_plans_with_google_calendar()
-                    if changes:
-                        st.success("✅ Preses confirmades actualitzades!")
-                    else:
-                        st.info("ℹ️ Sincronitzat (sense nous canvis).")
-                st.rerun()
-        with c_back:
-            if st.button("🔙 Inici", use_container_width=True):
-                st.session_state.current_module = None
-                st.rerun()
+    </div>
+    """
+    render_header_with_avatar(title_med_html, "medicacio", extra_button_fn=_render_sync_med_btn)
 
     st.write("")
 

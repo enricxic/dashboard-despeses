@@ -237,27 +237,16 @@ def render():
     </style>
     """, unsafe_allow_html=True)
 
-    # =========================================================================
-    # BARRA SUPERIOR DE CAPÇALERA
-    # =========================================================================
-    c_head1, c_head2 = st.columns([7, 3], vertical_alignment="center")
-    with c_head1:
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; gap:12px;">
-            <span style="font-size:2.2rem;">📅</span>
-            <div>
-                <h2 style="margin:0; font-weight:800; color:{text_primary};">Agenda i Calendari Familiar</h2>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    with c_head2:
-        c_btn_new, c_btn_sync, c_btn_back = st.columns([1.2, 1.1, 1.2])
-        with c_btn_new:
-            if st.button("➕ Esdeveniment", type="primary", use_container_width=True, key="btn_open_new_ev"):
+    from modules.avatar_widget import render_header_with_avatar
+    
+    def _render_extra_cal_btns():
+        c_b1, c_b2 = st.columns(2)
+        with c_b1:
+            if st.button("➕ Nou", type="primary", use_container_width=True, key="btn_open_new_ev"):
                 st.session_state.show_event_modal = not st.session_state.show_event_modal
                 st.session_state.edit_event_data = None
                 st.rerun()
-        with c_btn_sync:
+        with c_b2:
             if st.button("🔄 Sincro", use_container_width=True, key="btn_sync_feeds", help="Actualitzar calendaris de Google"):
                 import os
                 if os.path.exists("data/feeds_cache.json"):
@@ -267,10 +256,14 @@ def render():
                         pass
                 st.success("✅ Sincronitzat!")
                 st.rerun()
-        with c_btn_back:
-            if st.button("🔙 Inici", use_container_width=True, key="btn_back_home"):
-                st.session_state.current_module = None
-                st.rerun()
+
+    title_cal_html = f"""
+    <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:2.2rem;">📅</span>
+        <h2 style="margin:0; font-weight:800; color:{text_primary};">Agenda i Calendari Familiar</h2>
+    </div>
+    """
+    render_header_with_avatar(title_cal_html, "calendari", extra_button_fn=_render_extra_cal_btns)
 
     st.write("")
 

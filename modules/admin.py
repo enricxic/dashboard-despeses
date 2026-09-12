@@ -308,22 +308,13 @@ def render():
         </style>
     """, unsafe_allow_html=True)
     
-    # Header estil Google Chrome
-    c_head1, c_head2, c_head3 = st.columns([3, 6.2, 0.8], vertical_alignment="center")
-    with c_head1:
-        st.markdown(f"""
-        <div class="chrome-title-group">
-            <span class="chrome-logo">⚙️</span>
-            <h2 class="chrome-title">Configuració</h2>
-        </div>
-        """, unsafe_allow_html=True)
-    with c_head2:
-        search_query = st.text_input("🔍 Cercar ajustos", placeholder="Cercar a la configuració...", label_visibility="collapsed", key="cfg_search")
-    with c_head3:
-        if st.button("🔙 Inici", use_container_width=True, key="btn_cfg_home"):
-            st.session_state.current_module = None
-            st.rerun()
-            
+    from modules.avatar_widget import render_header_with_avatar
+    
+    def _render_search_input():
+        st.text_input("🔍 Cercar ajustos", placeholder="Cercar a la configuració...", label_visibility="collapsed", key="cfg_search")
+
+    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>⚙️ Configuració Global</h2>", "admin", extra_button_fn=_render_search_input)
+    search_query = st.session_state.get("cfg_search", "")
     st.write("")
     
     # Layout en dues columnes (Menú lateral Chrome a l'esquerra + Contingut a la dreta)
