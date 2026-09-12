@@ -12,20 +12,16 @@ def render_avatar_widget(current_module: str = None, container=None, key_prefix:
     img_b64 = get_avatar_image_base64(role_info["image_file"])
     badge_color = role_info["badge_color"]
     
-    # CSS dedicat per a l'Avatar amb efectes visuals neó i glassmorphism
+    # CSS dedicat per a l'Avatar amb efectes visuals neó i fons 100% transparent
     st.markdown(f"""
     <style>
     .avatar-card {{
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.90));
-        border: 2px solid {badge_color};
-        border-radius: 16px;
-        padding: 14px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 15px {badge_color}44;
-        backdrop-filter: blur(8px);
-        margin-bottom: 15px;
+        background: transparent !important;
+        border: none !important;
+        padding: 4px;
         color: #f8fafc;
         position: relative;
-        overflow: hidden;
+        text-align: center;
     }}
     .avatar-badge {{
         display: inline-block;
@@ -38,23 +34,25 @@ def render_avatar_widget(current_module: str = None, container=None, key_prefix:
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 8px;
+        box-shadow: 0 0 10px {badge_color}aa;
     }}
     .avatar-img-container {{
         text-align: center;
-        margin: 8px 0;
+        margin: 4px 0;
         position: relative;
     }}
     .avatar-img {{
         width: 100%;
         max-width: 220px;
-        border-radius: 14px;
-        border: 2px solid {badge_color};
-        box-shadow: 0 0 20px {badge_color}66;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 18px {badge_color}aa);
+        transition: transform 0.3s ease, filter 0.3s ease;
     }}
     .avatar-img:hover {{
-        transform: scale(1.03);
-        box-shadow: 0 0 25px {badge_color}aa;
+        transform: scale(1.05) translateY(-3px);
+        filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 28px {badge_color});
     }}
     .speech-bubble {{
         position: relative;
@@ -66,7 +64,7 @@ def render_avatar_widget(current_module: str = None, container=None, key_prefix:
         line-height: 1.4;
         color: #e2e8f0;
         margin-top: 10px;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }}
     .speech-bubble::before {{
         content: '';

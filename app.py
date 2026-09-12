@@ -13,7 +13,7 @@ st.set_page_config(
     page_title="XiquiHouse Dashboard",
     page_icon="🏡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 st.markdown('''
@@ -729,16 +729,11 @@ def render_module_view(module_name):
 
 
 if st.session_state.current_module is None:
-    # Si som a la pantalla d'inici, oferim l'avatar a la barra lateral i desplegable
-    from modules.avatar_widget import render_avatar_widget, render_floating_avatar
-    with st.sidebar:
-        render_avatar_widget(current_module="base", key_prefix="sidebar")
+    from modules.avatar_widget import render_floating_avatar
     render_floating_avatar(current_module="base")
 else:
     render_traditional_menubar()
-    from modules.avatar_widget import render_avatar_widget, render_floating_avatar
-    with st.sidebar:
-        render_avatar_widget(current_module=st.session_state.current_module, key_prefix="sidebar")
+    from modules.avatar_widget import render_floating_avatar
     render_floating_avatar(current_module=st.session_state.current_module)
         
     try:

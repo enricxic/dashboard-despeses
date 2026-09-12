@@ -75,7 +75,8 @@ def get_avatar_role_for_module(module_name: str = None) -> dict:
     if manual_role and manual_role in AVATAR_ROLES:
         return AVATAR_ROLES[manual_role]
     
-    role_key = MODULE_TO_ROLE.get(module_name, "base")
+    clean_mod = str(module_name or "").replace("modules.", "").strip().lower()
+    role_key = MODULE_TO_ROLE.get(clean_mod, "base")
     return AVATAR_ROLES.get(role_key, AVATAR_ROLES["base"])
 
 @st.cache_data(ttl=3600, show_spinner=False)
