@@ -89,20 +89,6 @@
             "icona": "👧",
             "google_calendar_ical": "",
             "color": "#f59e0b"
-        },
-        {
-            "id": 5,
-            "nom": "Carles",
-            "rol": "Fill",
-            "data_naixement": "01/01/1996",
-            "edat": "30",
-            "actiu": true,
-            "alergies": [],
-            "vetos": [],
-            "comodins": [],
-            "icona": "👦",
-            "google_calendar_ical": "",
-            "color": "#3b82f6"
         }
     ],
     "tutelats": [],
