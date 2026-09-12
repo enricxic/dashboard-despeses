@@ -646,7 +646,7 @@ def render():
                     with c_act1:
                         m_actiu = st.toggle("🏠 Membre actiu a la llar (Participa en menús i rutines diàries)", value=is_mem_actiu, key=f"f_actiu_{mem_id}")
                         if not m_actiu:
-                            st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les meves dades però no es computarà per defecte als menús setmanals.*")
+                            st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les seves dades però no es computarà per defecte als menús setmanals.*")
                     with c_del_top:
                         st.button("🗑️ Esborrar", key=f"f_del_{mem_id}", use_container_width=True, on_click=_on_delete_family_member, args=(mem_id,))
                     
