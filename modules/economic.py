@@ -4687,17 +4687,18 @@ def render(view_mode="economic"):
     
                 # Display chat messages from history on app rerun
                 for message in st.session_state.messages:
-                    with st.chat_message(message["role"]):
+                    av = "imatges/avatars/avatar_administrativa.png" if message["role"] == "assistant" else "👤"
+                    with st.chat_message(message["role"], avatar=av):
                         st.markdown(message["content"])
     
                 # React to user input
                 if prompt := st.chat_input("Exemple: Quant he gastat en gasolina el mes de juny?"):
                     # Display user message in chat message container
-                    st.chat_message("user").markdown(prompt)
+                    st.chat_message("user", avatar="👤").markdown(prompt)
                     # Add user message to chat history
                     st.session_state.messages.append({"role": "user", "content": prompt})
                         
-                    with st.spinner("L'assistent està pensant..."):
+                    with st.spinner("La Xiqui Administrativa està pensant..."):
                         try:
                             model = genai.GenerativeModel('gemini-flash-latest')
                                 
@@ -4710,7 +4711,7 @@ def render(view_mode="economic"):
                             context += "TAULA INGRESSOS:\n" + year_ing_context.to_csv(index=False) + "\n\n"
                             context += "TAULA TR CARTERA:\n" + df_cartera.to_csv(index=False) + "\n\n"
                                 
-                            sys_prompt = "Ets un assistent financer expert. Respon a les preguntes de l'usuari únicament basant-te en les dades proporcionades. Respon sempre en català de forma clara i concisa. IMPORTANT: Respon exclusivament amb text normal, no utilitzis cap eina ni function call ni codi."
+                            sys_prompt = "Ets la Xiqui, l'assistent financera anime de 20 anys per a XiquiHouse. Respons a les preguntes de l'usuari únicament basant-te en les dades proporcionades. Respon sempre en català de forma molt clara, amable i concisa. IMPORTANT: Respon exclusivament amb text normal, no utilitzis cap eina ni function call ni codi."
                                 
                             # Generate response
                             response = model.generate_content([sys_prompt, context, prompt])
