@@ -142,62 +142,99 @@ def _clear_section_session_keys(prefix):
     for k in keys_to_del:
         del st.session_state[k]
 
-def _get_updated_member_from_state(mem):
-    m = copy.deepcopy(mem)
-    m_id = m.get("id")
-    if not m_id:
-        return m
-    if f"f_nom_{m_id}" in st.session_state:
-        m["nom"] = st.session_state[f"f_nom_{m_id}"]
-    if f"f_rol_{m_id}" in st.session_state:
-        m["rol"] = st.session_state[f"f_rol_{m_id}"]
-    if f"f_actiu_{m_id}" in st.session_state:
-        m["actiu"] = bool(st.session_state[f"f_actiu_{m_id}"])
-    if f"f_naix_{m_id}" in st.session_state:
-        m_naix = st.session_state[f"f_naix_{m_id}"]
-        m["data_naixement"] = m_naix
-        calc_e = str(calcular_edat(m_naix)) if str(calcular_edat(m_naix)).isdigit() else str(m.get("edat", ""))
-        m["edat"] = calc_e
-    if f"f_al_{m_id}" in st.session_state:
-        al_lst = _parse_comma_str_to_list(st.session_state[f"f_al_{m_id}"])
-        m["alergies"] = al_lst
-        m["circunstancies"] = al_lst
-    if f"f_vt_{m_id}" in st.session_state:
-        m["vetos"] = _parse_comma_str_to_list(st.session_state[f"f_vt_{m_id}"])
-    if f"f_com_{m_id}" in st.session_state:
-        m["comodins"] = _parse_comma_str_to_list(st.session_state[f"f_com_{m_id}"])
-    if f"f_icon_{m_id}" in st.session_state:
-        m["icona"] = st.session_state[f"f_icon_{m_id}"]
-    if f"f_gcal_{m_id}" in st.session_state:
-        m["google_calendar_ical"] = st.session_state[f"f_gcal_{m_id}"]
-    if f"f_col_{m_id}" in st.session_state:
-        m["color"] = st.session_state[f"f_col_{m_id}"]
-    return m
+def _get_all_family_members_from_state_and_config():
+    cur_cfg = load_app_config()
+    disk_fam = cur_cfg.get("familia", [])
+    fam_by_id = {}
+    for m in disk_fam:
+        if isinstance(m, dict) and "id" in m:
+            fam_by_id[m["id"]] = copy.deepcopy(m)
+            
+    # Cercar quins id de membre hi ha actius a st.session_state (claus f_nom_<id>)
+    ss_ids = set()
+    for k in list(st.session_state.keys()):
+        if k.startswith("f_nom_"):
+            try:
+                m_id = int(k.replace("f_nom_", ""))
+                ss_ids.add(m_id)
+            except ValueError:
+                pass
+
+    all_ids = sorted(list(set(fam_by_id.keys()).union(ss_ids)))
+    updated_fam = []
+    
+    for m_id in all_ids:
+        if m_id in fam_by_id:
+            m = copy.deepcopy(fam_by_id[m_id])
+        else:
+            m = {
+                "id": m_id,
+                "nom": f"Membre {m_id}",
+                "rol": "Familiar",
+                "data_naixement": "",
+                "edat": "",
+                "actiu": True,
+                "alergies": [],
+                "circunstancies": [],
+                "vetos": [],
+                "comodins": [],
+                "icona": "👤",
+                "google_calendar_ical": "",
+                "color": "#3b82f6"
+            }
+            
+        if f"f_nom_{m_id}" in st.session_state:
+            m["nom"] = str(st.session_state[f"f_nom_{m_id}"]).strip()
+        if f"f_rol_{m_id}" in st.session_state:
+            m["rol"] = str(st.session_state[f"f_rol_{m_id}"]).strip()
+        if f"f_actiu_{m_id}" in st.session_state:
+            m["actiu"] = bool(st.session_state[f"f_actiu_{m_id}"])
+        if f"f_naix_{m_id}" in st.session_state:
+            m_naix = str(st.session_state[f"f_naix_{m_id}"]).strip()
+            m["data_naixement"] = m_naix
+            calc_e = calcular_edat(m_naix)
+            m["edat"] = str(calc_e) if str(calc_e).isdigit() else str(m.get("edat", ""))
+        if f"f_al_{m_id}" in st.session_state:
+            al_lst = _parse_comma_str_to_list(st.session_state[f"f_al_{m_id}"])
+            m["alergies"] = al_lst
+            m["circunstancies"] = al_lst
+        if f"f_vt_{m_id}" in st.session_state:
+            m["vetos"] = _parse_comma_str_to_list(st.session_state[f"f_vt_{m_id}"])
+        if f"f_com_{m_id}" in st.session_state:
+            m["comodins"] = _parse_comma_str_to_list(st.session_state[f"f_com_{m_id}"])
+        if f"f_icon_{m_id}" in st.session_state:
+            m["icona"] = st.session_state[f"f_icon_{m_id}"]
+        if f"f_gcal_{m_id}" in st.session_state:
+            m["google_calendar_ical"] = str(st.session_state[f"f_gcal_{m_id}"]).strip()
+        if f"f_col_{m_id}" in st.session_state:
+            m["color"] = st.session_state[f"f_col_{m_id}"]
+            
+        updated_fam.append(m)
+        
+    return updated_fam
 
 def _on_delete_family_member(mem_id):
-    cur_cfg = load_app_config()
-    current_fam = cur_cfg.get("familia", [])
+    all_members = _get_all_family_members_from_state_and_config()
     del_nom = ""
     new_fam = []
-    for m in current_fam:
-        m_id = m.get("id")
-        if m_id == mem_id:
+    for m in all_members:
+        if m.get("id") == mem_id:
             del_nom = m.get("nom", "")
             continue
-        new_fam.append(_get_updated_member_from_state(m))
+        new_fam.append(m)
+    
+    cur_cfg = load_app_config()
     cur_cfg["familia"] = new_fam
     if save_app_config(cur_cfg):
         _clear_section_session_keys("f_")
         st.session_state["flash_success"] = f"🗑️ Membre '{del_nom}' eliminat i desat a config.json!"
 
 def _on_add_family_member():
-    cur_cfg = load_app_config()
-    current_fam = cur_cfg.get("familia", [])
-    updated_fam = [_get_updated_member_from_state(m) for m in current_fam]
-    next_id = max([m.get("id", 0) for m in updated_fam] + [0]) + 1
-    updated_fam.append({
+    all_members = _get_all_family_members_from_state_and_config()
+    next_id = max([m.get("id", 0) for m in all_members] + [0]) + 1
+    all_members.append({
         "id": next_id,
-        "nom": f"Membre {len(updated_fam) + 1}",
+        "nom": f"Membre {len(all_members) + 1}",
         "rol": "Familiar",
         "data_naixement": "",
         "edat": "",
@@ -210,16 +247,16 @@ def _on_add_family_member():
         "google_calendar_ical": "",
         "color": "#3b82f6"
     })
-    cur_cfg["familia"] = updated_fam
+    cur_cfg = load_app_config()
+    cur_cfg["familia"] = all_members
     if save_app_config(cur_cfg):
         _clear_section_session_keys("f_")
         st.session_state["flash_success"] = "✅ Nou membre afegit i desat a config.json!"
 
 def _on_save_family_members():
+    all_members = _get_all_family_members_from_state_and_config()
     cur_cfg = load_app_config()
-    current_fam = cur_cfg.get("familia", [])
-    updated_fam = [_get_updated_member_from_state(m) for m in current_fam]
-    cur_cfg["familia"] = updated_fam
+    cur_cfg["familia"] = all_members
     if save_app_config(cur_cfg):
         _clear_section_session_keys("f_")
         st.session_state["flash_success"] = "✅ Membres de la família desats correctament a config.json!"
