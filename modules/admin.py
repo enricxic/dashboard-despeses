@@ -227,6 +227,10 @@ def _on_delete_family_member(mem_id):
     cur_cfg["familia"] = new_fam
     if save_app_config(cur_cfg):
         _clear_section_session_keys("f_")
+        try:
+            st.cache_data.clear()
+        except Exception:
+            pass
         st.session_state["flash_success"] = f"🗑️ Membre '{del_nom}' eliminat i desat a config.json!"
 
 def _on_request_delete_family_member(mem_id):
@@ -293,6 +297,10 @@ def _on_add_family_member():
     cur_cfg["familia"] = all_members
     if save_app_config(cur_cfg):
         _clear_section_session_keys("f_")
+        try:
+            st.cache_data.clear()
+        except Exception:
+            pass
         st.session_state["flash_success"] = "✅ Nou membre afegit i desat a config.json!"
 
 def _on_save_family_members():
@@ -301,7 +309,19 @@ def _on_save_family_members():
     cur_cfg["familia"] = all_members
     if save_app_config(cur_cfg):
         _clear_section_session_keys("f_")
+        try:
+            st.cache_data.clear()
+        except Exception:
+            pass
         st.session_state["flash_success"] = "✅ Membres de la família desats correctament a config.json!"
+
+def _on_sync_family_from_disk():
+    _clear_section_session_keys("f_")
+    try:
+        st.cache_data.clear()
+    except Exception:
+        pass
+    st.session_state["flash_success"] = "🔄 Dades de la família recarregades directament des de config.json!"
 
 def _render_flash_message():
     if "flash_success" in st.session_state:
@@ -706,12 +726,17 @@ def render():
             
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             
-            # Botó d'afegir membre
+            # Botons d'accions (Recarregar disc i Afegir membre)
             if num_membres < 10:
-                col_add1, col_add2 = st.columns([8, 2])
+                col_add1, col_sync, col_add2 = st.columns([5.2, 2.8, 2])
+                with col_sync:
+                    st.button("🔄 Recarregar disc", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Llegeix directament el fitxer config.json del disc i buida la memòria cau")
                 with col_add2:
                     st.button("➕ Afegir Membre", type="primary", use_container_width=True, key="btn_add_fam_mem", on_click=_on_add_family_member)
             else:
+                col_add1, col_sync = st.columns([7, 3])
+                with col_sync:
+                    st.button("🔄 Recarregar disc", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Llegeix directament el fitxer config.json del disc i buida la memòria cau")
                 st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
                 
             st.write("")

@@ -1,8 +1,8 @@
 import json
 import os
 
-_CURR_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(_CURR_DIR, "config.json")
+_CURR_DIR = os.path.abspath(os.path.dirname(__file__))
+CONFIG_FILE = os.path.abspath(os.path.join(_CURR_DIR, "config.json"))
 
 DEFAULT_CONFIG = {
     "admin": {
