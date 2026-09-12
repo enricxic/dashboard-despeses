@@ -379,14 +379,27 @@ def render(view_mode="economic"):
     
     def fetch_all_supabase(client, table_name):
         data = []
-        count = 1000
+        count = 250
         start = 0
+        max_retries = 3
         while True:
-            response = client.table(table_name).select("*").range(start, start + count - 1).execute()
-            data.extend(response.data)
-            if len(response.data) < count:
+            success = False
+            for attempt in range(max_retries):
+                try:
+                    response = client.table(table_name).select("*").range(start, start + count - 1).execute()
+                    if response and hasattr(response, 'data') and response.data is not None:
+                        data.extend(response.data)
+                        if len(response.data) < count:
+                            return pd.DataFrame(data)
+                        start += count
+                        success = True
+                        break
+                except Exception as e:
+                    import time
+                    print(f"⚠️ Reintent fetch_all_supabase ({attempt+1}/{max_retries}) per a '{table_name}': {e}")
+                    time.sleep(0.4 * (attempt + 1))
+            if not success:
                 break
-            start += count
         return pd.DataFrame(data)
     
     def get_csv_mtimes():

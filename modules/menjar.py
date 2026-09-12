@@ -619,6 +619,25 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
 
     return final_stock_list
 
+@st.cache_data(ttl=300, show_spinner=False)
+def get_tb_receptes_cached():
+    try:
+        from core.db import fetch_table_fast, fix_mojibake_df
+        _, df = fetch_table_fast('tb_receptes_pro')
+        if df is not None and not df.empty:
+            return fix_mojibake_df(df)
+    except Exception as e:
+        print("Error fetching tb_receptes_pro via fast engine:", e)
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        df = fetch_all_supabase(supabase, 'tb_receptes_pro')
+        if df is not None and not df.empty:
+            from core.db import fix_mojibake_df
+            return fix_mojibake_df(df)
+    except Exception as e:
+        print("Error fetching tb_receptes_pro via supabase:", e)
+    return pd.DataFrame()
+
 def render():
     col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
     with col_t1:
@@ -628,16 +647,15 @@ def render():
             st.session_state.current_module = None
             st.rerun()
     
-    
-
-
     if True:
-        
-        
         try:
-            supabase = get_supabase_client(st.session_state.get("role", "guest"))
-            df_receptes = fetch_all_supabase(supabase, 'tb_receptes_pro')
-            if not df_receptes.empty:
+            df_receptes = get_tb_receptes_cached()
+            if df_receptes.empty and "df_receptes_fallback" in st.session_state:
+                df_receptes = st.session_state["df_receptes_fallback"]
+            elif not df_receptes.empty:
+                st.session_state["df_receptes_fallback"] = df_receptes
+                
+            if not df_receptes.empty and 'categoria' in df_receptes.columns and 'titol' in df_receptes.columns:
                 df_receptes = df_receptes.sort_values(by=['categoria', 'titol'], ascending=[True, True]).reset_index(drop=True)
             
             subtab_gen, subtab_list, subtab_add = st.tabs(["🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta"])
@@ -787,6 +805,9 @@ def render():
                         }
                         resp = supabase.table('tb_receptes_pro').insert(data_insert).execute()
                         if resp.data:
+                            get_tb_receptes_cached.clear()
+                            if "df_receptes_fallback" in st.session_state:
+                                del st.session_state["df_receptes_fallback"]
                             # Clear form keys from session_state
                             keys_to_clear = ['k_titol', 'k_cat', 'k_temps', 'k_dif', 'k_dia', 'k_temp', 'k_ori', 'k_salut', 'k_img_url', 'k_vid_url', 'k_ing', 'k_mise', 'k_ins', 'k_uploaded']
                             for key in keys_to_clear:
