@@ -670,7 +670,8 @@ def render():
                 cur_cfg = load_app_config()
                 cur_cfg["familia"] = updated_familia
                 if save_app_config(cur_cfg):
-                    st.session_state["flash_success"] = "✅ Membres de la família desats correctament!"
+                    _clear_section_session_keys("f_")
+                    st.session_state["flash_success"] = "✅ Membres de la família desats correctament a config.json!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 

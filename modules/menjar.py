@@ -871,6 +871,29 @@ def render():
                                     })
                                 else:
                                     st.caption("*(Fora de la llar aquesta setmana)*")
+                    
+                    st.write("")
+                    if st.button("💾 Desar aquests ajustos a la configuració permanent de la família (config.json)", key="btn_save_fam_from_planner", use_container_width=True):
+                        from core.config_manager import load_app_config, save_app_config
+                        cur_cfg = load_app_config()
+                        cur_fam = cur_cfg.get("familia", [])
+                        for idx_f, memb in enumerate(cur_fam):
+                            if idx_f < len(familia_cfg):
+                                is_chk = st.session_state.get(f"sel_mem_{idx_f}", memb.get("actiu", True))
+                                cur_al = st.session_state.get(f"al_m_{idx_f}", memb.get("alergies", []))
+                                vet_txt = st.session_state.get(f"vet_m_{idx_f}", ", ".join(memb.get("vetos", [])))
+                                com_txt = st.session_state.get(f"com_m_{idx_f}", ", ".join(memb.get("comodins", [])))
+                                
+                                memb["actiu"] = bool(is_chk)
+                                memb["alergies"] = cur_al
+                                memb["circunstancies"] = cur_al
+                                memb["vetos"] = [v.strip() for v in str(vet_txt).split(",") if v.strip()]
+                                memb["comodins"] = [c.strip() for c in str(com_txt).split(",") if c.strip()]
+                        cur_cfg["familia"] = cur_fam
+                        if save_app_config(cur_cfg):
+                            st.toast("✅ Ajustos de la família desats correctament a config.json!", icon="💾")
+                            st.success("✅ Ajustos de la família desats correctament a config.json!")
+                            st.rerun()
                 
                 with st.expander("🥗 2. Regles Nutricionals de la Llar", expanded=False):
                     c_r1, c_r2, c_r3 = st.columns(3)
