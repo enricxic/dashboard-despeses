@@ -229,6 +229,48 @@ def _on_delete_family_member(mem_id):
         _clear_section_session_keys("f_")
         st.session_state["flash_success"] = f"🗑️ Membre '{del_nom}' eliminat i desat a config.json!"
 
+def _on_request_delete_family_member(mem_id):
+    st.session_state["delete_target_mem_id"] = mem_id
+
+@st.dialog("⚠️ Confirmar Eliminació de Membre")
+def show_delete_family_member_dialog(mem):
+    st.markdown("### 🗑️ Estàs segur que vols eliminar aquest membre?")
+    st.write("Aquesta acció eliminarà el membre de la família de forma permanent a `config.json`.")
+    
+    nom_val = mem.get('nom', 'Sense nom')
+    rol_val = mem.get('rol', 'Familiar')
+    naix_val = mem.get('data_naixement', '')
+    edat_val = mem.get('edat', '')
+    icon_val = mem.get('icona', '👤')
+    actiu_txt = "🟢 Present a la llar" if mem.get('actiu', True) else "⚪ Fora de la llar"
+    
+    edat_info = f" ({edat_val} anys)" if edat_val else ""
+    naix_info = f"{naix_val}{edat_info}" if naix_val else "No especificada"
+
+    st.markdown(f"""
+    <div style="background:#0f172a; padding:16px; border-radius:12px; border:1px solid #334155; margin:12px 0 20px 0; color:#f8fafc;">
+        <div style="font-size:1.3rem; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+            <span>{icon_val}</span> <span>{nom_val}</span> <span style="font-size:0.9rem; color:#94a3b8; font-weight:400;">({rol_val})</span>
+        </div>
+        <div style="font-size:0.9rem; line-height:1.6; color:#cbd5e1;">
+            <div>🎂 <b>Data de Naixement:</b> {naix_info}</div>
+            <div>🏠 <b>Estat a la llar:</b> {actiu_txt}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("❌ Cancel·lar", use_container_width=True, key="btn_cancel_del_mem"):
+            st.session_state.pop("delete_target_mem_id", None)
+            st.rerun()
+    with c2:
+        if st.button("✅ Acceptar i Esborrar", type="primary", use_container_width=True, key="btn_confirm_del_mem"):
+            m_id = mem.get("id")
+            _on_delete_family_member(m_id)
+            st.session_state.pop("delete_target_mem_id", None)
+            st.rerun()
+
 def _on_add_family_member():
     all_members = _get_all_family_members_from_state_and_config()
     next_id = max([m.get("id", 0) for m in all_members] + [0]) + 1
@@ -643,6 +685,15 @@ def render():
         # 3. SECCIÓ: FAMÍLIA
         # =========================================================================
         elif active == "familia":
+            if "delete_target_mem_id" in st.session_state:
+                target_id = st.session_state["delete_target_mem_id"]
+                all_mems = _get_all_family_members_from_state_and_config()
+                target_mem = next((m for m in all_mems if m.get("id") == target_id), None)
+                if target_mem:
+                    show_delete_family_member_dialog(target_mem)
+                else:
+                    st.session_state.pop("delete_target_mem_id", None)
+
             familia_list = list(cfg.get("familia", []))
             num_membres = len(familia_list)
             
@@ -685,7 +736,7 @@ def render():
                         if not m_actiu:
                             st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les seves dades però no es computarà per defecte als menús setmanals.*")
                     with c_del_top:
-                        st.button("🗑️ Esborrar", key=f"f_del_{mem_id}", use_container_width=True, on_click=_on_delete_family_member, args=(mem_id,))
+                        st.button("🗑️ Esborrar", key=f"f_del_{mem_id}", use_container_width=True, on_click=_on_request_delete_family_member, args=(mem_id,))
                     
                     st.write("")
                     c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 2.3])
