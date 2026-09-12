@@ -1,5 +1,6 @@
 import streamlit as st
 import json
+import copy
 import os
 import base64
 from datetime import datetime, date
@@ -140,6 +141,38 @@ def _clear_section_session_keys(prefix):
     keys_to_del = [k for k in list(st.session_state.keys()) if k.startswith(prefix)]
     for k in keys_to_del:
         del st.session_state[k]
+
+def _get_updated_member_from_state(mem):
+    m = copy.deepcopy(mem)
+    m_id = m.get("id")
+    if not m_id:
+        return m
+    if f"f_nom_{m_id}" in st.session_state:
+        m["nom"] = st.session_state[f"f_nom_{m_id}"]
+    if f"f_rol_{m_id}" in st.session_state:
+        m["rol"] = st.session_state[f"f_rol_{m_id}"]
+    if f"f_actiu_{m_id}" in st.session_state:
+        m["actiu"] = bool(st.session_state[f"f_actiu_{m_id}"])
+    if f"f_naix_{m_id}" in st.session_state:
+        m_naix = st.session_state[f"f_naix_{m_id}"]
+        m["data_naixement"] = m_naix
+        calc_e = str(calcular_edat(m_naix)) if str(calcular_edat(m_naix)).isdigit() else str(m.get("edat", ""))
+        m["edat"] = calc_e
+    if f"f_al_{m_id}" in st.session_state:
+        al_lst = _parse_comma_str_to_list(st.session_state[f"f_al_{m_id}"])
+        m["alergies"] = al_lst
+        m["circunstancies"] = al_lst
+    if f"f_vt_{m_id}" in st.session_state:
+        m["vetos"] = _parse_comma_str_to_list(st.session_state[f"f_vt_{m_id}"])
+    if f"f_com_{m_id}" in st.session_state:
+        m["comodins"] = _parse_comma_str_to_list(st.session_state[f"f_com_{m_id}"])
+    if f"f_icon_{m_id}" in st.session_state:
+        m["icona"] = st.session_state[f"f_icon_{m_id}"]
+    if f"f_gcal_{m_id}" in st.session_state:
+        m["google_calendar_ical"] = st.session_state[f"f_gcal_{m_id}"]
+    if f"f_col_{m_id}" in st.session_state:
+        m["color"] = st.session_state[f"f_col_{m_id}"]
+    return m
 
 def _render_flash_message():
     if "flash_success" in st.session_state:
@@ -540,25 +573,29 @@ def render():
                 col_add1, col_add2 = st.columns([8, 2])
                 with col_add2:
                     if st.button("➕ Afegir Membre", type="primary", use_container_width=True, key="btn_add_fam_mem"):
-                        next_id = max([m.get("id", 0) for m in familia_list] + [0]) + 1
-                        familia_list.append({
+                        updated_current_fam = [_get_updated_member_from_state(m) for m in familia_list]
+                        next_id = max([m.get("id", 0) for m in updated_current_fam] + [0]) + 1
+                        updated_current_fam.append({
                             "id": next_id,
-                            "nom": f"Membre {num_membres + 1}",
+                            "nom": f"Membre {len(updated_current_fam) + 1}",
                             "rol": "Familiar",
                             "data_naixement": "",
                             "edat": "",
                             "actiu": True,
                             "alergies": [],
+                            "circunstancies": [],
                             "vetos": [],
                             "comodins": [],
                             "icona": "👤",
                             "google_calendar_ical": "",
                             "color": "#3b82f6"
                         })
-                        cfg["familia"] = familia_list
-                        save_app_config(cfg)
-                        _clear_section_session_keys("f_")
-                        st.rerun()
+                        cur_cfg = load_app_config()
+                        cur_cfg["familia"] = updated_current_fam
+                        if save_app_config(cur_cfg):
+                            _clear_section_session_keys("f_")
+                            st.session_state["flash_success"] = "✅ Nou membre afegit i desat correctament!"
+                            st.rerun()
             else:
                 st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
                 
@@ -583,7 +620,7 @@ def render():
                     with c_act1:
                         m_actiu = st.toggle("🏠 Membre actiu a la llar (Participa en menús i rutines diàries)", value=is_mem_actiu, key=f"f_actiu_{mem_id}")
                         if not m_actiu:
-                            st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les seves dades però no es computarà per defecte als menús setmanals.*")
+                            st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les meves dades però no es computarà per defecte als menús setmanals.*")
                     with c_del_top:
                         del_btn = st.button("🗑️ Esborrar", key=f"f_del_{mem_id}", use_container_width=True)
                     
@@ -657,12 +694,13 @@ def render():
                             "color": m_color
                         })
                     else:
-                        new_fam = [m for m in updated_familia if m.get("id") != mem_id] + familia_list[i+1:]
-                        cfg["familia"] = new_fam
-                        save_app_config(cfg)
-                        _clear_section_session_keys("f_")
-                        st.success("Membre eliminat.")
-                        st.rerun()
+                        new_fam = [_get_updated_member_from_state(m) for m in familia_list if m.get("id") != mem_id]
+                        cur_cfg = load_app_config()
+                        cur_cfg["familia"] = new_fam
+                        if save_app_config(cur_cfg):
+                            _clear_section_session_keys("f_")
+                            st.session_state["flash_success"] = f"🗑️ Membre '{mem.get('nom', '')}' eliminat correctament!"
+                            st.rerun()
                         
             st.write("")
             _render_flash_message()

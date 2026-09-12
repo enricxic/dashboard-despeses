@@ -24,7 +24,8 @@ DEFAULT_CONFIG = {
         {"id": 1, "nom": "Enric", "rol": "Pare", "data_naixement": "23/09/1957", "edat": "68", "actiu": True, "alergies": [], "vetos": ["fetge", "casqueria"], "comodins": ["Pit de pollastre a la planxa", "Truita francesa"], "icona": "👨", "google_calendar_ical": "", "color": "#3b82f6"},
         {"id": 2, "nom": "Isabel", "rol": "Mare", "data_naixement": "06/03/1959", "edat": "67", "actiu": True, "alergies": [], "vetos": [], "comodins": ["Amanida completa", "Salmó a la planxa"], "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"},
         {"id": 3, "nom": "Jordi", "rol": "Fill", "data_naixement": "18/12/1988", "edat": "37", "actiu": True, "alergies": [], "vetos": [], "comodins": ["Macarrons", "Hamburguesa"], "icona": "👦", "google_calendar_ical": "", "color": "#10b981"},
-        {"id": 4, "nom": "Mireia", "rol": "Filla", "data_naixement": "01/08/1994", "edat": "32", "actiu": False, "alergies": ["Lactosa"], "vetos": ["Carn vermella"], "comodins": ["Wok de verdures amb tofu", "Arròs vegetal"], "icona": "👧", "google_calendar_ical": "", "color": "#f59e0b"}
+        {"id": 4, "nom": "Mireia", "rol": "Filla", "data_naixement": "01/08/1994", "edat": "32", "actiu": False, "alergies": ["Lactosa"], "vetos": ["Carn vermella"], "comodins": ["Wok de verdures amb tofu", "Arròs vegetal"], "icona": "👧", "google_calendar_ical": "", "color": "#f59e0b"},
+        {"id": 5, "nom": "Carles", "rol": "Fill", "data_naixement": "01/01/1996", "edat": "30", "actiu": True, "alergies": [], "vetos": [], "comodins": [], "icona": "👦", "google_calendar_ical": "", "color": "#3b82f6"}
     ],
     "tutelats": [],
     "bancs": [
@@ -149,16 +150,18 @@ TRANSLATIONS = {
     }
 }
 
+import copy
+
 def load_app_config():
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
     if not os.path.exists(CONFIG_FILE):
-        save_app_config(DEFAULT_CONFIG)
-        return DEFAULT_CONFIG
+        save_app_config(copy.deepcopy(DEFAULT_CONFIG))
+        return copy.deepcopy(DEFAULT_CONFIG)
     
     try:
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             cfg = json.load(f)
-            merged = dict(DEFAULT_CONFIG)
+            merged = copy.deepcopy(DEFAULT_CONFIG)
             for k, v in cfg.items():
                 if isinstance(v, dict) and k in merged and isinstance(merged[k], dict):
                     merged[k] = {**merged[k], **v}
@@ -167,7 +170,7 @@ def load_app_config():
             return merged
     except Exception as e:
         print("Error reading config file:", e)
-        return DEFAULT_CONFIG
+        return copy.deepcopy(DEFAULT_CONFIG)
 
 def save_app_config(cfg_data):
     try:
