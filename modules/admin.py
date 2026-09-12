@@ -668,7 +668,46 @@ def render():
             _render_flash_message()
             if st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam"):
                 cur_cfg = load_app_config()
-                cur_cfg["familia"] = updated_familia
+                cur_fam_list = cur_cfg.get("familia", [])
+                final_fam = []
+                for i, mem in enumerate(cur_fam_list):
+                    mem_id = mem.get("id", i + 1)
+                    
+                    nom_v = st.session_state.get(f"f_nom_{mem_id}", mem.get("nom", ""))
+                    rol_v = st.session_state.get(f"f_rol_{mem_id}", mem.get("rol", "Familiar"))
+                    actiu_v = st.session_state.get(f"f_actiu_{mem_id}", mem.get("actiu", True))
+                    icon_v = st.session_state.get(f"f_icon_{mem_id}", mem.get("icona", "👤"))
+                    naix_v = st.session_state.get(f"f_naix_{mem_id}", mem.get("data_naixement", ""))
+                    
+                    al_v = st.session_state.get(f"f_al_{mem_id}", _format_list_to_comma_str(mem.get("alergies", [])))
+                    vt_v = st.session_state.get(f"f_vt_{mem_id}", _format_list_to_comma_str(mem.get("vetos", [])))
+                    com_v = st.session_state.get(f"f_com_{mem_id}", _format_list_to_comma_str(mem.get("comodins", [])))
+                    
+                    col_v = st.session_state.get(f"f_col_{mem_id}", mem.get("color", "#3b82f6"))
+                    gcal_v = st.session_state.get(f"f_gcal_{mem_id}", mem.get("google_calendar_ical", ""))
+
+                    al_list = _parse_comma_str_to_list(al_v)
+                    vt_list = _parse_comma_str_to_list(vt_v)
+                    com_list = _parse_comma_str_to_list(com_v)
+                    calc_e_final = str(calcular_edat(naix_v)) if str(calcular_edat(naix_v)).isdigit() else str(mem.get("edat", ""))
+
+                    final_fam.append({
+                        "id": mem_id,
+                        "nom": nom_v,
+                        "rol": rol_v,
+                        "actiu": actiu_v,
+                        "data_naixement": naix_v,
+                        "edat": calc_e_final,
+                        "circunstancies": al_list,
+                        "alergies": al_list,
+                        "vetos": vt_list,
+                        "comodins": com_list,
+                        "icona": icon_v,
+                        "google_calendar_ical": gcal_v,
+                        "color": col_v
+                    })
+
+                cur_cfg["familia"] = final_fam
                 if save_app_config(cur_cfg):
                     _clear_section_session_keys("f_")
                     st.session_state["flash_success"] = "✅ Membres de la família desats correctament a config.json!"
