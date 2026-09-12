@@ -6,7 +6,7 @@ from core.avatar_manager import (
     AVATAR_ROLES
 )
 
-def render_avatar_widget(current_module: str = None, container=None):
+def render_avatar_widget(current_module: str = None, container=None, key_prefix: str = "sb"):
     """Renderitza el widget visual de l'Avatar Anime en un contenidor de Streamlit."""
     role_info = get_avatar_role_for_module(current_module)
     img_b64 = get_avatar_image_base64(role_info["image_file"])
@@ -123,7 +123,7 @@ def render_avatar_widget(current_module: str = None, container=None):
                 options=list(role_options.keys()),
                 format_func=lambda x: role_options[x],
                 index=list(role_options.keys()).index(role_info["key"]),
-                key=f"avatar_role_sel_{current_module}"
+                key=f"avatar_role_sel_{key_prefix}_{current_module}"
             )
             if selected_r != st.session_state.get("avatar_manual_role"):
                 st.session_state["avatar_manual_role"] = selected_r
@@ -141,7 +141,7 @@ def render_avatar_widget(current_module: str = None, container=None):
         
         # Formulari d'interacció "Pregunta'm"
         st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
-        with st.form(key=f"avatar_query_form_{current_module}", clear_on_submit=True):
+        with st.form(key=f"avatar_query_form_{key_prefix}_{current_module}", clear_on_submit=True):
             user_input = st.text_input(
                 "Pregunta'm...",
                 placeholder="Ex: Què tenim per dinar avui? O quines tasques queden?",
@@ -176,5 +176,5 @@ def render_floating_avatar(current_module: str = None):
     """, unsafe_allow_html=True)
     
     with st.expander(f"✨ Xiqui AI Avatar ({role_info['title']})", expanded=False):
-        render_avatar_widget(current_module=current_module)
+        render_avatar_widget(current_module=current_module, key_prefix="float")
 
