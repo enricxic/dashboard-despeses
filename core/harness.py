@@ -5,8 +5,45 @@ import re
 import requests
 from typing import Dict, List, Any, Optional, Tuple, Callable
 
-def load_harness_cases(file_path: Optional[str] = None) -> List[Dict[str, Any]]:
+def get_live_family_test_case() -> Dict[str, Any]:
+    """Genera un cas de prova dinàmic basat en la configuració real activa de la llar (config.json)."""
+    try:
+        from core.config_manager import load_app_config
+        cfg = load_app_config()
+        familia = cfg.get("familia", [])
+        regles = cfg.get("regles_menjar", {})
+        eines = cfg.get("eines_cuina", {})
+        
+        return {
+            "id": "TC-REAL-XiquiHouse",
+            "titol": "Perfil Real de la Llar (Configuració Actual)",
+            "descripcio": "Avaluació del menú setmanal usant la configuració real activa de la família, regles nutricionals i equipament de XiquiHouse.",
+            "perfil_familia": familia,
+            "regles_llar": regles,
+            "eines_disponibles": eines,
+            "stock_disponible": [],
+            "peticions_setmanals": [],
+            "valoracions_previes": {},
+            "configuracio_apats": {
+                "dies": 7,
+                "format": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+                "comensals_base": sum(1 for m in familia if m.get("actiu", True))
+            },
+            "criteris_esperats": {
+                "max_carn_vermella": regles.get("max_carn_vermella", 1),
+                "min_dies_peix": regles.get("min_peix", 2),
+                "min_dies_llegum": regles.get("min_llegums", 2),
+                "max_embotits_sopar": regles.get("max_embotits_sopar", 2),
+                "zero_repeticions_hidrats": regles.get("no_repetir_hidrats", True)
+            }
+        }
+    except Exception as e:
+        print(f"Error generant cas de prova real: {e}")
+        return {}
+
+def load_harness_cases(file_path: Optional[str] = None, include_live: bool = True) -> List[Dict[str, Any]]:
     """Carrega la col·lecció de casos de prova del banc de dades JSON resolent rutes absolutes."""
+    cases = []
     target_path = file_path
     if not target_path or not os.path.exists(target_path):
         curr_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,16 +59,21 @@ def load_harness_cases(file_path: Optional[str] = None) -> List[Dict[str, Any]]:
                 target_path = c
                 break
                 
-    if not target_path or not os.path.exists(target_path):
-        return []
-        
-    try:
-        with open(target_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data.get("test_cases", [])
-    except Exception as e:
-        print(f"Error carregant casos de prova des de {target_path}: {e}")
-        return []
+    if target_path and os.path.exists(target_path):
+        try:
+            with open(target_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                cases = data.get("test_cases", [])
+        except Exception as e:
+            print(f"Error carregant casos de prova des de {target_path}: {e}")
+            cases = []
+
+    if include_live:
+        live_case = get_live_family_test_case()
+        if live_case and live_case.get("id"):
+            cases.append(live_case)
+            
+    return cases
 
 def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Optional[List[Any]] = None, recipes_sample: Optional[List[Any]] = None, **kwargs) -> str:
     """Construeix el prompt del sistema optimitzat per generar un menú estricte en format JSON."""
