@@ -3750,8 +3750,6 @@ def render(view_mode="economic"):
         return
 
     # ================= MÒDUL ECONÒMIC (PESTANYES) =================
-    from modules.avatar_widget import render_header_with_avatar
-    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>📈 Mòdul Econòmic</h2>", "economic")
     st.write("")
 
     tabs_list = ["📈 Detalls del Mes"]

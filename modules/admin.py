@@ -304,7 +304,16 @@ def _on_add_family_member():
         st.session_state["flash_success"] = "✅ Nou membre afegit i desat a config.json!"
 
 def _on_save_family_members():
+    print("DEBUG: session_state keys starting with f_:")
+    for k, v in st.session_state.items():
+        if k.startswith("f_"):
+            print(f"{k}: {v}")
+    
     all_members = _get_all_family_members_from_state_and_config()
+    print("DEBUG: all_members extracted:")
+    for m in all_members:
+        print(m.get("id"), m.get("nom"))
+        
     cur_cfg = load_app_config()
     cur_cfg["familia"] = all_members
     if save_app_config(cur_cfg):
@@ -493,7 +502,7 @@ def render():
     from modules.avatar_widget import render_header_with_avatar
     
     def _render_search_input():
-        st.text_input("🔍 Cercar ajustos", placeholder="Cercar a la configuració...", label_visibility="collapsed", key="cfg_search")
+        st.text_input("Cercar ajustos", placeholder="🔍 Cercar a la configuració...", label_visibility="collapsed", key="cfg_search")
 
     render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>⚙️ Configuració Global</h2>", "admin", extra_button_fn=_render_search_input)
     search_query = st.session_state.get("cfg_search", "")
@@ -723,6 +732,9 @@ def render():
                 <div class="chrome-card-desc">Afegeix i gestiona els membres de la llar (fins a un màxim de 10). Aquesta informació s'utilitza pel control de medicació, menús familiars, al·lèrgies, vetos personals i assistent IA.</div>
             </div>
             """, unsafe_allow_html=True)
+            
+            from core.config_manager import CONFIG_FILE
+            st.warning(f"🛠️ **MODE DEPURACIÓ - Ruta real del config.json:** `{CONFIG_FILE}`")
             
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             

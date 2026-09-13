@@ -169,7 +169,7 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
     Manté el botó d'Inici i qualsevol botó extra."""
     
     if extra_button_fn:
-        c_title, c_controls = st.columns([8.4, 1.6], vertical_alignment="center")
+        c_title, c_controls = st.columns([7.6, 2.4], vertical_alignment="center")
     else:
         c_title, c_controls = st.columns([9.2, 0.8], vertical_alignment="center")
     
@@ -179,9 +179,9 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
     with c_controls:
         cols_spec = []
         if extra_button_fn:
-            cols_spec.append(1)
+            cols_spec.append(2) # El doble d'ample per al botó extra perquè hi càpiga el text
             
-        cols_spec.append(1) # Botó 🔙 Inici
+        cols_spec.append(1) # Botó 🔙 Inici (meitat de 2.4 és 0.8, o si està sol és el total 0.8)
         
         cols = st.columns(cols_spec, vertical_alignment="center")
         
