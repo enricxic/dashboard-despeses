@@ -165,51 +165,20 @@ def render_floating_avatar(current_module: str = None):
     pass
 
 def render_header_with_avatar(title_html: str, module_name: str = None, extra_button_fn=None):
-    """Renderitza la capçalera del mòdul amb el títol, la imatge petita transparent de l'avatar a tamany ampliat (~105px) sense brillo,
-    el botó estrella ✨ per activar/desactivar la visibilitat i el botó 🔙 Inici intacte en mides originals."""
+    """Renderitza la capçalera del mòdul sense l'avatar (ocultat per petició de l'usuari).
+    Manté el botó d'Inici i qualsevol botó extra."""
     
-    if "show_avatar_overlay" not in st.session_state:
-        st.session_state["show_avatar_overlay"] = True
-        
-    show_avatar = st.session_state["show_avatar_overlay"]
-    role_info = get_avatar_role_for_module(module_name)
-    img_b64 = get_avatar_image_base64(role_info["image_file"])
-    
-    st.markdown("""
-    <style>
-    .hdr-avatar-img-standalone {
-        height: 105px;
-        max-height: 105px;
-        width: auto;
-        object-fit: contain;
-        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
-        transition: transform 0.2s ease;
-        vertical-align: middle;
-        user-select: none;
-        background: transparent !important;
-    }
-    .hdr-avatar-img-standalone:hover {
-        transform: scale(1.06);
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    c_title, c_controls = st.columns([6.2, 5.8], vertical_alignment="center")
+    c_title, c_controls = st.columns([7, 3], vertical_alignment="center")
     
     with c_title:
         st.markdown(title_html, unsafe_allow_html=True)
         
     with c_controls:
-        # Calcular columnes dinàmiques amb proporció ajustada per no modificar la mida del botó Inici
         cols_spec = []
         if extra_button_fn:
-            cols_spec.append(2.6)
+            cols_spec.append(1)
             
-        if show_avatar and img_b64:
-            cols_spec.append(3.2) # Imatge transparent de l'avatar a 105px
-            
-        cols_spec.append(1.0) # Botó Estrella ✨
-        cols_spec.append(1.8) # Botó 🔙 Inici intacte
+        cols_spec.append(1) # Botó 🔙 Inici
         
         cols = st.columns(cols_spec, vertical_alignment="center")
         
@@ -219,22 +188,7 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
                 extra_button_fn()
             col_idx += 1
             
-        if show_avatar and img_b64:
-            with cols[col_idx]:
-                st.markdown(f"""
-                <div style="text-align: center; display: flex; justify-content: center; align-items: center;">
-                    <img src="{img_b64}" class="hdr-avatar-img-standalone" title="Xiqui ({role_info['title']})" alt="Xiqui Avatar" />
-                </div>
-                """, unsafe_allow_html=True)
-            col_idx += 1
-            
         with cols[col_idx]:
-            star_type = "primary" if show_avatar else "secondary"
-            if st.button("✨", key=f"btn_toggle_avatar_star_{module_name}", type=star_type, help="Activar / Desactivar visibilitat de l'avatar transparent Xiqui", use_container_width=False):
-                st.session_state["show_avatar_overlay"] = not show_avatar
-                st.rerun()
-                
-        with cols[col_idx + 1]:
-            if st.button("🔙 Inici", use_container_width=False, key=f"btn_nav_inici_{module_name}"):
+            if st.button("🔙 Inici", use_container_width=True, key=f"btn_nav_inici_{module_name}"):
                 st.session_state.current_module = None
                 st.rerun()
