@@ -51,8 +51,6 @@ def render():
         
     pk_col = PK_MAP.get(selected_table, 'id')
     
-    st.info(f"Visualitzant i editant la taula **`{selected_table}`**. La clau primària (ID) per desar els canvis és **`{pk_col}`**.")
-    
     # Fetch Data
     with st.spinner(f"Carregant dades de {selected_table}..."):
         try:
