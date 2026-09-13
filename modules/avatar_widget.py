@@ -168,7 +168,10 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
     """Renderitza la capçalera del mòdul sense l'avatar (ocultat per petició de l'usuari).
     Manté el botó d'Inici i qualsevol botó extra."""
     
-    c_title, c_controls = st.columns([7, 3], vertical_alignment="center")
+    if extra_button_fn:
+        c_title, c_controls = st.columns([8.4, 1.6], vertical_alignment="center")
+    else:
+        c_title, c_controls = st.columns([9.2, 0.8], vertical_alignment="center")
     
     with c_title:
         st.markdown(title_html, unsafe_allow_html=True)
