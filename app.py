@@ -316,6 +316,16 @@ div.block-container {{
     z-index: 999999;
     padding: 4px 0;
 }}
+/* Pont invisible per evitar que el menú es tanqui al moure el ratolí avall */
+.desktop-menubar .menu-dropdown::before {{
+    content: "";
+    position: absolute;
+    top: -15px;
+    left: 0;
+    right: 0;
+    height: 15px;
+    background: transparent;
+}}
 .desktop-menubar .menu-item:hover .menu-dropdown {{
     display: block;
 }}
@@ -362,6 +372,16 @@ div.block-container {{
     min-width: 240px;
     z-index: 1000000;
     padding: 4px 0;
+}}
+/* Pont invisible per al submenú al moure el ratolí cap a la dreta */
+.desktop-menubar .menu-dropdown .submenu-dropdown::before {{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -15px;
+    width: 15px;
+    bottom: 0;
+    background: transparent;
 }}
 .desktop-menubar .menu-dropdown .submenu-item:hover .submenu-dropdown {{
     display: block;
