@@ -221,3 +221,4 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **13/09/2026**: Modificació de l'esquema de la base de dades: afegida la columna `preuUnit` a `tb_productes` i executada la migració retrospectiva per importar l'últim preu de compra des de `compresSuper`.
 - **13/09/2026**: Solució del problema de pèrdua de sessió (petició de contrasenya) en navegar mitjançant el menú superior entre mòduls gràcies a l'emmagatzematge del token a l'estat de la sessió.
 - **13/09/2026**: Creació d'un nou mòdul `modules/bases_dades.py` que fa de **Gestor de Bases de Dades**. Accessible des del menú superior, permet visualitzar i editar en temps real (inserir, modificar i esborrar) totes les taules de Supabase de manera centralitzada i senzilla mitjançant `st.data_editor`.
+- **13/09/2026**: Afegit botó "Inici" al capdamunt a la dreta del Gestor de Bases de Dades i eliminat text informatiu de la ID segons l'usuari.
