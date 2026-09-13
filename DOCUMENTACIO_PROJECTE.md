@@ -219,3 +219,4 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 ## 12. Historial de Canvis Recents (Changelog Menor)
 - **13/09/2026**: Renomenament de mòdul de "Compres" a "Ingressos i Despeses", pestanyes a "Ingrés / Despesa General", i aplicació de color corporatiu taronja (`#f39c12`) a les capçaleres d'introducció de moviments i "Compres Super". Correcció del botó "Inici" duplicat a la pestanya de Compres Super.
 - **13/09/2026**: Modificació de l'esquema de la base de dades: afegida la columna `preuUnit` a `tb_productes` i executada la migració retrospectiva per importar l'últim preu de compra des de `compresSuper`.
+- **13/09/2026**: Solució del problema de pèrdua de sessió (petició de contrasenya) en navegar mitjançant el menú superior entre mòduls gràcies a l'emmagatzematge del token a l'estat de la sessió.

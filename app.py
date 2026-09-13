@@ -249,7 +249,7 @@ if st.session_state.get("editing_json_file"):
     show_json_editor_dialog(st.session_state["editing_json_file"])
 
 def render_traditional_menubar():
-    auth_token = st.query_params.get("auth", "")
+    auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
     icones_actives = app_cfg.get("icones_actives", {})
     
@@ -470,7 +470,7 @@ if st.session_state.current_module is None:
         with open(logo_path, "rb") as img_file:
             b64_logo = base64.b64encode(img_file.read()).decode()
 
-    auth_token = st.query_params.get("auth", "")
+    auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
 
     role = st.session_state.get("role", "admin")

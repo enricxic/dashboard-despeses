@@ -10,12 +10,14 @@ def check_password():
         st.session_state["authenticated"] = True
         st.session_state["role"] = "admin"
         st.session_state["username"] = "Admin Local"
+        st.session_state["auth_token"] = DEFAULT_HASH
         return True
         
     if st.query_params.get("device") == "desktop":
         st.session_state["authenticated"] = True
         st.session_state["role"] = "admin"
         st.session_state["username"] = "Admin Local"
+        st.session_state["auth_token"] = DEFAULT_HASH
         return True
 
     # 1. Comprovar si hi ha un token d'autenticació vàlid a la URL
@@ -35,16 +37,19 @@ def check_password():
             st.session_state["authenticated"] = True
             st.session_state["role"] = "admin"
             st.session_state["username"] = assigned_name
+            st.session_state["auth_token"] = auth_param
             return True
         elif auth_param in viewer_hashes:
             st.session_state["authenticated"] = True
             st.session_state["role"] = "viewer"
             st.session_state["username"] = assigned_name
+            st.session_state["auth_token"] = auth_param
             return True
         elif auth_param in guest_hashes:
             st.session_state["authenticated"] = True
             st.session_state["role"] = "guest"
             st.session_state["username"] = assigned_name
+            st.session_state["auth_token"] = auth_param
             return True
 
     try:
@@ -53,10 +58,18 @@ def check_password():
         if headers:
             cookies = headers.get("Cookie", "")
             if "client_device_type=desktop" in cookies:
+                st.session_state["authenticated"] = True
+                st.session_state["role"] = "admin"
+                st.session_state["username"] = "Admin Local"
+                st.session_state["auth_token"] = DEFAULT_HASH
                 return True
             
             ua = headers.get("User-Agent", "")
             if "Mobi" not in ua and "Android" not in ua and "iPhone" not in ua and "iPad" not in ua:
+                st.session_state["authenticated"] = True
+                st.session_state["role"] = "admin"
+                st.session_state["username"] = "Admin Local"
+                st.session_state["auth_token"] = DEFAULT_HASH
                 return True
     except (ImportError, Exception):
         pass
@@ -88,18 +101,21 @@ def check_password():
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "admin"
                     st.session_state["username"] = assigned_name
+                    st.session_state["auth_token"] = hashed
                     st.query_params["auth"] = hashed
                     st.rerun()
                 elif hashed in viewer_hashes:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "viewer"
                     st.session_state["username"] = assigned_name
+                    st.session_state["auth_token"] = hashed
                     st.query_params["auth"] = hashed
                     st.rerun()
                 elif hashed in guest_hashes:
                     st.session_state["authenticated"] = True
                     st.session_state["role"] = "guest"
                     st.session_state["username"] = assigned_name
+                    st.session_state["auth_token"] = hashed
                     st.query_params["auth"] = hashed
                     st.rerun()
                 else:
