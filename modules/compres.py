@@ -2833,6 +2833,7 @@ def render():
 
 
     with tab_llista:
+        st.markdown("<h2 style='color:#f39c12; margin-top:0;'>🛒 Llista de la Compra</h2>", unsafe_allow_html=True)
         st.write("Aquesta llista mostra els productes del teu rebost on l'stock actual està per sota de l'stock mínim.")
         try:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -2909,6 +2910,8 @@ def render():
                         df_prods_filtered[col] = 0.0
                 if 'super_habitual' not in df_prods_filtered.columns:
                     df_prods_filtered['super_habitual'] = None
+                if 'preuUnit' not in df_prods_filtered.columns:
+                    df_prods_filtered['preuUnit'] = 0.0
                     
                 df_shopping = df_prods_filtered[df_prods_filtered['stock_actual'] < df_prods_filtered['stock_minim']].copy()
                 
@@ -2916,8 +2919,11 @@ def render():
                     df_shopping['falta'] = df_shopping['stock_minim'] - df_shopping['stock_actual']
                     df_shopping['super_habitual'] = df_shopping['super_habitual'].fillna("Sense Assignar").replace("", "Sense Assignar")
                     df_shopping['is_manual'] = False
+                    # Convert to numeric just in case
+                    df_shopping['preuUnit'] = pd.to_numeric(df_shopping['preuUnit'], errors='coerce').fillna(0.0)
+                    df_shopping['total_linia'] = df_shopping['falta'] * df_shopping['preuUnit']
                 else:
-                    df_shopping = pd.DataFrame(columns=['idProducte', 'nom_estandard', 'super_habitual', 'falta', 'unitat', 'is_manual'])
+                    df_shopping = pd.DataFrame(columns=['idProducte', 'nom_estandard', 'super_habitual', 'falta', 'unitat', 'is_manual', 'preuUnit', 'total_linia'])
                 
                 # FETCH tb_pendents_compra
                 try:
@@ -2930,6 +2936,8 @@ def render():
                             'quantitat': 'falta'
                         })
                         df_manual['is_manual'] = True
+                        df_manual['preuUnit'] = 0.0
+                        df_manual['total_linia'] = 0.0
                         df_shopping = pd.concat([df_shopping, df_manual], ignore_index=True)
                 except Exception as e:
                     pass # Taula potser no existeix o error
@@ -2940,12 +2948,19 @@ def render():
                     
                     # Group by super_habitual
                     for superm, group in df_shopping.groupby('super_habitual'):
+                        total_super = group['total_linia'].sum()
+                        total_str = f" · Total aprox: {total_super:,.2f} €" if total_super > 0 else ""
+                        
                         # Use expander for each supermarket
-                        with st.expander(f"🏪 {superm} ({len(group)} productes)", expanded=(superm == "Sense Assignar")):
+                        with st.expander(f"🏪 {superm} ({len(group)} productes){total_str}", expanded=(superm == "Sense Assignar")):
                             for _, row in group.iterrows():
                                 unit_str = row['unitat'] if 'unitat' in row and pd.notna(row['unitat']) and str(row['unitat']).lower() != 'none' else 'u.'
                                 icon = "➕" if row.get('is_manual', False) else "📦"
-                                st.checkbox(f"{icon} **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}", key=f"chk_shop_{row['idProducte']}_{superm}_{row.get('is_manual', False)}")
+                                preu_u = row.get('preuUnit', 0.0)
+                                tot_linia = row.get('total_linia', 0.0)
+                                
+                                preu_str = f" (Últim preu: {preu_u:,.2f} €/u. ➜ **{tot_linia:,.2f} €**)" if preu_u > 0 else ""
+                                st.checkbox(f"{icon} **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}{preu_str}", key=f"chk_shop_{row['idProducte']}_{superm}_{row.get('is_manual', False)}")
                                 
                             # Botó netejar si hi ha manuals
                             manual_ids = group[group['is_manual'] == True]['idProducte'].tolist()
