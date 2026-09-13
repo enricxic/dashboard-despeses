@@ -97,6 +97,21 @@ def scale_ingredients(raw_ingredients: str, base: float = 3.0, target: float = 3
 
 def cb_set_editing_recepta(r_id, val):
     st.session_state[f"editing_{r_id}"] = val
+
+def cb_afegir_compra(nom, quant):
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        new_item = {
+            "name": nom,
+            "category": "Menú Setmanal IA",
+            "notes": quant,
+            "is_bought": False
+        }
+        supabase.table('compresSuper').insert(new_item).execute()
+        st.toast(f"✅ {nom} afegit a la llista de la compra!")
+    except Exception as e:
+        st.toast(f"❌ Error afegint {nom}: {e}")
+
 @st.dialog("🔄 Canviar Plat", width="large")
 def modal_canvi_plat(idx_d, apat, clau_plat, cat_filtre, df_receptes):
     st.markdown(f"### Selecciona una alternativa per al {clau_plat} del {apat}")
@@ -134,7 +149,7 @@ def modal_organitzacio(dia_nom, apat_nom, apat_dict, df_receptes):
         st.markdown(f"#### 🥣 1r Plat: {p_nom}")
         if p_nom and p_nom != '-':
             r1 = cercar_recepta_per_nom(p_nom, df_receptes)
-            if r1:
+            if r1 is not None:
                 st.info(f"**Temps:** {r1.get('temps_prep_minuts', 0)} min")
                 ins1 = r1.get('instruccions', 'Cap instrucció definida.')
                 st.markdown(ins1)
@@ -145,7 +160,7 @@ def modal_organitzacio(dia_nom, apat_nom, apat_dict, df_receptes):
         st.markdown(f"#### 🥩 2n Plat: {s_nom}")
         if s_nom and s_nom != '-':
             r2 = cercar_recepta_per_nom(s_nom, df_receptes)
-            if r2:
+            if r2 is not None:
                 st.info(f"**Temps:** {r2.get('temps_prep_minuts', 0)} min")
                 ins2 = r2.get('instruccions', 'Cap instrucció definida.')
                 st.markdown(ins2)
@@ -1251,7 +1266,7 @@ def render():
                             c_buy, c_pantry = st.columns(2)
                             with c_buy:
                                 st.markdown("##### 🛒 A Comprar")
-                                for it in ings_comprar:
+                                for idx_it, it in enumerate(ings_comprar):
                                     if str(it.get("estat", "")).lower() == "comprar":
                                         n_ing = it.get("nom", "")
                                         q_ing = it.get("quantitat", "")
@@ -1259,11 +1274,15 @@ def render():
                                         # Comprovar si està a la llista
                                         ja_hi_es = any(n_ing.lower() in nom_l or nom_l in n_ing.lower() for nom_l in noms_llista)
                                         
-                                        icon = "✅" if ja_hi_es else "❌"
-                                        color = "green" if ja_hi_es else "red"
-                                        text_estat = "Ja a la llista" if ja_hi_es else "Falta a la llista"
-                                        
-                                        st.markdown(f"- **{n_ing}** ({q_ing}) - <span style='color:{color}; font-size:0.85rem;'>{icon} {text_estat}</span>", unsafe_allow_html=True)
+                                        if ja_hi_es:
+                                            st.markdown(f"- **{n_ing}** ({q_ing}) - <span style='color:green; font-size:0.85rem;'>✅ Ja a la llista</span>", unsafe_allow_html=True)
+                                        else:
+                                            # Per fer botons petits utilitzem targetes molt simples
+                                            c_ing1, c_ing2 = st.columns([4, 1.5], vertical_alignment="center")
+                                            with c_ing1:
+                                                st.markdown(f"- **{n_ing}** ({q_ing})")
+                                            with c_ing2:
+                                                st.button("➕ Llista", key=f"btn_add_buy_{idx_it}_{n_ing}", on_click=cb_afegir_compra, args=(n_ing, q_ing), help="Afegir-ho ràpidament a la base de dades")
                                         
                             with c_pantry:
                                 st.markdown("##### 📦 Aprofitament del Rebost")
