@@ -268,7 +268,7 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
     start_time = time.time()
     
     models_to_try = [model_name]
-    for alt in ["gemini-2.5-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]:
+    for alt in ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-latest"]:
         if alt not in models_to_try:
             models_to_try.append(alt)
         
@@ -371,7 +371,7 @@ def parse_and_clean_json(raw_text: str) -> Tuple[bool, Dict[str, Any], str]:
         except Exception:
             pass
 
-    return False, {}, "Error de sintaxi JSON no recuperable a la resposta del model"
+    return False, {}, f"Error de sintaxi JSON no recuperable a la resposta del model. Resposta crua:\n{raw_text}"
 
 # =========================================================================
 # GRADERS DETERMINISTES (AVALUADORS LÒGICS)
