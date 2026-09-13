@@ -429,10 +429,18 @@ div.block-container {{
 <div class="menu-item">
 <span class="menu-title">Bases de dades</span>
 <div class="menu-dropdown">
-<a href="?mod=modules.economic{auth_suffix}" target="_self">🗄️ Taules de Dades (Despeses / Ingressos)</a>
+<div class="submenu-item">
+<div class="submenu-title"><span>🗄️ Gestor de Bases de Dades</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></div>
+<div class="submenu-dropdown">
+<a href="?mod=modules.bases_dades&db=despeses{auth_suffix}" target="_self">💸 Despeses</a>
+<a href="?mod=modules.bases_dades&db=ingressos{auth_suffix}" target="_self">💰 Ingressos</a>
+<a href="?mod=modules.bases_dades&db=compresSuper{auth_suffix}" target="_self">🛒 Compres Super</a>
+<a href="?mod=modules.bases_dades&db=tb_productes{auth_suffix}" target="_self">📦 Productes (Catàleg)</a>
+<a href="?mod=modules.bases_dades{auth_suffix}" target="_self">🔍 Totes les taules...</a>
+</div>
+</div>
 <a href="?action=sync_db{auth_suffix}" target="_self">🔄 Sincronitzar / Recarregar dades</a>
 <a href="?action=backup_db{auth_suffix}" target="_self">💾 Crear Còpia de seguretat (ZIP)</a>
-<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Base de dades d'articles i súper</a>
 </div>
 </div>
 <div class="menu-item">
