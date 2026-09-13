@@ -19,6 +19,18 @@ def ensure_data_dir():
     os.makedirs(os.path.dirname(MED_PLANS_FILE), exist_ok=True)
 
 def load_plans():
+    # Supabase (id=5)
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client("guest")
+        res = supabase.table("app_config").select("config_json").eq("id", 5).execute()
+        if res.data and len(res.data) > 0:
+            data = res.data[0]["config_json"]
+            return data if isinstance(data, list) else []
+    except Exception as e:
+        print("Supabase med_plans load failed:", e)
+        
+    # Fallback local
     ensure_data_dir()
     if not os.path.exists(MED_PLANS_FILE):
         return []
@@ -31,6 +43,18 @@ def load_plans():
         return []
 
 def save_plans(plans):
+    # Supabase (id=5)
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client("admin")
+        supabase.table("app_config").upsert({
+            "id": 5,
+            "config_json": plans
+        }).execute()
+    except Exception as e:
+        print("Error saving med_plans to Supabase:", e)
+        
+    # Backup local
     ensure_data_dir()
     try:
         with open(MED_PLANS_FILE, "w", encoding="utf-8") as f:

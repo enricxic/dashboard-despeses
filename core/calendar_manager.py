@@ -25,6 +25,18 @@ def ensure_data_dir():
     os.makedirs(os.path.dirname(EVENTS_FILE), exist_ok=True)
 
 def load_local_events():
+    # Supabase (id=3)
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client("guest")
+        res = supabase.table("app_config").select("config_json").eq("id", 3).execute()
+        if res.data and len(res.data) > 0:
+            data = res.data[0]["config_json"]
+            return data if isinstance(data, list) else []
+    except Exception as e:
+        print("Supabase events load failed:", e)
+
+    # Fallback local
     ensure_data_dir()
     if not os.path.exists(EVENTS_FILE):
         return []
@@ -37,6 +49,18 @@ def load_local_events():
         return []
 
 def save_local_events(events):
+    # Supabase (id=3)
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client("admin")
+        supabase.table("app_config").upsert({
+            "id": 3,
+            "config_json": events
+        }).execute()
+    except Exception as e:
+        print("Error saving events to Supabase:", e)
+
+    # Backup local
     ensure_data_dir()
     try:
         with open(EVENTS_FILE, "w", encoding="utf-8") as f:
@@ -193,14 +217,25 @@ def parse_ics_content(ics_text, source_name="Google Calendar", default_member="T
 
 def fetch_feed_cached(feed_url, member_name="Enric", member_color="#407faf", max_age_seconds=600):
     """Fetches iCal feed with caching."""
-    ensure_data_dir()
     cache = {}
-    if os.path.exists(CACHE_FEEDS_FILE):
-        try:
-            with open(CACHE_FEEDS_FILE, "r", encoding="utf-8") as f:
-                cache = json.load(f)
-        except Exception:
-            cache = {}
+    
+    # Try Supabase (id=4)
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client("guest")
+        res = supabase.table("app_config").select("config_json").eq("id", 4).execute()
+        if res.data and len(res.data) > 0:
+            cache = res.data[0]["config_json"] or {}
+    except Exception as e:
+        print("Supabase cache_feeds load failed:", e)
+        # Fallback local
+        ensure_data_dir()
+        if os.path.exists(CACHE_FEEDS_FILE):
+            try:
+                with open(CACHE_FEEDS_FILE, "r", encoding="utf-8") as f:
+                    cache = json.load(f)
+            except Exception:
+                cache = {}
             
     cache_entry = cache.get(feed_url, {})
     last_fetched = cache_entry.get("timestamp", 0)
@@ -236,6 +271,20 @@ def fetch_feed_cached(feed_url, member_name="Enric", member_color="#407faf", max
             "timestamp": now_ts,
             "events": events
         }
+        
+        # Save to Supabase (id=4)
+        try:
+            from core.db import get_supabase_client
+            supabase = get_supabase_client("admin")
+            supabase.table("app_config").upsert({
+                "id": 4,
+                "config_json": cache
+            }).execute()
+        except Exception as e:
+            print("Error saving cache to Supabase:", e)
+            
+        # Backup local
+        ensure_data_dir()
         try:
             with open(CACHE_FEEDS_FILE, "w", encoding="utf-8") as f:
                 json.dump(cache, f, ensure_ascii=False)

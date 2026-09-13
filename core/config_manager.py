@@ -152,6 +152,24 @@ TRANSLATIONS = {
 import copy
 
 def load_app_config():
+    # Intenta llegir de Supabase primer (id=2 per la configuració general)
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client("guest")
+        res = supabase.table("app_config").select("config_json").eq("id", 2).execute()
+        if res.data and len(res.data) > 0:
+            cfg = res.data[0]["config_json"]
+            merged = copy.deepcopy(DEFAULT_CONFIG)
+            for k, v in cfg.items():
+                if isinstance(v, dict) and k in merged and isinstance(merged[k], dict):
+                    merged[k] = {**merged[k], **v}
+                else:
+                    merged[k] = v
+            return merged
+    except Exception as e:
+        print("Supabase config_manager load failed:", e)
+
+    # Fallback: llegir del fitxer local
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
     if not os.path.exists(CONFIG_FILE):
         save_app_config(copy.deepcopy(DEFAULT_CONFIG))
@@ -172,6 +190,18 @@ def load_app_config():
         return copy.deepcopy(DEFAULT_CONFIG)
 
 def save_app_config(cfg_data):
+    # Desar primer a Supabase (id=2)
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client("admin")
+        supabase.table("app_config").upsert({
+            "id": 2,
+            "config_json": cfg_data
+        }).execute()
+    except Exception as e:
+        print("Error saving config to Supabase:", e)
+
+    # Backup local
     try:
         os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
