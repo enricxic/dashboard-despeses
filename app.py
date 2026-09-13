@@ -405,7 +405,7 @@ div.block-container {{
 <div class="menu-dropdown">
 <a href="?mod=modules.dashboard{auth_suffix}" target="_self">📊 Resum General (Dashboard)</a>
 {f'<a href="?mod=modules.economic{auth_suffix}" target="_self">📈 Mòdul Econòmic complet</a>' if icones_actives.get('economic', True) else ''}
-{f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Compres i tiquets súper</a>' if icones_actives.get('compres', True) else ''}
+{f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Ingressos i Despeses</a>' if icones_actives.get('compres', True) else ''}
 </div>
 </div>
 <div class="menu-item">
@@ -700,7 +700,7 @@ if st.session_state.current_module is None:
 {render_hotspot('medicacio', 'left: 81.05%; top: 34.16%; width: 8.2%;', '💊 Control de Medicació')}
 {render_hotspot('menjar', 'left: 71.88%; top: 41.57%; width: 8.2%;', '🍽️ Menjar, Menús i Rebost')}
 {render_hotspot('cotxe', 'left: 80.91%; top: 51.25%; width: 8.2%;', '🚗 Cotxe i Transport')}
-{render_hotspot('compres', 'left: 71.88%; top: 58.36%; width: 8.2%;', '🛒 Compres al Súper i Stock')}
+{render_hotspot('compres', 'left: 71.88%; top: 58.36%; width: 8.2%;', '🛒 Ingressos i Despeses')}
 
 </div>
 </div>""")

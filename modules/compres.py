@@ -1334,7 +1334,7 @@ def cb_finalize_ticket():
 def render_compres_super_interface():
     global df_super, df_desp
     from modules.avatar_widget import render_header_with_avatar
-    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛒 Compres al Súper i Stock</h2>", "compres")
+    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛒 Ingressos i Despeses</h2>", "compres")
     
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     if "df_desp" not in st.session_state:
@@ -2284,7 +2284,7 @@ def render():
 
     col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
     with col_t1:
-        st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Ingressos i Despeses</h2>", unsafe_allow_html=True)
     with col_t2:
         if st.button("🔙 Inici", use_container_width=True):
             st.session_state.current_module = None
@@ -2365,7 +2365,7 @@ def render():
             # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
             st.rerun()
 
-    tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Compres Super", "📝 Ingressos / Despeses", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
+    tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Compres Super", "📝 Ingrés / Despesa General", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
     
     with tab_scanner:
         render_compres_super_interface()

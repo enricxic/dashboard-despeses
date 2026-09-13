@@ -60,9 +60,9 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
     - `⛽ Repostatge`: Taula històrica de proveïments de la BBDD `gasolina` (alimentada des d'Ingressos/Despeses) amb mètriques de preu últim repostatge, preu més alt i més baix.
     - `🔧 Canvi d'Oli`: Seguiment de km actuals, límit de canvi d'oli i km restants.
     - `📊 Consum`: Gràfic de consum anual L/100km.
-12. **🛒 Compres**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral de compres i despeses:
+12. **🛒 Ingressos i Despeses**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral d'ingressos, despeses i compres:
     - `📄 Compres Super`: Escàner OCR intel·ligent Gemini Vision i introducció línia per línia de tiquets.
-    - `📝 Ingressos / Despeses`: Formulari directe de **Moviments Reals** (Despesa, Ingrés, Traspàs), proveïment de gasolina amb calculadora, tiquets pendents i taula d'últims moviments.
+    - `📝 Ingrés / Despesa General`: Formulari directe de **Moviments Reals** (Despesa, Ingrés, Traspàs), proveïment de gasolina amb calculadora, tiquets pendents i taula d'últims moviments.
     - `📋 Llista de la Compra`: Llista de productes sota stock mínim i peticions puntuals.
     - `📦 Rebost / Stock`: Inventari de productes del rebost i control d'existències.
     - `📊 Estadístiques`: Gràfics i mètriques de despesa en supermercats.
