@@ -202,3 +202,14 @@ Això assegurarà que treballi directament sobre `app.py`, el nucli a `core/` i 
 - En qualsevol tasca o modificació de codi completada, l'assistent d'IA **TÉ L'OBLIGACIÓ STRICTA DE DESAR I PUJAR SEMPRE ELS CANVIS A GITHUB** (`git add`, `git commit`, `git push origin main`).
 - Mai s'ha de declarar una tasca com a finalitzada només modificant els fitxers locals: **SEMPRE CAL PUJAR ELS CANVIS A GITHUB** perquè la versió del núvol actualitzi la interfície de l'usuari immediatament.
 
+---
+
+## 11. Arquitectura "Cloud Native" i Supabase Centralitzat
+Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense perdre dades en els reinicis de la màquina virtual, l'aplicació ha transicionat l'emmagatzematge de configuracions des de fitxers JSON locals cap a **Supabase (taula `app_config`)**:
+- **ID 1**: `categories_conceptes.json`
+- **ID 2**: `core/config.json` (Perfil familiar, eines de cuina, paràmetres globals)
+- **ID 3**: `data/events.json` (Calendari familiar)
+- **ID 4**: `data/feeds_cache.json` (Memòria cau dels Google Calendars)
+- **ID 5**: `data/medication_plans.json` (Plans de medicació)
+
+*Nota: Els fitxers locals es mantenen com a còpia de seguretat (fallback local), però la font de la veritat prioritària és sempre Supabase. Així mateix, per desig exprés de l'usuari, s'ha suprimit la renderització dels Avatars (Xiqui) i els seus botons a les capçaleres de tots els mòduls per simplificar la interfície.*
