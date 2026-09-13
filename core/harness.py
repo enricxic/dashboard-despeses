@@ -210,6 +210,7 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 - MAI, sota cap concepte, posis "Fruita de temporada", "Poma", "Plàtan", "Iogurt" com a "segon" plat.
 - Totes les fruites i lactis de postre han d'anar EXCLUSIVAMENT al camp "postre".
 - Si el primer plat és molt contundent (com ara unes llenties estofades o paella), com a segon plat pots posar una proteïna lleugera (ex. Ou dur amb amanida, Lluç a la planxa) o bé "-" (plat únic), PERÒ MAI FRUITA.
+- ⚠️ PROHIBICIÓ POSTRES GENÈRICS: Està PROHIBIT posar simplement "Fruita de temporada" com a postre. HAS D'ESPECIFICAR QUINA FRUITA ES CONCRETAMENT (ex. "Síndria fresca", "Mandarines", "Poma al forn", "Raïm blanc", "Meló tallat"). Varia les fruites durant la setmana.
 
 ### REGLES CRÍTIQUES DE DESDOBLAMENT I VETOS:
 1. Si la família menja un plat que conté un aliment vetat per un sol membre (ex. fetge), programa el plat per a la família i genera OBLIGATÒRIAMENT un 'plat_alternatiu' ràpid (usant els seus comodins favorits) per a aquell membre, compartint la mateixa guarnició.
@@ -256,10 +257,13 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
     }}
   ],
   "bases_batch_prep_diumenge": [
-    {{"base": "Patates probiòtiques", "quantitat": "1.5 kg", "utilitzacio": "Dinars de dimarts i dijous"}},
-    {{"base": "Caldo de peix / verdures concentrat", "quantitat": "1.5 L", "utilitzacio": "Arròs i sopes"}}
+    {{"base": "Coure 1.5kg de verdures al vapor (carbassó, pastanaga i bròquil)", "utilitzacio": "Servirà com a acompanyament ràpid i per fer les cremes dels dinars de dilluns a dimecres."}},
+    {{"base": "Preparar 1.5L de caldo concentrat de verdures i peix", "utilitzacio": "Serà la base imprescindible per a l'arròs de dijous i la sopa de dimarts."}}
   ],
-  "ingredients_a_comprar": ["llista d'ingredients que NO estan a l'stock"]
+  "ingredients_a_comprar": [
+    {{"nom": "Lluç fresc", "quantitat": "4 filets", "estat": "Comprar"}},
+    {{"nom": "Ceba", "quantitat": "1 kg", "estat": "Al rebost"}}
+  ]
 }}"""
     return prompt
 

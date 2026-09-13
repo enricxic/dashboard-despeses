@@ -97,6 +97,64 @@ def scale_ingredients(raw_ingredients: str, base: float = 3.0, target: float = 3
 
 def cb_set_editing_recepta(r_id, val):
     st.session_state[f"editing_{r_id}"] = val
+@st.dialog("🔄 Canviar Plat", width="large")
+def modal_canvi_plat(idx_d, apat, clau_plat, cat_filtre, df_receptes):
+    st.markdown(f"### Selecciona una alternativa per al {clau_plat} del {apat}")
+    if df_receptes.empty:
+        st.warning("No hi ha receptes a la base de dades.")
+        return
+        
+    df_filtrat = df_receptes.copy()
+    if cat_filtre == "primer":
+        df_filtrat = df_filtrat[df_filtrat['categoria'].str.lower().str.contains("primer|sopa|crema|amanida", na=False)]
+    elif cat_filtre == "segon":
+        df_filtrat = df_filtrat[df_filtrat['categoria'].str.lower().str.contains("segon|carn|peix|plat únic", na=False)]
+        
+    plats_opts = df_filtrat['titol'].tolist()
+    plats_opts.sort()
+    
+    nou_plat = st.selectbox("Llista de plats disponibles:", [""] + plats_opts)
+    
+    if st.button("💾 Guardar Canvi", type="primary") and nou_plat:
+        menu_obj = st.session_state['ai_menu_result']
+        menu_obj["menu_setmanal"][idx_d][apat][clau_plat] = nou_plat
+        st.session_state['ai_menu_result'] = menu_obj
+        st.rerun()
+
+@st.dialog("🕐 Com organitzar-se?", width="large")
+def modal_organitzacio(dia_nom, apat_nom, apat_dict, df_receptes):
+    st.markdown(f"### 🧑‍🍳 Preparació del {apat_nom} ({dia_nom})")
+    
+    p_nom = apat_dict.get('primer', apat_dict.get('plat', '-'))
+    s_nom = apat_dict.get('segon', '-')
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown(f"#### 🥣 1r Plat: {p_nom}")
+        if p_nom and p_nom != '-':
+            r1 = cercar_recepta_per_nom(p_nom, df_receptes)
+            if r1:
+                st.info(f"**Temps:** {r1.get('temps_prep_minuts', 0)} min")
+                ins1 = r1.get('instruccions', 'Cap instrucció definida.')
+                st.markdown(ins1)
+            else:
+                st.write("Recepta no trobada a la base de dades (Proposta lliure de la IA).")
+                
+    with col2:
+        st.markdown(f"#### 🥩 2n Plat: {s_nom}")
+        if s_nom and s_nom != '-':
+            r2 = cercar_recepta_per_nom(s_nom, df_receptes)
+            if r2:
+                st.info(f"**Temps:** {r2.get('temps_prep_minuts', 0)} min")
+                ins2 = r2.get('instruccions', 'Cap instrucció definida.')
+                st.markdown(ins2)
+            else:
+                st.write("Recepta no trobada a la base de dades (Proposta lliure de la IA).")
+                
+    st.write("")
+    if st.button("Tancar"):
+        st.rerun()
 
 @st.dialog(" ", width="large")
 def modal_recepta(row):
@@ -306,7 +364,7 @@ def sanitize_segon(p_seg: str) -> str:
         return '-'
     return p_seg
 
-def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame, key_btn: str, n_comensals: int = 3):
+def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame, key_btn: str, n_comensals: int = 3, canvi_args: tuple = None):
     """Renderitza una targeta visual amb miniatura i botó per obrir la recepta."""
     if not nom_plat or str(nom_plat).strip() in ['-', '', 'null', 'None']:
         return
@@ -328,12 +386,21 @@ def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame,
             if rec is not None:
                 t_prep = int(rec['temps_prep_minuts']) if pd.notna(rec.get('temps_prep_minuts')) else 0
                 st.caption(f"📖 *{rec.get('titol')}* | ⏱️ {t_prep} min")
-                if st.button("🔍 Veure Recepta", key=key_btn, use_container_width=True):
-                    st.session_state[f"editing_{rec['id']}"] = False
-                    st.session_state[f"rec_comensals_{rec['id']}"] = n_comensals
-                    modal_recepta(rec)
+                col_b1, col_b2 = st.columns([3, 1])
+                with col_b1:
+                    if st.button("🔍 Veure Recepta", key=key_btn, use_container_width=True):
+                        st.session_state[f"editing_{rec['id']}"] = False
+                        st.session_state[f"rec_comensals_{rec['id']}"] = n_comensals
+                        modal_recepta(rec)
+                with col_b2:
+                    if canvi_args is not None:
+                        if st.button("🔄 Canvi", key=f"btn_canvi_{key_btn}", use_container_width=True, type="secondary"):
+                            modal_canvi_plat(canvi_args[0], canvi_args[1], canvi_args[2], canvi_args[2], df_receptes)
             else:
                 st.caption("✨ *Proposta de la IA*")
+                if canvi_args is not None:
+                    if st.button("🔄 Canvi", key=f"btn_canvi_{key_btn}", use_container_width=True, type="secondary"):
+                        modal_canvi_plat(canvi_args[0], canvi_args[1], canvi_args[2], canvi_args[2], df_receptes)
 
 DEFAULT_PANTRY_CATALOG = [
     # Verdura
@@ -1027,10 +1094,16 @@ def render():
                         
                         with st.container(border=True):
                             st.markdown(f"#### 🗓️ {dia_nom}")
-                            c_d1, c_d2 = st.columns(2)
                             
-                            with c_d1:
-                                st.markdown("##### ☀️ Dinar")
+                            # Càpsula visual per al Dinar
+                            with st.container(border=True):
+                                c_title_d, c_btn_d = st.columns([4, 1])
+                                with c_title_d:
+                                    st.markdown("##### ☀️ Dinar")
+                                with c_btn_d:
+                                    if st.button("🕐 Organització", key=f"btn_org_d_{idx_d}", use_container_width=True):
+                                        modal_organitzacio(dia_nom, "Dinar", dinar, df_receptes)
+                                        
                                 if not mode_edit:
                                     p_prim = dinar.get('primer', dinar.get('plat', '-'))
                                     p_seg = sanitize_segon(dinar.get('segon', '-'))
@@ -1038,11 +1111,11 @@ def render():
                                     
                                     # 1r Plat amb miniatura i botó de recepta
                                     if p_prim and p_prim != '-':
-                                        render_plat_card("🥣 1r Plat", p_prim, df_receptes, f"btn_d_p1_{idx_d}", n_comensals=len(comensals_seleccionats))
+                                        render_plat_card("🥣 1r Plat", p_prim, df_receptes, f"btn_d_p1_{idx_d}", n_comensals=len(comensals_seleccionats), canvi_args=(idx_d, "dinar", "primer"))
                                     
                                     # 2n Plat amb miniatura i botó de recepta
                                     if p_seg and p_seg != '-':
-                                        render_plat_card("🥩/🐟 2n Plat", p_seg, df_receptes, f"btn_d_p2_{idx_d}", n_comensals=len(comensals_seleccionats))
+                                        render_plat_card("🥩/🐟 2n Plat", p_seg, df_receptes, f"btn_d_p2_{idx_d}", n_comensals=len(comensals_seleccionats), canvi_args=(idx_d, "dinar", "segon"))
                                         
                                     # Postre
                                     st.markdown(f"<div style='margin-top:6px; padding:6px 10px; background:#18221e; border-radius:6px; font-size:0.9rem;'>🍏 <strong>Postre:</strong> {p_post}</div>", unsafe_allow_html=True)
@@ -1062,8 +1135,17 @@ def render():
                                             st.session_state[f"rec_comensals_{rec_alt_d['id']}"] = 1
                                             modal_recepta(rec_alt_d)
                             
-                            with c_d2:
-                                st.markdown("##### 🌙 Sopar")
+                            st.write("")
+                            
+                            # Càpsula visual per al Sopar
+                            with st.container(border=True):
+                                c_title_s, c_btn_s = st.columns([4, 1])
+                                with c_title_s:
+                                    st.markdown("##### 🌙 Sopar")
+                                with c_btn_s:
+                                    if st.button("🕐 Organització", key=f"btn_org_s_{idx_d}", use_container_width=True):
+                                        modal_organitzacio(dia_nom, "Sopar", sopar, df_receptes)
+                                        
                                 if not mode_edit:
                                     s_prim = sopar.get('primer', '')
                                     s_seg = sanitize_segon(sopar.get('segon', sopar.get('plat', '-')))
@@ -1071,11 +1153,11 @@ def render():
                                     
                                     # 1r Plat Sopar (si existeix)
                                     if s_prim and s_prim.strip() and s_prim != '-':
-                                        render_plat_card("🥣 1r Plat", s_prim, df_receptes, f"btn_s_p1_{idx_d}", n_comensals=len(comensals_seleccionats))
+                                        render_plat_card("🥣 1r Plat", s_prim, df_receptes, f"btn_s_p1_{idx_d}", n_comensals=len(comensals_seleccionats), canvi_args=(idx_d, "sopar", "primer"))
                                     
                                     # 2n Plat / Principal Sopar
                                     if s_seg and s_seg != '-':
-                                        render_plat_card("🍳 Plat principal", s_seg, df_receptes, f"btn_s_p2_{idx_d}", n_comensals=len(comensals_seleccionats))
+                                        render_plat_card("🍳 Plat principal", s_seg, df_receptes, f"btn_s_p2_{idx_d}", n_comensals=len(comensals_seleccionats), canvi_args=(idx_d, "sopar", "segon"))
                                         
                                     # Postre
                                     st.markdown(f"<div style='margin-top:6px; padding:6px 10px; background:#18221e; border-radius:6px; font-size:0.9rem;'>🥛 <strong>Postre:</strong> {s_post}</div>", unsafe_allow_html=True)
@@ -1129,39 +1211,73 @@ def render():
                     wa_encoded = urllib.parse.quote(wa_text)
                     wa_url = f"https://wa.me/?text={wa_encoded}"
                     
-                    c_wa, c_exp = st.columns([6, 4])
-                    with c_wa:
-                        st.markdown(f"""
+                    st.write("")
+                    st.write("")
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: center; margin-top: 20px; margin-bottom: 30px;">
                         <a href="{wa_url}" target="_blank" style="text-decoration:none;">
-                            <div style="background-color:#25D366; color:white; padding:12px 20px; border-radius:8px; text-align:center; font-weight:700; font-size:1.05rem; display:flex; align-items:center; justify-content:center; gap:8px;">
-                                <span>📲</span> Enviar Menú per WhatsApp per a Consens Familiar
+                            <div style="background-color:#25D366; color:white; padding:12px 24px; border-radius:8px; text-align:center; font-weight:700; font-size:1.1rem; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <span style="font-size: 1.3rem;">📲</span> Enviar Menú per WhatsApp per a Consens Familiar
                             </div>
                         </a>
-                        """, unsafe_allow_html=True)
-                        
+                    </div>
+                    """, unsafe_allow_html=True)
                     st.write("")
-                    
                     # Pestanya Batch Cooking & Ingredients a Comprar
                     st.markdown("#### ⏱️ Mise en Place de Diumenge (Batch Cooking) i Compres")
-                    c_bp1, c_bp2 = st.columns(2)
                     
-                    with c_bp1:
-                        st.markdown("**🔪 Bases a preparar el diumenge:**")
-                        bases = menu_obj.get("bases_batch_prep_diumenge", [])
-                        if bases:
-                            for b in bases:
-                                st.info(f"🥣 **{b.get('base', 'Base')}** ({b.get('quantitat', '')}): {b.get('utilitzacio', '')}")
+                    st.markdown("**🔪 Bases a preparar el diumenge:**")
+                    bases = menu_obj.get("bases_batch_prep_diumenge", [])
+                    if bases:
+                        for idx_b, b in enumerate(bases):
+                            # Si ja ve en format llarg, l'ajustem. El JSON nou té 'base' detallat i 'utilitzacio'
+                            st.info(f"🥣 **{b.get('base', 'Base')}**\n\n📌 *{b.get('utilitzacio', '')}*")
+                    else:
+                        st.write("No calen bases prèvies per a aquest menú.")
+                        
+                    st.write("")
+                    st.markdown("**🛒 Llista d'Ingredients (Més enllà del teu rebost)**")
+                    ings_comprar = menu_obj.get("ingredients_a_comprar", [])
+                    
+                    if ings_comprar:
+                        if isinstance(ings_comprar[0], dict):
+                            # NOU FORMAT: Llista d'objectes
+                            try:
+                                df_compres = fetch_all_supabase(supabase, 'compresSuper')
+                                noms_llista = df_compres['name'].str.lower().tolist() if (df_compres is not None and not df_compres.empty and 'name' in df_compres.columns) else []
+                            except:
+                                noms_llista = []
+                                
+                            c_buy, c_pantry = st.columns(2)
+                            with c_buy:
+                                st.markdown("##### 🛒 A Comprar")
+                                for it in ings_comprar:
+                                    if str(it.get("estat", "")).lower() == "comprar":
+                                        n_ing = it.get("nom", "")
+                                        q_ing = it.get("quantitat", "")
+                                        
+                                        # Comprovar si està a la llista
+                                        ja_hi_es = any(n_ing.lower() in nom_l or nom_l in n_ing.lower() for nom_l in noms_llista)
+                                        
+                                        icon = "✅" if ja_hi_es else "❌"
+                                        color = "green" if ja_hi_es else "red"
+                                        text_estat = "Ja a la llista" if ja_hi_es else "Falta a la llista"
+                                        
+                                        st.markdown(f"- **{n_ing}** ({q_ing}) - <span style='color:{color}; font-size:0.85rem;'>{icon} {text_estat}</span>", unsafe_allow_html=True)
+                                        
+                            with c_pantry:
+                                st.markdown("##### 📦 Aprofitament del Rebost")
+                                for it in ings_comprar:
+                                    if str(it.get("estat", "")).lower() != "comprar":
+                                        st.markdown(f"- **{it.get('nom', '')}** ({it.get('quantitat', '')})")
                         else:
-                            st.write("No calen bases prèvies per a aquest menú.")
-                            
-                    with c_bp2:
-                        st.markdown("**🛒 Ingredients a comprar:**")
-                        ings_comprar = menu_obj.get("ingredients_a_comprar", [])
-                        if ings_comprar:
-                            st.markdown("- " + "\n- ".join(ings_comprar))
-                        else:
-                            st.write("Tots els ingredients estan disponibles.")
-
+                            # FORMAT ANTIC: Llista de strings
+                            c_buy, c_empty = st.columns(2)
+                            with c_buy:
+                                st.markdown("##### 🛒 A Comprar")
+                                st.markdown("- " + "\n- ".join(ings_comprar))
+                    else:
+                        st.write("Tots els ingredients estan disponibles.")
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
 
