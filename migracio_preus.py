@@ -22,6 +22,7 @@ with engine.connect() as conn:
         print("Columna afegida correctament.")
     except sqlalchemy.exc.ProgrammingError as e:
         if "already exists" in str(e) or "ja existeix" in str(e):
+            conn.rollback() # <--- IMPORTANT per netejar la transacció fallida en postgres
             print("La columna 'preuUnit' ja existeix. Continuant...")
         else:
             raise e
