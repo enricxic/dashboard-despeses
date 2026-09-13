@@ -1333,8 +1333,7 @@ def cb_finalize_ticket():
 
 def render_compres_super_interface():
     global df_super, df_desp
-    from modules.avatar_widget import render_header_with_avatar
-    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", "compres")
+    st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
     
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     if "df_desp" not in st.session_state:
