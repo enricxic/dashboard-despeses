@@ -1098,8 +1098,7 @@ def render():
                     st.markdown("### 📅 El teu Menú Setmanal (Primer, Segon i Postre)")
                     st.caption("Fes clic a **🔍 Veure Recepta** a qualsevol plat per obrir la fitxa sencera amb quantitats i instruccions.")
                     
-                    # Commutador de Mode Edició en viu
-                    mode_edit = st.toggle("✏️ Mode Edició: Modificar / Canviar plats directament", value=False, key="toggle_edit_menu")
+                    # Commutador de Mode Edició en viu eliminat perquè tenim botons Canvi
                     
                     # Targetes per dies
                     for idx_d, dia_data in enumerate(menu_setmanal):
@@ -1109,17 +1108,18 @@ def render():
                         
                         with st.container(border=True):
                             st.markdown(f"#### 🗓️ {dia_nom}")
+                            c_d1, c_d2 = st.columns(2)
                             
-                            # Càpsula visual per al Dinar
-                            with st.container(border=True):
-                                c_title_d, c_btn_d = st.columns([4, 1])
-                                with c_title_d:
-                                    st.markdown("##### ☀️ Dinar")
-                                with c_btn_d:
-                                    if st.button("🕐 Organització", key=f"btn_org_d_{idx_d}", use_container_width=True):
-                                        modal_organitzacio(dia_nom, "Dinar", dinar, df_receptes)
-                                        
-                                if not mode_edit:
+                            with c_d1:
+                                # Càpsula visual per al Dinar
+                                with st.container(border=True):
+                                    c_title_d, c_btn_d = st.columns([4, 1.5])
+                                    with c_title_d:
+                                        st.markdown("##### ☀️ Dinar")
+                                    with c_btn_d:
+                                        if st.button("🕐 Organització", key=f"btn_org_d_{idx_d}", use_container_width=True):
+                                            modal_organitzacio(dia_nom, "Dinar", dinar, df_receptes)
+                                            
                                     p_prim = dinar.get('primer', dinar.get('plat', '-'))
                                     p_seg = sanitize_segon(dinar.get('segon', '-'))
                                     p_post = dinar.get('postre', 'Fruita de temporada')
@@ -1134,34 +1134,29 @@ def render():
                                         
                                     # Postre
                                     st.markdown(f"<div style='margin-top:6px; padding:6px 10px; background:#18221e; border-radius:6px; font-size:0.9rem;'>🍏 <strong>Postre:</strong> {p_post}</div>", unsafe_allow_html=True)
-                                else:
-                                    dinar['primer'] = st.text_input("1r Plat Dinar", value=dinar.get('primer', dinar.get('plat', '')), key=f"ed_d_prim_{idx_d}")
-                                    dinar['segon'] = st.text_input("2n Plat Dinar", value=sanitize_segon(dinar.get('segon', '')), key=f"ed_d_seg_{idx_d}")
-                                    dinar['postre'] = st.text_input("Postre Dinar", value=dinar.get('postre', 'Fruita de temporada'), key=f"ed_d_post_{idx_d}")
-                                
-                                alt_d = dinar.get("plat_alternatiu")
-                                if alt_d and isinstance(alt_d, dict) and alt_d.get('plat'):
-                                    alt_plat_nom = alt_d.get('plat')
-                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:8px;'>⚡ <strong>Plat ràpid per a {alt_d.get('per', '')}:</strong> {alt_plat_nom}<br><em style='color:#bbb;'>Motiu: {alt_d.get('motiu', '')}</em></div>", unsafe_allow_html=True)
-                                    rec_alt_d = cercar_recepta_per_nom(alt_plat_nom, df_receptes)
-                                    if rec_alt_d is not None:
-                                        if st.button(f"🔍 Recepta per a {alt_d.get('per', '')}", key=f"btn_d_alt_{idx_d}", use_container_width=True):
-                                            st.session_state[f"editing_{rec_alt_d['id']}"] = False
-                                            st.session_state[f"rec_comensals_{rec_alt_d['id']}"] = 1
-                                            modal_recepta(rec_alt_d)
+                                    
+                                    alt_d = dinar.get("plat_alternatiu")
+                                    if alt_d and isinstance(alt_d, dict) and alt_d.get('plat'):
+                                        alt_plat_nom = alt_d.get('plat')
+                                        st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:8px;'>⚡ <strong>Plat ràpid per a {alt_d.get('per', '')}:</strong> {alt_plat_nom}<br><em style='color:#bbb;'>Motiu: {alt_d.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                                        rec_alt_d = cercar_recepta_per_nom(alt_plat_nom, df_receptes)
+                                        if rec_alt_d is not None:
+                                            if st.button(f"🔍 Recepta per a {alt_d.get('per', '')}", key=f"btn_d_alt_{idx_d}", use_container_width=True):
+                                                st.session_state[f"editing_{rec_alt_d['id']}"] = False
+                                                st.session_state[f"rec_comensals_{rec_alt_d['id']}"] = 1
+                                                modal_recepta(rec_alt_d)
                             
                             st.write("")
-                            
-                            # Càpsula visual per al Sopar
-                            with st.container(border=True):
-                                c_title_s, c_btn_s = st.columns([4, 1])
-                                with c_title_s:
-                                    st.markdown("##### 🌙 Sopar")
-                                with c_btn_s:
-                                    if st.button("🕐 Organització", key=f"btn_org_s_{idx_d}", use_container_width=True):
-                                        modal_organitzacio(dia_nom, "Sopar", sopar, df_receptes)
-                                        
-                                if not mode_edit:
+                            with c_d2:
+                                # Càpsula visual per al Sopar
+                                with st.container(border=True):
+                                    c_title_s, c_btn_s = st.columns([4, 1.5])
+                                    with c_title_s:
+                                        st.markdown("##### 🌙 Sopar")
+                                    with c_btn_s:
+                                        if st.button("🕐 Organització", key=f"btn_org_s_{idx_d}", use_container_width=True):
+                                            modal_organitzacio(dia_nom, "Sopar", sopar, df_receptes)
+                                            
                                     s_prim = sopar.get('primer', '')
                                     s_seg = sanitize_segon(sopar.get('segon', sopar.get('plat', '-')))
                                     s_post = sopar.get('postre', 'Iogurt')
@@ -1176,21 +1171,17 @@ def render():
                                         
                                     # Postre
                                     st.markdown(f"<div style='margin-top:6px; padding:6px 10px; background:#18221e; border-radius:6px; font-size:0.9rem;'>🥛 <strong>Postre:</strong> {s_post}</div>", unsafe_allow_html=True)
-                                else:
-                                    sopar['primer'] = st.text_input("1r Plat Sopar (opcional)", value=sopar.get('primer', ''), key=f"ed_s_prim_{idx_d}")
-                                    sopar['segon'] = st.text_input("Plat principal Sopar", value=sanitize_segon(sopar.get('segon', sopar.get('plat', ''))), key=f"ed_s_seg_{idx_d}")
-                                    sopar['postre'] = st.text_input("Postre Sopar", value=sopar.get('postre', 'Iogurt'), key=f"ed_s_post_{idx_d}")
-                                
-                                alt_s = sopar.get("plat_alternatiu")
-                                if alt_s and isinstance(alt_s, dict) and alt_s.get('plat'):
-                                    alt_plat_nom = alt_s.get('plat')
-                                    st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:8px;'>⚡ <strong>Plat ràpid per a {alt_s.get('per', '')}:</strong> {alt_plat_nom}<br><em style='color:#bbb;'>Motiu: {alt_s.get('motiu', '')}</em></div>", unsafe_allow_html=True)
-                                    rec_alt_s = cercar_recepta_per_nom(alt_plat_nom, df_receptes)
-                                    if rec_alt_s is not None:
-                                        if st.button(f"🔍 Recepta per a {alt_s.get('per', '')}", key=f"btn_s_alt_{idx_d}", use_container_width=True):
-                                            st.session_state[f"editing_{rec_alt_s['id']}"] = False
-                                            st.session_state[f"rec_comensals_{rec_alt_s['id']}"] = 1
-                                            modal_recepta(rec_alt_s)
+                                    
+                                    alt_s = sopar.get("plat_alternatiu")
+                                    if alt_s and isinstance(alt_s, dict) and alt_s.get('plat'):
+                                        alt_plat_nom = alt_s.get('plat')
+                                        st.markdown(f"<div style='background-color:#2a2318; border-left:4px solid #f39c12; padding:6px 10px; border-radius:4px; font-size:0.85rem; margin-top:8px;'>⚡ <strong>Plat ràpid per a {alt_s.get('per', '')}:</strong> {alt_plat_nom}<br><em style='color:#bbb;'>Motiu: {alt_s.get('motiu', '')}</em></div>", unsafe_allow_html=True)
+                                        rec_alt_s = cercar_recepta_per_nom(alt_plat_nom, df_receptes)
+                                        if rec_alt_s is not None:
+                                            if st.button(f"🔍 Recepta per a {alt_s.get('per', '')}", key=f"btn_s_alt_{idx_d}", use_container_width=True):
+                                                st.session_state[f"editing_{rec_alt_s['id']}"] = False
+                                                st.session_state[f"rec_comensals_{rec_alt_s['id']}"] = 1
+                                                modal_recepta(rec_alt_s)
                     
                     st.write("")
                     
