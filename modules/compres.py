@@ -1334,7 +1334,7 @@ def cb_finalize_ticket():
 def render_compres_super_interface():
     global df_super, df_desp
     from modules.avatar_widget import render_header_with_avatar
-    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛒 Ingressos i Despeses</h2>", "compres")
+    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", "compres")
     
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     if "df_desp" not in st.session_state:
@@ -2427,7 +2427,7 @@ def render():
                 if k.startswith(prefix) and k != "desp_version":
                     del st.session_state[k]
 
-        st.markdown("### ➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)")
+        st.markdown("<h3 style='color:#f39c12; margin-top:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
         st.write("---")
 
         # Row 1 (4 columns)

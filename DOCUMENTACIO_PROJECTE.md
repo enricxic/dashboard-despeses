@@ -213,3 +213,8 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **ID 5**: `data/medication_plans.json` (Plans de medicació)
 
 *Nota: Els fitxers locals es mantenen com a còpia de seguretat (fallback local), però la font de la veritat prioritària és sempre Supabase. Així mateix, per desig exprés de l'usuari, s'ha suprimit la renderització dels Avatars (Xiqui) i els seus botons a les capçaleres de tots els mòduls per simplificar la interfície.*
+
+---
+
+## 12. Historial de Canvis Recents (Changelog Menor)
+- **13/09/2026**: Renomenament de mòdul de "Compres" a "Ingressos i Despeses", pestanyes a "Ingrés / Despesa General", i aplicació de color corporatiu taronja (`#f39c12`) a les capçaleres d'introducció de moviments i "Compres Super".
