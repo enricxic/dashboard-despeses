@@ -2947,9 +2947,13 @@ def render():
                     df_shopping = df_shopping.sort_values(by=['super_habitual', 'is_manual'])
                     
                     # Group by super_habitual
+                    gran_total_compra = df_shopping['total_linia'].sum()
+                    
                     for superm, group in df_shopping.groupby('super_habitual'):
                         total_super = group['total_linia'].sum()
-                        total_str = f" · Total aprox: {total_super:,.2f} €" if total_super > 0 else ""
+                        items_sense_preu = len(group[group['preuUnit'] == 0])
+                        avís_sense_preu = f" (⚠️ {items_sense_preu} sense preu)" if items_sense_preu > 0 else ""
+                        total_str = f" · Total aprox: {total_super:,.2f} €{avís_sense_preu}" if total_super > 0 else (f" · Total: 0.00 €{avís_sense_preu}" if items_sense_preu > 0 else "")
                         
                         # Use expander for each supermarket
                         with st.expander(f"🏪 {superm} ({len(group)} productes){total_str}", expanded=(superm == "Sense Assignar")):
@@ -2959,8 +2963,10 @@ def render():
                                 preu_u = row.get('preuUnit', 0.0)
                                 tot_linia = row.get('total_linia', 0.0)
                                 
-                                preu_str = f" (Últim preu: {preu_u:,.2f} €/u. ➜ **{tot_linia:,.2f} €**)" if preu_u > 0 else ""
+                                preu_str = f" (Últim preu: {preu_u:,.2f} €/u. ➜ **{tot_linia:,.2f} €**)" if preu_u > 0 else " ⚠️ *(Sense valoració)*"
                                 st.checkbox(f"{icon} **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}{preu_str}", key=f"chk_shop_{row['idProducte']}_{superm}_{row.get('is_manual', False)}")
+                                
+                            st.markdown(f"<div style='text-align:right; font-size:1.1rem; color:#f39c12; margin-top:8px;'><b>Total {superm}: {total_super:,.2f} €</b></div>", unsafe_allow_html=True)
                                 
                             # Botó netejar si hi ha manuals
                             manual_ids = group[group['is_manual'] == True]['idProducte'].tolist()
