@@ -102,12 +102,12 @@ def cb_afegir_compra(nom, quant):
     try:
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
         new_item = {
-            "name": nom,
-            "category": "Menú Setmanal IA",
-            "notes": quant,
-            "is_bought": False
+            "nom": nom,
+            "categoria": "Menú Setmanal IA",
+            "quantitat": quant,
+            "estat": "Comprar"
         }
-        supabase.table('compresSuper').insert(new_item).execute()
+        supabase.table('tb_pendents_compra').insert(new_item).execute()
         st.toast(f"✅ {nom} afegit a la llista de la compra!")
     except Exception as e:
         st.toast(f"❌ Error afegint {nom}: {e}")

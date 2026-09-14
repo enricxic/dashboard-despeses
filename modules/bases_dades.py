@@ -23,13 +23,8 @@ PK_MAP = {
 }
 
 def render():
-    col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
-    with col_t1:
-        st.markdown("<h2 style='color:#f39c12; margin-top:0;'>🗄️ Gestor de Bases de Dades</h2>", unsafe_allow_html=True)
-    with col_t2:
-        if st.button("🔙 Inici", use_container_width=True, key="btn_inici_db"):
-            st.session_state.current_module = None
-            st.rerun()
+    import modules.avatar_widget as avatar
+    avatar.render_header_with_avatar("<h2 style='color:#f39c12; margin-top:0;'>🗄️ Gestor de Bases de Dades</h2>", "bases_dades")
             
     # Check permissions
     if st.session_state.get("role") not in ["admin", "guest"]:
@@ -71,7 +66,12 @@ def render():
         df = pd.DataFrame(columns=[pk_col, "nou_camp_exemple"])
         
     # Order by ID descending if it exists to show newest first
-    if pk_col in df.columns:
+    if selected_table == 'registre_accions' and 'data_hora' in df.columns:
+        try:
+            df = df.sort_values(by='data_hora', ascending=False).reset_index(drop=True)
+        except Exception:
+            pass
+    elif pk_col in df.columns:
         try:
             df = df.sort_values(by=pk_col, ascending=False).reset_index(drop=True)
         except Exception:
