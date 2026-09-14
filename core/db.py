@@ -398,10 +398,10 @@ def get_config_concepts(category):
             desp_c = df_d[df_d['Idcategoria'] == category]['Idconcepte'].dropna().unique()
             concepts.update([str(c).strip() for c in desp_c if c and str(c).strip()])
             
-    # Clean and filter: remove category name itself (e.g. 'op_banc'), empty items, and '+' items
+    # Clean and filter: remove empty items, and '+' items
     cleaned = [
         c for c in concepts 
-        if c and c.lower() != str(category).strip().lower() and not c.startswith("➕")
+        if c and not c.startswith("➕")
     ]
     return sorted(cleaned)
 
