@@ -90,7 +90,7 @@ def show():
                     productes_list = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
                     prod_sel = st.selectbox("Producte", [""] + productes_list)
                 with col_form2:
-                    supers = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Novavenda", "Altres"]
+                    supers = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Novavenda", "El Corte Inglés", "Altres"]
                     super_sel = st.selectbox("Supermercat", supers)
                 with col_form3:
                     tipus_sel = st.selectbox("Tipus d'oferta", ["Preu rebaixat", "3x2", "2a unitat %", "Altres volumètriques"])
@@ -183,6 +183,16 @@ def show():
         c8.markdown("""
         <div style="background-color:#E98300; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             <a href="https://novavenda.com/ofertes/" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Novavenda</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
+        c9, c10, c11, c12 = st.columns(4)
+        
+        c9.markdown("""
+        <div style="background-color:#00593B; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.elcorteingles.es/supermercado/promociones/" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 El Corte Inglés</a>
         </div>
         """, unsafe_allow_html=True)
 
