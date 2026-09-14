@@ -104,7 +104,8 @@ Dashboard/
 │   ├── manteniment.py        # 🛠️ Manteniment i reparacions
 │   ├── medicacio.py          # 💊 Control de medicació i tutelats (Pla de dosificació & sync)
 │   ├── menjar.py             # 🍽️ Receptari (Escalat base 3), Planificador IA i Batch Cooking
-│   └── seguretat.py          # 📹 Seguretat i càmeres
+│   ├── ofertes.py            # 🔍 Comparador d'Ofertes i Visor de Fulletons (Mercadona, Aldi, etc.)
+│   ├── seguretat.py          # 📹 Seguretat i càmeres
 └── DOCUMENTACIO_PROJECTE.md  # Aquest document
 ```
 
@@ -211,6 +212,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **ID 3**: `data/events.json` (Calendari familiar)
 - **ID 4**: `data/feeds_cache.json` (Memòria cau dels Google Calendars)
 - **ID 5**: `data/medication_plans.json` (Plans de medicació)
+- **ID 6**: `data/ofertes.json` (Registre d'Ofertes Setmanals i Volumètriques)
 
 *Nota: Els fitxers locals es mantenen com a còpia de seguretat (fallback local), però la font de la veritat prioritària és sempre Supabase. Així mateix, per desig exprés de l'usuari, s'ha suprimit la renderització dels Avatars (Xiqui) i els seus botons a les capçaleres de tots els mòduls per simplificar la interfície.*
 
@@ -226,3 +228,4 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **13/09/2026**: Ajustos visuals addicionals en les capçaleres: (1) S'ha eliminat la capçalera repetida amb el botó Inici a `modules/economic.py`; (2) S'ha fet més gran l'espai per a elements extra a la capçalera (`avatar_widget.py`), de manera que els botons llargs com el de Medicació i la capsa de cerca de Configuració (amb nova icona de lupa) es vegin correctament sense deformar el botó Inici.
 - **13/09/2026**: Millores a la **Llista de la Compra** (`modules/compres.py`): Afegit un títol clar en taronja. Aprofitant el camp `preuUnit`, es calcula i es mostra de forma automàtica l'import estimat per línia i per supermercat. S'han afegit avisos explícits `(Sense valoració)` pels productes que no tenen preu registrat per tal que no hi hagi confusions en el total, i s'ha afegit un **Gran Total** a sota de tot per saber el cost total de tota la compra pendent.
 - **13/09/2026**: Solucionat un problema d'interfície on el menú superior (`app.py`) es tancava accidentalment en moure el ratolí (pèrdua del *hover*) abans d'arribar als submenús. S'ha implementat un "pont invisible" amb pseudo-elements CSS per assegurar que el menú roman obert durant el desplaçament del cursor.
+- **14/09/2026**: Creació del nou mòdul `modules/ofertes.py` ("Consulta d'Ofertes i Preus") accessible des del menú "Finances". Inclou un Comparador de Preus intel·ligent que creua l'stock (Llista de la Compra o Rebost Sencer) amb ofertes manuals (desades a `app_config` ID 6), i una segona pestanya amb un Visor de Fulletons oficials integrat.
