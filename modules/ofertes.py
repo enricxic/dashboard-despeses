@@ -90,7 +90,7 @@ def show():
                     productes_list = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
                     prod_sel = st.selectbox("Producte", [""] + productes_list)
                 with col_form2:
-                    supers = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Altres"]
+                    supers = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Novavenda", "Altres"]
                     super_sel = st.selectbox("Supermercat", supers)
                 with col_form3:
                     tipus_sel = st.selectbox("Tipus d'oferta", ["Preu rebaixat", "3x2", "2a unitat %", "Altres volumètriques"])
@@ -135,46 +135,54 @@ def show():
         c1, c2, c3, c4 = st.columns(4)
         
         c1.markdown("""
-        <div style="background-color:#007B22; border-radius:10px; padding:20px; text-align:center; margin-bottom:10px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="background-color:#007B22; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             <a href="https://info.mercadona.es/ca/supermercats" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Mercadona</a>
         </div>
         """, unsafe_allow_html=True)
         
         c2.markdown("""
-        <div style="background-color:#E30613; border-radius:10px; padding:20px; text-align:center; margin-bottom:10px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="background-color:#E30613; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             <a href="https://www.bonpreuesclat.cat/ca/promocions" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Bonpreu/Esclat</a>
         </div>
         """, unsafe_allow_html=True)
         
         c3.markdown("""
-        <div style="background-color:#0050AA; border-radius:10px; padding:20px; text-align:center; margin-bottom:10px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="background-color:#0050AA; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             <a href="https://www.lidl.es/es/folletos-promociones/s1072" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Lidl</a>
         </div>
         """, unsafe_allow_html=True)
         
         c4.markdown("""
-        <div style="background-color:#003B7E; border-radius:10px; padding:20px; text-align:center; margin-bottom:10px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="background-color:#003B7E; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             <a href="https://www.aldi.es/folletos-promociones.html" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Aldi</a>
         </div>
         """, unsafe_allow_html=True)
 
+        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
         c5, c6, c7, c8 = st.columns(4)
         
         c5.markdown("""
-        <div style="background-color:#F58220; border-radius:10px; padding:20px; text-align:center; margin-bottom:10px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="background-color:#F58220; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             <a href="https://www.consum.es/ca/ofertes" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Consum</a>
         </div>
         """, unsafe_allow_html=True)
         
         c6.markdown("""
-        <div style="background-color:#D81F26; border-radius:10px; padding:20px; text-align:center; margin-bottom:10px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="background-color:#D81F26; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             <a href="https://www.dia.es/compra-online/ofertas" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Dia</a>
         </div>
         """, unsafe_allow_html=True)
         
         c7.markdown("""
-        <div style="background-color:#D31145; border-radius:10px; padding:20px; text-align:center; margin-bottom:10px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="background-color:#D31145; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             <a href="https://www.bonarea.com/ca/ofertes" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 AreaGuissona</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c8.markdown("""
+        <div style="background-color:#E98300; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://novavenda.com/ofertes/" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Novavenda</a>
         </div>
         """, unsafe_allow_html=True)
 
