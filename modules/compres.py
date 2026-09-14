@@ -1046,6 +1046,7 @@ def cb_clear_ticket():
             del st.session_state[k]
     if "finalize_error" in st.session_state:
         del st.session_state["finalize_error"]
+    st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
     st.rerun()
@@ -1326,6 +1327,7 @@ def cb_finalize_ticket():
         if key in st.session_state:
             del st.session_state[key]
             
+    st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
     st.session_state["viewing_compres_super"] = True
@@ -1645,9 +1647,13 @@ Notes importants:
                                 super_definitiu = 'Novavenda'
                                 
                             if super_definitiu:
+                                if super_definitiu.lower() == 'bonarea':
+                                    super_definitiu = 'AreaGuissona'
                                 st.session_state["ticket_super_val"] = super_definitiu
                                 st.session_state["ticket_super_widget"] = super_definitiu
                             else:
+                                if super_trobat.lower() == 'bonarea':
+                                    super_trobat = 'AreaGuissona'
                                 st.session_state["ticket_super_val"] = super_trobat
                                 st.session_state["ticket_super_widget"] = super_trobat
 

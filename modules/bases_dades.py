@@ -65,17 +65,30 @@ def render():
         # Create an empty dataframe with just the PK column to allow inserts
         df = pd.DataFrame(columns=[pk_col, "nou_camp_exemple"])
         
-    # Order by ID descending if it exists to show newest first
-    if selected_table == 'registre_accions' and 'data_hora' in df.columns:
-        try:
-            df = df.sort_values(by='data_hora', ascending=False).reset_index(drop=True)
-        except Exception:
-            pass
-    elif pk_col in df.columns:
-        try:
-            df = df.sort_values(by=pk_col, ascending=False).reset_index(drop=True)
-        except Exception:
-            pass
+    ordenar_recent = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.")
+    
+    if ordenar_recent:
+        if selected_table == 'registre_accions' and 'data_hora' in df.columns:
+            try:
+                df = df.sort_values(by='data_hora', ascending=False).reset_index(drop=True)
+            except Exception:
+                pass
+        elif pk_col in df.columns:
+            try:
+                df = df.sort_values(by=pk_col, ascending=False).reset_index(drop=True)
+            except Exception:
+                pass
+    else:
+        if selected_table == 'registre_accions' and 'data_hora' in df.columns:
+            try:
+                df = df.sort_values(by='data_hora', ascending=True).reset_index(drop=True)
+            except Exception:
+                pass
+        elif pk_col in df.columns:
+            try:
+                df = df.sort_values(by=pk_col, ascending=True).reset_index(drop=True)
+            except Exception:
+                pass
 
     st.write("---")
     
