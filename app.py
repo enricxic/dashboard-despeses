@@ -426,6 +426,7 @@ div.block-container {{
 <a href="?mod=modules.dashboard{auth_suffix}" target="_self">📊 Resum General (Dashboard)</a>
 {f'<a href="?mod=modules.economic{auth_suffix}" target="_self">📈 Mòdul Econòmic complet</a>' if icones_actives.get('economic', True) else ''}
 {f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Ingressos i Despeses</a>' if icones_actives.get('compres', True) else ''}
+<a href="?mod=modules.ofertes{auth_suffix}" target="_self">🔍 Consulta d\'Ofertes i Preus</a>
 </div>
 </div>
 <div class="menu-item">
