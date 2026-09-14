@@ -80,53 +80,53 @@ def show():
                 
                 st.dataframe(df_show, use_container_width=True, hide_index=True)
                 
-                # --- REGISTRAR OFERTA ---
-                st.markdown("---")
-                st.markdown("### 🏷️ Registrar nova oferta")
-                
-                with st.form("form_oferta"):
-                    col_form1, col_form2, col_form3 = st.columns(3)
-                    with col_form1:
-                        productes_list = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
-                        prod_sel = st.selectbox("Producte", [""] + productes_list)
-                    with col_form2:
-                        supers = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Altres"]
-                        super_sel = st.selectbox("Supermercat", supers)
-                    with col_form3:
-                        tipus_sel = st.selectbox("Tipus d'oferta", ["Preu rebaixat", "3x2", "2a unitat %", "Altres volumètriques"])
-                        
-                    col_form4, col_form5, col_form6 = st.columns(3)
-                    with col_form4:
-                        preu_of = st.number_input("Preu de l'oferta (€)", min_value=0.0, step=0.01, format="%.2f")
-                    with col_form5:
-                        data_fi = st.date_input("Fins quan (Data Fi)?")
-                    with col_form6:
-                        st.write("")
-                        st.write("")
-                        submitted = st.form_submit_button("Desar Oferta", type="primary", use_container_width=True)
-                        
-                    if submitted:
-                        if not prod_sel:
-                            st.error("Has de seleccionar un producte.")
-                        else:
-                            pid_match = df_prod[df_prod['nom_estandard'] == prod_sel]['idProducte']
-                            if not pid_match.empty:
-                                pid = int(pid_match.values[0])
-                                
-                                nova_oferta = {
-                                    "id_producte": pid,
-                                    "supermercat": super_sel,
-                                    "tipus": tipus_sel,
-                                    "preu_oferta": preu_of,
-                                    "data_fi": data_fi.strftime("%Y-%m-%d") if data_fi else ""
-                                }
-                                
-                                ofertes_list.append(nova_oferta)
-                                if save_ofertes(ofertes_list):
-                                    st.success(f"✅ Oferta desada per {prod_sel}!")
-                                    st.rerun()
-                                else:
-                                    st.error("Error al desar l'oferta.")
+            # --- REGISTRAR OFERTA ---
+            st.markdown("---")
+            st.markdown("### 🏷️ Registrar nova oferta")
+            
+            with st.form("form_oferta"):
+                col_form1, col_form2, col_form3 = st.columns(3)
+                with col_form1:
+                    productes_list = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
+                    prod_sel = st.selectbox("Producte", [""] + productes_list)
+                with col_form2:
+                    supers = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Altres"]
+                    super_sel = st.selectbox("Supermercat", supers)
+                with col_form3:
+                    tipus_sel = st.selectbox("Tipus d'oferta", ["Preu rebaixat", "3x2", "2a unitat %", "Altres volumètriques"])
+                    
+                col_form4, col_form5, col_form6 = st.columns(3)
+                with col_form4:
+                    preu_of = st.number_input("Preu de l'oferta (€)", min_value=0.0, step=0.01, format="%.2f")
+                with col_form5:
+                    data_fi = st.date_input("Fins quan (Data Fi)?")
+                with col_form6:
+                    st.write("")
+                    st.write("")
+                    submitted = st.form_submit_button("Desar Oferta", type="primary", use_container_width=True)
+                    
+                if submitted:
+                    if not prod_sel:
+                        st.error("Has de seleccionar un producte.")
+                    else:
+                        pid_match = df_prod[df_prod['nom_estandard'] == prod_sel]['idProducte']
+                        if not pid_match.empty:
+                            pid = int(pid_match.values[0])
+                            
+                            nova_oferta = {
+                                "id_producte": pid,
+                                "supermercat": super_sel,
+                                "tipus": tipus_sel,
+                                "preu_oferta": preu_of,
+                                "data_fi": data_fi.strftime("%Y-%m-%d") if data_fi else ""
+                            }
+                            
+                            ofertes_list.append(nova_oferta)
+                            if save_ofertes(ofertes_list):
+                                st.success(f"✅ Oferta desada per {prod_sel}!")
+                                st.rerun()
+                            else:
+                                st.error("Error al desar l'oferta.")
 
     with pestanyes[1]:
         st.markdown("### 📖 Fulletons i Catàlegs Setmanals")
