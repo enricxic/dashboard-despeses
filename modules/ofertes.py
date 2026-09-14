@@ -80,6 +80,49 @@ def show():
                 
                 st.dataframe(df_show, use_container_width=True, hide_index=True)
                 
+            # --- HISTÒRIC DE PREUS ---
+            st.markdown("---")
+            st.markdown("### 📈 Històric de Preus per Producte")
+            st.write("Consulta els preus de compra anteriors d'un producte concret (segons els tiquets del súper):")
+            
+            productes_list = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
+            hist_prod = st.selectbox("🔍 Selecciona un producte", [""] + productes_list, key="hist_prod")
+            
+            if hist_prod:
+                df_super = fetch_all_supabase(supabase, 'compresSuper')
+                if not df_super.empty:
+                    # 'article' in compresSuper matches 'nom_estandard' in tb_productes
+                    df_hist = df_super[df_super['article'].astype(str).str.lower() == hist_prod.lower()].copy()
+                    
+                    if not df_hist.empty:
+                        # Ordenar per data de compra descendent (més recent primer)
+                        try:
+                            from core.db import parse_excel_date
+                            df_hist['parsed_date'] = df_hist['data'].apply(parse_excel_date)
+                            df_hist = df_hist.sort_values(by='parsed_date', ascending=False)
+                        except Exception:
+                            pass
+                            
+                        cols_hist = ['data', 'super', 'preuUnit', 'quantitat', 'totLinea', 'prom']
+                        # Ensure columns exist
+                        cols_exist = [c for c in cols_hist if c in df_hist.columns]
+                        df_hist_show = df_hist[cols_exist].copy()
+                        
+                        df_hist_show.rename(columns={
+                            'data': 'Data Compra',
+                            'super': 'Supermercat',
+                            'preuUnit': 'Preu Unitari (€)',
+                            'quantitat': 'Quantitat',
+                            'totLinea': 'Total (€)',
+                            'prom': 'Promoció'
+                        }, inplace=True)
+                        
+                        st.dataframe(df_hist_show, use_container_width=True, hide_index=True)
+                    else:
+                        st.info(f"No hi ha cap registre històric de compra per '{hist_prod}'.")
+                else:
+                    st.info("No hi ha dades de compres (tiquets) disponibles.")
+                
             # --- REGISTRAR OFERTA ---
             st.markdown("---")
             st.markdown("### 🏷️ Registrar nova oferta")
