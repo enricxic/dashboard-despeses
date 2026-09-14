@@ -2505,11 +2505,11 @@ def render():
             cat_val = st.selectbox("Categoria", categories_opt, index=0, key=f"desp_cat_{version}")
             
         with r2_col3:
-            concept_options = [""] + get_config_concepts(cat_val) + ["➕ Afegir nou..."] if cat_val else [""]
+            concept_options = get_config_concepts(cat_val) + ["➕ Afegir nou..."] if cat_val else []
             is_new_mode = st.session_state.get(f"desp_is_new_concept_{version}", False)
             
             if not is_new_mode:
-                concept_val = st.selectbox("Concepte", concept_options, index=0, key=f"desp_concepte_{version}")
+                concept_val = st.selectbox("Concepte", concept_options, index=None, key=f"desp_concepte_{version}")
                 if concept_val == "➕ Afegir nou...":
                     st.session_state[f"desp_is_new_concept_{version}"] = True
                     st.rerun()
