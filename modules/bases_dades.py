@@ -6,7 +6,7 @@ from core.db import fetch_table_fast, update_db_row, insert_db_row, delete_db_ro
 PK_MAP = {
     'despeses': 'ID_mov',
     'ingressos': 'ID_mov',
-    'compresSuper': 'id',
+    'compresSuper': 'IdCompra',
     'gasolina': 'id',
     'kmCotxe': 'id',
     'hipoteca': 'id',
