@@ -796,6 +796,25 @@ def save_categories_conceptes(config):
         return False
 
 
+def load_ofertes():
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        res = supabase.table("app_config").select("config_json").eq("id", 6).execute()
+        if res.data and "config_json" in res.data[0]:
+            return res.data[0]["config_json"] or []
+    except Exception as e:
+        print(f"Error loading ofertes: {e}")
+    return []
+
+def save_ofertes(ofertes_list):
+    try:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        supabase.table("app_config").upsert({"id": 6, "config_json": ofertes_list}).execute()
+        return True
+    except Exception as e:
+        print(f"Error saving ofertes: {e}")
+        return False
+
 def delete_db_row(table_name, id_col, id_val):
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     
