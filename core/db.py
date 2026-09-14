@@ -707,7 +707,7 @@ def add_concept_to_config(category, concept):
         return
     c_str = str(concept).strip()
     cat_str = str(category).strip()
-    if not c_str or c_str.lower() == cat_str.lower() or c_str.startswith("➕"):
+    if not c_str or c_str.startswith("➕"):
         return
     global cat_config
     if cat_config is None or not isinstance(cat_config, dict):
@@ -717,7 +717,7 @@ def add_concept_to_config(category, concept):
         cat_config[cat_str] = list(existing)
     if c_str not in cat_config[cat_str]:
         cat_config[cat_str].append(c_str)
-        cat_config[cat_str] = [c for c in cat_config[cat_str] if c and c.lower() != cat_str.lower() and not c.startswith("➕")]
+        cat_config[cat_str] = [c for c in cat_config[cat_str] if c and not c.startswith("➕")]
         cat_config[cat_str].sort()
         save_categories_conceptes(cat_config)
 
