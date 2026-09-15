@@ -264,18 +264,23 @@ def show():
             st.write("")
             btn_scrape = st.button("🌐 Cercar als Supers", type="primary", use_container_width=True)
             
+        if "scrape_results" not in st.session_state:
+            st.session_state.scrape_results = None
+            
         if btn_scrape:
             if not scrape_prod:
                 st.warning("Selecciona un producte primer.")
+                st.session_state.scrape_results = None
             else:
                 with st.spinner(f"Connectant amb els supermercats per buscar '{scrape_prod}'... Això pot trigar uns segons."):
-                    resultats = buscar_producte_supers(scrape_prod)
+                    st.session_state.scrape_results = buscar_producte_supers(scrape_prod)
                     
-                if resultats:
-                    df_res = pd.DataFrame(resultats)
-                    st.data_editor(df_res, use_container_width=True, hide_index=True)
-                else:
-                    st.info("No s'ha trobat cap resultat en directe o hi ha hagut un error de connexió.")
+        if st.session_state.scrape_results is not None:
+            if st.session_state.scrape_results:
+                df_res = pd.DataFrame(st.session_state.scrape_results)
+                st.data_editor(df_res, use_container_width=True, hide_index=True, key="scrape_editor")
+            else:
+                st.info("No s'ha trobat cap resultat en directe o hi ha hagut un error de connexió.")
 
 def render():
     st.markdown('''
