@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from core.db import get_supabase_client, fetch_all_supabase, load_ofertes, save_ofertes
+from core.scraper_supers import buscar_producte_supers
 
 def show():
     st.markdown("<h2 style='color:#f39c12; margin-top:-10px;'>Consulta d'Ofertes i Preus</h2>", unsafe_allow_html=True)
@@ -179,7 +180,7 @@ def show():
         
         c1.markdown("""
         <div style="background-color:#007B22; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            <a href="https://info.mercadona.es/ca/supermercats" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Mercadona</a>
+            <a href="https://info.mercadona.es/ca/inici-ca" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Mercadona</a>
         </div>
         """, unsafe_allow_html=True)
         
@@ -191,13 +192,13 @@ def show():
         
         c3.markdown("""
         <div style="background-color:#0050AA; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            <a href="https://www.lidl.es/es/folletos-promociones/s1072" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Lidl</a>
+            <a href="https://www.lidl.es/c/alimentacion/s10097705" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Lidl</a>
         </div>
         """, unsafe_allow_html=True)
         
         c4.markdown("""
         <div style="background-color:#003B7E; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            <a href="https://www.aldi.es/folletos-promociones.html" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Aldi</a>
+            <a href="https://www.aldi.es/ofertes.html" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Aldi</a>
         </div>
         """, unsafe_allow_html=True)
 
@@ -207,7 +208,7 @@ def show():
         
         c5.markdown("""
         <div style="background-color:#F58220; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            <a href="https://www.consum.es/ca/ofertes" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Consum</a>
+            <a href="https://www.consum.es" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Consum</a>
         </div>
         """, unsafe_allow_html=True)
         
@@ -244,6 +245,37 @@ def show():
             <a href="https://www.clarel.es/ofertas" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Clarel</a>
         </div>
         """, unsafe_allow_html=True)
+        
+        # --- SCRAPER SEARCH ---
+        st.markdown("---")
+        st.markdown("### 🔍 Cercador de Preus en Temps Real (Scraping)")
+        st.write("Busca un producte als catàlegs digitals dels supermercats per veure'n el preu ara mateix.")
+        
+        col_s1, col_s2 = st.columns([3, 1])
+        with col_s1:
+            if "df_prod" in locals() and not df_prod.empty:
+                prod_list_scrape = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
+            else:
+                prod_list_scrape = []
+            scrape_prod = st.selectbox("Quin producte vols buscar a les webs?", [""] + prod_list_scrape, key="scrape_prod")
+            
+        with col_s2:
+            st.write("")
+            st.write("")
+            btn_scrape = st.button("🌐 Cercar als Supers", type="primary", use_container_width=True)
+            
+        if btn_scrape:
+            if not scrape_prod:
+                st.warning("Selecciona un producte primer.")
+            else:
+                with st.spinner(f"Connectant amb els supermercats per buscar '{scrape_prod}'... Això pot trigar uns segons."):
+                    resultats = buscar_producte_supers(scrape_prod)
+                    
+                if resultats:
+                    df_res = pd.DataFrame(resultats)
+                    st.dataframe(df_res, use_container_width=True, hide_index=True)
+                else:
+                    st.info("No s'ha trobat cap resultat en directe o hi ha hagut un error de connexió.")
 
 def render():
     st.markdown('''
