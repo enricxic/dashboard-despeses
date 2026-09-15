@@ -19,7 +19,7 @@ st.set_page_config(
 st.markdown('''
     <style>
     #MainMenu {visibility: hidden;}
-    header {visibility: hidden; height: 0px !important;}
+    header[data-testid="stHeader"] {visibility: hidden; height: 0px !important;}
     footer {visibility: hidden;}
     .block-container {padding-top: 1rem !important; margin-top: 0rem !important;}
     
