@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from core.db import get_supabase_client, fetch_all_supabase, load_ofertes, save_ofertes
-from core.scraper_supers import buscar_producte_supers
 
 def show():
     st.markdown("<h2 style='color:#f39c12; margin-top:-10px;'>Consulta d'Ofertes i Preus</h2>", unsafe_allow_html=True)
@@ -246,41 +245,47 @@ def show():
         </div>
         """, unsafe_allow_html=True)
         
-        # --- SCRAPER SEARCH ---
+        # --- MANUAL COMPARISON TABLE ---
         st.markdown("---")
-        st.markdown("### 🔍 Cercador de Preus en Temps Real (Scraping)")
-        st.write("Busca un producte als catàlegs digitals dels supermercats per veure'n el preu ara mateix.")
+        st.markdown("### 📝 Taula de Comparativa Manual")
+        st.write("Selecciona un producte i anota manualment els preus i ofertes que trobis als fulletons per comparar-los d'un cop d'ull.")
         
-        col_s1, col_s2 = st.columns([3, 1])
-        with col_s1:
-            if "df_prod" in locals() and not df_prod.empty:
-                prod_list_scrape = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
-            else:
-                prod_list_scrape = []
-            scrape_prod = st.selectbox("Quin producte vols buscar a les webs?", [""] + prod_list_scrape, key="scrape_prod")
+        if "df_prod" in locals() and not df_prod.empty:
+            prod_list_manual = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
+        else:
+            prod_list_manual = []
             
-        with col_s2:
-            st.write("")
-            st.write("")
-            btn_scrape = st.button("🌐 Cercar als Supers", type="primary", use_container_width=True)
+        manual_prod = st.selectbox("Quin producte vols comparar?", [""] + prod_list_manual, key="manual_prod")
+        
+        if manual_prod:
+            # Check if we already have a table for this product in session state
+            session_key = f"manual_table_{manual_prod}"
+            if session_key not in st.session_state:
+                supers_llista = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Novavenda", "El Corte Inglés", "Clarel"]
+                dades_inicials = {
+                    "Supermercat": supers_llista,
+                    "Preu (€)": [0.0] * len(supers_llista),
+                    "Oferta / Promoció": [""] * len(supers_llista)
+                }
+                st.session_state[session_key] = pd.DataFrame(dades_inicials)
+                
+            st.write(f"**Comparativa per:** {manual_prod}")
             
-        if "scrape_results" not in st.session_state:
-            st.session_state.scrape_results = None
+            # Use data_editor to allow user to input prices and offers
+            edited_df = st.data_editor(
+                st.session_state[session_key],
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Supermercat": st.column_config.TextColumn(disabled=True),
+                    "Preu (€)": st.column_config.NumberColumn(format="%.2f €", min_value=0.0, step=0.01),
+                    "Oferta / Promoció": st.column_config.TextColumn()
+                },
+                key=f"editor_{manual_prod}"
+            )
             
-        if btn_scrape:
-            if not scrape_prod:
-                st.warning("Selecciona un producte primer.")
-                st.session_state.scrape_results = None
-            else:
-                with st.spinner(f"Connectant amb els supermercats per buscar '{scrape_prod}'... Això pot trigar uns segons."):
-                    st.session_state.scrape_results = buscar_producte_supers(scrape_prod)
-                    
-        if st.session_state.scrape_results is not None:
-            if st.session_state.scrape_results:
-                df_res = pd.DataFrame(st.session_state.scrape_results)
-                st.data_editor(df_res, use_container_width=True, hide_index=True, key="scrape_editor")
-            else:
-                st.info("No s'ha trobat cap resultat en directe o hi ha hagut un error de connexió.")
+            # Save edits back to session state so they persist while navigating
+            st.session_state[session_key] = edited_df
 
 def render():
     st.markdown('''
