@@ -198,7 +198,7 @@ def show():
         
         c4.markdown("""
         <div style="background-color:#003B7E; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            <a href="https://www.aldi.es/ofertes.html" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Aldi</a>
+            <a href="https://www.aldi.es" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Aldi</a>
         </div>
         """, unsafe_allow_html=True)
 
@@ -220,7 +220,7 @@ def show():
         
         c7.markdown("""
         <div style="background-color:#D31145; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            <a href="https://www.bonarea.com/ca/ofertes" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 AreaGuissona</a>
+            <a href="https://www.bonarea.com" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 AreaGuissona</a>
         </div>
         """, unsafe_allow_html=True)
 
@@ -273,7 +273,7 @@ def show():
                     
                 if resultats:
                     df_res = pd.DataFrame(resultats)
-                    st.dataframe(df_res, use_container_width=True, hide_index=True)
+                    st.data_editor(df_res, use_container_width=True, hide_index=True)
                 else:
                     st.info("No s'ha trobat cap resultat en directe o hi ha hagut un error de connexió.")
 
