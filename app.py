@@ -113,6 +113,12 @@ if "action" in st.query_params:
     elif act == "sync_db":
         st.cache_data.clear()
         st.session_state["db_synced_toast"] = True
+    elif act == "toggle_offline":
+        if "is_offline" not in st.session_state:
+            st.session_state["is_offline"] = True
+        else:
+            st.session_state["is_offline"] = not st.session_state["is_offline"]
+        st.session_state["offline_toast"] = True
     elif act == "backup_db":
         import zipfile
         os.makedirs("backup_dades", exist_ok=True)
@@ -138,6 +144,21 @@ if "action" in st.query_params:
 if st.session_state.get("db_synced_toast"):
     st.toast("🔄 Memòria cau alliberada i dades sincronitzades!", icon="⚡")
     del st.session_state["db_synced_toast"]
+
+if st.session_state.get("offline_toast"):
+    if st.session_state.get("is_offline"):
+        st.toast("⚠️ MODE OFFLINE ACTIVAT. Els canvis es guarden en local.", icon="⚠️")
+    else:
+        st.toast("🌐 MODE ONLINE RECUPERAT. Es tornarà a utilitzar el núvol.", icon="🌐")
+    del st.session_state["offline_toast"]
+
+# Mostra una franja permanent de mode offline si està activat
+if st.session_state.get("is_offline"):
+    st.markdown('''
+    <div style="background-color: #ef4444; color: white; text-align: center; padding: 10px; font-weight: bold; border-radius: 5px; margin-bottom: 15px; border: 2px solid #b91c1c; animation: pulse 2s infinite;">
+        ⚠️ ATENCIÓ: Estàs treballant en MODE OFFLINE. Totes les dades s'estan desant localment i s'encuaran per sincronitzar-les quan torni Internet.
+    </div>
+    ''', unsafe_allow_html=True)
 
 if st.session_state.get("db_backup_toast"):
     st.toast(f"💾 Còpia de seguretat desada a backup_dades/{st.session_state['db_backup_toast']}", icon="✅")
@@ -461,6 +482,7 @@ div.block-container {{
 </div>
 </div>
 <a href="?action=sync_db{auth_suffix}" target="_self">🔄 Sincronitzar / Recarregar dades</a>
+<a href="?mod=modules.sincronitzacio{auth_suffix}" target="_self" style="color: #60a5fa !important;">🌍 Consolidar Dades Offline</a>
 <a href="?action=backup_db{auth_suffix}" target="_self">💾 Crear Còpia de seguretat (ZIP)</a>
 </div>
 </div>
@@ -476,6 +498,7 @@ div.block-container {{
 <a href="?mod=modules.admin&tab=tema{auth_suffix}" target="_self">🎨 Aspecte i tema</a>
 <a href="?mod=modules.admin&tab=icones{auth_suffix}" target="_self">🔘 Icones actives d'inici</a>
 <a href="?mod=modules.admin&tab=idioma{auth_suffix}" target="_self">🌐 Idioma i traducció</a>
+<a href="?action=toggle_offline{auth_suffix}" target="_self" style="color: #f87171 !important;">🔌 Commutar Mode Offline</a>
 </div>
 </div>
 </nav>"""

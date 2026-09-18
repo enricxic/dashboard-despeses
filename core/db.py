@@ -139,15 +139,47 @@ def get_db_engine():
     return None
 
 def fetch_table_fast(table_name):
+    import os
+    csv_path = os.path.join("csv", f"{table_name}.csv")
+    
+    is_offline = False
+    try:
+        import streamlit as st
+        is_offline = st.session_state.get("is_offline", False)
+    except:
+        pass
+        
+    if is_offline:
+        if os.path.exists(csv_path):
+            try:
+                df = pd.read_csv(csv_path, sep=';')
+                return table_name, df
+            except Exception as e:
+                print(f"Error reading local CSV for {table_name}: {e}")
+        return table_name, pd.DataFrame()
+
+    df_result = pd.DataFrame()
     engine = get_db_engine()
     if engine:
         try:
             with engine.connect() as conn:
-                return table_name, pd.read_sql(f'SELECT * FROM "{table_name}"', conn)
+                df_result = pd.read_sql(f'SELECT * FROM "{table_name}"', conn)
         except Exception:
             pass
-    supabase = get_supabase_client(st.session_state.get("role", "guest"))
-    return table_name, fetch_all_supabase(supabase, table_name)
+            
+    if df_result.empty:
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        df_result = fetch_all_supabase(supabase, table_name)
+        
+    # Guardar còpia local al CSV si s'ha pogut baixar del núvol per properes avaries
+    if not df_result.empty:
+        os.makedirs("csv", exist_ok=True)
+        try:
+            df_result.to_csv(csv_path, sep=';', index=False)
+        except Exception:
+            pass
+            
+    return table_name, df_result
 
 @st.cache_resource
 def get_db_tracker():
@@ -657,7 +689,69 @@ def update_session_state_delete(table_name, id_col, id_val):
         if id_col in df.columns:
             st.session_state[df_key] = df[df[id_col] != id_val].reset_index(drop=True)
 
+def log_offline_action(table_name, action_type, details):
+    import json
+    import os
+    from datetime import datetime
+    queue_file = "sync_queue.json"
+    queue = []
+    if os.path.exists(queue_file):
+        try:
+            with open(queue_file, "r", encoding="utf-8") as f:
+                queue = json.load(f)
+        except:
+            pass
+            
+    # Clean datetime objects for json
+    def clean_dict(d):
+        if isinstance(d, dict):
+            return {k: clean_dict(v) for k, v in d.items()}
+        elif isinstance(d, list):
+            return [clean_dict(x) for x in d]
+        elif isinstance(d, pd.Timestamp):
+            return d.isoformat()
+        elif pd.isna(d):
+            return None
+        return d
+        
+    queue.append({
+        "taula": table_name,
+        "accio": action_type,
+        "detalls": clean_dict(details),
+        "timestamp": datetime.now().isoformat()
+    })
+    try:
+        with open(queue_file, "w", encoding="utf-8") as f:
+            json.dump(queue, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving offline action to queue: {e}")
+
+def save_to_csv_local(df, table_name):
+    import os
+    os.makedirs("csv", exist_ok=True)
+    csv_path = os.path.join("csv", f"{table_name}.csv")
+    try:
+        df.to_csv(csv_path, sep=';', index=False)
+    except Exception as e:
+        print(f"Error saving {csv_path} locally: {e}")
+
 def insert_db_row(table_name, new_row_dict):
+    is_offline = st.session_state.get("is_offline", False)
+    if is_offline:
+        log_offline_action(table_name, 'INSERT', new_row_dict)
+        update_session_state_insert(table_name, new_row_dict)
+        # Try to save the updated session state df to local CSV
+        table_map = {
+            'despeses': 'df_desp', 'ingressos': 'df_ing',
+            'compresSuper': 'df_super', 'gasolina': 'df_gas',
+            'kmCotxe': 'df_km', 'hipoteca': 'df_hip',
+            'estalviDP': 'df_est', 'limitsDespeses': 'df_limits',
+            'pagaments': 'df_pag', 'tr_cartera': 'df_cartera'
+        }
+        if table_name in table_map and table_map[table_name] in st.session_state:
+            save_to_csv_local(st.session_state[table_map[table_name]], table_name)
+        return True
+
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         supabase.table(table_name).insert(new_row_dict).execute()
@@ -673,20 +767,45 @@ def insert_db_row(table_name, new_row_dict):
 
 def append_to_db(df_new, table_name, state_key, extra_details=None):
     import json
+    
+    is_offline = st.session_state.get("is_offline", False)
+    
+    details = {'count': len(df_new)}
+    if table_name == 'compresSuper' and 'super' in df_new.columns:
+        supers = df_new['super'].unique().tolist()
+        details['supermercat'] = supers[0] if len(supers) == 1 else supers
+        
+    if extra_details:
+        details.update(extra_details)
+        
+    # Store the fully inserted rows
+    rows_json = json.loads(df_new.to_json(orient='records', date_format='iso'))
+    details['rows_inserted'] = rows_json
+
+    if is_offline:
+        log_offline_action(table_name, 'INSERT_BULK', details)
+        # Update session state df directly
+        if state_key and state_key in st.session_state:
+            del st.session_state[state_key]
+        load_dashboard_data.clear()
+        # En el proper load_dashboard_data offline es llegirà del CSV, 
+        # així que hauríem d'actualitzar el CSV ara. Però primer l'hem de carregar si no ho està.
+        # Ho simplifiquem deixant que load_dashboard_data.clear() faci la seva feina i 
+        # nosaltres només desem aquest chunk al CSV manualment llegint-lo abans:
+        import os
+        csv_path = os.path.join("csv", f"{table_name}.csv")
+        if os.path.exists(csv_path):
+            try:
+                df_existing = pd.read_csv(csv_path, sep=';')
+                df_updated = pd.concat([df_new, df_existing], ignore_index=True)
+                df_updated.to_csv(csv_path, sep=';', index=False)
+            except:
+                pass
+        return True
+
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
-        supabase.table(table_name).insert(json.loads(df_new.to_json(orient='records', date_format='iso'))).execute()
-        details = {'count': len(df_new)}
-        if table_name == 'compresSuper' and 'super' in df_new.columns:
-            supers = df_new['super'].unique().tolist()
-            details['supermercat'] = supers[0] if len(supers) == 1 else supers
-            
-        if extra_details:
-            details.update(extra_details)
-            
-        # Also store the fully inserted rows for auditing
-        details['rows_inserted'] = json.loads(df_new.to_json(orient='records', date_format='iso'))
-            
+        supabase.table(table_name).insert(rows_json).execute()
         log_action(table_name, 'INSERT_BULK', details)
         
         st.cache_data.clear()
@@ -816,6 +935,42 @@ def save_ofertes(ofertes_list):
         return False
 
 def delete_db_row(table_name, id_col, id_val):
+    is_offline = st.session_state.get("is_offline", False)
+    if is_offline:
+        deleted_row_data = {}
+        table_map = {
+            'despeses': 'df_desp', 'ingressos': 'df_ing',
+            'compresSuper': 'df_super', 'gasolina': 'df_gas',
+            'hipoteca': 'df_hip', 'estalviDP': 'df_est',
+            'tb_productes': 'df_prod', 'tb_llocs': 'df_llocs',
+            'tb_pendents_compra': 'df_pendents',
+            'tr_cartera': 'df_tr_cartera'
+        }
+        df_key = table_map.get(table_name)
+        if df_key and df_key in st.session_state:
+            import numpy as np
+            import pandas as pd
+            df = st.session_state[df_key]
+            mask = df[id_col] == id_val
+            if mask.any():
+                row_dict = df[mask].iloc[0].replace({np.nan: None}).to_dict()
+                for k, v in row_dict.items():
+                    if isinstance(v, pd.Timestamp):
+                        row_dict[k] = v.isoformat()
+                deleted_row_data = row_dict
+        detalls = {'id_col': id_col, 'id_val': id_val}
+        if deleted_row_data:
+            detalls['deleted_row'] = deleted_row_data
+        log_offline_action(table_name, 'DELETE', detalls)
+        update_session_state_delete(table_name, id_col, id_val)
+        csv_table_map = {
+            'despeses': 'df_desp', 'ingressos': 'df_ing', 'compresSuper': 'df_super',
+            'gasolina': 'df_gas', 'kmCotxe': 'df_km', 'pagaments': 'df_pag', 'tr_cartera': 'df_cartera'
+        }
+        if table_name in csv_table_map and csv_table_map[table_name] in st.session_state:
+            save_to_csv_local(st.session_state[csv_table_map[table_name]], table_name)
+        return True
+
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     
     # NEW CODE: Fetch deleted row from session_state before deleting
@@ -859,6 +1014,51 @@ def delete_db_row(table_name, id_col, id_val):
         st.error(f"❌ Error a l'esborrar de Supabase ({table_name}): {str(e)}")
 
 def update_db_row(table_name, id_col, id_val, new_data):
+    is_offline = st.session_state.get("is_offline", False)
+    if is_offline:
+        update_payload = new_data.copy()
+        if id_col in update_payload:
+            del update_payload[id_col]
+        import pandas as pd
+        for k, v in update_payload.items():
+            if pd.isna(v):
+                update_payload[k] = None
+        old_row_data = {}
+        table_map = {
+            'despeses': 'df_desp', 'ingressos': 'df_ing',
+            'compresSuper': 'df_super', 'gasolina': 'df_gas',
+            'hipoteca': 'df_hip', 'estalviDP': 'df_est',
+            'tb_productes': 'df_prod', 'tb_llocs': 'df_llocs',
+            'tb_pendents_compra': 'df_pendents',
+            'tr_cartera': 'df_tr_cartera'
+        }
+        df_key = table_map.get(table_name)
+        if df_key and df_key in st.session_state:
+            import numpy as np
+            df = st.session_state[df_key]
+            mask = df[id_col] == id_val
+            if mask.any():
+                row_dict = df[mask].iloc[0].replace({np.nan: None}).to_dict()
+                for k, v in row_dict.items():
+                    if isinstance(v, pd.Timestamp):
+                        row_dict[k] = v.isoformat()
+                old_row_data = row_dict
+        detalls = {'id_col': id_col, 'id_val': id_val, 'changes': update_payload}
+        if old_row_data:
+            detalls['old_row'] = old_row_data
+        log_offline_action(table_name, 'UPDATE', detalls)
+        update_session_state_update(table_name, id_col, id_val, update_payload)
+        csv_table_map = {
+            'despeses': 'df_desp', 'ingressos': 'df_ing',
+            'compresSuper': 'df_super', 'gasolina': 'df_gas',
+            'kmCotxe': 'df_km', 'hipoteca': 'df_hip',
+            'estalviDP': 'df_est', 'limitsDespeses': 'df_limits',
+            'pagaments': 'df_pag', 'tr_cartera': 'df_cartera'
+        }
+        if table_name in csv_table_map and csv_table_map[table_name] in st.session_state:
+            save_to_csv_local(st.session_state[csv_table_map[table_name]], table_name)
+        return True
+
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     
     old_row_data = {}
