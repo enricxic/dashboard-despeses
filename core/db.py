@@ -753,9 +753,6 @@ def insert_db_row(table_name, new_row_dict):
         log_action(table_name, 'INSERT', new_row_dict)
         
         update_session_state_insert(table_name, new_row_dict)
-        st.cache_data.clear()
-        get_db_tracker().update()
-        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
@@ -803,14 +800,8 @@ def append_to_db(df_new, table_name, state_key, extra_details=None):
         supabase.table(table_name).insert(rows_json).execute()
         log_action(table_name, 'INSERT_BULK', details)
         
-        st.cache_data.clear()
         if state_key and state_key in st.session_state:
             del st.session_state[state_key]
-            
-        tracker_obj = get_db_tracker()
-        tracker_obj.update()
-        st.session_state["last_synced_time"] = get_db_tracker().last_update
-        load_dashboard_data.clear()
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (APPEND {table_name})**: {str(e)}")
@@ -1001,9 +992,6 @@ def delete_db_row(table_name, id_col, id_val):
         log_action(table_name, 'DELETE', detalls)
         
         update_session_state_delete(table_name, id_col, id_val)
-        st.cache_data.clear()
-        get_db_tracker().update()
-        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         st.error(f"❌ Error a l'esborrar de Supabase ({table_name}): {str(e)}")
@@ -1096,9 +1084,6 @@ def update_db_row(table_name, id_col, id_val, new_data):
         log_action(table_name, 'UPDATE', detalls)
         
         update_session_state_update(table_name, id_col, id_val, update_payload)
-        st.cache_data.clear()
-        get_db_tracker().update()
-        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         print(f"FAILED PAYLOAD FOR {table_name}:", update_payload)
