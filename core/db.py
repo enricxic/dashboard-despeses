@@ -132,7 +132,8 @@ def get_db_engine():
                 st.secrets["connection_string"],
                 pool_pre_ping=True,
                 pool_size=10,
-                max_overflow=5
+                max_overflow=5,
+                connect_args={'connect_timeout': 3}
             )
         except Exception:
             return None
@@ -160,8 +161,12 @@ def fetch_table_fast(table_name):
 
     df_result = pd.DataFrame()
     
-    # Utilitzem només el client REST HTTPS de Supabase per evitar timeouts lents 
-    # de connexions directes a bases de dades per ports tancats (5432/6543)
+    try:
+        engine = get_db_engine()
+        if engine is not None:
+            df_result = pd.read_sql(f"SELECT * FROM {table_name}", engine)
+    except Exception as e:
+        print(f"⚠️ Error connexió directa PostgreSQL a {table_name}, fallback a REST API: {e}")
     if df_result.empty:
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
         df_result = fetch_all_supabase(supabase, table_name)

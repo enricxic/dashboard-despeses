@@ -51,9 +51,9 @@ def main():
         process = subprocess.Popen([sys.executable, "-m", "streamlit", "run", "app.py", "--server.headless=true"])
         print("Esperant que s'iniciï el servidor local...")
         
-        # Esperar fins que el servidor respongui o passin 15 segons
+        # Esperar fins que el servidor respongui o passin 30 segons
         import urllib.request
-        max_retries = 15
+        max_retries = 30
         for i in range(max_retries):
             try:
                 urllib.request.urlopen("http://localhost:8501/_stcore/health", timeout=1)

@@ -765,6 +765,11 @@ if st.session_state.current_module is None:
         from core.db import load_dashboard_data, get_csv_mtimes
         def _prewarm():
             try:
+                from streamlit.runtime.scriptrunner import add_script_run_ctx
+                add_script_run_ctx(threading.current_thread())
+            except Exception:
+                pass
+            try:
                 load_dashboard_data(mtimes=db_tracker.last_update)
             except Exception:
                 pass
