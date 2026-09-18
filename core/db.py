@@ -1101,7 +1101,7 @@ def ensure_session_dfs():
         or st.session_state.get("last_synced_time") < tracker.last_update
     )
     if needs_init:
-        dfs = load_dashboard_data(get_csv_mtimes())
+        dfs = load_dashboard_data(mtimes=tracker.last_update)
         st.session_state["df_desp"] = dfs[0]
         st.session_state["df_ing"] = dfs[1]
         st.session_state["df_super"] = dfs[2]

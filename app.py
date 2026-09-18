@@ -765,7 +765,7 @@ if st.session_state.current_module is None:
         from core.db import load_dashboard_data, get_csv_mtimes
         def _prewarm():
             try:
-                load_dashboard_data(get_csv_mtimes())
+                load_dashboard_data(mtimes=db_tracker.last_update)
             except Exception:
                 pass
         threading.Thread(target=_prewarm, daemon=True).start()
