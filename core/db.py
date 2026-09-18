@@ -191,7 +191,7 @@ def get_supabase_client(role: str) -> Client:
 
 def fetch_all_supabase(client, table_name):
     data = []
-    count = 250  # Reduït a 250 per evitar Gateway Timeout (504) de Supabase en taules grans
+    count = 1000  # Optimitzat a 1000 per reduir les peticions massives a la API REST
     start = 0
     max_retries = 3
     while True:
@@ -245,7 +245,7 @@ def load_dashboard_data(mtimes=None):
         'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'
     ]
         
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         fetched = dict(executor.map(fetch_table_fast, tables_to_fetch))
     
     # Load tables from PostgreSQL
