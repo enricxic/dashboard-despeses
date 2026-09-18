@@ -27,8 +27,6 @@ def show_offline_modal():
         print("ADVERTÈNCIA: No s'ha detectat Internet. Iniciant en Mode Offline.")
 
 def main():
-    online_url = "https://dashboard-despeses.streamlit.app/"
-    
     # Intentar forçar Google Chrome
     chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
     if not os.path.exists(chrome_path):
@@ -41,24 +39,22 @@ def main():
         browser = webbrowser.get()
     
     if check_internet():
-        print("Internet detectat. Obrint la versió Cloud...")
-        browser.open(online_url)
+        print("Internet detectat. L'aplicació es connectarà al núvol (Supabase).")
     else:
-        print("Sense Internet. Iniciant entorn local...")
+        print("Sense Internet. Iniciant entorn completament Offline...")
         show_offline_modal()
-        # Change dir to the script's directory (assuming it's in the repo root)
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
         
-        # Start streamlit
-        try:
-            import time
-            subprocess.Popen([sys.executable, "-m", "streamlit", "run", "app.py", "--server.headless=true"])
-            print("Esperant que s'iniciï el servidor local...")
-            time.sleep(3)
-            browser.open("http://localhost:8501")
-        except Exception as e:
-            print(f"Error a l'iniciar Streamlit: {e}")
-            input("Prem Enter per sortir...")
+    # Iniciar sempre l'entorn local
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        import time
+        subprocess.Popen([sys.executable, "-m", "streamlit", "run", "app.py", "--server.headless=true"])
+        print("Esperant que s'iniciï el servidor local...")
+        time.sleep(3)
+        browser.open("http://localhost:8501")
+    except Exception as e:
+        print(f"Error a l'iniciar Streamlit: {e}")
+        input("Prem Enter per sortir...")
 
 if __name__ == "__main__":
     main()
