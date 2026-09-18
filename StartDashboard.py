@@ -48,10 +48,11 @@ def main():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     try:
         import time
-        subprocess.Popen([sys.executable, "-m", "streamlit", "run", "app.py", "--server.headless=true"])
+        process = subprocess.Popen([sys.executable, "-m", "streamlit", "run", "app.py", "--server.headless=true"])
         print("Esperant que s'iniciï el servidor local...")
-        time.sleep(3)
+        time.sleep(4)
         browser.open("http://localhost:8501")
+        process.wait()  # Manté el procés viu fins que tanquis la consola
     except Exception as e:
         print(f"Error a l'iniciar Streamlit: {e}")
         input("Prem Enter per sortir...")
