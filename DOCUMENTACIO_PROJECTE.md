@@ -7,13 +7,17 @@ Aquest document descriu l'arquitectura, funcionalitats, estructura de fitxers i 
 ## 1. Visió General i Arquitectura Modular
 L'aplicació utilitza una **arquitectura modular consolidada**, neta, extensible i optimitzada per a mòbils i escriptori.
 - **Frontend / Backend**: Construïda en **Streamlit** (Python).
-- **Entrada Principal (Router Canònic)**: L'arxiu **[`app.py`](file:///e:/Dashboard/app.py)** actua com a menú principal (Landing Screen interactiva) i gestor de navegació global. Incorpora `importlib.reload(mod)` en la càrrega de mòduls per garantir que qualsevol canvi de codi s'apliqui a l'instant en calent.
+- **Arquitectura de Xarxa Dual**: 
+  - **Cloud-First**: Per defecte, l'arrencador de l'escriptori (`StartDashboard.py`) obre la versió del núvol de forma instantània si hi ha internet.
+  - **Sincronització de Fons**: Mentre s'obre el núvol, un procés silenciós (`scripts/update_csvs_background.py`) actualitza totes les dades al disc dur local (CSV) mitjançant una connexió directa i ultra-ràpida a PostgreSQL (buidant i descarregant tot sense els límits de paginació de l'API REST) per tenir una Font de Veritat íntegra i actualitzada localment.
+  - **Emergency Offline Mode**: Si no hi ha internet (o si l'usuari ho força prement el botó inicial durant 3 segons), s'engega l'entorn local Streamlit llegint exclusivament dels CSVs locals, amb càrrega de taules a la carta (Lazy Loading) per maximitzar la velocitat.
+- **Entrada Principal (Router Canònic)**: L'arxiu **[`app.py`](file:///e:/Dashboard/app.py)** actua com a menú principal (Landing Screen interactiva) i gestor de navegació global.
 - **Bridge de Compatibilitat**: L'arxiu **[`app_v2.py`](file:///e:/Dashboard/app_v2.py)** actua com a *forwarder* transparent per garantir compatibilitat amb desplegaments de Streamlit Cloud.
 - **Arxiu Històric**: L'antic fitxer monolític de 6.700 línies es conserva a [`legacy/app_monolithic_legacy.py`](file:///e:/Dashboard/legacy/app_monolithic_legacy.py).
 - **Barra Superior de Menús (Estil Tradicional d'Escriptori)**: Dins de qualsevol mòdul, es disposa d'un menú superior clàssic (`Arxiu`, `Finances`, `Llar`, `Família`, `Ajustos`, `Ajuda`) amb submenús desplegables per activar directament qualsevol secció o acció de l'aplicació.
-- **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/fons xiquiHouse.jpg`), amb 12 punts d'accés (hotspots interactius 100% transparents en repòs) mapejats amb precisió sobre les icones de la casa.
-- **Base de Dades**: **Supabase** (PostgreSQL). Tota la comunicació CRUD està centralitzada a `core/db.py`.
-- **Autenticació**: Gestionada a `core/auth.py`. Incorpora persistència de sessió mitjançant paràmetre de consulta (`?auth=<token>`) per evitar demanar contrasenya en recarregar la pàgina al fer clic als hotspots d'inici.
+- **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/fons xiquiHouse.jpg`), amb 12 punts d'accés interactius mapejats.
+- **Base de Dades**: **Supabase** (PostgreSQL) com a mestre i **CSV** com a font local d'emergència. Tota la comunicació CRUD està centralitzada a `core/db.py`. L'arrencada local integra un tallacorrents de 3 segons si PostgreSQL està bloquejat pel proveïdor d'internet, passant automàticament a l'API REST.
+- **Autenticació**: Gestionada a `core/auth.py`. Incorpora persistència de sessió mitjançant paràmetre de consulta (`?auth=<token>`).
 - **Estat de Navegació**: Es controla mitjançant `st.session_state.current_module`. Per tornar enrere, cada mòdul disposa del botó `🏡 Inici` a la barra superior i `🔙 Tornar a l'inici` a la capçalera que restableix l'estat a `None`.
 
 ---
