@@ -50,7 +50,17 @@ def main():
         import time
         process = subprocess.Popen([sys.executable, "-m", "streamlit", "run", "app.py", "--server.headless=true"])
         print("Esperant que s'iniciï el servidor local...")
-        time.sleep(4)
+        
+        # Esperar fins que el servidor respongui o passin 15 segons
+        import urllib.request
+        max_retries = 15
+        for i in range(max_retries):
+            try:
+                urllib.request.urlopen("http://localhost:8501/_stcore/health", timeout=1)
+                break
+            except:
+                time.sleep(1)
+                
         browser.open("http://localhost:8501")
         process.wait()  # Manté el procés viu fins que tanquis la consola
     except Exception as e:

@@ -159,14 +159,9 @@ def fetch_table_fast(table_name):
         return table_name, pd.DataFrame()
 
     df_result = pd.DataFrame()
-    engine = get_db_engine()
-    if engine:
-        try:
-            with engine.connect() as conn:
-                df_result = pd.read_sql(f'SELECT * FROM "{table_name}"', conn)
-        except Exception:
-            pass
-            
+    
+    # Utilitzem només el client REST HTTPS de Supabase per evitar timeouts lents 
+    # de connexions directes a bases de dades per ports tancats (5432/6543)
     if df_result.empty:
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
         df_result = fetch_all_supabase(supabase, table_name)
