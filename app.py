@@ -758,23 +758,7 @@ if st.session_state.current_module is None:
 </div>""")
 
     st.markdown(html_content, unsafe_allow_html=True)
-    
-    # Pre-escalfar la memòria cau de dades en segon pla per a una càrrega instantània
-    if "prewarmed" not in st.session_state:
-        import threading
-        from core.db import load_dashboard_data, get_csv_mtimes
-        def _prewarm():
-            try:
-                from streamlit.runtime.scriptrunner import add_script_run_ctx
-                add_script_run_ctx(threading.current_thread())
-            except Exception:
-                pass
-            try:
-                load_dashboard_data(mtimes=db_tracker.last_update)
-            except Exception:
-                pass
-        threading.Thread(target=_prewarm, daemon=True).start()
-        st.session_state["prewarmed"] = True
+
 
 def render_module_view(module_name):
     from core.db import ensure_session_dfs
