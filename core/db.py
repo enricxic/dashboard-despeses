@@ -11,6 +11,7 @@ from sqlalchemy import text as sa_text
 
 # ----------------- DATA UTILITIES -----------------
 CSV_DIR = "csv"
+_DB_ENGINE_FAILED = False
 
 # Dict of month name translations from Catalan/Spanish CSV inputs to order index
 MONTHS_MAP = {
@@ -161,12 +162,16 @@ def fetch_table_fast(table_name):
 
     df_result = pd.DataFrame()
     
-    try:
-        engine = get_db_engine()
-        if engine is not None:
-            df_result = pd.read_sql(f"SELECT * FROM {table_name}", engine)
-    except Exception as e:
-        print(f"⚠️ Error connexió directa PostgreSQL a {table_name}, fallback a REST API: {e}")
+    global _DB_ENGINE_FAILED
+    
+    if not _DB_ENGINE_FAILED:
+        try:
+            engine = get_db_engine()
+            if engine is not None:
+                df_result = pd.read_sql(f"SELECT * FROM {table_name}", engine)
+        except Exception as e:
+            _DB_ENGINE_FAILED = True
+            print(f"⚠️ Error connexió directa PostgreSQL a {table_name}, fallback a REST API: {e}")
     if df_result.empty:
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
         df_result = fetch_all_supabase(supabase, table_name)

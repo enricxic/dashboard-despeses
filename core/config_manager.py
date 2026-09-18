@@ -150,7 +150,9 @@ TRANSLATIONS = {
 }
 
 import copy
+import streamlit as st
 
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_app_config():
     # Intenta llegir de Supabase primer (id=2 per la configuració general)
     try:
@@ -190,6 +192,7 @@ def load_app_config():
         return copy.deepcopy(DEFAULT_CONFIG)
 
 def save_app_config(cfg_data):
+    load_app_config.clear()
     # Desar primer a Supabase (id=2)
     try:
         from core.db import get_supabase_client
