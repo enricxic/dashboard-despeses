@@ -168,10 +168,10 @@ def fetch_table_fast(table_name):
         try:
             engine = get_db_engine()
             if engine is not None:
-                df_result = pd.read_sql(f"SELECT * FROM {table_name}", engine)
+                df_result = pd.read_sql(f'SELECT * FROM "{table_name}"', engine)
         except Exception as e:
             _DB_ENGINE_FAILED = True
-            print(f"⚠️ Error connexió directa PostgreSQL a {table_name}, fallback a REST API: {e}")
+            print(f"Error connexio directa PostgreSQL a {table_name}, fallback a REST API: {e}")
     if df_result.empty:
         supabase = get_supabase_client(st.session_state.get("role", "guest"))
         df_result = fetch_all_supabase(supabase, table_name)
@@ -254,28 +254,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         tables_to_load = [
             'despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe',
             'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'
-        current_mod = st.session_state.get("current_module", "")
-        if current_mod == "Despeses":
-            tables_to_load = ['despeses', 'limitsDespeses', 'pagaments']
-        elif current_mod == "Ingressos":
-            tables_to_load = ['ingressos']
-        elif current_mod == "Supermercat":
-            tables_to_load = ['compresSuper']
-        elif current_mod == "Gasolina":
-            tables_to_load = ['gasolina']
-        elif current_mod == "Km Cotxe":
-            tables_to_load = ['kmCotxe']
-        elif current_mod == "Hipoteca":
-            tables_to_load = ['hipoteca']
-        elif current_mod == "Cartera":
-            tables_to_load = ['tr_cartera']
-        elif current_mod == "Estalvi":
-            tables_to_load = ['estalviDP']
-        else:
-            tables_to_load = [
-                'despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe',
-                'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'
-            ]
+        ]
         
     with ThreadPoolExecutor(max_workers=4) as executor:
         fetched = dict(zip(tables_to_load, executor.map(fetch_table_fast, tables_to_load)))
@@ -1207,7 +1186,12 @@ def ensure_session_dfs():
         st.session_state["dfs_initialized"] = True
         st.session_state["last_synced_time"] = tracker.last_update
 
-ensure_session_dfs()
+try:
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    if get_script_run_ctx() is not None:
+        ensure_session_dfs()
+except Exception:
+    pass
 
 df_desp = st.session_state.get("df_desp", pd.DataFrame())
 df_ing = st.session_state.get("df_ing", pd.DataFrame())

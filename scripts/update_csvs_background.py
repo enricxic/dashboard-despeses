@@ -14,7 +14,10 @@ def get_keys():
     secrets_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.streamlit', 'secrets.toml'))
     with open(secrets_path, "rb") as f:
         data = tomllib.load(f)
-    return data.get("SUPABASE_URL"), data.get("SUPABASE_KEY")
+    
+    # Try different possible key names from secrets.toml
+    key = data.get("SUPABASE_KEY") or data.get("SUPABASE_KEY_PUBLISHABLE") or data.get("SUPABASE_KEY_SECRET")
+    return data.get("SUPABASE_URL"), key
 
 def main():
     print(f"[{datetime.now()}] Iniciant sincronització silenciada en segon pla...")
