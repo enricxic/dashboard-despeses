@@ -295,19 +295,20 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         df = df.rename(columns={'?/l': 'euros/litre', '€/l': 'euros/litre'})
         df['idGasolina'] = pd.to_numeric(df['idGasolina'], errors='coerce')
         df = df.dropna(subset=['idGasolina']).sort_values(by='idGasolina', ascending=False).reset_index(drop=True)
-        df['KM totals'] = pd.to_numeric(df['KM totals'], errors='coerce')
-        df['Litres'] = clean_numeric(df['Litres'])
-        df['Euros'] = clean_numeric(df['Euros'])
-        df['euros/litre'] = clean_numeric(df['euros/litre'])
-        df['parsed_date'] = df['Data'].apply(parse_excel_date)
+        df['import'] = clean_numeric(df['import'])
+        df['litres'] = clean_numeric(df['litres'])
+        df['euros/litre'] = clean_numeric(df.get('euros/litre', 0))
+        df['parsed_date'] = df['data'].apply(parse_excel_date)
         out['df_gas'] = df
         
     if 'kmCotxe' in fetched:
         _, df = fetched['kmCotxe']
         df = fix_mojibake_df(df)
-        df['id'] = pd.to_numeric(df['id'], errors='coerce')
-        df = df.dropna(subset=['id']).sort_values(by='id', ascending=False).reset_index(drop=True)
-        df['Km totals'] = clean_numeric(df['Km totals'])
+        df['idRuta'] = pd.to_numeric(df['idRuta'], errors='coerce')
+        df = df.dropna(subset=['idRuta']).sort_values(by='idRuta', ascending=False).reset_index(drop=True)
+        df['contador'] = clean_numeric(df['contador'])
+        df['km'] = clean_numeric(df['km'])
+        df['parsed_date'] = df['data'].apply(parse_excel_date)
         out['df_km'] = df
         
     if 'hipoteca' in fetched:
