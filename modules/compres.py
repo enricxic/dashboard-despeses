@@ -102,6 +102,11 @@ def map_product_to_category(product_name):
     if 'rmse' in prod_norm or 'formatge' in prod_norm or 'untar' in prod_norm:
         return 'lactics', 'Formatge'
 
+    from core.db import load_categories_conceptes
+    cat_config = load_categories_conceptes()
+    if not cat_config:
+        cat_config = {}
+
     articles_map = cat_config.get("articles_compres", {})
     for fam, articles in articles_map.items():
         for art in articles:
@@ -1829,7 +1834,10 @@ Notes importants:
             if st.button("Guardar article", key="btn_save_dialog_article", use_container_width=True):
                 if new_art_name.strip():
                     new_art = new_art_name.strip()
-                    global cat_config
+                    from core.db import load_categories_conceptes, save_categories_conceptes
+                    cat_config = load_categories_conceptes()
+                    if not cat_config:
+                        cat_config = {}
                     if "articles_compres" not in cat_config:
                         cat_config["articles_compres"] = {}
                     if family not in cat_config["articles_compres"]:
