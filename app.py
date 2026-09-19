@@ -80,6 +80,10 @@ try {
 if not check_password():
     st.stop()
 
+# Si StartDashboard.py ha engegat el mode d'emergència, fixem l'estat offline d'entrada
+if "is_offline" not in st.session_state:
+    st.session_state["is_offline"] = (os.environ.get("STREAMLIT_OFFLINE_MODE") == "1")
+
 app_cfg = load_app_config()
 
 # Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu)
