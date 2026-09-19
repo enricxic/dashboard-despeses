@@ -694,6 +694,28 @@ def render():
             </div>
             """, unsafe_allow_html=True)
             
+            def _update_desktop_shortcut(new_title):
+                try:
+                    import os, glob, win32com.client
+                    user_profile = os.environ.get("USERPROFILE")
+                    if not user_profile: return
+                    
+                    desktop_path = os.path.join(user_profile, "Desktop")
+                    shell = win32com.client.Dispatch("WScript.Shell")
+                    
+                    for lnk in glob.glob(os.path.join(desktop_path, "*.lnk")):
+                        try:
+                            shortcut = shell.CreateShortCut(lnk)
+                            if "StartDashboard.py" in shortcut.Arguments or "StartDashboard.py" in shortcut.TargetPath:
+                                new_lnk = os.path.join(desktop_path, f"{new_title}.lnk")
+                                if lnk != new_lnk:
+                                    os.rename(lnk, new_lnk)
+                                break
+                        except:
+                            pass
+                except Exception as e:
+                    print("Error actualitzant drecera:", e)
+
             st.write("")
             _render_flash_message()
             if st.button("💾 Desar Títol de la Casa", type="primary", use_container_width=True, key="save_titol"):
@@ -706,6 +728,7 @@ def render():
                     "tamany_lletra": tamany_lletra
                 }
                 if save_app_config(cur_cfg):
+                    _update_desktop_shortcut(f"{p1}{p2}")
                     st.session_state["flash_success"] = "✅ Títol de la casa desat correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
