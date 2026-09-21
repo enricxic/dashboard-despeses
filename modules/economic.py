@@ -3775,11 +3775,13 @@ def render(view_mode="economic"):
                 amt = float(row.get('Import', 0.0))
                 banc = str(row.get('Banc', '')).strip()
                 forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
+                if not forma_pago:
+                    forma_pago = "Compte"
                 
                 # Check for missing critical data
                 warning = ""
-                if not banc or not forma_pago:
-                    warning = " ⚠️ *(Falta Banc o F. Pagament!)*"
+                if not banc:
+                    warning = " ⚠️ *(Falta Banc!)*"
                 
                 st.markdown(f"**{row.get('Concepte', 'Pagament')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
                 
@@ -3794,11 +3796,13 @@ def render(view_mode="economic"):
                 amt = float(row.get('Import', 0.0))
                 banc = str(row.get('Banc', '')).strip()
                 forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
+                if not forma_pago:
+                    forma_pago = "Compte"
                 
                 # Check for missing critical data
                 warning = ""
-                if not banc or not forma_pago:
-                    warning = " ⚠️ *(Falta Banc o F. Pagament!)*"
+                if not banc:
+                    warning = " ⚠️ *(Falta Banc!)*"
                     
                 st.markdown(f"**{row.get('Concepte', 'Ingrés')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
                 
@@ -3816,8 +3820,8 @@ def render(view_mode="economic"):
             
             updates_made = False
             for key, res in results.items():
-                if not res['banc'] or not res['forma_pago']:
-                    st.error(f"Si us plau, tanca i corregeix a les previsions el Banc i Forma de Pagament de: {res['row'].get('Concepte', '')}")
+                if not res['banc']:
+                    st.error(f"Si us plau, tanca i corregeix a les previsions el Banc de: {res['row'].get('Concepte', '')}")
                     return
                     
                 max_id += 1
