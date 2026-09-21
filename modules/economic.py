@@ -4515,9 +4515,10 @@ def render(view_mode="economic"):
 
             st.markdown("#### 📊 Resum i Balanç d'Inversions")
             if not df_cartera.empty:
-                col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
+                col_kpi1, col_kpi2, col_kpi_sum, col_kpi3, col_kpi4 = st.columns(5)
                 sp_compres = df_cartera[df_cartera['CARTERA'] == 'S&P500']['COMPRA'].sum()
                 nv_compres = df_cartera[df_cartera['CARTERA'] == 'NVIDIA']['COMPRA'].sum()
+                suma_accions = sp_compres + nv_compres
                 total_vendes = df_cartera['VENDA'].sum()
                 total_cashback = df_cartera[df_cartera['CONCEPTE'] == 'CashBack']['COMPRA'].sum()
                 
@@ -4525,6 +4526,8 @@ def render(view_mode="economic"):
                     st.metric("Total S&P500", f"{sp_compres:,.2f} €")
                 with col_kpi2:
                     st.metric("Total NVIDIA", f"{nv_compres:,.2f} €")
+                with col_kpi_sum:
+                    st.metric("Suma Inversió", f"{suma_accions:,.2f} €")
                 with col_kpi3:
                     st.metric("Total Vendes", f"{total_vendes:,.2f} €")
                 with col_kpi4:
