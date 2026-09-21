@@ -3763,10 +3763,7 @@ def render(view_mode="economic"):
     
     @st.dialog("⚙️ Confirmar Operacions i Bancs", width="large")
     def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
-        st.write("Verifica el **Banc** i la **Forma de Pagament** per a cada operació seleccionada:")
-        
-        bancs_options = [""] + get_config_banks()
-        pay_methods = [""] + get_config_payment_methods()
+        st.write("Verifica els imports i bancs de les operacions seleccionades. Si detectes algun error, tanca aquesta finestra i corregeix-ho a la taula de previsions.")
         
         results = {}
         
@@ -3775,54 +3772,38 @@ def render(view_mode="economic"):
             for p in pagaments_sel:
                 idx = p['idx']
                 row = p['row']
-                st.markdown(f"**{row['Concepte']}**")
-                c1, c2, c3 = st.columns([1, 1.5, 1.5])
+                amt = float(row.get('Import', 0.0))
+                banc = str(row.get('Banc', '')).strip()
+                forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
                 
-                default_b_idx = 1 if len(bancs_options) > 1 else 0
-                row_banc = str(row.get('Banc', '')).strip()
-                if row_banc in bancs_options:
-                    default_b_idx = bancs_options.index(row_banc)
-                    
-                default_pm_idx = 1 if len(pay_methods) > 1 else 0
-                row_pm = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
-                if row_pm in pay_methods:
-                    default_pm_idx = pay_methods.index(row_pm)
-                    
-                with c1:
-                    amt = st.number_input(f"Import (€)", value=float(row.get('Import', 0.0)), step=1.0, format="%.2f", key=f"amt_pag_{idx}")
-                with c2:
-                    b = st.selectbox(f"Banc", bancs_options, index=default_b_idx, key=f"b_pag_{idx}")
-                with c3:
-                    pm = st.selectbox(f"F. Pagament", pay_methods, index=default_pm_idx, key=f"pm_pag_{idx}")
-                results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm, 'import_final': amt}
-                st.divider()
+                # Check for missing critical data
+                warning = ""
+                if not banc or not forma_pago:
+                    warning = " ⚠️ *(Falta Banc o F. Pagament!)*"
+                
+                st.markdown(f"**{row.get('Concepte', 'Pagament')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
+                
+                results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': banc, 'forma_pago': forma_pago, 'import_final': amt}
+            st.divider()
                 
         if ingressos_sel:
             st.markdown("#### 🟢 Ingressos a processar")
             for i in ingressos_sel:
                 idx = i['idx']
                 row = i['row']
-                st.markdown(f"**{row['Concepte']}**")
-                c1, c2, c3 = st.columns([1, 1.5, 1.5])
+                amt = float(row.get('Import', 0.0))
+                banc = str(row.get('Banc', '')).strip()
+                forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
                 
-                default_b_idx = 1 if len(bancs_options) > 1 else 0
-                row_banc = str(row.get('Banc', '')).strip()
-                if row_banc in bancs_options:
-                    default_b_idx = bancs_options.index(row_banc)
+                # Check for missing critical data
+                warning = ""
+                if not banc or not forma_pago:
+                    warning = " ⚠️ *(Falta Banc o F. Pagament!)*"
                     
-                default_pm_idx = 1 if len(pay_methods) > 1 else 0
-                row_pm = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
-                if row_pm in pay_methods:
-                    default_pm_idx = pay_methods.index(row_pm)
-                    
-                with c1:
-                    amt = st.number_input(f"Import (€)", value=float(row.get('Import', 0.0)), step=1.0, format="%.2f", key=f"amt_ing_{idx}")
-                with c2:
-                    b = st.selectbox(f"Banc", bancs_options, index=default_b_idx, key=f"b_ing_{idx}")
-                with c3:
-                    pm = st.selectbox(f"F. Pagament", pay_methods, index=default_pm_idx, key=f"pm_ing_{idx}")
-                results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': b, 'forma_pago': pm, 'import_final': amt}
-                st.divider()
+                st.markdown(f"**{row.get('Concepte', 'Ingrés')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
+                
+                results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': banc, 'forma_pago': forma_pago, 'import_final': amt}
+            st.divider()
                 
         if st.button("✅ Confirmar i Desar a BBDD", type="primary", use_container_width=True):
             df_desp_local = st.session_state["df_desp"]
@@ -3836,7 +3817,7 @@ def render(view_mode="economic"):
             updates_made = False
             for key, res in results.items():
                 if not res['banc'] or not res['forma_pago']:
-                    st.error("Si us plau, selecciona Banc i Forma de Pagament per a totes les operacions.")
+                    st.error(f"Si us plau, tanca i corregeix a les previsions el Banc i Forma de Pagament de: {res['row'].get('Concepte', '')}")
                     return
                     
                 max_id += 1
