@@ -380,12 +380,53 @@ def show_orphan_cleaner_dialog():
                 item_to_link = df[df["idNom"] == selected_ids[0]].iloc[0]
                 st.write(f"Enllaçant: **{item_to_link['nom_super']}** ({item_to_link['supermercat']})")
                 
-                from core.db import get_config_families, get_config_articles
+                from core.db import get_config_families, get_config_articles, get_tb_productes_cached, save_categories_conceptes
+                from core.config_manager import load_app_config
                 fam_options = [""] + get_config_families()
                 fam_sel = st.selectbox("Família", fam_options, key="orf_fam")
                 if fam_sel:
                     art_options = [""] + get_config_articles(fam_sel)
-                    art_sel = st.selectbox("Article", art_options, key="orf_art")
+                    
+                    if "orf_force_art" in st.session_state:
+                        if st.session_state["orf_force_art"] in art_options:
+                            st.session_state["orf_art"] = st.session_state["orf_force_art"]
+                        del st.session_state["orf_force_art"]
+
+                    art_col1, art_col2 = st.columns([8, 2])
+                    with art_col1:
+                        art_sel = st.selectbox("Article", art_options, key="orf_art")
+                    with art_col2:
+                        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                        if st.button("➕", key="btn_add_orf_art", help="Crear nou article"):
+                            st.session_state["show_new_art_orf"] = not st.session_state.get("show_new_art_orf", False)
+                            st.rerun()
+                            
+                    if st.session_state.get("show_new_art_orf", False):
+                        st.markdown(f"<div style='background:#1e293b; padding:10px; border-radius:8px; border:1px solid #334155;'>", unsafe_allow_html=True)
+                        new_art_name = st.text_input(f"Nom del nou article per **{fam_sel}**:", key="new_orf_art_input")
+                        if st.button("Crear i Seleccionar", use_container_width=True):
+                            if new_art_name.strip():
+                                new_art = new_art_name.strip()
+                                try:
+                                    supabase.table('tb_productes').insert({'nom_estandard': new_art, 'familia': fam_sel}).execute()
+                                    get_tb_productes_cached.clear()
+                                    cfg = load_app_config()
+                                    if "articles_compres" not in cfg:
+                                        cfg["articles_compres"] = {}
+                                    if fam_sel not in cfg["articles_compres"]:
+                                        cfg["articles_compres"][fam_sel] = []
+                                    if new_art not in cfg["articles_compres"][fam_sel]:
+                                        cfg["articles_compres"][fam_sel].append(new_art)
+                                        cfg["articles_compres"][fam_sel].sort()
+                                        save_categories_conceptes(cfg)
+                                    st.toast(f"Article '{new_art}' creat!", icon="✅")
+                                    st.session_state["show_new_art_orf"] = False
+                                    st.session_state["orf_force_art"] = new_art
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error creant article: {e}")
+                        st.markdown("</div>", unsafe_allow_html=True)
+                            
                     if art_sel and st.button("🔗 Enllaçar", use_container_width=True):
                         # Trobar idProducte
                         res_prod = supabase.table('tb_productes').select('idProducte').eq('nom_estandard', art_sel).execute()
@@ -393,6 +434,8 @@ def show_orphan_cleaner_dialog():
                             id_prod = res_prod.data[0]['idProducte']
                             supabase.table('tb_noms_producte').update({'idProducte': id_prod}).eq('idNom', selected_ids[0]).execute()
                             st.toast(f"Element enllaçat a {art_sel}!", icon="✅")
+                            if "orf_art" in st.session_state:
+                                del st.session_state["orf_art"]
                             st.rerun()
                         else:
                             st.error("No s'ha trobat l'ID de l'article a tb_productes.")
