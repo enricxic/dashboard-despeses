@@ -1855,9 +1855,11 @@ Notes importants:
         
     with col_art_btn:
         st.markdown("<div style='margin-bottom: 2px;'></div>", unsafe_allow_html=True)
-        if st.button("+", key="btn_trigger_add_art", help="Tria una FAMÍLIA abans d'afegir un article" if not fam_sel else "Afegir nou article", use_container_width=True, disabled=not bool(fam_sel)):
+        if st.button("+", key="btn_trigger_add_art", help="Afegir nou article", use_container_width=True):
             if fam_sel:
                 show_add_article_dialog(fam_sel)
+            else:
+                st.warning("Tria una FAMÍLIA abans d'afegir un article.")
                 
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
