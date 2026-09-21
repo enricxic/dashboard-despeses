@@ -3816,7 +3816,7 @@ def render(view_mode="economic"):
             df_pag_local = st.session_state["df_pag"]
             df_ing_local = st.session_state["df_ing"]
             
-            avui = datetime.datetime.now().strftime("%d/%m/%Y")
+            avui = datetime.now().strftime("%d/%m/%Y")
             
             updates_made = False
             for key, res in results.items():
