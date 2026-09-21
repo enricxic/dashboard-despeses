@@ -65,7 +65,7 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
     - `🔧 Canvi d'Oli`: Seguiment de km actuals, límit de canvi d'oli i km restants.
     - `📊 Consum`: Gràfic de consum anual L/100km.
 12. **🛒 Ingressos i Despeses**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral d'ingressos, despeses i compres:
-    - `📄 Compres Super`: Escàner OCR intel·ligent Gemini Vision i introducció línia per línia de tiquets.
+    - `📄 Compres Super`: Escàner OCR intel·ligent amb suport total de Gemini Vision. Incorpora un sistema de **Regles de Súper Editables (`core/ocr_rules.md`)** des del menú superior, permetent ensenyar a la IA com llegir ofertes o estructures de tiquets específiques de cada cadena (Mercadona, Bonpreu, Dia, etc.) sense programar codi. Inclou mecanismes estrictes per forçar quantitats enteres.
     - `📝 Ingrés / Despesa General`: Formulari directe de **Moviments Reals** (Despesa, Ingrés, Traspàs), proveïment de gasolina amb calculadora, tiquets pendents i taula d'últims moviments.
     - `📋 Llista de la Compra`: Llista de productes sota stock mínim i peticions puntuals.
     - `📦 Rebost / Stock`: Inventari de productes del rebost i control d'existències.
@@ -84,6 +84,7 @@ Dashboard/
 │   ├── db.py                 # Connexió i operacions CRUD a Supabase
 │   ├── config_manager.py     # Gestor de configuració JSON i perfil familiar (Ruta absoluta garanteix focalització a core/config.json)
 │   ├── config.json           # Configuració de categories, comptes, família, eines i paràmetres
+│   ├── ocr_rules.md          # Regles personalitzades per supermercat enviades al prompt de Gemini
 │   └── harness.py            # Motor d'avaluació IA, execució asíncrona en segon pla i generador d'informes .txt
 ├── data/
 │   ├── harness_menu_cases.json # Banc d'11 casos de prova exhaustius per al test de menús
