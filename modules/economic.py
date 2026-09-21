@@ -4535,8 +4535,13 @@ def render(view_mode="economic"):
 
                 st.markdown("#### 📋 Històric de Moviments TR Cartera")
                 cols_tr = [c for c in ['DATA', 'CARTERA', 'CONCEPTE', 'COMPRA', 'VENDA', 'COMENTARI'] if c in df_cartera.columns]
+                
+                format_dict = {'COMPRA': '{:,.2f} €', 'VENDA': '{:,.2f} €'}
+                if 'DATA' in df_cartera.columns:
+                    format_dict['DATA'] = lambda x: pd.to_datetime(x).strftime('%d/%m/%Y') if pd.notnull(x) and str(x).strip() else ''
+                    
                 st.dataframe(
-                    df_cartera[cols_tr].style.format({'COMPRA': '{:,.2f} €', 'VENDA': '{:,.2f} €'}),
+                    df_cartera[cols_tr].style.format(format_dict),
                     use_container_width=True,
                     hide_index=True
                 )
