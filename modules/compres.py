@@ -1855,7 +1855,7 @@ Notes importants:
         
     with col_art_btn:
         st.markdown("<div style='margin-bottom: 2px;'></div>", unsafe_allow_html=True)
-        if st.button("Nou", key="btn_trigger_add_art", help="Afegir nou article", use_container_width=True):
+        if st.button("+", key="btn_trigger_add_art", help="Afegir nou article", use_container_width=True):
             if fam_sel:
                 show_add_article_dialog(fam_sel)
             else:
