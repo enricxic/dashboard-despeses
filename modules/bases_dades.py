@@ -10,7 +10,7 @@ PK_MAP = {
     'gasolina': 'id',
     'kmCotxe': 'id',
     'hipoteca': 'id',
-    'tr_cartera': 'id',
+    'tr_cartera': 'idTRCartera',
     'estalviDP': 'id',
     'limitsDespeses': 'id',
     'pagaments': 'id',
@@ -95,12 +95,19 @@ def render():
     # Key to force re-render if needed
     editor_key = f"db_editor_{selected_table}"
     
+    col_config = {}
+    for col in df.columns:
+        if col.upper() == 'DATA':
+            df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
+            col_config[col] = st.column_config.DateColumn(col, format="DD/MM/YYYY")
+            
     edited_data = st.data_editor(
         df,
         num_rows="dynamic",
         use_container_width=True,
         key=editor_key,
-        hide_index=True
+        hide_index=True,
+        column_config=col_config
     )
     
     # Detect and apply changes manually if the user wants to apply them.
