@@ -337,6 +337,9 @@ def _render_flash_message():
         msg = st.session_state.pop("flash_success")
         st.toast(msg, icon="💾")
         st.success(msg)
+    if "flash_warning" in st.session_state:
+        msg_warn = st.session_state.pop("flash_warning")
+        st.warning(msg_warn)
 
 def _on_eina_change(e_id):
     val = st.session_state.get(f"chk_eina_{e_id}")
@@ -738,7 +741,7 @@ def render():
                 }
                 if save_app_config(cur_cfg):
                     if not _update_desktop_shortcut(f"{p1}{p2}"):
-                        st.warning(f"S'ha desat la configuració al núvol. Recorda canviar manualment el nom de la icona del teu escriptori a '{p1}{p2}' o fer-ho estant en mode Offline.")
+                        st.session_state["flash_warning"] = f"S'ha desat la configuració al núvol. Recorda canviar manualment el nom de la icona del teu escriptori a '{p1}{p2}' o fer-ho estant en mode Offline."
                     st.session_state["flash_success"] = "✅ Títol de la casa desat correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
