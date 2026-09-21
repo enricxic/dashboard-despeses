@@ -1348,43 +1348,9 @@ def render(view_mode="economic"):
     
     
     def save_unknown_products(parsed_items, supermercat):
-        try:
-            supabase = get_supabase_client(st.session_state.get("role", "guest"))
-            df_nom = fetch_all_supabase(supabase, 'tb_noms_producte')
-            
-            if not df_nom.empty:
-                df_super = df_nom[df_nom['supermercat'].astype(str).str.lower() == str(supermercat).lower()]
-                existing_names = set(df_super['nom_super'].dropna().apply(lambda x: normalitzar_text(x)))
-            else:
-                existing_names = set()
-                
-            new_rows = []
-            for item in parsed_items:
-                nom_brut = item.get('nom_brut', '').strip()
-                if not nom_brut:
-                    continue
-                    
-                nom_norm = normalitzar_text(nom_brut)
-                if not nom_norm:
-                    continue
-                    
-                # If not in existing names, we need to add it
-                if nom_norm not in existing_names:
-                    new_rows.append({
-                        "supermercat": supermercat,
-                        "nom_super": nom_brut,
-                        "idProducte": None,
-                        "tipus": None,
-                        "unitat": None,
-                        "mesura": None
-                    })
-                    existing_names.add(nom_norm)
-                    
-            if new_rows:
-                supabase.table("tb_noms_producte").insert(new_rows).execute()
-                print(f"Saved {len(new_rows)} new unknown products to tb_noms_producte for {supermercat}.")
-        except Exception as e:
-            print(f"Error saving unknown products: {e}")
+        # Desactivat per evitar l'acumulació de productes orfes.
+        # Ara s'exigeix que l'usuari els enllaci manualment abans de tancar el tiquet.
+        pass
     
     def parse_default_ticket(text_content):
         # Log Streamlit OCR text
@@ -2112,8 +2078,10 @@ def render(view_mode="economic"):
             st.session_state["finalize_error"] = "Si us plau, especifica la Data del tiquet!"
             return
             
-        # Salvem els articles desconeguts si n'hi ha (ara que tenim supermercat confirmat)
-        save_unknown_products(items, ticket_super)
+        has_pending = any(item.get('familia') == 'Pendent' or item.get('article') == 'pendent' for item in items)
+        if has_pending:
+            st.session_state["finalize_error"] = "⚠️ Tens productes marcats com a 'Pendent'. Has de lligar-los al teu catàleg o esborrar-los del tiquet abans de desar-lo."
+            return
             
         if "finalize_error" in st.session_state:
             del st.session_state["finalize_error"]
