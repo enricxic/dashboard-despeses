@@ -4515,20 +4515,23 @@ def render(view_mode="economic"):
 
             st.markdown("#### 📊 Resum i Balanç d'Inversions")
             if not df_cartera.empty:
-                col_kpi1, col_kpi2, col_kpi3, col_kpi_sum, col_kpi_vendes = st.columns(5)
+                col_kpi1, col_kpi2, col_kpi_amz, col_kpi3, col_kpi_sum, col_kpi_vendes = st.columns(6)
                 
                 sp_compres = df_cartera[(df_cartera['CARTERA'] == 'S&P500') & (df_cartera['CONCEPTE'].str.lower() == 'compra')]['COMPRA'].sum()
                 nv_compres = df_cartera[(df_cartera['CARTERA'] == 'NVIDIA') & (df_cartera['CONCEPTE'].str.lower() == 'compra')]['COMPRA'].sum()
+                amz_compres = df_cartera[(df_cartera['CARTERA'] == 'Amazon') & (df_cartera['CONCEPTE'].str.lower() == 'compra')]['COMPRA'].sum()
                 total_cashback = df_cartera[df_cartera['CONCEPTE'].str.lower() == 'cashback']['COMPRA'].sum()
-                suma_accions = sp_compres + nv_compres + total_cashback
+                suma_accions = sp_compres + nv_compres + amz_compres + total_cashback
                 total_vendes = df_cartera['VENDA'].sum()
                 
                 with col_kpi1:
                     st.metric("Total S&P500", f"{sp_compres:,.2f} €")
                 with col_kpi2:
                     st.metric("Total NVIDIA", f"{nv_compres:,.2f} €")
+                with col_kpi_amz:
+                    st.metric("Total Amazon", f"{amz_compres:,.2f} €")
                 with col_kpi3:
-                    st.metric("CashBack Acumulat", f"{total_cashback:,.2f} €")
+                    st.metric("CashBack", f"{total_cashback:,.2f} €")
                 with col_kpi_sum:
                     st.metric("Suma Inversió", f"{suma_accions:,.2f} €")
                 with col_kpi_vendes:
