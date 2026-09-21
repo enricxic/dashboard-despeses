@@ -4517,9 +4517,11 @@ def render(view_mode="economic"):
             if not df_cartera.empty:
                 col_kpi1, col_kpi2, col_kpi_amz, col_kpi3, col_kpi_sum, col_kpi_vendes = st.columns(6)
                 
-                sp_compres = df_cartera[(df_cartera['CARTERA'] == 'S&P500') & (df_cartera['CONCEPTE'].str.lower() == 'compra')]['COMPRA'].sum()
-                nv_compres = df_cartera[(df_cartera['CARTERA'] == 'NVIDIA') & (df_cartera['CONCEPTE'].str.lower() == 'compra')]['COMPRA'].sum()
-                amz_compres = df_cartera[(df_cartera['CARTERA'] == 'Amazon') & (df_cartera['CONCEPTE'].str.lower() == 'compra')]['COMPRA'].sum()
+                valid_concepts = ['compra', 'promoció', 'promocio']
+                
+                sp_compres = df_cartera[(df_cartera['CARTERA'] == 'S&P500') & (df_cartera['CONCEPTE'].str.lower().isin(valid_concepts))]['COMPRA'].sum()
+                nv_compres = df_cartera[(df_cartera['CARTERA'] == 'NVIDIA') & (df_cartera['CONCEPTE'].str.lower().isin(valid_concepts))]['COMPRA'].sum()
+                amz_compres = df_cartera[(df_cartera['CARTERA'] == 'Amazon') & (df_cartera['CONCEPTE'].str.lower().isin(valid_concepts))]['COMPRA'].sum()
                 total_cashback = df_cartera[df_cartera['CONCEPTE'].str.lower() == 'cashback']['COMPRA'].sum()
                 suma_accions = sp_compres + nv_compres + amz_compres + total_cashback
                 total_vendes = df_cartera['VENDA'].sum()
