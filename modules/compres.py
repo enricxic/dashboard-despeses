@@ -1855,8 +1855,8 @@ Notes importants:
         
     with col_art_btn:
         st.markdown("<div style='margin-bottom: 2px;'></div>", unsafe_allow_html=True)
-        if fam_sel:
-            if st.button("➕", key="btn_trigger_add_art", help="Afegir nou article", use_container_width=True):
+        if st.button("➕", key="btn_trigger_add_art", help="Tria una FAMÍLIA abans d'afegir un article" if not fam_sel else "Afegir nou article", use_container_width=True, disabled=not bool(fam_sel)):
+            if fam_sel:
                 show_add_article_dialog(fam_sel)
                 
     with col_pes:
