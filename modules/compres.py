@@ -1792,7 +1792,7 @@ Notes importants:
             st.text_input("Text original (modifica si cal abans de desar per ensenyar al sistema):", value=ed_item.get('nom_brut', ''), key="manual_nom_brut_input")
             
     col_fam, col_art, col_art_btn, col_pes, col_qty, col_preu, col_pct, col_prom, col_tot, col_reb, col_add = st.columns(
-        [2, 1.85, 0.35, 1, 1, 1, 0.8, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
+        [2, 1.85, 0.55, 1, 0.8, 1, 0.8, 1, 1.2, 0.6, 1.2], vertical_alignment="bottom"
     )
     
     with col_fam:
@@ -1855,7 +1855,7 @@ Notes importants:
         
     with col_art_btn:
         st.markdown("<div style='margin-bottom: 2px;'></div>", unsafe_allow_html=True)
-        if st.button("+", key="btn_trigger_add_art", help="Afegir nou article"):
+        if st.button("✚", key="btn_trigger_add_art", help="Afegir nou article", use_container_width=True, type="primary"):
             if fam_sel:
                 show_add_article_dialog(fam_sel)
             else:
