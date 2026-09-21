@@ -3892,7 +3892,7 @@ def render(view_mode="economic"):
                         'Data': avui,
                         'Banc': str(res['banc']),
                         'FormaPago': str(res['forma_pago']),
-                        'Idcategoria': 'ingressos',
+                        'Idcategoria': 'ingres_general',
                         'Idconcepte': str(res['row']['Concepte']),
                         'Import càrrec': 0.0,
                         'import ingrés': float(res['import_final']),
