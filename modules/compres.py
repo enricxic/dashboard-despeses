@@ -324,7 +324,6 @@ def save_unknown_products(parsed_items, supermercat):
                 new_rows.append({
                     "supermercat": supermercat,
                     "nom_super": nom_brut,
-                    "similitud_minima": 0.7,
                     "idProducte": None,
                     "tipus": None,
                     "unitat": None,
@@ -1641,14 +1640,20 @@ Notes importants:
                         # 1. Update supermercat
                         super_trobat = data.get("supermercat", "")
                         if super_trobat:
+                            import unicodedata
+                            def normalize_str(s):
+                                return ''.join(c for c in unicodedata.normalize('NFD', str(s)) if unicodedata.category(c) != 'Mn').lower()
+                                
                             valid_supers = get_config_supers()
                             super_definitiu = None
+                            norm_trobat = normalize_str(super_trobat)
                             for sp in valid_supers:
-                                if sp.lower() in super_trobat.lower() or super_trobat.lower() in sp.lower():
+                                norm_sp = normalize_str(sp)
+                                if norm_sp in norm_trobat or norm_trobat in norm_sp:
                                     super_definitiu = sp
                                     break
                             
-                            if not super_definitiu and 'comerbal' in super_trobat.lower():
+                            if not super_definitiu and 'comerbal' in norm_trobat:
                                 super_definitiu = 'Novavenda'
                                 
                             if super_definitiu:
