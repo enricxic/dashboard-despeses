@@ -4038,9 +4038,15 @@ def render(view_mode="economic"):
                     with c_chk:
                         is_sel = st.checkbox(" ", key=f"chk_pag_{it['idx']}", label_visibility="collapsed")
                     with c_txt:
-                        st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:140px; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
-                    if is_sel:
-                        pagaments_a_processar.append({'idx': it['idx'], 'row': it['row']})
+                        if is_sel:
+                            c_name, c_num = st.columns([0.60, 0.40])
+                            c_name.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:140px; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</span></div>", unsafe_allow_html=True)
+                            custom_amt = c_num.number_input("Import real", value=float(amt), step=0.01, format="%.2f", key=f"num_pag_in_{it['idx']}", label_visibility="collapsed")
+                            new_row = it['row'].copy()
+                            new_row['Import'] = custom_amt
+                            pagaments_a_processar.append({'idx': it['idx'], 'row': new_row})
+                        else:
+                            st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:140px; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
                 
                 if len(pagaments_a_processar) > 0:
                     if st.button("📥 Passar seleccionats a la BBDD", key="btn_proc_pag"):
@@ -4097,9 +4103,15 @@ def render(view_mode="economic"):
                         with c_chk:
                             is_sel = st.checkbox(" ", key=f"chk_ing_{i_idx}", label_visibility="collapsed")
                         with c_txt:
-                            st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:190px; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
-                        if is_sel:
-                            ingressos_a_processar.append({'idx': i_idx, 'row': i_row})
+                            if is_sel:
+                                c_name, c_num = st.columns([0.60, 0.40])
+                                c_name.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:190px; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</span></div>", unsafe_allow_html=True)
+                                custom_amt = c_num.number_input("Import real", value=float(amt), step=0.01, format="%.2f", key=f"num_ing_in_{i_idx}", label_visibility="collapsed")
+                                new_row = i_row.copy()
+                                new_row['Import'] = custom_amt
+                                ingressos_a_processar.append({'idx': i_idx, 'row': new_row})
+                            else:
+                                st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:190px; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
                     
                     if len(ingressos_a_processar) > 0:
                         if st.button("📥 Passar ingressos a BBDD", key="btn_proc_ing"):
