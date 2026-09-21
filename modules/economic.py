@@ -4539,9 +4539,12 @@ def render(view_mode="economic"):
                 format_dict = {'COMPRA': '{:,.2f} €', 'VENDA': '{:,.2f} €'}
                 if 'DATA' in df_cartera.columns:
                     format_dict['DATA'] = lambda x: pd.to_datetime(x).strftime('%d/%m/%Y') if pd.notnull(x) and str(x).strip() else ''
+                    df_cartera_display = df_cartera.sort_values(by='DATA', ascending=False)
+                else:
+                    df_cartera_display = df_cartera
                     
                 st.dataframe(
-                    df_cartera[cols_tr].style.format(format_dict),
+                    df_cartera_display[cols_tr].style.format(format_dict),
                     use_container_width=True,
                     hide_index=True
                 )
