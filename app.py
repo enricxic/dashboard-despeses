@@ -116,6 +116,8 @@ if "action" in st.query_params:
             st.session_state["editing_json_file"] = json_f
     elif act == "edit_rules":
         st.session_state["editing_ocr_rules"] = True
+    elif act == "clean_orphans":
+        st.session_state["cleaning_ocr_orphans"] = True
     elif act == "sync_db":
         st.cache_data.clear()
         st.session_state["db_synced_toast"] = True
@@ -298,32 +300,118 @@ def show_ocr_rules_editor_dialog():
         key=f"ta_{content_key}"
     )
 
-    c1, c2 = st.columns([1, 1])
+    c1, c2, c3 = st.columns([1,1,1])
     with c1:
-        if st.button("💾 Desar canvis", use_container_width=True, type="primary"):
+        if st.button("💾 Desar Regles", type="primary", use_container_width=True):
             try:
-                os.makedirs(os.path.dirname(full_path), exist_ok=True)
                 with open(full_path, "w", encoding="utf-8") as f:
                     f.write(current_val)
-                st.toast("✅ Regles desades correctament!", icon="💾")
+                st.toast("✅ Regles desades correctament!", icon="✨")
+                st.session_state[content_key] = current_val
                 if "editing_ocr_rules" in st.session_state:
                     del st.session_state["editing_ocr_rules"]
-                if content_key in st.session_state:
-                    del st.session_state[content_key]
                 st.rerun()
             except Exception as e:
-                st.error(f"❌ Error en desar el fitxer: {e}")
+                st.error(f"❌ Error en desar: {e}")
 
-    with c2:
-        if st.button("❌ Tancar", use_container_width=True):
+    with c3:
+        if st.button("❌ Cancel·lar", use_container_width=True):
             if "editing_ocr_rules" in st.session_state:
                 del st.session_state["editing_ocr_rules"]
-            if content_key in st.session_state:
-                del st.session_state[content_key]
             st.rerun()
 
 if st.session_state.get("editing_ocr_rules"):
     show_ocr_rules_editor_dialog()
+@st.dialog("🧹 Neteja Orfes (OCR)", width="large")
+def show_orphan_cleaner_dialog():
+    from core.db import get_supabase_client
+    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    if not supabase:
+        st.error("No hi ha connexió amb Supabase.")
+        return
+        
+    try:
+        # Fetch orphans
+        res = supabase.table('tb_noms_producte').select('idNom, supermercat, nom_super').is_('idProducte', 'null').execute()
+        orphans = res.data
+        if not orphans:
+            st.success("🎉 No hi ha cap producte orfe a la base de dades! Està tot net.")
+            if st.button("Tancar"):
+                if "cleaning_ocr_orphans" in st.session_state:
+                    del st.session_state["cleaning_ocr_orphans"]
+                st.rerun()
+            return
+            
+        st.info(f"S'han trobat **{len(orphans)}** noms de producte orfes (sense idProducte assignat).")
+        
+        import pandas as pd
+        df = pd.DataFrame(orphans)
+        df.insert(0, "Seleccionar", False)
+        
+        edited_df = st.data_editor(
+            df,
+            column_config={
+                "Seleccionar": st.column_config.CheckboxColumn("Seleccionar", default=False),
+                "idNom": "ID",
+                "supermercat": "Supermercat",
+                "nom_super": "Nom Original (OCR)"
+            },
+            disabled=["idNom", "supermercat", "nom_super"],
+            hide_index=True,
+            use_container_width=True
+        )
+        
+        selected_ids = edited_df[edited_df["Seleccionar"] == True]["idNom"].tolist()
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🗑️ Esborrar Seleccionats", type="primary", use_container_width=True):
+                if selected_ids:
+                    for id_nom in selected_ids:
+                        supabase.table('tb_noms_producte').delete().eq('idNom', id_nom).execute()
+                    st.toast(f"{len(selected_ids)} orfes esborrats correctament!", icon="✅")
+                    st.rerun()
+                else:
+                    st.warning("Selecciona almenys un element per esborrar.")
+                    
+        with col2:
+            st.markdown("#### O enllaça un element:")
+            if len(selected_ids) == 1:
+                item_to_link = df[df["idNom"] == selected_ids[0]].iloc[0]
+                st.write(f"Enllaçant: **{item_to_link['nom_super']}** ({item_to_link['supermercat']})")
+                
+                from core.config_manager import get_config_families, get_config_articles
+                fam_options = [""] + get_config_families()
+                fam_sel = st.selectbox("Família", fam_options, key="orf_fam")
+                if fam_sel:
+                    art_options = [""] + get_config_articles(fam_sel)
+                    art_sel = st.selectbox("Article", art_options, key="orf_art")
+                    if art_sel and st.button("🔗 Enllaçar", use_container_width=True):
+                        # Trobar idProducte
+                        res_prod = supabase.table('tb_productes').select('idProducte').eq('nom_estandard', art_sel).execute()
+                        if res_prod.data:
+                            id_prod = res_prod.data[0]['idProducte']
+                            supabase.table('tb_noms_producte').update({'idProducte': id_prod}).eq('idNom', selected_ids[0]).execute()
+                            st.toast(f"Element enllaçat a {art_sel}!", icon="✅")
+                            st.rerun()
+                        else:
+                            st.error("No s'ha trobat l'ID de l'article a tb_productes.")
+            elif len(selected_ids) > 1:
+                st.info("Només pots enllaçar 1 element a la vegada.")
+            else:
+                st.info("Selecciona 1 element per enllaçar-lo a un producte existent.")
+        
+        st.markdown("<hr/>", unsafe_allow_html=True)
+        if st.button("❌ Tancar Menu", use_container_width=True):
+            if "cleaning_ocr_orphans" in st.session_state:
+                del st.session_state["cleaning_ocr_orphans"]
+            st.rerun()
+                
+    except Exception as e:
+        st.error(f"Error llegint dades: {e}")
+
+if st.session_state.get("cleaning_ocr_orphans"):
+    show_orphan_cleaner_dialog()
 
 def render_traditional_menubar():
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
@@ -496,6 +584,7 @@ div.block-container {{
 </div>
 </div>
 <a href="?action=edit_rules{auth_suffix}" target="_self">📝 Editar regles súper (OCR)</a>
+<a href="?action=clean_orphans{auth_suffix}" target="_self">🧹 Neteja Orfes (OCR)</a>
 </div>
 </div>
 <div class="menu-item">
