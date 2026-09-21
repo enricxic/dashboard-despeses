@@ -767,6 +767,20 @@ def render(view_mode="economic"):
             if 'Data' in new_row and 'parsed_date' in df.columns:
                 try: new_row['parsed_date'] = pd.to_datetime(new_row['Data'], format='%d/%m/%Y', errors='coerce')
                 except: pass
+                
+            if df_key == 'df_desp':
+                if 'mes' in new_row:
+                    new_row['clean_mes'] = str(new_row['mes']).strip().lower()
+                else:
+                    new_row['clean_mes'] = ''
+                
+                try:
+                    any_val = int(new_row.get('any', 0))
+                    mes_idx = int(MONTHS_MAP.get(new_row['clean_mes'], 12))
+                    new_row['date_score'] = any_val * 12 + mes_idx
+                except:
+                    pass
+                    
             new_df = pd.DataFrame([new_row])
             updated_df = pd.concat([new_df, df], ignore_index=True)
             if sort_col and sort_col in updated_df.columns:
@@ -3863,7 +3877,7 @@ def render(view_mode="economic"):
                         row_dest['Banc'] = banc_desti_str
                         row_dest['Import càrrec'] = 0.0
                         row_dest['import ingrés'] = float(res['import_final'])
-                        row_dest['grup'] = "Ingrés"
+                        row_dest['grup'] = "op_banc"
                         insert_db_row('despeses', row_dest)
                         max_id += 1
                         
