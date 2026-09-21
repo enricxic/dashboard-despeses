@@ -66,7 +66,9 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
     - `📊 Consum`: Gràfic de consum anual L/100km.
 12. **🛒 Ingressos i Despeses**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral d'ingressos, despeses i compres:
     - `📄 Compres Super`: Escàner OCR intel·ligent amb suport total de Gemini Vision. Incorpora un sistema de **Regles de Súper Editables (`core/ocr_rules.md`)** des del menú superior, permetent ensenyar a la IA com llegir ofertes o estructures de tiquets específiques de cada cadena (Mercadona, Bonpreu, Dia, etc.) sense programar codi. Inclou mecanismes estrictes per forçar quantitats enteres.
-    - `📝 Ingrés / Despesa General`: Formulari directe de **Moviments Reals** (Despesa, Ingrés, Traspàs), proveïment de gasolina amb calculadora, tiquets pendents i taula d'últims moviments.
+    - `🛡️ Auditoria d'Entrada Estricta`: Prevenció d'entrada de dades brutes a la base de dades. Els articles desconeguts de l'OCR ('Pendent') no s'insereixen automàticament; el sistema bloqueja el desat del tiquet fins que l'usuari hagi categoritzat cada producte nou o l'hagi esborrat, evitant la creació d'orfes a `tb_noms_producte`.
+    - `🧹 Neteja d'Orfes (OCR)`: Eina avançada (disponible al menú "Editar") per depurar productes històrics orfes. Permet esborrar massivament text brossa de l'OCR, o bé enllaçar i crear nous articles al catàleg sobre la marxa de manera molt eficient.
+    - `📝 Ingrés / Despesa General`: Formulari directe de **Moviments Reals** (Despesa, Ingrés, Traspàs), proveïment de gasolina amb calculadora, tiquets pendents i taula d'últims moviments. Incorpora un **formulari d'inserció múltiple simplificat** (només text) que exigeix que el Banc i la Forma de Pagament s'hagin auditat prèviament a les previsions.
     - `📋 Llista de la Compra`: Llista de productes sota stock mínim i peticions puntuals.
     - `📦 Rebost / Stock`: Inventari de productes del rebost i control d'existències.
     - `📊 Estadístiques`: Gràfics i mètriques de despesa en supermercats.
