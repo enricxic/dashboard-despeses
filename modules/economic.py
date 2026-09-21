@@ -2558,26 +2558,40 @@ def render(view_mode="economic"):
                                 uploaded_file.seek(0)
                                 encoded_image = base64.b64encode(uploaded_file.read()).decode("utf-8")
                                 
-                                prompt = """
+                                ocr_rules_text = ""
+                                try:
+                                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                                    rules_path = os.path.join(base_dir, "core", "ocr_rules.md")
+                                    if os.path.exists(rules_path):
+                                        with open(rules_path, "r", encoding="utf-8") as f:
+                                            ocr_rules_text = f.read()
+                                except Exception as e:
+                                    print("No s'han pogut carregar les regles OCR:", e)
+                                    
+                                prompt = f"""
     Ets un expert en extracció de dades de tiquets de compra.
     Llegeix aquest tiquet de supermercat i retorna les dades en un format JSON net i estricte.
     L'estructura del JSON ha de ser EXACTAMENT aquesta:
-    {
+    {{
         "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
         "data": "DD/MM/YYYY (si la trobes)",
         "articles": [
-            {
+            {{
                 "nom_brut": "Nom exacte del producte que surt al tiquet, respectant lletres",
                 "quantitat": 1,
                 "preu_unitari": 0.0,
                 "preu_total": 0.0
-            }
+            }}
         ]
-    }
-    Notes importants:
-    1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal, Ofertes, Cupons).
+    }}
+    Notes importants i generals:
+    1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal).
     2. Assegura't de capturar bé el 'preu_total' de la línia.
-    3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
+    
+    -----------------------------
+    AQUÍ TENS INSTRUCCIONS ESPECÍFIQUES I REGLES ESTRICTES A APLICAR:
+    
+    {ocr_rules_text}
     """
                                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
                                 payload = {

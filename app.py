@@ -114,6 +114,8 @@ if "action" in st.query_params:
         json_f = st.query_params.get("file", "")
         if json_f:
             st.session_state["editing_json_file"] = json_f
+    elif act == "edit_rules":
+        st.session_state["editing_ocr_rules"] = True
     elif act == "sync_db":
         st.cache_data.clear()
         st.session_state["db_synced_toast"] = True
@@ -272,6 +274,56 @@ def show_json_editor_dialog(file_rel_path):
 
 if st.session_state.get("editing_json_file"):
     show_json_editor_dialog(st.session_state["editing_json_file"])
+
+@st.dialog("📝 Editar regles súper (OCR)", width="large")
+def show_ocr_rules_editor_dialog():
+    st.markdown("**📁 Fitxer:** `core/ocr_rules.md`")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    full_path = os.path.abspath(os.path.join(base_dir, "core", "ocr_rules.md"))
+    
+    content_key = "ocr_rules_content"
+    
+    if content_key not in st.session_state:
+        if os.path.exists(full_path):
+            with open(full_path, "r", encoding="utf-8") as f:
+                st.session_state[content_key] = f.read()
+        else:
+            st.session_state[content_key] = "# Regles Específiques per Supermercat (OCR)\n\n"
+
+    current_val = st.text_area(
+        "Contingut de les regles",
+        value=st.session_state[content_key],
+        height=480,
+        label_visibility="collapsed",
+        key=f"ta_{content_key}"
+    )
+
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        if st.button("💾 Desar canvis", use_container_width=True, type="primary"):
+            try:
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                with open(full_path, "w", encoding="utf-8") as f:
+                    f.write(current_val)
+                st.toast("✅ Regles desades correctament!", icon="💾")
+                if "editing_ocr_rules" in st.session_state:
+                    del st.session_state["editing_ocr_rules"]
+                if content_key in st.session_state:
+                    del st.session_state[content_key]
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Error en desar el fitxer: {e}")
+
+    with c2:
+        if st.button("❌ Tancar", use_container_width=True):
+            if "editing_ocr_rules" in st.session_state:
+                del st.session_state["editing_ocr_rules"]
+            if content_key in st.session_state:
+                del st.session_state[content_key]
+            st.rerun()
+
+if st.session_state.get("editing_ocr_rules"):
+    show_ocr_rules_editor_dialog()
 
 def render_traditional_menubar():
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
@@ -443,6 +495,7 @@ div.block-container {{
 {json_items_html}
 </div>
 </div>
+<a href="?action=edit_rules{auth_suffix}" target="_self">📝 Editar regles súper (OCR)</a>
 </div>
 </div>
 <div class="menu-item">
