@@ -817,9 +817,16 @@ if st.session_state.current_module is None:
 }}
 .img-logo-h {{
     display: block !important;
-    width: 100%; height: 100%; pointer-events: none; user-select: none; object-fit: contain;
+    width: 100%; height: 100%; pointer-events: none; user-select: none;
+    background-image: url("data:image/png;base64,{b64_logo_h}");
+    background-size: contain; background-repeat: no-repeat; background-position: center;
 }}
-.img-logo-v {{ display: none !important; }}
+.img-logo-v {{
+    display: none !important;
+    width: 100%; height: 100%; pointer-events: none; user-select: none;
+    background-image: url("data:image/png;base64,{b64_logo_v}");
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+}}
 
 .house-title-container {{
     position: absolute;
@@ -908,7 +915,7 @@ if st.session_state.current_module is None:
 /* -- VERTICAL (Mòbils / Tablets verticals) -- */
 @media (max-width: 900px) and (orientation: portrait), (orientation: portrait) {{
     .img-logo-h {{ display: none !important; }}
-    .img-logo-v {{ display: block !important; width: 100%; height: 100%; pointer-events: none; user-select: none; object-fit: contain; }}
+    .img-logo-v {{ display: block !important; }}
     
     .stApp {{ overflow-x: hidden !important; }}
     .main-wrapper {{ min-height: 96vh !important; padding: 0 !important; }}
@@ -955,8 +962,8 @@ if st.session_state.current_module is None:
 
 <div class="main-wrapper">
 <div class="logo-box">
-<img src="data:image/png;base64,{b64_logo_h}" class="img-logo-h" alt="XiquiHouse H">
-<img src="data:image/png;base64,{b64_logo_v}" class="img-logo-v" alt="XiquiHouse V">
+<div class="img-logo-h"></div>
+<div class="img-logo-v"></div>
 
 <!-- Títol i Eslògan personalitzats de la casa -->
 <div class="house-title-container">
