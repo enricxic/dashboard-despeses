@@ -2991,7 +2991,8 @@ def render(view_mode="economic"):
     col_logo, col_title, col_super = st.columns([0.7, 8.5, 0.8], vertical_alignment="center")
     with col_logo:
         import os
-        logo_path = os.path.join("imatges", "logo.png")
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logo_path = os.path.join(root_dir, "imatges", "logo.png")
         if os.path.exists(logo_path):
             st.image(logo_path, width=60)
     with col_title:
