@@ -302,6 +302,12 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
                     candidates = data.get("candidates", [])
                     if candidates:
                         content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                        clean_content = content.strip()
+                        if clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
+                            if attempt < max_attempts - 1:
+                                time.sleep(2.0)
+                                continue # Reintentar si està truncat
+                            return False, f"La IA ha tallat la resposta prematurament (truncat). Resposta crua:\n{content}", elapsed
                         return True, content, elapsed
                     return False, "Resposta buida de Gemini", elapsed
                 elif resp.status_code in [503, 429]:
