@@ -380,8 +380,7 @@ def show_orphan_cleaner_dialog():
                 item_to_link = df[df["idNom"] == selected_ids[0]].iloc[0]
                 st.write(f"Enllaçant: **{item_to_link['nom_super']}** ({item_to_link['supermercat']})")
                 
-                from core.db import get_config_families, get_config_articles, get_tb_productes_cached, save_categories_conceptes
-                from core.config_manager import load_app_config
+                from core.db import get_config_families, get_config_articles, get_tb_productes_cached, save_categories_conceptes, load_categories_conceptes
                 fam_options = [""] + get_config_families()
                 fam_sel = st.selectbox("Família", fam_options, key="orf_fam")
                 if fam_sel:
@@ -410,7 +409,7 @@ def show_orphan_cleaner_dialog():
                                 try:
                                     supabase.table('tb_productes').insert({'nom_estandard': new_art, 'familia': fam_sel}).execute()
                                     get_tb_productes_cached.clear()
-                                    cfg = load_app_config()
+                                    cfg = load_categories_conceptes()
                                     if "articles_compres" not in cfg:
                                         cfg["articles_compres"] = {}
                                     if fam_sel not in cfg["articles_compres"]:
