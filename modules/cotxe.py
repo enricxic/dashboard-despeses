@@ -55,8 +55,7 @@ def render():
         df_km_car = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
         if not df_km_car.empty:
             df_km_car_sorted = df_km_car.copy()
-            if 'parsed_date' not in df_km_car_sorted.columns:
-                df_km_car_sorted['parsed_date'] = df_km_car_sorted['data'].apply(parse_excel_date)
+            df_km_car_sorted['parsed_date'] = df_km_car_sorted['data'].apply(parse_excel_date)
             df_km_car_sorted = df_km_car_sorted.sort_values(by='parsed_date', ascending=False)
             last_km = float(df_km_car_sorted.dropna(subset=['contador'])['contador'].iloc[0])
 
@@ -137,8 +136,7 @@ def render():
         st.markdown("<h4 style='color:#f39c12;'>📋 Històric de Rutes Registrades</h4>", unsafe_allow_html=True)
         if not df_km.empty:
             df_km_show = df_km.copy()
-            if 'parsed_date' not in df_km_show.columns:
-                df_km_show['parsed_date'] = df_km_show['data'].apply(parse_excel_date)
+            df_km_show['parsed_date'] = df_km_show['data'].apply(parse_excel_date)
             sort_cols = [c for c in ['parsed_date', 'idRuta'] if c in df_km_show.columns]
             if sort_cols:
                 df_km_show = df_km_show.sort_values(by=sort_cols, ascending=[False] * len(sort_cols))
