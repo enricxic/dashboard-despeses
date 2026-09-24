@@ -2990,11 +2990,15 @@ def render(view_mode="economic"):
     
     col_logo, col_title, col_super = st.columns([0.7, 8.5, 0.8], vertical_alignment="center")
     with col_logo:
-        import os
+        import os, base64
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         logo_path = os.path.join(root_dir, "imatges", "logo.png")
         if os.path.exists(logo_path):
-            st.image(logo_path, width=60)
+            with open(logo_path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode()
+            st.markdown(f'<img src="data:image/png;base64,{b64}" style="width: 60px;">', unsafe_allow_html=True)
+        else:
+            st.error(f"Image not found: {logo_path}")
     with col_title:
         title_text = "Dashboard General" if view_mode == "dashboard" else "Mòdul Econòmic"
         st.markdown(f"<h2 style='margin:0; font-size:2.1rem; font-weight:800; color:#f39c12; user-select:none; line-height:1.2;'>{title_text}</h2>", unsafe_allow_html=True)
