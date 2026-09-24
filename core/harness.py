@@ -272,7 +272,7 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
     start_time = time.time()
     
     models_to_try = [model_name]
-    for alt in ["gemini-3.6-flash", "gemini-3.8-flash"]:
+    for alt in ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-3.6-flash", "gemini-3.8-flash"]:
         if alt not in models_to_try:
             models_to_try.append(alt)
         
