@@ -2990,8 +2990,10 @@ def render(view_mode="economic"):
     
     col_logo, col_title, col_super = st.columns([0.7, 8.5, 0.8], vertical_alignment="center")
     with col_logo:
-        if os.path.exists("logoEXD.png"):
-            st.image("logoEXD.png", width=60)
+        import os
+        logo_path = os.path.join("imatges", "logo.png")
+        if os.path.exists(logo_path):
+            st.image(logo_path, width=60)
     with col_title:
         title_text = "Dashboard General" if view_mode == "dashboard" else "Mòdul Econòmic"
         st.markdown(f"<h2 style='margin:0; font-size:2.1rem; font-weight:800; color:#f39c12; user-select:none; line-height:1.2;'>{title_text}</h2>", unsafe_allow_html=True)
