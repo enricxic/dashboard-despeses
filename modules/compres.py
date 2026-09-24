@@ -971,13 +971,21 @@ def cb_recalculate_manual_pct():
     if existing_prom is None: existing_prom = 0.0
     
     if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
-        qty = st.session_state.get("manual_qty_num", 1.0)
-        if qty is None or qty <= 0: qty = 1.0
+        qty = st.session_state.get("manual_qty_num", 1)
+        qty = int(qty) if qty is not None and int(qty) > 0 else 1
         
-        prom_per_unit = preu_final * (pct / 100.0)
-        prom_from_pct = prom_per_unit * qty
+        # El preu final inamovible de la línia que el client vol mantenir
+        total_final_desitjat = preu_final * qty
+        
+        # Calculem el preu original (més car) abans del descompte
+        p_orig = preu_final / (1.0 - (pct / 100.0))
+        p_orig_rounded = round(p_orig, 2)
+        
+        # La promoció ha de ser EXACTAMENT la diferència per clavar el total final
+        prom_from_pct = (p_orig_rounded * qty) - total_final_desitjat
         
         st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
+        st.session_state["manual_preu_num"] = p_orig_rounded
         st.session_state["manual_pct_num"] = 0.0
 
 
