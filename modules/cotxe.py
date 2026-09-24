@@ -54,7 +54,11 @@ def render():
         last_km = 0.0
         df_km_car = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
         if not df_km_car.empty:
-            last_km = float(df_km_car.dropna(subset=['contador'])['contador'].iloc[0])
+            df_km_car_sorted = df_km_car.copy()
+            if 'parsed_date' not in df_km_car_sorted.columns:
+                df_km_car_sorted['parsed_date'] = df_km_car_sorted['data'].apply(parse_excel_date)
+            df_km_car_sorted = df_km_car_sorted.sort_values(by='parsed_date', ascending=False)
+            last_km = float(df_km_car_sorted.dropna(subset=['contador'])['contador'].iloc[0])
 
         r1_col1, r1_col2, r1_col3 = st.columns([2, 4, 4])
         with r1_col1:
