@@ -286,7 +286,6 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
                 }
             ],
             "generationConfig": {
-                "responseMimeType": "application/json",
                 "temperature": 0.1,
                 "maxOutputTokens": 8192
             }
