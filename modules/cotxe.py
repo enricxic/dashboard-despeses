@@ -106,22 +106,22 @@ def render():
                 st.error("⚠️ Heu d'especificar la ruta.")
             else:
                 new_row = {
-                    'idRuta': int(df_km['idRuta'].max() + 1) if not df_km.empty and 'idRuta' in df_km.columns else 1,
                     'cotxe': cotxe_val,
                     'data': data_val.strftime('%d/%m/%Y'),
                     'ruta': ruta_val.strip(),
                     'contador': int(contador_val),
                     'km': int(km_val)
                 }
-                append_to_db(pd.DataFrame([new_row]), 'kmCotxe', 'df_km')
-                if current_sel == "Nova ruta...":
-                    if st.session_state.get(f"km_save_ruta_{km_version}", True):
-                        add_route_to_config(ruta_val.strip(), df_km)
-                    else:
-                        init_routes_config(df_km)
-                st.success("Ruta desada correctament!")
-                st.session_state["km_version"] = st.session_state.get("km_version", 0) + 1
-                st.rerun()
+                ok = append_to_db(pd.DataFrame([new_row]), 'kmCotxe', 'df_km')
+                if ok:
+                    if current_sel == "Nova ruta...":
+                        if st.session_state.get(f"km_save_ruta_{km_version}", True):
+                            add_route_to_config(ruta_val.strip(), df_km)
+                        else:
+                            init_routes_config(df_km)
+                    st.success("Ruta desada correctament!")
+                    st.session_state["km_version"] = st.session_state.get("km_version", 0) + 1
+                    st.rerun()
 
         st.markdown("<hr style='margin:15px 0;'>", unsafe_allow_html=True)
         st.markdown("<h4 style='color:#f39c12;'>📋 Històric de Rutes Registrades</h4>", unsafe_allow_html=True)
