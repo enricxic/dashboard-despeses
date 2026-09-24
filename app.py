@@ -702,14 +702,23 @@ if st.session_state.current_module is None:
         with open(fons_path, "rb") as f_img:
             b64_fons = base64.b64encode(f_img.read()).decode()
 
-    # Carregar el logotip transparent (1024x682)
-    logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
-    if not os.path.exists(logo_path):
-        logo_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.jpg")
-    b64_logo = ""
-    if os.path.exists(logo_path):
-        with open(logo_path, "rb") as img_file:
-            b64_logo = base64.b64encode(img_file.read()).decode()
+    # Carregar el logotip horitzontal
+    logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse ampliat.png")
+    if not os.path.exists(logo_h_path):
+        logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
+    b64_logo_h = ""
+    if os.path.exists(logo_h_path):
+        with open(logo_h_path, "rb") as img_file:
+            b64_logo_h = base64.b64encode(img_file.read()).decode()
+
+    # Carregar el logotip vertical
+    logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse vertical.png")
+    if not os.path.exists(logo_v_path):
+        logo_v_path = logo_h_path
+    b64_logo_v = ""
+    if os.path.exists(logo_v_path):
+        with open(logo_v_path, "rb") as img_file:
+            b64_logo_v = base64.b64encode(img_file.read()).decode()
 
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
@@ -741,11 +750,13 @@ if st.session_state.current_module is None:
     
     icones_actives = app_cfg.get("icones_actives", {})
 
-    def render_hotspot(mod_key, style_str, title_str, always_active=False):
+    def render_hotspot(mod_key, title_str, always_active=False):
         is_active = always_active or icones_actives.get(mod_key, True) or (mod_key == "calendari" and icones_actives.get("agenda", True))
+        cls = "hotspot" if is_active else "hotspot-disabled"
+        href = f'href="?mod=modules.{mod_key}{auth_suffix}" target="_self"' if is_active else ""
         if is_active:
-            return f'<a href="?mod=modules.{mod_key}{auth_suffix}" target="_self" class="hotspot" style="{style_str}" title="{title_str}"></a>'
-        return f'<div class="hotspot-disabled" style="{style_str}" title="{title_str} (Desactivat)"></div>'
+            return f'<a {href} class="{cls} hs-{mod_key}" title="{title_str}"></a>'
+        return f'<div class="{cls} hs-{mod_key}" title="{title_str} (Desactivat)"></div>'
 
     html_content = textwrap.dedent(f"""<style>
 :root {{
@@ -793,23 +804,22 @@ if st.session_state.current_module is None:
     padding: 0;
     margin: 0 auto;
 }}
+
+/* -- HORITZONTAL PER DEFECTE -- */
 .logo-box {{
     position: relative;
     display: block;
-    width: min(98vw, 146vh);
-    aspect-ratio: 1024 / 682;
+    width: min(98vw, 175vh);
+    aspect-ratio: 1772 / 1181;
     margin: 0 auto;
     line-height: 0;
 }}
-.img-logo {{
-    width: 100%;
-    height: 100%;
-    display: block;
-    pointer-events: none;
-    user-select: none;
-    object-fit: contain;
-    filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
+.img-logo-h {{
+    display: block !important;
+    width: 100%; height: 100%; pointer-events: none; user-select: none; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
 }}
+.img-logo-v {{ display: none !important; }}
+
 .house-title-container {{
     position: absolute;
     top: 74.5%;
@@ -819,14 +829,14 @@ if st.session_state.current_module is None:
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: calc(14 * min(98vw, 146vh) / 1024);
+    gap: calc(14 * min(98vw, 175vh) / 1772);
     z-index: 50;
     pointer-events: none;
     user-select: none;
     width: 100%;
 }}
 .house-custom-title {{
-    font-size: calc({tamany_px} * min(98vw, 146vh) / 1024);
+    font-size: calc({tamany_px} * min(98vw, 175vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     text-align: center;
@@ -838,11 +848,11 @@ if st.session_state.current_module is None:
     align-items: center;
 }}
 .house-custom-slogan {{
-    font-size: calc({max(11, int(tamany_px * 0.32))} * min(98vw, 146vh) / 1024);
+    font-size: calc({max(11, int(tamany_px * 0.32))} * min(98vw, 175vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #407faf;
-    letter-spacing: calc(2.2 * min(98vw, 146vh) / 1024);
+    letter-spacing: calc(2.2 * min(98vw, 175vh) / 1024);
     text-transform: uppercase;
     text-align: center;
     white-space: nowrap;
@@ -880,29 +890,59 @@ if st.session_state.current_module is None:
     z-index: 99;
 }}
 
-@media (max-width: 768px) {{
-    .stApp {{
-        overflow-x: hidden !important;
-    }}
-    .main-wrapper {{
-        min-height: 96vh !important;
-        padding: 0 !important;
-    }}
+/* COORDENADES HORITZONTALS (Idèntiques a abans) */
+.hs-admin {{ left: 37.33%; top: 18.43%; width: 7.2%; }}
+.hs-dashboard {{ left: 61.18%; top: 18.26%; width: 7.2%; }}
+.hs-economic {{ left: 27.54%; top: 25.95%; width: 8.2%; }}
+.hs-seguretat {{ left: 17.24%; top: 34.38%; width: 8.2%; }}
+.hs-manteniment {{ left: 27.54%; top: 41.42%; width: 8.2%; }}
+.hs-domotica {{ left: 17.09%; top: 51.25%; width: 8.2%; }}
+.hs-jocs {{ left: 27.54%; top: 57.62%; width: 8.2%; }}
+.hs-calendari {{ left: 72.17%; top: 25.95%; width: 8.2%; }}
+.hs-medicacio {{ left: 81.05%; top: 34.16%; width: 8.2%; }}
+.hs-menjar {{ left: 71.88%; top: 41.57%; width: 8.2%; }}
+.hs-cotxe {{ left: 80.91%; top: 51.25%; width: 8.2%; }}
+.hs-compres {{ left: 71.88%; top: 58.36%; width: 8.2%; }}
+
+/* -- VERTICAL (Mòbils / Tablets verticals) -- */
+@media (max-width: 900px) and (orientation: portrait), (orientation: portrait) {{
+    .img-logo-h {{ display: none !important; }}
+    .img-logo-v {{ display: block !important; width: 100%; height: 100%; pointer-events: none; user-select: none; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15)); }}
+    
+    .stApp {{ overflow-x: hidden !important; }}
+    .main-wrapper {{ min-height: 96vh !important; padding: 0 !important; }}
+    
     .logo-box {{
         width: 100vw !important;
         max-width: 100vw !important;
+        aspect-ratio: 1181 / 1772 !important;
     }}
+    
     .house-title-container {{
-        top: 75% !important;
+        top: 80% !important;
         gap: 6px !important;
     }}
     .house-custom-title {{
-        font-size: calc({tamany_px} * 98vw / 1024) !important;
+        font-size: calc({tamany_px} * 1.6 * 98vw / 1024) !important;
     }}
     .house-custom-slogan {{
-        font-size: calc({max(11, int(tamany_px * 0.32))} * 98vw / 1024) !important;
+        font-size: calc({max(11, int(tamany_px * 0.32))} * 1.6 * 98vw / 1024) !important;
         letter-spacing: 1.5px !important;
     }}
+
+    /* COORDENADES VERTICALS (Provisional per defecte) */
+    .hs-admin {{ left: 25%; top: 10%; width: 15%; }}
+    .hs-dashboard {{ left: 75%; top: 10%; width: 15%; }}
+    .hs-economic {{ left: 25%; top: 25%; width: 15%; }}
+    .hs-seguretat {{ left: 25%; top: 40%; width: 15%; }}
+    .hs-manteniment {{ left: 25%; top: 55%; width: 15%; }}
+    .hs-domotica {{ left: 25%; top: 70%; width: 15%; }}
+    .hs-jocs {{ left: 25%; top: 85%; width: 15%; }}
+    .hs-calendari {{ left: 75%; top: 25%; width: 15%; }}
+    .hs-medicacio {{ left: 75%; top: 40%; width: 15%; }}
+    .hs-menjar {{ left: 75%; top: 55%; width: 15%; }}
+    .hs-cotxe {{ left: 75%; top: 70%; width: 15%; }}
+    .hs-compres {{ left: 75%; top: 85%; width: 15%; }}
 }}
 </style>
 
@@ -913,7 +953,8 @@ if st.session_state.current_module is None:
 
 <div class="main-wrapper">
 <div class="logo-box">
-<img src="data:image/png;base64,{b64_logo}" class="img-logo" alt="XiquiHouse">
+<img src="data:image/png;base64,{b64_logo_h}" class="img-logo-h" alt="XiquiHouse H">
+<img src="data:image/png;base64,{b64_logo_v}" class="img-logo-v" alt="XiquiHouse V">
 
 <!-- Títol i Eslògan personalitzats de la casa -->
 <div class="house-title-container">
@@ -926,22 +967,22 @@ if st.session_state.current_module is None:
 </div>
 
 <!-- ================= SENSE RODONA (SUPERIOR) ================= -->
-{render_hotspot('admin', 'left: 37.33%; top: 18.43%; width: 7.2%;', '⚙️ Configuració Global')}
-{render_hotspot('dashboard', 'left: 61.18%; top: 18.26%; width: 7.2%;', '📊 Dashboard General', always_active=True)}
+{render_hotspot('admin', '⚙️ Configuració Global')}
+{render_hotspot('dashboard', '📊 Dashboard General', always_active=True)}
 
 <!-- ================= AMB RODONA PART ESQUERRA (5 NODES) ================= -->
-{render_hotspot('economic', 'left: 27.54%; top: 25.95%; width: 8.2%;', '📈 Mòdul Econòmic')}
-{render_hotspot('seguretat', 'left: 17.24%; top: 34.38%; width: 8.2%;', '📹 Seguretat i Càmeres')}
-{render_hotspot('manteniment', 'left: 27.54%; top: 41.42%; width: 8.2%;', '🛠️ Manteniment de la Llar')}
-{render_hotspot('domotica', 'left: 17.09%; top: 51.25%; width: 8.2%;', '📶 Domòtica (Home Assistant)')}
-{render_hotspot('jocs', 'left: 27.54%; top: 57.62%; width: 8.2%;', '🎲 Jocs i Oci Familiar')}
+{render_hotspot('economic', '📈 Mòdul Econòmic')}
+{render_hotspot('seguretat', '📹 Seguretat i Càmeres')}
+{render_hotspot('manteniment', '🛠️ Manteniment de la Llar')}
+{render_hotspot('domotica', '📶 Domòtica (Home Assistant)')}
+{render_hotspot('jocs', '🎲 Jocs i Oci Familiar')}
 
 <!-- ================= AMB RODONA PART DRETA (5 NODES) ================= -->
-{render_hotspot('calendari', 'left: 72.17%; top: 25.95%; width: 8.2%;', '📅 Agenda i Calendari')}
-{render_hotspot('medicacio', 'left: 81.05%; top: 34.16%; width: 8.2%;', '💊 Control de Medicació')}
-{render_hotspot('menjar', 'left: 71.88%; top: 41.57%; width: 8.2%;', '🍽️ Menjar, Menús i Rebost')}
-{render_hotspot('cotxe', 'left: 80.91%; top: 51.25%; width: 8.2%;', '🚗 Cotxe i Transport')}
-{render_hotspot('compres', 'left: 71.88%; top: 58.36%; width: 8.2%;', '🛒 Ingressos i Despeses')}
+{render_hotspot('calendari', '📅 Agenda i Calendari')}
+{render_hotspot('medicacio', '💊 Control de Medicació')}
+{render_hotspot('menjar', '🍽️ Menjar, Menús i Rebost')}
+{render_hotspot('cotxe', '🚗 Cotxe i Transport')}
+{render_hotspot('compres', '🛒 Ingressos i Despeses')}
 
 </div>
 </div>""")
