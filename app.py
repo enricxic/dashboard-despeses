@@ -817,7 +817,7 @@ if st.session_state.current_module is None:
 }}
 .img-logo-h {{
     display: block !important;
-    width: 100%; height: 100%; pointer-events: none; user-select: none; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15));
+    width: 100%; height: 100%; pointer-events: none; user-select: none; object-fit: contain;
 }}
 .img-logo-v {{ display: none !important; }}
 
@@ -908,7 +908,7 @@ if st.session_state.current_module is None:
 /* -- VERTICAL (Mòbils / Tablets verticals) -- */
 @media (max-width: 900px) and (orientation: portrait), (orientation: portrait) {{
     .img-logo-h {{ display: none !important; }}
-    .img-logo-v {{ display: block !important; width: 100%; height: 100%; pointer-events: none; user-select: none; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.15)); }}
+    .img-logo-v {{ display: block !important; width: 100%; height: 100%; pointer-events: none; user-select: none; object-fit: contain; }}
     
     .stApp {{ overflow-x: hidden !important; }}
     .main-wrapper {{ min-height: 96vh !important; padding: 0 !important; }}
