@@ -105,7 +105,17 @@ def render():
             elif not ruta_val or not ruta_val.strip():
                 st.error("⚠️ Heu d'especificar la ruta.")
             else:
+                # Consultem l'ID màxim directament al núvol per esquivar la memòria cau
+                max_id = 1
+                try:
+                    res = supabase.table('kmCotxe').select('idRuta').order('idRuta', desc=True).limit(1).execute()
+                    if res.data and len(res.data) > 0:
+                        max_id = int(res.data[0]['idRuta']) + 1
+                except:
+                    max_id = int(df_km['idRuta'].max() + 1) if not df_km.empty and 'idRuta' in df_km.columns else 1
+
                 new_row = {
+                    'idRuta': max_id,
                     'cotxe': cotxe_val,
                     'data': data_val.strftime('%d/%m/%Y'),
                     'ruta': ruta_val.strip(),
