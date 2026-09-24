@@ -43,6 +43,13 @@ st.markdown('''
     input[type=number] {
         -moz-appearance: textfield;
     }
+    
+    /* Ocultar enllaços "anchor" autogenerats per Streamlit als títols */
+    a.header-anchor {
+        display: none !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+    }
     </style>
 ''', unsafe_allow_html=True)
 
