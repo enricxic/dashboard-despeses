@@ -813,6 +813,7 @@ if st.session_state.current_module is None:
     aspect-ratio: 1772 / 1181;
     margin: 0 auto;
     line-height: 0;
+    transform: translateY(-6vh);
 }}
 .img-logo-h {{
     display: block !important;
@@ -916,6 +917,7 @@ if st.session_state.current_module is None:
         width: 100vw !important;
         max-width: 100vw !important;
         aspect-ratio: 1181 / 1772 !important;
+        transform: translateY(0) !important;
     }}
     
     .house-title-container {{
