@@ -174,7 +174,25 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
         c_title, c_controls = st.columns([9.2, 0.8], vertical_alignment="center")
     
     with c_title:
-        st.markdown(title_html, unsafe_allow_html=True)
+        # Prevenir que Streamlit detecti headers i afegeixi anchor links
+        # Convertint els H2 i H3 a DIVs amb classes per no duplicar atributs 'style'
+        st.markdown('''
+            <style>
+            .fake-h1 { font-size: 2.25rem; font-weight: 700; display: block; }
+            .fake-h2 { font-size: 1.75rem; font-weight: 600; padding-bottom: 0.3rem; display: block; }
+            .fake-h3 { font-size: 1.25rem; font-weight: 600; display: block; }
+            </style>
+        ''', unsafe_allow_html=True)
+        
+        safe_html = title_html
+        if "<h1" in safe_html:
+            safe_html = safe_html.replace("<h1", "<div class='fake-h1'").replace("</h1>", "</div>")
+        if "<h2" in safe_html:
+            safe_html = safe_html.replace("<h2", "<div class='fake-h2'").replace("</h2>", "</div>")
+        if "<h3" in safe_html:
+            safe_html = safe_html.replace("<h3", "<div class='fake-h3'").replace("</h3>", "</div>")
+            
+        st.markdown(safe_html, unsafe_allow_html=True)
         
     with c_controls:
         cols_spec = []

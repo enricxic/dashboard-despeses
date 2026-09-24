@@ -24,7 +24,7 @@ PK_MAP = {
 
 def render():
     import modules.avatar_widget as avatar
-    avatar.render_header_with_avatar("<h2 style='color:#f39c12; margin-top:0;'>🗄️ Gestor de Bases de Dades</h2>", "bases_dades")
+    avatar.render_header_with_avatar("<div style='font-size: 1.8rem; font-weight: bold; color:#f39c12; margin-top:0;'>🗄️ Gestor de Bases de Dades</div>", "bases_dades")
             
     # Check permissions
     if st.session_state.get("role") not in ["admin", "guest"]:

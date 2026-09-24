@@ -44,11 +44,21 @@ st.markdown('''
         -moz-appearance: textfield;
     }
     
-    /* Ocultar enllaços "anchor" autogenerats per Streamlit als títols */
-    a.header-anchor {
+    /* Ocultar enllaços "anchor" autogenerats per Streamlit als títols (Totes les versions) */
+    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a,
+    h1 svg, h2 svg, h3 svg, h4 svg, h5 svg, h6 svg,
+    a.header-anchor, a[data-testid="stHeaderAnchor"] {
         display: none !important;
         pointer-events: none !important;
         visibility: hidden !important;
+        width: 0px !important;
+        height: 0px !important;
+        opacity: 0 !important;
+    }
+    
+    /* Peça clau: tapar completament l'espai i el contingut de l'enllaç */
+    .stMarkdown h1 a *, .stMarkdown h2 a *, .stMarkdown h3 a *, .stMarkdown h4 a * {
+        display: none !important;
     }
     </style>
 ''', unsafe_allow_html=True)
