@@ -1020,6 +1020,7 @@ def render_module_view(module_name):
     ensure_session_dfs()
     
     mod = importlib.import_module(module_name)
+    importlib.reload(mod)
     mod.render()
 
 
