@@ -1019,6 +1019,10 @@ def render_module_view(module_name):
     from core.db import ensure_session_dfs
     ensure_session_dfs()
     
+    import sys
+    if 'core.harness' in sys.modules:
+        importlib.reload(sys.modules['core.harness'])
+        
     mod = importlib.import_module(module_name)
     importlib.reload(mod)
     mod.render()
