@@ -696,6 +696,13 @@ def update_session_state_insert(table_name, new_row_dict):
         if sort_col and sort_col in updated_df.columns:
             updated_df[sort_col] = pd.to_numeric(updated_df[sort_col], errors='coerce')
             updated_df = updated_df.sort_values(by=sort_col, ascending=False).reset_index(drop=True)
+            
+        # Generar camps derivats necessaris pel dashboard si falten
+        if 'mes' in updated_df.columns:
+            updated_df['clean_mes'] = updated_df['mes'].astype(str).str.strip().str.lower()
+        if 'any' in updated_df.columns and 'clean_mes' in updated_df.columns:
+            updated_df['date_score'] = updated_df['any'] * 12 + updated_df['clean_mes'].map(MONTHS_MAP).fillna(12).astype(int)
+            
         st.session_state[df_key] = updated_df
 
 def update_session_state_update(table_name, id_col, id_val, update_dict):
@@ -719,6 +726,13 @@ def update_session_state_update(table_name, id_col, id_val, update_dict):
                             try: v = pd.to_numeric(v)
                             except: pass
                         df.loc[mask, k] = v
+                
+                # Refrescar camps derivats després de l'update
+                if 'mes' in df.columns:
+                    df['clean_mes'] = df['mes'].astype(str).str.strip().str.lower()
+                if 'any' in df.columns and 'clean_mes' in df.columns:
+                    df['date_score'] = df['any'] * 12 + df['clean_mes'].map(MONTHS_MAP).fillna(12).astype(int)
+                    
                 st.session_state[df_key] = df
 
 def update_session_state_delete(table_name, id_col, id_val):
