@@ -1942,7 +1942,7 @@ Notes importants:
                 else:
                     _cell(p_str if p_str else "0g")
             with cols[4]:
-                _cell(f"{item['quantitat']}")
+                _cell(f"{int(float(item['quantitat']))}")
             with cols[5]:
                 _cell(f"{item['preuUnit']:.2f} €")
             with cols[6]:
