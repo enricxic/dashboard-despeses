@@ -851,7 +851,7 @@ def cb_edit_ticket_item(idx):
     st.session_state["manual_fam_selectbox"] = item['familia'] if item['familia'] != 'Pendent' else ""
     st.session_state["manual_art_selectbox"] = item['article'] if item['article'] != 'pendent' else ""
     st.session_state["manual_pes_num"] = str(item['pes'])
-    st.session_state["manual_qty_num"] = float(item['quantitat'])
+    st.session_state["manual_qty_num"] = int(float(item['quantitat']))
     st.session_state["manual_preu_num"] = float(item['preuUnit'])
     st.session_state["manual_prom_num"] = float(item['prom'])
     st.session_state["manual_reb_chk"] = (item['rebost'] == 'rebost')
@@ -896,8 +896,8 @@ def cb_add_ticket_line():
     fam = st.session_state.get("manual_fam_selectbox", "")
     art = st.session_state.get("manual_art_selectbox", "")
     pes_raw = st.session_state.get("manual_pes_num", "0")
-    qty_raw = st.session_state.get("manual_qty_num", 1.0)
-    qty = float(qty_raw) if qty_raw is not None else 1.0
+    qty_raw = st.session_state.get("manual_qty_num", 1)
+    qty = int(qty_raw) if qty_raw is not None else 1
     preu_raw = st.session_state.get("manual_preu_num", 0.0)
     preu = float(preu_raw) if preu_raw is not None else 0.0
     prom_raw = st.session_state.get("manual_prom_num", 0.0)
@@ -1684,6 +1684,7 @@ Notes importants:
                                 
                             parsed.append(curr_item)
 
+                        parsed = group_duplicate_ticket_items(parsed)
                         st.session_state["ticket_items"] = parsed
                         save_unknown_products(parsed, current_super)
                         st.session_state["ocr_failed"] = False
@@ -1866,7 +1867,7 @@ Notes importants:
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
     with col_qty:
-        qty_val = st.number_input("QUANTITAT", min_value=0.0, step=1.0, key="manual_qty_num", on_change=cb_recalculate_manual_pct, value=None, placeholder="1")
+        qty_val = st.number_input("QUANTITAT", min_value=0, step=1, key="manual_qty_num", on_change=cb_recalculate_manual_pct, value=None, placeholder="1")
     with col_preu:
         preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", on_change=cb_recalculate_manual_pct, value=None, placeholder="0.0")
     with col_pct:
