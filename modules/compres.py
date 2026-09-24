@@ -2533,6 +2533,17 @@ def render():
                     dest_banc_opt.remove(banc)
                 dest_banc = st.selectbox("Banc de Destí", dest_banc_opt, index=0, key=f"desp_dest_banc_{version}")
 
+        is_loteria = (str(concept_val).strip().lower() == "loteria")
+        if is_loteria:
+            st.markdown("<h5 style='color:#3498db; margin-top:5px; margin-bottom:5px;'>🍀 Dades de la Loteria</h5>", unsafe_allow_html=True)
+            lot_col1, lot_col2, lot_col3 = st.columns(3)
+            with lot_col1:
+                lot_tipus = st.selectbox("Tipus de Loteria", ["Nacional (SELAE)", "ONCE", "La Grossa de Catalunya"], key=f"desp_lot_tipus_{version}")
+            with lot_col2:
+                lot_data = st.date_input("Data Sorteig", value=datetime.today(), format="DD/MM/YYYY", key=f"desp_lot_data_{version}")
+            with lot_col3:
+                lot_num = st.text_input("Número jugat", value="", key=f"desp_lot_num_{version}")
+
         # Row 3 (ticket pendent)
         ticket_pendent = st.checkbox("Aquesta despesa és una compra de súper amb ticket pendent de desglossar", key=f"desp_ticket_pendent_{version}")
         vacances_pendent = st.checkbox("Compra de viatge / vacances (Sense desglós ni estoc)", key=f"desp_vacances_pendent_{version}")
@@ -2612,6 +2623,18 @@ def render():
                         comentari_val = "[VACANCES] " + comentari_val
                     else:
                         comentari_val = "[VACANCES]"
+                        
+                if is_loteria:
+                    from datetime import timedelta
+                    if lot_tipus == "Nacional (SELAE)":
+                        caducitat = lot_data + timedelta(days=91)
+                    elif lot_tipus == "ONCE":
+                        caducitat = lot_data + timedelta(days=31)
+                    else:
+                        caducitat = lot_data + timedelta(days=90)
+                        
+                    ext_str = f"[LOTERIA] Tipus: {lot_tipus} | Num: {lot_num} | Sorteig: {lot_data.strftime('%d/%m/%Y')} | Caduca: {caducitat.strftime('%d/%m/%Y')}"
+                    comentari_val = f"{ext_str} | {comentari_val}" if comentari_val else ext_str
 
                 new_row_desp = {
                     'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty and 'ID_mov' in df_desp.columns else 1,

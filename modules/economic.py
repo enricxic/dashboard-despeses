@@ -3458,6 +3458,29 @@ def render(view_mode="economic"):
             if exceeded_list:
                 st.markdown(f"<div style='background-color: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;'>⚠️ <b style='color:#ef4444;'>Valor superat:</b> {', '.join(exceeded_list)}</div>", unsafe_allow_html=True)
     
+        # Alerta Loteria
+        loteria_mask = df_desp['Comentari'].str.startswith('[LOTERIA]', na=False)
+        if loteria_mask.any():
+            loteria_tickets = df_desp[loteria_mask]
+            avui = datetime.today().date()
+            for _, row in loteria_tickets.iterrows():
+                com = str(row['Comentari'])
+                parts = com.split('|')
+                try:
+                    caduca_str = [p for p in parts if 'Caduca:' in p][0].split('Caduca:')[1].strip()
+                    caduca_date = datetime.strptime(caduca_str, '%d/%m/%Y').date()
+                    
+                    if caduca_date >= avui:
+                        dies_restants = (caduca_date - avui).days
+                        num_str = [p for p in parts if 'Num:' in p][0].split('Num:')[1].strip()
+                        tipus_str = [p for p in parts if 'Tipus:' in p][0].split('Tipus:')[1].strip().replace('[LOTERIA] Tipus:', '').strip()
+                        
+                        color = "#f59e0b" if dies_restants > 15 else "#ef4444"
+                        bg_color = "rgba(245, 158, 11, 0.15)" if dies_restants > 15 else "rgba(239, 68, 68, 0.15)"
+                        st.markdown(f"<div style='background-color: {bg_color}; border: 1px solid {color}; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;'>🍀 <b style='color:{color};'>Loteria Activa ({tipus_str}):</b> Núm. {num_str} - Caduca el {caduca_str} ({dies_restants} dies restants).</div>", unsafe_allow_html=True)
+                except:
+                    pass
+
         # Alerta de canvi d'oli
         kms_left = st.session_state.get("kms_canvi_oli", 31491.0) - car_kms_actuals
         if kms_left <= 0:
