@@ -7,8 +7,8 @@ PK_MAP = {
     'despeses': 'ID_mov',
     'ingressos': 'ID_mov',
     'compresSuper': 'IdCompra',
-    'gasolina': 'id',
-    'kmCotxe': 'id',
+    'gasolina': 'idGasolina',
+    'kmCotxe': 'idRuta',
     'hipoteca': 'id',
     'tr_cartera': 'idTRCartera',
     'estalviDP': 'id',
@@ -98,7 +98,7 @@ def render():
     col_config = {}
     for col in df.columns:
         if col.upper() == 'DATA':
-            df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
+            df[col] = pd.to_datetime(df[col], format="%d/%m/%Y", errors='coerce').dt.date
             col_config[col] = st.column_config.DateColumn(col, format="DD/MM/YYYY")
             
     edited_data = st.data_editor(

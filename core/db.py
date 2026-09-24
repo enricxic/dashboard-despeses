@@ -864,7 +864,11 @@ def append_to_db(df_new, table_name, state_key, extra_details=None):
         log_action(table_name, 'INSERT_BULK', details)
         
         if state_key and state_key in st.session_state:
-            del st.session_state[state_key]
+            st.session_state[state_key] = pd.concat([st.session_state[state_key], df_new], ignore_index=True)
+            
+        load_dashboard_data.clear()
+        get_db_tracker().update()
+        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (APPEND {table_name})**: {str(e)}")
