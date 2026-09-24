@@ -974,12 +974,10 @@ def cb_recalculate_manual_pct():
         qty = st.session_state.get("manual_qty_num", 1.0)
         if qty is None or qty <= 0: qty = 1.0
         
-        p_orig = preu_final / (1.0 - (pct / 100.0))
-        prom_per_unit = p_orig - preu_final
+        prom_per_unit = preu_final * (pct / 100.0)
         prom_from_pct = prom_per_unit * qty
         
         st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
-        st.session_state["manual_preu_num"] = round(p_orig, 2)
         st.session_state["manual_pct_num"] = 0.0
 
 
