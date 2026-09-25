@@ -732,12 +732,9 @@ div.block-container {{
 
 
 <!-- Campana Notificacions -->
-<div class="menu-item" style="float: right;">
+<div class="menu-item" style="margin-left: auto;">
 <a href="?action=notifications{auth_suffix}" target="_self" style="text-decoration: none; display: flex; align-items: center; padding: 10px 15px;">
-<span class="menu-title" style="font-size: 1.2rem; display: flex; align-items: center; position: relative;">
-🔔
-{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}
-</span>
+<span class="menu-title" style="font-size: 1.2rem; display: flex; align-items: center; position: relative;">🔔{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}</span>
 </a>
 </div>
 
@@ -1009,16 +1006,12 @@ if st.session_state.current_module is None:
 <div class="role-badge" title="{role_title}">
     <span>{role_icon}</span>
 </div>
-</div>
 
 <!-- Campana Notificacions a la pantalla d'inici -->
 <div style="position: fixed; top: 22px; right: 70px; z-index: 99999;">
-    <a href="?action=notifications{auth_suffix}" target="_self" style="text-decoration: none; display: flex; align-items: center; background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 20px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
-        <span style="font-size: 1.3rem; display: flex; align-items: center; position: relative;">
-            🔔
-            {f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}
-        </span>
-    </a>
+<a href="?action=notifications{auth_suffix}" target="_self" style="text-decoration: none; display: flex; align-items: center; background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 20px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
+<span style="font-size: 1.3rem; display: flex; align-items: center; position: relative;">🔔{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}</span>
+</a>
 </div>
 
 <div class="main-wrapper">
