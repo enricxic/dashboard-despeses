@@ -554,11 +554,28 @@ def render(view_mode="economic"):
         if cfg and category in cfg:
             concepts.update([c for c in cfg[category] if c])
         if category == "op_banc":
-            concepts.update(["Amortització", "Cashback TR", "Embargament", "Gestions Banc", "Pago ElCorteInglés", "Pago VISA", "Reintegre Caixer", "Transferència", "Traspàs comptes"])
+            concepts.update(["Amortització", "Cashback TR", "TR Cashback", "Embargament", "Gestions Banc", "Pago ElCorteInglés", "Pago VISA", "Reintegre Caixer", "Transferència", "Traspàs comptes"])
         if 'df_desp' in locals() and not df_desp.empty and 'Idcategoria' in df_desp.columns and 'Idconcepte' in df_desp.columns:
             desp_c = df_desp[df_desp['Idcategoria'] == category]['Idconcepte'].dropna().unique()
             concepts.update(desp_c)
-        return sorted(list(concepts))
+            
+        cleaned_dict = {}
+        for c in concepts:
+            if c and not str(c).startswith("➕"):
+                c_str = str(c).strip()
+                if not c_str: continue
+                import unicodedata
+                norm = unicodedata.normalize('NFKD', c_str).encode('ASCII', 'ignore').decode('utf-8').lower()
+                if norm in cleaned_dict:
+                    if len(c_str.encode('ascii', 'ignore')) < len(c_str):
+                        cleaned_dict[norm] = c_str
+                else:
+                    cleaned_dict[norm] = c_str
+                    
+        if "cashback tr" in cleaned_dict and "tr cashback" in cleaned_dict:
+            del cleaned_dict["cashback tr"]
+            
+        return sorted(list(cleaned_dict.values()))
     
     def get_config_banks():
         try:

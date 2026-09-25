@@ -474,11 +474,25 @@ def get_config_concepts(category):
             desp_c = df_d[df_d['Idcategoria'] == category]['Idconcepte'].dropna().unique()
             concepts.update([str(c).strip() for c in desp_c if c and str(c).strip()])
             
-    # Clean and filter: remove empty items, and '+' items
-    cleaned = [
-        c for c in concepts 
-        if c and not c.startswith("➕")
-    ]
+    # Clean and filter: remove empty items, and '+' items, deduplicate by normalized string
+    cleaned_dict = {}
+    for c in concepts:
+        if c and not str(c).startswith("➕"):
+            c_str = str(c).strip()
+            if not c_str: continue
+            import unicodedata
+            norm = unicodedata.normalize('NFKD', c_str).encode('ASCII', 'ignore').decode('utf-8').lower()
+            if norm in cleaned_dict:
+                # Prefer version with accents (non-ascii characters)
+                if len(c_str.encode('ascii', 'ignore')) < len(c_str):
+                    cleaned_dict[norm] = c_str
+            else:
+                cleaned_dict[norm] = c_str
+                
+    if "cashback tr" in cleaned_dict and "tr cashback" in cleaned_dict:
+        del cleaned_dict["cashback tr"]
+        
+    cleaned = list(cleaned_dict.values())
     return sorted(cleaned)
 
 def get_config_banks():
