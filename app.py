@@ -105,6 +105,12 @@ app_cfg = load_app_config()
 
 from core.alerts import get_global_alerts
 st.session_state["global_alerts_list"] = get_global_alerts()
+alerts_html = ""
+for al in st.session_state["global_alerts_list"]:
+    color = "#fecaca" if al['type'] == 'error' else "#fef08a"
+    alerts_html += f'<div style="padding: 8px; margin-bottom: 5px; background: {color}; color: #1e293b; border-radius: 4px; font-size: 0.8rem; line-height: 1.2;"><strong>{al["icon"]} {al["title"]}</strong><br>{al["message"]}</div>'
+if not alerts_html:
+    alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
 
 # Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu)
 if "mod" in st.query_params:
@@ -733,9 +739,10 @@ div.block-container {{
 
 <!-- Campana Notificacions -->
 <div class="menu-item" style="margin-left: auto;">
-<a href="?action=notifications{auth_suffix}" target="_self" style="text-decoration: none; display: flex; align-items: center; padding: 10px 15px;">
-<span class="menu-title" style="font-size: 1.2rem; display: flex; align-items: center; position: relative;">🔔{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}</span>
-</a>
+<span class="menu-title" style="font-size: 1.2rem; display: flex; align-items: center; position: relative; cursor: pointer;">🔔{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}</span>
+<div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
+{alerts_html}
+</div>
 </div>
 
 </nav>"""
@@ -1000,6 +1007,8 @@ if st.session_state.current_module is None:
     .hs-cotxe {{ left: 89.2%; top: 51.02%; width: 12.3%; }}
     .hs-compres {{ left: 88.9%; top: 61.34%; width: 12.3%; }}
 }}
+.bell-dropdown { display: none; position: absolute; top: 40px; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; min-width: 320px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100000; cursor: default; white-space: normal; text-align: left; }
+.bell-container:hover .bell-dropdown { display: block; }
 </style>
 
 <!-- Indicador de Rol Usuari -->
@@ -1008,10 +1017,9 @@ if st.session_state.current_module is None:
 </div>
 
 <!-- Campana Notificacions a la pantalla d'inici -->
-<div style="position: fixed; top: 22px; right: 70px; z-index: 99999;">
-<a href="?action=notifications{auth_suffix}" target="_self" style="text-decoration: none; display: flex; align-items: center; background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 20px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
-<span style="font-size: 1.3rem; display: flex; align-items: center; position: relative;">🔔{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}</span>
-</a>
+<div class="bell-container" style="position: fixed; top: 22px; right: 70px; z-index: 99999; cursor: pointer;">
+<span style="font-size: 1.3rem; display: flex; align-items: center; position: relative; padding: 5px 10px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}</span>
+<div class="bell-dropdown">{alerts_html}</div>
 </div>
 
 <div class="main-wrapper">
