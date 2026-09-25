@@ -914,19 +914,19 @@ if st.session_state.current_module is None:
     z-index: 99;
 }}
 
-/* COORDENADES HORITZONTALS (Idèntiques a abans) */
-.hs-admin {{ left: 37.33%; top: 18.43%; width: 7.2%; }}
-.hs-dashboard {{ left: 61.18%; top: 18.26%; width: 7.2%; }}
-.hs-economic {{ left: 27.54%; top: 25.95%; width: 8.2%; }}
-.hs-seguretat {{ left: 17.24%; top: 34.38%; width: 8.2%; }}
-.hs-manteniment {{ left: 27.54%; top: 41.42%; width: 8.2%; }}
-.hs-domotica {{ left: 17.09%; top: 51.25%; width: 8.2%; }}
-.hs-jocs {{ left: 27.54%; top: 57.62%; width: 8.2%; }}
-.hs-calendari {{ left: 72.17%; top: 25.95%; width: 8.2%; }}
-.hs-medicacio {{ left: 81.05%; top: 34.16%; width: 8.2%; }}
-.hs-menjar {{ left: 71.88%; top: 41.57%; width: 8.2%; }}
-.hs-cotxe {{ left: 80.91%; top: 51.25%; width: 8.2%; }}
-.hs-compres {{ left: 71.88%; top: 58.36%; width: 8.2%; }}
+/* COORDENADES HORITZONTALS (Actualitzades a imatge ampliada) */
+.hs-admin {{ left: 35.50%; top: 12.28%; width: 8.2%; }}
+.hs-dashboard {{ left: 64.71%; top: 12.07%; width: 8.2%; }}
+.hs-economic {{ left: 23.51%; top: 21.49%; width: 8.2%; }}
+.hs-seguretat {{ left: 10.90%; top: 31.82%; width: 8.2%; }}
+.hs-manteniment {{ left: 23.51%; top: 40.44%; width: 8.2%; }}
+.hs-domotica {{ left: 10.72%; top: 52.48%; width: 8.2%; }}
+.hs-jocs {{ left: 23.51%; top: 60.28%; width: 8.2%; }}
+.hs-calendari {{ left: 78.17%; top: 21.49%; width: 8.2%; }}
+.hs-medicacio {{ left: 89.05%; top: 31.54%; width: 8.2%; }}
+.hs-menjar {{ left: 77.82%; top: 40.62%; width: 8.2%; }}
+.hs-cotxe {{ left: 88.88%; top: 52.47%; width: 8.2%; }}
+.hs-compres {{ left: 77.82%; top: 61.18%; width: 8.2%; }}
 
 /* -- VERTICAL (Mòbils / Tablets verticals) -- */
 @media (max-width: 900px) and (orientation: portrait), (orientation: portrait) {{
@@ -944,8 +944,7 @@ if st.session_state.current_module is None:
     }}
     
     .house-title-container {{
-        top: 80% !important;
-        gap: 6px !important;
+        display: none !important;
     }}
     .house-custom-title {{
         font-size: calc({tamany_px} * 1.6 * 98vw / 1024) !important;
@@ -955,19 +954,19 @@ if st.session_state.current_module is None:
         letter-spacing: 1.5px !important;
     }}
 
-    /* COORDENADES VERTICALS (Provisional per defecte) */
-    .hs-admin {{ left: 25%; top: 10%; width: 15%; }}
-    .hs-dashboard {{ left: 75%; top: 10%; width: 15%; }}
-    .hs-economic {{ left: 25%; top: 25%; width: 15%; }}
-    .hs-seguretat {{ left: 25%; top: 40%; width: 15%; }}
-    .hs-manteniment {{ left: 25%; top: 55%; width: 15%; }}
-    .hs-domotica {{ left: 25%; top: 70%; width: 15%; }}
-    .hs-jocs {{ left: 25%; top: 85%; width: 15%; }}
-    .hs-calendari {{ left: 75%; top: 25%; width: 15%; }}
-    .hs-medicacio {{ left: 75%; top: 40%; width: 15%; }}
-    .hs-menjar {{ left: 75%; top: 55%; width: 15%; }}
-    .hs-cotxe {{ left: 75%; top: 70%; width: 15%; }}
-    .hs-compres {{ left: 75%; top: 85%; width: 15%; }}
+    /* COORDENADES VERTICALS (Actualitzades a imatge ampliada) */
+    .hs-admin {{ left: 30.27%; top: 13.69%; width: 12.3%; }}
+    .hs-dashboard {{ left: 69.86%; top: 13.40%; width: 12.3%; }}
+    .hs-economic {{ left: 10.3%; top: 20.32%; width: 12.3%; }}
+    .hs-seguretat {{ left: 10.5%; top: 30.81%; width: 12.3%; }}
+    .hs-manteniment {{ left: 10.3%; top: 40.46%; width: 12.3%; }}
+    .hs-domotica {{ left: 10.3%; top: 50.56%; width: 12.3%; }}
+    .hs-jocs {{ left: 10.3%; top: 60.67%; width: 12.3%; }}
+    .hs-calendari {{ left: 89.5%; top: 20.09%; width: 12.3%; }}
+    .hs-medicacio {{ left: 88.8%; top: 30.76%; width: 12.3%; }}
+    .hs-menjar {{ left: 89.0%; top: 40.74%; width: 12.3%; }}
+    .hs-cotxe {{ left: 89.2%; top: 51.02%; width: 12.3%; }}
+    .hs-compres {{ left: 88.9%; top: 61.34%; width: 12.3%; }}
 }}
 </style>
 
