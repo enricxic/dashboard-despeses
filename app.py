@@ -1007,8 +1007,8 @@ if st.session_state.current_module is None:
     .hs-cotxe {{ left: 89.2%; top: 51.02%; width: 12.3%; }}
     .hs-compres {{ left: 88.9%; top: 61.34%; width: 12.3%; }}
 }}
-.bell-dropdown { display: none; position: absolute; top: 40px; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; min-width: 320px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100000; cursor: default; white-space: normal; text-align: left; }
-.bell-container:hover .bell-dropdown { display: block; }
+.bell-dropdown {{ display: none; position: absolute; top: 40px; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; min-width: 320px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100000; cursor: default; white-space: normal; text-align: left; }}
+.bell-container:hover .bell-dropdown {{ display: block; }}
 </style>
 
 <!-- Indicador de Rol Usuari -->
