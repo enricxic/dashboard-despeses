@@ -442,6 +442,7 @@ def render(view_mode="economic"):
         df_desp = df_desp.dropna(subset=['ID_mov']).sort_values(by='ID_mov', ascending=False).reset_index(drop=True)
         df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
         df_desp['Import càrrec'] = clean_numeric(df_desp['Import càrrec'])
+        df_desp['any'] = pd.to_numeric(df_desp['any'], errors='coerce').fillna(2026).astype(int)
         df_desp['parsed_date'] = df_desp['Data'].apply(parse_excel_date)
         if 'mes' in df_desp.columns:
             df_desp['clean_mes'] = df_desp['mes'].astype(str).str.strip().str.lower()
@@ -3058,18 +3059,18 @@ def render(view_mode="economic"):
             if bank_display_name == 'Pago VISA':
                 mask_visa_exp = (df_desp['FormaPago'] == 'VISA')
                 mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
-                b_desp = df_desp[(mask_visa_exp | mask_visa_pay) & (df_desp['any'] == selected_year)].copy()
+                b_desp = df_desp[(mask_visa_exp | mask_visa_pay) & (df_desp['any'] == int(selected_year))].copy()
                 # Convert payment's Import càrrec to import ingrés so it reduces the debt!
                 is_payment = (b_desp['Idcategoria'] == 'op_banc') & (b_desp['Idconcepte'] == 'Pago VISA')
                 b_desp.loc[is_payment, 'import ingrés'] = b_desp.loc[is_payment, 'import ingrés'].fillna(0) + b_desp.loc[is_payment, 'Import càrrec'].fillna(0)
                 b_desp.loc[is_payment, 'Import càrrec'] = 0.0
             else:
-                b_desp = df_desp[(df_desp['Banc'].isin(csv_names)) & (df_desp['any'] == selected_year)].copy()
+                b_desp = df_desp[(df_desp['Banc'].isin(csv_names)) & (df_desp['any'] == int(selected_year))].copy()
                 # Exclude VISA payments entirely since the bank settlement covers it
                 b_desp = b_desp[b_desp['FormaPago'].fillna('') != 'VISA']
                     
             # Calculate starting balance by including EVERYTHING up to Dec 31 of previous year
-            prev_target = (selected_year - 1) * 12 + 12
+            prev_target = (int(selected_year) - 1) * 12 + 12
             if bank_display_name == 'Pago VISA':
                 mask_visa_exp = (df_desp['FormaPago'] == 'VISA')
                 mask_visa_pay = (df_desp['Idcategoria'] == 'op_banc') & (df_desp['Idconcepte'] == 'Pago VISA')
@@ -3505,11 +3506,6 @@ def render(view_mode="economic"):
                 except:
                     pass
 
-        # Alerta de canvi d'oli
-        kms_left = st.session_state.get("kms_canvi_oli", 31491.0) - car_kms_actuals
-        if kms_left <= 0:
-            st.error(f"🔧 **Atenció!** Cal fer el canvi d'oli del cotxe. Teniu el límit superat per {int(abs(kms_left))} km.")
-            
         if show_limits:
             limits_row = {c: None for c in df_summary.columns}
             limits_row['Mes'] = 'LÍMITS'

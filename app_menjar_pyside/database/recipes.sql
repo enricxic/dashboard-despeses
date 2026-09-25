@@ -1,0 +1,2 @@
+INSERT INTO recipes (title, category, guide_url, budget, img_path, ingredients, directions)
+VALUES ('Tarta de Manzana', 'Postres', 'http://example.com/guide', 15.50, 'images/apple_pie.jpg', 'Manzanas, harina, azúcar, mantequilla', 'Mezclar los ingredientes y hornear a 180°C por 45 minutos.'); ALTER

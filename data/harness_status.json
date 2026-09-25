@@ -1,0 +1,3513 @@
+{
+  "status": "completed",
+  "started_at": "19:00:14 (10/09/2026)",
+  "finished_at": "19:07:33 (10/09/2026)",
+  "total_duration_s": 438.9,
+  "model_name": "gemini-2.5-flash",
+  "progress": {
+    "current": 11,
+    "total": 11,
+    "current_title": "Finalitzat!",
+    "pct": 1.0
+  },
+  "results": {
+    "total_proves": 11,
+    "proves_superades": 2,
+    "percentatge_exit": 18.2,
+    "taxa_json_valid": 90.9,
+    "taxa_seguretat_alergies": 81.8,
+    "taxa_desdoblament_vetos": 90.9,
+    "taxa_equipament_forn": 90.9,
+    "latencia_mitjana_s": 38.83,
+    "model_avaluat": "gemini-2.5-flash",
+    "durada_total_s": 438.9,
+    "detall_resultats": [
+      {
+        "id": "TC-01-Alergies-Lactosa-Gluten",
+        "titol": "Seguretat Mèdica Estricta: Celiaquia i Intolerància a la Lactosa",
+        "exit_global": false,
+        "json_valid": true,
+        "puntuacio_seguretat": 0.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 1.0,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 39.15,
+        "errors": [
+          "Divendres (sopar): 'Sopar fred: Taula d'embotits aptes, pa sense gluten i formatge sense lactosa - Poma de temporada' conté el terme prohibit 'formatge'",
+          "Divendres (sopar): ingredient 'formatge sense lactosa' conté 'formatge'",
+          "Dissabte (sopar): 'Pizza casolana sense gluten amb mozzarella sense lactosa i verdures al forn - Iogurt sense lactosa' conté el terme prohibit 'mozzarella'",
+          "Dissabte (sopar): 'Pizza casolana sense gluten amb mozzarella sense lactosa i verdures al forn - Iogurt sense lactosa' conté el terme prohibit 'iogurt'",
+          "Dissabte (sopar): ingredient 'mozzarella sense lactosa' conté 'mozzarella'",
+          "Dissabte (sopar): ingredient 'iogurt sense lactosa' conté 'iogurt'",
+          "Dimecres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits"
+        ],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 2,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb verdures",
+                "segon": "Lluç a la planxa amb guarnició d'enciam",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "carrossa",
+                  "ceba",
+                  "lluc",
+                  "enciam",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó",
+                "segon": "Truita francesa amb tomàquet amanit",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons sense gluten amb salsa de tomàquet i alfàbrega",
+                "segon": "Pit de pollastre a la planxa amb xampinyons",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "macarrons sense gluten",
+                  "tomàquet",
+                  "pit de pollastre",
+                  "xampinyons",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brot de verdures",
+                "segon": "Salmó a la planxa amb espàrrecs de mar",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "salmó",
+                  "espàrrecs",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata i un xorret d'oli d'oliva",
+                "segon": "Hamburguesa de vedella a la planxa amb amanida de tomàquet",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "hamburguesa de vedella",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa i pastanaga",
+                "segon": "Gall dindi a la planxa amb orenga",
+                "postre": "Iogurt vegetal de coco",
+                "ingredients_principals": [
+                  "carbassa",
+                  "pastanaga",
+                  "gall dindi",
+                  "iogurt vegetal de coco"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs caldós de verdures",
+                "segon": "Calamars a la planxa amb all i julivert",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "arròs",
+                  "pimentó",
+                  "pèsols",
+                  "calamars",
+                  "all",
+                  "julivert",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": null,
+                "segon": "Sopar fred: Pa sense gluten amb pernil ibèric i tomàquet",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "pa sense gluten",
+                  "pernil ibèric",
+                  "tomàquet",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs",
+                "segon": "Bacallà a la planxa amb pinyons i fulles verdes",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "bacallà",
+                  "pinyons",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": null,
+                "segon": "Sopar fred: Taula d'embotits aptes, pa sense gluten i formatge sense lactosa",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "pa sense gluten",
+                  "embotit sense gluten",
+                  "formatge sense lactosa",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Amanida acolorida de cogombre, tomàquet i olives",
+                "segon": "Pollastre al forn amb patates i herbes aromàtiques",
+                "postre": "Maduixes",
+                "ingredients_principals": [
+                  "enciam",
+                  "cogombre",
+                  "tomàquet",
+                  "olives",
+                  "pollastre",
+                  "patates",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": null,
+                "segon": "Pizza casolana sense gluten amb mozzarella sense lactosa i verdures al forn",
+                "postre": "Iogurt sense lactosa",
+                "ingredients_principals": [
+                  "massa pizza sense gluten",
+                  "mozzarella sense lactosa",
+                  "carbassó",
+                  "pimentó",
+                  "iogurt sense lactosa"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Arròs mariner amb gambes i musclos",
+                "segon": "Lluç al forn amb llit de ceba",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "arròs",
+                  "gambes",
+                  "musclos",
+                  "brou de peix",
+                  "lluc",
+                  "ceba",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de porros",
+                "segon": "Truita de patata i ceba",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "porros",
+                  "patates",
+                  "ous",
+                  "ceba",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Brou concentrat de verdures i peix",
+              "quantitat": "2 L",
+              "utilitzacio": "Sopes de la setmana i arrossos"
+            },
+            {
+              "base": "Verdures netes i tallades (carbassó, porros, carbassa)",
+              "quantitat": "1.5 kg",
+              "utilitzacio": "Cremes ràpides entre setmana"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "Llenties cuites",
+            "Cigrons cuits",
+            "Macarrons sense gluten",
+            "Pa sense gluten",
+            "Massa de pizza casolana sense gluten",
+            "Mozzarella sense lactosa",
+            "Formatge sense lactosa",
+            "Iogurt vegetal de coco",
+            "Iogurt sense lactosa",
+            "Lluç fresc",
+            "Salmó",
+            "Bacallà",
+            "Gambes i musclos",
+            "Calamars",
+            "Pit de pollastre",
+            "Pollastre sencer o a quartons",
+            "Gall dindi",
+            "Hamburgueses de vedella",
+            "Pernil ibèric i embotits sense gluten",
+            "Ous",
+            "Carbassó, carbassa, porros, mongeta tendra, espinacs, patates, cebes, tomàquets, cogombre, espàrrecs",
+            "Pomes, peres, mandarines, plàtans, maduixes"
+          ]
+        }
+      },
+      {
+        "id": "TC-02-Veto-Personal-Desdoblament",
+        "titol": "Veto Personal i Desdoblament Culinari (Fetge / Casqueria)",
+        "exit_global": false,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 1.0,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 87.81,
+        "errors": [
+          "Dimarts: Repetició consecutiva d'hidrat 'pasta' dos dies seguits",
+          "Dimecres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits",
+          "Dijous: Repetició consecutiva d'hidrat 'pasta' dos dies seguits",
+          "Diumenge: Repetició consecutiva d'hidrat 'pasta' dos dies seguits"
+        ],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 3,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb ceba, pastanaga i carbassa",
+                "segon": "Lluç a la planxa amb una petita amanida de lletuga",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "ceba",
+                  "pastanaga",
+                  "carbassa",
+                  "lluç",
+                  "lletuga",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó i porros (sense patata)",
+                "segon": "Truita francesa amb tomàquet amanit",
+                "postre": "Taronja",
+                "ingredients_principals": [
+                  "carbassó",
+                  "porro",
+                  "ous",
+                  "tomàquet",
+                  "taronja"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb salsa de tomàquet casolana i ceba",
+                "segon": "Pit de pollastre a la planxa amb enciam",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "pasta",
+                  "tomàquet",
+                  "ceba",
+                  "pit de pollastre",
+                  "enciam",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brou casolà amb fideus",
+                "segon": "Llobarro a la planxa amb verdures saltades",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "brou",
+                  "fideus",
+                  "llobarro",
+                  "verdures",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata bullida i un raig d'oli d'oliva",
+                "segon": "Fetge de vedella amb ceba",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "fetge de vedella",
+                  "ceba",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": {
+                  "per": "Enric",
+                  "plat": "Pit de pollastre a la planxa amb ceba",
+                  "motiu": "Veto personal a fetge i casqueria"
+                }
+              },
+              "sopar": {
+                "primer": "Crema de carbassa i pastanaga (sense patata)",
+                "segon": "Truita de carbassó",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "carbassa",
+                  "pastanaga",
+                  "ous",
+                  "carbassó",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs de verdures (carbassó, pebrot i ceba)",
+                "segon": "Contramusclos de pollastre a la planxa",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "arròs",
+                  "carbassó",
+                  "pebrot",
+                  "ceba",
+                  "pollastre",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Caldo de verdures lleuger (sense fideus)",
+                "segon": "Salmó a la planxa amb espàrrecs verds",
+                "postre": "Iogurt vegetal de coco",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "salmó",
+                  "espàrrecs verds",
+                  "iogurt de coco"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs i un to d'all",
+                "segon": "Gall dindi a la planxa amb amanida de tomàquet",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "all",
+                  "gall dindi",
+                  "tomàquet",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Gaspatxo o crema freda de tomàquet",
+                "segon": "Taula d'embotits magres (pernil dolç i gall dindi) amb pa amb tomàquet",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "pernil dolç",
+                  "gall dindi",
+                  "pa",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Amanida verda completa amb olives i ceba",
+                "segon": "Pizza casolana amb pernil dolç, xampinyons i formatge sense lactosa (al forn)",
+                "postre": "Maduixes",
+                "ingredients_principals": [
+                  "enciam",
+                  "olives",
+                  "ceba",
+                  "massa de pizza",
+                  "pernil dolç",
+                  "xampinyons",
+                  "formatge sense lactosa",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de porros i ceba",
+                "segon": "Lluç al forn amb ceba i tomàquet rodanxat",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "porro",
+                  "ceba",
+                  "lluç",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Paella de verdures de temporada",
+                "segon": "Pollastre rostit al forn amb herbes aromàtiques",
+                "postre": "Poma al forn amb canyella",
+                "ingredients_principals": [
+                  "arròs",
+                  "verdures variades",
+                  "pollastre",
+                  "poma",
+                  "canyella"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brou casolà (sense fideus)",
+                "segon": "Truita francesa amb pernil dolç",
+                "postre": "Iogurt vegetal de coco",
+                "ingredients_principals": [
+                  "brou",
+                  "ous",
+                  "pernil dolç",
+                  "iogurt de coco"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Brou casolà de pollastre i verdures",
+              "quantitat": "3 L",
+              "utilitzacio": "Sopes de dimarts i diumenge, i bases de cremes"
+            },
+            {
+              "base": "Sofregit de ceba i tomàquet",
+              "quantitat": "1 kg",
+              "utilitzacio": "Macarrons de dimarts, arròs de dijous i paella de diumenge"
+            },
+            {
+              "base": "Verdures netes i tallades (carbassó, pastanaga, ceba)",
+              "quantitat": "1.5 kg",
+              "utilitzacio": "Cremes, saltats i acompanyaments de tota la setmana"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "Llenties seques o cuites",
+            "Cigrons cuits",
+            "Lluç fresc o congelat (6 racions)",
+            "Llobarro (3 filets)",
+            "Salmó (3 filets)",
+            "Fetge de vedella (2 racions)",
+            "Pit de pollastre (6 racions)",
+            "Contramusclos de pollastre (3 unitats)",
+            "Pollastre sencer per a rostit",
+            "Pernil dolç i gall dindi a llesques",
+            "Ous (2 dotzenes)",
+            "Formatge sense lactosa per a pizza",
+            "Massa de pizza casolana o preparada",
+            "Macarrons",
+            "Fideus per a sopa",
+            "Arròs rodó",
+            "Patates",
+            "Carbassons, carbassa, porros, cebes, pastanagues, mongeta tendra, espinacs, espàrrecs verds, tomàquets, enciam, xampinyons",
+            "Pomes, peres, taronges, mandarines, maduixes, plàtans",
+            "Iogurt vegetal de coco"
+          ]
+        }
+      },
+      {
+        "id": "TC-03-Peticio-Consens-Sardines",
+        "titol": "Petició d'Usuari Consensuada: Sardines a la Planxa",
+        "exit_global": false,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 0.75,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 53.52,
+        "errors": [
+          "Excés d'embotits per sopar: 3 cops (màxim permès: 2)",
+          "Dimarts: Repetició consecutiva d'hidrat 'pasta' dos dies seguits",
+          "Divendres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits",
+          "Dissabte: Repetició consecutiva d'hidrat 'pasta' dos dies seguits"
+        ],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 3,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb verdures",
+                "segon": "Lluç a la planxa amb una rodanxa de llimona",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "pastanaga",
+                  "ceba",
+                  "lluç",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa i porro",
+                "segon": "Truita de ceba i carbassó",
+                "postre": "Iogurt natural",
+                "ingredients_principals": [
+                  "carbassa",
+                  "porro",
+                  "ous",
+                  "ceba",
+                  "carbassó",
+                  "iogurt"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb salsa de tomàquet casolana i ceba",
+                "segon": "Pit de pollastre a la planxa amb enciam",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "macarrons",
+                  "tomàquet",
+                  "ceba",
+                  "pit de pollastre",
+                  "enciam",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de fideus amb brou de verdures",
+                "segon": "Truita francesa amb tomàquet amanit",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "fideus",
+                  "brou de verdures",
+                  "ous",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patates bullides",
+                "segon": "Hamburguesa de vedella a la planxa",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "hamburguesa de vedella",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó",
+                "segon": "Truita francesa amb pernil dolç",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "pernil dolç",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs amb verdures de temporada",
+                "segon": "Pit de gall dindi a la planxa",
+                "postre": "Taronja",
+                "ingredients_principals": [
+                  "arròs",
+                  "pèsols",
+                  "pastanaga",
+                  "pit de gall dindi",
+                  "taronja"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida verda amb tomàquet i ceba",
+                "segon": "Sardines a la planxa amb amanida",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "enciam",
+                  "tomàquet",
+                  "ceba",
+                  "sardines",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs",
+                "segon": "Llobarro a la planxa amb all i julivert",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "llobarro",
+                  "all",
+                  "julivert",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brou de verdures sense fideus",
+                "segon": "Truita de xampinyons",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "ous",
+                  "xampinyons",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Espaguetis a la bolonyesa de pollastre",
+                "segon": "Lluç al forn amb ceba i tomàquet",
+                "postre": "Maduixes",
+                "ingredients_principals": [
+                  "espaguetis",
+                  "carn picada de pollastre",
+                  "tomàquet",
+                  "lluç",
+                  "ceba",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de verdures de temporada",
+                "segon": "Pizza casolana al forn amb formatge i pernil dolç",
+                "postre": "Iogurt natural",
+                "ingredients_principals": [
+                  "verdures variades",
+                  "massa de pizza",
+                  "tomàquet",
+                  "formatge",
+                  "pernil dolç",
+                  "iogurt"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Paella de verdures",
+                "segon": "Pollastre rostit al forn amb herbes aromàtiques",
+                "postre": "Pinya",
+                "ingredients_principals": [
+                  "arròs",
+                  "pimentó",
+                  "mongeta verda",
+                  "pollastre sencer",
+                  "herbes aromàtiques",
+                  "pinya"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brou de gall dindi",
+                "segon": "Taula de formatges i embotits amb pa amb tomàquet",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "brou de gall dindi",
+                  "formatges variats",
+                  "embotits",
+                  "pa",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Brou de verdures i gall dindi concentrat",
+              "quantitat": "3 L",
+              "utilitzacio": "Sopes de dimarts, divendres i diumenge, i per a la cocció de l'arròs de dijous"
+            },
+            {
+              "base": "Sofregit de ceba i tomàquet",
+              "quantitat": "1 kg",
+              "utilitzacio": "Base per a les llenties de dilluns, macarrons de dimarts, arròs de dijous i espaguetis de dissabte"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "Llenties seques o cuites",
+            "Cigrons cuits",
+            "Macarrons",
+            "Espaguetis",
+            "Fideus per a sopa",
+            "Arròs rodó",
+            "Massa de pizza casolana",
+            "Pa de pagès",
+            "Lluç fresc o congelat (6 rodanxes)",
+            "Sardines fresques (12 unitats)",
+            "Llobarro (3 filets)",
+            "Pit de pollastre (300g)",
+            "Pit de gall dindi (300g)",
+            "Carn picada de pollastre (250g)",
+            "Pollastre sencer per a rostit",
+            "Hamburgueses de vedella (3 unitats)",
+            "Pernil dolç",
+            "Embotits variats (pernil salat, llonganissa)",
+            "Formatges variats (per a la taula i per a la pizza)",
+            "Ous (2 dotzenes)",
+            "Iogurts naturals (6 unitats)",
+            "Carbassa",
+            "Carbassó",
+            "Porros",
+            "Cebes",
+            "Tomàquets per a amanida i per a sucar",
+            "Tomàquet triturat",
+            "Mongeta tendra",
+            "Patates",
+            "Espinacs frescos",
+            "Xampinyons",
+            "Enciam",
+            "Pastanagues",
+            "Pèsols",
+            "Pomes",
+            "Peres",
+            "Taronges",
+            "Mandarines",
+            "Plàtans",
+            "Maduixes",
+            "Pinya",
+            "All",
+            "Julivert",
+            "Herbes aromàtiques (romani, timó)"
+          ]
+        }
+      },
+      {
+        "id": "TC-04-Regles-Nutricionals-Llar",
+        "titol": "Compliment Estricte de Freqüències Nutricionals de la Llar",
+        "exit_global": true,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 1.0,
+        "puntuacio_varietat": 1.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 27.49,
+        "errors": [],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 3,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb verdures",
+                "segon": "Lluç a la planxa amb amanida d'enciam",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "carrossa",
+                  "ceba",
+                  "lluç",
+                  "enciam",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó",
+                "segon": "Truita de gall dindi",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "gall dindi",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb samfaina",
+                "segon": "Pit de pollastre a la planxa amb xampinyons",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "macarrons",
+                  "tomàquet",
+                  "carbassó",
+                  "pollastre",
+                  "xampinyons",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brots de verdura (sense fideus)",
+                "segon": "Llobina a la planxa amb escalivada",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "llobina",
+                  "pimentó",
+                  "albergínia",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata i oli d'oliva",
+                "segon": "Hamburguesa de vedella a la planxa amb tomàquet amanit",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "vedella",
+                  "tomàquet",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida de tomàquet i formatge fresc",
+                "segon": "Sèpia a la planxa amb all i julivert",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "formatge fresc",
+                  "sèpia",
+                  "all",
+                  "julivert",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs de verdures i bolets",
+                "segon": "Lluç al vapor amb mongetes verdes",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "arròs",
+                  "bolets",
+                  "pimentó",
+                  "lluç",
+                  "mongetes verdes",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de ceba lleugera",
+                "segon": "Pa amb tomàquet i pernil ibèric",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "ceba",
+                  "brou",
+                  "pa",
+                  "tomàquet",
+                  "pernil ibèric",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs",
+                "segon": "Botifarra de gall dindi a la planxa",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "all",
+                  "botifarra de gall dindi",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa",
+                "segon": "Taula d'embotits d'aus i formatge amb pa amb tomàquet",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "carbassa",
+                  "ceba",
+                  "embotit d'aus",
+                  "formatge",
+                  "pa",
+                  "tomàquet",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Amanida barreja amb fruits secs",
+                "segon": "Lasanya de pollastre i verdures al forn",
+                "postre": "Maduixes",
+                "ingredients_principals": [
+                  "enciam",
+                  "fruits secs",
+                  "plaques de lasanya",
+                  "pollastre picat",
+                  "verdures",
+                  "beixamel",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de xampinyons",
+                "segon": "Pizza casolana amb verdures i tonyina al forn",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "xampinyons",
+                  "massa de pizza",
+                  "tomàquet",
+                  "mozzarella",
+                  "tonyina",
+                  "pimentó",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Amanida il·lustrada",
+                "segon": "Rostit de pollastre amb patates i xampinyons al forn",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "enciam",
+                  "ou dur",
+                  "tonyina",
+                  "pollastre",
+                  "patates",
+                  "xampinyons",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Caldo de verdures",
+                "segon": "Salmó a la planxa amb espàrrecs de mar",
+                "postre": "Iogurt vegetal de coco",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "salmó",
+                  "espàrrecs",
+                  "iogurt vegetal"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Caldo concentrat de verdures",
+              "quantitat": "2 L",
+              "utilitzacio": "Sopes de dimarts, dijous i diumenge"
+            },
+            {
+              "base": "Samfaina de verdures",
+              "quantitat": "1 kg",
+              "utilitzacio": "Macarrons de dimarts i farcit de pizza/lasanya del cap de setmana"
+            },
+            {
+              "base": "Escalivada al forn",
+              "quantitat": "500 g",
+              "utilitzacio": "Acompanyament de la llobina de dimarts sopar"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "Llenties cuites",
+            "Cigrons cuits",
+            "Lluç fresc o congelat",
+            "Llobina",
+            "Sèpia",
+            "Salmó",
+            "Tonyina en llauna",
+            "Pit de pollastre",
+            "Pollastre picat",
+            "Pollastre sencer per rostir",
+            "Hamburgueses de vedella",
+            "Botifarra de gall dindi",
+            "Pernil dindi i pernil ibèric",
+            "Embotits d'aus i formatge",
+            "Ous",
+            "Carbassó, carbassa, espinacs, mongeta tendra, xampinyons, ceba, tomàquets, pimentons, albergínia, espàrrecs",
+            "Patates",
+            "Arròs",
+            "Macarrons",
+            "Plaques de lasanya",
+            "Massa de pizza casolana",
+            "Pa",
+            "Fruits secs",
+            "Iogurt vegetal de coco",
+            "Fruita de temporada: pomes, peres, mandarines, plàtans, maduixes"
+          ]
+        }
+      },
+      {
+        "id": "TC-05-Ponderacio-Estrelles",
+        "titol": "Optimització per Puntuacions i Gustos Reals (Estrelles 0-5)",
+        "exit_global": true,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 1.0,
+        "puntuacio_varietat": 1.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 28.45,
+        "errors": [],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 2,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades",
+                "segon": "Lluç a la planxa amb amanida verda",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "ceba",
+                  "carbassó",
+                  "lluç",
+                  "enciam",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó",
+                "segon": "Truita francesa amb tomàquet amanit",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb samfaina de verdures",
+                "segon": "Pit de pollastre a la planxa amb xampinyons",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "macarrons",
+                  "tomàquet",
+                  "pebrot",
+                  "pollastre",
+                  "xampinyons",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de fideus amb brou de verdures",
+                "segon": "Llobarro a la planxa amb espàrrecs de bosc",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "fideus",
+                  "brou de verdures",
+                  "llobarro",
+                  "espàrrecs",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata i un xorret d'oli d'oliva",
+                "segon": "Hamburguesa de vedella a la planxa amb escalivada",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "hamburguesa de vedella",
+                  "pebrot",
+                  "albergínia",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopar fred: Pa amb tomàquet i taula d'embotits magres i formatge",
+                "segon": "Amanida verda amb tomàquet i olives",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "pa",
+                  "tomàquet",
+                  "pernil ibèric",
+                  "formatge",
+                  "enciam",
+                  "olives",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs de verdures de temporada",
+                "segon": "Sèpia a la planxa amb picada d'all i julivert",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "arròs",
+                  "carbassó",
+                  "mongeta tendra",
+                  "sèpia",
+                  "all",
+                  "julivert",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa i pastanaga",
+                "segon": "Gall dindi a la planxa amb amanida de cogombre",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "carbassa",
+                  "pastanaga",
+                  "gall dindi",
+                  "cogombre",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs i alls tressats",
+                "segon": "Calamars a la planxa amb amanida de tomàquet",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "all",
+                  "calamars",
+                  "tomàquet",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopar fred: Amanida verda amb formatge fresc, gall dindi i fruits secs",
+                "segon": "Truita d'espinacs",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "enciam",
+                  "formatge fresc",
+                  "gall dindi",
+                  "nous",
+                  "ous",
+                  "espinacs",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Amanida de tomàquet i formatge maó",
+                "segon": "Fideuà de marisc",
+                "postre": "Maduixes de temporada",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "formatge",
+                  "fideus de fideuà",
+                  "gambes",
+                  "escamarlans",
+                  "sepia",
+                  "brou de peix",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de verdures de l'hort",
+                "segon": "Orada al forn amb llit de patates i ceba",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "verdures variades",
+                  "orada",
+                  "patata",
+                  "ceba",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Amanida de cogombre, tomàquet i olives",
+                "segon": "Pollastre rostit amb patates",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "cogombre",
+                  "tomàquet",
+                  "olives",
+                  "pollastre",
+                  "patates",
+                  "herbes aromàtiques",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brou vegetal",
+                "segon": "Truita de tonyina amb amanida verda",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "brou vegetal",
+                  "ous",
+                  "tonyina",
+                  "enciam",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Brou vegetal concentrat",
+              "quantitat": "2 L",
+              "utilitzacio": "Sopa de fideus dimarts i sopar de diumenge"
+            },
+            {
+              "base": "Samfaina de verdures (ceba, tomàquet, pebrot, carbassó)",
+              "quantitat": "1 kg",
+              "utilitzacio": "Macarrons de dimarts i acompanyaments"
+            },
+            {
+              "base": "Patates i verdura bullida o tallada per enfornar",
+              "quantitat": "1.5 kg",
+              "utilitzacio": "Mongeta amb patata dimecres, orada dissabte i rostit diumenge"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "llenties cuites o seques",
+            "cigrons cuits",
+            "macarrons",
+            "fideus Primers/Mitjans",
+            "fideus de fideuà",
+            "arròs rodó",
+            "lluç en filets",
+            "llobarro",
+            "sèpia",
+            "calamars",
+            "orada",
+            "marisc per a fideuà (gambes, escamarlans)",
+            "pit de pollastre",
+            "pollastre sencer per rostar",
+            "hamburgueses de vedella",
+            "pit de gall dindi",
+            "embotits magres i pernil ibèric",
+            "formatge fresc i formatge Maó",
+            "ous",
+            "tonyina en llauna",
+            "carbassó",
+            "mongeta tendra",
+            "patates",
+            "cebes",
+            "alls",
+            "tomàquets",
+            "enciam",
+            "espinacs frescos",
+            "carbassa",
+            "pastanagues",
+            "espàrrecs de bosc",
+            "pebrot vermell i verd",
+            "albergínies",
+            "xampinyons",
+            "cogombres",
+            "olives",
+            "pomes",
+            "peres",
+            "mandarines",
+            "plàtans",
+            "maduixes",
+            "nous",
+            "pa de pagès",
+            "oli d'oliva verge extra",
+            "sal i herbes aromàtiques"
+          ]
+        }
+      },
+      {
+        "id": "TC-06-Aprofitament-Stock-Bases",
+        "titol": "Aprofitament d'Stock i Bases de Congelador (Zero Malbaratament)",
+        "exit_global": false,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 1.0,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 29.34,
+        "errors": [
+          "Dimarts: Repetició consecutiva d'hidrat 'pasta' dos dies seguits"
+        ],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 2,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb verdures",
+                "segon": "Lluç a la planxa amb amanida verda",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "pastanaga",
+                  "ceba",
+                  "lluç",
+                  "enciam",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brou de verdures (sense fideus)",
+                "segon": "Truita de carbassó",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "ous",
+                  "carbassó",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb samfaina i tomàquet",
+                "segon": "Pit de gall dindi a la planxa",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "macarrons",
+                  "tomàquet",
+                  "pebrot",
+                  "albergínia",
+                  "gall dindi",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa amb llavors",
+                "segon": "Calamars a la planxa amb all i julivert",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "carbassa",
+                  "ceba",
+                  "calamars",
+                  "all",
+                  "julivert",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata",
+                "segon": "Hamburguesa de vedella a la planxa amb guarnició",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "hamburguesa de vedella",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida de tomàquet i cogombre",
+                "segon": "Sèpia a la planxa amb verduretes saltades",
+                "postre": "Iogurt vegetal",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "cogombre",
+                  "sèpia",
+                  "verdures",
+                  "iogurt vegetal"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs caldós de peix i marisc",
+                "segon": "Ou dur amb amanida lleugera",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "arròs bomba",
+                  "caldo de peix",
+                  "gambes",
+                  "ous",
+                  "enciam",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Consomé lleuger de verdures",
+                "segon": "Pa amb tomàquet i pernil ibèric",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "pa",
+                  "tomàquet",
+                  "pernil ibèric",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs",
+                "segon": "Filet de salmó a la planxa",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "all",
+                  "salmó",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de xampinyons i porro",
+                "segon": "Taula d'embotits artesans i formatge",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "xampinyons",
+                  "porro",
+                  "embotits",
+                  "formatge",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Espaguetis amb pesto de alfàbrega",
+                "segon": "Llobarro a la planxa",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "espaguetis",
+                  "alfàbrega",
+                  "pinyons",
+                  "llobarro",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida barreja amb magrana i nous",
+                "segon": "Pizza casolana al forn amb verdures i mozzarella",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "enciam",
+                  "magrana",
+                  "nous",
+                  "massa de pizza",
+                  "verdures",
+                  "mozzarella",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Escalivada al forn (pebrot, albergínia i ceba)",
+                "segon": "Pollastre rostit al forn amb herbes aromàtiques i patates",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "pebrot",
+                  "albergínia",
+                  "ceba",
+                  "pollastre",
+                  "patates",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó",
+                "segon": "Truita francesa amb tomàquet amanit",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "tomàquet",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Escalivada al forn",
+              "quantitat": "1 kg",
+              "utilitzacio": "Diumenge dinar i acompanyaments"
+            },
+            {
+              "base": "Brou concentrat de verdures",
+              "quantitat": "2 L",
+              "utilitzacio": "Sopes i cremes de dilluns, dimarts i dijous"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "Llenties cuites",
+            "Lluç fresc",
+            "Macarrons",
+            "Pit de gall dindi",
+            "Calamars",
+            "Mongeta tendra",
+            "Patates",
+            "Hamburguesa de vedella",
+            "Sèpia",
+            "Gambes",
+            "Ous",
+            "Pernil ibèric",
+            "Cigrons cuits",
+            "Espinacs frescs",
+            "Salmó",
+            "Xampinyons",
+            "Embotits i formatge",
+            "Espaguetis",
+            "Llobarro",
+            "Massa de pizza",
+            "Mozzarella",
+            "Pollastre sencer",
+            "Verdures variades (carbassó, carbassa, tomàquets, enciam, pebrots, albergínies, porros, ceba, all)",
+            "Fruita de temporada (pomes, peres, mandarines, plàtans)"
+          ]
+        }
+      },
+      {
+        "id": "TC-07-Mise-En-Place-Setmanal",
+        "titol": "Derivació de la Guia de Batch Prep (Mise en Place de Diumenge)",
+        "exit_global": false,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 1.0,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 21.85,
+        "errors": [
+          "Dijous: Repetició consecutiva d'hidrat 'arròs' dos dies seguits"
+        ],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 3,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb verdures",
+                "segon": "Lluç a la planxa amb guarnició d'enciam i tomàquet",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "ceba",
+                  "carrossa",
+                  "lluç",
+                  "enciam",
+                  "tomàquet",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó i ceba",
+                "segon": "Truita francesa amb tomàquet amanit",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb samfaina de verdures",
+                "segon": "Pit de pollastre a la planxa amb amanida",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "macarrons",
+                  "tomàquet",
+                  "pebrot",
+                  "pollastre",
+                  "enciam",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brou de verdures amb fideus",
+                "segon": "Gall dindi a la planxa amb xampinyons saltats",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "fideus",
+                  "gall dindi",
+                  "xampinyons",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata i un xorret d'oli d'oliva",
+                "segon": "Hamburguesa de vedella a la paella amb tomàquet a la planxa",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "hamburguesa de vedella",
+                  "tomàquet",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida de tomàquet amb formatge fresc i orégano",
+                "segon": "Sèpia a la planxa amb all i julivert",
+                "postre": "Iogurt natural",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "formatge fresc",
+                  "sèpia",
+                  "all",
+                  "julivert",
+                  "iogurt"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs de verdures (carxofa, pèsols i pebrot)",
+                "segon": "Llobarro a la planxa amb enciam",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "arròs",
+                  "carxofa",
+                  "pèsols",
+                  "pebrot",
+                  "llobarro",
+                  "enciam",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de xampinyons",
+                "segon": "Ous ferrats amb saltejat de carbassó",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "xampinyons",
+                  "ceba",
+                  "ous",
+                  "carbassó",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs i alls",
+                "segon": "Lluç a la cassola amb ceba i tomàquet",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "lluç",
+                  "ceba",
+                  "tomàquet",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida verda variada amb coure de pipes",
+                "segon": "Sopar fred: Taula d'embotits variats, formatge i pa amb tomàquet",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "enciam",
+                  "embotits",
+                  "formatge",
+                  "pa",
+                  "tomàquet",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Amanida de tomàquet i olives",
+                "segon": "Pizza casolana al forn amb verdures i talls de gall dindi",
+                "postre": "Maduixes",
+                "ingredients_principals": [
+                  "massa de pizza",
+                  "tomàquet",
+                  "mozzarella",
+                  "verdures variades",
+                  "gall dindi",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa amb llavors de gira-sol",
+                "segon": "Salmó al forn amb verdures de temporada",
+                "postre": "Iogurt natural",
+                "ingredients_principals": [
+                  "carbassa",
+                  "salmó",
+                  "carbassó",
+                  "ceba",
+                  "iogurt"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Amanida il·lustrada de canonges, tomàquet i espàrrecs",
+                "segon": "Pollastre rostit al forn amb patates i galleda d'herbes aromàtiques",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "canonges",
+                  "espàrrecs",
+                  "pollastre",
+                  "patates",
+                  "ceba",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa lleugera de verdures",
+                "segon": "Truita de patates i ceba",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "brou de verdures",
+                  "patates",
+                  "ous",
+                  "ceba",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Brou concentrat de verdures",
+              "quantitat": "2 L",
+              "utilitzacio": "Sopes de fideus i fons per a l'arròs de dijous"
+            },
+            {
+              "base": "Verdures per a samfaina i sofregits",
+              "quantitat": "1 kg",
+              "utilitzacio": "Macarrons de dimarts, llenties de dilluns i fons de pizzes"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "Llenties cuites",
+            "Cigrons cuits",
+            "Macarrons",
+            "Fideus",
+            "Arròs",
+            "Massa de pizza",
+            "Pa",
+            "Patates",
+            "Carbassó",
+            "Carbassa",
+            "Mongeta tendra",
+            "Espinacs",
+            "Xampinyons",
+            "Carxofes",
+            "Pèsols",
+            "Tomàquets",
+            "Enciam",
+            "Canonges",
+            "Ceba",
+            "Pebrot",
+            "Espàrrecs",
+            "Lluç fresc o congelat",
+            "Sèpia",
+            "Llobarro",
+            "Salmó",
+            "Hamburguesa de vedella",
+            "Pit de pollastre",
+            "Pollastre sencer per rostar",
+            "Gall dindi",
+            "Embotits variats",
+            "Formatge fresc",
+            "Mozzarella",
+            "Ous",
+            "Iogurts naturals",
+            "Pomes",
+            "Peres",
+            "Plàtans",
+            "Mandarines",
+            "Maduixes"
+          ]
+        }
+      },
+      {
+        "id": "TC-08-Zero-Repeticions-Consecutives",
+        "titol": "Control de Varietat: Zero Repeticions d'Hidrats en Dies Consecutius",
+        "exit_global": false,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 1.0,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 23.11,
+        "errors": [
+          "Dimarts: Repetició consecutiva d'hidrat 'pasta' dos dies seguits"
+        ],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 2,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb verdures",
+                "segon": "Lluç a la planxa amb amanida verda",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "pastanaga",
+                  "ceba",
+                  "lluç",
+                  "enciam",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa i pastanaga",
+                "segon": "Truita de carbassó",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassa",
+                  "pastanaga",
+                  "ous",
+                  "carbassó",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb salsa de tomàquet i alfàbrega",
+                "segon": "Pit de pollastre a la planxa amb xampinyons saltats",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "macarrons",
+                  "tomàquet",
+                  "pollastre",
+                  "xampinyons",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de coure verdures",
+                "segon": "Sèpia a la planxa amb all i julivert",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "verdures de caldo",
+                  "sèpia",
+                  "all",
+                  "julivert",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata i oli d'oliva verge extra",
+                "segon": "Bistec de vedella a la planxa amb amanida de tomàquet",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "vedella",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida de tomàquet, cogombre i formatge fresc",
+                "segon": "Llobarro a la planxa amb espàrrecs de margalló",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "cogombre",
+                  "formatge fresc",
+                  "llobarro",
+                  "espàrrecs",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs de verdures de la horta",
+                "segon": "Hamburguesa de gall dindi a la planxa amb pebrots saltats",
+                "postre": "Taronja",
+                "ingredients_principals": [
+                  "arròs",
+                  "verdures variades",
+                  "gall dindi",
+                  "pebrots",
+                  "taronja"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó amb ceba",
+                "segon": "Ou potxat amb amanida de canonges i nous",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "canonges",
+                  "nous",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs i un toc de pebre vermell",
+                "segon": "Solenyot de gall dindi a la planxa amb amanida",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "gall dindi",
+                  "enciam",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida verda variada amb varietat de fulles",
+                "segon": "Taula d'embotits artesans i formatges amb pa amb tomàquet",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "enciam",
+                  "embotits",
+                  "formatge",
+                  "pa",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Amanida mediterrània amb olives i carbassó grillat",
+                "segon": "Pizza casolana al forn amb escalivada i mozzarella",
+                "postre": "Maduixes",
+                "ingredients_principals": [
+                  "enciam",
+                  "massa de pizza",
+                  "pobrots",
+                  "albergínia",
+                  "mozzarella",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de caldo de verdures clar",
+                "segon": "Dorada al forn amb un llit de tomàquet i ceba",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "caldo de verdures",
+                  "dorada",
+                  "tomàquet",
+                  "ceba",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Amanida fresca de cogombre, radis i tomàquet",
+                "segon": "Rostit de pollastre al forn amb patates i herbes aromàtiques",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "cogombre",
+                  "radis",
+                  "tomàquet",
+                  "pollastre",
+                  "patates",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de porros i patata lleugera",
+                "segon": "Truita francesa amb tomàquet amanit",
+                "postre": "Iogurt vegetal de coco",
+                "ingredients_principals": [
+                  "porros",
+                  "patata",
+                  "ous",
+                  "tomàquet",
+                  "iogurt vegetal"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Caldo concentrat de verdures",
+              "quantitat": "2 L",
+              "utilitzacio": "Sopes de dimarts i dissabte"
+            },
+            {
+              "base": "Mongetes tendres i patates cuites al vapor",
+              "quantitat": "1 kg",
+              "utilitzacio": "Dinar de dimecres"
+            },
+            {
+              "base": "Escalivada al forn (pebrots i albergínies)",
+              "quantitat": "500 g",
+              "utilitzacio": "Pizza de dissabte dinar"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "llenties",
+            "cigrons",
+            "macarrons",
+            "arròs",
+            "massa de pizza",
+            "lluç",
+            "sèpia",
+            "llobarro",
+            "dorada",
+            "bistec de vedella",
+            "pit de pollastre",
+            "pollastre sencer per rostit",
+            "hamburgueses de gall dindi",
+            "solenyot de gall dindi",
+            "ous",
+            "formatge fresc",
+            "mozzarella",
+            "embotits variats",
+            "iogurt vegetal de coco",
+            "carbassa",
+            "carbassó",
+            "pastanaga",
+            "mongeta tendra",
+            "patates",
+            "tomàquets",
+            "enciam variat",
+            "espinacs",
+            "porros",
+            "cebes",
+            "xampinyons",
+            "espàrrecs",
+            "pebrots",
+            "albergínies",
+            "pomes",
+            "peres",
+            "mandarines",
+            "taronges",
+            "plàtans",
+            "maduixes",
+            "nous"
+          ]
+        }
+      },
+      {
+        "id": "TC-09-Membres-Actius-vs-Fora",
+        "titol": "Flexibilitat de Comensals: Filla Fora de la Llar (Inactiva)",
+        "exit_global": false,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 1.0,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 27.43,
+        "errors": [
+          "Dimecres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits",
+          "Dijous: Repetició consecutiva d'hidrat 'arròs' dos dies seguits"
+        ],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 3,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb verdures",
+                "segon": "Lluç a la planxa amb amanida de tomàquet",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "cenalloga",
+                  "lluç",
+                  "tomàquet",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó amb ceba",
+                "segon": "Truita francesa amb enciam amanit",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "enciam",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb samfaina",
+                "segon": "Pit de gall dindi a la planxa amb xampinyons",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "macarrons",
+                  "tomàquet",
+                  "pesta",
+                  "gall dindi",
+                  "xampinyons",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de brou vegetal",
+                "segon": "Sèpia a la planxa amb picada d'all i julivert i amanida",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "brou vegetal",
+                  "sèpia",
+                  "all",
+                  "julivert",
+                  "enciam",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata fiada",
+                "segon": "Hamburguesa de pollastre a la paella amb verduretes",
+                "postre": "Taronja",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "pollastre",
+                  "pàprit",
+                  "taronja"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa i pastanaga",
+                "segon": "Llobarro a la planxa amb escalivada de paella",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassa",
+                  "pastanaga",
+                  "llobarro",
+                  "pimentó",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs de verdures de la horta",
+                "segon": "Contracuix de pollastre a la paella amb romer",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "arròs",
+                  "verdures variades",
+                  "pollastre",
+                  "romer",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida mixta de tomàquet, ceba i olives",
+                "segon": "Sopar fred: Taula d'embotits variats amb pa amb tomàquet",
+                "postre": "Mandarina",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "enciam",
+                  "embotits",
+                  "pa",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs i alls",
+                "segon": "Bacallà a la cassola amb salsa de tomàquet casolana",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "bacallà",
+                  "tomàquet",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de verdures de temporada",
+                "segon": "Truita de patates i ceba amb amanida verda",
+                "postre": "Iogurt natural",
+                "ingredients_principals": [
+                  "verdures",
+                  "ous",
+                  "patates",
+                  "ceba",
+                  "iogurt"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Pizza casolana de verdures al forn",
+                "segon": "Hamburguesa de vedella a la paella amb amanida",
+                "postre": "Fruita de temporada",
+                "ingredients_principals": [
+                  "massa de pizza",
+                  "verdures",
+                  "vedella",
+                  "enciam",
+                  "fruita"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de porros i patata",
+                "segon": "Gall dindi a la planxa amb guarnició d'alvocat i tomàquet",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "porros",
+                  "patata",
+                  "gall dindi",
+                  "alvocat",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Amanida il·lustrada amb espàrrecs i tomàquet",
+                "segon": "Pollastre rostit al forn amb patates i herbes aromàtiques",
+                "postre": "Maduixes de temporada",
+                "ingredients_principals": [
+                  "enciam",
+                  "espàrrecs",
+                  "pollastre",
+                  "patates",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Gazpacho o brou lleuger de verdures",
+                "segon": "Sopar fred: Sandvitx vegetal amb pernil ibèric i formatge",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "pa de motlle",
+                  "pernil ibèric",
+                  "formatge",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2",
+                  "Fill 1"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Brou de verdures concentrat",
+              "quantitat": "2 L",
+              "utilitzacio": "Bases de sopes, cremes i arròs de la setmana"
+            },
+            {
+              "base": "Samfaina casolana de verdures",
+              "quantitat": "1 kg",
+              "utilitzacio": "Acompanyament de macarrons i hamburgueses de pollastre"
+            },
+            {
+              "base": "Patates i verdura bullida",
+              "quantitat": "1.5 kg",
+              "utilitzacio": "Mongeta tendra amb patata i cremes"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "llenties",
+            "cigrons",
+            "lluç",
+            "sèpia",
+            "llobarro",
+            "bacallà",
+            "pit de gall dindi",
+            "hamburgueses de pollastre",
+            "contracuix de pollastre",
+            "pollastre sencer per rostar",
+            "hamburguesa de vedella",
+            "embotits variats",
+            "pernil ibèric",
+            "formatge",
+            "ous",
+            "macarrons",
+            "arròs",
+            "massa de pizza casolana",
+            "pa de motlle",
+            "pa convencional",
+            "carbassó",
+            "carbassa",
+            "mongeta tendra",
+            "patates",
+            "cebes",
+            "porros",
+            "pastanagues",
+            "tomàquets",
+            "enciam",
+            "xampinyons",
+            "alvocat",
+            "espàrrecs",
+            "pomes",
+            "peres",
+            "mandarines",
+            "plàtans",
+            "taronges",
+            "maduixes",
+            "iogurt natural"
+          ]
+        }
+      },
+      {
+        "id": "TC-10-Equipament-Eines-Cuina",
+        "titol": "Adaptació Estricta a l'Equipament: Eines de Cuina Disponibles",
+        "exit_global": false,
+        "json_valid": true,
+        "puntuacio_seguretat": 1.0,
+        "puntuacio_vetos": 1.0,
+        "puntuacio_regles": 0.75,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 1.0,
+        "puntuacio_eines": 1.0,
+        "latencia_s": 29.97,
+        "errors": [
+          "Excés de carn vermella: 2 cops (màxim permès: 1)",
+          "Dimecres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits"
+        ],
+        "resposta_json": {
+          "dies_planificats": 7,
+          "comensals_actius": 2,
+          "menu_setmanal": [
+            {
+              "dia": "Dilluns",
+              "dinar": {
+                "primer": "Llenties estofades amb verdures",
+                "segon": "Lluç a la planxa amb amanida verda",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "llenties",
+                  "carrossa",
+                  "ceba",
+                  "lluç",
+                  "enciam",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassó",
+                "segon": "Truita francesa amb tomàquet amanit",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassó",
+                  "ceba",
+                  "ous",
+                  "tomàquet",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimarts",
+              "dinar": {
+                "primer": "Macarrons amb salsa de tomàquet casolana",
+                "segon": "Pit de pollastre a la graella amb escalivada",
+                "postre": "Mandarines",
+                "ingredients_principals": [
+                  "pasta",
+                  "tomàquet",
+                  "ceba",
+                  "pollastre",
+                  "pesta",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida de brots barrejats i tomàquet",
+                "segon": "Sardines a la planxa amb all i julivert",
+                "postre": "Iogurt vegetal",
+                "ingredients_principals": [
+                  "brots barrejats",
+                  "tomàquet",
+                  "sardines",
+                  "all",
+                  "julivert",
+                  "iogurt vegetal"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dimecres",
+              "dinar": {
+                "primer": "Mongeta tendra amb patata fiada",
+                "segon": "Hamburguesa de vedella a la planxa",
+                "postre": "Plàtan",
+                "ingredients_principals": [
+                  "mongeta tendra",
+                  "patata",
+                  "carn de vedella",
+                  "plàtan"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Sopa de verdures de temporada",
+                "segon": "Daus de tofu saltats amb xampinyons",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "porro",
+                  "aprit",
+                  "pastanaga",
+                  "tofu",
+                  "xampinyons",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dijous",
+              "dinar": {
+                "primer": "Arròs de verdures i bolets",
+                "segon": "Gall dindi a la planxa amb saltejat de pimentó",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "arròs",
+                  "bolets",
+                  "pimentó",
+                  "gall dindi",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida verda amb cogombre i olives",
+                "segon": "Sèpia a la planxa amb all i julivert",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "enciam",
+                  "cogombre",
+                  "olives",
+                  "sèpia",
+                  "all",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Divendres",
+              "dinar": {
+                "primer": "Cigrons saltats amb espinacs i pinyons",
+                "segon": "Salmó al forn amb verdures",
+                "postre": "Taronja",
+                "ingredients_principals": [
+                  "cigrons",
+                  "espinacs",
+                  "pinyons",
+                  "salmó",
+                  "calabacito",
+                  "taronja"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": null,
+                "segon": "Sopar fred: pa amb tomàquet, embotits magres i formatge",
+                "postre": "Mandarines",
+                "ingredients_principals": [
+                  "pa",
+                  "tomàquet",
+                  "embotit gall dindi",
+                  "formatge",
+                  "mandarina"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Dissabte",
+              "dinar": {
+                "primer": "Espirals de pasta amb pesto de carbassó",
+                "segon": "Llom de porc a la planxa amb xipirons",
+                "postre": "Poma de temporada",
+                "ingredients_principals": [
+                  "pasta",
+                  "carbassó",
+                  "llom de porc",
+                  "poma"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Amanida Caprese amb tomàquet i mozzarella",
+                "segon": "Pizza casolana de verdures al forn",
+                "postre": "Iogurt vegetal",
+                "ingredients_principals": [
+                  "tomàquet",
+                  "mozzarella",
+                  "massa de pizza",
+                  "pimentó",
+                  "iogurt vegetal"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            },
+            {
+              "dia": "Diumenge",
+              "dinar": {
+                "primer": "Paella de verdures de la horta",
+                "segon": "Rostit de pollastre al forn amb herbes aromàtiques",
+                "postre": "Maduixes",
+                "ingredients_principals": [
+                  "arròs",
+                  "verdures variades",
+                  "pollastre",
+                  "herbes aromàtiques",
+                  "maduixes"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              },
+              "sopar": {
+                "primer": "Crema de carbassa",
+                "segon": "Truita d'espàrecs de bosc",
+                "postre": "Pera de temporada",
+                "ingredients_principals": [
+                  "carbassa",
+                  "ceba",
+                  "ous",
+                  "espàrecs",
+                  "pera"
+                ],
+                "apte_per": [
+                  "Enric",
+                  "Adult 2"
+                ],
+                "plat_alternatiu": null
+              }
+            }
+          ],
+          "bases_batch_prep_diumenge": [
+            {
+              "base": "Sofregit de ceba, tomàquet i pimentó",
+              "quantitat": "500 g",
+              "utilitzacio": "Basi per a pasta, legums i arrossos de la setmana"
+            },
+            {
+              "base": "Caldo de verdures casolà",
+              "quantitat": "2 L",
+              "utilitzacio": "Sopes, arrossos i cremes de la setmana"
+            }
+          ],
+          "ingredients_a_comprar": [
+            "llenties",
+            "cigrons",
+            "arròs",
+            "pasta (macarrons, espirals)",
+            "massa de pizza",
+            "pa",
+            "mongeta tendra",
+            "patates",
+            "carbassó",
+            "carbassa",
+            "espinacs",
+            "xampinyons",
+            "bolets",
+            "tomàquets",
+            "enciam i brots barrejats",
+            "pimentons",
+            "cebes",
+            "all",
+            "julivert",
+            "espàrecs de bosc",
+            "lluç",
+            "sardines",
+            "sèpia",
+            "salmó",
+            "pit de pollastre",
+            "pollastre enter per rostir",
+            "gall dindi",
+            "hamburguesa de vedella",
+            "llom de porc",
+            "tofu",
+            "ous",
+            "embotit de gall dindi",
+            "formatge",
+            "mozzarella",
+            "pinyons",
+            "olives",
+            "iogurt vegetal",
+            "pomes",
+            "peres",
+            "mandarines",
+            "plàtans",
+            "taronges",
+            "maduixes"
+          ]
+        }
+      },
+      {
+        "id": "TC-11-Us-Forn-i-Peticio-Familiar",
+        "titol": "Regla d'Ús del Forn vs Petició Familiar Expressa per Consens",
+        "exit_global": false,
+        "json_valid": false,
+        "puntuacio_seguretat": 0.0,
+        "puntuacio_vetos": 0.0,
+        "puntuacio_regles": 0.0,
+        "puntuacio_varietat": 0.0,
+        "puntuacio_estrelles": 0.0,
+        "puntuacio_eines": 0.0,
+        "latencia_s": 59.03,
+        "errors": [
+          "Error estructural: Error de sintaxi JSON no recuperable a la resposta del model"
+        ],
+        "resposta_json": {}
+      }
+    ]
+  },
+  "error": null
+}

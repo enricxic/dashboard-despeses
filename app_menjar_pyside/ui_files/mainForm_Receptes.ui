@@ -1,0 +1,1055 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainForm_Receptes</class>
+ <widget class="QWidget" name="MainForm_Receptes">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>359</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="centralWidget_Recepta">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QFrame" name="background_frame_Recepta">
+        <property name="styleSheet">
+         <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/images/fons receptes s_icones.jpg&quot;) 0 0 0 0 stretch stretch;
+}</string>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::Shape::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Shadow::Raised</enum>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QFrame" name="content_frame_Recepta">
+           <property name="frameShape">
+            <enum>QFrame::Shape::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Shadow::Raised</enum>
+           </property>
+           <widget class="QFrame" name="top_bar_frame">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>360</width>
+              <height>83</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/images/top.png&quot;) 0 0 0 0 stretch stretch;
+}
+</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <widget class="QFrame" name="frame_logo">
+             <property name="geometry">
+              <rect>
+               <x>9</x>
+               <y>4</y>
+               <width>165</width>
+               <height>65</height>
+              </rect>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/icons/foddayLogo.png&quot;) 0 0 0 0 stretch stretch;
+}
+</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+            </widget>
+            <widget class="QFrame" name="frame_butons_top">
+             <property name="geometry">
+              <rect>
+               <x>227</x>
+               <y>12</y>
+               <width>129</width>
+               <height>49</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QFrame" name="frame_top_buscar">
+              <property name="geometry">
+               <rect>
+                <x>51</x>
+                <y>3</y>
+                <width>33</width>
+                <height>42</height>
+               </rect>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::Shape::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Shadow::Raised</enum>
+              </property>
+              <widget class="QPushButton" name="BtBuscaRecepta">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>7</y>
+                 <width>30</width>
+                 <height>34</height>
+                </rect>
+               </property>
+               <property name="toolTip">
+                <string>Buscar Recepta</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../assets/icons/buscaRecepta.png</normaloff>../assets/icons/buscaRecepta.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>32</width>
+                 <height>32</height>
+                </size>
+               </property>
+              </widget>
+             </widget>
+             <widget class="QFrame" name="frame_top_menu">
+              <property name="geometry">
+               <rect>
+                <x>87</x>
+                <y>9</y>
+                <width>32</width>
+                <height>35</height>
+               </rect>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::Shape::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Shadow::Raised</enum>
+              </property>
+              <widget class="QPushButton" name="BtMenu">
+               <property name="geometry">
+                <rect>
+                 <x>3</x>
+                 <y>5</y>
+                 <width>31</width>
+                 <height>30</height>
+                </rect>
+               </property>
+               <property name="toolTip">
+                <string/>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../assets/icons/menu.png</normaloff>../assets/icons/menu.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>32</width>
+                 <height>32</height>
+                </size>
+               </property>
+              </widget>
+             </widget>
+             <widget class="QFrame" name="frame_top_edit">
+              <property name="geometry">
+               <rect>
+                <x>8</x>
+                <y>6</y>
+                <width>39</width>
+                <height>42</height>
+               </rect>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::Shape::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Shadow::Raised</enum>
+              </property>
+              <widget class="QPushButton" name="BtEditRecepta">
+               <property name="geometry">
+                <rect>
+                 <x>6</x>
+                 <y>4</y>
+                 <width>28</width>
+                 <height>34</height>
+                </rect>
+               </property>
+               <property name="toolTip">
+                <string>Editar Recepta</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../assets/icons/editRecepta.png</normaloff>../assets/icons/editRecepta.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>32</width>
+                 <height>32</height>
+                </size>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </widget>
+           <widget class="QFrame" name="frame_titol">
+            <property name="geometry">
+             <rect>
+              <x>62</x>
+              <y>66</y>
+              <width>286</width>
+              <height>57</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/images/top.png&quot;) 0 0 0 0 stretch stretch;
+}</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <widget class="QLabel" name="label_titol">
+             <property name="geometry">
+              <rect>
+               <x>4</x>
+               <y>-14</y>
+               <width>282</width>
+               <height>67</height>
+              </rect>
+             </property>
+             <property name="font">
+              <font>
+               <family>Montserrat</family>
+               <pointsize>14</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLabel {
+    color: white;
+    font-weight: bold;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Pollastre amb ametlles del carib i formatge fos</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </widget>
+           <widget class="QFrame" name="frame_ingredients">
+            <property name="geometry">
+             <rect>
+              <x>42</x>
+              <y>120</y>
+              <width>263</width>
+              <height>112</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/images/top.png&quot;) 0 0 0 0 stretch stretch;
+}
+</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <widget class="QTextEdit" name="text_ingredients">
+             <property name="geometry">
+              <rect>
+               <x>4</x>
+               <y>2</y>
+               <width>251</width>
+               <height>101</height>
+              </rect>
+             </property>
+             <property name="font">
+              <font>
+               <family>Courier New</family>
+               <pointsize>-1</pointsize>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QTextEdit {
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    color: white; /* Canvia el color del text si cal */
+}
+
+</string>
+             </property>
+             <property name="lineWrapMode">
+              <enum>QTextEdit::LineWrapMode::NoWrap</enum>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+             <property name="html">
+              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Courier New'; font-size:14px; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;100gr. de pollastre&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;ceba de Figueres&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;sal&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="BtAjustaRecepta">
+             <property name="geometry">
+              <rect>
+               <x>240</x>
+               <y>80</y>
+               <width>80</width>
+               <height>26</height>
+              </rect>
+             </property>
+             <property name="toolTip">
+              <string>Ajustaments</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	background : transparent;
+	border: none;
+	min-width: 80px;
+	min_height: 30px;
+}┬
+
+QPushButton:hover {
+	border: 1px solid rgba(255,255,255,0.5);
+	background-color: rgba(255,255,255,0.1);
+	border-radius: 3px;
+}
+
+QPushButton:pressed {
+	background-color: rgba(255,255,255,0.25);
+}</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </widget>
+           <widget class="QFrame" name="frame_imatge">
+            <property name="geometry">
+             <rect>
+              <x>26</x>
+              <y>240</y>
+              <width>283</width>
+              <height>149</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/images/top.png&quot;) 0 0 0 0 stretch stretch;
+}
+</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <widget class="QLabel" name="label">
+             <property name="geometry">
+              <rect>
+               <x>-4</x>
+               <y>0</y>
+               <width>290</width>
+               <height>152</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="pixmap">
+              <pixmap>../assets/images/pollastre ametlles.jpeg</pixmap>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </widget>
+           <widget class="QFrame" name="frame_icons_laterals">
+            <property name="geometry">
+             <rect>
+              <x>307</x>
+              <y>101</y>
+              <width>48</width>
+              <height>227</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/images/top.png&quot;) 0 0 0 0 stretch stretch;
+}
+</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <widget class="QFrame" name="frame_eines">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>6</y>
+               <width>41</width>
+               <height>39</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QPushButton" name="BtEines">
+              <property name="geometry">
+               <rect>
+                <x>-1</x>
+                <y>-1</y>
+                <width>40</width>
+                <height>40</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>40</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Eines</string>
+              </property>
+              <property name="whatsThis">
+               <string/>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+	background : transparent;
+	border: none;
+	min-width: 80px;
+	min_height: 30px;
+}┬
+
+QPushButton:hover {
+	border: 1px solid rgba(255,255,255,0.5);
+	background-color: rgba(255,255,255,0.1);
+	border-radius: 3px;
+}
+
+QPushButton:pressed {
+	background-color: rgba(255,255,255,0.25);
+}</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../assets/icons/boil_11902115.png</normaloff>
+                <activeon>../assets/icons/boil_11902115.png</activeon>../assets/icons/boil_11902115.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>34</width>
+                <height>34</height>
+               </size>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_alergens">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>46</y>
+               <width>44</width>
+               <height>39</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QPushButton" name="BtAlergens">
+              <property name="geometry">
+               <rect>
+                <x>-2</x>
+                <y>-2</y>
+                <width>40</width>
+                <height>40</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>40</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Alèrgens</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+	background : transparent;
+	border: none;
+	min-width: 80px;
+	min_height: 30px;
+}┬
+
+QPushButton:hover {
+	border: 1px solid rgba(255,255,255,0.5);
+	background-color: rgba(255,255,255,0.1);
+	border-radius: 3px;
+}
+
+QPushButton:pressed {
+	background-color: rgba(255,255,255,0.25);
+}</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../assets/icons/alergens.png</normaloff>../assets/icons/alergens.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>34</width>
+                <height>34</height>
+               </size>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_ajusta_recepta">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>86</y>
+               <width>44</width>
+               <height>43</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QPushButton" name="BtAjusta">
+              <property name="geometry">
+               <rect>
+                <x>2</x>
+                <y>9</y>
+                <width>40</width>
+                <height>34</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../assets/icons/ajust.png</normaloff>../assets/icons/ajust.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>34</width>
+                <height>34</height>
+               </size>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_afegir_recepta">
+             <property name="geometry">
+              <rect>
+               <x>1</x>
+               <y>131</y>
+               <width>43</width>
+               <height>43</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QPushButton" name="BtAfegirRecepta">
+              <property name="geometry">
+               <rect>
+                <x>6</x>
+                <y>4</y>
+                <width>34</width>
+                <height>36</height>
+               </rect>
+              </property>
+              <property name="toolTip">
+               <string>Nova Recepta</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../assets/icons/afegirRecepta.png</normaloff>../assets/icons/afegirRecepta.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>34</width>
+                <height>34</height>
+               </size>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_borrar_recepta">
+             <property name="geometry">
+              <rect>
+               <x>2</x>
+               <y>174</y>
+               <width>44</width>
+               <height>43</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QPushButton" name="BtBorraRecepta">
+              <property name="geometry">
+               <rect>
+                <x>4</x>
+                <y>6</y>
+                <width>38</width>
+                <height>38</height>
+               </rect>
+              </property>
+              <property name="toolTip">
+               <string>Borrar Recepta</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../assets/icons/borrarRecepta.png</normaloff>../assets/icons/borrarRecepta.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>34</width>
+                <height>34</height>
+               </size>
+              </property>
+             </widget>
+            </widget>
+           </widget>
+           <widget class="QFrame" name="frame_preparacio">
+            <property name="geometry">
+             <rect>
+              <x>7</x>
+              <y>410</y>
+              <width>344</width>
+              <height>161</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/images/top.png&quot;) 0 0 0 0 stretch stretch;
+}</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <widget class="QLabel" name="label_2">
+             <property name="geometry">
+              <rect>
+               <x>14</x>
+               <y>7</y>
+               <width>300</width>
+               <height>150</height>
+              </rect>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLabel {
+    word-wrap: break-word;
+    min-width: 100px;  /* Amplada mínima */
+    max-width: 300px;  /* Amplada màxima */
+    min-height: 50px;  /* Alçada mínima */
+}</string>
+             </property>
+             <property name="text">
+              <string>Preparar una caçola a foc alt i rustir la ceba de Figueres amb una mica de mantega. En una paella fregir el talls de pollastre després d'enfarinar-los.  </string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </widget>
+           <widget class="QFrame" name="frame_info_plat">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>580</y>
+              <width>339</width>
+              <height>54</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QWidget {
+    border-image: url(&quot;P:/ARXIUS/PYTHON/FoodDay/PySide6/assets/images/top.png&quot;) 0 0 0 0 stretch stretch;
+}
+</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <widget class="QFrame" name="frame_anterior">
+             <property name="geometry">
+              <rect>
+               <x>2</x>
+               <y>2</y>
+               <width>49</width>
+               <height>45</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QPushButton" name="BtAnteriorRecepta">
+              <property name="geometry">
+               <rect>
+                <x>4</x>
+                <y>-1</y>
+                <width>42</width>
+                <height>49</height>
+               </rect>
+              </property>
+              <property name="toolTip">
+               <string>Recepta Anterior</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../assets/icons/retrocedir.png</normaloff>../assets/icons/retrocedir.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>48</width>
+                <height>48</height>
+               </size>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_tipusPlat">
+             <property name="geometry">
+              <rect>
+               <x>57</x>
+               <y>2</y>
+               <width>51</width>
+               <height>45</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QLabel" name="EtiTipusPlat">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>5</y>
+                <width>47</width>
+                <height>37</height>
+               </rect>
+              </property>
+              <property name="toolTip">
+               <string>Tipus Plat</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_temporada">
+             <property name="geometry">
+              <rect>
+               <x>117</x>
+               <y>3</y>
+               <width>51</width>
+               <height>44</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QLabel" name="EtiTemporada">
+              <property name="geometry">
+               <rect>
+                <x>-4</x>
+                <y>3</y>
+                <width>57</width>
+                <height>37</height>
+               </rect>
+              </property>
+              <property name="toolTip">
+               <string>Temporada</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_temps">
+             <property name="geometry">
+              <rect>
+               <x>173</x>
+               <y>1</y>
+               <width>57</width>
+               <height>44</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QLabel" name="EtiTemps">
+              <property name="geometry">
+               <rect>
+                <x>-1</x>
+                <y>3</y>
+                <width>62</width>
+                <height>40</height>
+               </rect>
+              </property>
+              <property name="toolTip">
+               <string>Temps Cocció</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_dificultat">
+             <property name="geometry">
+              <rect>
+               <x>235</x>
+               <y>1</y>
+               <width>49</width>
+               <height>48</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QLabel" name="EtiDificultat">
+              <property name="geometry">
+               <rect>
+                <x>4</x>
+                <y>3</y>
+                <width>45</width>
+                <height>39</height>
+               </rect>
+              </property>
+              <property name="toolTip">
+               <string>Dificultat</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </widget>
+            <widget class="QFrame" name="frame_posterior">
+             <property name="geometry">
+              <rect>
+               <x>292</x>
+               <y>0</y>
+               <width>46</width>
+               <height>50</height>
+              </rect>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <widget class="QPushButton" name="BtPosteriorRecepta">
+              <property name="geometry">
+               <rect>
+                <x>-3</x>
+                <y>3</y>
+                <width>49</width>
+                <height>42</height>
+               </rect>
+              </property>
+              <property name="toolTip">
+               <string>Recepta Posterior</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../assets/icons/avança.png</normaloff>../assets/icons/avança.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>48</width>
+                <height>47</height>
+               </size>
+              </property>
+             </widget>
+            </widget>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

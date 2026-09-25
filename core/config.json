@@ -17,7 +17,7 @@
     "familia": [
         {
             "id": 1,
-            "nom": "Enric",
+            "nom": "Enric Test",
             "rol": "Pare",
             "data_naixement": "23/09/1957",
             "edat": "68",
@@ -92,7 +92,7 @@
         },
         {
             "id": 5,
-            "nom": "Miquel",
+            "nom": "Miquel Modificat",
             "rol": "Altres",
             "data_naixement": "01/01/1999",
             "edat": "27",

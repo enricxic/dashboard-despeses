@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Generador de Hash SHA-256 (Local i Segur)</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 2rem; background: #f0f2f6; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #f39c12; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background: #e67e22; }
+        .result { margin-top: 20px; word-break: break-all; background: #e8f0fe; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 14px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Generador de Contrasenyes (SHA-256)</h2>
+    <p>Escriu la teva nova contrasenya a sota i prem el botó. El procés és 100% local, no s'envia res a internet.</p>
+    
+    <input type="text" id="pwd" placeholder="Escriu la contrasenya aquí..." autocomplete="off">
+    <button onclick="generarHash()">Generar Codi</button>
+
+    <div id="resultat" class="result" style="display: none;"></div>
+</div>
+
+<script>
+    async function generarHash() {
+        const password = document.getElementById('pwd').value;
+        if (!password) return;
+        
+        // Convert string to ArrayBuffer
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        
+        // Hash it using Web Crypto API
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        
+        // Convert ArrayBuffer to Hex string
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        // Display result
+        const resDiv = document.getElementById('resultat');
+        resDiv.style.display = 'block';
+        resDiv.innerHTML = `<strong>Copia això als Secrets de Streamlit:</strong><br><br><code>"${hashHex}"</code>`;
+    }
+</script>
+
+</body>
+</html>

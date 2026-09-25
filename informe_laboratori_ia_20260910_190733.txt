@@ -1,0 +1,105 @@
+================================================================================
+        INFORME D'AVALUACIÓ DEL LABORATORI IA (HARNESS) - XIQUIHOUSE            
+================================================================================
+Data i hora de generacio: 2026-09-10 19:07:33
+Model d'IA Avaluat: gemini-2.5-flash
+Total de Proves Executades: 11
+Proves Superades amb Exit: 2 / 11 (18.2%)
+Durada Total del Proces: 7m 18s
+Latencia Mitjana per Prova: 38.83 s
+
+--------------------------------------------------------------------------------
+RESUM DE MÈTRIQUES GLOBALS:
+  - Taxa d'Exit Global: 18.2% (Objectiu: 100%)
+  - Validesa Estructural JSON: 90.9% (Objectiu: 100%)
+  - Seguretat Medica d'Alergies: 81.8% (Objectiu: 100%)
+  - Desdoblament de Vetos Personals: 90.9% (Objectiu: 100%)
+  - Adaptacio a Eines i Forn: 90.9% (Objectiu: 100%)
+--------------------------------------------------------------------------------
+TAULA RESUM DE CASOS DE PROVA:
+ID                                  | ESTAT  | LATÈNCIA   | INCIDÈNCIES
+--------------------------------------------------------------------------------
+TC-01-Alergies-Lactosa-Gluten       | FAIL   |  39.15s   | 7 incidencies
+TC-02-Veto-Personal-Desdoblament    | FAIL   |  87.81s   | 4 incidencies
+TC-03-Peticio-Consens-Sardines      | FAIL   |  53.52s   | 4 incidencies
+TC-04-Regles-Nutricionals-Llar      | PASS   |  27.49s   | Cap
+TC-05-Ponderacio-Estrelles          | PASS   |  28.45s   | Cap
+TC-06-Aprofitament-Stock-Bases      | FAIL   |  29.34s   | 1 incidencies
+TC-07-Mise-En-Place-Setmanal        | FAIL   |  21.85s   | 1 incidencies
+TC-08-Zero-Repeticions-Consecutives | FAIL   |  23.11s   | 1 incidencies
+TC-09-Membres-Actius-vs-Fora        | FAIL   |  27.43s   | 2 incidencies
+TC-10-Equipament-Eines-Cuina        | FAIL   |  29.97s   | 2 incidencies
+TC-11-Us-Forn-i-Peticio-Familiar    | FAIL   |  59.03s   | 1 incidencies
+
+--------------------------------------------------------------------------------
+DETALL DETALLAT PER CAS DE PROVA:
+
+[1] TC-01-Alergies-Lactosa-Gluten: Seguretat Mèdica Estricta: Celiaquia i Intolerància a la Lactosa
+    Estat: FALLAT | Latencia: 39.15s
+    Infraccions detectades:
+      - Divendres (sopar): 'Sopar fred: Taula d'embotits aptes, pa sense gluten i formatge sense lactosa - Poma de temporada' conté el terme prohibit 'formatge'
+      - Divendres (sopar): ingredient 'formatge sense lactosa' conté 'formatge'
+      - Dissabte (sopar): 'Pizza casolana sense gluten amb mozzarella sense lactosa i verdures al forn - Iogurt sense lactosa' conté el terme prohibit 'mozzarella'
+      - Dissabte (sopar): 'Pizza casolana sense gluten amb mozzarella sense lactosa i verdures al forn - Iogurt sense lactosa' conté el terme prohibit 'iogurt'
+      - Dissabte (sopar): ingredient 'mozzarella sense lactosa' conté 'mozzarella'
+      - Dissabte (sopar): ingredient 'iogurt sense lactosa' conté 'iogurt'
+      - Dimecres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+
+[2] TC-02-Veto-Personal-Desdoblament: Veto Personal i Desdoblament Culinari (Fetge / Casqueria)
+    Estat: FALLAT | Latencia: 87.81s
+    Infraccions detectades:
+      - Dimarts: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+      - Dimecres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+      - Dijous: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+      - Diumenge: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+
+[3] TC-03-Peticio-Consens-Sardines: Petició d'Usuari Consensuada: Sardines a la Planxa
+    Estat: FALLAT | Latencia: 53.52s
+    Infraccions detectades:
+      - Excés d'embotits per sopar: 3 cops (màxim permès: 2)
+      - Dimarts: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+      - Divendres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+      - Dissabte: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+
+[4] TC-04-Regles-Nutricionals-Llar: Compliment Estricte de Freqüències Nutricionals de la Llar
+    Estat: SUPERAT | Latencia: 27.49s
+    Compliment: 100% dels criteris i regles de seguretat respectats.
+
+[5] TC-05-Ponderacio-Estrelles: Optimització per Puntuacions i Gustos Reals (Estrelles 0-5)
+    Estat: SUPERAT | Latencia: 28.45s
+    Compliment: 100% dels criteris i regles de seguretat respectats.
+
+[6] TC-06-Aprofitament-Stock-Bases: Aprofitament d'Stock i Bases de Congelador (Zero Malbaratament)
+    Estat: FALLAT | Latencia: 29.34s
+    Infraccions detectades:
+      - Dimarts: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+
+[7] TC-07-Mise-En-Place-Setmanal: Derivació de la Guia de Batch Prep (Mise en Place de Diumenge)
+    Estat: FALLAT | Latencia: 21.85s
+    Infraccions detectades:
+      - Dijous: Repetició consecutiva d'hidrat 'arròs' dos dies seguits
+
+[8] TC-08-Zero-Repeticions-Consecutives: Control de Varietat: Zero Repeticions d'Hidrats en Dies Consecutius
+    Estat: FALLAT | Latencia: 23.11s
+    Infraccions detectades:
+      - Dimarts: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+
+[9] TC-09-Membres-Actius-vs-Fora: Flexibilitat de Comensals: Filla Fora de la Llar (Inactiva)
+    Estat: FALLAT | Latencia: 27.43s
+    Infraccions detectades:
+      - Dimecres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+      - Dijous: Repetició consecutiva d'hidrat 'arròs' dos dies seguits
+
+[10] TC-10-Equipament-Eines-Cuina: Adaptació Estricta a l'Equipament: Eines de Cuina Disponibles
+    Estat: FALLAT | Latencia: 29.97s
+    Infraccions detectades:
+      - Excés de carn vermella: 2 cops (màxim permès: 1)
+      - Dimecres: Repetició consecutiva d'hidrat 'pasta' dos dies seguits
+
+[11] TC-11-Us-Forn-i-Peticio-Familiar: Regla d'Ús del Forn vs Petició Familiar Expressa per Consens
+    Estat: FALLAT | Latencia: 59.03s
+    Infraccions detectades:
+      - Error estructural: Error de sintaxi JSON no recuperable a la resposta del model
+
+================================================================================
+Informe generat automatitzadament pel Laboratori IA de XiquiHouse.

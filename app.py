@@ -103,10 +103,15 @@ if "is_offline" not in st.session_state:
 
 app_cfg = load_app_config()
 
+from core.alerts import get_global_alerts
+st.session_state["global_alerts_list"] = get_global_alerts()
+
 # Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu)
 if "mod" in st.query_params:
     selected_mod = st.query_params.get("mod")
     st.session_state.current_module = selected_mod
+    if "db" in st.query_params:
+        st.session_state["db_to_open"] = st.query_params.get("db")
     try:
         del st.query_params["mod"]
     except Exception:
@@ -158,6 +163,8 @@ if "action" in st.query_params:
             if os.path.exists("core/config.json"):
                 zipf.write("core/config.json", "config.json")
         st.session_state["db_backup_toast"] = os.path.basename(zip_path)
+    elif act == "notifications":
+        st.session_state["show_notifications"] = True
     try:
         del st.query_params["action"]
         if "file" in st.query_params:
@@ -176,6 +183,22 @@ if st.session_state.get("offline_toast"):
     else:
         st.toast("🌐 MODE ONLINE RECUPERAT. Es tornarà a utilitzar el núvol.", icon="🌐")
     del st.session_state["offline_toast"]
+
+if st.session_state.get("show_notifications"):
+    del st.session_state["show_notifications"]
+    @st.dialog("🔔 Notificacions i Alertes")
+    def notifications_dialog():
+        from core.alerts import get_global_alerts
+        alerts = get_global_alerts()
+        if not alerts:
+            st.info("No tens cap notificació o alerta activa.")
+        else:
+            for al in alerts:
+                if al['type'] == 'error':
+                    st.error(f"**{al['icon']} {al['title']}**: {al['message']}")
+                else:
+                    st.warning(f"**{al['icon']} {al['title']}**: {al['message']}")
+    notifications_dialog()
 
 # Mostra una franja permanent de mode offline si està activat
 if st.session_state.get("is_offline"):
@@ -706,6 +729,18 @@ div.block-container {{
 <a href="?action=toggle_offline{auth_suffix}" target="_self" style="color: #f87171 !important;">🔌 Commutar Mode Offline</a>
 </div>
 </div>
+
+
+<!-- Campana Notificacions -->
+<div class="menu-item" style="float: right;">
+<a href="?action=notifications{auth_suffix}" target="_self" style="text-decoration: none; display: flex; align-items: center; padding: 10px 15px;">
+<span class="menu-title" style="font-size: 1.2rem; display: flex; align-items: center; position: relative;">
+🔔
+{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}
+</span>
+</a>
+</div>
+
 </nav>"""
     st.markdown(menubar_html, unsafe_allow_html=True)
 
@@ -916,8 +951,8 @@ if st.session_state.current_module is None:
 
 /* COORDENADES HORITZONTALS (Actualitzades a imatge ampliada) */
 .hs-admin {{ left: 35.50%; top: 12.28%; width: 8.2%; }}
-.hs-dashboard {{ left: 64.71%; top: 12.07%; width: 8.2%; }}
-.hs-economic {{ left: 23.51%; top: 21.49%; width: 8.2%; }}
+.hs-dashboard {{ left: 64.71%; top: 12.07%; width: 10.66%; }}
+.hs-economic {{ left: 23.51%; top: 21.49%; width: 10.66%; }}
 .hs-seguretat {{ left: 10.90%; top: 31.82%; width: 8.2%; }}
 .hs-manteniment {{ left: 23.51%; top: 40.44%; width: 8.2%; }}
 .hs-domotica {{ left: 10.72%; top: 52.48%; width: 8.2%; }}
@@ -956,8 +991,8 @@ if st.session_state.current_module is None:
 
     /* COORDENADES VERTICALS (Actualitzades a imatge ampliada) */
     .hs-admin {{ left: 30.27%; top: 13.69%; width: 12.3%; }}
-    .hs-dashboard {{ left: 69.86%; top: 13.40%; width: 12.3%; }}
-    .hs-economic {{ left: 10.3%; top: 20.32%; width: 12.3%; }}
+    .hs-dashboard {{ left: 69.86%; top: 13.40%; width: 15.99%; }}
+    .hs-economic {{ left: 10.3%; top: 20.32%; width: 15.99%; }}
     .hs-seguretat {{ left: 10.5%; top: 30.81%; width: 12.3%; }}
     .hs-manteniment {{ left: 10.3%; top: 40.46%; width: 12.3%; }}
     .hs-domotica {{ left: 10.3%; top: 50.56%; width: 12.3%; }}
@@ -973,6 +1008,17 @@ if st.session_state.current_module is None:
 <!-- Indicador de Rol Usuari -->
 <div class="role-badge" title="{role_title}">
     <span>{role_icon}</span>
+</div>
+</div>
+
+<!-- Campana Notificacions a la pantalla d'inici -->
+<div style="position: fixed; top: 22px; right: 70px; z-index: 99999;">
+    <a href="?action=notifications{auth_suffix}" target="_self" style="text-decoration: none; display: flex; align-items: center; background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 20px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
+        <span style="font-size: 1.3rem; display: flex; align-items: center; position: relative;">
+            🔔
+            {f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}
+        </span>
+    </a>
 </div>
 
 <div class="main-wrapper">
