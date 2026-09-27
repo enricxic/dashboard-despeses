@@ -739,7 +739,7 @@ div.block-container {{
 
 <!-- Campana Notificacions -->
 <div class="menu-item" style="margin-left: auto;">
-<span class="menu-title" style="font-size: 1.2rem; display: flex; align-items: center; position: relative; cursor: pointer;">🔔{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}</span>
+<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; position: relative; cursor: pointer;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 <div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
 {alerts_html}
 </div>
@@ -864,7 +864,7 @@ if st.session_state.current_module is None:
 .logo-box {{
     position: relative;
     display: block;
-    width: min(98vw, 175vh);
+    width: min(85vw, 140vh);
     aspect-ratio: 1772 / 1181;
     margin: 0 auto;
     line-height: 0;
@@ -892,14 +892,14 @@ if st.session_state.current_module is None:
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: calc(14 * min(98vw, 175vh) / 1772);
+    gap: calc(14 * min(85vw, 140vh) / 1772);
     z-index: 50;
     pointer-events: none;
     user-select: none;
     width: 100%;
 }}
 .house-custom-title {{
-    font-size: calc({tamany_px} * min(98vw, 175vh) / 1024);
+    font-size: calc({tamany_px} * min(85vw, 140vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     text-align: center;
@@ -911,11 +911,11 @@ if st.session_state.current_module is None:
     align-items: center;
 }}
 .house-custom-slogan {{
-    font-size: calc({max(11, int(tamany_px * 0.32))} * min(98vw, 175vh) / 1024);
+    font-size: calc({max(11, int(tamany_px * 0.32))} * min(85vw, 140vh) / 1024);
     font-weight: 800;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #407faf;
-    letter-spacing: calc(2.2 * min(98vw, 175vh) / 1024);
+    letter-spacing: calc(2.2 * min(85vw, 140vh) / 1024);
     text-transform: uppercase;
     text-align: center;
     white-space: nowrap;
@@ -1018,7 +1018,7 @@ if st.session_state.current_module is None:
 
 <!-- Campana Notificacions a la pantalla d'inici -->
 <div class="bell-container" style="position: fixed; top: 22px; right: 70px; z-index: 99999; cursor: pointer;">
-<span style="font-size: 1.3rem; display: flex; align-items: center; position: relative; padding: 5px 10px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔{f'<span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get("global_alerts_list", []))}</span>' if len(st.session_state.get("global_alerts_list", [])) > 0 else ""}</span>
+<span style="font-size: 1.6rem; display: flex; align-items: center; position: relative; padding: 5px 10px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 <div class="bell-dropdown">{alerts_html}</div>
 </div>
 
