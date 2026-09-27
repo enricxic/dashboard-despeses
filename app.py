@@ -88,8 +88,12 @@ function attachSelectAllToNumberInputs() {
 }
 attachSelectAllToNumberInputs();
 try {
-    const observer = new MutationObserver(attachSelectAllToNumberInputs);
-    observer.observe(window.parent.document.body, { childList: true, subtree: true });
+let debounceTimer = null;
+const observer = new MutationObserver(() => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(attachSelectAllToNumberInputs, 500);
+});
+observer.observe(window.parent.document.body, { childList: true, subtree: true });
 } catch(e) {}
 </script>
 ''', height=0, width=0)
