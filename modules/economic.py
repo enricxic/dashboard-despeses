@@ -424,22 +424,9 @@ def render(view_mode="economic"):
             df[col] = df[col].apply(fix_mojibake)
         return df
     
-    @st.cache_data(ttl=5, show_spinner=False)
-    def _fetch_fast_tables():
-        from concurrent.futures import ThreadPoolExecutor
-        tables = ['despeses', 'compresSuper']
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            return dict(zip(tables, executor.map(fetch_table_fast, tables)))
-
-    @st.cache_data(ttl=600, show_spinner=False)
-    def _fetch_slow_tables():
-        from concurrent.futures import ThreadPoolExecutor
-        tables = ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            return dict(zip(tables, executor.map(fetch_table_fast, tables)))
-
-    # No cache here, uses the inner cached functions
+    # No cache here, relies on core.db global cached functions to prevent Streamlit inner-function cache crash
     def load_dashboard_data(mtimes=None):
+        from core.db import _fetch_fast_tables, _fetch_slow_tables
         fetched = {}
         fetched.update(_fetch_fast_tables())
         fetched.update(_fetch_slow_tables())
@@ -529,6 +516,7 @@ def render(view_mode="economic"):
         
     # Monkey-patch clear method so existing code calling load_dashboard_data.clear() still works
     def _clear_dashboard_cache():
+        from core.db import _fetch_fast_tables, _fetch_slow_tables
         _fetch_fast_tables.clear()
         _fetch_slow_tables.clear()
     load_dashboard_data.clear = _clear_dashboard_cache
