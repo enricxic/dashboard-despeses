@@ -739,7 +739,7 @@ div.block-container {{
 
 <!-- Campana Notificacions -->
 <div class="menu-item" style="margin-left: auto;">
-<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; position: relative; cursor: pointer;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
+<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; position: relative; cursor: pointer;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 <div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
 {alerts_html}
 </div>
@@ -1017,7 +1017,7 @@ if st.session_state.current_module is None:
 
 <!-- Campana Notificacions a la pantalla d'inici -->
 <div class="bell-container" style="position: fixed; top: 22px; right: 70px; z-index: 99999; cursor: pointer;">
-<span style="font-size: 1.6rem; display: flex; align-items: center; position: relative; padding: 5px 10px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
+<span style="font-size: 1.6rem; display: flex; align-items: center; position: relative; padding: 5px 10px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 <div class="bell-dropdown">{alerts_html}</div>
 </div>
 
