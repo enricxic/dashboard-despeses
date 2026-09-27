@@ -1068,13 +1068,7 @@ def render_module_view(module_name):
     from core.db import ensure_session_dfs
     ensure_session_dfs()
     
-    import sys
-    for m in list(sys.modules.keys()):
-        if m.startswith('core.'):
-            importlib.reload(sys.modules[m])
-            
     mod = importlib.import_module(module_name)
-    importlib.reload(mod)
     mod.render()
 
 
