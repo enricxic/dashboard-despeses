@@ -2716,7 +2716,10 @@ def render():
                         except Exception as e:
                             st.error(f"Error inserint a TR Cartera: {e}")
                     else:
-                        insert_db_row('despeses', new_row_desp)
+                        success = insert_db_row('despeses', new_row_desp)
+                        if not success:
+                            st.error("❌ No s'ha pogut desar el moviment a la base de dades. És possible que hi hagi un conflicte (per exemple, si un altre dispositiu ha creat un moviment al mateix temps). Actualitzeu la pàgina i torneu a provar-ho.")
+                            return
                         
                         if grup_val == "op_banc" and cat_val == "op_banc" and actual_concept == "Traspàs comptes" and dest_banc:
                             row_dest = new_row_desp.copy()
