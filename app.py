@@ -868,7 +868,6 @@ if st.session_state.current_module is None:
     aspect-ratio: 1772 / 1181;
     margin: 0 auto;
     line-height: 0;
-    transform: translateY(-6vh);
 }}
 .img-logo-h {{
     display: block !important;
