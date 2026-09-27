@@ -246,18 +246,44 @@ def fix_mojibake_df(df):
         df[col] = df[col].apply(fix_mojibake)
     return df
 
+@st.cache_data(ttl=5, show_spinner=False)
+def _fetch_fast_tables():
+    from concurrent.futures import ThreadPoolExecutor
+    tables = ['despeses', 'compresSuper']
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        return dict(zip(tables, executor.map(fetch_table_fast, tables)))
+
 @st.cache_data(ttl=600, show_spinner=False)
+def _fetch_slow_tables():
+    from concurrent.futures import ThreadPoolExecutor
+    tables = ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        return dict(zip(tables, executor.map(fetch_table_fast, tables)))
+
+# No cache here, relies on the cached helper functions above
 def load_dashboard_data(tables_to_load=None, mtimes=None):
     from concurrent.futures import ThreadPoolExecutor
     
+    fetched = {}
     if tables_to_load is None:
-        tables_to_load = [
-            'despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe',
-            'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'
-        ]
+        fetched.update(_fetch_fast_tables())
+        fetched.update(_fetch_slow_tables())
+    else:
+        fast_needed = [t for t in tables_to_load if t in ['despeses', 'compresSuper']]
+        slow_needed = [t for t in tables_to_load if t not in ['despeses', 'compresSuper']]
         
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        fetched = dict(zip(tables_to_load, executor.map(fetch_table_fast, tables_to_load)))
+        if fast_needed == ['despeses', 'compresSuper']:
+            fetched.update(_fetch_fast_tables())
+        elif fast_needed:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                fetched.update(dict(zip(fast_needed, executor.map(fetch_table_fast, fast_needed))))
+                
+        if slow_needed == ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']:
+            fetched.update(_fetch_slow_tables())
+        elif slow_needed:
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                fetched.update(dict(zip(slow_needed, executor.map(fetch_table_fast, slow_needed))))
+
     
     out = {}
     if 'despeses' in fetched:
@@ -366,6 +392,12 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
     df_cartera = out.get('df_cartera', pd.DataFrame())
 
     return df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag, df_cartera
+
+# Monkey-patch clear method so existing code calling load_dashboard_data.clear() still works
+def _clear_dashboard_cache():
+    _fetch_fast_tables.clear()
+    _fetch_slow_tables.clear()
+load_dashboard_data.clear = _clear_dashboard_cache
 
 # Load categories_conceptes.json if exists
 import json

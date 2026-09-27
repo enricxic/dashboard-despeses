@@ -424,17 +424,25 @@ def render(view_mode="economic"):
             df[col] = df[col].apply(fix_mojibake)
         return df
     
-    @st.cache_data(ttl=600, show_spinner=False)
-    def load_dashboard_data(mtimes=None):
+    @st.cache_data(ttl=5, show_spinner=False)
+    def _fetch_fast_tables():
         from concurrent.futures import ThreadPoolExecutor
-        
-        tables_to_fetch = [
-            'despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe',
-            'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'
-        ]
-            
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            fetched = dict(executor.map(fetch_table_fast, tables_to_fetch))
+        tables = ['despeses', 'compresSuper']
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            return dict(zip(tables, executor.map(fetch_table_fast, tables)))
+
+    @st.cache_data(ttl=600, show_spinner=False)
+    def _fetch_slow_tables():
+        from concurrent.futures import ThreadPoolExecutor
+        tables = ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            return dict(zip(tables, executor.map(fetch_table_fast, tables)))
+
+    # No cache here, uses the inner cached functions
+    def load_dashboard_data(mtimes=None):
+        fetched = {}
+        fetched.update(_fetch_fast_tables())
+        fetched.update(_fetch_slow_tables())
         
         # Load tables from PostgreSQL
         df_desp = fix_mojibake_df(fetched['despeses'])
@@ -518,6 +526,12 @@ def render(view_mode="economic"):
             df_pag['clean_mes'] = ''
         
         return df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag, df_cartera
+        
+    # Monkey-patch clear method so existing code calling load_dashboard_data.clear() still works
+    def _clear_dashboard_cache():
+        _fetch_fast_tables.clear()
+        _fetch_slow_tables.clear()
+    load_dashboard_data.clear = _clear_dashboard_cache
     
     # Load categories_conceptes.json if exists
     import json
