@@ -3980,13 +3980,16 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 8060;BBVA;VISA;22/09/2026;septiembre;2026;0.0;31.0;Càrrec;varis;Expectacles/Teatre;La Pedrera. Barcelona;False
 8061;Efectiu;;25/09/2026;septiembre;2026;0.0;39.0;Càrrec;restaurant;Restaurant;Mònica, Palamos + degustació vi (5€);False
 8062;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;17.25;Càrrec;menjar;Mercadona;;False
-8063;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;67.5;Càrrec;restaurant;Restaurant;Mònica Palamós. Pago de 34€. Resta efectiu;False
+8063;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;67.5;Càrrec;restaurant;Restaurant;Mònica Palamós. ;False
 8064;LaCaixa;Compte;26/09/2026;septiembre;2026;0.0;68.46;Càrrec;despesa_general;Ajunt. Arbúcies;;False
 8065;LaCaixa;Compte;26/09/2026;septiembre;2026;68.25;0.0;Ingrés;ingres_general;Complement Generalitat;;False
 8066;LaCaixa;Compte;26/09/2026;septiembre;2026;628.8;0.0;Ingrés;ingres_general;Pensió no contributiva;;False
 4564;Efectiu;;04/02/2025;febrero;2025;0.0;4.3;Càrrec;neteja;Clarel;;False
 8067;Efectiu;;25/09/2026;septiembre;2026;0.0;-33.5;Càrrec;restaurant;Restaurant;Part Mònica Palamós Manolo i Pepe;False
+8068;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;17.5;Càrrec;restaurant;Bar;Degustació Vins. Palamós;False
 4976;BBVA;Dèbit;10/05/2025;mayo;2025;0.0;47.58;Càrrec;menjar;LIDL;;False
+8069;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;100.5;Càrrec;restaurant;Restaurant;Pizzeria Marina. Palamós;False
+8070;Efectiu;;26/09/2026;septiembre;2026;0.0;-50.25;Càrrec;restaurant;Restaurant;[Compensació] Pizzeria Marina. Palamós;False
 5740;BBVA;Compte;12/11/2025;noviembre;2025;0.0;34.69;Càrrec;despesa_general;Lowi;;False
 6729;BBVA;Compte;12/06/2026;junio;2026;0.0;283.8;Càrrec;assegurança;Assegurança Cotxe;;False
 6716;TradeRep.;Dèbit;08/06/2026;junio;2026;0.0;12.25;Càrrec;menjar;Novavenda;;False

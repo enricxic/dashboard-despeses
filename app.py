@@ -954,8 +954,8 @@ if st.session_state.current_module is None:
 
 /* COORDENADES HORITZONTALS (Actualitzades a imatge ampliada) */
 .hs-admin {{ left: 35.50%; top: 12.28%; width: 8.2%; }}
-.hs-dashboard {{ left: 64.71%; top: 12.07%; width: 10.66%; }}
-.hs-economic {{ left: 23.51%; top: 21.49%; width: 10.66%; }}
+.hs-dashboard {{ left: 64.71%; top: 12.07%; width: 8.2%; }}
+.hs-economic {{ left: 23.90%; top: 21.10%; width: 8.2%; }}
 .hs-seguretat {{ left: 10.90%; top: 31.82%; width: 8.2%; }}
 .hs-manteniment {{ left: 23.51%; top: 40.44%; width: 8.2%; }}
 .hs-domotica {{ left: 10.72%; top: 52.48%; width: 8.2%; }}
@@ -994,8 +994,8 @@ if st.session_state.current_module is None:
 
     /* COORDENADES VERTICALS (Actualitzades a imatge ampliada) */
     .hs-admin {{ left: 30.27%; top: 13.69%; width: 12.3%; }}
-    .hs-dashboard {{ left: 69.86%; top: 13.40%; width: 15.99%; }}
-    .hs-economic {{ left: 10.3%; top: 20.32%; width: 15.99%; }}
+    .hs-dashboard {{ left: 69.86%; top: 13.40%; width: 12.3%; }}
+    .hs-economic {{ left: 10.70%; top: 20.10%; width: 12.3%; }}
     .hs-seguretat {{ left: 10.5%; top: 30.81%; width: 12.3%; }}
     .hs-manteniment {{ left: 10.3%; top: 40.46%; width: 12.3%; }}
     .hs-domotica {{ left: 10.3%; top: 50.56%; width: 12.3%; }}
