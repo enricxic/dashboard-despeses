@@ -6,8 +6,7 @@ from core.db import (
     get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row, append_to_db, delete_db_row,
     get_config_supers, get_config_banks, get_config_payment_methods, get_config_families, get_config_articles,
     get_config_categories, get_config_concepts, get_config_routes, add_concept_to_config, add_route_to_config,
-    init_routes_config, add_super_to_config, get_tb_productes_cached, save_categories_conceptes, save_to_csv,
-    load_dashboard_data, get_csv_mtimes, BANK_MAPPING, MONTHS_MAP, clean_numeric, parse_excel_date, fix_mojibake_df
+    load_dashboard_data, get_csv_mtimes, BANK_MAPPING, MONTHS_MAP, clean_numeric, parse_excel_date, fix_mojibake_df, get_next_id
 )
 import re
 import urllib.parse
@@ -1171,7 +1170,7 @@ def cb_finalize_ticket():
             })
             
         # Assign IDs to new_entries
-        next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
+        next_id = get_next_id('despeses', 'ID_mov', df_desp)
         for i, entry in enumerate(new_entries):
             if i == 0 and pending_ticket_id:
                 entry['ID_mov'] = pending_ticket_id
@@ -1203,7 +1202,7 @@ def cb_finalize_ticket():
                     print(f"Error deleting pending ticket {pending_ticket_id}: {e}")
     
     new_rows = []
-    base_id = int(df_super['IdCompra'].max() + 1) if not df_super.empty else 1
+    base_id = get_next_id('compresSuper', 'IdCompra', df_super)
     for idx, item in enumerate(items):
         line_discount = discount if idx == 0 else 0.0
         # Determine linked expense ID based on category/rebost
@@ -1770,7 +1769,7 @@ Notes importants:
         if pending_ticket_id:
             next_id = pending_ticket_id
         else:
-            next_id = int(df_desp['ID_mov'].max() + 1) if not df_desp.empty else 1
+            next_id = get_next_id('despeses', 'ID_mov', df_desp)
         st.markdown("**Nº DESPESA**")
         st.markdown(f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{next_id}</div>", unsafe_allow_html=True)
 
@@ -2646,7 +2645,7 @@ def render():
                     comentari_val = f"{ext_str} | {comentari_val}" if comentari_val else ext_str
 
                 new_row_desp = {
-                    'ID_mov': int(df_desp['ID_mov'].max() + 1) if not df_desp.empty and 'ID_mov' in df_desp.columns else 1,
+                    'ID_mov': get_next_id('despeses', 'ID_mov', df_desp),
                     'Banc': banc,
                     'FormaPago': forma_pago,
                     'Data': data_val.strftime('%d/%m/%Y'),
@@ -2666,7 +2665,7 @@ def render():
                     preu_l_saved = float(st.session_state.get(f"desp_gas_preu_l_{version}") or (gas_preu_l if gas_preu_l else 0.0))
                     litres_saved = round(import_carg / preu_l_saved, 2) if preu_l_saved > 0 else 0.0
                     new_row_gas = {
-                        'idGasolina': int(df_gas['idGasolina'].max() + 1) if not df_gas.empty and 'idGasolina' in df_gas.columns else 1,
+                        'idGasolina': get_next_id('gasolina', 'idGasolina', df_gas),
                         'cotxe': st.session_state.get(f"desp_gas_cotxe_{version}"),
                         'data': data_val.strftime('%d/%m/%Y'),
                         'mes': mes_val,
@@ -2732,7 +2731,7 @@ def render():
                         
                         if grup_val == "op_banc" and cat_val == "op_banc" and actual_concept == "Traspàs comptes" and dest_banc:
                             row_dest = new_row_desp.copy()
-                            row_dest['ID_mov'] = int(st.session_state["df_desp"]['ID_mov'].max() + 1) if "df_desp" in st.session_state else int(df_desp['ID_mov'].max() + 2)
+                            row_dest['ID_mov'] = get_next_id('despeses', 'ID_mov')
                             row_dest['Banc'] = dest_banc
                             for k in list(row_dest.keys()):
                                 if 'ingr' in k.lower(): ing_key = k
@@ -2744,7 +2743,7 @@ def render():
                         # Lògica per a la compensació (Compte compartit restaurant/altres)
                         if bill_split and import_carg > 0 and bill_own_portion < import_carg:
                             row_comp = new_row_desp.copy()
-                            row_comp['ID_mov'] = int(st.session_state["df_desp"]['ID_mov'].max() + 1) if "df_desp" in st.session_state else int(df_desp['ID_mov'].max() + 2)
+                            row_comp['ID_mov'] = get_next_id('despeses', 'ID_mov')
                             row_comp['Banc'] = "Efectiu"
                             row_comp['FormaPago'] = ""
                             diff_comp = import_carg - bill_own_portion

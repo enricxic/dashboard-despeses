@@ -224,6 +224,21 @@ def fetch_all_supabase(client, table_name):
             break
     return pd.DataFrame(data)
 
+def get_next_id(table_name, id_col, fallback_df=None):
+    try:
+        import streamlit as st
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        res = supabase.table(table_name).select(id_col).order(id_col, desc=True).limit(1).execute()
+        if res.data and len(res.data) > 0:
+            return int(res.data[0][id_col]) + 1
+        return 1
+    except Exception as e:
+        import pandas as pd
+        print(f"Error fetching max ID for {table_name}: {e}")
+        if fallback_df is not None and not fallback_df.empty and id_col in fallback_df.columns:
+            return int(fallback_df[id_col].max() + 1)
+        return 1
+
 def get_csv_mtimes():
     # With Supabase, we don't need local file modified times.
     # Return a dummy dict to preserve compatibility with existing signatures.
@@ -246,96 +261,59 @@ def fix_mojibake_df(df):
         df[col] = df[col].apply(fix_mojibake)
     return df
 
-@st.cache_data(ttl=5, show_spinner=False)
-def _fetch_fast_tables():
-    from concurrent.futures import ThreadPoolExecutor
-    tables = ['despeses', 'compresSuper']
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        return dict(executor.map(fetch_table_fast, tables))
-
-@st.cache_data(ttl=600, show_spinner=False)
-def _fetch_slow_tables():
-    from concurrent.futures import ThreadPoolExecutor
-    tables = ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        return dict(executor.map(fetch_table_fast, tables))
-
-# No cache here, relies on the cached helper functions above
-def load_dashboard_data(tables_to_load=None, mtimes=None):
-    from concurrent.futures import ThreadPoolExecutor
-    
-    fetched = {}
-    if tables_to_load is None:
-        fetched.update(_fetch_fast_tables())
-        fetched.update(_fetch_slow_tables())
-    else:
-        fast_needed = [t for t in tables_to_load if t in ['despeses', 'compresSuper']]
-        slow_needed = [t for t in tables_to_load if t not in ['despeses', 'compresSuper']]
-        
-        if fast_needed == ['despeses', 'compresSuper']:
-            fetched.update(_fetch_fast_tables())
-        elif fast_needed:
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                fetched.update(dict(executor.map(fetch_table_fast, fast_needed)))
-                
-        if slow_needed == ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']:
-            fetched.update(_fetch_slow_tables())
-        elif slow_needed:
-            with ThreadPoolExecutor(max_workers=8) as executor:
-                fetched.update(dict(executor.map(fetch_table_fast, slow_needed)))
-
-    
+def _process_tables(fetched):
     out = {}
     if 'despeses' in fetched:
-        df = fetched['despeses']
-        df = fix_mojibake_df(df)
-        df['ID_mov'] = pd.to_numeric(df['ID_mov'], errors='coerce')
-        df = df.dropna(subset=['ID_mov']).sort_values(by='ID_mov', ascending=False).reset_index(drop=True)
-        df['import ingrés'] = clean_numeric(df['import ingrés'])
-        df['Import càrrec'] = clean_numeric(df['Import càrrec'])
-        df['parsed_date'] = df['Data'].apply(parse_excel_date)
-        df['date_score'] = df['any'] * 12 + df['mes'].astype(str).str.lower().map(MONTHS_MAP).fillna(12).astype(int)
-        out['df_desp'] = df
+        df = fix_mojibake_df(fetched['despeses'])
+        if 'ID_mov' in df.columns:
+            df['ID_mov'] = pd.to_numeric(df['ID_mov'], errors='coerce')
+            df = df.dropna(subset=['ID_mov']).sort_values(by='ID_mov', ascending=False).reset_index(drop=True)
+        if 'import ingrés' in df.columns: df['import ingrés'] = clean_numeric(df['import ingrés'])
+        if 'Import càrrec' in df.columns: df['Import càrrec'] = clean_numeric(df['Import càrrec'])
+        if 'Data' in df.columns: df['parsed_date'] = df['Data'].apply(parse_excel_date)
+        if 'any' in df.columns and 'mes' in df.columns:
+            df['date_score'] = df['any'] * 12 + df['mes'].astype(str).str.lower().map(MONTHS_MAP).fillna(12).astype(int)
+        out['despeses'] = df
         
     if 'ingressos' in fetched:
-        df = fetched['ingressos']
-        df = fix_mojibake_df(df)
-        df['idIngres'] = pd.to_numeric(df['idIngres'], errors='coerce')
-        df = df.dropna(subset=['idIngres']).sort_values(by='idIngres', ascending=False).reset_index(drop=True)
-        df['Import'] = clean_numeric(df['Import'])
-        df['parsed_date'] = df['Data'].apply(parse_excel_date)
-        out['df_ing'] = df
+        df = fix_mojibake_df(fetched['ingressos'])
+        if 'idIngres' in df.columns:
+            df['idIngres'] = pd.to_numeric(df['idIngres'], errors='coerce')
+            df = df.dropna(subset=['idIngres']).sort_values(by='idIngres', ascending=False).reset_index(drop=True)
+        if 'Import' in df.columns: df['Import'] = clean_numeric(df['Import'])
+        if 'Data' in df.columns: df['parsed_date'] = df['Data'].apply(parse_excel_date)
+        out['ingressos'] = df
         
     if 'compresSuper' in fetched:
-        df = fetched['compresSuper']
-        df = fix_mojibake_df(df)
-        df['IdCompra'] = pd.to_numeric(df['IdCompra'], errors='coerce')
-        df = df.dropna(subset=['IdCompra']).sort_values(by='IdCompra', ascending=False).reset_index(drop=True)
-        df['totLinea'] = clean_numeric(df['totLinea'])
-        df['parsed_date'] = df['data'].apply(parse_excel_date)
-        out['df_super'] = df
+        df = fix_mojibake_df(fetched['compresSuper'])
+        if 'IdCompra' in df.columns:
+            df['IdCompra'] = pd.to_numeric(df['IdCompra'], errors='coerce')
+            df = df.dropna(subset=['IdCompra']).sort_values(by='IdCompra', ascending=False).reset_index(drop=True)
+        if 'totLinea' in df.columns: df['totLinea'] = clean_numeric(df['totLinea'])
+        if 'data' in df.columns: df['parsed_date'] = df['data'].apply(parse_excel_date)
+        out['compresSuper'] = df
         
     if 'gasolina' in fetched:
-        df = fetched['gasolina']
-        df = fix_mojibake_df(df)
+        df = fix_mojibake_df(fetched['gasolina'])
         df = df.rename(columns={'?/l': 'euros/litre', '€/l': 'euros/litre'})
-        df['idGasolina'] = pd.to_numeric(df['idGasolina'], errors='coerce')
-        df = df.dropna(subset=['idGasolina']).sort_values(by='idGasolina', ascending=False).reset_index(drop=True)
-        df['import'] = clean_numeric(df['import'])
-        df['litres'] = clean_numeric(df['litres'])
-        df['euros/litre'] = clean_numeric(df.get('euros/litre', 0))
-        df['parsed_date'] = df['data'].apply(parse_excel_date)
-        out['df_gas'] = df
+        if 'idGasolina' in df.columns:
+            df['idGasolina'] = pd.to_numeric(df['idGasolina'], errors='coerce')
+            df = df.dropna(subset=['idGasolina']).sort_values(by='idGasolina', ascending=False).reset_index(drop=True)
+        if 'import' in df.columns: df['import'] = clean_numeric(df['import'])
+        if 'litres' in df.columns: df['litres'] = clean_numeric(df['litres'])
+        if 'euros/litre' in df.columns: df['euros/litre'] = clean_numeric(df['euros/litre'])
+        if 'data' in df.columns: df['parsed_date'] = df['data'].apply(parse_excel_date)
+        out['gasolina'] = df
         
     if 'kmCotxe' in fetched:
-        df = fetched['kmCotxe']
-        df = fix_mojibake_df(df)
-        df['idRuta'] = pd.to_numeric(df['idRuta'], errors='coerce')
-        df = df.dropna(subset=['idRuta']).sort_values(by='idRuta', ascending=False).reset_index(drop=True)
-        df['contador'] = clean_numeric(df['contador'])
-        df['km'] = clean_numeric(df['km'])
-        df['parsed_date'] = df['data'].apply(parse_excel_date)
-        out['df_km'] = df
+        df = fix_mojibake_df(fetched['kmCotxe'])
+        if 'idRuta' in df.columns:
+            df['idRuta'] = pd.to_numeric(df['idRuta'], errors='coerce')
+            df = df.dropna(subset=['idRuta']).sort_values(by='idRuta', ascending=False).reset_index(drop=True)
+        if 'contador' in df.columns: df['contador'] = clean_numeric(df['contador'])
+        if 'km' in df.columns: df['km'] = clean_numeric(df['km'])
+        if 'data' in df.columns: df['parsed_date'] = df['data'].apply(parse_excel_date)
+        out['kmCotxe'] = df
         
     if 'hipoteca' in fetched:
         df = fetched['hipoteca']
@@ -345,51 +323,93 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         if 'Quota fixa' in df.columns:
             df = df.dropna(subset=['Quota fixa'])
             df['Quota fixa'] = clean_numeric(df['Quota fixa'])
-        out['df_hip'] = df
+        out['hipoteca'] = df
         
     if 'tr_cartera' in fetched:
-        df = fetched['tr_cartera']
-        df = fix_mojibake_df(df)
+        df = fix_mojibake_df(fetched['tr_cartera'])
         df['idTRCartera'] = pd.to_numeric(df.get('idTRCartera', df.index), errors='coerce')
         df = df.dropna(subset=['idTRCartera']).sort_values(by='idTRCartera', ascending=False).reset_index(drop=True)
-        df['COMPRA'] = clean_numeric(df.get('COMPRA', 0))
-        df['VENDA'] = clean_numeric(df.get('VENDA', 0))
-        df['parsed_date'] = df.get('DATA', pd.Series(dtype=object)).apply(parse_excel_date)
-        out['df_cartera'] = df
+        if 'COMPRA' in df.columns: df['COMPRA'] = clean_numeric(df['COMPRA'])
+        if 'VENDA' in df.columns: df['VENDA'] = clean_numeric(df['VENDA'])
+        if 'DATA' in df.columns: df['parsed_date'] = df['DATA'].apply(parse_excel_date)
+        out['tr_cartera'] = df
         
     if 'estalviDP' in fetched:
         df = fetched['estalviDP']
-        df = df.dropna(subset=['mes', 'any'])
-        df['any'] = pd.to_numeric(df['any'], errors='coerce')
-        df['quota'] = clean_numeric(df['quota'])
+        if 'mes' in df.columns and 'any' in df.columns: df = df.dropna(subset=['mes', 'any'])
+        if 'any' in df.columns: df['any'] = pd.to_numeric(df['any'], errors='coerce')
+        if 'quota' in df.columns: df['quota'] = clean_numeric(df['quota'])
         if 'aportació' in df.columns: df['aportació'] = clean_numeric(df['aportació'])
         if 'rescat' in df.columns: df['rescat'] = clean_numeric(df['rescat'])
         if 'pérdua' in df.columns: df['pérdua'] = clean_numeric(df['pérdua'])
-        out['df_est'] = df
+        out['estalviDP'] = df
         
     if 'limitsDespeses' in fetched:
         df = fetched['limitsDespeses']
-        df = df.dropna(subset=['data_inici'])
-        df['parsed_date'] = df['data_inici'].apply(parse_excel_date)
-        out['df_limits'] = df
+        if 'data_inici' in df.columns:
+            df = df.dropna(subset=['data_inici'])
+            df['parsed_date'] = df['data_inici'].apply(parse_excel_date)
+        out['limitsDespeses'] = df
         
     if 'pagaments' in fetched:
         df = fetched['pagaments']
-        df = df.dropna(subset=['idPago'])
-        df['Import'] = clean_numeric(df['Import'])
-        df['parsed_date'] = df['Data'].apply(parse_excel_date)
-        out['df_pag'] = df
+        if 'idPago' in df.columns: df = df.dropna(subset=['idPago'])
+        if 'Import' in df.columns: df['Import'] = clean_numeric(df['Import'])
+        if 'Data' in df.columns: df['parsed_date'] = df['Data'].apply(parse_excel_date)
+        out['pagaments'] = df
         
-    df_desp = out.get('df_desp', pd.DataFrame())
-    df_ing = out.get('df_ing', pd.DataFrame())
-    df_super = out.get('df_super', pd.DataFrame())
-    df_gas = out.get('df_gas', pd.DataFrame())
-    df_km = out.get('df_km', pd.DataFrame())
-    df_hip = out.get('df_hip', pd.DataFrame())
-    df_est = out.get('df_est', pd.DataFrame())
-    df_limits = out.get('df_limits', pd.DataFrame())
-    df_pag = out.get('df_pag', pd.DataFrame())
-    df_cartera = out.get('df_cartera', pd.DataFrame())
+    return out
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _fetch_fast_tables():
+    from concurrent.futures import ThreadPoolExecutor
+    tables = ['despeses', 'compresSuper']
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        fetched = dict(executor.map(fetch_table_fast, tables))
+    return _process_tables(fetched)
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _fetch_slow_tables():
+    from concurrent.futures import ThreadPoolExecutor
+    tables = ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        fetched = dict(executor.map(fetch_table_fast, tables))
+    return _process_tables(fetched)
+
+def load_dashboard_data(tables_to_load=None, mtimes=None):
+    fetched = {}
+    
+    if tables_to_load is None:
+        fetched.update(_fetch_fast_tables())
+        fetched.update(_fetch_slow_tables())
+    else:
+        fast_needed = [t for t in tables_to_load if t in ['despeses', 'compresSuper']]
+        slow_needed = [t for t in tables_to_load if t not in ['despeses', 'compresSuper']]
+        
+        if fast_needed:
+            # Utilitzem directament la memòria cau per no bloquejar.
+            # _fetch_fast_tables retorna totes dues taules, només agafem les sol·licitades.
+            fast_cached = _fetch_fast_tables()
+            for t in fast_needed:
+                if t in fast_cached:
+                    fetched[t] = fast_cached[t]
+                
+        if slow_needed:
+            slow_cached = _fetch_slow_tables()
+            for t in slow_needed:
+                if t in slow_cached:
+                    fetched[t] = slow_cached[t]
+
+    df_desp = fetched.get('despeses', pd.DataFrame())
+    df_ing = fetched.get('ingressos', pd.DataFrame())
+    df_super = fetched.get('compresSuper', pd.DataFrame())
+    df_gas = fetched.get('gasolina', pd.DataFrame())
+    df_km = fetched.get('kmCotxe', pd.DataFrame())
+    df_hip = fetched.get('hipoteca', pd.DataFrame())
+    df_est = fetched.get('estalviDP', pd.DataFrame())
+    df_limits = fetched.get('limitsDespeses', pd.DataFrame())
+    df_pag = fetched.get('pagaments', pd.DataFrame())
+    df_cartera = fetched.get('tr_cartera', pd.DataFrame())
 
     return df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag, df_cartera
 

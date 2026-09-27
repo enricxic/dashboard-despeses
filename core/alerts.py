@@ -3,6 +3,7 @@ import streamlit as st
 from datetime import datetime
 from core.db import load_dashboard_data
 
+@st.cache_data(ttl=600, show_spinner=False)
 def get_global_alerts():
     alerts = []
     
