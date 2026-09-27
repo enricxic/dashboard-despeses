@@ -251,14 +251,14 @@ def _fetch_fast_tables():
     from concurrent.futures import ThreadPoolExecutor
     tables = ['despeses', 'compresSuper']
     with ThreadPoolExecutor(max_workers=2) as executor:
-        return dict(zip(tables, executor.map(fetch_table_fast, tables)))
+        return dict(executor.map(fetch_table_fast, tables))
 
 @st.cache_data(ttl=600, show_spinner=False)
 def _fetch_slow_tables():
     from concurrent.futures import ThreadPoolExecutor
     tables = ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']
     with ThreadPoolExecutor(max_workers=8) as executor:
-        return dict(zip(tables, executor.map(fetch_table_fast, tables)))
+        return dict(executor.map(fetch_table_fast, tables))
 
 # No cache here, relies on the cached helper functions above
 def load_dashboard_data(tables_to_load=None, mtimes=None):
@@ -276,18 +276,18 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
             fetched.update(_fetch_fast_tables())
         elif fast_needed:
             with ThreadPoolExecutor(max_workers=2) as executor:
-                fetched.update(dict(zip(fast_needed, executor.map(fetch_table_fast, fast_needed))))
+                fetched.update(dict(executor.map(fetch_table_fast, fast_needed)))
                 
         if slow_needed == ['ingressos', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments']:
             fetched.update(_fetch_slow_tables())
         elif slow_needed:
             with ThreadPoolExecutor(max_workers=8) as executor:
-                fetched.update(dict(zip(slow_needed, executor.map(fetch_table_fast, slow_needed))))
+                fetched.update(dict(executor.map(fetch_table_fast, slow_needed)))
 
     
     out = {}
     if 'despeses' in fetched:
-        _, df = fetched['despeses']
+        df = fetched['despeses']
         df = fix_mojibake_df(df)
         df['ID_mov'] = pd.to_numeric(df['ID_mov'], errors='coerce')
         df = df.dropna(subset=['ID_mov']).sort_values(by='ID_mov', ascending=False).reset_index(drop=True)
@@ -298,7 +298,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         out['df_desp'] = df
         
     if 'ingressos' in fetched:
-        _, df = fetched['ingressos']
+        df = fetched['ingressos']
         df = fix_mojibake_df(df)
         df['idIngres'] = pd.to_numeric(df['idIngres'], errors='coerce')
         df = df.dropna(subset=['idIngres']).sort_values(by='idIngres', ascending=False).reset_index(drop=True)
@@ -307,7 +307,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         out['df_ing'] = df
         
     if 'compresSuper' in fetched:
-        _, df = fetched['compresSuper']
+        df = fetched['compresSuper']
         df = fix_mojibake_df(df)
         df['IdCompra'] = pd.to_numeric(df['IdCompra'], errors='coerce')
         df = df.dropna(subset=['IdCompra']).sort_values(by='IdCompra', ascending=False).reset_index(drop=True)
@@ -316,7 +316,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         out['df_super'] = df
         
     if 'gasolina' in fetched:
-        _, df = fetched['gasolina']
+        df = fetched['gasolina']
         df = fix_mojibake_df(df)
         df = df.rename(columns={'?/l': 'euros/litre', '€/l': 'euros/litre'})
         df['idGasolina'] = pd.to_numeric(df['idGasolina'], errors='coerce')
@@ -328,7 +328,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         out['df_gas'] = df
         
     if 'kmCotxe' in fetched:
-        _, df = fetched['kmCotxe']
+        df = fetched['kmCotxe']
         df = fix_mojibake_df(df)
         df['idRuta'] = pd.to_numeric(df['idRuta'], errors='coerce')
         df = df.dropna(subset=['idRuta']).sort_values(by='idRuta', ascending=False).reset_index(drop=True)
@@ -338,7 +338,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         out['df_km'] = df
         
     if 'hipoteca' in fetched:
-        _, df = fetched['hipoteca']
+        df = fetched['hipoteca']
         if 'id' in df.columns:
             df['id'] = pd.to_numeric(df['id'], errors='coerce')
             df = df.dropna(subset=['id'])
@@ -348,7 +348,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         out['df_hip'] = df
         
     if 'tr_cartera' in fetched:
-        _, df = fetched['tr_cartera']
+        df = fetched['tr_cartera']
         df = fix_mojibake_df(df)
         df['idTRCartera'] = pd.to_numeric(df.get('idTRCartera', df.index), errors='coerce')
         df = df.dropna(subset=['idTRCartera']).sort_values(by='idTRCartera', ascending=False).reset_index(drop=True)
@@ -358,7 +358,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         out['df_cartera'] = df
         
     if 'estalviDP' in fetched:
-        _, df = fetched['estalviDP']
+        df = fetched['estalviDP']
         df = df.dropna(subset=['mes', 'any'])
         df['any'] = pd.to_numeric(df['any'], errors='coerce')
         df['quota'] = clean_numeric(df['quota'])
@@ -368,13 +368,13 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         out['df_est'] = df
         
     if 'limitsDespeses' in fetched:
-        _, df = fetched['limitsDespeses']
+        df = fetched['limitsDespeses']
         df = df.dropna(subset=['data_inici'])
         df['parsed_date'] = df['data_inici'].apply(parse_excel_date)
         out['df_limits'] = df
         
     if 'pagaments' in fetched:
-        _, df = fetched['pagaments']
+        df = fetched['pagaments']
         df = df.dropna(subset=['idPago'])
         df['Import'] = clean_numeric(df['Import'])
         df['parsed_date'] = df['Data'].apply(parse_excel_date)
