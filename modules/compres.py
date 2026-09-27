@@ -2548,10 +2548,13 @@ def render():
         ticket_pendent = st.checkbox("Aquesta despesa és una compra de súper amb ticket pendent de desglossar", key=f"desp_ticket_pendent_{version}")
         vacances_pendent = st.checkbox("Compra de viatge / vacances (Sense desglós ni estoc)", key=f"desp_vacances_pendent_{version}")
         
-        bill_split = st.checkbox("He pagat tot el compte i em deuen una part (Generar compensació en efectiu)", key=f"desp_bill_split_{version}")
         bill_own_portion = 0.0
-        if bill_split:
-            bill_own_portion = st.number_input("Quina és la teva part de la despesa (el que et tocava pagar a tu)? (€)", min_value=0.0, value=0.0, step=None, format="%.2f", key=f"desp_bill_own_{version}")
+        bill_split = False
+        
+        if banc and str(banc).strip().lower() not in ["efectiu", "casa"] and cat_val and str(cat_val).lower() == "restaurant":
+            bill_split = st.checkbox("He pagat tot el compte i em deuen una part (Generar compensació en efectiu)", key=f"desp_bill_split_{version}")
+            if bill_split:
+                bill_own_portion = st.number_input("Quina és la teva part de la despesa (el que et tocava pagar a tu)? (€)", min_value=0.0, value=0.0, step=None, format="%.2f", key=f"desp_bill_own_{version}")
 
 
         is_gas_cat = (str(cat_val).lower() == "gasolina")
