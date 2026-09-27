@@ -2363,12 +2363,18 @@ def render():
             # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
             st.rerun()
 
-    tab_scanner, tab_intro, tab_llista, tab_rebost, tab_stats = st.tabs(["📄 Compres Super", "📝 Ingrés / Despesa General", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"])
+    active_tab = st.radio(
+        "Navegació:",
+        ["📄 Compres Super", "📝 Ingrés / Despesa General", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    st.write("---")
     
-    with tab_scanner:
+    if active_tab == "📄 Compres Super":
         render_compres_super_interface()
 
-    with tab_intro:
+    if active_tab == "📝 Ingrés / Despesa General":
         from core.db import ensure_session_dfs
         ensure_session_dfs()
         
@@ -2881,7 +2887,7 @@ def render():
             )
 
 
-    with tab_llista:
+    if active_tab == "📋 Llista de la Compra":
         st.markdown("<h2 style='color:#f39c12; margin-top:0;'>🛒 Llista de la Compra</h2>", unsafe_allow_html=True)
         st.write("Aquesta llista mostra els productes del teu rebost on l'stock actual està per sota de l'stock mínim.")
         try:
@@ -3090,7 +3096,7 @@ def render():
 
 
     
-    with tab_rebost:
+    if active_tab == "📦 Rebost / Stock":
         try:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_prods = fetch_all_supabase(supabase, 'tb_productes')
@@ -3407,7 +3413,7 @@ def render():
         except Exception as e:
             st.error(f"Error carregant dades del rebost: {e}")
 
-    with tab_stats:
+    if active_tab == "📊 Estadístiques":
         st.markdown("<h3 style='color:#f39c12;'>📊 Estadístiques i Distribució de Compres</h3>", unsafe_allow_html=True)
         try:
             from core.db import ensure_session_dfs
