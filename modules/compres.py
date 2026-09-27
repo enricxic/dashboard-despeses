@@ -2547,6 +2547,12 @@ def render():
         # Row 3 (ticket pendent)
         ticket_pendent = st.checkbox("Aquesta despesa és una compra de súper amb ticket pendent de desglossar", key=f"desp_ticket_pendent_{version}")
         vacances_pendent = st.checkbox("Compra de viatge / vacances (Sense desglós ni estoc)", key=f"desp_vacances_pendent_{version}")
+        
+        bill_split = st.checkbox("He pagat tot el compte i em deuen una part (Generar compensació en efectiu)", key=f"desp_bill_split_{version}")
+        bill_own_portion = 0.0
+        if bill_split:
+            bill_own_portion = st.number_input("Quina és la teva part de la despesa (el que et tocava pagar a tu)? (€)", min_value=0.0, value=0.0, step=None, format="%.2f", key=f"desp_bill_own_{version}")
+
 
         is_gas_cat = (str(cat_val).lower() == "gasolina")
         if is_gas_cat:
@@ -2731,6 +2737,21 @@ def render():
                             row_dest[ing_key] = new_row_desp[carg_key]
                             row_dest[carg_key] = new_row_desp[ing_key]
                             insert_db_row('despeses', row_dest)
+                            
+                        # Lògica per a la compensació (Compte compartit restaurant/altres)
+                        if bill_split and import_carg > 0 and bill_own_portion < import_carg:
+                            row_comp = new_row_desp.copy()
+                            row_comp['ID_mov'] = int(st.session_state["df_desp"]['ID_mov'].max() + 1) if "df_desp" in st.session_state else int(df_desp['ID_mov'].max() + 2)
+                            row_comp['Banc'] = "Efectiu"
+                            row_comp['FormaPago'] = ""
+                            diff_comp = import_carg - bill_own_portion
+                            row_comp['Import càrrec'] = -round(diff_comp, 2)
+                            
+                            c_val = str(row_comp.get('Comentari', ''))
+                            prefix = "[Compensació]"
+                            row_comp['Comentari'] = f"{prefix} {c_val}".strip() if c_val else prefix
+                            
+                            insert_db_row('despeses', row_comp)
                         
                     if is_gas_cat:
                         insert_db_row('gasolina', new_row_gas)
