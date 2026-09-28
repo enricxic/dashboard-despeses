@@ -1751,6 +1751,7 @@ Notes importants:
                             st.session_state["added_supers"].append(new_super_name.strip())
                         from core.db import add_super_to_config
                         add_super_to_config(new_super_name.strip())
+                        st.session_state["ticket_super_val"] = new_super_name.strip()
                         st.session_state["show_new_super_popover"] = False
                         st.rerun()
             with col_ns2:
