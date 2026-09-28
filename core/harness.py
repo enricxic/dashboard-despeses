@@ -313,7 +313,8 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
                     return False, "Resposta buida de Gemini", elapsed
                 elif resp.status_code in [503, 429]:
                     if attempt < max_attempts - 1:
-                        time.sleep(2.0)
+                        sleep_time = 16.0 if resp.status_code == 429 else 2.0
+                        time.sleep(sleep_time)
                     last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
                     continue
                 else:
@@ -947,7 +948,7 @@ def _harness_background_worker(api_key: str, model_name: str):
         
         res = run_harness_single_test(tc, api_key=api_key, model_name=model_name)
         results.append(res)
-        time.sleep(1.0)
+        time.sleep(6.0)
         
     total_duration_s = round(time.time() - start_ts, 1)
     passed_total = sum(1 for r in results if r["exit_global"])
