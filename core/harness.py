@@ -287,14 +287,15 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
             ],
             "generationConfig": {
                 "temperature": 0.1,
-                "maxOutputTokens": 8192
+                "maxOutputTokens": 8192,
+                "responseMimeType": "application/json"
             }
         }
         
         max_attempts = 2
         for attempt in range(max_attempts):
             try:
-                resp = requests.post(url, json=payload, timeout=45)
+                resp = requests.post(url, json=payload, timeout=90)
                 elapsed = round(time.time() - start_time, 2)
                 
                 if resp.status_code == 200:
