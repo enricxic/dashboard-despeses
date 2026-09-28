@@ -575,19 +575,27 @@ def grade_repeticions_hidrats(menu_data: Dict[str, Any], test_case: Dict[str, An
     infraccions = []
     darrers_hidrats = set()
     
+    arros_kw = [r"\barròs\b", r"\barros\b", r"\bpaella\b", r"\brisotto\b"]
+    pasta_kw = [r"\bpasta\b", r"\bmacarrons\b", r"\bfideus\b", r"\bespaguetis\b", r"\bespirals\b", r"\blasanya\b", r"\bpizza\b", r"\bfideuà\b", r"\bfideua\b"]
+    
     for dia_obj in menu_data.get("menu_setmanal", []):
         dia_nom = dia_obj.get("dia", "")
         hidrats_avui = set()
         for apat_k in ["dinar", "sopar"]:
             apat = dia_obj.get(apat_k, {})
             if not isinstance(apat, dict): continue
-            plat = extract_apat_text(apat).lower()
-            ings = " ".join([str(i).lower() for i in apat.get("ingredients_principals", [])])
-            full = f"{plat} {ings}"
             
-            if any(k in full for k in ["arròs", "arros", "paella", "risotto"]):
+            plat_text = extract_apat_text(apat).lower()
+            
+            # Avoid counting "sense fideus" or "sense arròs"
+            plat_text = re.sub(r'\bsense\s+[a-zà-ú0-9_\'-]+', '', plat_text)
+            
+            ings = " ".join([str(i).lower() for i in apat.get("ingredients_principals", [])])
+            full = f"{plat_text} {ings}"
+            
+            if any(re.search(k, full) for k in arros_kw):
                 hidrats_avui.add("arròs")
-            if any(k in full for k in ["pasta", "macarrons", "fideus", "espaguetis", "espirals", "lasanya", "pizza", "fideuà", "fideua"]):
+            if any(re.search(k, full) for k in pasta_kw):
                 hidrats_avui.add("pasta")
                 
         if darrers_hidrats:
