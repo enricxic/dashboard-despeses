@@ -63,6 +63,50 @@ def get_global_alerts():
                     except:
                         pass
                         
+        # 3. Alerta Límits de despesa (Valor superat)
+        if df_desp is not None and not df_desp.empty:
+            avui = datetime.today()
+            curr_year = str(avui.year)
+            from core.db import CATALAN_MONTHS, get_limits_for
+            curr_month_str = CATALAN_MONTHS[avui.month - 1]
+            
+            # Filter df_desp for current year and month
+            df_curr = df_desp[(df_desp['any'].astype(str) == curr_year) & (df_desp['mes'].str.lower() == curr_month_str)].copy()
+            
+            if not df_curr.empty:
+                df_curr['Categoria'] = df_curr['Categoria'].str.strip().str.lower()
+                sum_menjar = df_curr[df_curr['Categoria'] == 'menjar']['import'].sum()
+                sum_gasolina = df_curr[df_curr['Categoria'] == 'gasolina']['import'].sum()
+                sum_restaurant = df_curr[df_curr['Categoria'] == 'restaurant']['import'].sum()
+                sum_farmacia = df_curr[df_curr['Categoria'] == 'farmàcia']['import'].sum()
+                sum_neteja = df_curr[df_curr['Categoria'] == 'neteja']['import'].sum()
+                sum_varis = df_curr[df_curr['Categoria'] == 'varis']['import'].sum()
+                
+                curr_limits = get_limits_for(avui.year, curr_month_str)
+                
+                col_mapping_alert = {
+                    'menjar': ('menjar', sum_menjar),
+                    'gasolina': ('gasolina', sum_gasolina),
+                    'restaurant': ('restaurant', sum_restaurant),
+                    'farmacia': ('farmàcia', sum_farmacia),
+                    'neteja': ('neteja', sum_neteja),
+                    'varis': ('varis', sum_varis)
+                }
+                
+                exceeded = []
+                for limit_key, (display_lbl, val) in col_mapping_alert.items():
+                    lim = curr_limits.get(limit_key, float('inf'))
+                    if val > lim:
+                        exceeded.append(f"{display_lbl} ({val:,.2f} € > {lim:,.2f} €)")
+                
+                if exceeded:
+                    alerts.append({
+                        "type": "error",
+                        "icon": "⚠️",
+                        "title": "Valor superat",
+                        "message": ", ".join(exceeded)
+                    })
+                        
     except Exception as e:
         print(f"Error generant alertes globals: {e}")
         

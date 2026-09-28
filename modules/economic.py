@@ -3469,7 +3469,6 @@ def render(view_mode="economic"):
         selected_month_summary = df_summary[df_summary['Mes'].str.lower() == selected_month_cat.lower()]
         if not selected_month_summary.empty:
             m_row = selected_month_summary.iloc[0]
-            exceeded_list = []
             col_mapping_alert = {
                 'Menjar': ('menjar', 'menjar'),
                 'Gasolina': ('gasolina', 'gasolina'),
@@ -3478,36 +3477,6 @@ def render(view_mode="economic"):
                 'Neteja': ('neteja', 'neteja'),
                 'Varis': ('varis', 'varis')
             }
-            for col_name, (display_lbl, limit_key) in col_mapping_alert.items():
-                val = m_row[col_name]
-                lim = selected_limits.get(limit_key, float('inf'))
-                if val > lim:
-                    exceeded_list.append(f"<b>{display_lbl}</b> ({val:,.2f} € > {lim:,.2f} €)")
-            if exceeded_list:
-                st.markdown(f"<div style='background-color: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;'>⚠️ <b style='color:#ef4444;'>Valor superat:</b> {', '.join(exceeded_list)}</div>", unsafe_allow_html=True)
-    
-        # Alerta Loteria
-        loteria_mask = df_desp['Comentari'].str.startswith('[LOTERIA]', na=False)
-        if loteria_mask.any():
-            loteria_tickets = df_desp[loteria_mask]
-            avui = datetime.today().date()
-            for _, row in loteria_tickets.iterrows():
-                com = str(row['Comentari'])
-                parts = com.split('|')
-                try:
-                    caduca_str = [p for p in parts if 'Caduca:' in p][0].split('Caduca:')[1].strip()
-                    caduca_date = datetime.strptime(caduca_str, '%d/%m/%Y').date()
-                    
-                    if caduca_date >= avui:
-                        dies_restants = (caduca_date - avui).days
-                        num_str = [p for p in parts if 'Num:' in p][0].split('Num:')[1].strip()
-                        tipus_str = [p for p in parts if 'Tipus:' in p][0].split('Tipus:')[1].strip().replace('[LOTERIA] Tipus:', '').strip()
-                        
-                        color = "#f59e0b" if dies_restants > 15 else "#ef4444"
-                        bg_color = "rgba(245, 158, 11, 0.15)" if dies_restants > 15 else "rgba(239, 68, 68, 0.15)"
-                        st.markdown(f"<div style='background-color: {bg_color}; border: 1px solid {color}; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;'>🍀 <b style='color:{color};'>Loteria Activa ({tipus_str}):</b> Núm. {num_str} - Caduca el {caduca_str} ({dies_restants} dies restants).</div>", unsafe_allow_html=True)
-                except:
-                    pass
 
         if show_limits:
             limits_row = {c: None for c in df_summary.columns}
