@@ -3990,6 +3990,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4976;BBVA;Dèbit;10/05/2025;mayo;2025;0.0;47.58;Càrrec;menjar;LIDL;;False
 8069;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;100.5;Càrrec;restaurant;Restaurant;Pizzeria Marina. Palamós;False
 8070;Efectiu;;26/09/2026;septiembre;2026;0.0;-50.25;Càrrec;restaurant;Restaurant;[Compensació] Pizzeria Marina. Palamós;False
+8071;TradeRep.;Dèbit;27/09/2026;septiembre;2026;0.0;26.0;Càrrec;restaurant;Restaurant;Degustació Palamós;False
 5740;BBVA;Compte;12/11/2025;noviembre;2025;0.0;34.69;Càrrec;despesa_general;Lowi;;False
 6729;BBVA;Compte;12/06/2026;junio;2026;0.0;283.8;Càrrec;assegurança;Assegurança Cotxe;;False
 6716;TradeRep.;Dèbit;08/06/2026;junio;2026;0.0;12.25;Càrrec;menjar;Novavenda;;False
