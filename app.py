@@ -742,10 +742,16 @@ div.block-container {{
 
 
 <!-- Campana Notificacions -->
-<div class="menu-item" style="margin-left: auto;">
-<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; position: relative; cursor: pointer;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
+<div class="menu-item" style="margin-left: auto; display: flex; align-items: center;">
+<div style="position: relative;">
+<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 <div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
 {alerts_html}
+</div>
+</div>
+<!-- Avatar Administrador -->
+<div class="role-badge-menubar" title="Rol actual" style="margin-left: 15px; font-size: 1.5rem; display: flex; align-items: center; cursor: default; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
+{ "👑" if st.session_state.get("role") == "admin" else ("👁️‍🗨️" if st.session_state.get("role") == "viewer" else "👤") }
 </div>
 </div>
 

@@ -223,11 +223,6 @@ def render(view_mode="economic"):
         f"""
         <style>
         </style>
-<div title="Rol: {role_title} ({username_disp})" style='position: fixed; top: 1.5rem; right: 1rem; z-index: 9999; 
-                    font-size: 1.8rem; cursor: help; 
-                    text-shadow: 0px 0px 5px rgba(255,255,255,0.8);'>
-{role_icon}
-</div>
         """, 
         unsafe_allow_html=True
     )
