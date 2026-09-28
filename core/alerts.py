@@ -17,7 +17,11 @@ def get_global_alerts():
             
         # 1. Alerta de canvi d'oli (Cotxe)
         if df_km is not None and not df_km.empty:
-            df_km_tivoli = df_km[df_km['vehicle'] == 'Tivoli'].copy()
+            if 'cotxe' in df_km.columns:
+                df_km_tivoli = df_km[df_km['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)].copy()
+            else:
+                df_km_tivoli = df_km.copy()
+            
             if not df_km_tivoli.empty:
                 df_km_tivoli = df_km_tivoli.sort_values(by='data', ascending=False)
                 car_kms_actuals = df_km_tivoli.dropna(subset=['contador'])['contador'].iloc[0]
