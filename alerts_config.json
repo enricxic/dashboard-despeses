@@ -1,0 +1,32 @@
+{
+  "membres_familia": [
+    {
+      "id": "pare",
+      "nom": "Adult",
+      "rol": "adult"
+    },
+    {
+      "id": "dependent1",
+      "nom": "Dependent",
+      "rol": "dependent"
+    }
+  ],
+  "regles_alertes": {
+    "loteria": {
+      "activar_dia_sorteig": true,
+      "dies_avis_caducitat": 7,
+      "mostrar_a_campana": true
+    },
+    "metge": {
+      "mostrar_per_rols": ["dependent"],
+      "dies_antelacio": 2
+    },
+    "medicacio": {
+      "mostrar_a_campana": false
+    },
+    "esdeveniment_familiar": {
+      "mostrar_a_campana": true,
+      "dies_antelacio": 7
+    }
+  }
+}

@@ -522,6 +522,7 @@ def render():
             ("titol", "🏷️ Títol de la casa"),
             ("familia", "👨‍👩‍👧‍👦 Família"),
             ("menjar", "🍽️ Menús i Nutrició"),
+            ("alertes", "🔔 Alertes Globals"),
             ("harness", "🧪 Laboratori IA (Harness)"),
             ("tutelats", "🤝 Tutelats"),
             ("bancs", "🏦 Bancs"),
@@ -1083,6 +1084,95 @@ def render():
         # =========================================================================
         # SECCIÓ: LABORATORI IA / HARNESS
         # =========================================================================
+        # =========================================================================
+        # SECCIÓ: ALERTES GLOBALS
+        # =========================================================================
+        elif active == "alertes":
+            import os, json
+            alerts_config_path = os.path.join(os.path.dirname(__file__), '..', 'alerts_config.json')
+            
+            try:
+                with open(alerts_config_path, 'r', encoding='utf-8') as f:
+                    alerts_cfg = json.load(f)
+            except:
+                alerts_cfg = {"regles_alertes": {"loteria": {"activar_dia_sorteig": True, "dies_avis_caducitat": 7, "mostrar_a_campana": True}}}
+            
+            regles = alerts_cfg.get("regles_alertes", {})
+            loteria = regles.get("loteria", {})
+            metge = regles.get("metge", {})
+            esdeveniment = regles.get("esdeveniment_familiar", {})
+            
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🔔 Configuració d'Alertes Globals</div>
+                <div class="chrome-card-desc">Controla quines notificacions apareixen a la campaneta i amb quina antelació. (Les dades es desen a alerts_config.json)</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            
+            # Loteria
+            st.markdown("#### 🍀 Loteria")
+            c1, c2 = st.columns(2)
+            with c1:
+                mostrar_loteria = st.checkbox("Mostrar alertes de Loteria", value=loteria.get("mostrar_a_campana", True), key="chk_lot_show")
+                activar_sorteig = st.checkbox("Avisar el dia exacte del Sorteig", value=loteria.get("activar_dia_sorteig", True), key="chk_lot_sorteig")
+            with c2:
+                dies_caduca = st.number_input("Dies d'avís abans de caducar", min_value=1, max_value=60, value=loteria.get("dies_avis_caducitat", 7), key="num_lot_caduca")
+            
+            st.markdown("---")
+            # Metge / Salut
+            st.markdown("#### 🏥 Visites Mèdiques (Futur Mòdul)")
+            c3, c4 = st.columns(2)
+            with c3:
+                rols_visites = st.text_input("Mostrar visites per a rols (separats per coma)", value=", ".join(metge.get("mostrar_per_rols", ["dependent"])), key="txt_metge_rols", help="Exemple: dependent, infant")
+            with c4:
+                dies_metge = st.number_input("Antelació avís visites (dies)", min_value=1, max_value=30, value=metge.get("dies_antelacio", 2), key="num_metge_dies")
+            
+            st.markdown("---")
+            # Esdeveniments familiars
+            st.markdown("#### 📅 Esdeveniments Familiars (Futur Mòdul)")
+            c5, c6 = st.columns(2)
+            with c5:
+                mostrar_esdev = st.checkbox("Mostrar viatges, visites i dinars familiars", value=esdeveniment.get("mostrar_a_campana", True), key="chk_esdev_show")
+            with c6:
+                dies_esdev = st.number_input("Antelació avís esdeveniments (dies)", min_value=1, max_value=60, value=esdeveniment.get("dies_antelacio", 7), key="num_esdev_dies")
+            
+            st.write("")
+            _render_flash_message()
+            
+            if st.button("💾 Desar Configuració d'Alertes", type="primary", use_container_width=True, key="save_alerts"):
+                alerts_cfg["regles_alertes"] = {
+                    "loteria": {
+                        "mostrar_a_campana": mostrar_loteria,
+                        "activar_dia_sorteig": activar_sorteig,
+                        "dies_avis_caducitat": dies_caduca
+                    },
+                    "metge": {
+                        "mostrar_per_rols": [r.strip() for r in rols_visites.split(",") if r.strip()],
+                        "dies_antelacio": dies_metge
+                    },
+                    "esdeveniment_familiar": {
+                        "mostrar_a_campana": mostrar_esdev,
+                        "dies_antelacio": dies_esdev
+                    },
+                    "medicacio": regles.get("medicacio", {"mostrar_a_campana": False})
+                }
+                try:
+                    with open(alerts_config_path, 'w', encoding='utf-8') as f:
+                        json.dump(alerts_cfg, f, indent=2, ensure_ascii=False)
+                    st.session_state["flash_success"] = "✅ Configuració d'alertes desada correctament a alerts_config.json!"
+                except Exception as e:
+                    st.session_state["flash_warning"] = f"Error en desar: {e}"
+                
+                try:
+                    st.cache_data.clear()
+                except:
+                    pass
+                st.rerun()
+                
+            st.markdown("</div>", unsafe_allow_html=True)
+
         elif active == "harness":
             st.markdown(f"""
             <div class="chrome-card">

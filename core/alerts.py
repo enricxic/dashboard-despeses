@@ -1,11 +1,27 @@
 import pandas as pd
 import streamlit as st
 from datetime import datetime
+import json
+import os
 from core.db import load_dashboard_data
+
+def load_alerts_config():
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'alerts_config.json')
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except:
+        return {
+            "membres_familia": [],
+            "regles_alertes": {
+                "loteria": {"activar_dia_sorteig": True, "dies_avis_caducitat": 7, "mostrar_a_campana": True}
+            }
+        }
 
 @st.cache_data(ttl=600, show_spinner=False)
 def get_global_alerts():
     alerts = []
+    config = load_alerts_config()
     
     try:
         # Assegurar que les dades estan carregades
@@ -35,37 +51,54 @@ def get_global_alerts():
                     })
                     
         # 2. Alerta de Loteria
-        if df_desp is not None and not df_desp.empty and 'Comentari' in df_desp.columns:
-            loteria_mask = df_desp['Comentari'].astype(str).str.startswith('[LOTERIA]', na=False)
-            if loteria_mask.any():
-                loteria_tickets = df_desp[loteria_mask]
-                avui = datetime.today().date()
-                for _, row in loteria_tickets.iterrows():
-                    com = str(row['Comentari'])
-                    parts = com.split('|')
-                    try:
-                        caduca_str = [p for p in parts if 'Caduca:' in p][0].split('Caduca:')[1].strip()
-                        caduca_date = datetime.strptime(caduca_str, '%d/%m/%Y').date()
-                        if caduca_date >= avui:
-                            dies_restants = (caduca_date - avui).days
-                            num_str = [p for p in parts if 'Num:' in p][0].split('Num:')[1].strip()
-                            tipus_str = [p for p in parts if 'Tipus:' in p][0].split('Tipus:')[1].strip().replace('[LOTERIA] Tipus:', '').strip()
-                            if dies_restants <= 15:
-                                alerts.append({
-                                    "type": "error",
-                                    "icon": "🍀",
-                                    "title": f"Loteria Activa ({tipus_str})",
-                                    "message": f"Núm. {num_str} - Caduca el {caduca_str} ({dies_restants} dies restants)."
-                                })
-                            else:
-                                alerts.append({
-                                    "type": "warning",
-                                    "icon": "🍀",
-                                    "title": f"Loteria Activa ({tipus_str})",
-                                    "message": f"Núm. {num_str} - Caduca el {caduca_str} ({dies_restants} dies restants)."
-                                })
-                    except:
-                        pass
+        loteria_cfg = config.get("regles_alertes", {}).get("loteria", {})
+        if loteria_cfg.get("mostrar_a_campana", True):
+            if df_desp is not None and not df_desp.empty and 'Comentari' in df_desp.columns:
+                loteria_mask = df_desp['Comentari'].astype(str).str.startswith('[LOTERIA]', na=False)
+                if loteria_mask.any():
+                    loteria_tickets = df_desp[loteria_mask]
+                    avui = datetime.today().date()
+                    for _, row in loteria_tickets.iterrows():
+                        com = str(row['Comentari'])
+                        parts = [p.strip() for p in com.split('|')]
+                        try:
+                            caduca_str = [p for p in parts if 'Caduca:' in p][0].split('Caduca:')[1].strip()
+                            caduca_date = datetime.strptime(caduca_str, '%d/%m/%Y').date()
+                            
+                            sorteig_date = None
+                            try:
+                                sorteig_str = [p for p in parts if 'Sorteig:' in p][0].split('Sorteig:')[1].strip()
+                                sorteig_date = datetime.strptime(sorteig_str, '%d/%m/%Y').date()
+                            except IndexError:
+                                pass # No Sorteig date specified
+                            
+                            if caduca_date >= avui:
+                                dies_restants = (caduca_date - avui).days
+                                num_str = [p for p in parts if 'Num:' in p][0].split('Num:')[1].strip()
+                                tipus_str = [p for p in parts if 'Tipus:' in p][0].split('Tipus:')[1].strip().replace('[LOTERIA] Tipus:', '').strip()
+                                
+                                avis_caducitat = loteria_cfg.get("dies_avis_caducitat", 7)
+                                activar_sorteig = loteria_cfg.get("activar_dia_sorteig", True)
+                                
+                                # Si avui és el dia del sorteig i està activat
+                                is_draw_day = (activar_sorteig and sorteig_date == avui)
+                                
+                                if dies_restants <= avis_caducitat:
+                                    alerts.append({
+                                        "type": "error",
+                                        "icon": "🍀",
+                                        "title": f"Loteria a punt de caducar ({tipus_str})",
+                                        "message": f"Núm. {num_str} - Caduca el {caduca_str} ({dies_restants} dies restants)."
+                                    })
+                                elif is_draw_day:
+                                    alerts.append({
+                                        "type": "warning",
+                                        "icon": "🍀",
+                                        "title": f"Sorteig Avui! ({tipus_str})",
+                                        "message": f"Avui és el sorteig del núm. {num_str}!"
+                                    })
+                        except Exception as e:
+                            pass
                         
         # 3. Alerta Límits de despesa (Valor superat)
         if df_desp is not None and not df_desp.empty:
