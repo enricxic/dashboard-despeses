@@ -3765,31 +3765,6 @@ def render(view_mode="economic"):
         )
         st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
         st.markdown("<div style='margin-bottom: 40px;'></div>", unsafe_allow_html=True)
-        
-        return
-
-    # ================= MÒDUL ECONÒMIC (PESTANYES) =================
-    st.write("")
-
-    tabs_list = ["📈 Detalls del Mes"]
-    if st.session_state.get("role") in ["admin", "guest"]:
-        tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🤖 Xat IA"])
-    
-    tabs = st.tabs(tabs_list)
-    tab_details = tabs[0]
-    
-    if st.session_state.get("role") in ["admin", "guest"]:
-        tab_prev_desp = tabs[1]
-        tab_prev_ing = tabs[2]
-        tab_inversions = tabs[3]
-        tab_estalvis = tabs[4]
-        tab_xat = tabs[5]
-    else:
-        tab_prev_desp = None
-        tab_prev_ing = None
-        tab_inversions = None
-        tab_estalvis = None
-        tab_xat = None
 
     # ================= PESTANYA 1 ECONÒMIC: DETALLS DEL MES =================
     
@@ -3951,7 +3926,7 @@ def render(view_mode="economic"):
                 st.cache_data.clear()
                 st.rerun()
     
-    with tab_details:
+    with st.container():
         col_det_title, col_det_mes, col_det_any = st.columns([6, 3, 3], vertical_alignment="center")
         with col_det_mes:
             cur_m_idx = CATALAN_MONTHS.index(selected_month_cat) if selected_month_cat in CATALAN_MONTHS else current_month_index
@@ -4216,6 +4191,33 @@ def render(view_mode="economic"):
             else:
                 st.info("No hi ha dades de despeses per aquest mes.")
     
+
+
+        
+        return
+
+    # ================= MÒDUL ECONÒMIC (PESTANYES) =================
+    st.write("")
+
+    tabs_list = []
+    if st.session_state.get("role") in ["admin", "guest"]:
+        tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🤖 Xat IA"])
+    
+    if tabs_list:
+        tabs = st.tabs(tabs_list)
+    
+    if st.session_state.get("role") in ["admin", "guest"]:
+        tab_prev_desp = tabs[0]
+        tab_prev_ing = tabs[1]
+        tab_inversions = tabs[2]
+        tab_estalvis = tabs[3]
+        tab_xat = tabs[4]
+    else:
+        tab_prev_desp = None
+        tab_prev_ing = None
+        tab_inversions = None
+        tab_estalvis = None
+        tab_xat = None
 
     # ================= TAB: PREVISIÓ DE DESPESES =================
     if tab_prev_desp:
