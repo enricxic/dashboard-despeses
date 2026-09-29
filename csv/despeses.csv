@@ -3978,11 +3978,11 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 8058;TradeRep.;Dèbit;24/09/2026;septiembre;2026;0.0;5.8;Càrrec;menjar;Fleca Arnau;;False
 8059;TradeRep.;Dèbit;22/09/2026;septiembre;2026;0.0;0.3;Càrrec;varis;Parking;Arbúcies;False
 8060;BBVA;VISA;22/09/2026;septiembre;2026;0.0;31.0;Càrrec;varis;Expectacles/Teatre;La Pedrera. Barcelona;False
-8061;Efectiu;;25/09/2026;septiembre;2026;0.0;39.0;Càrrec;restaurant;Restaurant;Mònica, Palamos + degustació vi (5€);False
+8061;Efectiu;;25/09/2026;septiembre;2026;0.0;0.0;Càrrec;restaurant;Restaurant;anulat;False
 8062;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;17.25;Càrrec;menjar;Mercadona;;False
 8063;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;67.5;Càrrec;restaurant;Restaurant;Mònica Palamós. ;False
 8064;LaCaixa;Compte;26/09/2026;septiembre;2026;0.0;68.46;Càrrec;despesa_general;Ajunt. Arbúcies;;False
-8065;LaCaixa;Compte;26/09/2026;septiembre;2026;68.25;0.0;Ingrés;ingres_general;Complement Generalitat;;False
+8065;LaCaixa;Compte;26/09/2026;septiembre;2026;531.03;0.0;Ingrés;ingres_general;Complement Generalitat;;False
 8066;LaCaixa;Compte;26/09/2026;septiembre;2026;628.8;0.0;Ingrés;ingres_general;Pensió no contributiva;;False
 4564;Efectiu;;04/02/2025;febrero;2025;0.0;4.3;Càrrec;neteja;Clarel;;False
 8067;Efectiu;;25/09/2026;septiembre;2026;0.0;-33.5;Càrrec;restaurant;Restaurant;Part Mònica Palamós Manolo i Pepe;False
@@ -3991,7 +3991,19 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 8069;TradeRep.;Dèbit;26/09/2026;septiembre;2026;0.0;100.5;Càrrec;restaurant;Restaurant;Pizzeria Marina. Palamós;False
 8070;Efectiu;;26/09/2026;septiembre;2026;0.0;-50.25;Càrrec;restaurant;Restaurant;[Compensació] Pizzeria Marina. Palamós;False
 8071;TradeRep.;Dèbit;27/09/2026;septiembre;2026;0.0;26.0;Càrrec;restaurant;Restaurant;Degustació Palamós;False
+8072;Efectiu;;26/09/2026;septiembre;2026;0.0;15.19;Càrrec;menjar;Fruites Marcel.Palamós;;False
+8073;Efectiu;;25/09/2026;septiembre;2026;0.0;20.0;Càrrec;varis;Loteria;[LOTERIA] Tipus: Nacional (SELAE) | Num: 17612 | Sorteig: 22/12/2026 | Caduca: 23/03/2027;False
+8074;Efectiu;;26/09/2026;septiembre;2026;0.0;13.0;Càrrec;restaurant;Restaurant;Degustació Palamós;False
+8075;Efectiu;;25/09/2026;septiembre;2026;0.0;9.0;Càrrec;restaurant;Restaurant;Hamburguesa Degustació Palamós;False
+8076;Efectiu;;26/09/2026;septiembre;2026;0.0;10.0;Càrrec;personal;Jordi;;False
+8077;Efectiu;;28/09/2026;septiembre;2026;0.0;4.67;Càrrec;menjar;Fruiteria Arbúcies;;False
+8078;LaCaixa;Compte;18/09/2026;septiembre;2026;0.0;40.0;op_banc;op_banc;Reintegre caixer;;False
 5740;BBVA;Compte;12/11/2025;noviembre;2025;0.0;34.69;Càrrec;despesa_general;Lowi;;False
+8079;LaCaixa;Compte;25/09/2026;septiembre;2026;0.0;100.0;op_banc;op_banc;Reintegre caixer;;False
+8080;TradeRep.;Dèbit;28/09/2026;septiembre;2026;0.0;19.23;Càrrec;menjar;AreaGuissona;;False
+8081;TradeRep.;Dèbit;28/09/2026;septiembre;2026;0.0;8.95;Càrrec;farmàcia;Farmàcia;;False
+8082;BBVA;Compte;28/09/2026;septiembre;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
+8083;TradeRep.;Compte;28/09/2026;septiembre;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 6729;BBVA;Compte;12/06/2026;junio;2026;0.0;283.8;Càrrec;assegurança;Assegurança Cotxe;;False
 6716;TradeRep.;Dèbit;08/06/2026;junio;2026;0.0;12.25;Càrrec;menjar;Novavenda;;False
 6717;TradeRep.;Dèbit;10/06/2026;junio;2026;0.0;11.2;Càrrec;menjar;Mercadona;;False

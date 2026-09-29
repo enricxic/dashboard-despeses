@@ -2319,21 +2319,20 @@ def render(view_mode="economic"):
     # ================= MÒDUL ECONÒMIC (PESTANYES) =================
     st.write("")
 
-    tabs_list = ["📄 Compres Super", "📝 Ingrés / Despesa General"]
+    tabs_list = ["📝 Ingrés / Despesa General"]
     if st.session_state.get("role") in ["admin", "guest"]:
         tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🤖 Xat IA"])
     
     if tabs_list:
         tabs = st.tabs(tabs_list)
     
-    tab_compres_super = tabs[0]
-    tab_ingres_despesa = tabs[1]
+    tab_ingres_despesa = tabs[0]
     if st.session_state.get("role") in ["admin", "guest"]:
-        tab_prev_desp = tabs[2]
-        tab_prev_ing = tabs[3]
-        tab_inversions = tabs[4]
-        tab_estalvis = tabs[5]
-        tab_xat = tabs[6]
+        tab_prev_desp = tabs[1]
+        tab_prev_ing = tabs[2]
+        tab_inversions = tabs[3]
+        tab_estalvis = tabs[4]
+        tab_xat = tabs[5]
     else:
         tab_prev_desp = None
         tab_prev_ing = None
@@ -2341,10 +2340,7 @@ def render(view_mode="economic"):
         tab_estalvis = None
         tab_xat = None
 
-    if tab_compres_super:
-        with tab_compres_super:
-            render_compres_super_interface()
-            
+    # Removed Compres Super
     if tab_ingres_despesa:
         with tab_ingres_despesa:
             render_ingres_despesa_general_interface()

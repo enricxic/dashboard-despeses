@@ -6,7 +6,7 @@ from core.db import (
     get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row, append_to_db, delete_db_row,
     get_config_supers, get_config_banks, get_config_payment_methods, get_config_families, get_config_articles,
     get_config_categories, get_config_concepts, get_config_routes, add_concept_to_config, add_route_to_config,
-    load_dashboard_data, get_csv_mtimes, BANK_MAPPING, MONTHS_MAP, clean_numeric, parse_excel_date, fix_mojibake_df, get_next_id
+    load_dashboard_data, get_csv_mtimes, BANK_MAPPING, MONTHS_MAP, clean_numeric, parse_excel_date, fix_mojibake_df, get_next_id, load_ofertes, save_ofertes
 )
 import re
 import urllib.parse
@@ -2798,7 +2798,11 @@ def render():
 
     col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
     with col_t1:
-        st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Ingressos i Despeses</h2>", unsafe_allow_html=True)
+        col_logo_c, col_title_c = st.columns([0.7, 8.5], vertical_alignment="center")
+        with col_logo_c:
+            st.image("imatges/logo xiquiHouse.png", use_container_width=True)
+        with col_title_c:
+            st.markdown("<h2 style='margin:0; color:#f39c12;'>Compres Super i Stock</h2>", unsafe_allow_html=True)
     with col_t2:
         if st.button("🔙 Inici", use_container_width=True):
             st.session_state.current_module = None
@@ -2881,12 +2885,15 @@ def render():
 
     active_tab = st.radio(
         "Navegació:",
-        ["📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques"],
+        ["📄 Compres Super", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques", "🔍 Comparador d'Ofertes", "📰 Fulletons"],
         horizontal=True,
         label_visibility="collapsed"
     )
     st.write("---")
     
+
+    if active_tab == "📄 Compres Super":
+        render_compres_super_interface()
 
     if active_tab == "📋 Llista de la Compra":
         st.markdown("<h2 style='color:#f39c12; margin-top:0;'>🛒 Llista de la Compra</h2>", unsafe_allow_html=True)
@@ -3551,3 +3558,286 @@ def render():
             import traceback
             st.error(f"Error carregant estadístiques de compres: {e}")
             st.code(traceback.format_exc())
+
+    if active_tab == "🔍 Comparador d'Ofertes":
+        st.write("Aquesta secció permet comparar els preus històrics de la Llista de la Compra i el Rebost, així com introduir ofertes setmanals.")
+
+        # --- CARREGAR DADES ---
+        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        df_prod = fetch_all_supabase(supabase, 'tb_productes')
+        df_pendents = fetch_all_supabase(supabase, 'tb_pendents_compra')
+
+        ofertes_list = load_ofertes()
+
+        if df_prod.empty:
+            st.info("No hi ha productes al catàleg.")
+        else:
+            col_filt1, col_filt2 = st.columns([1, 2])
+            with col_filt1:
+                filtre_vista = st.radio("👀 Filtrar productes per:", ["🛒 A la llista de compra", "📦 Tot el rebost"], horizontal=True)
+
+            with col_filt2:
+                cerca = st.text_input("🔍 Buscar producte...")
+
+            # --- FILTRAR DADES ---
+            if filtre_vista == "🛒 A la llista de compra":
+                if df_pendents.empty:
+                    st.warning("La llista de compra està buida.")
+                    df_view = pd.DataFrame()
+                else:
+                    id_pendents = df_pendents['idProducte'].tolist()
+                    df_view = df_prod[df_prod['idProducte'].isin(id_pendents)]
+            else:
+                df_view = df_prod.copy()
+
+            if cerca:
+                df_view = df_view[df_view['nom_estandard'].str.contains(cerca, case=False, na=False)]
+
+            if not df_view.empty:
+                st.markdown("### 📊 Comparador de Preus")
+
+                # Afegir dades d'ofertes al dataframe per visualitzar
+                ofertes_map = {}
+                for of in ofertes_list:
+                    # Agafar només ofertes vigents (data de fi > avui)
+                    # O si no tenen data_fi
+                    try:
+                        if of.get("data_fi"):
+                            dfi = datetime.strptime(of["data_fi"], "%Y-%m-%d")
+                            if dfi < datetime.now():
+                                continue # Caducada
+                    except Exception:
+                        pass
+
+                    pid = of.get("id_producte")
+                    if pid:
+                        txt_oferta = f"🌟 {of.get('tipus', 'Oferta')}: {of.get('preu_oferta', '')}€ ({of.get('supermercat', '')})"
+                        if pid in ofertes_map:
+                            ofertes_map[pid] += " | " + txt_oferta
+                        else:
+                            ofertes_map[pid] = txt_oferta
+
+                df_view['Ofertes Actives'] = df_view['idProducte'].map(ofertes_map).fillna("-")
+
+                # Seleccionar columnes a mostrar
+                cols_to_show = ['nom_estandard', 'familia', 'super_habitual', 'preuUnit', 'Ofertes Actives']
+                df_show = df_view[cols_to_show].copy()
+                df_show.rename(columns={
+                    'nom_estandard': 'Producte',
+                    'familia': 'Família',
+                    'super_habitual': 'Súper Habitual',
+                    'preuUnit': 'Últim Preu (€)'
+                }, inplace=True)
+
+                st.dataframe(df_show, use_container_width=True, hide_index=True)
+
+            # --- HISTÒRIC DE PREUS ---
+            st.markdown("---")
+            st.markdown("### 📈 Històric de Preus per Producte")
+            st.write("Consulta els preus de compra anteriors d'un producte concret (segons els tiquets del súper):")
+
+            productes_list = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
+            hist_prod = st.selectbox("🔍 Selecciona un producte", [""] + productes_list, key="hist_prod")
+
+            if hist_prod:
+                df_super = fetch_all_supabase(supabase, 'compresSuper')
+                if not df_super.empty:
+                    # 'article' in compresSuper matches 'nom_estandard' in tb_productes
+                    df_hist = df_super[df_super['article'].astype(str).str.lower() == hist_prod.lower()].copy()
+
+                    if not df_hist.empty:
+                        # Ordenar per data de compra descendent (més recent primer)
+                        try:
+                            from core.db import parse_excel_date
+                            df_hist['parsed_date'] = df_hist['data'].apply(parse_excel_date)
+                            df_hist = df_hist.sort_values(by='parsed_date', ascending=False)
+                        except Exception:
+                            pass
+
+                        cols_hist = ['data', 'super', 'preuUnit', 'quantitat', 'totLinea', 'prom']
+                        # Ensure columns exist
+                        cols_exist = [c for c in cols_hist if c in df_hist.columns]
+                        df_hist_show = df_hist[cols_exist].copy()
+
+                        df_hist_show.rename(columns={
+                            'data': 'Data Compra',
+                            'super': 'Supermercat',
+                            'preuUnit': 'Preu Unitari (€)',
+                            'quantitat': 'Quantitat',
+                            'totLinea': 'Total (€)',
+                            'prom': 'Promoció'
+                        }, inplace=True)
+
+                        st.dataframe(df_hist_show, use_container_width=True, hide_index=True)
+                    else:
+                        st.info(f"No hi ha cap registre històric de compra per '{hist_prod}'.")
+                else:
+                    st.info("No hi ha dades de compres (tiquets) disponibles.")
+
+            # --- REGISTRAR OFERTA ---
+            st.markdown("---")
+            st.markdown("### 🏷️ Registrar nova oferta")
+
+            with st.form("form_oferta"):
+                col_form1, col_form2, col_form3 = st.columns(3)
+                with col_form1:
+                    productes_list = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
+                    prod_sel = st.selectbox("Producte", [""] + productes_list)
+                with col_form2:
+                    supers = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Novavenda", "El Corte Inglés", "Clarel", "Altres"]
+                    super_sel = st.selectbox("Supermercat", supers)
+                with col_form3:
+                    tipus_sel = st.selectbox("Tipus d'oferta", ["Preu rebaixat", "3x2", "2a unitat %", "Altres volumètriques"])
+
+                col_form4, col_form5, col_form6 = st.columns(3)
+                with col_form4:
+                    preu_of = st.number_input("Preu de l'oferta (€)", min_value=0.0, step=0.01, format="%.2f")
+                with col_form5:
+                    data_fi = st.date_input("Fins quan (Data Fi)?")
+                with col_form6:
+                    st.write("")
+                    st.write("")
+                    submitted = st.form_submit_button("Desar Oferta", type="primary", use_container_width=True)
+
+                if submitted:
+                    if not prod_sel:
+                        st.error("Has de seleccionar un producte.")
+                    else:
+                        pid_match = df_prod[df_prod['nom_estandard'] == prod_sel]['idProducte']
+                        if not pid_match.empty:
+                            pid = int(pid_match.values[0])
+
+                            nova_oferta = {
+                                "id_producte": pid,
+                                "supermercat": super_sel,
+                                "tipus": tipus_sel,
+                                "preu_oferta": preu_of,
+                                "data_fi": data_fi.strftime("%Y-%m-%d") if data_fi else ""
+                            }
+
+                            ofertes_list.append(nova_oferta)
+                            if save_ofertes(ofertes_list):
+                                st.success(f"✅ Oferta desada per {prod_sel}!")
+                                st.rerun()
+                            else:
+                                st.error("Error al desar l'oferta.")
+
+
+
+    if active_tab == "📰 Fulletons":
+        st.markdown("### 📖 Fulletons i Catàlegs Setmanals")
+        st.write("Accés directe als catàlegs oficials d'ofertes dels supermercats habituals:")
+
+        c1, c2, c3, c4 = st.columns(4)
+
+        c1.markdown("""
+        <div style="background-color:#007B22; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://info.mercadona.es/ca/inici-ca" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Mercadona</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c2.markdown("""
+        <div style="background-color:#E30613; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.bonpreuesclat.cat/ca/promocions" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Bonpreu/Esclat</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c3.markdown("""
+        <div style="background-color:#0050AA; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.lidl.es/c/alimentacion/s10097705" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Lidl</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c4.markdown("""
+        <div style="background-color:#003B7E; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.aldi.es" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Aldi</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
+        c5, c6, c7, c8 = st.columns(4)
+
+        c5.markdown("""
+        <div style="background-color:#F58220; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.consum.es" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Consum</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c6.markdown("""
+        <div style="background-color:#D81F26; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.dia.es/compra-online/ofertas" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Dia</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c7.markdown("""
+        <div style="background-color:#D31145; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.bonarea.com" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 AreaGuissona</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c8.markdown("""
+        <div style="background-color:#E98300; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://novavenda.com/ofertes/" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Novavenda</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
+        c9, c10, c11, c12 = st.columns(4)
+
+        c9.markdown("""
+        <div style="background-color:#00593B; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.elcorteingles.es/supermercado/promociones/" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 El Corte Inglés</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c10.markdown("""
+        <div style="background-color:#E4007C; border-radius:10px; padding:20px; text-align:center; margin-bottom:20px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="https://www.clarel.es/ofertas" target="_blank" style="color:white; text-decoration:none; font-weight:bold; font-size:18px; display:block;">🛒 Clarel</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # --- MANUAL COMPARISON TABLE ---
+        st.markdown("---")
+        st.markdown("### 📝 Taula de Comparativa Manual")
+        st.write("Selecciona un producte i anota manualment els preus i ofertes que trobis als fulletons per comparar-los d'un cop d'ull.")
+
+        if "df_prod" in locals() and not df_prod.empty:
+            prod_list_manual = sorted(df_prod['nom_estandard'].dropna().unique().tolist())
+        else:
+            prod_list_manual = []
+
+        manual_prod = st.selectbox("Quin producte vols comparar?", [""] + prod_list_manual, key="manual_prod")
+
+        if manual_prod:
+            # Check if we already have a table for this product in session state
+            session_key = f"manual_table_{manual_prod}"
+            if session_key not in st.session_state:
+                supers_llista = ["Mercadona", "Bonpreu", "Aldi", "Lidl", "Consum", "Dia", "AreaGuissona", "Novavenda", "El Corte Inglés", "Clarel"]
+                dades_inicials = {
+                    "Supermercat": supers_llista,
+                    "Preu (€)": [0.0] * len(supers_llista),
+                    "Oferta / Promoció": [""] * len(supers_llista)
+                }
+                st.session_state[session_key] = pd.DataFrame(dades_inicials)
+
+            st.write(f"**Comparativa per:** {manual_prod}")
+
+            # Use data_editor to allow user to input prices and offers
+            edited_df = st.data_editor(
+                st.session_state[session_key],
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Supermercat": st.column_config.TextColumn(disabled=True),
+                    "Preu (€)": st.column_config.NumberColumn(format="%.2f €", min_value=0.0, step=0.01),
+                    "Oferta / Promoció": st.column_config.TextColumn()
+                },
+                key=f"editor_{manual_prod}"
+            )
+
+            # Save edits back to session state so they persist while navigating
+            st.session_state[session_key] = edited_df
+
+

@@ -1,0 +1,13 @@
+admin.py: No title found
+bases_dades.py: No title found
+calendari.py: No title found
+compres.py: 🛒 Compres Super
+cotxe.py: No title found
+domotica.py: No title found
+economic.py: 📈 Previsió ingressos/despeses
+jocs.py: No title found
+manteniment.py: No title found
+medicacio.py: No title found
+menjar.py: No title found
+seguretat.py: No title found
+sincronitzacio.py: 🌍 Sincronització de Dades (Offline)
