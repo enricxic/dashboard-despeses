@@ -2469,7 +2469,7 @@ def render(view_mode="economic"):
             if not df_pag.empty:
                 df_pag_filtered = df_pag.copy()
                 with st.expander("🔍 Filtres", expanded=False):
-                    f1, f2, f3, f4 = st.columns(4)
+                    f1, f2, f3, f4, f5 = st.columns([2, 2, 2, 2, 1], vertical_alignment="bottom")
                     with f1:
                         f_any_pag = st.selectbox("Any", ["Tots"] + sorted(list(df_pag['any'].unique()), reverse=True), key="f_any_pag")
                     with f2:
@@ -2478,6 +2478,11 @@ def render(view_mode="economic"):
                         f_banc_pag = st.selectbox("Banc", ["Tots"] + sorted(list(df_pag['Banc'].astype(str).unique())), key="f_banc_pag")
                     with f4:
                         f_estat_pag = st.selectbox("Estat", ["Tots"] + sorted(list(df_pag['pagat'].astype(str).unique())), key="f_estat_pag")
+                    with f5:
+                        if st.button("🔄 Netejar", key="clear_pag_filters", use_container_width=True):
+                            for k in ["f_any_pag", "f_mes_pag", "f_banc_pag", "f_estat_pag"]:
+                                if k in st.session_state: del st.session_state[k]
+                            st.rerun()
                         
                 if f_any_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['any'] == f_any_pag]
                 if f_mes_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['mes'].astype(str) == f_mes_pag]
@@ -2606,7 +2611,7 @@ def render(view_mode="economic"):
             if not df_ing.empty:
                 df_ing_filtered = df_ing.copy()
                 with st.expander("🔍 Filtres", expanded=False):
-                    fi1, fi2, fi3, fi4 = st.columns(4)
+                    fi1, fi2, fi3, fi4, fi5 = st.columns([2, 2, 2, 2, 1], vertical_alignment="bottom")
                     with fi1:
                         f_any_ing = st.selectbox("Any", ["Tots"] + sorted(list(df_ing['any'].unique()), reverse=True), key="f_any_ing")
                     with fi2:
@@ -2615,6 +2620,11 @@ def render(view_mode="economic"):
                         f_banc_ing = st.selectbox("Banc", ["Tots"] + sorted(list(df_ing['Banc'].astype(str).unique())), key="f_banc_ing")
                     with fi4:
                         f_estat_ing = st.selectbox("Estat", ["Tots"] + sorted(list(df_ing['cobrat'].astype(str).unique())), key="f_estat_ing")
+                    with fi5:
+                        if st.button("🔄 Netejar", key="clear_ing_filters", use_container_width=True):
+                            for k in ["f_any_ing", "f_mes_ing", "f_banc_ing", "f_estat_ing"]:
+                                if k in st.session_state: del st.session_state[k]
+                            st.rerun()
                         
                 if f_any_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['any'] == f_any_ing]
                 if f_mes_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['mes'].astype(str) == f_mes_ing]
