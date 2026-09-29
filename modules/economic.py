@@ -2465,20 +2465,34 @@ def render(view_mode="economic"):
                             if k.startswith("pag_") or k == "rep_any_pag": del st.session_state[k]
                         st.rerun()
 
-            st.markdown(f"#### 📋 Llistat de Pagaments Previstos ({selected_year})")
+            st.markdown("#### 📋 Llistat de Pagaments Previstos")
             if not df_pag.empty:
-                df_pag_year = df_pag[df_pag['any'] == selected_year].copy()
-                cols_p = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_year.columns]
-                sort_cols = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'pagat'] if c in df_pag_year.columns]
+                df_pag_filtered = df_pag.copy()
+                with st.expander("🔍 Filtres", expanded=False):
+                    f1, f2, f3, f4 = st.columns(4)
+                    with f1:
+                        f_any_pag = st.selectbox("Any", ["Tots"] + sorted(list(df_pag['any'].unique()), reverse=True), key="f_any_pag")
+                    with f2:
+                        f_mes_pag = st.selectbox("Mes", ["Tots"] + sorted(list(df_pag['mes'].astype(str).unique())), key="f_mes_pag")
+                    with f3:
+                        f_banc_pag = st.selectbox("Banc", ["Tots"] + sorted(list(df_pag['Banc'].astype(str).unique())), key="f_banc_pag")
+                    with f4:
+                        f_estat_pag = st.selectbox("Estat", ["Tots"] + sorted(list(df_pag['pagat'].astype(str).unique())), key="f_estat_pag")
+                        
+                if f_any_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['any'] == f_any_pag]
+                if f_mes_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['mes'].astype(str) == f_mes_pag]
+                if f_banc_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['Banc'].astype(str) == f_banc_pag]
+                if f_estat_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['pagat'].astype(str) == f_estat_pag]
+
+                cols_p = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_filtered.columns]
+                sort_cols = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'pagat'] if c in df_pag_filtered.columns]
                 if sort_cols:
-                    df_pag_year = df_pag_year.sort_values(by=sort_cols)
+                    df_pag_filtered = df_pag_filtered.sort_values(by=sort_cols)
                 st.dataframe(
-                    df_pag_year[cols_p],
+                    df_pag_filtered[cols_p],
                     use_container_width=True,
                     hide_index=True,
-                    column_config={
-                        "Import": st.column_config.NumberColumn(format="%.2f €")
-                    }
+                    column_config={"Import": st.column_config.NumberColumn(format="%.2f €")}
                 )
             else:
                 st.info("No hi ha previsions de pagament.")
@@ -2588,20 +2602,34 @@ def render(view_mode="economic"):
                             if k.startswith("ing_") or k == "rep_any_ing": del st.session_state[k]
                         st.rerun()
 
-            st.markdown(f"#### 📋 Llistat d'Ingressos Previstos ({selected_year})")
+            st.markdown("#### 📋 Llistat d'Ingressos Previstos")
             if not df_ing.empty:
-                df_ing_year = df_ing[df_ing['any'] == selected_year].copy()
-                cols_i = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_year.columns]
-                sort_cols_i = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'cobrat'] if c in df_ing_year.columns]
+                df_ing_filtered = df_ing.copy()
+                with st.expander("🔍 Filtres", expanded=False):
+                    fi1, fi2, fi3, fi4 = st.columns(4)
+                    with fi1:
+                        f_any_ing = st.selectbox("Any", ["Tots"] + sorted(list(df_ing['any'].unique()), reverse=True), key="f_any_ing")
+                    with fi2:
+                        f_mes_ing = st.selectbox("Mes", ["Tots"] + sorted(list(df_ing['mes'].astype(str).unique())), key="f_mes_ing")
+                    with fi3:
+                        f_banc_ing = st.selectbox("Banc", ["Tots"] + sorted(list(df_ing['Banc'].astype(str).unique())), key="f_banc_ing")
+                    with fi4:
+                        f_estat_ing = st.selectbox("Estat", ["Tots"] + sorted(list(df_ing['cobrat'].astype(str).unique())), key="f_estat_ing")
+                        
+                if f_any_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['any'] == f_any_ing]
+                if f_mes_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['mes'].astype(str) == f_mes_ing]
+                if f_banc_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['Banc'].astype(str) == f_banc_ing]
+                if f_estat_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['cobrat'].astype(str) == f_estat_ing]
+
+                cols_i = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_filtered.columns]
+                sort_cols_i = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'cobrat'] if c in df_ing_filtered.columns]
                 if sort_cols_i:
-                    df_ing_year = df_ing_year.sort_values(by=sort_cols_i)
+                    df_ing_filtered = df_ing_filtered.sort_values(by=sort_cols_i)
                 st.dataframe(
-                    df_ing_year[cols_i],
+                    df_ing_filtered[cols_i],
                     use_container_width=True,
                     hide_index=True,
-                    column_config={
-                        "Import": st.column_config.NumberColumn(format="%.2f €")
-                    }
+                    column_config={"Import": st.column_config.NumberColumn(format="%.2f €")}
                 )
             else:
                 st.info("No hi ha previsions d'ingrés.")
