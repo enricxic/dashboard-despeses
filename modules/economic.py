@@ -2465,7 +2465,11 @@ def render(view_mode="economic"):
                             if k.startswith("pag_") or k == "rep_any_pag": del st.session_state[k]
                         st.rerun()
 
-            st.markdown("#### 📋 Llistat de Pagaments Previstos")
+            col_t_pag, col_chk_pag = st.columns([7, 3], vertical_alignment="bottom")
+            with col_t_pag:
+                st.markdown("#### 📋 Llistat de Pagaments Previstos")
+            with col_chk_pag:
+                ordenar_recent_pag = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.", key="ord_rec_pag")
             if not df_pag.empty:
                 df_pag_filtered = df_pag.copy()
                 with st.expander("🔍 Filtres", expanded=False):
@@ -2489,7 +2493,6 @@ def render(view_mode="economic"):
                 if f_banc_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['Banc'].astype(str) == f_banc_pag]
                 if f_estat_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['pagat'].astype(str) == f_estat_pag]
 
-                ordenar_recent_pag = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.", key="ord_rec_pag")
                 cols_p = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_filtered.columns]
                 sort_cols = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'pagat'] if c in df_pag_filtered.columns]
                 if ordenar_recent_pag and 'parsed_date' in df_pag_filtered.columns:
@@ -2610,7 +2613,11 @@ def render(view_mode="economic"):
                             if k.startswith("ing_") or k == "rep_any_ing": del st.session_state[k]
                         st.rerun()
 
-            st.markdown("#### 📋 Llistat d'Ingressos Previstos")
+            col_t_ing, col_chk_ing = st.columns([7, 3], vertical_alignment="bottom")
+            with col_t_ing:
+                st.markdown("#### 📋 Llistat d'Ingressos Previstos")
+            with col_chk_ing:
+                ordenar_recent_ing = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.", key="ord_rec_ing")
             if not df_ing.empty:
                 df_ing_filtered = df_ing.copy()
                 with st.expander("🔍 Filtres", expanded=False):
@@ -2634,7 +2641,6 @@ def render(view_mode="economic"):
                 if f_banc_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['Banc'].astype(str) == f_banc_ing]
                 if f_estat_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['cobrat'].astype(str) == f_estat_ing]
 
-                ordenar_recent_ing = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.", key="ord_rec_ing")
                 cols_i = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_filtered.columns]
                 sort_cols_i = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'cobrat'] if c in df_ing_filtered.columns]
                 if ordenar_recent_ing and 'parsed_date' in df_ing_filtered.columns:
