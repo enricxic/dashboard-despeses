@@ -2468,11 +2468,14 @@ def render(view_mode="economic"):
             st.markdown(f"#### 📋 Llistat de Pagaments Previstos ({selected_year})")
             if not df_pag.empty:
                 df_pag_year = df_pag[df_pag['any'] == selected_year].copy()
-                cols_p = [c for c in ['mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_year.columns]
+                cols_p = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_year.columns]
                 st.dataframe(
-                    df_pag_year[cols_p].style.format({'Import': '{:,.2f} €'}),
+                    df_pag_year[cols_p],
                     use_container_width=True,
-                    hide_index=True
+                    hide_index=True,
+                    column_config={
+                        "Import": st.column_config.NumberColumn(format="%.2f €")
+                    }
                 )
             else:
                 st.info("No hi ha previsions de pagament.")
@@ -2585,11 +2588,14 @@ def render(view_mode="economic"):
             st.markdown(f"#### 📋 Llistat d'Ingressos Previstos ({selected_year})")
             if not df_ing.empty:
                 df_ing_year = df_ing[df_ing['any'] == selected_year].copy()
-                cols_i = [c for c in ['mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_year.columns]
+                cols_i = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_year.columns]
                 st.dataframe(
-                    df_ing_year[cols_i].style.format({'Import': '{:,.2f} €'}),
+                    df_ing_year[cols_i],
                     use_container_width=True,
-                    hide_index=True
+                    hide_index=True,
+                    column_config={
+                        "Import": st.column_config.NumberColumn(format="%.2f €")
+                    }
                 )
             else:
                 st.info("No hi ha previsions d'ingrés.")
