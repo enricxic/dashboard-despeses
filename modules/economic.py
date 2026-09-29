@@ -2329,7 +2329,7 @@ def render(view_mode="economic"):
     tab_compres_super = tabs[0]
     tab_ingres_despesa = tabs[1]
     if st.session_state.get("role") in ["admin", "guest"]:
-        tab_prev_desp = tabs[0]
+        tab_prev_desp = tabs[2]
         tab_prev_ing = tabs[3]
         tab_inversions = tabs[4]
         tab_estalvis = tabs[5]
