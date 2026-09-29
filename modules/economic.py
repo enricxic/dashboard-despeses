@@ -2489,9 +2489,12 @@ def render(view_mode="economic"):
                 if f_banc_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['Banc'].astype(str) == f_banc_pag]
                 if f_estat_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['pagat'].astype(str) == f_estat_pag]
 
+                ordenar_recent_pag = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.", key="ord_rec_pag")
                 cols_p = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_filtered.columns]
                 sort_cols = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'pagat'] if c in df_pag_filtered.columns]
-                if sort_cols:
+                if ordenar_recent_pag and 'parsed_date' in df_pag_filtered.columns:
+                    df_pag_filtered = df_pag_filtered.sort_values(by=['parsed_date'], ascending=False)
+                elif sort_cols:
                     df_pag_filtered = df_pag_filtered.sort_values(by=sort_cols)
                 st.dataframe(
                     df_pag_filtered[cols_p],
@@ -2631,9 +2634,12 @@ def render(view_mode="economic"):
                 if f_banc_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['Banc'].astype(str) == f_banc_ing]
                 if f_estat_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['cobrat'].astype(str) == f_estat_ing]
 
+                ordenar_recent_ing = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.", key="ord_rec_ing")
                 cols_i = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_filtered.columns]
                 sort_cols_i = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'cobrat'] if c in df_ing_filtered.columns]
-                if sort_cols_i:
+                if ordenar_recent_ing and 'parsed_date' in df_ing_filtered.columns:
+                    df_ing_filtered = df_ing_filtered.sort_values(by=['parsed_date'], ascending=False)
+                elif sort_cols_i:
                     df_ing_filtered = df_ing_filtered.sort_values(by=sort_cols_i)
                 st.dataframe(
                     df_ing_filtered[cols_i],
