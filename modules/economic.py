@@ -3766,430 +3766,430 @@ def render(view_mode="economic"):
         st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
         st.markdown("<div style='margin-bottom: 40px;'></div>", unsafe_allow_html=True)
 
-    # ================= PESTANYA 1 ECONÒMIC: DETALLS DEL MES =================
+        # ================= PESTANYA 1 ECONÒMIC: DETALLS DEL MES =================
     
-    @st.dialog("⚙️ Confirmar Operacions i Bancs", width="large")
-    def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
-        st.write("Verifica els imports i bancs de les operacions seleccionades. Si detectes algun error, tanca aquesta finestra i corregeix-ho a la taula de previsions.")
+        @st.dialog("⚙️ Confirmar Operacions i Bancs", width="large")
+        def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
+            st.write("Verifica els imports i bancs de les operacions seleccionades. Si detectes algun error, tanca aquesta finestra i corregeix-ho a la taula de previsions.")
         
-        results = {}
+            results = {}
         
-        if pagaments_sel:
-            st.markdown("#### 🔴 Pagaments a processar")
-            for p in pagaments_sel:
-                idx = p['idx']
-                row = p['row']
-                amt = float(row.get('Import', 0.0))
-                banc = str(row.get('Banc', '')).strip()
-                forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
-                if not forma_pago:
-                    forma_pago = "Compte"
+            if pagaments_sel:
+                st.markdown("#### 🔴 Pagaments a processar")
+                for p in pagaments_sel:
+                    idx = p['idx']
+                    row = p['row']
+                    amt = float(row.get('Import', 0.0))
+                    banc = str(row.get('Banc', '')).strip()
+                    forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
+                    if not forma_pago:
+                        forma_pago = "Compte"
                 
-                # Check for missing critical data
-                warning = ""
-                if not banc:
-                    warning = " ⚠️ *(Falta Banc!)*"
+                    # Check for missing critical data
+                    warning = ""
+                    if not banc:
+                        warning = " ⚠️ *(Falta Banc!)*"
                 
-                st.markdown(f"**{row.get('Concepte', 'Pagament')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
+                    st.markdown(f"**{row.get('Concepte', 'Pagament')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
                 
-                results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': banc, 'forma_pago': forma_pago, 'import_final': amt}
-            st.divider()
+                    results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': banc, 'forma_pago': forma_pago, 'import_final': amt}
+                st.divider()
                 
-        if ingressos_sel:
-            st.markdown("#### 🟢 Ingressos a processar")
-            for i in ingressos_sel:
-                idx = i['idx']
-                row = i['row']
-                amt = float(row.get('Import', 0.0))
-                banc = str(row.get('Banc', '')).strip()
-                forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
-                if not forma_pago:
-                    forma_pago = "Compte"
+            if ingressos_sel:
+                st.markdown("#### 🟢 Ingressos a processar")
+                for i in ingressos_sel:
+                    idx = i['idx']
+                    row = i['row']
+                    amt = float(row.get('Import', 0.0))
+                    banc = str(row.get('Banc', '')).strip()
+                    forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
+                    if not forma_pago:
+                        forma_pago = "Compte"
                 
-                # Check for missing critical data
-                warning = ""
-                if not banc:
-                    warning = " ⚠️ *(Falta Banc!)*"
+                    # Check for missing critical data
+                    warning = ""
+                    if not banc:
+                        warning = " ⚠️ *(Falta Banc!)*"
                     
-                st.markdown(f"**{row.get('Concepte', 'Ingrés')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
+                    st.markdown(f"**{row.get('Concepte', 'Ingrés')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
                 
-                results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': banc, 'forma_pago': forma_pago, 'import_final': amt}
-            st.divider()
+                    results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': banc, 'forma_pago': forma_pago, 'import_final': amt}
+                st.divider()
                 
-        if st.button("✅ Confirmar i Desar a BBDD", type="primary", use_container_width=True):
-            df_desp_local = st.session_state["df_desp"]
-            max_id = int(df_desp_local['ID_mov'].max()) if not df_desp_local.empty else 0
+            if st.button("✅ Confirmar i Desar a BBDD", type="primary", use_container_width=True):
+                df_desp_local = st.session_state["df_desp"]
+                max_id = int(df_desp_local['ID_mov'].max()) if not df_desp_local.empty else 0
             
-            df_pag_local = st.session_state["df_pag"]
-            df_ing_local = st.session_state["df_ing"]
+                df_pag_local = st.session_state["df_pag"]
+                df_ing_local = st.session_state["df_ing"]
             
-            avui = datetime.now().strftime("%d/%m/%Y")
+                avui = datetime.now().strftime("%d/%m/%Y")
             
-            updates_made = False
-            for key, res in results.items():
-                if not res['banc']:
-                    st.error(f"Si us plau, tanca i corregeix a les previsions el Banc de: {res['row'].get('Concepte', '')}")
-                    return
+                updates_made = False
+                for key, res in results.items():
+                    if not res['banc']:
+                        st.error(f"Si us plau, tanca i corregeix a les previsions el Banc de: {res['row'].get('Concepte', '')}")
+                        return
                     
-                max_id += 1
-                if res['type'] == 'pagament':
-                    if res['idx'] == 'hipoteca':
-                        df_hip_local = st.session_state["df_hip"]
-                        df_hip_local.loc[(df_hip_local['any'] == any_val) & (df_hip_local['mes'].str.lower() == selected_month_data), 'pagat'] = 'pagat'
-                        df_hip_local.loc[(df_hip_local['any'] == any_val) & (df_hip_local['mes'].str.lower() == selected_month_data), 'Quota fixa'] = float(res['import_final'])
-                        save_to_csv(df_hip_local, 'hipoteca.csv')
-                        st.session_state["df_hip"] = df_hip_local
-                    else:
-                        df_pag_local.loc[res['idx'], 'pagat'] = 'Pagat'
-                        df_pag_local.loc[res['idx'], 'Import'] = float(res['import_final'])
-                        
-                    new_row = {
-                        'ID_mov': int(max_id),
-                        'Data': avui,
-                        'Banc': str(res['banc']),
-                        'FormaPago': str(res['forma_pago']),
-                        'Idcategoria': str(res['row'].get('Categoria', 'despesa_general')),
-                        'Idconcepte': str(res['row']['Concepte']),
-                        'Import càrrec': float(res['import_final']),
-                        'import ingrés': 0.0,
-                        'Comentari': None,
-                        'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
-                        'any': int(any_val),
-                        'grup': "Càrrec",
-                        'ticketPendent': False
-                    }
-                    insert_db_row('despeses', new_row)
-                    
-                    # Check for scheduled transfers
-                    banc_desti = df_pag_local.loc[res['idx'], 'banc_desti_traspas'] if 'banc_desti_traspas' in df_pag_local.columns else None
-                    if banc_desti and pd.notna(banc_desti) and str(banc_desti).strip() != '':
-                        banc_desti_str = str(banc_desti).strip()
-                        # 1. Add compensatory income to despeses
-                        row_dest = new_row.copy()
-                        row_dest['ID_mov'] = int(max_id + 1)
-                        row_dest['Banc'] = banc_desti_str
-                        row_dest['Import càrrec'] = 0.0
-                        row_dest['import ingrés'] = float(res['import_final'])
-                        row_dest['grup'] = "op_banc"
-                        insert_db_row('despeses', row_dest)
-                        max_id += 1
-                        
-                        # 2. If dest_banc == TR Cartera, insert into tr_cartera as Compra
-                        if banc_desti_str == 'TR Cartera':
-                            concepte_str = str(res['row']['Concepte']).lower()
-                            cartera_val = 'NVIDIA' if 'nvidia' in concepte_str else 'S&P500'
-                            new_tr_row = {
-                                'DATA': datetime.datetime.now().strftime('%Y-%m-%d'),
-                                'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
-                                'any': int(any_val),
-                                'COMPRA': float(res['import_final']),
-                                'VENDA': 0.0,
-                                'CARTERA': cartera_val,
-                                'CONCEPTE': 'Compra',
-                                'COMENTARI': f"Traspàs automàtic: {res['row']['Concepte']}"
-                            }
-                            insert_db_row('tr_cartera', new_tr_row)
-                            
-                    updates_made = True
-                elif res['type'] == 'ingres':
-                    df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
-                    df_ing_local.loc[res['idx'], 'Import'] = float(res['import_final'])
-                    new_row = {
-                        'ID_mov': int(max_id),
-                        'Data': avui,
-                        'Banc': str(res['banc']),
-                        'FormaPago': str(res['forma_pago']),
-                        'Idcategoria': 'ingres_general',
-                        'Idconcepte': str(res['row']['Concepte']),
-                        'Import càrrec': 0.0,
-                        'import ingrés': float(res['import_final']),
-                        'Comentari': None,
-                        'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
-                        'any': int(any_val),
-                        'grup': "Ingrés",
-                        'ticketPendent': False
-                    }
-                    try:
-                        insert_db_row('despeses', new_row)
-                        updates_made = True
-                    except Exception as e:
-                        st.error(f"Error inserint ingressos: {e}")
-                    
-            if updates_made:
-                save_to_csv(df_pag_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
-                save_to_csv(df_ing_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
-                st.session_state["df_pag"] = df_pag_local
-                st.session_state["df_ing"] = df_ing_local
-                
-                st.success("Operacions desades correctament!")
-                time.sleep(1)
-                st.cache_data.clear()
-                st.rerun()
-    
-    with st.container():
-        col_det_title, col_det_mes, col_det_any = st.columns([6, 3, 3], vertical_alignment="center")
-        with col_det_mes:
-            cur_m_idx = CATALAN_MONTHS.index(selected_month_cat) if selected_month_cat in CATALAN_MONTHS else current_month_index
-            sel_m = st.selectbox("Mes", CATALAN_MONTHS, index=cur_m_idx, key="detalls_sel_mes")
-        with col_det_any:
-            cur_y_idx = years_list.index(selected_year) if selected_year in years_list else 0
-            sel_y = st.selectbox("Any", years_list, index=cur_y_idx, key="detalls_sel_year")
-        with col_det_title:
-            st.markdown(f"<h3 style='margin:0; font-size:1.45rem; color:#f39c12; font-weight:700;'>🔍 Detalls de {sel_m.capitalize()} del {sel_y}</h3>", unsafe_allow_html=True)
-            
-        selected_month_cat = sel_m
-        selected_month_data = month_translations.get(sel_m.lower(), sel_m.lower())
-        selected_year = int(sel_y)
-        st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
-        
-        col_left, col_mid, col_right = st.columns([1, 1, 1], gap="medium")
-        
-        with col_left:
-            st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments del Mes</h4>", unsafe_allow_html=True)
-            
-            all_items = []
-            seen_concepts = set()
-            pagaments_a_processar = []
-            
-            # 1. Hipoteca status
-            sub_hip = df_hip[(df_hip['any'] == selected_year) & (df_hip['mes'].str.lower() == selected_month_data)]
-            if not sub_hip.empty:
-                hip_row = sub_hip.iloc[0]
-                amt_hip = float(clean_numeric(pd.Series([hip_row.get('Quota fixa', 0.0)])).iloc[0])
-                status_hip = "Pagat" if str(hip_row.get('pagat', '')).lower().strip() == 'pagat' else "Pendent"
-                all_items.append({
-                    'idx': 'hipoteca',
-                    'Concepte': 'Hipoteca',
-                    'Import': amt_hip,
-                    'status': status_hip,
-                    'Categoria': 'manteniment',
-                    'icon': '🏠',
-                    'row': {'Concepte': 'Hipoteca', 'Import': amt_hip, 'Categoria': 'manteniment'}
-                })
-                seen_concepts.add('hipoteca')
-
-            # 2. Pagaments de la taula Previsió de Pagaments
-            sub_pag_all = df_pag[
-                (df_pag['any'] == selected_year) & 
-                (df_pag['mes'].astype(str).str.lower().str.strip() == selected_month_data.lower().strip())
-            ]
-            
-            if not sub_pag_all.empty:
-                sub_pag_work = sub_pag_all.copy()
-                sub_pag_work['import_num'] = clean_numeric(sub_pag_work['Import'])
-                
-                for p_idx, p_row in sub_pag_work.iterrows():
-                    concept_str = str(p_row.get('Concepte', '')).strip()
-                    concept_lower = concept_str.lower()
-                    if concept_lower in seen_concepts:
-                        continue
-                    
-                    # Assignem icones segons el concepte
-                    if any(k in concept_lower for k in ["hipoteca", "ajunt", "bbva asseg", "casa"]):
-                        icon = "🏠"
-                    elif any(k in concept_lower for k in ["cotxe", "lloguer parking"]):
-                        icon = "🚗"
-                    elif "piscina" in concept_lower:
-                        icon = "🏊‍♂️"
-                    elif "pj isabel" in concept_lower:
-                        icon = "🐷"
-                    elif any(k in concept_lower for k in ["lowi", "telefon", "mòbil"]):
-                        icon = "📱"
-                    elif "accions" in concept_lower:
-                        icon = "💸"
-                    elif any(k in concept_lower for k in ["morts", "ocaso"]):
-                        icon = "✝️"
-                    else:
-                        icon = "💸"
-                    
-                    amt = float(p_row['import_num'])
-                    status_p = "Pagat" if str(p_row.get('pagat', '')).lower().strip() == 'pagat' else "Pendent"
-                    all_items.append({
-                        'idx': p_idx,
-                        'Concepte': concept_str,
-                        'Import': amt,
-                        'status': status_p,
-                        'Categoria': p_row.get('Categoria', 'despesa_general'),
-                        'icon': icon,
-                        'row': p_row
-                    })
-                    seen_concepts.add(concept_lower)
-            
-            pendent_items = [it for it in all_items if it['status'] != 'Pagat']
-            paid_items = [it for it in all_items if it['status'] == 'Pagat']
-            
-            total_programat = sum(it['Import'] for it in all_items)
-            total_pendent = sum(it['Import'] for it in pendent_items)
-
-            # --- Render Pendents ---
-            if pendent_items:
-                st.write("**Pendents de pagament:**")
-                for it in pendent_items:
-                    amt = float(it['Import'])
-                    icon = it.get('icon', '💸')
-                    c_chk, c_txt = st.columns([0.08, 0.92], gap="small")
-                    with c_chk:
-                        is_sel = st.checkbox(" ", key=f"chk_pag_{it['idx']}", label_visibility="collapsed")
-                    with c_txt:
-                        if is_sel:
-                            c_name, c_num = st.columns([0.60, 0.40])
-                            c_name.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:140px; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</span></div>", unsafe_allow_html=True)
-                            custom_amt = c_num.number_input("Import real", value=float(amt), step=0.01, format="%.2f", key=f"num_pag_in_{it['idx']}", label_visibility="collapsed")
-                            new_row = it['row'].copy()
-                            new_row['Import'] = custom_amt
-                            pagaments_a_processar.append({'idx': it['idx'], 'row': new_row})
+                    max_id += 1
+                    if res['type'] == 'pagament':
+                        if res['idx'] == 'hipoteca':
+                            df_hip_local = st.session_state["df_hip"]
+                            df_hip_local.loc[(df_hip_local['any'] == any_val) & (df_hip_local['mes'].str.lower() == selected_month_data), 'pagat'] = 'pagat'
+                            df_hip_local.loc[(df_hip_local['any'] == any_val) & (df_hip_local['mes'].str.lower() == selected_month_data), 'Quota fixa'] = float(res['import_final'])
+                            save_to_csv(df_hip_local, 'hipoteca.csv')
+                            st.session_state["df_hip"] = df_hip_local
                         else:
-                            st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:140px; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
+                            df_pag_local.loc[res['idx'], 'pagat'] = 'Pagat'
+                            df_pag_local.loc[res['idx'], 'Import'] = float(res['import_final'])
+                        
+                        new_row = {
+                            'ID_mov': int(max_id),
+                            'Data': avui,
+                            'Banc': str(res['banc']),
+                            'FormaPago': str(res['forma_pago']),
+                            'Idcategoria': str(res['row'].get('Categoria', 'despesa_general')),
+                            'Idconcepte': str(res['row']['Concepte']),
+                            'Import càrrec': float(res['import_final']),
+                            'import ingrés': 0.0,
+                            'Comentari': None,
+                            'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
+                            'any': int(any_val),
+                            'grup': "Càrrec",
+                            'ticketPendent': False
+                        }
+                        insert_db_row('despeses', new_row)
+                    
+                        # Check for scheduled transfers
+                        banc_desti = df_pag_local.loc[res['idx'], 'banc_desti_traspas'] if 'banc_desti_traspas' in df_pag_local.columns else None
+                        if banc_desti and pd.notna(banc_desti) and str(banc_desti).strip() != '':
+                            banc_desti_str = str(banc_desti).strip()
+                            # 1. Add compensatory income to despeses
+                            row_dest = new_row.copy()
+                            row_dest['ID_mov'] = int(max_id + 1)
+                            row_dest['Banc'] = banc_desti_str
+                            row_dest['Import càrrec'] = 0.0
+                            row_dest['import ingrés'] = float(res['import_final'])
+                            row_dest['grup'] = "op_banc"
+                            insert_db_row('despeses', row_dest)
+                            max_id += 1
+                        
+                            # 2. If dest_banc == TR Cartera, insert into tr_cartera as Compra
+                            if banc_desti_str == 'TR Cartera':
+                                concepte_str = str(res['row']['Concepte']).lower()
+                                cartera_val = 'NVIDIA' if 'nvidia' in concepte_str else 'S&P500'
+                                new_tr_row = {
+                                    'DATA': datetime.datetime.now().strftime('%Y-%m-%d'),
+                                    'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
+                                    'any': int(any_val),
+                                    'COMPRA': float(res['import_final']),
+                                    'VENDA': 0.0,
+                                    'CARTERA': cartera_val,
+                                    'CONCEPTE': 'Compra',
+                                    'COMENTARI': f"Traspàs automàtic: {res['row']['Concepte']}"
+                                }
+                                insert_db_row('tr_cartera', new_tr_row)
+                            
+                        updates_made = True
+                    elif res['type'] == 'ingres':
+                        df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
+                        df_ing_local.loc[res['idx'], 'Import'] = float(res['import_final'])
+                        new_row = {
+                            'ID_mov': int(max_id),
+                            'Data': avui,
+                            'Banc': str(res['banc']),
+                            'FormaPago': str(res['forma_pago']),
+                            'Idcategoria': 'ingres_general',
+                            'Idconcepte': str(res['row']['Concepte']),
+                            'Import càrrec': 0.0,
+                            'import ingrés': float(res['import_final']),
+                            'Comentari': None,
+                            'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
+                            'any': int(any_val),
+                            'grup': "Ingrés",
+                            'ticketPendent': False
+                        }
+                        try:
+                            insert_db_row('despeses', new_row)
+                            updates_made = True
+                        except Exception as e:
+                            st.error(f"Error inserint ingressos: {e}")
+                    
+                if updates_made:
+                    save_to_csv(df_pag_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                    save_to_csv(df_ing_local.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                    st.session_state["df_pag"] = df_pag_local
+                    st.session_state["df_ing"] = df_ing_local
                 
-                if len(pagaments_a_processar) > 0:
-                    if st.button("📥 Passar seleccionats a la BBDD", key="btn_proc_pag"):
-                        dialog_confirmar_operacions(pagaments_a_processar, [], selected_year, selected_month_cat)
-                
-                st.write("") # spacer
-            elif not all_items:
-                st.info("No hi ha dades de pagaments per aquest mes.")
-            else:
-                st.info("No hi ha cap pagament pendent aquest mes.")
+                    st.success("Operacions desades correctament!")
+                    time.sleep(1)
+                    st.cache_data.clear()
+                    st.rerun()
+    
+        with st.container():
+            col_det_title, col_det_mes, col_det_any = st.columns([6, 3, 3], vertical_alignment="center")
+            with col_det_mes:
+                cur_m_idx = CATALAN_MONTHS.index(selected_month_cat) if selected_month_cat in CATALAN_MONTHS else current_month_index
+                sel_m = st.selectbox("Mes", CATALAN_MONTHS, index=cur_m_idx, key="detalls_sel_mes")
+            with col_det_any:
+                cur_y_idx = years_list.index(selected_year) if selected_year in years_list else 0
+                sel_y = st.selectbox("Any", years_list, index=cur_y_idx, key="detalls_sel_year")
+            with col_det_title:
+                st.markdown(f"<h3 style='margin:0; font-size:1.45rem; color:#f39c12; font-weight:700;'>🔍 Detalls de {sel_m.capitalize()} del {sel_y}</h3>", unsafe_allow_html=True)
+            
+            selected_month_cat = sel_m
+            selected_month_data = month_translations.get(sel_m.lower(), sel_m.lower())
+            selected_year = int(sel_y)
+            st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
+        
+            col_left, col_mid, col_right = st.columns([1, 1, 1], gap="medium")
+        
+            with col_left:
+                st.markdown("<h4 style='color:#f39c12;'>📋 Pagaments del Mes</h4>", unsafe_allow_html=True)
+            
+                all_items = []
+                seen_concepts = set()
+                pagaments_a_processar = []
+            
+                # 1. Hipoteca status
+                sub_hip = df_hip[(df_hip['any'] == selected_year) & (df_hip['mes'].str.lower() == selected_month_data)]
+                if not sub_hip.empty:
+                    hip_row = sub_hip.iloc[0]
+                    amt_hip = float(clean_numeric(pd.Series([hip_row.get('Quota fixa', 0.0)])).iloc[0])
+                    status_hip = "Pagat" if str(hip_row.get('pagat', '')).lower().strip() == 'pagat' else "Pendent"
+                    all_items.append({
+                        'idx': 'hipoteca',
+                        'Concepte': 'Hipoteca',
+                        'Import': amt_hip,
+                        'status': status_hip,
+                        'Categoria': 'manteniment',
+                        'icon': '🏠',
+                        'row': {'Concepte': 'Hipoteca', 'Import': amt_hip, 'Categoria': 'manteniment'}
+                    })
+                    seen_concepts.add('hipoteca')
 
-            # --- Render Pagats (sense línies de taula, espaiat reduït i alineat) ---
-            if paid_items:
-                st.write("**Pagats:**")
-                rows_html = []
-                for it in paid_items:
-                    amt = float(it['Import'])
-                    icon = it.get('icon', '💸')
-                    rows_html.append(f"<tr style='border:none;'><td style='padding:3px 18px 3px 0; border:none; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</td><td style='padding:3px 10px 3px 0; border:none; text-align:right; font-weight:600; font-size:0.95rem; white-space:nowrap;'>{amt:,.2f} €</td><td style='padding:3px 0; border:none; color:#22c55e; font-size:0.82rem; font-weight:600; white-space:nowrap;'>pagat</td></tr>")
-                table_html = f"<table style='width:auto; border:none; border-collapse:collapse; margin-bottom:6px;'><tbody>{''.join(rows_html)}</tbody></table>"
-                st.markdown(table_html, unsafe_allow_html=True)
-                st.write("")
+                # 2. Pagaments de la taula Previsió de Pagaments
+                sub_pag_all = df_pag[
+                    (df_pag['any'] == selected_year) & 
+                    (df_pag['mes'].astype(str).str.lower().str.strip() == selected_month_data.lower().strip())
+                ]
+            
+                if not sub_pag_all.empty:
+                    sub_pag_work = sub_pag_all.copy()
+                    sub_pag_work['import_num'] = clean_numeric(sub_pag_work['Import'])
+                
+                    for p_idx, p_row in sub_pag_work.iterrows():
+                        concept_str = str(p_row.get('Concepte', '')).strip()
+                        concept_lower = concept_str.lower()
+                        if concept_lower in seen_concepts:
+                            continue
+                    
+                        # Assignem icones segons el concepte
+                        if any(k in concept_lower for k in ["hipoteca", "ajunt", "bbva asseg", "casa"]):
+                            icon = "🏠"
+                        elif any(k in concept_lower for k in ["cotxe", "lloguer parking"]):
+                            icon = "🚗"
+                        elif "piscina" in concept_lower:
+                            icon = "🏊‍♂️"
+                        elif "pj isabel" in concept_lower:
+                            icon = "🐷"
+                        elif any(k in concept_lower for k in ["lowi", "telefon", "mòbil"]):
+                            icon = "📱"
+                        elif "accions" in concept_lower:
+                            icon = "💸"
+                        elif any(k in concept_lower for k in ["morts", "ocaso"]):
+                            icon = "✝️"
+                        else:
+                            icon = "💸"
+                    
+                        amt = float(p_row['import_num'])
+                        status_p = "Pagat" if str(p_row.get('pagat', '')).lower().strip() == 'pagat' else "Pendent"
+                        all_items.append({
+                            'idx': p_idx,
+                            'Concepte': concept_str,
+                            'Import': amt,
+                            'status': status_p,
+                            'Categoria': p_row.get('Categoria', 'despesa_general'),
+                            'icon': icon,
+                            'row': p_row
+                        })
+                        seen_concepts.add(concept_lower)
+            
+                pendent_items = [it for it in all_items if it['status'] != 'Pagat']
+                paid_items = [it for it in all_items if it['status'] == 'Pagat']
+            
+                total_programat = sum(it['Import'] for it in all_items)
+                total_pendent = sum(it['Import'] for it in pendent_items)
 
-            if total_programat > 0 or total_pendent > 0:
-                st.markdown(f"""
-                <div style="display: flex; gap: 40px; margin-top: 10px;">
-                    <div data-testid="stMetric">
-                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a pagar</div>
-                        <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{total_programat:,.2f} €</div>
-                    </div>
-                    <div data-testid="stMetric">
-                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
-                        <div style="font-size: 2.25rem; font-weight: 400; color: #ef4444;">{total_pendent:,.2f} €</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-        with col_mid:
-            st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
-            # Load ingressos list for selected month
-            month_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['clean_mes'] == selected_month_data)]
-            if not month_ing.empty:
-                ingressos_a_processar = []
-                mask_pendent = month_ing['cobrat'].astype(str).str.strip().str.lower() == 'pendent'
-                month_ing_pendent = month_ing[mask_pendent]
-                month_ing_cobrat = month_ing[~mask_pendent].copy()
-                
-                if not month_ing_pendent.empty:
-                    st.write("**Pendents de cobrament:**")
-                    for i_idx, i_row in month_ing_pendent.iterrows():
-                        amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
-                        concepte = i_row['Concepte']
+                # --- Render Pendents ---
+                if pendent_items:
+                    st.write("**Pendents de pagament:**")
+                    for it in pendent_items:
+                        amt = float(it['Import'])
+                        icon = it.get('icon', '💸')
                         c_chk, c_txt = st.columns([0.08, 0.92], gap="small")
                         with c_chk:
-                            is_sel = st.checkbox(" ", key=f"chk_ing_{i_idx}", label_visibility="collapsed")
+                            is_sel = st.checkbox(" ", key=f"chk_pag_{it['idx']}", label_visibility="collapsed")
                         with c_txt:
                             if is_sel:
                                 c_name, c_num = st.columns([0.60, 0.40])
-                                c_name.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:190px; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</span></div>", unsafe_allow_html=True)
-                                custom_amt = c_num.number_input("Import real", value=float(amt), step=0.01, format="%.2f", key=f"num_ing_in_{i_idx}", label_visibility="collapsed")
-                                new_row = i_row.copy()
+                                c_name.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:140px; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</span></div>", unsafe_allow_html=True)
+                                custom_amt = c_num.number_input("Import real", value=float(amt), step=0.01, format="%.2f", key=f"num_pag_in_{it['idx']}", label_visibility="collapsed")
+                                new_row = it['row'].copy()
                                 new_row['Import'] = custom_amt
-                                ingressos_a_processar.append({'idx': i_idx, 'row': new_row})
+                                pagaments_a_processar.append({'idx': it['idx'], 'row': new_row})
                             else:
-                                st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:190px; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
-                    
-                    if len(ingressos_a_processar) > 0:
-                        if st.button("📥 Passar ingressos a BBDD", key="btn_proc_ing"):
-                            dialog_confirmar_operacions([], ingressos_a_processar, selected_year, selected_month_cat)
-                    
+                                st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:140px; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
+                
+                    if len(pagaments_a_processar) > 0:
+                        if st.button("📥 Passar seleccionats a la BBDD", key="btn_proc_pag"):
+                            dialog_confirmar_operacions(pagaments_a_processar, [], selected_year, selected_month_cat)
+                
                     st.write("") # spacer
-                
-                # --- Render Cobrats (sense línies de taula, espaiat reduït i alineat) ---
-                if not month_ing_cobrat.empty:
-                    st.write("**Cobrats:**")
-                    rows_ing_html = []
-                    for _, i_row in month_ing_cobrat.iterrows():
-                        amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
-                        concepte = i_row['Concepte']
-                        rows_ing_html.append(f"<tr style='border:none;'><td style='padding:3px 18px 3px 0; border:none; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</td><td style='padding:3px 10px 3px 0; border:none; text-align:right; font-weight:600; font-size:0.95rem; white-space:nowrap;'>{amt:,.2f} €</td><td style='padding:3px 0; border:none; color:#22c55e; font-size:0.82rem; font-weight:600; white-space:nowrap;'>cobrat</td></tr>")
-                    table_ing_html = f"<table style='width:auto; border:none; border-collapse:collapse; margin-bottom:6px;'><tbody>{''.join(rows_ing_html)}</tbody></table>"
-                    st.markdown(table_ing_html, unsafe_allow_html=True)
+                elif not all_items:
+                    st.info("No hi ha dades de pagaments per aquest mes.")
+                else:
+                    st.info("No hi ha cap pagament pendent aquest mes.")
+
+                # --- Render Pagats (sense línies de taula, espaiat reduït i alineat) ---
+                if paid_items:
+                    st.write("**Pagats:**")
+                    rows_html = []
+                    for it in paid_items:
+                        amt = float(it['Import'])
+                        icon = it.get('icon', '💸')
+                        rows_html.append(f"<tr style='border:none;'><td style='padding:3px 18px 3px 0; border:none; font-size:0.95rem; white-space:nowrap;'>{icon} {it['Concepte']}</td><td style='padding:3px 10px 3px 0; border:none; text-align:right; font-weight:600; font-size:0.95rem; white-space:nowrap;'>{amt:,.2f} €</td><td style='padding:3px 0; border:none; color:#22c55e; font-size:0.82rem; font-weight:600; white-space:nowrap;'>pagat</td></tr>")
+                    table_html = f"<table style='width:auto; border:none; border-collapse:collapse; margin-bottom:6px;'><tbody>{''.join(rows_html)}</tbody></table>"
+                    st.markdown(table_html, unsafe_allow_html=True)
                     st.write("")
+
+                if total_programat > 0 or total_pendent > 0:
+                    st.markdown(f"""
+                    <div style="display: flex; gap: 40px; margin-top: 10px;">
+                        <div data-testid="stMetric">
+                            <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a pagar</div>
+                            <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{total_programat:,.2f} €</div>
+                        </div>
+                        <div data-testid="stMetric">
+                            <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
+                            <div style="font-size: 2.25rem; font-weight: 400; color: #ef4444;">{total_pendent:,.2f} €</div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+            with col_mid:
+                st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
+                # Load ingressos list for selected month
+                month_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['clean_mes'] == selected_month_data)]
+                if not month_ing.empty:
+                    ingressos_a_processar = []
+                    mask_pendent = month_ing['cobrat'].astype(str).str.strip().str.lower() == 'pendent'
+                    month_ing_pendent = month_ing[mask_pendent]
+                    month_ing_cobrat = month_ing[~mask_pendent].copy()
+                
+                    if not month_ing_pendent.empty:
+                        st.write("**Pendents de cobrament:**")
+                        for i_idx, i_row in month_ing_pendent.iterrows():
+                            amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
+                            concepte = i_row['Concepte']
+                            c_chk, c_txt = st.columns([0.08, 0.92], gap="small")
+                            with c_chk:
+                                is_sel = st.checkbox(" ", key=f"chk_ing_{i_idx}", label_visibility="collapsed")
+                            with c_txt:
+                                if is_sel:
+                                    c_name, c_num = st.columns([0.60, 0.40])
+                                    c_name.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:190px; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</span></div>", unsafe_allow_html=True)
+                                    custom_amt = c_num.number_input("Import real", value=float(amt), step=0.01, format="%.2f", key=f"num_ing_in_{i_idx}", label_visibility="collapsed")
+                                    new_row = i_row.copy()
+                                    new_row['Import'] = custom_amt
+                                    ingressos_a_processar.append({'idx': i_idx, 'row': new_row})
+                                else:
+                                    st.markdown(f"<div style='display:flex; align-items:center; padding-top:4px;'><span style='min-width:190px; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</span><span style='font-weight:600; font-size:0.95rem; white-space:nowrap; margin-left:14px;'>{amt:,.2f} €</span></div>", unsafe_allow_html=True)
+                    
+                        if len(ingressos_a_processar) > 0:
+                            if st.button("📥 Passar ingressos a BBDD", key="btn_proc_ing"):
+                                dialog_confirmar_operacions([], ingressos_a_processar, selected_year, selected_month_cat)
+                    
+                        st.write("") # spacer
+                
+                    # --- Render Cobrats (sense línies de taula, espaiat reduït i alineat) ---
+                    if not month_ing_cobrat.empty:
+                        st.write("**Cobrats:**")
+                        rows_ing_html = []
+                        for _, i_row in month_ing_cobrat.iterrows():
+                            amt = float(clean_numeric(pd.Series([i_row['Import']])).iloc[0])
+                            concepte = i_row['Concepte']
+                            rows_ing_html.append(f"<tr style='border:none;'><td style='padding:3px 18px 3px 0; border:none; font-size:0.95rem; white-space:nowrap;'>🟢 {concepte}</td><td style='padding:3px 10px 3px 0; border:none; text-align:right; font-weight:600; font-size:0.95rem; white-space:nowrap;'>{amt:,.2f} €</td><td style='padding:3px 0; border:none; color:#22c55e; font-size:0.82rem; font-weight:600; white-space:nowrap;'>cobrat</td></tr>")
+                        table_ing_html = f"<table style='width:auto; border:none; border-collapse:collapse; margin-bottom:6px;'><tbody>{''.join(rows_ing_html)}</tbody></table>"
+                        st.markdown(table_ing_html, unsafe_allow_html=True)
+                        st.write("")
                         
-                # Sum the pending ingressos
-                pendent_sum = month_ing_pendent['Import'].sum() if not month_ing_pendent.empty else 0.0
+                    # Sum the pending ingressos
+                    pendent_sum = month_ing_pendent['Import'].sum() if not month_ing_pendent.empty else 0.0
                     
-                st.markdown(f"""
-                <div style="display: flex; gap: 40px; margin-top: 10px;">
-                    <div data-testid="stMetric">
-                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a ingressar</div>
-                        <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{month_ing['Import'].sum():,.2f} €</div>
+                    st.markdown(f"""
+                    <div style="display: flex; gap: 40px; margin-top: 10px;">
+                        <div data-testid="stMetric">
+                            <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Total per a ingressar</div>
+                            <div style="font-size: 2.25rem; font-weight: 400; color: inherit;">{month_ing['Import'].sum():,.2f} €</div>
+                    </div>
+                        <div data-testid="stMetric">
+                            <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
+                            <div style="font-size: 2.25rem; font-weight: 400; color: #3b82f6;">{pendent_sum:,.2f} €</div>
+                    </div>
                 </div>
-                    <div data-testid="stMetric">
-                        <div style="font-size: 14px; color: rgb(85, 85, 85); padding-bottom: 0.25rem;">Pendent</div>
-                        <div style="font-size: 2.25rem; font-weight: 400; color: #3b82f6;">{pendent_sum:,.2f} €</div>
-                </div>
-            </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.info("No hi ha dades d'ingressos per aquest mes.")
+                    """, unsafe_allow_html=True)
+                else:
+                    st.info("No hi ha dades d'ingressos per aquest mes.")
                 
-        with col_right:
-            st.markdown("<h4 style='color:#f39c12;'>📤 Càrrecs per Categoria</h4>", unsafe_allow_html=True)
-            month_desp = df_desp[(df_desp['any'] == selected_year) & (df_desp['clean_mes'] == selected_month_data)]
-            if not month_desp.empty:
-                # Exclude op_banc!
-                month_desp_filtered = month_desp[month_desp['Idcategoria'] != 'op_banc']
+            with col_right:
+                st.markdown("<h4 style='color:#f39c12;'>📤 Càrrecs per Categoria</h4>", unsafe_allow_html=True)
+                month_desp = df_desp[(df_desp['any'] == selected_year) & (df_desp['clean_mes'] == selected_month_data)]
+                if not month_desp.empty:
+                    # Exclude op_banc!
+                    month_desp_filtered = month_desp[month_desp['Idcategoria'] != 'op_banc']
                 
-                grouped_desp = month_desp_filtered.groupby('Idcategoria')['Import càrrec'].sum().reset_index()
-                grouped_desp = grouped_desp[grouped_desp['Import càrrec'] > 0].sort_values(by='Import càrrec', ascending=False)
+                    grouped_desp = month_desp_filtered.groupby('Idcategoria')['Import càrrec'].sum().reset_index()
+                    grouped_desp = grouped_desp[grouped_desp['Import càrrec'] > 0].sort_values(by='Import càrrec', ascending=False)
                 
-                try:
-                    event = st.dataframe(
-                        grouped_desp[['Idcategoria', 'Import càrrec']],
-                        use_container_width=True,
-                        hide_index=True,
-                        on_select="rerun",
-                        selection_mode="single-row",
-                        column_config={
-                            "Idcategoria": st.column_config.TextColumn("Idcategoria"),
-                            "Import càrrec": st.column_config.NumberColumn("Import càrrec", format="%.2f €", width="small")
-                        }
-                    )
-                except Exception as e:
-                    st.error(f"Error rendering grouped_desp: {e}")
-                    event = None
-                st.metric("Total Gastat", f"{grouped_desp['Import càrrec'].sum():,.2f} €")
-                
-                # Show details of selected group if clicked
-                if event and 'rows' in event.selection and event.selection['rows']:
-                    selected_row_idx = event.selection['rows'][0]
-                    selected_cat = grouped_desp.iloc[selected_row_idx]['Idcategoria']
-                    st.write("")
-                    st.markdown(f"**🔍 Desglòs de despeses: {selected_cat}**")
-                    
-                    cat_details = month_desp_filtered[month_desp_filtered['Idcategoria'] == selected_cat][
-                        ['Data', 'FormaPago', 'Idconcepte', 'Import càrrec', 'Comentari']
-                    ].copy()
-                    
                     try:
-                        st.dataframe(
-                            cat_details.style.format({'Import càrrec': '{:,.2f} €'}),
+                        event = st.dataframe(
+                            grouped_desp[['Idcategoria', 'Import càrrec']],
                             use_container_width=True,
-                            hide_index=True
+                            hide_index=True,
+                            on_select="rerun",
+                            selection_mode="single-row",
+                            column_config={
+                                "Idcategoria": st.column_config.TextColumn("Idcategoria"),
+                                "Import càrrec": st.column_config.NumberColumn("Import càrrec", format="%.2f €", width="small")
+                            }
                         )
                     except Exception as e:
-                        st.error(f"Error rendering cat_details: {e}")
-            else:
-                st.info("No hi ha dades de despeses per aquest mes.")
+                        st.error(f"Error rendering grouped_desp: {e}")
+                        event = None
+                    st.metric("Total Gastat", f"{grouped_desp['Import càrrec'].sum():,.2f} €")
+                
+                    # Show details of selected group if clicked
+                    if event and 'rows' in event.selection and event.selection['rows']:
+                        selected_row_idx = event.selection['rows'][0]
+                        selected_cat = grouped_desp.iloc[selected_row_idx]['Idcategoria']
+                        st.write("")
+                        st.markdown(f"**🔍 Desglòs de despeses: {selected_cat}**")
+                    
+                        cat_details = month_desp_filtered[month_desp_filtered['Idcategoria'] == selected_cat][
+                            ['Data', 'FormaPago', 'Idconcepte', 'Import càrrec', 'Comentari']
+                        ].copy()
+                    
+                        try:
+                            st.dataframe(
+                                cat_details.style.format({'Import càrrec': '{:,.2f} €'}),
+                                use_container_width=True,
+                                hide_index=True
+                            )
+                        except Exception as e:
+                            st.error(f"Error rendering cat_details: {e}")
+                else:
+                    st.info("No hi ha dades de despeses per aquest mes.")
     
 
 
