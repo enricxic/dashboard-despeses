@@ -2469,6 +2469,9 @@ def render(view_mode="economic"):
             if not df_pag.empty:
                 df_pag_year = df_pag[df_pag['any'] == selected_year].copy()
                 cols_p = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_year.columns]
+                sort_cols = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'pagat'] if c in df_pag_year.columns]
+                if sort_cols:
+                    df_pag_year = df_pag_year.sort_values(by=sort_cols)
                 st.dataframe(
                     df_pag_year[cols_p],
                     use_container_width=True,
@@ -2589,6 +2592,9 @@ def render(view_mode="economic"):
             if not df_ing.empty:
                 df_ing_year = df_ing[df_ing['any'] == selected_year].copy()
                 cols_i = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_year.columns]
+                sort_cols_i = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'cobrat'] if c in df_ing_year.columns]
+                if sort_cols_i:
+                    df_ing_year = df_ing_year.sort_values(by=sort_cols_i)
                 st.dataframe(
                     df_ing_year[cols_i],
                     use_container_width=True,
