@@ -680,26 +680,22 @@ div.block-container {{
 </div>
 </div>
 <div class="menu-item">
-<span class="menu-title">Finances</span>
+<span class="menu-title">Mòduls</span>
 <div class="menu-dropdown">
 <a href="?mod=modules.dashboard{auth_suffix}" target="_self">📊 Resum General (Dashboard)</a>
 {f'<a href="?mod=modules.economic{auth_suffix}" target="_self">📈 Mòdul Econòmic complet</a>' if icones_actives.get('economic', True) else ''}
 {f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Compres Super i Stock</a>' if icones_actives.get('compres', True) else ''}
+<div class="submenu-item">
+<div class="submenu-title"><span>🚗 Cotxe i Transport</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></div>
+<div class="submenu-dropdown">
+{f'<a href="?mod=modules.cotxe{auth_suffix}" target="_self">🚗 Mòdul Cotxe</a>' if icones_actives.get('cotxe', True) else ''}
+<a href="?action=edit_json&file=categories_conceptes.json{auth_suffix}" target="_self">📝 Editar Rutes al JSON</a>
 </div>
 </div>
-<div class="menu-item">
-<span class="menu-title">Llar</span>
-<div class="menu-dropdown">
 {f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">🍽️ Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
 {f'<a href="?mod=modules.manteniment{auth_suffix}" target="_self">🛠️ Manteniment de la llar</a>' if icones_actives.get('manteniment', True) else ''}
-{f'<a href="?mod=modules.cotxe{auth_suffix}" target="_self">🚗 Cotxe i manteniment</a>' if icones_actives.get('cotxe', True) else ''}
 {f'<a href="?mod=modules.domotica{auth_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
 {f'<a href="?mod=modules.seguretat{auth_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
-</div>
-</div>
-<div class="menu-item">
-<span class="menu-title">Família</span>
-<div class="menu-dropdown">
 {f'<a href="?mod=modules.calendari{auth_suffix}" target="_self">📅 Agenda i esdeveniments</a>' if icones_actives.get('agenda', True) else ''}
 {f'<a href="?mod=modules.medicacio{auth_suffix}" target="_self">💊 Control de medicació</a>' if icones_actives.get('medicacio', True) else ''}
 {f'<a href="?mod=modules.jocs{auth_suffix}" target="_self">🎲 Jocs i oci</a>' if icones_actives.get('jocs', True) else ''}
