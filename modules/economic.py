@@ -2513,7 +2513,7 @@ def render(view_mode="economic"):
                 if f_banc_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['Banc'].astype(str) == f_banc_pag]
                 if f_estat_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['pagat'].astype(str) == f_estat_pag]
 
-                cols_p = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_filtered.columns]
+                cols_p = [c for c in ['Data', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_filtered.columns]
                 sort_cols = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'pagat'] if c in df_pag_filtered.columns]
                 if ordenar_recent_pag and 'parsed_date' in df_pag_filtered.columns:
                     df_pag_filtered = df_pag_filtered.sort_values(by=['parsed_date'], ascending=False)
@@ -2661,7 +2661,7 @@ def render(view_mode="economic"):
                 if f_banc_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['Banc'].astype(str) == f_banc_ing]
                 if f_estat_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['cobrat'].astype(str) == f_estat_ing]
 
-                cols_i = [c for c in ['any', 'mes', 'dia', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_filtered.columns]
+                cols_i = [c for c in ['Data', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_filtered.columns]
                 sort_cols_i = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'cobrat'] if c in df_ing_filtered.columns]
                 if ordenar_recent_ing and 'parsed_date' in df_ing_filtered.columns:
                     df_ing_filtered = df_ing_filtered.sort_values(by=['parsed_date'], ascending=False)
