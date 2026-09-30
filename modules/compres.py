@@ -1312,7 +1312,13 @@ def cb_finalize_ticket():
 
 def render_compres_super_interface():
     global df_super, df_desp
-    st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
+    col_h1, col_h2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
+    with col_h1:
+        st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
+    with col_h2:
+        if st.button("🚇", key="tunnel_to_economic", help="Anar directe a Ingrés / Despesa General"):
+            st.session_state.current_module = "economic"
+            st.rerun()
     
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     if "df_desp" not in st.session_state:
@@ -2324,7 +2330,13 @@ def render_ingres_despesa_general_interface():
             if k.startswith(prefix) and k != "desp_version":
                 del st.session_state[k]
 
-    st.markdown("<h3 style='color:#f39c12; margin-top:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
+    col_h1, col_h2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
+    with col_h1:
+        st.markdown("<h3 style='color:#f39c12; margin-top:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
+    with col_h2:
+        if st.button("🚇", key="tunnel_to_compres", help="Anar directe a Compres Super"):
+            st.session_state.current_module = "compres"
+            st.rerun()
     st.write("---")
 
     # Row 1 (4 columns)
@@ -2796,17 +2808,13 @@ def render():
     </style>
     """, unsafe_allow_html=True)
 
-    col_t1, col_tunnel, col_t2 = st.columns([8.2, 1.0, 0.8], vertical_alignment="center")
+    col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
     with col_t1:
-        col_logo_c, col_title_c = st.columns([0.8, 9.2], vertical_alignment="center")
+        col_logo_c, col_title_c = st.columns([0.7, 8.5], vertical_alignment="center")
         with col_logo_c:
             st.image("imatges/logo.png", width=65)
         with col_title_c:
             st.markdown("<h2 style='margin:0; color:#f39c12;'>Compres Super i Stock</h2>", unsafe_allow_html=True)
-    with col_tunnel:
-        if st.button("🚇 Finances", use_container_width=True, help="Anar directe al Mòdul Econòmic"):
-            st.session_state.current_module = "economic"
-            st.rerun()
     with col_t2:
         if st.button("🔙 Inici", use_container_width=True):
             st.session_state.current_module = None
