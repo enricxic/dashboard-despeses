@@ -686,10 +686,9 @@ div.block-container {{
 {f'<a href="?mod=modules.economic{auth_suffix}" target="_self">📈 Mòdul Econòmic complet</a>' if icones_actives.get('economic', True) else ''}
 {f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Compres Super i Stock</a>' if icones_actives.get('compres', True) else ''}
 <div class="submenu-item">
-<div class="submenu-title"><span>🚗 Cotxe i Transport</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></div>
+<a href="?mod=modules.cotxe{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🚗 Cotxe</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
-{f'<a href="?mod=modules.cotxe{auth_suffix}" target="_self">🚗 Mòdul Cotxe</a>' if icones_actives.get('cotxe', True) else ''}
-<a href="?action=edit_json&file=categories_conceptes.json{auth_suffix}" target="_self">📝 Editar Rutes al JSON</a>
+<a href="?action=edit_json&file=categories_conceptes.json{auth_suffix}" target="_self">📝 Editar Rutes</a>
 </div>
 </div>
 {f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">🍽️ Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
