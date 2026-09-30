@@ -1413,7 +1413,8 @@ def render(view_mode="economic"):
                 show_limits = st.checkbox("Veure límits despesa", value=False)
     
         # 3. Re-calculate balances and render bank metrics at the top container
-        current_balances = get_balances_up_to(selected_year, selected_month_data)
+        # Use "desembre" to ensure ALL confirmed real transactions in the DB for the current year are included in the global balance
+        current_balances = get_balances_up_to(selected_year, "desembre")
         
         # Explicit required dashboard order:
         # BBVA -> La Caixa -> Trade Repub. -> Casa -> Tg.Moneder -> CORTEINGLÉS -> Pago VISA

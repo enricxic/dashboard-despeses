@@ -128,6 +128,12 @@ def render():
                 
                 # 1. Update Existing
                 for row_idx_str, col_updates in edits.items():
+                    # Format dates back to string
+                    import datetime
+                    for k, v in col_updates.items():
+                        if isinstance(v, datetime.date):
+                            col_updates[k] = v.strftime("%d/%m/%Y")
+                            
                     row_idx = int(row_idx_str)
                     if row_idx < len(df):
                         pk_val = df.iloc[row_idx].get(pk_col)
@@ -151,6 +157,12 @@ def render():
                                 
                 # 3. Add Rows
                 for new_row in adds:
+                    # Format dates back to string
+                    import datetime
+                    for k, v in new_row.items():
+                        if isinstance(v, datetime.date):
+                            new_row[k] = v.strftime("%d/%m/%Y")
+                            
                     try:
                         insert_db_row(selected_table, new_row)
                     except Exception as e:
