@@ -2106,9 +2106,9 @@ def render(view_mode="economic"):
                         'Concepte': 'Hipoteca',
                         'Import': amt_hip,
                         'status': status_hip,
-                        'Categoria': 'manteniment',
+                        'Categoria': 'despesa_general',
                         'icon': '🏠',
-                        'row': {'Concepte': 'Hipoteca', 'Import': amt_hip, 'Categoria': 'manteniment', 'Banc': banc_hip, 'Formapago': forma_pago_hip}
+                        'row': {'Concepte': 'Hipoteca', 'Import': amt_hip, 'Categoria': 'despesa_general', 'Banc': banc_hip, 'Formapago': forma_pago_hip}
                     })
                     seen_concepts.add('hipoteca')
 
