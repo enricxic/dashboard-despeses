@@ -1890,7 +1890,12 @@ def render(view_mode="economic"):
     
         @st.dialog("⚙️ Confirmar Operacions i Bancs", width="large")
         def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
-            st.write("Verifica els imports i bancs de les operacions seleccionades. Si detectes algun error, tanca aquesta finestra i corregeix-ho a la taula de previsions.")
+            st.write("Verifica els imports i bancs de les operacions seleccionades. Si a alguna li falta el banc, pots assignar-lo aquí mateix al vol.")
+            
+            from core.config_manager import get_config_banks
+            bancs_disp = get_config_banks()
+            if not bancs_disp:
+                bancs_disp = ["BBVA", "Sabadell", "TR Cartera", "Revolut", "Efectiu"]
         
             results = {}
         
@@ -1905,14 +1910,19 @@ def render(view_mode="economic"):
                     if not forma_pago:
                         forma_pago = "Compte"
                 
-                    # Check for missing critical data
-                    warning = ""
-                    if not banc:
-                        warning = " ⚠️ *(Falta Banc!)*"
+                    col_info, col_banc = st.columns([0.65, 0.35], vertical_alignment="center")
+                    with col_info:
+                        st.markdown(f"**{row.get('Concepte', 'Pagament')}**<br><span style='font-size:1.1em;'>{amt:.2f} €</span>", unsafe_allow_html=True)
+                    
+                    with col_banc:
+                        if not banc or banc.lower() == 'nan':
+                            nou_banc = st.selectbox("Assigna Banc:", [""] + bancs_disp, key=f"sel_banc_pag_{idx}")
+                            banc_final = nou_banc
+                        else:
+                            st.markdown(f"<div style='padding-top:10px;'>➡️ **{banc}**</div>", unsafe_allow_html=True)
+                            banc_final = banc
                 
-                    st.markdown(f"**{row.get('Concepte', 'Pagament')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
-                
-                    results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': banc, 'forma_pago': forma_pago, 'import_final': amt}
+                    results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': banc_final, 'forma_pago': forma_pago, 'import_final': amt}
                 st.divider()
                 
             if ingressos_sel:
@@ -1926,14 +1936,19 @@ def render(view_mode="economic"):
                     if not forma_pago:
                         forma_pago = "Compte"
                 
-                    # Check for missing critical data
-                    warning = ""
-                    if not banc:
-                        warning = " ⚠️ *(Falta Banc!)*"
+                    col_info, col_banc = st.columns([0.65, 0.35], vertical_alignment="center")
+                    with col_info:
+                        st.markdown(f"**{row.get('Concepte', 'Ingrés')}**<br><span style='font-size:1.1em;'>{amt:.2f} €</span>", unsafe_allow_html=True)
                     
-                    st.markdown(f"**{row.get('Concepte', 'Ingrés')}** — {amt:.2f} € ➡️ {banc if banc else 'Desconegut'}{warning}")
+                    with col_banc:
+                        if not banc or banc.lower() == 'nan':
+                            nou_banc = st.selectbox("Assigna Banc:", [""] + bancs_disp, key=f"sel_banc_ing_{idx}")
+                            banc_final = nou_banc
+                        else:
+                            st.markdown(f"<div style='padding-top:10px;'>➡️ **{banc}**</div>", unsafe_allow_html=True)
+                            banc_final = banc
                 
-                    results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': banc, 'forma_pago': forma_pago, 'import_final': amt}
+                    results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': banc_final, 'forma_pago': forma_pago, 'import_final': amt}
                 st.divider()
                 
             if st.button("✅ Confirmar i Desar a BBDD", type="primary", use_container_width=True):
@@ -1948,7 +1963,7 @@ def render(view_mode="economic"):
                 updates_made = False
                 for key, res in results.items():
                     if not res['banc']:
-                        st.error(f"Si us plau, tanca i corregeix a les previsions el Banc de: {res['row'].get('Concepte', '')}")
+                        st.error(f"⚠️ Si us plau, assigna un Banc per a l'operació: **{res['row'].get('Concepte', '')}** utilitzant els desplegables de més amunt.")
                         return
                     
                     max_id += 1
@@ -2077,6 +2092,11 @@ def render(view_mode="economic"):
                     hip_row = sub_hip.iloc[0]
                     amt_hip = float(clean_numeric(pd.Series([hip_row.get('Quota fixa', 0.0)])).iloc[0])
                     status_hip = "Pagat" if str(hip_row.get('pagat', '')).lower().strip() == 'pagat' else "Pendent"
+                    banc_hip = str(hip_row.get('Banc', 'BBVA')).strip()
+                    if banc_hip.lower() == 'nan': banc_hip = 'BBVA'
+                    forma_pago_hip = str(hip_row.get('FormaPago', hip_row.get('Formapago', 'Compte'))).strip()
+                    if forma_pago_hip.lower() == 'nan': forma_pago_hip = 'Compte'
+                    
                     all_items.append({
                         'idx': 'hipoteca',
                         'Concepte': 'Hipoteca',
@@ -2084,7 +2104,7 @@ def render(view_mode="economic"):
                         'status': status_hip,
                         'Categoria': 'manteniment',
                         'icon': '🏠',
-                        'row': {'Concepte': 'Hipoteca', 'Import': amt_hip, 'Categoria': 'manteniment'}
+                        'row': {'Concepte': 'Hipoteca', 'Import': amt_hip, 'Categoria': 'manteniment', 'Banc': banc_hip, 'Formapago': forma_pago_hip}
                     })
                     seen_concepts.add('hipoteca')
 
