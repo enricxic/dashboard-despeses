@@ -2796,13 +2796,17 @@ def render():
     </style>
     """, unsafe_allow_html=True)
 
-    col_t1, col_t2 = st.columns([9.2, 0.8], vertical_alignment="center")
+    col_t1, col_tunnel, col_t2 = st.columns([8.2, 1.0, 0.8], vertical_alignment="center")
     with col_t1:
-        col_logo_c, col_title_c = st.columns([0.7, 8.5], vertical_alignment="center")
+        col_logo_c, col_title_c = st.columns([0.8, 9.2], vertical_alignment="center")
         with col_logo_c:
             st.image("imatges/logo.png", width=65)
         with col_title_c:
             st.markdown("<h2 style='margin:0; color:#f39c12;'>Compres Super i Stock</h2>", unsafe_allow_html=True)
+    with col_tunnel:
+        if st.button("🚇 Finances", use_container_width=True, help="Anar directe al Mòdul Econòmic"):
+            st.session_state.current_module = "economic"
+            st.rerun()
     with col_t2:
         if st.button("🔙 Inici", use_container_width=True):
             st.session_state.current_module = None

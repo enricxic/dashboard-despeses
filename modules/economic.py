@@ -1124,7 +1124,7 @@ def render(view_mode="economic"):
         st.toast(st.session_state["finalize_success"], icon="✅")
         del st.session_state["finalize_success"]
     
-    col_logo, col_title, col_super = st.columns([0.7, 8.5, 0.8], vertical_alignment="center")
+    col_logo, col_title, col_tunnel, col_super = st.columns([0.7, 7.5, 1.0, 0.8], vertical_alignment="center")
     with col_logo:
         import os, base64
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1138,6 +1138,12 @@ def render(view_mode="economic"):
     with col_title:
         title_text = "Dashboard General" if view_mode == "dashboard" else "Mòdul Econòmic"
         st.markdown(f"<h2 style='margin:0; font-size:2.1rem; font-weight:800; color:#f39c12; user-select:none; line-height:1.2;'>{title_text}</h2>", unsafe_allow_html=True)
+    with col_tunnel:
+        # Mostrem el botó només si no estem al dashboard (és a dir, a Mòdul Econòmic sencer)
+        if view_mode != "dashboard":
+            if st.button("🚇 Compres", use_container_width=True, help="Anar directe a Compres Super"):
+                st.session_state.current_module = "compres"
+                st.rerun()
     with col_super:
         if st.button("🔙 Inici", use_container_width=True, key=f"btn_back_{view_mode}"):
             st.session_state.current_module = None
