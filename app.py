@@ -146,6 +146,8 @@ if "action" in st.query_params:
         json_f = st.query_params.get("file", "")
         if json_f:
             st.session_state["editing_json_file"] = json_f
+    elif act == "edit_routes":
+        st.session_state["editing_routes"] = True
     elif act == "edit_rules":
         st.session_state["editing_ocr_rules"] = True
     elif act == "clean_orphans":
@@ -326,6 +328,45 @@ def show_json_editor_dialog(file_rel_path):
 
 if st.session_state.get("editing_json_file"):
     show_json_editor_dialog(st.session_state["editing_json_file"])
+
+@st.dialog("📝 Manteniment de Rutes (Cotxe)", width="large")
+def show_routes_editor_dialog():
+    import pandas as pd
+    from core.db import load_categories_conceptes, save_categories_conceptes
+    
+    cat_config = load_categories_conceptes() or {}
+    rutes = cat_config.get("rutes_cotxe", [])
+    
+    df = pd.DataFrame({"Ruta": rutes})
+    
+    st.markdown("Afegeix, edita o esborra les rutes existents:")
+    edited_df = st.data_editor(
+        df,
+        num_rows="dynamic",
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Ruta": st.column_config.TextColumn("Nom de la Ruta", required=True)
+        }
+    )
+    
+    if st.button("💾 Desar canvis", type="primary"):
+        noves_rutes = [str(r).strip() for r in edited_df["Ruta"].tolist() if str(r).strip()]
+        cat_config["rutes_cotxe"] = sorted(list(set(noves_rutes)))
+        save_categories_conceptes(cat_config)
+        st.success("Rutes desades correctament!")
+        import time; time.sleep(1)
+        if "editing_routes" in st.session_state:
+            del st.session_state["editing_routes"]
+        st.rerun()
+        
+    if st.button("❌ Tancar", type="secondary"):
+        if "editing_routes" in st.session_state:
+            del st.session_state["editing_routes"]
+        st.rerun()
+
+if st.session_state.get("editing_routes"):
+    show_routes_editor_dialog()
 
 @st.dialog("📝 Editar regles súper (OCR)", width="large")
 def show_ocr_rules_editor_dialog():
@@ -508,12 +549,16 @@ if st.session_state.get("cleaning_ocr_orphans"):
 def render_traditional_menubar():
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
+    curr_mod = st.session_state.get("current_module")
+    mod_suffix = f"&mod={curr_mod}" if curr_mod else ""
+    action_suffix = f"{mod_suffix}{auth_suffix}"
+    
     icones_actives = app_cfg.get("icones_actives", {})
     
     json_files = get_project_json_files()
     json_items_html = ""
     for jf in json_files:
-        json_items_html += f'<a href="?action=edit_json&file={jf}{auth_suffix}" target="_self">📄 {jf}</a>\n'
+        json_items_html += f'<a href="?action=edit_json&file={jf}{action_suffix}" target="_self">📄 {jf}</a>\n'
     if not json_items_html:
         json_items_html = '<span style="display:block; padding: 6px 14px; color: #64748b; font-size: 0.78rem;">Cap arxiu trobat</span>'
     
@@ -675,8 +720,8 @@ div.block-container {{
 {json_items_html}
 </div>
 </div>
-<a href="?action=edit_rules{auth_suffix}" target="_self">📝 Editar regles súper (OCR)</a>
-<a href="?action=clean_orphans{auth_suffix}" target="_self">🧹 Neteja Orfes (OCR)</a>
+<a href="?action=edit_rules{action_suffix}" target="_self">📝 Editar regles súper (OCR)</a>
+<a href="?action=clean_orphans{action_suffix}" target="_self">🧹 Neteja Orfes (OCR)</a>
 </div>
 </div>
 <div class="menu-item">
@@ -688,7 +733,7 @@ div.block-container {{
 <div class="submenu-item">
 <a href="?mod=modules.cotxe{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🚗 Cotxe</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
-<a href="?action=edit_json&file=categories_conceptes.json{auth_suffix}" target="_self">📝 Editar Rutes</a>
+<a href="?action=edit_routes{action_suffix}" target="_self">📝 Editar Rutes</a>
 </div>
 </div>
 {f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">🍽️ Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
