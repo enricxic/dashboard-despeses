@@ -26,7 +26,7 @@ def render():
     """, unsafe_allow_html=True)
 
     from modules.avatar_widget import render_header_with_avatar
-    render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🚗 Cotxe i Transport</h2>", "cotxe")
+    render_header_with_avatar("<div style='font-size: 1.8rem; font-weight: bold; color:#f39c12; margin-top:0;'>🚗 Cotxe</div>", "cotxe")
 
     st.write("---")
 
@@ -39,7 +39,7 @@ def render():
     df_km = st.session_state.get("df_km", pd.DataFrame())
     df_gas = st.session_state.get("df_gas", pd.DataFrame())
 
-    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(["🛣️ Registre Km i Rutes", "⛽ Repostatge", "🔧 Canvi d'Oli", "📊 Consum"])
+    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(["🛣️ Km i Rutes", "⛽ Repostatge", "🔧 Canvi d'Oli", "📊 Consum"])
 
     # ----------------------------------------------------
     # TAB 1: REGISTRE DE KM I RUTES
@@ -200,8 +200,9 @@ def render():
         st.markdown("<h4 style='color:#f39c12;'>🔧 Estat del Canvi d'Oli</h4>", unsafe_allow_html=True)
         
         car_kms_actuals = 0.0
-        if not df_km.empty and 'contador' in df_km.columns:
-            car_kms_actuals = pd.to_numeric(df_km['contador'], errors='coerce').max()
+        df_km_oli = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
+        if not df_km_oli.empty and 'contador' in df_km_oli.columns:
+            car_kms_actuals = pd.to_numeric(df_km_oli['contador'], errors='coerce').max()
             if pd.isna(car_kms_actuals): car_kms_actuals = 0.0
 
         if "kms_canvi_oli" not in st.session_state:
@@ -231,16 +232,19 @@ def render():
             df_gas_work = df_gas.copy()
             df_km_work = df_km.copy()
             df_gas_work['parsed_date'] = df_gas_work['data'].apply(parse_excel_date)
+            df_gas_work['litres_val'] = clean_numeric(df_gas_work.get('litres', 0))
             df_km_work['parsed_date'] = df_km_work['data'].apply(parse_excel_date)
 
             df_gas_tivoli = df_gas_work[df_gas_work['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_gas_work.columns else df_gas_work
             df_km_tivoli = df_km_work[df_km_work['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km_work.columns else df_km_work
 
-            df_km_tivoli_valid = df_km_tivoli.dropna(subset=['contador', 'parsed_date'])
+            df_km_tivoli_valid = df_km_tivoli.dropna(subset=['contador', 'parsed_date']).copy()
+            df_km_tivoli_valid['contador_val'] = pd.to_numeric(df_km_tivoli_valid['contador'], errors='coerce')
+            df_km_tivoli_valid = df_km_tivoli_valid.dropna(subset=['contador_val'])
 
             if not df_gas_tivoli.empty and not df_km_tivoli_valid.empty:
-                gas_yr = df_gas_tivoli.groupby(df_gas_tivoli['parsed_date'].dt.year)['litres'].sum()
-                km_yr = df_km_tivoli_valid.groupby(df_km_tivoli_valid['parsed_date'].dt.year)['contador'].agg(lambda x: x.max() - x.min())
+                gas_yr = df_gas_tivoli.groupby(df_gas_tivoli['parsed_date'].dt.year)['litres_val'].sum()
+                km_yr = df_km_tivoli_valid.groupby(df_km_tivoli_valid['parsed_date'].dt.year)['contador_val'].agg(lambda x: x.max() - x.min())
                 km_yr = km_yr.replace(0, pd.NA)
 
                 consumption = ((gas_yr / km_yr) * 100).dropna().reset_index()
