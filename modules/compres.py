@@ -1312,13 +1312,7 @@ def cb_finalize_ticket():
 
 def render_compres_super_interface():
     global df_super, df_desp
-    col_h1, col_h2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
-    with col_h1:
-        st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
-    with col_h2:
-        if st.button("🔄", key="tunnel_to_economic", help="Anar directe a Ingrés / Despesa General"):
-            st.session_state.current_module = "economic"
-            st.rerun()
+    st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
     
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     if "df_desp" not in st.session_state:
@@ -2330,13 +2324,7 @@ def render_ingres_despesa_general_interface():
             if k.startswith(prefix) and k != "desp_version":
                 del st.session_state[k]
 
-    col_h1, col_h2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
-    with col_h1:
-        st.markdown("<h3 style='color:#f39c12; margin-top:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
-    with col_h2:
-        if st.button("🔄", key="tunnel_to_compres", help="Anar directe a Compres Super"):
-            st.session_state.current_module = "compres"
-            st.rerun()
+    st.markdown("<h3 style='color:#f39c12; margin-top:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
     st.write("---")
 
     # Row 1 (4 columns)
