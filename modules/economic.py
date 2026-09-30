@@ -2291,7 +2291,7 @@ def render(view_mode="economic"):
                 month_desp = df_desp[(df_desp['any'] == selected_year) & (df_desp['clean_mes'] == selected_month_data)]
                 if not month_desp.empty:
                     # Exclude op_banc!
-                    month_desp_filtered = month_desp[month_desp['Idcategoria'] != 'op_banc']
+                    month_desp_filtered = month_desp[(month_desp['Idcategoria'] != 'op_banc') & (month_desp['grup'] != 'op_banc')]
                 
                     grouped_desp = month_desp_filtered.groupby('Idcategoria')['Import càrrec'].sum().reset_index()
                     grouped_desp = grouped_desp[grouped_desp['Import càrrec'] > 0].sort_values(by='Import càrrec', ascending=False)
