@@ -1892,7 +1892,7 @@ def render(view_mode="economic"):
         def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
             st.write("Verifica els imports i bancs de les operacions seleccionades. Si a alguna li falta el banc, pots assignar-lo aquí mateix al vol.")
             
-            from core.config_manager import get_config_banks
+            from core.db import get_config_banks
             bancs_disp = get_config_banks()
             if not bancs_disp:
                 bancs_disp = ["BBVA", "Sabadell", "TR Cartera", "Revolut", "Efectiu"]
