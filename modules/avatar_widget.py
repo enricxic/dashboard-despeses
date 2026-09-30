@@ -198,7 +198,7 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
         
         c_logo, c_text = st.columns([0.7, 8.5], vertical_alignment="center")
         with c_logo:
-            st.image("imatges/logo.png", use_container_width=True)
+            st.image("imatges/logo.png", width=65)
         with c_text:
             st.markdown(safe_html, unsafe_allow_html=True)
         

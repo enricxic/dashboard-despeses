@@ -2800,7 +2800,7 @@ def render():
     with col_t1:
         col_logo_c, col_title_c = st.columns([0.7, 8.5], vertical_alignment="center")
         with col_logo_c:
-            st.image("imatges/logo.png", use_container_width=True)
+            st.image("imatges/logo.png", width=65)
         with col_title_c:
             st.markdown("<h2 style='margin:0; color:#f39c12;'>Compres Super i Stock</h2>", unsafe_allow_html=True)
     with col_t2:
