@@ -340,16 +340,18 @@ def show_routes_editor_dialog():
     df = pd.DataFrame({"Ruta": rutes})
     
     st.markdown("Afegeix, edita o esborra les rutes existents:")
-    edited_df = st.data_editor(
-        df,
-        num_rows="dynamic",
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Ruta": st.column_config.TextColumn("Nom de la Ruta", required=True)
-        }
-    )
-    
+    try:
+        edited_df = st.data_editor(
+            df,
+            key="rutes_editor_taula",
+            num_rows="dynamic",
+            use_container_width=True,
+            hide_index=True
+        )
+    except Exception as e:
+        st.error(f"Error a la taula: {e}")
+        edited_df = df
+        
     if st.button("💾 Desar canvis", type="primary"):
         noves_rutes = [str(r).strip() for r in edited_df["Ruta"].tolist() if str(r).strip()]
         cat_config["rutes_cotxe"] = sorted(list(set(noves_rutes)))
