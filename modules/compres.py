@@ -1316,7 +1316,7 @@ def render_compres_super_interface():
     with col_h1:
         st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
     with col_h2:
-        if st.button("🚇", key="tunnel_to_economic", help="Anar directe a Ingrés / Despesa General"):
+        if st.button("🔄", key="tunnel_to_economic", help="Anar directe a Ingrés / Despesa General"):
             st.session_state.current_module = "economic"
             st.rerun()
     
@@ -2334,7 +2334,7 @@ def render_ingres_despesa_general_interface():
     with col_h1:
         st.markdown("<h3 style='color:#f39c12; margin-top:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
     with col_h2:
-        if st.button("🚇", key="tunnel_to_compres", help="Anar directe a Compres Super"):
+        if st.button("🔄", key="tunnel_to_compres", help="Anar directe a Compres Super"):
             st.session_state.current_module = "compres"
             st.rerun()
     st.write("---")
