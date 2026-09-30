@@ -1996,7 +1996,10 @@ def render(view_mode="economic"):
                         insert_db_row('despeses', new_row)
                     
                         # Check for scheduled transfers
-                        banc_desti = df_pag_local.loc[res['idx'], 'banc_desti_traspas'] if 'banc_desti_traspas' in df_pag_local.columns else None
+                        banc_desti = None
+                        if 'banc_desti_traspas' in df_pag_local.columns and res['idx'] in df_pag_local.index:
+                            banc_desti = df_pag_local.loc[res['idx'], 'banc_desti_traspas']
+                        
                         if banc_desti and pd.notna(banc_desti) and str(banc_desti).strip() != '':
                             banc_desti_str = str(banc_desti).strip()
                             # 1. Add compensatory income to despeses
