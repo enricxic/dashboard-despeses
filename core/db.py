@@ -959,18 +959,18 @@ def add_concept_to_config(category, concept):
         cat_config[cat_str].sort()
         save_categories_conceptes(cat_config)
 
-def get_config_routes(df_km):
-    if cat_config and "rutes_cotxe" in cat_config:
-        return sorted(cat_config["rutes_cotxe"])
-    return sorted(list(df_km['ruta'].dropna().unique()))
+def get_config_routes(df_km=None):
+    cfg = load_categories_conceptes()
+    if cfg and "rutes_cotxe" in cfg:
+        return sorted(cfg["rutes_cotxe"])
+    return []
 
-def init_routes_config(df_km):
+def init_routes_config(df_km=None):
     global cat_config
     if cat_config is None:
-        cat_config = {}
+        cat_config = load_categories_conceptes() or {}
     if "rutes_cotxe" not in cat_config:
-        cat_config["rutes_cotxe"] = list(df_km['ruta'].dropna().unique())
-        cat_config["rutes_cotxe"] = list(df_km['ruta'].dropna().unique())
+        cat_config["rutes_cotxe"] = []
         save_categories_conceptes(cat_config)
 
 def update_ticket_pendent_db(id_mov, status):
@@ -982,8 +982,8 @@ def update_ticket_pendent_db(id_mov, status):
     except Exception as e:
         print(f"Error updating ticketPendent for {id_mov}: {e}")
 
-def add_route_to_config(route, df_km):
-    init_routes_config(df_km)
+def add_route_to_config(route, df_km=None):
+    init_routes_config()
     if route not in cat_config["rutes_cotxe"]:
         cat_config["rutes_cotxe"].append(route)
         cat_config["rutes_cotxe"].sort()
