@@ -554,9 +554,7 @@ def render(view_mode="economic"):
             concepts.update([c for c in cfg[category] if c])
         if category == "op_banc":
             concepts.update(["Amortització", "Cashback TR", "TR Cashback", "Embargament", "Gestions Banc", "Pago ElCorteInglés", "Pago VISA", "Reintegre Caixer", "Transferència", "Traspàs comptes"])
-        if 'df_desp' in locals() and not df_desp.empty and 'Idcategoria' in df_desp.columns and 'Idconcepte' in df_desp.columns:
-            desp_c = df_desp[df_desp['Idcategoria'] == category]['Idconcepte'].dropna().unique()
-            concepts.update(desp_c)
+        # (Línies de cerca a df_desp eliminades a petició de l'usuari per mantenir neteja de conceptes des del JSON)
             
         cleaned_dict = {}
         for c in concepts:
