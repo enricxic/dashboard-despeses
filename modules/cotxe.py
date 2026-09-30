@@ -253,13 +253,14 @@ def render():
 
                 if not consumption.empty:
                     fig_line = px.bar(consumption, x='Any', y='L/100km', text_auto='.2f', color_discrete_sequence=['#f39c12'])
+                    fig_line.update_traces(textfont_size=20, textposition='outside', cliponaxis=False)
                     fig_line.update_layout(
                         paper_bgcolor='rgba(0,0,0,0)',
                         plot_bgcolor='rgba(0,0,0,0)',
                         font=dict(color='#f8fafc'),
-                        xaxis=dict(gridcolor='#334155'),
+                        xaxis=dict(gridcolor='#334155', type='category'),
                         yaxis=dict(gridcolor='#334155'),
-                        margin=dict(t=20, b=20, l=10, r=10)
+                        margin=dict(t=40, b=20, l=10, r=10)
                     )
                     st.plotly_chart(fig_line, use_container_width=True, config={'staticPlot': True})
                 else:
