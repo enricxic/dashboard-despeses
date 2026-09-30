@@ -748,10 +748,6 @@ div.block-container {{
 {alerts_html}
 </div>
 </div>
-<!-- Botó Túnel (Llamp) -->
-<div class="menu-item" style="margin-left: 15px; font-size: 1.5rem; display: flex; align-items: center; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
-{f'<a href="?mod=modules.economic{auth_suffix}" style="text-decoration:none; color:inherit;" title="Anar a Mòdul Econòmic">⚡</a>' if st.session_state.current_module == 'compres' else f'<a href="?mod=modules.compres{auth_suffix}" style="text-decoration:none; color:inherit;" title="Anar a Compres Super">⚡</a>'}
-</div>
 <!-- Avatar Administrador -->
 <div class="role-badge-menubar" title="Rol actual" style="margin-left: 15px; font-size: 1.5rem; display: flex; align-items: center; cursor: default; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
 { "👑" if st.session_state.get("role") == "admin" else ("👁️‍🗨️" if st.session_state.get("role") == "viewer" else "👤") }
