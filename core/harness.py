@@ -96,7 +96,7 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
 - Mínim peix: {regles.get('min_peix', 2)} cops per setmana.
 - Mínim llegums: {regles.get('min_llegums', 2)} cops per setmana.
 - Màxim sopars d'embotits/freds: {regles.get('max_embotits_sopar', 2)} cops per setmana.
-- No repetir hidrats de carboni (arròs, pasta, patata com a base) en dies consecutius.
+- CRÍTIC: NO pots servir arròs ni pasta en dies consecutius (si avui hi ha arròs/pasta, demà NO n'hi pot haver). Intercala amb llegums, verdures o carn/peix.
 - Disponibilitat del forn: {us_forn}."""
 
     stock_list = test_case.get("stock_disponible", [])
@@ -287,8 +287,7 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
             ],
             "generationConfig": {
                 "temperature": 0.1,
-                "maxOutputTokens": 8192,
-                "responseMimeType": "application/json"
+                "maxOutputTokens": 8192
             }
         }
         
@@ -308,15 +307,18 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
                             if attempt < max_attempts - 1:
                                 time.sleep(2.0)
                                 continue # Reintentar si està truncat
-                            return False, f"La IA ha tallat la resposta prematurament (truncat). Resposta crua:\n{content}", elapsed
+                            last_error = f"La IA ha tallat la resposta prematurament (truncat). Resposta crua:\n{content}"
+                            break # Try the next model
                         return True, content, elapsed
-                    return False, "Resposta buida de Gemini", elapsed
+                    last_error = "Resposta buida de Gemini"
+                    break # Try the next model
                 elif resp.status_code in [503, 429]:
                     if attempt < max_attempts - 1:
-                        sleep_time = 16.0 if resp.status_code == 429 else 2.0
+                        sleep_time = 16.0 if resp.status_code == 429 else 6.0
                         time.sleep(sleep_time)
+                        continue
                     last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
-                    continue
+                    break # Try the next model
                 else:
                     last_error = f"Error HTTP {resp.status_code} ({current_model}): {resp.text}"
                     break
