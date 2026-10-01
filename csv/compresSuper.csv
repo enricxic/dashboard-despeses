@@ -8142,3 +8142,17 @@ IdCompra;data;mes;any;super;familia;article;pes;quantitat;preuUnit;prom;totLinea
 8141;28/09/2026;septiembre;2026;AreaGuissona;fruita;Coctail fruits secs;0;1;1.1;0.0;1.1;8080.0;0.0;
 8142;28/09/2026;septiembre;2026;AreaGuissona;lactics;Nata liq.;0;1;0.8;0.0;0.8;8080.0;0.0;
 8143;28/09/2026;septiembre;2026;AreaGuissona;pa;Pa de vidre;0;1;1.0;0.0;1.0;8080.0;0.0;
+8144;29/09/2026;septiembre;2026;LIDL;neteja;Detergent;0;1;4.49;0.0;4.49;8085.0;0.0;
+8145;29/09/2026;septiembre;2026;LIDL;xocolata;Xocolata Llet;0;10;0.99;0.0;9.9;8084.0;0.0;
+8146;29/09/2026;septiembre;2026;LIDL;begudes;Descafeinat cap.;0;2;3.65;0.18;7.12;8084.0;0.0;
+8147;29/09/2026;septiembre;2026;Fruiteria Arbúcies;verdura;Xampinyó;0;1;1.49;0.0;1.49;8088.0;0.0;
+8148;29/09/2026;septiembre;2026;Fruiteria Arbúcies;fruita;Prunes;430;1;0.51;0.0;0.51;8088.0;0.0;
+8149;29/09/2026;septiembre;2026;Dia;carn;Pit pollastre;0.0;3;2.14;1.92;4.5;8089.0;1.0;
+8150;29/09/2026;septiembre;2026;Dia;fruita;Plàtan;735;1;0.82;0.0;0.82;8089.0;0.0;
+8151;29/09/2026;septiembre;2026;Dia;llaunes;Tomàquet fregit;0;1;1.69;0.0;1.69;8089.0;0.0;
+8152;29/09/2026;septiembre;2026;Dia;oli;Olives verdes;0;1;1.85;0.0;1.85;8089.0;0.0;
+8153;29/09/2026;septiembre;2026;Dia;pa;Baguette;0;1;0.5;0.0;0.5;8089.0;0.0;
+8154;29/09/2026;septiembre;2026;Dia;pa;Hojaldre;0;1;1.25;0.37;0.88;8089.0;0.0;
+8155;29/09/2026;septiembre;2026;Dia;peix;Cloïses;0;1;1.89;0.0;1.89;8089.0;0.0;
+8156;29/09/2026;septiembre;2026;Dia;extres;Gelat;0;1;1.89;0.0;1.89;8089.0;0.0;
+8157;29/09/2026;septiembre;2026;Dia;neteja;Paper alumini;0;1;2.45;0.0;2.45;8090.0;0.0;

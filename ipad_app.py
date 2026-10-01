@@ -85,7 +85,7 @@ def receptes():
     sel_apat = request.args.get("apat", "").strip()
 
     receptes_list = []
-    categories = ["Primer", "Segon", "Plat únic", "Postre", "Complement", "Guarnició", "Salsa"]
+    categories = ["Primer", "Segon", "Postre", "Complement", "Guarnició", "Salsa"]
     apats = ["Dinar", "Sopar", "Dinar/Sopar", "Esmorzar"]
 
     try:
@@ -185,7 +185,7 @@ def menu():
 
             # Pools per categoria i apat
             pool_dinar_1 = [r for r in all_recipes if r.get('categoria') == 'Primer' and (r.get('apat') in ['Dinar', 'Dinar/Sopar', None])]
-            pool_dinar_2 = [r for r in all_recipes if r.get('categoria') in ['Segon', 'Plat únic'] and (r.get('apat') in ['Dinar', 'Dinar/Sopar', None])]
+            pool_dinar_2 = [r for r in all_recipes if r.get('categoria') in ['Segon'] and (r.get('apat') in ['Dinar', 'Dinar/Sopar', None])]
             pool_postres = [r for r in all_recipes if r.get('categoria') == 'Postre']
             pool_sopar = [r for r in all_recipes if r.get('apat') in ['Sopar', 'Dinar/Sopar', None]]
 

@@ -4004,6 +4004,15 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 8081;TradeRep.;Dèbit;28/09/2026;septiembre;2026;0.0;8.95;Càrrec;farmàcia;Farmàcia;;False
 8082;BBVA;Compte;28/09/2026;septiembre;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
 8083;TradeRep.;Compte;28/09/2026;septiembre;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
+8084;TradeRep.;Dèbit;29/09/2026;septiembre;2026;0.0;17.02;Càrrec;menjar;LIDL;;False
+8085;TradeRep.;Dèbit;29/09/2026;septiembre;2026;0.0;4.49;Càrrec;neteja;LIDL;;False
+8086;TradeRep.;Dèbit;29/09/2026;septiembre;2026;0.0;22.77;Càrrec;roba;LIDL;jaqueta Jordi, samarreta Isa, mitjons;False
+8087;TradeRep.;Dèbit;29/09/2026;septiembre;2026;0.0;8.99;Càrrec;manteniment;LIDL;llum led ;False
+8088;TradeRep.;Dèbit;29/09/2026;septiembre;2026;0.0;2.0;Càrrec;menjar;Fruiteria Arbúcies;;False
+8089;TradeRep.;Dèbit;29/09/2026;septiembre;2026;0.0;13.02;Càrrec;menjar;Dia;;False
+8090;TradeRep.;Dèbit;29/09/2026;septiembre;2026;0.0;2.45;Càrrec;neteja;Dia;;False
+8091;BBVA;Compte;30/09/2026;septiembre;2026;17.1;0.0;Ingrés;ingres_general;Cartera DP Petit;;False
+8092;BBVA;Compte;30/09/2026;septiembre;2026;39.37;0.0;Ingrés;ingres_general;Cartera DP Gran;;False
 6729;BBVA;Compte;12/06/2026;junio;2026;0.0;283.8;Càrrec;assegurança;Assegurança Cotxe;;False
 6716;TradeRep.;Dèbit;08/06/2026;junio;2026;0.0;12.25;Càrrec;menjar;Novavenda;;False
 6717;TradeRep.;Dèbit;10/06/2026;junio;2026;0.0;11.2;Càrrec;menjar;Mercadona;;False
@@ -4014,6 +4023,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6726;TradeRep.;Dèbit;11/06/2026;junio;2026;0.0;0.95;Càrrec;neteja;Dia;;False
 6727;TradeRep.;Dèbit;12/06/2026;junio;2026;0.0;19.32;Càrrec;menjar;AreaGuissona;;False
 6733;TradeRep.;Dèbit;12/06/2026;junio;2026;0.0;14.6;Càrrec;restaurant;Bar;Esmorzar Jordi Bayes;False
+8093;BBVA;Compte;30/09/2026;septiembre;2026;0.0;489.43;Càrrec;despesa_general;Hipoteca;;False
 6715;BBVA;VISA;08/06/2026;junio;2026;0.0;13.56;Càrrec;manteniment;Aliexpress;radial+genollera;False
 6723;Efectiu;;10/06/2026;junio;2026;0.0;10.0;Càrrec;personal;Jordi;;False
 6724;Efectiu;;10/06/2026;junio;2026;0.0;4.0;Càrrec;menjar;Pa i pastisseria;;False
@@ -4022,6 +4032,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 592;BBVA;Compte;30/12/2021;diciembre;2021;0.0;0.0;Ingrés;ingrés_general;Hisenda;;False
 621;BBVA;Compte;07/01/2022;enero;2022;451.92;0.0;Ingrés;ingrés_general;Abonament Ajuda Isabel;;False
 622;BBVA;Compte;07/01/2022;enero;2022;451.92;0.0;Ingrés;ingrés_general;Abonament Ajuda Enric;;False
+8094;BBVA;Compte;30/09/2026;septiembre;2026;0.0;337.14;Càrrec;despesa_general;Crèdit Cotxe;;False
 634;BBVA;Compte;14/01/2022;enero;2022;1156.21;0.0;Ingrés;op_banc;Transferència;Interesos Bsabadell;False
 645;BBVA;Compte;21/01/2022;enero;2022;50.0;0.0;Ingrés;ingrés_general;Hisenda;;False
 615;BBVA;Compte;05/01/2022;enero;2022;10.0;0.0;Ingrés;ingrés_extra;Promos;;False
@@ -4046,6 +4057,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 959;BBVA;Compte;20/05/2022;mayo;2022;100.0;0.0;Ingrés;ingrés_general;Hisenda;;False
 1198;BBVA;Compte;22/08/2022;agosto;2022;1.0;0.0;Ingrés;varis;Bizum;Mireia;False
 973;BBVA;Compte;25/05/2022;mayo;2022;50.0;0.0;Ingrés;ingrés_general;Hisenda;;False
+8095;BBVA;Compte;2026-10-01;octubre;2026;0.0;43.48;Càrrec;despesa_general;Endesa;;False
 1163;BBVA;Dèbit;29/07/2022;julio;2022;0.6;0.0;Ingrés;menjar;BonPreu;abono peix;False
 974;BBVA;Compte;25/05/2022;mayo;2022;50.0;0.0;Ingrés;ingrés_general;Hisenda;;False
 1160;BBVA;Compte;27/07/2022;julio;2022;500.0;0.0;Ingrés;op_banc;Traspàs comptes;;False
@@ -4071,6 +4083,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1347;BBVA;Compte;12/09/2022;septiembre;2022;0.0;0.0;Ingrés;ingrés_extra;Xarrup Sou;Liquidació;False
 1544;BBVA;Dèbit;25/10/2022;octubre;2022;1.0;0.0;Ingrés;menjar;Altres menjar;Abono.Aigua aeroport;False
 1707;BBVA;Dèbit;16/12/2022;diciembre;2022;13.94;0.0;Ingrés;neteja;Action Girona;;False
+8096;BBVA;VISA;29/09/2026;septiembre;2026;0.0;91.77;Càrrec;manteniment;Leroy Merlin;Rajoles sota escala;False
 1289;Casa;;06/09/2022;septiembre;2022;2000.0;0.0;Ingrés;ingrés_extra;Xarrup Sou;A cta.;False
 1302;BBVA;Compte;09/09/2022;septiembre;2022;0.0;0.0;Ingrés;ingrés_extra;Xarrup Sou;Agost;False
 1353;BBVA;Compte;14/01/2022;enero;2022;1129.52;0.0;Ingrés;ingrés_extra;Cobro Banc;Sabadell;False
@@ -4098,6 +4111,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1819;BBVA;Compte;13/01/2023;enero;2023;156.65;0.0;Ingrés;ingrés_extra;Subvenció;Bo social energètic;False
 2108;BBVA;VISA;07/04/2023;abril;2023;3.27;0.0;Ingrés;manteniment;Aliexpress;Devolució cargols nevera;False
 1894;Efectiu;;06/02/2023;febrero;2023;50.0;0.0;Ingrés;ingrés_extra;Casament;Video Montse Simón;False
+8097;BBVA;VISA;29/09/2026;septiembre;2026;0.0;5.49;Càrrec;despesa_general;Quota IA;;False
 2251;LaCaixa;Compte;25/05/2023;mayo;2023;229.62;0.0;Ingrés;ingrés_general;Complement Generalitat;;False
 2341;Efectiu;;24/06/2023;junio;2023;12.0;0.0;Ingrés;Ingres_extra;Feina foto;6 fotos Santi Cugat;False
 2252;BBVA;Compte;24/05/2023;mayo;2023;50.0;0.0;Ingrés;ingrés_general;Hisenda;;False
@@ -4115,6 +4129,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2622;Efectiu;;05/09/2023;septiembre;2023;25.0;0.0;Ingrés;ingrés_extra;Feina Foto;Olga Coris;False
 2680;Efectiu;;21/09/2023;septiembre;2023;600.0;0.0;Ingrés;ingrés_extra;Feina Horeca;Calendaris Pepe;False
 2790;BBVA;Compte;25/10/2023;octubre;2023;661.85;0.0;Ingrés;ingrés_extra;Subvenció;Energía;False
+8098;TradeRep.;Dèbit;29/09/2026;septiembre;2026;0.0;55.1;Càrrec;gasolina;GasolinaAreaGuissona;;False
 2807;LaCaixa;Compte;26/10/2023;octubre;2023;183.58;0.0;Ingrés;ingrés_general;Complement Generalitat;;False
 2812;BBVA;Compte;30/10/2023;octubre;2023;53.06;0.0;Ingrés;ingrés_general;Cartera DP Gran;;False
 2813;BBVA;Compte;30/10/2023;octubre;2023;30.09;0.0;Ingrés;ingrés_general;Cartera DP Petit;;False

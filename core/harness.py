@@ -209,7 +209,7 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 - El camp "segon" ÉS SEMPRE UNA PROTEÏNA O PLAT PRINCIPAL (peix, aus, carn magra, ous, tofu o llegums).
 - MAI, sota cap concepte, posis "Fruita de temporada", "Poma", "Plàtan", "Iogurt" com a "segon" plat.
 - Totes les fruites i lactis de postre han d'anar EXCLUSIVAMENT al camp "postre".
-- Si el primer plat és molt contundent (com ara unes llenties estofades o paella), com a segon plat pots posar una proteïna lleugera (ex. Ou dur amb amanida, Lluç a la planxa) o bé "-" (plat únic), PERÒ MAI FRUITA.
+- Si el primer plat és molt contundent (com ara unes llenties estofades o paella), com a segon plat pots posar una proteïna lleugera (ex. Ou dur amb amanida, Lluç a la planxa) o bé "-", PERÒ MAI FRUITA.
 - ⚠️ PROHIBICIÓ POSTRES GENÈRICS: Està PROHIBIT posar simplement "Fruita de temporada" com a postre. HAS D'ESPECIFICAR QUINA FRUITA ES CONCRETAMENT (ex. "Síndria fresca", "Mandarines", "Poma al forn", "Raïm blanc", "Meló tallat"). Varia les fruites durant la setmana.
 
 ### REGLES CRÍTIQUES DE DESDOBLAMENT I VETOS:

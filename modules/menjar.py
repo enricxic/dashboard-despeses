@@ -123,7 +123,7 @@ def modal_canvi_plat(idx_d, apat, clau_plat, cat_filtre, df_receptes):
     if cat_filtre == "primer":
         df_filtrat = df_filtrat[df_filtrat['categoria'].str.lower().str.contains("primer|sopa|crema|amanida", na=False)]
     elif cat_filtre == "segon":
-        df_filtrat = df_filtrat[df_filtrat['categoria'].str.lower().str.contains("segon|carn|peix|plat únic", na=False)]
+        df_filtrat = df_filtrat[df_filtrat['categoria'].str.lower().str.contains("segon|carn|peix", na=False)]
         
     plats_opts = df_filtrat['titol'].tolist()
     plats_opts.sort()
@@ -182,7 +182,7 @@ def modal_recepta(row):
             c1, c2, c3 = st.columns(3)
             with c1:
                 e_titol = st.text_input("Títol", value=row.get('titol', ''))
-                cat_opts = ["Primer", "Segon", "Plat únic", "Postre", "Complement", "Guarnició", "Salsa"]
+                cat_opts = ["Primer", "Segon", "Postre", "Complement", "Guarnició", "Salsa"]
                 e_cat = st.selectbox("Categoria", cat_opts, index=cat_opts.index(row.get('categoria')) if row.get('categoria') in cat_opts else 0)
                 val_temps = row.get('temps_prep_minuts', 0)
                 e_temps = st.number_input("Temps (min)", value=int(val_temps) if pd.notna(val_temps) else 0, step=5)
@@ -745,7 +745,7 @@ def render():
                     f_text = st.text_input("Cercar per nom de la recepta...", key="f_text")
                     f_col1, f_col2, f_col3, f_col4, f_col5, f_col6 = st.columns(6)
                     with f_col1:
-                        f_cat = st.multiselect("Categoria", ["Tots", "Primer", "Segon", "Plat únic", "Postre", "Complement", "Guarnició", "Salsa"], key="f_cat_m")
+                        f_cat = st.multiselect("Categoria", ["Tots", "Primer", "Segon", "Postre", "Complement", "Guarnició", "Salsa"], key="f_cat_m")
                     with f_col2:
                         f_dif = st.multiselect("Dificultat", ["Tots", "Fàcil", "Mitjana", "Difícil"], key="f_dif_m")
                     with f_col3:
@@ -820,7 +820,7 @@ def render():
                     c1, c2, c3 = st.columns(3)
                     with c1:
                         new_titol = st.text_input("Títol de la Recepta", key="k_titol")
-                        new_cat = st.selectbox("Categoria", ["Primer", "Segon", "Plat únic", "Postre", "Complement", "Guarnició", "Salsa"], key="k_cat")
+                        new_cat = st.selectbox("Categoria", ["Primer", "Segon", "Postre", "Complement", "Guarnició", "Salsa"], key="k_cat")
                         new_temps = st.number_input("Temps de prep. (min)", min_value=0, step=5, key="k_temps")
                     with c2:
                         new_apat = st.selectbox("Àpat", ["Esmorzar", "Dinar", "Sopar", "Dinar/Sopar"], key="k_apat")

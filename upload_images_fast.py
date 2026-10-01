@@ -8,16 +8,19 @@ SUPABASE_URL = cfg['SUPABASE_URL']
 SUPABASE_KEY = cfg['SUPABASE_KEY_PUBLISHABLE']
 
 images_to_upload = [
-    (104, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\rollets_pernil_esparrecs_1790591101725.png"),
-    (109, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\tomaquet_cherry_formatge_1790591111148.png"),
-    (79, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\tomaquets_farcits_1790591123023.png"),
-    (45, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\pizza_verdures_pasta_full_1790591134791.png"),
-    (143, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\boquerons_arrebossats_1790591143907.png"),
-    (200, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\edamame_1790591162464.png"),
-    (164, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\pesols_llagrima_ou_1790591172725.png"),
-    (136, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\torreznos_1790591182748.png"),
-    (77, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\xipirons_andalusa_1790591194640.png"),
-    (144, r"C:\Users\Usuari\.gemini\antigravity\brain\43929060-9ca5-471b-83f7-6900422203fa\bunyols_bacalla_1790591205431.png")
+    (116, r"e:\Dashboard\imatges\116.png"),
+    (184, r"e:\Dashboard\imatges\184.png"),
+    (53, r"e:\Dashboard\imatges\53.png"),
+    (134, r"e:\Dashboard\imatges\134.png"),
+    (169, r"e:\Dashboard\imatges\169.png"),
+    (55, r"e:\Dashboard\imatges\55.png"),
+    (133, r"e:\Dashboard\imatges\133.png"),
+    (148, r"e:\Dashboard\imatges\148.png"),
+    (64, r"e:\Dashboard\imatges\64.png"),
+    (66, r"e:\Dashboard\imatges\66.png"),
+    (67, r"e:\Dashboard\imatges\67.png"),
+    (68, r"e:\Dashboard\imatges\68.png"),
+    (71, r"e:\Dashboard\imatges\71.png")
 ]
 
 headers_storage = {
@@ -52,11 +55,15 @@ for rec_id, path in images_to_upload:
         
     final_img_url = f"{SUPABASE_URL}/storage/v1/object/public/imatges-receptes/{file_name}"
     
-    # 2. Update DB
-    db_url = f"{SUPABASE_URL}/rest/v1/tb_receptes_pro?id=eq.{rec_id}"
-    res2 = requests.patch(db_url, headers=headers_db, json={"imatge_url": final_img_url})
+    from core.db import get_supabase_client
+    admin_sb = get_supabase_client("admin")
     
-    if res2.status_code >= 400:
-        print(f"Failed to update DB for ID {rec_id}: {res2.text}")
-    else:
-        print(f"Success: Updated Recipe ID {rec_id} with URL {final_img_url}")
+    # 2. Update DB using admin client to bypass RLS
+    try:
+        res2 = admin_sb.table("tb_receptes_pro").update({"imatge_url": final_img_url}).eq("id", rec_id).execute()
+        if not res2.data:
+            print(f"Failed to update DB for ID {rec_id}: No rows updated")
+        else:
+            print(f"Success: Updated Recipe ID {rec_id} with URL {final_img_url}")
+    except Exception as e:
+        print(f"Failed to update DB for ID {rec_id}: {e}")
