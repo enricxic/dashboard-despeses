@@ -229,6 +229,7 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 ### RESPOSTA EN FORMAT JSON ESTRICTE:
 Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, amb cometes dobles en totes les claus i valors, i sense comes sobrants):
 {{
+  "raonament_previ": "Anàlisi de com compliràs les regles: 1) Cap hidrat (arròs/pasta) en dies seguits. 2) Cops de peix/carn correctes. 3) Peticions incloses.",
   "dies_planificats": 7,
   "comensals_actius": 3,
   "menu_setmanal": [
@@ -264,7 +265,9 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
     {{"nom": "Lluç fresc", "quantitat": "4 filets", "estat": "Comprar"}},
     {{"nom": "Ceba", "quantitat": "1 kg", "estat": "Al rebost"}}
   ]
-}}"""
+}}
+
+CRÍTIC: NO TALLIS EL JSON. Assegura't de tancar tots els claudàtors i claus ']' i '}}' correctament."""
     return prompt
 
 def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-flash") -> Tuple[bool, str, float]:
@@ -314,7 +317,7 @@ def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-fla
                     break # Try the next model
                 elif resp.status_code in [503, 429]:
                     if attempt < max_attempts - 1:
-                        sleep_time = 16.0 if resp.status_code == 429 else 6.0
+                        sleep_time = 16.0 if resp.status_code == 429 else 15.0
                         time.sleep(sleep_time)
                         continue
                     last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
