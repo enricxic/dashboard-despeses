@@ -15,3 +15,8 @@ build/
 backup_dades/
 *.zip
 tickets/
+
+# Arxius d'estat dinàmics
+data/harness_status.json
+data/feeds_cache.json
+
