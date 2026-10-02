@@ -2016,7 +2016,7 @@ def render(view_mode="economic"):
                                 concepte_str = str(res['row']['Concepte']).lower()
                                 cartera_val = 'NVIDIA' if 'nvidia' in concepte_str else 'S&P500'
                                 new_tr_row = {
-                                    'DATA': datetime.datetime.now().strftime('%Y-%m-%d'),
+                                    'DATA': datetime.now().strftime('%Y-%m-%d'),
                                     'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
                                     'any': int(any_val),
                                     'COMPRA': float(res['import_final']),
