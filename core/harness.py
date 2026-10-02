@@ -93,7 +93,7 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
     regles = test_case.get("regles_llar", {})
     us_forn = regles.get("us_forn", "Només cap de setmana (Dissabte i Diumenge)")
     regles_txt = f"""- Màxim carn vermella: {regles.get('max_carn_vermella', 1)} cop per setmana.
-- Mínim peix: {regles.get('min_peix', 2)} cops per setmana.
+- Cops de peix: EXACTAMENT {regles.get('freq_peix', regles.get('min_peix', 2))} cops per setmana.
 - Mínim llegums: {regles.get('min_llegums', 2)} cops per setmana.
 - Màxim sopars d'embotits/freds: {regles.get('max_embotits_sopar', 2)} cops per setmana.
 - CRÍTIC: NO pots servir arròs ni pasta en dies consecutius (si avui hi ha arròs/pasta, demà NO n'hi pot haver). Intercala amb llegums, verdures o carn/peix.
@@ -170,7 +170,8 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 ### ⚠️ COMPLIMENT ESTRICTE DE FREQÜÈNCIES NUTRICIONALS I CALENDARI D'HIDRATS:
 1. CARN VERMELLA (vedella, bou, hamburguesa): Màxim el límit indicat (habitualment MÀXIM 1 COP en tota la setmana). Si ja has posat carn vermella un dia, la resta de dies utilitza aus (pollastre, gall dindi), peix, ous o llegums.
 2. SOPARS FREDS / EMBOTITS: Màxim el límit indicat (habitualment MÀXIM 2 COPS per setmana).
-3. PEIX I LLEGUMS: Assegura el mínim de cops setmanals (habitualment mínim 2 de peix i mínim 2 de llegums).
+3. PEIX: Assegura EXACTAMENT la freqüència indicada (habitualment 2 cops setmanals).
+4. LLEGUMS: Assegura el mínim de cops setmanals (habitualment mínim 2).
 4. CALENDARI SETMANAL D'HIDRATS (ZERO REPETICIONS EN DIES CONSECUTIUS):
    Per complir estrictament la no repetició d'hidrats en dies consecutius, has d'assignar la base principal seguint aquest patró:
    - Dilluns: Llegums (ex. Llenties estofades) [PROHIBIT pasta, fideus i arròs; les sopes seran sense fideus]
@@ -237,7 +238,7 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
     "mapa_vetos_actius": "Llista NOMÉS els comensals que estan presents a la llar i els seus vetos. IGNORE i OMET qualsevol veto de familiars 'FORA DE LA LLAR'. Verifica que els ingredients vetats coincideixen exactament (ex: llom NO és fetge).",
     "recompte_setmanal": {{
       "cops_carn_vermella": "Quants cops apareix carn vermella? (Màxim 1, en cap de setmana)",
-      "cops_peix": "Quants cops apareix peix? (Mínim 2)",
+      "cops_peix": "Quants cops apareix peix? (Assegura't de complir la quantitat EXACTA demanada)",
       "cops_llegums": "Quants cops apareixen llegums? (Mínim 2)"
     }},
     "peticions_a_integrar": "Llista les peticions que se t'han demanat i com les ubicaràs al calendari."

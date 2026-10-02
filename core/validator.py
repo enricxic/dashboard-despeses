@@ -80,13 +80,13 @@ def verify_menu_constraints(menu_json: Dict[str, Any], test_case: Dict[str, Any]
     # 3. Validar límits globals
     regles = test_case.get("regles_llar", {})
     max_carn = regles.get("max_carn_vermella", 1)
-    min_peix = regles.get("min_peix", 2)
+    freq_peix = regles.get("freq_peix", regles.get("min_peix", 2))
     min_llegums = regles.get("min_llegums", 2)
     
     if cops_carn_vermella > max_carn:
         errors.append(f"Has posat carn vermella {cops_carn_vermella} cops a la setmana, i el màxim permès és {max_carn}.")
-    if cops_peix < min_peix:
-        errors.append(f"Has posat peix només {cops_peix} cops a la setmana, i el mínim obligatori és {min_peix}.")
+    if cops_peix != freq_peix:
+        errors.append(f"Has posat peix {cops_peix} cops a la setmana, i s'ha demanat EXACTAMENT {freq_peix} cops.")
     if cops_llegums < min_llegums:
         errors.append(f"Has posat llegums només {cops_llegums} cops a la setmana, i el mínim obligatori és {min_llegums}.")
         

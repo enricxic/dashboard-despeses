@@ -897,7 +897,7 @@ def render():
                 r_carn = st.slider("🔴 Màxim de dies de Carn Vermella / setmana", min_value=0, max_value=7, value=int(regles.get("max_carn_vermella", 1)), help="Limita els àpats amb vedella, bou, porc o carn vermella.")
                 r_lleg = st.slider("🌱 Mínim de dies de Llegums / setmana", min_value=0, max_value=7, value=int(regles.get("min_llegums", 2)), help="Garanteix plats amb llenties, cigrons, mongetes o pèsols.")
             with c_r2:
-                r_peix = st.slider("🐟 Mínim de dies de Peix / setmana", min_value=0, max_value=7, value=int(regles.get("min_peix", 2)), help="Promou el consum de peix blanc i blau.")
+                r_peix = st.slider("🐟 Cops exactes de Peix / setmana", min_value=0, max_value=7, value=int(regles.get("freq_peix", regles.get("min_peix", 2))), help="Indica quantes vegades EXACTES a la setmana es menjarà peix.")
                 r_emb = st.slider("🥪 Màxim de sopars d'Embotits / Freds / setmana", min_value=0, max_value=7, value=int(regles.get("max_embotits_sopar", 2)), help="Evita abusar de sopars a base d'embotits processats.")
             
             st.markdown("---")
@@ -1067,7 +1067,8 @@ def render():
                 cur_cfg = load_app_config()
                 cur_cfg["regles_menjar"] = {
                     "max_carn_vermella": r_carn,
-                    "min_peix": r_peix,
+                    "freq_peix": r_peix,
+                    "min_peix": r_peix, # Guardar-ho també com a min_peix per compatibilitat
                     "min_llegums": r_lleg,
                     "max_embotits_sopar": r_emb,
                     "no_repetir_hidrats": r_no_rep,

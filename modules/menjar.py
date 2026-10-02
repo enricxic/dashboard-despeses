@@ -990,7 +990,7 @@ def render():
                         sel_temp = st.selectbox("Temporada actual", temp_opts, index=temp_opts.index(def_temp), key="m_sel_temp")
                         max_carn = st.number_input("Màx. carn vermella / setm.", min_value=0, max_value=7, value=int(regles_cfg.get("max_carn_vermella", 1)), key="m_max_carn")
                     with c_r2:
-                        min_peix = st.number_input("Mín. peix / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_peix", 2)), key="m_min_peix")
+                        freq_peix = st.number_input("Cops exact. peix / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("freq_peix", regles_cfg.get("min_peix", 2))), key="m_freq_peix")
                         min_lleg = st.number_input("Mín. llegums / setmana", min_value=0, max_value=7, value=int(regles_cfg.get("min_llegums", 2)), key="m_min_lleg")
                     with c_r3:
                         max_embotits = st.number_input("Màx. sopars embotits / freds", min_value=0, max_value=7, value=int(regles_cfg.get("max_embotits_sopar", 2)), key="m_max_embotits")
@@ -1067,7 +1067,8 @@ def render():
                                 "perfil_familia": comensals_seleccionats,
                                 "regles_llar": {
                                     "max_carn_vermella": max_carn,
-                                    "min_peix": min_peix,
+                                    "freq_peix": freq_peix,
+                                    "min_peix": freq_peix,
                                     "min_llegums": min_lleg,
                                     "max_embotits_sopar": max_embotits,
                                     "no_repetir_hidrats": chk_hidrats,
