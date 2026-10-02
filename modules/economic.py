@@ -2716,43 +2716,26 @@ def render(view_mode="economic"):
                             supabase = get_supabase_client(st.session_state.get("role", "guest"))
                             supabase.table("tr_cartera").insert([new_tr_row]).execute()
                             
-                            import_carg = tr_import_inv if tr_concepte_inv == "Compra" else 0.0
-                            import_ing = tr_import_inv if tr_concepte_inv != "Compra" else 0.0
-                            
-                            df_desp_local = st.session_state.get("df_desp", pd.DataFrame())
+                            rows_to_insert = []
                             max_id = int(df_desp_local['ID_mov'].max()) if not df_desp_local.empty else 0
                             
-                            row_traderep = {
-                                'ID_mov': max_id + 1,
-                                'Data': data_val_tr.strftime('%d/%m/%Y'),
-                                'mes': mes_val_tr,
-                                'any': any_val_tr,
-                                'Banc': 'TradeRep.',
-                                'FormaPago': 'Compte',
-                                'Import càrrec': import_carg,
-                                'import ingrés': import_ing,
-                                'grup': 'op_banc',
-                                'Idcategoria': 'op_banc',
-                                'Idconcepte': tr_concepte_inv,
-                                'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(),
-                                'ticketPendent': False
-                            }
-                            row_trcartera = {
-                                'ID_mov': max_id + 2,
-                                'Data': data_val_tr.strftime('%d/%m/%Y'),
-                                'mes': mes_val_tr,
-                                'any': any_val_tr,
-                                'Banc': 'TR Cartera',
-                                'FormaPago': 'Compte',
-                                'Import càrrec': import_ing,
-                                'import ingrés': import_carg,
-                                'grup': 'op_banc',
-                                'Idcategoria': 'op_banc',
-                                'Idconcepte': tr_concepte_inv,
-                                'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(),
-                                'ticketPendent': False
-                            }
-                            supabase.table("despeses").insert([row_traderep, row_trcartera]).execute()
+                            if tr_concepte_inv == "Compra":
+                                row_traderep = {'ID_mov': max_id + 1, 'Data': data_val_tr.strftime('%d/%m/%Y'), 'mes': mes_val_tr, 'any': any_val_tr, 'Banc': 'TradeRep.', 'FormaPago': 'Compte', 'Import càrrec': tr_import_inv, 'import ingrés': 0.0, 'grup': 'op_banc', 'Idcategoria': 'op_banc', 'Idconcepte': tr_concepte_inv, 'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(), 'ticketPendent': False}
+                                row_trcartera = {'ID_mov': max_id + 2, 'Data': data_val_tr.strftime('%d/%m/%Y'), 'mes': mes_val_tr, 'any': any_val_tr, 'Banc': 'TR Cartera', 'FormaPago': 'Compte', 'Import càrrec': 0.0, 'import ingrés': tr_import_inv, 'grup': 'op_banc', 'Idcategoria': 'op_banc', 'Idconcepte': tr_concepte_inv, 'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(), 'ticketPendent': False}
+                                rows_to_insert.extend([row_traderep, row_trcartera])
+                            elif tr_concepte_inv == "Venda":
+                                row_traderep = {'ID_mov': max_id + 1, 'Data': data_val_tr.strftime('%d/%m/%Y'), 'mes': mes_val_tr, 'any': any_val_tr, 'Banc': 'TradeRep.', 'FormaPago': 'Compte', 'Import càrrec': 0.0, 'import ingrés': tr_import_inv, 'grup': 'op_banc', 'Idcategoria': 'op_banc', 'Idconcepte': tr_concepte_inv, 'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(), 'ticketPendent': False}
+                                row_trcartera = {'ID_mov': max_id + 2, 'Data': data_val_tr.strftime('%d/%m/%Y'), 'mes': mes_val_tr, 'any': any_val_tr, 'Banc': 'TR Cartera', 'FormaPago': 'Compte', 'Import càrrec': tr_import_inv, 'import ingrés': 0.0, 'grup': 'op_banc', 'Idcategoria': 'op_banc', 'Idconcepte': tr_concepte_inv, 'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(), 'ticketPendent': False}
+                                rows_to_insert.extend([row_traderep, row_trcartera])
+                            elif tr_concepte_inv == "CashBack":
+                                row_trcartera = {'ID_mov': max_id + 1, 'Data': data_val_tr.strftime('%d/%m/%Y'), 'mes': mes_val_tr, 'any': any_val_tr, 'Banc': 'TR Cartera', 'FormaPago': 'Compte', 'Import càrrec': 0.0, 'import ingrés': tr_import_inv, 'grup': 'op_banc', 'Idcategoria': 'op_banc', 'Idconcepte': tr_concepte_inv, 'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(), 'ticketPendent': False}
+                                rows_to_insert.append(row_trcartera)
+                            elif tr_concepte_inv == "Promoció":
+                                row_traderep = {'ID_mov': max_id + 1, 'Data': data_val_tr.strftime('%d/%m/%Y'), 'mes': mes_val_tr, 'any': any_val_tr, 'Banc': 'TradeRep.', 'FormaPago': 'Compte', 'Import càrrec': 0.0, 'import ingrés': tr_import_inv, 'grup': 'op_banc', 'Idcategoria': 'op_banc', 'Idconcepte': tr_concepte_inv, 'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(), 'ticketPendent': False}
+                                rows_to_insert.append(row_traderep)
+                            
+                            if rows_to_insert:
+                                supabase.table("despeses").insert(rows_to_insert).execute()
                             
                             st.success("Moviment TR Cartera desat correctament!")
                             st.cache_data.clear()
