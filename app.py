@@ -753,7 +753,7 @@ div.block-container {{
 {f'''<div class="submenu-item">
 <a href="?mod=modules.economic{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>📈 Mòdul Econòmic complet</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
-<a href="?action=show_faq_economic{auth_suffix}" target="_self">❓ Preguntes i Respostes</a>
+<a href="?mod=modules.economic&action=show_faq_economic{auth_suffix}" target="_self">❓ Preguntes i Respostes</a>
 </div>
 </div>''' if icones_actives.get('economic', True) else ''}
 {f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Compres Super i Stock</a>' if icones_actives.get('compres', True) else ''}
