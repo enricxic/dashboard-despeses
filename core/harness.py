@@ -212,14 +212,16 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 - Si el primer plat és molt contundent (com ara unes llenties estofades o paella), com a segon plat pots posar una proteïna lleugera (ex. Ou dur amb amanida, Lluç a la planxa) o bé "-", PERÒ MAI FRUITA.
 - ⚠️ PROHIBICIÓ POSTRES GENÈRICS: Està PROHIBIT posar simplement "Fruita de temporada" com a postre. HAS D'ESPECIFICAR QUINA FRUITA ES CONCRETAMENT (ex. "Síndria fresca", "Mandarines", "Poma al forn", "Raïm blanc", "Meló tallat"). Varia les fruites durant la setmana.
 
-### REGLES CRÍTIQUES DE DESDOBLAMENT I VETOS:
-1. Si la família menja un plat que conté un aliment vetat per un sol membre (ex. fetge), programa el plat per a la família i genera OBLIGATÒRIAMENT un 'plat_alternatiu' ràpid (usant els seus comodins favorits) per a aquell membre, compartint la mateixa guarnició.
-2. Si un membre està 'FORA DE LA LLAR', NO comptabilitzis les seves restriccions personals per defecte ni el sumis al nombre de racions.
+### REGLES CRÍTIQUES DE DESDOBLAMENT I VETOS (LLEGEIX AMB ATENCIÓ):
+1. Si un membre està 'FORA DE LA LLAR', IGNORA COMPLETAMENT I ABSOLUTAMENT TOTS ELS SEUS VETOS. Els seus vetos NO s'apliquen a la resta de la família.
+2. ABANS d'aplicar un veto per a un membre actiu, comprova que l'ingredient realment forma part del plat. EXEMPLE CRÍTIC: "Llom de porc" o "Llom a la planxa" NO ÉS "Fetge" ni "Casqueria". "Pollastre" NO ÉS "Carn vermella". No inventis correspondències falses.
+3. Si un membre ACTIU té un veto sobre el plat principal familiar, genera OBLIGATÒRIAMENT un 'plat_alternatiu' ràpid (usant els seus comodins favorits) per a aquell membre, compartint la mateixa guarnició.
 
 ### ESTRUCTURA D'ÀPATS TRADICIONAL CATALANA:
 - DINAR:
-  - "primer": Primer plat (ex. Amanida, Sopa, Crema de verdures, Llenties, Macarrons, Arròs de verdures)
-  - "segon": Segon plat (ex. Lluç al forn amb patates, Pit de pollastre amb xampinyons, Bistec amb guarnició)
+  - "primer": Primer plat (ex. Amanida, Sopa, Crema de verdures, Llenties, Macarrons).
+  - "segon": Segon plat (ex. Lluç al forn amb patates, Pit de pollastre, Bistec).
+  - ⚡ EXCEPCIÓ ARROSSOS FESTIUS (DIUMENGE): Si el plat fort és 'Paella', 'Arròs amb pollastre rostit' o 'Fideuà', aquest ha d'anar OBLIGATÒRIAMENT a "segon" (com a plat principal). A "primer" hi haurà d'anar un aperitiu com 'Escamarlans a la planxa', 'Musclos' o 'Amanida lleugera'.
   - "postre": Postre saludable (ex. Fruita de temporada, Poma, Iogurt vegetal)
 - SOPAR:
   - "primer": Primer plat lleuger (ex. Sopa de brou, Crema de carbassó, Amanida verda) o null
@@ -232,8 +234,9 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
   "reflexio_obligatoria": {{
     "assignacio_hidrats": "Indica l'esquema d'hidrats per cada dia. Ex: Dl: Llegums, Dm: Pasta, Dc: Verdures, Dj: Arròs, Dv: Llegums, Ds: Pasta, Dg: Arròs. REVISA bé que NO hi hagi pasta o arròs en dies consecutius.",
     "dies_us_forn": "Indica quins dies concrets encendràs el forn. Recorda: Només cap de setmana (Ds i Dg) a no ser que hi hagi una petició expressa familiar.",
+    "mapa_vetos_actius": "Llista NOMÉS els comensals que estan presents a la llar i els seus vetos. IGNORE i OMET qualsevol veto de familiars 'FORA DE LA LLAR'. Verifica que els ingredients vetats coincideixen exactament (ex: llom NO és fetge).",
     "recompte_setmanal": {{
-      "cops_carn_vermella": "Quants cops apareix carn vermella? (Màxim 1)",
+      "cops_carn_vermella": "Quants cops apareix carn vermella? (Màxim 1, en cap de setmana)",
       "cops_peix": "Quants cops apareix peix? (Mínim 2)",
       "cops_llegums": "Quants cops apareixen llegums? (Mínim 2)"
     }},
