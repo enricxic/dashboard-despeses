@@ -4144,6 +4144,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3081;Efectiu;;13/01/2024;enero;2024;50.0;0.0;Ingrés;ingrés_extra;Feina Foto;A cta Festa Lidia Cerrillo;False
 3133;Efectiu;;03/02/2024;febrero;2024;15.0;0.0;Ingrés;ingrés_extra;Feina Foto;Fotos Olga Coris;False
 2944;Efectiu;;09/12/2023;diciembre;2023;15.0;0.0;Ingrés;ingrés_extra;Feina Foto;Felic. Natàlia Bonilla;False
+8099;BBVA;Compte;01/10/2026;octubre;2026;0.0;90.28;Càrrec;despesa_general;Piscina;;False
 3306;BBVA;Compte;22/03/2024;marzo;2024;50.0;0.0;Ingrés;ingrés_general;Hisenda 50 2;;False
 3320;LaCaixa;Compte;26/03/2024;marzo;2024;151.6;0.0;Ingrés;ingrés_general;Complement Generalitat;;False
 3344;BBVA;Compte;31/03/2024;marzo;2024;15.18;0.0;Ingrés;ingrés_general;Cartera DP Petit;;False
@@ -4159,6 +4160,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3691;Efectiu;;27/06/2024;junio;2024;125.0;0.0;Ingrés;ingrés_extra;Feina Horeca;Cartell Xarrup;False
 3782;BBVA;Compte;22/07/2024;julio;2024;20.0;0.0;Ingrés;ingrés_extra;Gelt;;False
 3383;BBVA;Compte;10/04/2024;abril;2024;152.56;0.0;Ingrés;ingrés_extra;Devolució Hisenda;;False
+8100;BBVA;Compte;01/10/2026;octubre;2026;0.0;12.9;Càrrec;despesa_general;Ocaso;;False
 3811;LaCaixa;Compte;26/07/2024;julio;2024;151.6;0.0;Ingrés;ingrés_general;Complement Generalitat;;False
 3899;BBVA;Compte;22/08/2024;agosto;2024;50.0;0.0;Ingrés;ingrés_general;Hisenda 50 1;;False
 3900;BBVA;Compte;22/08/2024;agosto;2024;100.0;0.0;Ingrés;ingrés_general;Hisenda 100;;False
@@ -4174,6 +4176,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4318;BBVA;Compte;05/12/2024;diciembre;2024;53.0;0.0;Ingrés;ingrés_extra;Feina Foto;Olga Coris;False
 4364;BBVA;Compte;18/12/2024;diciembre;2024;36.0;0.0;Ingrés;ingrés_extra;Feina Foto;Felicitacions Bonilla;False
 4232;BBVA;Compte;15/11/2024;noviembre;2024;343.31;0.0;Ingrés;ingrés_extra;Subvenció;Bo social energètic;False
+8101;TradeRep.;Compte;01/10/2026;octubre;2026;0.33;0.0;Ingrés;ingres_general;Interessos Trade Rep.;;False
 4431;BBVA;Compte;31/12/2024;diciembre;2024;15.93;0.0;Ingrés;ingrés_general;Cartera DP Petit;;False
 4459;LaCaixa;Compte;23/12/2024;diciembre;2024;151.6;0.0;Ingrés;ingrés_general;Complement Generalitat;;False
 4520;BBVA;Compte;22/01/2025;enero;2025;50.0;0.0;Ingrés;ingrés_general;Hisenda 50 1;;False
@@ -4190,6 +4193,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4823;BBVA;Compte;05/04/2025;abril;2025;200.0;0.0;Ingrés;op_banc;Traspàs comptes;;False
 4777;BBVA;Compte;25/03/2025;marzo;2025;1.65;0.0;Ingrés;ingrés_extra;Ingres Extra;Milka promo;False
 4702;BBVA;Compte;10/03/2025;marzo;2025;1.65;0.0;Ingrés;ingrés_extra;Ingres Extra;Promoció Milka;False
+8102;TradeRep.;Dèbit;01/10/2026;octubre;2026;0.0;4.4;Càrrec;menjar;Fleca Arnau;;False
 5136;BBVA;Compte;18/06/2025;junio;2025;50.0;0.0;Ingrés;ingrés_general;Hisenda 50 1;;False
 5137;BBVA;Compte;18/06/2025;junio;2025;50.0;0.0;Ingrés;ingrés_general;Hisenda 50 2;;False
 5143;BBVA;Compte;19/06/2025;junio;2025;100.0;0.0;Ingrés;ingrés_general;Hisenda 100;;False
@@ -4203,6 +4207,8 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5598;BBVA;Compte;05/10/2025;octubre;2025;300.0;0.0;Ingrés;op_banc;Traspàs comptes;;False
 5502;Casa;;07/09/2025;septiembre;2025;200.0;0.0;Ingrés;ingrés_extra;Feina Foto;efectiu. Lidia Cerrillo;False
 5631;BBVA;Compte;15/10/2025;octubre;2025;10.0;0.0;Ingrés;ingrés_extra;Promos;;False
+8103;TradeRep.;Dèbit;01/10/2026;octubre;2026;0.0;20.0;Càrrec;menjar;Dia;;False
+8104;TradeRep.;Dèbit;01/10/2026;octubre;2026;0.0;3.44;Càrrec;neteja;Dia;;False
 5766;BBVA;Compte;21/11/2025;noviembre;2025;100.0;0.0;Ingrés;ingrés_general;Hisenda 100;;False
 5767;BBVA;Compte;21/11/2025;noviembre;2025;50.0;0.0;Ingrés;ingrés_general;Hisenda 50 2;;False
 5782;BBVA;Compte;25/11/2025;noviembre;2025;916.01;0.0;Ingrés;ingrés_general;Paga extra Enric;;False

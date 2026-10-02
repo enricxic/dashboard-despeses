@@ -1186,20 +1186,16 @@ def render():
             
             c_p, c_m1, c_m2 = st.columns([3, 4, 3])
             with c_p:
-                provider = st.selectbox("Proveïdor d'IA:", ["gemini", "deepseek", "openrouter"], key="harness_provider_sel")
+                provider = st.selectbox("Proveïdor d'IA:", ["gemini", "openrouter"], key="harness_provider_sel")
             with c_m1:
                 if provider == "gemini":
                     model_options = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
-                elif provider == "deepseek":
-                    model_options = ["deepseek-chat"]
                 else:
                     model_options = ["deepseek/deepseek-chat", "qwen/qwen-2.5-7b-instruct", "meta-llama/llama-3.1-8b-instruct"]
                 selected_model = st.selectbox("Model d'IA:", model_options, index=0, key="harness_model_sel")
             with c_m2:
                 if provider == "gemini":
                     default_key = st.secrets.get("GEMINI_API_KEY", "")
-                elif provider == "deepseek":
-                    default_key = st.secrets.get("DEEPSEEK_API_KEY", "")
                 else:
                     default_key = st.secrets.get("OPENROUTER_API_KEY", "")
                 
