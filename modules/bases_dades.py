@@ -75,8 +75,11 @@ def render():
         for col in df.columns:
             if col == pk_col or col.lower() in ['data', 'import', 'preu_unitari', 'preu_total', 'comentari', 'id', 'id_mov']:
                 continue
-            if df[col].nunique() <= 20:
-                candidate_cols.append(col)
+            try:
+                if df[col].nunique() <= 20:
+                    candidate_cols.append(col)
+            except TypeError:
+                pass
                 
         # We limit to 4 dropdowns for layout purposes
         filter_cols = candidate_cols[:4]
