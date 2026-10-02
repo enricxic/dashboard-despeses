@@ -379,7 +379,7 @@ if st.session_state.get("show_faq_economic"):
         faq_path = os.path.join(os.path.dirname(__file__), "docs", "faq_economic.md")
         if os.path.exists(faq_path):
             with open(faq_path, "r", encoding="utf-8") as f:
-                st.markdown(f.read())
+                st.markdown(f.read(), unsafe_allow_html=True)
         else:
             st.warning("Encara no s'ha creat l'arxiu de preguntes freqüents.")
             

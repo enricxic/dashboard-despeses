@@ -1,4 +1,4 @@
-### Com entrar el Cashback de TradeRep.?
+<h3 style="color: #3498db;">❓ Com entrar el Cashback de TradeRep.?</h3>
 
 És molt fàcil! Ho tens integrat directament a la pestanya d'Inversions de l'apartat econòmic. Aquests són els passos:
 
