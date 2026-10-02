@@ -24,7 +24,7 @@ def verify_menu_constraints(menu_json: Dict[str, Any], test_case: Dict[str, Any]
     paraules_carn_vermella = ["vedella", "bou", "hamburguesa", "entrecot", "xulet", "botifarra"]
     paraules_peix = ["peix", "salmó", "lluç", "orada", "tonyina", "llobarro", "rap", "bacallà", "llenguado", "escamarlans", "gambes", "sípia", "calamars", "musclos"]
     paraules_llegums = ["llegum", "cigrons", "llenties", "mongetes blanques", "fesols", "pèsols"]
-    plats_cap_de_setmana = ["paella", "arròs", "fideuà", "canelons", "rostit"]
+    plats_cap_de_setmana = ["paella", "fideuà", "canelons", "rostit"]
     
     for dia_info in dies_planificats:
         dia_nom = dia_info.get("dia", "")
@@ -74,8 +74,9 @@ def verify_menu_constraints(menu_json: Dict[str, Any], test_case: Dict[str, Any]
                             break
                     
                     if not veto_trobat_al_plat:
-                        # Sometimes the LLM hallucinates a veto. Example: main dish is "Llom", it says veto is "fetge".
-                        errors.append(f"Has creat un plat alternatiu per a {persona} el {dia_nom} al·legant '{motiu}', però els plats principals ('{plat1}', '{plat2}') NO CONTENEN aquest ingredient segons els teus propis ingredients_principals. Revisa les dades.")
+                        # Sometimes the LLM hallucinates a veto. Example: main dish is "Llom", it says veto is "fetge" or invents a veto.
+                        vetos_str = ", ".join(vetos_persona)
+                        errors.append(f"Has creat un plat alternatiu per a {persona} el {dia_nom} al·legant '{motiu}', però els plats principals ('{plat1}', '{plat2}') NO CONTENEN cap dels seus vetos reals ({vetos_str}). Revisa les dades i no inventis vetos.")
 
     # 3. Validar límits globals
     regles = test_case.get("regles_llar", {})
