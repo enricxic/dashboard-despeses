@@ -65,7 +65,17 @@ def render():
         # Create an empty dataframe with just the PK column to allow inserts
         df = pd.DataFrame(columns=[pk_col, "nou_camp_exemple"])
         
-    ordenar_recent = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.")
+    c1, c2 = st.columns([1, 1], vertical_alignment="center")
+    with c1:
+        ordenar_recent = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.")
+    with c2:
+        search_term = st.text_input("🔍 Cerca / Filtre (busca a qualsevol columna):", "")
+        
+    if search_term:
+        mask = pd.Series(False, index=df.index)
+        for col in df.columns:
+            mask = mask | df[col].astype(str).str.contains(search_term, case=False, na=False)
+        df = df[mask].reset_index(drop=True)
     
     if ordenar_recent:
         if selected_table == 'registre_accions' and 'data_hora' in df.columns:
