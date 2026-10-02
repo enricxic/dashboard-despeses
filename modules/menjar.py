@@ -1034,12 +1034,11 @@ def render():
 
                 st.write("")
                 st.write("")
-                c_ai_prov, c_ai_btn = st.columns([1, 3])
+                c_ai_prov, c_ai_btn = st.columns([1, 3], vertical_alignment="bottom")
                 with c_ai_prov:
                     from core.llm_ui import render_ai_selector
                     prov, mod, ai_key = render_ai_selector(key_prefix="menjar", default_model="DeepSeek")
                 with c_ai_btn:
-                    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                     btn_gen_ai = st.button("✨ Generar Menú Setmanal Intel·ligent", use_container_width=True, type="primary")
 
                 if btn_gen_ai:
