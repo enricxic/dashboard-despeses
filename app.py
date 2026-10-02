@@ -119,6 +119,9 @@ if not alerts_html:
 # Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu)
 if "mod" in st.query_params:
     selected_mod = st.query_params.get("mod")
+    if st.session_state.get("current_module") != selected_mod:
+        for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic"]:
+            st.session_state.pop(k, None)
     st.session_state.current_module = selected_mod
     if "db" in st.query_params:
         st.session_state["db_to_open"] = st.query_params.get("db")
