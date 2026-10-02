@@ -1193,7 +1193,7 @@ def render():
                 elif provider == "deepseek":
                     model_options = ["deepseek-chat"]
                 else:
-                    model_options = ["qwen/qwen-2.5-7b-instruct", "meta-llama/llama-3.1-8b-instruct"]
+                    model_options = ["deepseek/deepseek-chat", "qwen/qwen-2.5-7b-instruct", "meta-llama/llama-3.1-8b-instruct"]
                 selected_model = st.selectbox("Model d'IA:", model_options, index=0, key="harness_model_sel")
             with c_m2:
                 if provider == "gemini":
