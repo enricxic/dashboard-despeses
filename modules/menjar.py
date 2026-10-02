@@ -1103,8 +1103,16 @@ def render():
                     menu_obj = st.session_state['ai_menu_result']
                     menu_setmanal = menu_obj.get("menu_setmanal", [])
                     
-                    st.markdown("### 📅 El teu Menú Setmanal (Primer, Segon i Postre)")
-                    st.caption("Fes clic a **🔍 Veure Recepta** a qualsevol plat per obrir la fitxa sencera amb quantitats i instruccions.")
+                    st.markdown("---")
+                    c_tit_m, c_btn_regen = st.columns([7, 3])
+                    with c_tit_m:
+                        st.markdown("### 📅 El teu Menú Setmanal")
+                        st.caption("Fes clic a **🔍 Veure Recepta** a qualsevol plat per obrir la fitxa sencera.")
+                    with c_btn_regen:
+                        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+                        if st.button("🔄 Descartar i Tornar a Generar", use_container_width=True):
+                            del st.session_state['ai_menu_result']
+                            st.rerun()
                     
                     # Commutador de Mode Edició en viu eliminat perquè tenim botons Canvi
                     
