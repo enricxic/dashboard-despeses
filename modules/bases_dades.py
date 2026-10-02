@@ -65,17 +65,56 @@ def render():
         # Create an empty dataframe with just the PK column to allow inserts
         df = pd.DataFrame(columns=[pk_col, "nou_camp_exemple"])
         
-    c1, c2 = st.columns([1, 1], vertical_alignment="center")
-    with c1:
+    col_t, col_chk = st.columns([7, 3], vertical_alignment="bottom")
+    with col_chk:
         ordenar_recent = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.")
-    with c2:
-        search_term = st.text_input("🔍 Cerca / Filtre (busca a qualsevol columna):", "")
         
+    with st.expander("🔍 Filtres", expanded=False):
+        # Determine candidate columns for categorical filters (max 15 unique values)
+        candidate_cols = []
+        for col in df.columns:
+            if col == pk_col or col.lower() in ['data', 'import', 'preu_unitari', 'preu_total', 'comentari', 'id', 'id_mov']:
+                continue
+            if df[col].nunique() <= 20:
+                candidate_cols.append(col)
+                
+        # We limit to 4 dropdowns for layout purposes
+        filter_cols = candidate_cols[:4]
+        num_cols = len(filter_cols) + 2 # dropdowns + text search + clear btn
+        
+        cols = st.columns(num_cols, vertical_alignment="bottom")
+        
+        filters = {}
+        for i, col in enumerate(filter_cols):
+            with cols[i]:
+                unique_vals = ["Tots"] + sorted([str(x) for x in df[col].dropna().unique()])
+                filters[col] = st.selectbox(col.capitalize(), unique_vals, key=f"f_{selected_table}_{col}")
+                
+        with cols[-2]:
+            search_term = st.text_input("Cerca text lliure", "", key=f"search_{selected_table}")
+            
+        with cols[-1]:
+            if st.button("🔄 Netejar", use_container_width=True):
+                for col in filter_cols:
+                    if f"f_{selected_table}_{col}" in st.session_state:
+                        del st.session_state[f"f_{selected_table}_{col}"]
+                if f"search_{selected_table}" in st.session_state:
+                    del st.session_state[f"search_{selected_table}"]
+                st.rerun()
+
+    # Apply dropdown filters
+    for col, val in filters.items():
+        if val != "Tots":
+            df = df[df[col].astype(str) == val]
+            
+    # Apply text search filter
     if search_term:
         mask = pd.Series(False, index=df.index)
         for col in df.columns:
             mask = mask | df[col].astype(str).str.contains(search_term, case=False, na=False)
-        df = df[mask].reset_index(drop=True)
+        df = df[mask]
+        
+    df = df.reset_index(drop=True)
     
     if ordenar_recent:
         if selected_table == 'registre_accions' and 'data_hora' in df.columns:
