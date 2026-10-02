@@ -1553,7 +1553,25 @@ Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes 
                                     mime_type = "image/png"
                                     
                                 uploaded_file.seek(0)
-                                encoded_image = base64.b64encode(uploaded_file.read()).decode("utf-8")
+                                try:
+                                    from PIL import Image
+                                    import io
+                                    img_to_resize = Image.open(io.BytesIO(uploaded_file.read()))
+                                    if img_to_resize.mode in ("RGBA", "P"):
+                                        img_to_resize = img_to_resize.convert("RGB")
+                                    
+                                    max_size = 1800
+                                    if max(img_to_resize.size) > max_size:
+                                        img_to_resize.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                                        
+                                    buffer = io.BytesIO()
+                                    img_to_resize.save(buffer, format="JPEG", quality=85)
+                                    encoded_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
+                                    mime_type = "image/jpeg"
+                                except Exception as e_img:
+                                    print(f"Error comprimint imatge: {e_img}")
+                                    uploaded_file.seek(0)
+                                    encoded_image = base64.b64encode(uploaded_file.read()).decode("utf-8")
                                 
                                 prompt = """
 Ets un expert en extracció de dades de tiquets de compra.
@@ -1603,16 +1621,23 @@ Notes importants:
                                 }
                                 
                         import time
-                        max_retries = 5
+                        max_retries = 3
                         for attempt in range(max_retries):
-                            req = requests.post(url, json=payload, timeout=90)
-                            if req.status_code == 503 or req.status_code == 429:
+                            try:
+                                req = requests.post(url, json=payload, timeout=150)
+                                if req.status_code == 503 or req.status_code == 429:
+                                    if attempt < max_retries - 1:
+                                        time.sleep(3 + (2 ** attempt))
+                                        continue
+                                if req.status_code != 200:
+                                    raise Exception(f"API Error {req.status_code}: {req.text}")
+                                break
+                            except requests.exceptions.Timeout:
                                 if attempt < max_retries - 1:
                                     time.sleep(3 + (2 ** attempt))
                                     continue
-                            if req.status_code != 200:
-                                raise Exception(f"API Error {req.status_code}: {req.text}")
-                            break
+                                else:
+                                    raise Exception("El servidor de la IA triga massa a respondre. Prova de retallar o comprimir la imatge (és molt grossa) o utilitza el mètode Híbrid.")
                             
                         response_data = req.json()
                         try:
