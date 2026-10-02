@@ -2784,15 +2784,43 @@ def render(view_mode="economic"):
                 with col_kpi_vendes:
                     st.metric("Total Vendes", f"{total_vendes:,.2f} €")
 
-                st.markdown("#### 📋 Històric de Moviments TR Cartera")
-                cols_tr = [c for c in ['DATA', 'CARTERA', 'CONCEPTE', 'COMPRA', 'VENDA', 'COMENTARI'] if c in df_cartera.columns]
+                col_t_inv, col_chk_inv = st.columns([7, 3], vertical_alignment="bottom")
+                with col_t_inv:
+                    st.markdown("#### 📋 Històric de Moviments TR Cartera")
+                with col_chk_inv:
+                    ordenar_recent_inv = st.checkbox("Ordenar pel més recent primer", value=True, help="Si està marcat, es mostrarà el més recent a dalt de tot.", key="ord_rec_inv")
+                    
+                with st.expander("🔍 Filtres", expanded=False):
+                    f1, f2, f3, f4, f5 = st.columns([2, 2, 2, 2, 1], vertical_alignment="bottom")
+                    with f1:
+                        f_any_inv = st.selectbox("Any", ["Tots"] + sorted(list(df_cartera['any'].dropna().unique()), reverse=True), key="f_any_inv") if 'any' in df_cartera.columns else "Tots"
+                    with f2:
+                        f_mes_inv = st.selectbox("Mes", ["Tots"] + sorted(list(df_cartera['mes'].dropna().astype(str).unique())), key="f_mes_inv") if 'mes' in df_cartera.columns else "Tots"
+                    with f3:
+                        f_cartera_inv = st.selectbox("Cartera", ["Tots"] + sorted(list(df_cartera['CARTERA'].dropna().astype(str).unique())), key="f_cartera_inv") if 'CARTERA' in df_cartera.columns else "Tots"
+                    with f4:
+                        f_concepte_inv = st.selectbox("Concepte", ["Tots"] + sorted(list(df_cartera['CONCEPTE'].dropna().astype(str).unique())), key="f_concepte_inv") if 'CONCEPTE' in df_cartera.columns else "Tots"
+                    with f5:
+                        if st.button("🔄 Netejar", key="clear_inv_filters", use_container_width=True):
+                            for k in ["f_any_inv", "f_mes_inv", "f_cartera_inv", "f_concepte_inv"]:
+                                if k in st.session_state: del st.session_state[k]
+                            st.rerun()
+
+                df_cartera_display = df_cartera.copy()
+                if f_any_inv != "Tots": df_cartera_display = df_cartera_display[df_cartera_display['any'] == f_any_inv]
+                if f_mes_inv != "Tots": df_cartera_display = df_cartera_display[df_cartera_display['mes'].astype(str) == f_mes_inv]
+                if f_cartera_inv != "Tots": df_cartera_display = df_cartera_display[df_cartera_display['CARTERA'].astype(str) == f_cartera_inv]
+                if f_concepte_inv != "Tots": df_cartera_display = df_cartera_display[df_cartera_display['CONCEPTE'].astype(str) == f_concepte_inv]
+
+                cols_tr = [c for c in ['DATA', 'CARTERA', 'CONCEPTE', 'COMPRA', 'VENDA', 'COMENTARI'] if c in df_cartera_display.columns]
                 
                 format_dict = {'COMPRA': '{:,.2f} €', 'VENDA': '{:,.2f} €'}
-                if 'DATA' in df_cartera.columns:
+                if 'DATA' in df_cartera_display.columns:
                     format_dict['DATA'] = lambda x: pd.to_datetime(x).strftime('%d/%m/%Y') if pd.notnull(x) and str(x).strip() else ''
-                    df_cartera_display = df_cartera.sort_values(by='DATA', ascending=False)
-                else:
-                    df_cartera_display = df_cartera
+                    if ordenar_recent_inv:
+                        df_cartera_display = df_cartera_display.sort_values(by='DATA', ascending=False)
+                    else:
+                        df_cartera_display = df_cartera_display.sort_values(by='DATA', ascending=True)
                     
                 st.dataframe(
                     df_cartera_display[cols_tr].style.format(format_dict),
