@@ -1104,15 +1104,20 @@ def render():
                     menu_setmanal = menu_obj.get("menu_setmanal", [])
                     
                     st.markdown("---")
-                    c_tit_m, c_btn_regen = st.columns([7, 3])
+                    c_tit_m, c_btn_regen, c_btn_down = st.columns([6, 2, 2])
                     with c_tit_m:
                         st.markdown("### 📅 El teu Menú Setmanal")
                         st.caption("Fes clic a **🔍 Veure Recepta** a qualsevol plat per obrir la fitxa sencera.")
                     with c_btn_regen:
                         st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-                        if st.button("🔄 Descartar i Tornar a Generar", use_container_width=True):
+                        if st.button("🔄 Descartar Menú", use_container_width=True):
                             del st.session_state['ai_menu_result']
                             st.rerun()
+                    with c_btn_down:
+                        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+                        import json
+                        json_str = json.dumps(menu_obj, indent=2, ensure_ascii=False)
+                        st.download_button("💾 Descarregar (JSON)", data=json_str, file_name="menu_setmanal_debug.json", mime="application/json", use_container_width=True)
                     
                     # Commutador de Mode Edició en viu eliminat perquè tenim botons Canvi
                     
