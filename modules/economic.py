@@ -2343,7 +2343,7 @@ def render(view_mode="economic"):
 
     tabs_list = ["📝 Ingrés / Despesa General"]
     if st.session_state.get("role") in ["admin", "guest"]:
-        tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🤖 Xat IA", "❓ Preguntes i Respostes"])
+        tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🤖 Xat IA"])
     
     if tabs_list:
         tabs = st.tabs(tabs_list)
@@ -2355,14 +2355,12 @@ def render(view_mode="economic"):
         tab_inversions = tabs[3]
         tab_estalvis = tabs[4]
         tab_xat = tabs[5]
-        tab_faq = tabs[6]
     else:
         tab_prev_desp = None
         tab_prev_ing = None
         tab_inversions = None
         tab_estalvis = None
         tab_xat = None
-        tab_faq = None
 
     # Removed Compres Super
     if tab_ingres_despesa:
@@ -3007,28 +3005,6 @@ def render(view_mode="economic"):
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
     
     
-
-    # ================= TAB: PREGUNTES I RESPOSTES =================
-    if tab_faq:
-        with tab_faq:
-            st.markdown("<h3 style='color:#f39c12;'>❓ Preguntes i Respostes</h3>", unsafe_allow_html=True)
-            st.write("Resol els teus dubtes sobre el funcionament del mòdul econòmic de forma ràpida.")
-            
-            @st.dialog("❓ Preguntes i Respostes Freqüents", width="large")
-            def show_faq_dialog(text_content):
-                st.markdown(text_content)
-                
-            import os
-            faq_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docs", "faq_economic.md")
-            if os.path.exists(faq_path):
-                with open(faq_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("📚 Obrir Guia / FAQ", type="primary", use_container_width=True):
-                    show_faq_dialog(content)
-            else:
-                st.warning("Encara no s'ha creat l'arxiu de preguntes freqüents.")
 
     # ================= EXTRA SPACE AT THE BOTTOM =================
     st.markdown("<br><br><br><br>", unsafe_allow_html=True)

@@ -148,6 +148,8 @@ if "action" in st.query_params:
             st.session_state["editing_json_file"] = json_f
     elif act == "edit_routes":
         st.session_state["editing_routes"] = True
+    elif act == "show_faq_economic":
+        st.session_state["show_faq_economic"] = True
     elif act == "edit_rules":
         st.session_state["editing_ocr_rules"] = True
     elif act == "clean_orphans":
@@ -369,6 +371,24 @@ def show_routes_editor_dialog():
 
 if st.session_state.get("editing_routes"):
     show_routes_editor_dialog()
+
+if st.session_state.get("show_faq_economic"):
+    @st.dialog("❓ Preguntes i Respostes (Mòdul Econòmic)", width="large")
+    def show_faq_dialog():
+        import os
+        faq_path = os.path.join(os.path.dirname(__file__), "docs", "faq_economic.md")
+        if os.path.exists(faq_path):
+            with open(faq_path, "r", encoding="utf-8") as f:
+                st.markdown(f.read())
+        else:
+            st.warning("Encara no s'ha creat l'arxiu de preguntes freqüents.")
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("❌ Tancar", type="secondary"):
+            if "show_faq_economic" in st.session_state:
+                del st.session_state["show_faq_economic"]
+            st.rerun()
+    show_faq_dialog()
 
 @st.dialog("📝 Editar regles súper (OCR)", width="large")
 def show_ocr_rules_editor_dialog():
@@ -730,7 +750,12 @@ div.block-container {{
 <span class="menu-title">Mòduls</span>
 <div class="menu-dropdown">
 <a href="?mod=modules.dashboard{auth_suffix}" target="_self">📊 Resum General (Dashboard)</a>
-{f'<a href="?mod=modules.economic{auth_suffix}" target="_self">📈 Mòdul Econòmic complet</a>' if icones_actives.get('economic', True) else ''}
+{f'''<div class="submenu-item">
+<a href="?mod=modules.economic{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>📈 Mòdul Econòmic complet</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<div class="submenu-dropdown">
+<a href="?action=show_faq_economic{auth_suffix}" target="_self">❓ Preguntes i Respostes</a>
+</div>
+</div>''' if icones_actives.get('economic', True) else ''}
 {f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Compres Super i Stock</a>' if icones_actives.get('compres', True) else ''}
 <div class="submenu-item">
 <a href="?mod=modules.cotxe{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🚗 Cotxe</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
