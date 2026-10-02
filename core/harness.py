@@ -202,8 +202,8 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 
 ### 🔥 REGLA D'ÚS DEL FORN I PRIORITAT DE PETICIONS:
 1. Regla d'ús del forn configurada: '{us_forn}'.
-2. Si la regla és 'Només cap de setmana (Dissabte i Diumenge)': Els plats automàtics que requereixin forn (rostits, peix al forn, gratinats, pastissos al forn, etc.) s'han de programar EXCLUSIVAMENT en dissabte o diumenge. De dilluns a divendres prioritza coccions ràpides (planxa, cassola, vapor, saltats).
-3. ⚡ EXCEPCIÓ DE PRIORITAT ABSOLUTA (PETICIÓ FAMILIAR): Si un membre de la família ha demanat un plat o s'ha fixat un plat que requereix forn per a un dia entre setmana (com ara 'Solomillo al forn dimecres' o 'Lluç al forn dijous'), la voluntat de la família TÉ PRIORITAT ABSOLUTA. En aquest cas, OBVIA la limitació del forn per a aquest àpat concret i programa obligatòriament el plat sol·licitat.
+2. Si la regla és 'Només cap de setmana (Dissabte i Diumenge)': MAI ENCENGUIS EL FORN DE DILLUNS A DIVENDRES. Els plats que requereixin forn (rostits, peix al forn, gratinats, pastissos al forn, etc.) s'han de programar EXCLUSIVAMENT en dissabte o diumenge.
+3. ⚡ EXCEPCIÓ DE PRIORITAT ABSOLUTA (PETICIÓ FAMILIAR): L'únic cas on pots encendre el forn de Dilluns a Divendres és si la família ho ha demanat explícitament a les PETICIONS APROVADES. La voluntat de la família TÉ PRIORITAT ABSOLUTA.
 
 ### 🚫 PROHIBICIÓ ESTRICTA: EL 2N PLAT MAI POT SER FRUITA NI IOGURT:
 - El camp "segon" ÉS SEMPRE UNA PROTEÏNA O PLAT PRINCIPAL (peix, aus, carn magra, ous, tofu o llegums).
@@ -229,7 +229,16 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 ### RESPOSTA EN FORMAT JSON ESTRICTE:
 Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, amb cometes dobles en totes les claus i valors, i sense comes sobrants):
 {{
-  "raonament_previ": "Anàlisi de com compliràs les regles: 1) Cap hidrat (arròs/pasta) en dies seguits. 2) Cops de peix/carn correctes. 3) Peticions incloses.",
+  "reflexio_obligatoria": {{
+    "assignacio_hidrats": "Indica l'esquema d'hidrats per cada dia. Ex: Dl: Llegums, Dm: Pasta, Dc: Verdures, Dj: Arròs, Dv: Llegums, Ds: Pasta, Dg: Arròs. REVISA bé que NO hi hagi pasta o arròs en dies consecutius.",
+    "dies_us_forn": "Indica quins dies concrets encendràs el forn. Recorda: Només cap de setmana (Ds i Dg) a no ser que hi hagi una petició expressa familiar.",
+    "recompte_setmanal": {{
+      "cops_carn_vermella": "Quants cops apareix carn vermella? (Màxim 1)",
+      "cops_peix": "Quants cops apareix peix? (Mínim 2)",
+      "cops_llegums": "Quants cops apareixen llegums? (Mínim 2)"
+    }},
+    "peticions_a_integrar": "Llista les peticions que se t'han demanat i com les ubicaràs al calendari."
+  }},
   "dies_planificats": 7,
   "comensals_actius": 3,
   "menu_setmanal": [

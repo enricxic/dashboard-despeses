@@ -1184,24 +1184,14 @@ def render():
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             st.markdown("#### ⚙️ Configuració de la Prova")
             
-            c_p, c_m1, c_m2 = st.columns([3, 4, 3])
+            c_p, c_m2 = st.columns([7, 3])
             with c_p:
-                provider = st.selectbox("Proveïdor d'IA:", ["gemini", "openrouter"], key="harness_provider_sel")
-            with c_m1:
-                if provider == "gemini":
-                    model_options = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
-                else:
-                    model_options = ["deepseek/deepseek-chat", "qwen/qwen-2.5-7b-instruct", "meta-llama/llama-3.1-8b-instruct"]
-                selected_model = st.selectbox("Model d'IA:", model_options, index=0, key="harness_model_sel")
+                from core.llm_ui import render_ai_selector
+                provider, selected_model, active_api_key = render_ai_selector(key_prefix="admin_harness", default_model="DeepSeek")
             with c_m2:
-                if provider == "gemini":
-                    default_key = st.secrets.get("GEMINI_API_KEY", "")
-                else:
-                    default_key = st.secrets.get("OPENROUTER_API_KEY", "")
-                
-                if default_key:
+                if active_api_key:
+                    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                     st.success("🔑 Clau detectada als Secrets")
-                    active_api_key = default_key
                 else:
                     active_api_key = st.text_input(f"🔑 Clau {provider}:", type="password", key=f"harness_key_input_{provider}")
             
