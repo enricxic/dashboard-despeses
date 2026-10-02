@@ -1033,14 +1033,19 @@ def render():
                     stock_input = st.text_area("🧊 Altres ingredients o notes d'estoc manuals (Congelador / Nevera):", key="m_stock_input", placeholder="Ex. Caldo de peix al congelador, 500g de carn picada, carbassons de l'hort", height=85)
 
                 st.write("")
-                btn_gen_ai = st.button("✨ Generar Menú Setmanal Intel·ligent (Primer + Segon + Postre)", use_container_width=True, type="primary")
+                c_ai_prov, c_ai_btn = st.columns([1, 3])
+                with c_ai_prov:
+                    ai_provider = st.selectbox("🤖 Motor d'IA", ["Gemini (1.5 Pro)", "DeepSeek (deepseek-chat)"], key="ai_planner_prov")
+                with c_ai_btn:
+                    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+                    btn_gen_ai = st.button("✨ Generar Menú Setmanal Intel·ligent", use_container_width=True, type="primary")
 
                 if btn_gen_ai:
                     if not comensals_seleccionats:
                         st.warning("Has de seleccionar com a mínim un membre actiu a la llar!")
                     else:
-                        with st.spinner("🧠 Generant menú setmanal estructurat amb Gemini IA..."):
-                            api_key = st.secrets.get("GEMINI_API_KEY", "")
+                        with st.spinner(f"🧠 Generant menú setmanal estructurat amb {ai_provider}..."):
+
                             
                             peticions_list = []
                             if peticio_general.strip():
@@ -1077,8 +1082,17 @@ def render():
                             if not df_receptes.empty:
                                 rec_list = df_receptes[['id', 'titol', 'categoria', 'apat', 'tags_nutricionals']].to_dict('records')
                             
+                            if "DeepSeek" in ai_provider:
+                                prov = "openrouter" # Calling DeepSeek via OpenRouter bridge
+                                mod = "deepseek/deepseek-chat"
+                                ai_key = st.secrets.get("OPENROUTER_API_KEY", "")
+                            else:
+                                prov = "gemini"
+                                mod = "gemini-1.5-pro"
+                                ai_key = st.secrets.get("GEMINI_API_KEY", "")
+
                             prompt_str = build_system_prompt_for_case(active_case, recipes_catalog=rec_list)
-                            ok_call, raw_resp, latency = call_llm_api(prompt_str, api_key=api_key, model_name="gemini-1.5-pro", provider="gemini")
+                            ok_call, raw_resp, latency = call_llm_api(prompt_str, api_key=ai_key, model_name=mod, provider=prov)
                             
                             if ok_call:
                                 json_ok, json_data, json_err = parse_and_clean_json(raw_resp)
