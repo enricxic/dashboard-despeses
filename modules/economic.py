@@ -2719,8 +2719,12 @@ def render(view_mode="economic"):
                             import_carg = tr_import_inv if tr_concepte_inv == "Compra" else 0.0
                             import_ing = tr_import_inv if tr_concepte_inv != "Compra" else 0.0
                             
+                            df_desp_local = st.session_state.get("df_desp", pd.DataFrame())
+                            max_id = int(df_desp_local['ID_mov'].max()) if not df_desp_local.empty else 0
+                            
                             row_traderep = {
-                                'Data': data_val_tr.strftime('%Y-%m-%d'),
+                                'ID_mov': max_id + 1,
+                                'Data': data_val_tr.strftime('%d/%m/%Y'),
                                 'mes': mes_val_tr,
                                 'any': any_val_tr,
                                 'Banc': 'TradeRep.',
@@ -2729,13 +2733,13 @@ def render(view_mode="economic"):
                                 'import ingrés': import_ing,
                                 'grup': 'op_banc',
                                 'Idcategoria': 'op_banc',
-                                'Concepte': tr_concepte_inv,
-                                'Descripcio': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(),
-                                'litres': 0.0,
-                                'Revisat': True
+                                'Idconcepte': tr_concepte_inv,
+                                'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(),
+                                'ticketPendent': False
                             }
                             row_trcartera = {
-                                'Data': data_val_tr.strftime('%Y-%m-%d'),
+                                'ID_mov': max_id + 2,
+                                'Data': data_val_tr.strftime('%d/%m/%Y'),
                                 'mes': mes_val_tr,
                                 'any': any_val_tr,
                                 'Banc': 'TR Cartera',
@@ -2744,10 +2748,9 @@ def render(view_mode="economic"):
                                 'import ingrés': import_carg,
                                 'grup': 'op_banc',
                                 'Idcategoria': 'op_banc',
-                                'Concepte': tr_concepte_inv,
-                                'Descripcio': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(),
-                                'litres': 0.0,
-                                'Revisat': True
+                                'Idconcepte': tr_concepte_inv,
+                                'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(),
+                                'ticketPendent': False
                             }
                             supabase.table("despeses").insert([row_traderep, row_trcartera]).execute()
                             
