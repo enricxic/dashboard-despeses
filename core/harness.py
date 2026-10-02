@@ -221,7 +221,7 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 - DINAR:
   - "primer": Primer plat (ex. Amanida, Sopa, Crema de verdures, Llenties, Macarrons).
   - "segon": Segon plat (ex. Lluç al forn amb patates, Pit de pollastre, Bistec).
-  - ⚡ EXCEPCIÓ ARROSSOS FESTIUS (DIUMENGE): Si el plat fort és 'Paella', 'Arròs amb pollastre rostit' o 'Fideuà', aquest ha d'anar OBLIGATÒRIAMENT a "segon" (com a plat principal). A "primer" hi haurà d'anar un aperitiu com 'Escamarlans a la planxa', 'Musclos' o 'Amanida lleugera'.
+  - ⚡ EXCEPCIÓ ARROSSOS I MARISC (CAP DE SETMANA): Si prepares un àpat festiu de cap de setmana amb Arrossos, Paelles o Fideuàs, aquest ha d'anar OBLIGATÒRIAMENT a "segon" (com a plat principal). El "primer" plat ha de ser un aperitiu o entrant lleuger, com ara 'Escamarlans a la planxa', 'Amanida', 'Calamars', 'Musclos' o 'Cloïsses'. És a dir: Primer -> Marisc/Entrant; Segon -> Arròs/Fideuà.
   - "postre": Postre saludable (ex. Fruita de temporada, Poma, Iogurt vegetal)
 - SOPAR:
   - "primer": Primer plat lleuger (ex. Sopa de brou, Crema de carbassó, Amanida verda) o null
@@ -262,9 +262,9 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
         "ingredients_principals": ["enciam", "tomàquet", "ous", "pera"],
         "apte_per": ["Nom1", "Nom2"],
         "plat_alternatiu": {{
-          "per": "Enric",
-          "plat": "Pit de pollastre a la planxa amb amanida",
-          "motiu": "Veto personal a fetge i casqueria"
+          "per": "Nom_del_comensal",
+          "plat": "Plat alternatiu escollit",
+          "motiu": "Veto personal a Ingredient_vetat"
         }}
       }}
     }}

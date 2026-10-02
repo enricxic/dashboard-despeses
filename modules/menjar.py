@@ -1084,17 +1084,49 @@ def render():
                                 rec_list = df_receptes[['id', 'titol', 'categoria', 'apat', 'tags_nutricionals']].to_dict('records')
                             
                             prompt_str = build_system_prompt_for_case(active_case, recipes_catalog=rec_list)
-                            ok_call, raw_resp, latency = call_llm_api(prompt_str, api_key=ai_key, model_name=mod, provider=prov)
                             
-                            if ok_call:
-                                json_ok, json_data, json_err = parse_and_clean_json(raw_resp)
-                                if json_ok:
-                                    st.session_state['ai_menu_result'] = json_data
-                                    st.success(f"🎉 Menú generat amb èxit en {latency} segons utilitzant el teu receptari!")
+                            from core.validator import verify_menu_constraints
+                            
+                            max_retries = 1
+                            current_try = 0
+                            final_json = None
+                            final_err = None
+                            total_latency = 0.0
+                            
+                            while current_try <= max_retries:
+                                if current_try > 0:
+                                    st.toast("🔄 Verificant i corregint errors del menú...", icon="⚠️")
+                                    
+                                ok_call, raw_resp, latency = call_llm_api(prompt_str, api_key=ai_key, model_name=mod, provider=prov)
+                                total_latency += latency
+                                
+                                if ok_call:
+                                    json_ok, json_data, json_err = parse_and_clean_json(raw_resp)
+                                    if json_ok:
+                                        errors = verify_menu_constraints(json_data, active_case)
+                                        if errors and current_try < max_retries:
+                                            error_msg = "\\n- ".join(errors)
+                                            prompt_str += f"\\n\\n### ⚠️ CORRECCIÓ REQUERIDA:\\nHas generat un menú amb aquests errors estructurals:\\n- {error_msg}\\n\\nRevisa l'estratègia i retorna exclusivament un NOU objecte JSON corregit i complet."
+                                            current_try += 1
+                                            continue
+                                        else:
+                                            final_json = json_data
+                                            if errors:
+                                                final_json["_validation_errors"] = errors
+                                                st.warning("⚠️ L'IA ha deixat alguns petits desajustos nutricionals, però pots corregir-los manualment.")
+                                            break
+                                    else:
+                                        final_err = f"Error parsejant el menú de la IA: {json_err}"
+                                        break
                                 else:
-                                    st.error(f"Error parsejant el menú de la IA: {json_err}")
+                                    final_err = f"Error cridant la IA: {raw_resp}"
+                                    break
+                            
+                            if final_json:
+                                st.session_state['ai_menu_result'] = final_json
+                                st.success(f"🎉 Menú generat amb èxit en {round(total_latency, 1)} segons!")
                             else:
-                                st.error(f"Error cridant la IA: {raw_resp}")
+                                st.error(final_err or "Error desconegut generant el menú.")
                                 st.info("🔄 Revisa la connexió o les regles seleccionades.")
 
                 # Renderitzar el menú generat si existeix
@@ -1107,6 +1139,12 @@ def render():
                     with c_tit_m:
                         st.markdown("### 📅 El teu Menú Setmanal")
                         st.caption("Fes clic a **🔍 Veure Recepta** a qualsevol plat per obrir la fitxa sencera.")
+                        
+                        val_errors = menu_obj.get("_validation_errors", [])
+                        if val_errors:
+                            st.error("⚠️ Després d'intentar corregir-ho, l'IA ha deixat aquests avisos estructurals (pots canviar el plat tu mateix):")
+                            for ve in val_errors:
+                                st.markdown(f"- {ve}")
                     with c_btn_regen:
                         st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
                         if st.button("🔄 Descartar Menú", use_container_width=True):
