@@ -375,8 +375,9 @@ def sanitize_segon(p_seg: str) -> str:
     """Evita que cap fruita o postre aparegui com a segon plat."""
     if not p_seg or str(p_seg).strip() in ['-', 'null', 'None']:
         return '-'
-    p_seg_lower = str(p_seg).lower()
-    if any(k in p_seg_lower for k in ['fruita', 'iogurt', 'postre', 'poma', 'plàtan', 'pera', 'taronja', 'maduixa', 'mandarina']):
+    p_seg_lower = str(p_seg).lower().strip()
+    # Nomes esborrem si el plat sencer es literalment una fruita o iogurt
+    if p_seg_lower in ['fruita', 'iogurt', 'postre', 'poma', 'plàtan', 'pera', 'taronja', 'maduixa', 'mandarina', 'poma de temporada', 'pera de temporada', 'plàtan de temporada', 'mandarines']:
         return '-'
     return p_seg
 
