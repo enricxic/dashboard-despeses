@@ -1184,17 +1184,30 @@ def render():
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             st.markdown("#### ⚙️ Configuració de la Prova")
             
-            c_m1, c_m2 = st.columns([6, 4])
+            c_p, c_m1, c_m2 = st.columns([3, 4, 3])
+            with c_p:
+                provider = st.selectbox("Proveïdor d'IA:", ["gemini", "deepseek", "openrouter"], key="harness_provider_sel")
             with c_m1:
-                model_options = ["gemini-2.5-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]
-                selected_model = st.selectbox("Model d'IA a avaluar:", model_options, index=0, key="harness_model_sel", help="Selecciona el model de Google Gemini per al test. Si un model dóna límit de quota (429), pots provar-ne un altre.")
+                if provider == "gemini":
+                    model_options = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+                elif provider == "deepseek":
+                    model_options = ["deepseek-chat"]
+                else:
+                    model_options = ["qwen/qwen-2.5-7b-instruct", "meta-llama/llama-3.1-8b-instruct"]
+                selected_model = st.selectbox("Model d'IA:", model_options, index=0, key="harness_model_sel")
             with c_m2:
-                default_key = st.secrets.get("GEMINI_API_KEY", "")
+                if provider == "gemini":
+                    default_key = st.secrets.get("GEMINI_API_KEY", "")
+                elif provider == "deepseek":
+                    default_key = st.secrets.get("DEEPSEEK_API_KEY", "")
+                else:
+                    default_key = st.secrets.get("OPENROUTER_API_KEY", "")
+                
                 if default_key:
-                    st.success("🔑 Clau GEMINI_API_KEY detectada als Secrets")
+                    st.success("🔑 Clau detectada als Secrets")
                     active_api_key = default_key
                 else:
-                    active_api_key = st.text_input("🔑 Clau d'API Gemini:", type="password", key="harness_key_input")
+                    active_api_key = st.text_input(f"🔑 Clau {provider}:", type="password", key=f"harness_key_input_{provider}")
             
             try:
                 from core.harness import (
@@ -1267,7 +1280,7 @@ def render():
                         st.error("❌ Cal disposar d'una clau d'API per executar les proves.")
                     else:
                         st.session_state.harness_single_result = None
-                        ok_start = start_harness_suite_background(api_key=active_api_key, model_name=selected_model)
+                        ok_start = start_harness_suite_background(api_key=active_api_key, model_name=selected_model, provider=provider)
                         if ok_start:
                             st.success("🚀 Bateria iniciada en segon pla!")
                             st.rerun()
@@ -1282,7 +1295,7 @@ def render():
                         target_case = next((c for c in cases if c["id"] == target_id), None)
                         if target_case:
                             with st.spinner(f"Avaluant {target_case['titol']}..."):
-                                single_res = run_harness_single_test(target_case, api_key=active_api_key, model_name=selected_model)
+                                single_res = run_harness_single_test(target_case, api_key=active_api_key, model_name=selected_model, provider=provider)
                                 st.session_state.harness_single_result = single_res
                                 st.rerun()
             

@@ -94,41 +94,22 @@ def get_avatar_image_base64(image_file: str) -> str:
     return ""
 
 def ask_avatar_ai(prompt: str, role_info: dict) -> str:
-    """Envia una pregunta a l'API de Gemini amb el perfil i rol de l'avatar anime."""
+    """Envia una pregunta a l'API d'IA amb el perfil i rol de l'avatar anime."""
     if not prompt or not prompt.strip():
         return "Si us plau, escriu una pregunta per a la Xiqui."
         
     api_key = st.secrets.get("GEMINI_API_KEY")
     if not api_key:
-        return "⚠️ Clau d'API de Gemini no configurada a `st.secrets['GEMINI_API_KEY']`."
+        return "⚠️ Clau d'API no configurada a `st.secrets['GEMINI_API_KEY']`."
         
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-        headers = {"Content-Type": "application/json"}
-        
+        from core.llm import call_llm_api
         system_instruction = role_info.get("system_prompt", "Es el teu nom Xiqui, assistent virtual de XiquiHouse.")
         full_prompt = f"{system_instruction}\n\nL'usuari et pregunta: \"{prompt}\"\n\nRespon de forma concisa, directa i molt amable en català."
         
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": full_prompt}]
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0.7,
-                "maxOutputTokens": 600
-            }
-        }
-        
-        resp = requests.post(url, headers=headers, json=payload, timeout=12)
-        if resp.status_code == 200:
-            res_json = resp.json()
-            candidates = res_json.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    return parts[0].get("text", "").strip()
-        return f"Error en generar resposta ({resp.status_code}): {resp.text[:100]}"
+        ok, response_text, _ = call_llm_api(full_prompt, api_key=api_key, model_name="gemini-2.5-flash", provider="gemini")
+        if ok:
+            return response_text
+        return f"Error en generar resposta: {response_text}"
     except Exception as e:
         return f"⚠️ No s'ha pogut connectar amb la Xiqui: {str(e)}"

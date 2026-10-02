@@ -270,69 +270,7 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
 CRÍTIC: NO TALLIS EL JSON. Assegura't de tancar tots els claudàtors i claus ']' i '}}' correctament."""
     return prompt
 
-def call_gemini_api(prompt: str, api_key: str, model_name: str = "gemini-2.5-flash") -> Tuple[bool, str, float]:
-    """Realitza una crida a l'API de Google Gemini amb reintents automàtics i gestió d'errors 503/429."""
-    start_time = time.time()
-    
-    models_to_try = [model_name]
-    for alt in ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-3.6-flash", "gemini-3.8-flash"]:
-        if alt not in models_to_try:
-            models_to_try.append(alt)
-        
-    last_error = ""
-    for current_model in models_to_try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent?key={api_key}"
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": prompt}]
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0.1,
-                "maxOutputTokens": 8192
-            }
-        }
-        
-        max_attempts = 2
-        for attempt in range(max_attempts):
-            try:
-                resp = requests.post(url, json=payload, timeout=90)
-                elapsed = round(time.time() - start_time, 2)
-                
-                if resp.status_code == 200:
-                    data = resp.json()
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                        clean_content = content.strip()
-                        if clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
-                            if attempt < max_attempts - 1:
-                                time.sleep(2.0)
-                                continue # Reintentar si està truncat
-                            last_error = f"La IA ha tallat la resposta prematurament (truncat). Resposta crua:\n{content}"
-                            break # Try the next model
-                        return True, content, elapsed
-                    last_error = "Resposta buida de Gemini"
-                    break # Try the next model
-                elif resp.status_code in [503, 429]:
-                    if attempt < max_attempts - 1:
-                        sleep_time = 16.0 if resp.status_code == 429 else 15.0
-                        time.sleep(sleep_time)
-                        continue
-                    last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
-                    break # Try the next model
-                else:
-                    last_error = f"Error HTTP {resp.status_code} ({current_model}): {resp.text}"
-                    break
-            except Exception as e:
-                if attempt < max_attempts - 1:
-                    time.sleep(1.0)
-                last_error = f"Excepció en cridar Gemini ({current_model}): {str(e)}"
-                
-    elapsed = round(time.time() - start_time, 2)
-    return False, last_error, elapsed
-
+from core.llm import call_llm_api
 def parse_and_clean_json(raw_text: str) -> Tuple[bool, Dict[str, Any], str]:
     """Neteja delimitadors markdown i parseja el text com a diccionari JSON de manera resilient."""
     if not raw_text:
@@ -755,10 +693,10 @@ def grade_aprofitament_estoc(menu_data: Dict[str, Any], test_case: Dict[str, Any
 # EXECUTOR PRINCIPAL DEL HARNESS
 # =========================================================================
 
-def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name: str = "gemini-3.8-flash") -> Dict[str, Any]:
+def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name: str = "gemini-3.8-flash", provider: str = "gemini") -> Dict[str, Any]:
     """Executa un cas de prova complet i retorna el resultat i la targeta de puntuació."""
     prompt = build_system_prompt_for_case(test_case)
-    ok_call, raw_resp, latency = call_gemini_api(prompt, api_key=api_key, model_name=model_name)
+    ok_call, raw_resp, latency = call_llm_api(prompt, api_key=api_key, model_name=model_name, provider=provider)
     
     if not ok_call:
         return {
@@ -824,7 +762,7 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
         "resposta_json": json_data
     }
 
-def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", progress_callback: Optional[Callable[[int, int, str], None]] = None) -> Dict[str, Any]:
+def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", provider: str = "gemini", progress_callback: Optional[Callable[[int, int, str], None]] = None) -> Dict[str, Any]:
     """Executa la bateria completa de proves i retorna un resum global de rendiment."""
     cases = load_harness_cases()
     if not cases:
@@ -837,7 +775,7 @@ def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", progre
         if progress_callback:
             progress_callback(idx + 1, total_cases, tc.get("titol", f"Test {idx+1}"))
             
-        res = run_harness_single_test(tc, api_key=api_key, model_name=model_name)
+        res = run_harness_single_test(tc, api_key=api_key, model_name=model_name, provider=provider)
         results.append(res)
         time.sleep(0.8)
         
@@ -898,7 +836,7 @@ def clear_harness_status():
     """Restableix l'estat del harness."""
     save_harness_status({"status": "idle", "progress": None, "results": None, "error": None})
 
-def _harness_background_worker(api_key: str, model_name: str):
+def _harness_background_worker(api_key: str, model_name: str, provider: str = "gemini"):
     """Executa la suite en un fil separat i actualitza l'estat progressivament."""
     from datetime import datetime
     cases = load_harness_cases()
@@ -951,7 +889,7 @@ def _harness_background_worker(api_key: str, model_name: str):
             "error": None
         })
         
-        res = run_harness_single_test(tc, api_key=api_key, model_name=model_name)
+        res = run_harness_single_test(tc, api_key=api_key, model_name=model_name, provider=provider)
         results.append(res)
         time.sleep(6.0)
         
@@ -993,13 +931,13 @@ def _harness_background_worker(api_key: str, model_name: str):
         "error": None
     })
 
-def start_harness_suite_background(api_key: str, model_name: str = "gemini-2.5-flash") -> bool:
+def start_harness_suite_background(api_key: str, model_name: str = "gemini-2.5-flash", provider: str = "gemini") -> bool:
     """Inicia la suite en un fil en segon pla (Daemon Thread) si no n'hi ha cap en curs."""
     st_data = get_harness_status()
     if st_data.get("status") == "running":
         return False
         
-    th = threading.Thread(target=_harness_background_worker, args=(api_key, model_name), daemon=True)
+    th = threading.Thread(target=_harness_background_worker, args=(api_key, model_name, provider), daemon=True)
     th.start()
     return True
 

@@ -6,7 +6,8 @@ from core.db import (
     get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row, get_config_supers
 )
 from core.config_manager import load_config
-from core.harness import build_system_prompt_for_case, call_gemini_api, parse_and_clean_json
+from core.harness import build_system_prompt_for_case, parse_and_clean_json
+from core.llm import call_llm_api
 import re
 import urllib.parse
 import json
@@ -1077,7 +1078,7 @@ def render():
                                 rec_list = df_receptes[['id', 'titol', 'categoria', 'apat', 'tags_nutricionals']].to_dict('records')
                             
                             prompt_str = build_system_prompt_for_case(active_case, recipes_catalog=rec_list)
-                            ok_call, raw_resp, latency = call_gemini_api(prompt_str, api_key=api_key, model_name="gemini-1.5-pro")
+                            ok_call, raw_resp, latency = call_llm_api(prompt_str, api_key=api_key, model_name="gemini-1.5-pro", provider="gemini")
                             
                             if ok_call:
                                 json_ok, json_data, json_err = parse_and_clean_json(raw_resp)
