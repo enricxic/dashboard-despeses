@@ -120,7 +120,7 @@ if not alerts_html:
 if "mod" in st.query_params:
     selected_mod = st.query_params.get("mod")
     if st.session_state.get("current_module") != selected_mod:
-        for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic"]:
+        for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar"]:
             st.session_state.pop(k, None)
     st.session_state.current_module = selected_mod
     if "db" in st.query_params:
@@ -153,6 +153,8 @@ if "action" in st.query_params:
         st.session_state["editing_routes"] = True
     elif act == "show_faq_economic":
         st.session_state["show_faq_economic"] = True
+    elif act == "show_faq_menjar":
+        st.session_state["show_faq_menjar"] = True
     elif act == "edit_rules":
         st.session_state["editing_ocr_rules"] = True
     elif act == "clean_orphans":
@@ -392,6 +394,24 @@ if st.session_state.get("show_faq_economic"):
                 del st.session_state["show_faq_economic"]
             st.rerun()
     show_faq_dialog()
+
+if st.session_state.get("show_faq_menjar"):
+    @st.dialog("❓ Preguntes i Respostes (Menús i Cuina)", width="large")
+    def show_faq_menjar_dialog():
+        import os
+        faq_path = os.path.join(os.path.dirname(__file__), "docs", "faq_menjar.md")
+        if os.path.exists(faq_path):
+            with open(faq_path, "r", encoding="utf-8") as f:
+                st.markdown(f.read(), unsafe_allow_html=True)
+        else:
+            st.warning("Encara no s'ha creat l'arxiu de preguntes freqüents.")
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("❌ Tancar", type="secondary"):
+            if "show_faq_menjar" in st.session_state:
+                del st.session_state["show_faq_menjar"]
+            st.rerun()
+    show_faq_menjar_dialog()
 
 @st.dialog("📝 Editar regles súper (OCR)", width="large")
 def show_ocr_rules_editor_dialog():
@@ -766,7 +786,12 @@ div.block-container {{
 <a href="?action=edit_routes{action_suffix}" target="_self">📝 Editar Rutes</a>
 </div>
 </div>
-{f'<a href="?mod=modules.menjar{auth_suffix}" target="_self">🍽️ Menús i cuina</a>' if icones_actives.get('menjar', True) else ''}
+{f'''<div class="submenu-item">
+<a href="?mod=modules.menjar{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🍽️ Menús i cuina</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<div class="submenu-dropdown">
+<a href="?mod=modules.menjar&action=show_faq_menjar{auth_suffix}" target="_self">❓ Preguntes i Respostes</a>
+</div>
+</div>''' if icones_actives.get('menjar', True) else ''}
 {f'<a href="?mod=modules.manteniment{auth_suffix}" target="_self">🛠️ Manteniment de la llar</a>' if icones_actives.get('manteniment', True) else ''}
 {f'<a href="?mod=modules.domotica{auth_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
 {f'<a href="?mod=modules.seguretat{auth_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
