@@ -630,7 +630,7 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
             pass
 
     # Utilitzar el catàleg per defecte ÚNICAMENT en cas que no hi hagi dades a Supabase
-    if not catalog_dict:
+    if not catalog_dict and (supabase_client is None or 'df_prods' not in locals() or df_prods is None or df_prods.empty):
         for item in DEFAULT_PANTRY_CATALOG:
             if not is_excluded_pantry_product(item["nom"], item.get("categoria", "")):
                 k = item["nom"].lower().strip()
