@@ -362,12 +362,20 @@ def cercar_recepta_per_nom(nom_plat: str, df_receptes: pd.DataFrame):
             return row
             
     # 3. Paraules clau significatives
-    words = [w for w in re.split(r'\W+', nom_clean) if len(w) > 3 and w not in ['amb', 'dels', 'deles', 'sense', 'plat', 'estofat', 'estofada', 'planxa', 'forn', 'salsa', 'feta', 'estil']]
+    words = [w for w in re.split(r'\W+', nom_clean) if len(w) > 3 and w not in ['amb', 'dels', 'deles', 'sense', 'plat', 'estofat', 'estofada', 'planxa', 'forn', 'salsa', 'feta', 'estil', 'sopa', 'crema']]
     if words:
+        best_match = None
+        best_score = 0
         for _, row in df_receptes.iterrows():
             t_clean = str(row.get('titol', '')).lower()
-            if any(w in t_clean for w in words):
-                return row
+            score = sum(1 for w in words if w in t_clean)
+            if score > best_score:
+                best_score = score
+                best_match = row
+        
+        # Només retornem si hi ha una coincidència forta (totes les paraules clau principals) o si és l'únic
+        if best_match is not None and best_score >= len(words) * 0.5:
+            return best_match
                 
     return None
 
@@ -402,7 +410,17 @@ def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame,
             st.markdown(f"**{tipus_label}:** {nom_plat}")
             if rec is not None:
                 t_prep = int(rec['temps_prep_minuts']) if pd.notna(rec.get('temps_prep_minuts')) else 0
-                st.caption(f"📖 *{rec.get('titol')}* | ⏱️ {t_prep} min")
+                dificultat = rec.get('dificultat', 'Fàcil') if pd.notna(rec.get('dificultat')) else 'Fàcil'
+                t_tit = str(rec.get('titol', ''))
+                
+                import difflib
+                similitud = difflib.SequenceMatcher(None, t_tit.lower().strip(), nom_plat.lower().strip()).ratio()
+                
+                if similitud < 0.75:
+                    st.caption(f"📖 *{t_tit}* | ⏱️ {t_prep} min | 👨‍🍳 {dificultat}")
+                else:
+                    st.caption(f"⏱️ {t_prep} min | 👨‍🍳 {dificultat}")
+                
                 col_b1, col_b2 = st.columns([3, 1])
                 with col_b1:
                     if st.button("🔍 Veure Recepta", key=key_btn, use_container_width=True):
@@ -586,6 +604,11 @@ def render_pantry_tag_cloud(supabase_client=None) -> List[Dict[str, str]]:
                     nom = str(r.get('nom_estandard', '')).strip()
                     if not nom: continue
                     
+                    # Només carregar productes marcats com a útils pel menú (stockXmenu == True)
+                    x_menu = r.get('stockXmenu')
+                    if pd.isna(x_menu) or x_menu is False or x_menu == 0 or str(x_menu).strip().lower() in ['false', 'f', '0']:
+                        continue
+                        
                     # Suport per a la columna 'x_etiqueta' a la BD tb_productes (si és False/0, s'amaga)
                     x_etq = r.get('x_etiqueta')
                     if pd.notna(x_etq):
@@ -1028,10 +1051,14 @@ def render():
                     st.markdown("---")
                     peticio_general = st.text_area("💬 Petició especial o comentaris addicionals:", key="m_peticio_gen", placeholder="Ex. Diumenge dinar serem 6 comensals per la paella. Sopars de dimarts i dijous molt lleugers.", height=85)
 
-                with st.expander("📦 4. Estoc del Rebost i Ingredients Preferents (Zero Malbaratament)", expanded=True):
+                with st.expander("📦 4. Estoc del Rebost i Congelador (Zero Malbaratament)", expanded=True):
                     pantry_tag_stock = render_pantry_tag_cloud(supabase)
                     st.markdown("---")
-                    stock_input = st.text_area("🧊 Altres ingredients o notes d'estoc manuals (Congelador / Nevera):", key="m_stock_input", placeholder="Ex. Caldo de peix al congelador, 500g de carn picada, carbassons de l'hort", height=85)
+                    c_stock1, c_stock2 = st.columns(2)
+                    with c_stock1:
+                        stock_rebost = st.text_area("🥫 Estoc al Rebost (Sec):", key="m_stock_rebost", placeholder="Ex. 1kg d'arròs, tomàquet fregit, patates...", height=85)
+                    with c_stock2:
+                        stock_congelador = st.text_area("🧊 Estoc al Congelador (Tàpers/Bases):", key="m_stock_congelador", placeholder="Ex. Caldo de peix, tupper de croquetes, verdures congelades...", height=85)
 
                 st.write("")
                 st.write("")
@@ -1040,15 +1067,14 @@ def render():
                     from core.llm_ui import render_ai_selector
                     prov, mod, ai_key = render_ai_selector(key_prefix="menjar", default_model="DeepSeek")
                 with c_ai_btn:
-                    btn_gen_ai = st.button("✨ Generar Menú Setmanal Intel·ligent", use_container_width=True, type="primary")
+                    btn_gen_ai = st.button("✨ Generar Menú Setmanal (Slow Thinking)", use_container_width=True, type="primary")
 
                 if btn_gen_ai:
                     if not comensals_seleccionats:
                         st.warning("Has de seleccionar com a mínim un membre actiu a la llar!")
                     else:
-                        with st.spinner(f"🧠 Generant menú setmanal estructurat amb {mod}..."):
+                        with st.spinner(f"🧠 (Slow Thinking) Analitzant regles i dissenyant menú amb {mod}..."):
 
-                            
                             peticions_list = []
                             if peticio_general.strip():
                                 peticions_list.append({"comensal": "Família", "plat": peticio_general.strip(), "dia_preferit": "Qualsevol"})
@@ -1056,10 +1082,14 @@ def render():
                                 peticions_list.append({"comensal": "Família", "plat": p_plat, "dia_preferit": k_dia})
                             
                             stock_list = list(pantry_tag_stock)
-                            if stock_input.strip():
-                                for s_line in stock_input.split("\n"):
+                            if stock_rebost.strip():
+                                for s_line in stock_rebost.split("\n"):
                                     if s_line.strip():
-                                        stock_list.append({"producte": s_line.strip(), "quantitat": "Disponible", "ubicacio": "Rebost/Congelador"})
+                                        stock_list.append({"producte": s_line.strip(), "quantitat": "Disponible", "ubicacio": "Rebost"})
+                            if stock_congelador.strip():
+                                for s_line in stock_congelador.split("\n"):
+                                    if s_line.strip():
+                                        stock_list.append({"producte": s_line.strip(), "quantitat": "1", "ubicacio": "Congelador (Prioritat Màxima)"})
                             
                             # Construir el cas de prova dinàmic
                             active_case = {
@@ -1067,6 +1097,7 @@ def render():
                                 "titol": "Planificació Setmanal XiquiHouse",
                                 "perfil_familia": comensals_seleccionats,
                                 "regles_llar": {
+                                    "temporada": sel_temp,
                                     "max_carn_vermella": max_carn,
                                     "freq_peix": freq_peix,
                                     "min_peix": freq_peix,
@@ -1089,7 +1120,7 @@ def render():
                             
                             from core.validator import verify_menu_constraints
                             
-                            max_retries = 1
+                            max_retries = 3
                             current_try = 0
                             final_json = None
                             final_err = None

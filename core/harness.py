@@ -84,15 +84,19 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
 
     perfil_txt = ""
     for m in test_case.get("perfil_familia", []):
-        actiu_str = "Present a la llar" if m.get("actiu", True) else "FORA DE LA LLAR (NO COMPUTA COMENSAL)"
+        if not m.get("actiu", True):
+            continue
         alergies_str = ", ".join(m.get("alergies", [])) if m.get("alergies") else "Cap"
         vetos_str = ", ".join(m.get("vetos", [])) if m.get("vetos") else "Cap"
         comodins_str = ", ".join(m.get("comodins", [])) if m.get("comodins") else "Cap"
-        perfil_txt += f"- {m.get('nom')} ({m.get('rol')}, {m.get('edat')} anys) [{actiu_str}]: Al·lèrgies mèdiques: {alergies_str} | Vetos personals: {vetos_str} | Plats comodí: {comodins_str}\n"
+        alts_str = ", ".join(m.get("plats_alternatius", [])) if m.get("plats_alternatius") else comodins_str
+        perfil_txt += f"- {m.get('nom')} ({m.get('rol')}, {m.get('edat')} anys) [Present a la llar]: Al·lèrgies mèdiques: {alergies_str} | Vetos personals: {vetos_str} | Plats comodí (general): {comodins_str} | Alternatives per Vetos: {alts_str}\n"
 
     regles = test_case.get("regles_llar", {})
     us_forn = regles.get("us_forn", "Només cap de setmana (Dissabte i Diumenge)")
-    regles_txt = f"""- Màxim carn vermella: {regles.get('max_carn_vermella', 1)} cop per setmana.
+    temporada = regles.get("temporada", "Tot l'any")
+    regles_txt = f"""- Temporada actual: {temporada}. Adapta l'estil dels plats (evita sopes calentes a l'estiu, evita gaspatxos a l'hivern).
+- Màxim carn vermella: {regles.get('max_carn_vermella', 1)} cop per setmana.
 - Cops de peix: EXACTAMENT {regles.get('freq_peix', regles.get('min_peix', 2))} cops per setmana.
 - Mínim llegums: {regles.get('min_llegums', 2)} cops per setmana.
 - Màxim sopars d'embotits/freds: {regles.get('max_embotits_sopar', 2)} cops per setmana.
@@ -100,9 +104,18 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
 - Disponibilitat del forn: {us_forn}."""
 
     stock_list = test_case.get("stock_disponible", [])
+    stock_rebost = [s for s in stock_list if "Rebost" in s.get("ubicacio", "")]
+    stock_congelador = [s for s in stock_list if "Congelador" in s.get("ubicacio", "")]
+    
     stock_txt = "Cap"
     if stock_list:
-        stock_txt = "\n".join([f"- {s.get('producte')} ({s.get('quantitat')}) a {s.get('ubicacio')}" for s in stock_list])
+        stock_txt = ""
+        if stock_congelador:
+            stock_txt += "🧊 **CONGELADOR (MÀXIMA PRIORITAT - ÚS OBLIGATORI AQUESTA SETMANA):**\n"
+            stock_txt += "\n".join([f"  - {s.get('producte')} ({s.get('quantitat')})" for s in stock_congelador]) + "\n"
+        if stock_rebost:
+            stock_txt += "🥫 **REBOST (Utilitzar preferentment si encaixa):**\n"
+            stock_txt += "\n".join([f"  - {s.get('producte')} ({s.get('quantitat')})" for s in stock_rebost])
 
     peticions_list = test_case.get("peticions_setmanals", [])
     peticions_txt = "Cap"
@@ -122,26 +135,42 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
     # Catàleg de receptes de la família
     receptari_txt = "No hi ha receptari predefinit."
     if cataleg_utilitzar:
-        primers = []
-        segons = []
+        primers_dinar = []
+        segons_dinar = []
+        primers_sopar = []
+        segons_sopar = []
         altres = []
+        
         for r in cataleg_utilitzar:
             if isinstance(r, dict):
                 titol = r.get("titol", "")
                 cat = str(r.get("categoria", "")).lower()
+                apat = str(r.get("apat", "")).lower()
             else:
                 titol = str(r)
                 cat = "primer"
+                apat = "dinar/sopar"
+            
             if not titol: continue
+            
+            es_dinar = "dinar" in apat or not apat or apat == "nan" or "sense" in apat
+            es_sopar = "sopar" in apat or not apat or apat == "nan" or "sense" in apat
+            
             if "primer" in cat:
-                primers.append(titol)
+                if es_dinar: primers_dinar.append(titol)
+                if es_sopar: primers_sopar.append(titol)
             elif "segon" in cat or "únic" in cat or "plat" in cat:
-                segons.append(titol)
+                if es_dinar: segons_dinar.append(titol)
+                if es_sopar: segons_sopar.append(titol)
             else:
                 altres.append(titol)
-        receptari_txt = f"""- PRIMERS PLATS DISPONIBLES AL LLIBRE ({len(primers)} receptes): {', '.join(primers[:60])}
-- SEGONS PLATS DISPONIBLES AL LLIBRE ({len(segons)} receptes): {', '.join(segons[:60])}
-- ALTRES / COMPLEMENTS: {', '.join(altres[:30])}"""
+                
+        # Treure duplicats si estan tant a dinar com a sopar (només visualment, però l'AI ho entendrà)
+        receptari_txt = f"""- PRIMERS PLATS DE DINAR: {', '.join(list(set(primers_dinar))[:40])}
+- SEGONS PLATS DE DINAR: {', '.join(list(set(segons_dinar))[:40])}
+- PRIMERS PLATS DE SOPAR: {', '.join(list(set(primers_sopar))[:40])}
+- SEGONS PLATS DE SOPAR: {', '.join(list(set(segons_sopar))[:40])}
+- ALTRES / COMPLEMENTS: {', '.join(list(set(altres))[:30])}"""
 
     prompt = f"""Ets el planificador nutricional intel·ligent de XiquiHouse.
 La teva missió és dissenyar un menú setmanal equilibrat, deliciós, segur i optimitzat per a la família seguint estrictament aquestes dades:
@@ -241,7 +270,8 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
       "cops_peix": "Quants cops apareix peix? (Assegura't de complir la quantitat EXACTA demanada)",
       "cops_llegums": "Quants cops apareixen llegums? (Mínim 2)"
     }},
-    "peticions_a_integrar": "Llista les peticions que se t'han demanat i com les ubicaràs al calendari."
+    "peticions_a_integrar": "Llista les peticions que se t'han demanat i com les ubicaràs al calendari.",
+    "pla_tactic_estoc": "Explica DIA a DIA com vas a descongelar i utilitzar OBLIGATORIAMENT TOTS els ítems llistats a la secció de CONGELADOR, i quins del REBOST."
   }},
   "dies_planificats": 7,
   "comensals_actius": 3,

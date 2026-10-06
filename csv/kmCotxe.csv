@@ -2,6 +2,7 @@ idRuta;cotxe;data;ruta;contador;km
 604;tívoli;23/06/2026;Sta. Coloma (dimarts);30660.0;54.0
 610;tívoli;22/07/2026;Girona Güell;31711.0;263.0
 616;tívoli;01/09/2026;?;34513.0;232.0
+624;tívoli;03/10/2026;Blanes;35448.0;71.0
 605;tívoli;25/06/2026;Palamós;30802.0;142.0
 611;tívoli;22/07/2026;Palamós;31814.0;103.0
 617;tívoli;11/09/2026;Girona ;34615.0;102.0
@@ -621,3 +622,4 @@ idRuta;cotxe;data;ruta;contador;km
 1;ibiza;01/03/2021;Palamós(Pepe);184690.0;140.0
 603;tívoli;23/06/2026;Palamós;30606.0;224.0
 615;tívoli;25/08/2026;Sta.Coloma (dimarts);34281.0;59.0
+623;tívoli;02/10/2026;Girona;35377.0;93.0

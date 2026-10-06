@@ -3386,9 +3386,11 @@ def render():
                 if 'super_habitual' not in df_prods.columns:
                     df_prods['super_habitual'] = None
                 
-                # Ensure select_stock exists
+                # Ensure select_stock and stockXmenu exist
                 if 'select_stock' not in df_prods.columns:
                     df_prods['select_stock'] = False
+                if 'stockXmenu' not in df_prods.columns:
+                    df_prods['stockXmenu'] = False
                     
                 # Order by familia and nom
                 df_prods = df_prods.sort_values(by=['familia', 'nom_estandard'])
@@ -3406,10 +3408,11 @@ def render():
                     
                 with st.form("form_edicio_rapida_stock"):
                     edited_df = st.data_editor(
-                        df_prods_filtered[['idProducte', 'select_stock', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'lloc']],
+                        df_prods_filtered[['idProducte', 'select_stock', 'stockXmenu', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'lloc']],
                         column_config={
                             "idProducte": None,
                             "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
+                            "stockXmenu": st.column_config.CheckboxColumn("Per Menú?", default=False, help="Marca-ho si és un ingredient útil per suggerir al generador de menús"),
                             "nom_estandard": st.column_config.TextColumn("Producte", disabled=True),
                             "familia": st.column_config.TextColumn("Família", disabled=True),
                             "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=get_config_supers() + ["Sense Assignar"], required=False),
@@ -3433,7 +3436,8 @@ def render():
                             row['stock_minim'] != orig_row['stock_minim'] or 
                             row['lloc'] != orig_row['lloc'] or
                             row['super_habitual'] != orig_row['super_habitual'] or
-                            row['select_stock'] != orig_row['select_stock']):
+                            row['select_stock'] != orig_row['select_stock'] or
+                            row['stockXmenu'] != orig_row['stockXmenu']):
                             
                             def s_float(v):
                                 try:
@@ -3445,6 +3449,7 @@ def render():
                                     
                             supabase.table('tb_productes').update({
                                 'select_stock': bool(row['select_stock']),
+                                'stockXmenu': bool(row['stockXmenu']),
                                 'stock_actual': s_float(row['stock_actual']),
                                 'stock_minim': s_float(row['stock_minim']),
                                 'lloc': str(row['lloc']) if pd.notna(row['lloc']) and str(row['lloc']).strip().lower() != "none" else None,

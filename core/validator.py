@@ -78,11 +78,12 @@ def verify_menu_constraints(menu_json: Dict[str, Any], test_case: Dict[str, Any]
                         vetos_str = ", ".join(vetos_persona)
                         errors.append(f"Has creat un plat alternatiu per a {persona} el {dia_nom} al·legant '{motiu}', però els plats principals ('{plat1}', '{plat2}') NO CONTENEN cap dels seus vetos reals ({vetos_str}). Revisa les dades i no inventis vetos.")
 
-    # 3. Validar límits globals
+    # 3. Validar límits globals i Temporada
     regles = test_case.get("regles_llar", {})
     max_carn = regles.get("max_carn_vermella", 1)
     freq_peix = regles.get("freq_peix", regles.get("min_peix", 2))
     min_llegums = regles.get("min_llegums", 2)
+    temporada = regles.get("temporada", "Tot l'any")
     
     if cops_carn_vermella > max_carn:
         errors.append(f"Has posat carn vermella {cops_carn_vermella} cops a la setmana, i el màxim permès és {max_carn}.")
@@ -90,5 +91,39 @@ def verify_menu_constraints(menu_json: Dict[str, Any], test_case: Dict[str, Any]
         errors.append(f"Has posat peix {cops_peix} cops a la setmana, i s'ha demanat EXACTAMENT {freq_peix} cops.")
     if cops_llegums < min_llegums:
         errors.append(f"Has posat llegums només {cops_llegums} cops a la setmana, i el mínim obligatori és {min_llegums}.")
-        
+
+    # Temporada
+    text_tot_menu = ""
+    for dia_info in dies_planificats:
+        for ap in ["dinar", "sopar"]:
+            apat = dia_info.get(ap)
+            if apat:
+                text_tot_menu += f"{apat.get('primer','')} {apat.get('segon','')} "
+    text_tot_menu = text_tot_menu.lower()
+    
+    if temporada == "Estiu":
+        if "sopa" in text_tot_menu and "freda" not in text_tot_menu:
+            errors.append("És Estiu, no pots programar sopes calentes ni escudelles.")
+        if "escudella" in text_tot_menu:
+            errors.append("És Estiu, no pots programar escudelles.")
+    elif temporada == "Hivern":
+        if "gaspatxo" in text_tot_menu or "salmorejo" in text_tot_menu or "sopa freda" in text_tot_menu:
+            errors.append("És Hivern, no pots programar gaspatxos ni sopes fredes.")
+
+    # 4. Validar ús estricte del Congelador
+    stock = test_case.get("stock_disponible", [])
+    congelador = [s for s in stock if "Congelador" in s.get("ubicacio", "")]
+    if congelador:
+        # Obtenir reflexió per veure si ho esmenta allà o al menú
+        reflexio = str(menu_json.get("reflexio_obligatoria", {})).lower()
+        full_text = text_tot_menu + " " + reflexio
+        for item in congelador:
+            prod = item.get("producte", "").lower()
+            # Agafar paraules clau principals per evitar falsos negatius per plurals o adjectius
+            keywords = [w for w in prod.split() if len(w) > 3]
+            if not keywords: keywords = [prod]
+            found = any(k in full_text for k in keywords)
+            if not found:
+                errors.append(f"TENS L'OBLIGACIÓ D'UTILITZAR EL CONGELADOR. No has utilitzat ni esmentat l'ítem '{prod}' del congelador.")
+
     return list(set(errors))

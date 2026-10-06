@@ -202,6 +202,8 @@ def _get_all_family_members_from_state_and_config():
             m["vetos"] = _parse_comma_str_to_list(st.session_state[f"f_vt_{m_id}"])
         if f"f_com_{m_id}" in st.session_state:
             m["comodins"] = _parse_comma_str_to_list(st.session_state[f"f_com_{m_id}"])
+        if f"f_alt_{m_id}" in st.session_state:
+            m["plats_alternatius"] = _parse_comma_str_to_list(st.session_state[f"f_alt_{m_id}"])
         if f"f_icon_{m_id}" in st.session_state:
             m["icona"] = st.session_state[f"f_icon_{m_id}"]
         if f"f_gcal_{m_id}" in st.session_state:
@@ -851,10 +853,13 @@ def render():
                         cur_vt_str = _format_list_to_comma_str(mem.get("vetos", []))
                         st.text_input("🚫 Vetos i aversions personals (no li agrada)", value=cur_vt_str, placeholder="ex: fetge, casqueria, conill, bledes...", key=f"f_vt_{mem_id}")
                         
-                    c_com1, c_gcal2_col = st.columns([6.5, 3.5])
+                    c_com1, c_alt1, c_gcal2_col = st.columns([4, 4, 2])
                     with c_com1:
                         cur_com_str = _format_list_to_comma_str(mem.get("comodins", []))
-                        st.text_input("🍗 Plats Comodí Favorits (alternatives ràpides)", value=cur_com_str, placeholder="ex: pit de pollastre a la planxa, truita francesa...", key=f"f_com_{mem_id}")
+                        st.text_input("🍗 Plats Comodí Favorits (general)", value=cur_com_str, placeholder="ex: pit de pollastre, truita...", key=f"f_com_{mem_id}")
+                    with c_alt1:
+                        cur_alt_str = _format_list_to_comma_str(mem.get("plats_alternatius", []))
+                        st.text_input("🔄 Alternatives per a Vetos", value=cur_alt_str, placeholder="ex: salsitxes de pollastre, ou dur...", key=f"f_alt_{mem_id}")
                     with c_gcal2_col:
                         cur_col = mem.get("color", "#3b82f6" if i % 2 == 0 else "#ec4899")
                         st.color_picker("Color al calendari", value=cur_col, key=f"f_col_{mem_id}")
