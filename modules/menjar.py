@@ -1177,6 +1177,10 @@ def render():
                         if 'ai_menu_prompt_json' in st.session_state:
                             with st.expander("👁️ Veure el JSON de regles que s'ha enviat a la IA"):
                                 st.json(st.session_state['ai_menu_prompt_json'])
+                                
+                        if 'ai_menu_result' in st.session_state:
+                            with st.expander("👁️ Veure la resposta JSON de la IA"):
+                                st.json(st.session_state['ai_menu_result'])
                         
                         val_errors = menu_obj.get("_validation_errors", [])
                         if val_errors:
