@@ -1157,6 +1157,7 @@ def render():
                             
                             if final_json:
                                 st.session_state['ai_menu_result'] = final_json
+                                st.session_state['ai_menu_prompt_json'] = active_case
                                 st.success(f"🎉 Menú generat amb èxit en {round(total_latency, 1)} segons!")
                             else:
                                 st.error(final_err or "Error desconegut generant el menú.")
@@ -1172,6 +1173,10 @@ def render():
                     with c_tit_m:
                         st.markdown("### 📅 El teu Menú Setmanal")
                         st.caption("Fes clic a **🔍 Veure Recepta** a qualsevol plat per obrir la fitxa sencera.")
+                        
+                        if 'ai_menu_prompt_json' in st.session_state:
+                            with st.expander("👁️ Veure el JSON de regles que s'ha enviat a la IA"):
+                                st.json(st.session_state['ai_menu_prompt_json'])
                         
                         val_errors = menu_obj.get("_validation_errors", [])
                         if val_errors:
