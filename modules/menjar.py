@@ -114,7 +114,7 @@ def cb_afegir_compra(nom, quant):
         st.toast(f"❌ Error afegint {nom}: {e}")
 
 @st.dialog("🔄 Canviar Plat", width="large")
-def modal_canvi_plat(idx_d, apat, clau_plat, cat_filtre, df_receptes):
+def modal_canvi_plat(idx_d, apat, clau_plat, cat_filtre, df_receptes, is_saved_menu=False):
     st.markdown(f"### Selecciona una alternativa per al {clau_plat} del {apat}")
     if df_receptes.empty:
         st.warning("No hi ha receptes a la base de dades.")
@@ -132,9 +132,18 @@ def modal_canvi_plat(idx_d, apat, clau_plat, cat_filtre, df_receptes):
     nou_plat = st.selectbox("Llista de plats disponibles:", [""] + plats_opts)
     
     if st.button("💾 Guardar Canvi", type="primary") and nou_plat:
-        menu_obj = st.session_state['ai_menu_result']
-        menu_obj["menu_setmanal"][idx_d][apat][clau_plat] = nou_plat
-        st.session_state['ai_menu_result'] = menu_obj
+        if is_saved_menu:
+            from core.db import get_supabase_client
+            supa = get_supabase_client("admin")
+            res = supa.table('tb_menu_actiu').select('menu_json').eq('id', 1).execute()
+            if res.data:
+                m_obj = res.data[0]['menu_json']
+                m_obj["menu_setmanal"][idx_d][apat][clau_plat] = nou_plat
+                supa.table('tb_menu_actiu').update({"menu_json": m_obj}).eq('id', 1).execute()
+        else:
+            menu_obj = st.session_state['ai_menu_result']
+            menu_obj["menu_setmanal"][idx_d][apat][clau_plat] = nou_plat
+            st.session_state['ai_menu_result'] = menu_obj
         st.rerun()
 
 @st.dialog("🕐 Com organitzar-se?", width="large")
@@ -389,7 +398,7 @@ def sanitize_segon(p_seg: str) -> str:
         return '-'
     return p_seg
 
-def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame, key_btn: str, n_comensals: int = 3, canvi_args: tuple = None):
+def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame, key_btn: str, n_comensals: int = 3, canvi_args: tuple = None, is_saved_menu=False):
     """Renderitza una targeta visual amb miniatura i botó per obrir la recepta."""
     if not nom_plat or str(nom_plat).strip() in ['-', '', 'null', 'None']:
         return
@@ -430,12 +439,12 @@ def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame,
                 with col_b2:
                     if canvi_args is not None:
                         if st.button("🔄 Canvi", key=f"btn_canvi_{key_btn}", use_container_width=True, type="secondary"):
-                            modal_canvi_plat(canvi_args[0], canvi_args[1], canvi_args[2], canvi_args[2], df_receptes)
+                            modal_canvi_plat(canvi_args[0], canvi_args[1], canvi_args[2], canvi_args[2], df_receptes, is_saved_menu=is_saved_menu)
             else:
                 st.caption("✨ *Proposta de la IA*")
                 if canvi_args is not None:
                     if st.button("🔄 Canvi", key=f"btn_canvi_{key_btn}", use_container_width=True, type="secondary"):
-                        modal_canvi_plat(canvi_args[0], canvi_args[1], canvi_args[2], canvi_args[2], df_receptes)
+                        modal_canvi_plat(canvi_args[0], canvi_args[1], canvi_args[2], canvi_args[2], df_receptes, is_saved_menu=is_saved_menu)
 
 DEFAULT_PANTRY_CATALOG = [
     # Verdura
@@ -762,7 +771,7 @@ def render():
             if not df_receptes.empty and 'categoria' in df_receptes.columns and 'titol' in df_receptes.columns:
                 df_receptes = df_receptes.sort_values(by=['categoria', 'titol'], ascending=[True, True]).reset_index(drop=True)
             
-            subtab_gen, subtab_list, subtab_add = st.tabs(["🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta"])
+            subtab_menu, subtab_gen, subtab_list, subtab_add = st.tabs(["📅 Menú Setmanal (Actiu)", "🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta"])
             
             with subtab_list:
                 # Sistema de Filtres
@@ -929,6 +938,16 @@ def render():
                 st.markdown("### 🧠 Planificador Nutricional Intel·ligent (IA)")
                 st.write("Genera un menú setmanal complet (Primer, Segon i Postre) adaptat a les al·lèrgies mèdiques, vetos personals amb desdoblament de plats, regles nutricionals i estoc existent.")
                 
+                import datetime
+                avui = datetime.date.today()
+                proper_dilluns = avui + datetime.timedelta(days=(7 - avui.weekday()) % 7)
+                if proper_dilluns == avui:
+                    proper_dilluns += datetime.timedelta(days=7)
+                
+                c_d_inici, _ = st.columns([1, 2])
+                with c_d_inici:
+                    data_inici = st.date_input("📅 Data d'inici del Menú:", value=proper_dilluns)
+                
                 cfg = load_config()
                 familia_cfg = cfg.get("familia", [])
                 regles_cfg = cfg.get("regles_menjar", {})
@@ -1027,11 +1046,15 @@ def render():
                     eines_actives_llista = [k for k, v in eines_cfg.items() if v]
                     st.caption(f"🍳 **Equipament de cuina actiu:** {', '.join(eines_actives_llista) if eines_actives_llista else 'Bàsic'}")
 
-                with st.expander("📌 3. Fixar Plats per Dies i Peticions Familiars", expanded=False):
-                    st.markdown("**🗓️ Fixació de plats o preferències per a cada dia de la setmana:**")
-                    st.caption("Pots fixar plats concrets per als dies que vulguis (ex. Llenties dilluns, Sardines divendres, Paella diumenge). La IA respectarà aquests plats obligatòriament.")
+                with st.expander("📌 3. Fixar Plats per Dies i Excepcions", expanded=False):
+                    st.markdown("**🗓️ Fixació de plats i absències per a cada dia de la setmana:**")
+                    st.caption("Pots fixar plats concrets o indicar si algun àpat no menjareu a casa per no planificar-lo.")
                     
-                    dies_setmana = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
+                    noms_base = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
+                    dies_setmana = []
+                    for i in range(7):
+                        d = data_inici + datetime.timedelta(days=i)
+                        dies_setmana.append(f"{noms_base[i]} {d.strftime('%d/%m')}")
                     peticions_dies = {}
                     
                     tabs_dies = st.tabs([f"🗓️ {d}" for d in dies_setmana])
@@ -1040,13 +1063,25 @@ def render():
                         with tab_d:
                             col_pd1, col_pd2 = st.columns(2)
                             with col_pd1:
-                                fix_dinar = st.text_input(f"☀️ Plat fixat per Dinar ({dia_nom}):", key=f"fix_din_{idx_d}", placeholder="Ex. Arròs de verdures / Llenties estofades / Lliure")
-                                if fix_dinar.strip():
-                                    peticions_dies[f"{dia_nom} dinar"] = fix_dinar.strip()
+                                with st.container(border=True):
+                                    st.markdown("##### ☀️ Dinar")
+                                    exc_dinar = st.checkbox("🚫 Fora (No som a casa)", key=f"exc_din_{idx_d}")
+                                    if exc_dinar:
+                                        peticions_dies[f"{dia_nom} dinar"] = "NÚL·L (NO PLANIFICAR, no som a casa)"
+                                    else:
+                                        fix_dinar = st.text_input(f"Plat fixat:", key=f"fix_din_{idx_d}", placeholder="Ex. Arròs de verdures")
+                                        if fix_dinar.strip():
+                                            peticions_dies[f"{dia_nom} dinar"] = fix_dinar.strip()
                             with col_pd2:
-                                fix_sopar = st.text_input(f"🌙 Plat fixat per Sopar ({dia_nom}):", key=f"fix_sop_{idx_d}", placeholder="Ex. Sardines a la planxa / Truita de patates / Lliure")
-                                if fix_sopar.strip():
-                                    peticions_dies[f"{dia_nom} sopar"] = fix_sopar.strip()
+                                with st.container(border=True):
+                                    st.markdown("##### 🌙 Sopar")
+                                    exc_sopar = st.checkbox("🚫 Fora (No som a casa)", key=f"exc_sop_{idx_d}")
+                                    if exc_sopar:
+                                        peticions_dies[f"{dia_nom} sopar"] = "NÚL·L (NO PLANIFICAR, no som a casa)"
+                                    else:
+                                        fix_sopar = st.text_input(f"Plat fixat:", key=f"fix_sop_{idx_d}", placeholder="Ex. Truita de patates")
+                                        if fix_sopar.strip():
+                                            peticions_dies[f"{dia_nom} sopar"] = fix_sopar.strip()
                     
                     st.markdown("---")
                     peticio_general = st.text_area("💬 Petició especial o comentaris addicionals:", key="m_peticio_gen", placeholder="Ex. Diumenge dinar serem 6 comensals per la paella. Sopars de dimarts i dijous molt lleugers.", height=85)
@@ -1169,6 +1204,17 @@ def render():
                     menu_setmanal = menu_obj.get("menu_setmanal", [])
                     
                     st.markdown("---")
+                    
+                    if st.button("💾 Guardar com a Menú Setmanal Actiu", type="primary", use_container_width=True):
+                        try:
+                            if supabase_client:
+                                supabase_client.table('tb_menu_actiu').update({"menu_json": menu_obj}).eq("id", 1).execute()
+                                st.toast("Menú guardat correctament a la pestanya principal! 📅", icon="✅")
+                            else:
+                                st.error("No hi ha connexió a Supabase per guardar-ho.")
+                        except Exception as e:
+                            st.error(f"Error guardant el menú: {e}")
+                            
                     c_tit_m, c_btn_regen, c_btn_down = st.columns([6, 2, 2])
                     with c_tit_m:
                         st.markdown("### 📅 El teu Menú Setmanal")
@@ -1388,6 +1434,96 @@ def render():
                                 st.markdown("- " + "\n- ".join(ings_comprar))
                     else:
                         st.write("Tots els ingredients estan disponibles.")
+                        
+            with subtab_menu:
+                st.markdown("### 📅 El teu Menú Setmanal (Actiu)")
+                
+                # Llegir de la base de dades
+                if supabase_client:
+                    res = supabase_client.table('tb_menu_actiu').select('menu_json, data_guardat').eq('id', 1).execute()
+                    if res.data and len(res.data) > 0 and res.data[0].get('menu_json'):
+                        saved_menu_obj = res.data[0]['menu_json']
+                        saved_data_guardat = res.data[0]['data_guardat']
+                        
+                        try:
+                            # Parse data guardat
+                            from datetime import datetime
+                            dt = datetime.fromisoformat(saved_data_guardat.replace('Z', '+00:00'))
+                            str_data = dt.strftime("%d/%m/%Y %H:%M")
+                        except:
+                            str_data = saved_data_guardat
+                            
+                        st.caption(f"Última actualització: {str_data}")
+                        
+                        menu_setmanal_saved = saved_menu_obj.get("menu_setmanal", [])
+                        if not menu_setmanal_saved:
+                            st.info("El menú guardat està buit.")
+                        else:
+                            for idx_d, dia_data in enumerate(menu_setmanal_saved):
+                                dia_nom = dia_data.get("dia", f"Dia {idx_d+1}")
+                                dinar = dia_data.get("dinar", {})
+                                sopar = dia_data.get("sopar", {})
+                                
+                                with st.container(border=True):
+                                    st.markdown(f"#### 🗓️ {dia_nom}")
+                                    c_d1, c_d2 = st.columns(2)
+                                    
+                                    with c_d1:
+                                        with st.container(border=True):
+                                            c_title_d, c_btn_d = st.columns([3, 2])
+                                            with c_title_d:
+                                                st.markdown("##### ☀️ Dinar")
+                                            with c_btn_d:
+                                                is_fora_d = dinar.get("fora", False)
+                                                if st.button("🚫 Fora" if not is_fora_d else "✅ Restaurar", key=f"btn_fora_d_{idx_d}", use_container_width=True):
+                                                    dinar["fora"] = not is_fora_d
+                                                    # Desar a Supabase
+                                                    supabase_client.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
+                                                    st.rerun()
+                                            
+                                            if dinar.get("fora", False):
+                                                st.markdown("<div style='text-align:center; padding:20px; color:#aaa; font-style:italic;'>🚫 Menjant a fora o anul·lat</div>", unsafe_allow_html=True)
+                                            else:
+                                                p_prim = dinar.get('primer', dinar.get('plat', '-'))
+                                                p_seg = sanitize_segon(dinar.get('segon', '-'))
+                                                p_post = dinar.get('postre', 'Fruita de temporada')
+                                                
+                                                if p_prim and p_prim != '-':
+                                                    render_plat_card("🥣 1r Plat", p_prim, df_receptes, f"btn_sav_d_p1_{idx_d}", canvi_args=(idx_d, "dinar", "primer"), is_saved_menu=True)
+                                                if p_seg and p_seg != '-':
+                                                    render_plat_card("🥩/🐟 2n Plat", p_seg, df_receptes, f"btn_sav_d_p2_{idx_d}", canvi_args=(idx_d, "dinar", "segon"), is_saved_menu=True)
+                                                st.markdown(f"<div style='margin-top:6px; padding:6px 10px; background:#18221e; border-radius:6px; font-size:0.9rem;'>🍏 <strong>Postre:</strong> {p_post}</div>", unsafe_allow_html=True)
+                                                
+                                    with c_d2:
+                                        with st.container(border=True):
+                                            c_title_s, c_btn_s = st.columns([3, 2])
+                                            with c_title_s:
+                                                st.markdown("##### 🌙 Sopar")
+                                            with c_btn_s:
+                                                is_fora_s = sopar.get("fora", False)
+                                                if st.button("🚫 Fora" if not is_fora_s else "✅ Restaurar", key=f"btn_fora_s_{idx_d}", use_container_width=True):
+                                                    sopar["fora"] = not is_fora_s
+                                                    # Desar a Supabase
+                                                    supabase_client.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
+                                                    st.rerun()
+                                                    
+                                            if sopar.get("fora", False):
+                                                st.markdown("<div style='text-align:center; padding:20px; color:#aaa; font-style:italic;'>🚫 Menjant a fora o anul·lat</div>", unsafe_allow_html=True)
+                                            else:
+                                                s_prim = sopar.get('primer', '')
+                                                s_seg = sanitize_segon(sopar.get('segon', sopar.get('plat', '-')))
+                                                s_post = sopar.get('postre', 'Iogurt')
+                                                
+                                                if s_prim and s_prim.strip() and s_prim != '-':
+                                                    render_plat_card("🥣 1r Plat", s_prim, df_receptes, f"btn_sav_s_p1_{idx_d}", canvi_args=(idx_d, "sopar", "primer"), is_saved_menu=True)
+                                                if s_seg and s_seg != '-':
+                                                    render_plat_card("🍳 Plat principal", s_seg, df_receptes, f"btn_sav_s_p2_{idx_d}", canvi_args=(idx_d, "sopar", "segon"), is_saved_menu=True)
+                                                st.markdown(f"<div style='margin-top:6px; padding:6px 10px; background:#18221e; border-radius:6px; font-size:0.9rem;'>🥛 <strong>Postre:</strong> {s_post}</div>", unsafe_allow_html=True)
+                    else:
+                        st.info("Actualment no tens cap menú guardat com a actiu. Genera'n un des del 'Recomanador de Menús' i clica 'Guardar com a Menú Setmanal Actiu'.")
+                else:
+                    st.error("No s'ha pogut connectar amb la base de dades.")
+                    
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
 
