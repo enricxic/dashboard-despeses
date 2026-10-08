@@ -30,7 +30,7 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 1. **⚙️ Configuracions**: `modules/admin.py` *(Icona engranatge)* - Panell de control i configuració global:
    - `👤 Administrador`: Dades de contacte, avatar i PIN mestre.
    - `🏷️ Títol de la casa`: Paraules, colors i tamany del títol d'inici.
-   - `👨‍👩‍👧‍👦 Família`: Membres de la llar amb data de naixement europea (`DD/MM/AAAA`), recàlcul automàtic d'edat en anys, al·lèrgies mèdiques (bloqueig estricte), vetos/aversions personals (desdoblament), plats comodí favorits i interruptor d'activació (`🟢 Present a la llar` vs `⚪ Fora de la llar`).
+   - `👨‍👩‍👧‍👦 Família`: Membres de la llar amb data de naixement europea (`DD/MM/AAAA`), recàlcul automàtic d'edat en anys, telèfon mòbil, al·lèrgies mèdiques (bloqueig estricte), vetos/aversions personals (desdoblament), plats comodí favorits i interruptor d'activació (`🟢 Present a la llar` vs `⚪ Fora de la llar`).
    - `🍽️ Menús i Nutrició`: 
      * Regles de salut (màxim carns vermelles, mínim peix i llegums, màxim sopars d'embotits), control d'hidrats consecutius, disponibilitat del forn i format de planificació.
      * **🍳 Aparells i Eines Disponibles**: Selector visual amb 14 eines de cuina clau (`forn`, `microones`, `airfryer`, `bascula`, `minipimer`, `batedora_vas`, `motlles_silicona`, `olla_pressio`, `liquadora`, `tallafiambres`, `robot_cuina`, `picadora`, `sifo_n2o`, `mandolina`) amb miniatures d'estudi homogènies i ampliació modal interactiva   - `🧪 Laboratori IA (Harness)`: Banc de proves integrat per avaluar la precisió, seguretat d'al·lèrgies mèdiques, gestió de vetos i adaptació a l'equipament dels models Gemini, amb **execució en segon pla (asíncrona)** i **descàrrega d'informes en format Text (.txt)**.
@@ -153,6 +153,16 @@ Dashboard/
   - Les quantitats de compra es calculen restant l'stock real existent: $\text{Compra} = \max(0, \text{Necessari} - \text{Stock})$.
 - **Consens Familiar via WhatsApp:** Generació automàtica d'enllaços de petició i consens per a desitjos de comensals (ex. sardines).
 
+### 4.6 Control de Repeticions i Priorització de Receptes
+- **Historial de Plats:** Cada vegada que es desa un menú o es genera la Mise en place, les receptes planificades s'apunten automàticament a `tb_historial_menjars`.
+- **Regla Anti-Repetició:** El recomanador de menús llegeix la taula de l'historial i prohibeix terminantment a la IA proposar un plat que s'hagi consumit en els últims `X` dies (configurable per l'usuari, per defecte 15 dies).
+- **Estrelles i Qualificació:** El catàleg lliurat a la IA adjunta les puntuacions actuals de cada plat. La IA té instruccions per prioritzar plats de 4 i 5 estrelles, discriminant les opcions pitjor valorades a l'hora de tancar la quadricula.
+
+### 4.7 Bústia de Peticions i Demandes Familiars
+- **Pestanya de Peticions:** S'habilita un formulari (pestanya "📥 Bústia Peticions") on els membres poden demanar plats concrets per menjar durant la setmana.
+- **Circuit d'Aprovació:** Les peticions es desen a `tb_peticions_menjar` en estat *Pendent*. El planificador del menú pot *Acceptar* o *Rebutjar* cada petició des del tauler de control.
+- **Assimilació Automàtica:** Si hi ha peticions *Acceptades*, aquestes s'injecten imperativament a la llista d'exigències del *prompt* perquè la IA les col·loqui al proper menú generat de forma automàtica.
+
 ---
 
 ## 5. Laboratori IA (Harness) i Benchmarking (`core/harness.py`)
@@ -270,6 +280,8 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **06/10/2026**: Integració de funcionalitats "Slow Thinking" al generador de menús (`core/validator.py`, `core/harness.py`, `modules/menjar.py`), permetent a la IA reflexionar i auto-corregir-se davant al·lucinacions, millorant el compliment de regles nutricionals, i discriminant entre l'estoc del rebost i el del congelador.
 - **06/10/2026**: Habilitada la categorització per `apat` ("Dinar", "Sopar", "Dinar/Sopar") al *prompt* enviat a la IA per millorar la coherència en la tria de plats segons el moment del dia, llegint el camp directament de `tb_receptes_pro`.
 - **06/10/2026**: Afegit suport per a una nova columna `stockXmenu` (booleana) a la taula `tb_productes`. Aquesta casella d'activació, editable des de la Taula Ràpida de Rebost a `modules/compres.py`, filtra de manera estricta els productes que es passen com a candidats per generar plats al Recomanador de Menús (amagant així articles inútils com sal, llet, paper, etc.).
+- **08/10/2026**: Integració de la **Bústia de Peticions**, permetent als membres demanar plats que seran validats i inclosos automàticament al proper menú de la IA. Implementació del registre de l'**Historial de Menjars**, aplicant una regla estricta que impedeix a la IA repetir plats ja consumits en els últims X dies. Finalment, adició del paràmetre del **telèfon mòbil** al perfil de membres de la família (preparació per l'enviament de menús) i millora del *prompt* per afavorir les receptes amb les millors **estrelles (valoració)**.
+
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**
 > Tot el codi i disseny que genera el sistema es desen primer de tot en **local** (al PC físic del client), i l'assistent s'encarrega d'enviar-ho seguidament i de manera obligatòria al repositori del núvol de **GitHub**. D'aquesta manera, l'usuari sempre té la còpia de seguretat original de tot el programa als seus discos, però gaudeix de les actualitzacions web al moment gràcies a l'enllaç de GitHub amb Streamlit Cloud.
