@@ -1207,8 +1207,8 @@ def render():
                     
                     if st.button("💾 Guardar com a Menú Setmanal Actiu", type="primary", use_container_width=True):
                         try:
-                            if supabase_client:
-                                supabase_client.table('tb_menu_actiu').update({"menu_json": menu_obj}).eq("id", 1).execute()
+                            if supabase:
+                                supabase.table('tb_menu_actiu').update({"menu_json": menu_obj}).eq("id", 1).execute()
                                 st.toast("Menú guardat correctament a la pestanya principal! 📅", icon="✅")
                             else:
                                 st.error("No hi ha connexió a Supabase per guardar-ho.")
@@ -1439,8 +1439,8 @@ def render():
                 st.markdown("### 📅 El teu Menú Setmanal (Actiu)")
                 
                 # Llegir de la base de dades
-                if supabase_client:
-                    res = supabase_client.table('tb_menu_actiu').select('menu_json, data_guardat').eq('id', 1).execute()
+                if supabase:
+                    res = supabase.table('tb_menu_actiu').select('menu_json, data_guardat').eq('id', 1).execute()
                     if res.data and len(res.data) > 0 and res.data[0].get('menu_json'):
                         saved_menu_obj = res.data[0]['menu_json']
                         saved_data_guardat = res.data[0]['data_guardat']
@@ -1478,7 +1478,7 @@ def render():
                                                 if st.button("🚫 Fora" if not is_fora_d else "✅ Restaurar", key=f"btn_fora_d_{idx_d}", use_container_width=True):
                                                     dinar["fora"] = not is_fora_d
                                                     # Desar a Supabase
-                                                    supabase_client.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
+                                                    supabase.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
                                                     st.rerun()
                                             
                                             if dinar.get("fora", False):
@@ -1504,7 +1504,7 @@ def render():
                                                 if st.button("🚫 Fora" if not is_fora_s else "✅ Restaurar", key=f"btn_fora_s_{idx_d}", use_container_width=True):
                                                     sopar["fora"] = not is_fora_s
                                                     # Desar a Supabase
-                                                    supabase_client.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
+                                                    supabase.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
                                                     st.rerun()
                                                     
                                             if sopar.get("fora", False):
