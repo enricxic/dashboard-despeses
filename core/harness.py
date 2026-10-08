@@ -90,7 +90,16 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
         vetos_str = ", ".join(m.get("vetos", [])) if m.get("vetos") else "Cap"
         comodins_str = ", ".join(m.get("comodins", [])) if m.get("comodins") else "Cap"
         alts_str = ", ".join(m.get("plats_alternatius", [])) if m.get("plats_alternatius") else comodins_str
-        perfil_txt += f"- {m.get('nom')} ({m.get('rol')}, {m.get('edat')} anys) [Present a la llar]: Al·lèrgies mèdiques: {alergies_str} | Vetos personals: {vetos_str} | Plats comodí (general): {comodins_str} | Alternatives per Vetos: {alts_str}\n"
+        
+        perfil_line = f"- {m.get('nom')} ({m.get('rol')}, {m.get('edat')} anys) [Present a la llar]: Al·lèrgies mèdiques: {alergies_str} | Vetos personals: {vetos_str} | Plats comodí (general): {comodins_str} | Alternatives per Vetos: {alts_str}"
+        
+        d_tip = m.get("dieta_tipus", "").strip()
+        d_dur = m.get("dieta_duracio", "").strip()
+        d_mal = m.get("dieta_malaltia", "").strip()
+        if d_tip or d_dur or d_mal:
+            perfil_line += f" | 🏥 DIETA ESPECIAL PRIORITÀRIA: Tipus '{d_tip}', Duració '{d_dur}', Malaltia/Nota '{d_mal}'"
+            
+        perfil_txt += perfil_line + "\n"
 
     regles = test_case.get("regles_llar", {})
     us_forn = regles.get("us_forn", "Només cap de setmana (Dissabte i Diumenge)")
@@ -102,19 +111,6 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
 - Màxim sopars d'embotits/freds: {regles.get('max_embotits_sopar', 2)} cops per setmana.
 - CRÍTIC: NO pots servir arròs ni pasta en dies consecutius (si avui hi ha arròs/pasta, demà NO n'hi pot haver). Intercala amb llegums, verdures o carn/peix.
 - Disponibilitat del forn: {us_forn}."""
-
-    dieta_tipus = regles.get("dieta_tipus", "").strip()
-    dieta_duracio = regles.get("dieta_duracio", "").strip()
-    dieta_malaltia = regles.get("dieta_malaltia", "").strip()
-    if dieta_tipus or dieta_duracio or dieta_malaltia:
-        regles_txt += "\n\n### 🏥 DIETA CLÍNICA I ESPECIAL (PRIORITAT MÀXIMA AQUESTA SETMANA):"
-        if dieta_tipus:
-            regles_txt += f"\n- Tipus de dieta a seguir: {dieta_tipus}"
-        if dieta_duracio:
-            regles_txt += f"\n- Duració aplicable: {dieta_duracio}"
-        if dieta_malaltia:
-            regles_txt += f"\n- Instruccions específiques / Malaltia: {dieta_malaltia}"
-        regles_txt += "\n⚠️ AQUESTES RESTRICCIONS SUPEREN QUALSEVOL ALTRA REGLA NUTRICIONAL (com repeticions de carn/peix). Modifica tots els àpats afectats per adaptar-los a aquesta dieta."
 
     stock_list = test_case.get("stock_disponible", [])
     stock_rebost = [s for s in stock_list if "Rebost" in s.get("ubicacio", "")]

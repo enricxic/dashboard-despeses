@@ -985,6 +985,11 @@ def render():
                                 comod_input = st.text_input("Plats comodí", value=", ".join(m_comodins_list), key=f"com_m_{idx_f}", placeholder="Ex. Pit de pollastre, Truita")
                                 cur_comodins = [c.strip() for c in comod_input.split(",") if c.strip()]
                                 
+                                with st.expander("🏥 Dieta Especial", expanded=False):
+                                    cur_d_tip = st.text_input("Tipus de dieta", value=memb.get("dieta_tipus", ""), key=f"d_tip_{idx_f}", placeholder="Ex. Dieta tova")
+                                    cur_d_dur = st.text_input("Duració", value=memb.get("dieta_duracio", ""), key=f"d_dur_{idx_f}", placeholder="Ex. Tota la setmana")
+                                    cur_d_mal = st.text_input("Malaltia/Nota", value=memb.get("dieta_malaltia", ""), key=f"d_mal_{idx_f}", placeholder="Ex. Evitar picant")
+                                
                                 if chk:
                                     comensals_seleccionats.append({
                                         "nom": m_nom,
@@ -993,21 +998,14 @@ def render():
                                         "actiu": True,
                                         "alergies": sel_al,
                                         "vetos": cur_vetos,
-                                        "comodins": cur_comodins
+                                        "comodins": cur_comodins,
+                                        "dieta_tipus": cur_d_tip.strip(),
+                                        "dieta_duracio": cur_d_dur.strip(),
+                                        "dieta_malaltia": cur_d_mal.strip()
                                     })
                                 else:
                                     st.caption("*(Fora de la llar aquesta setmana)*")
                     
-                    st.write("")
-                    st.markdown("##### 🏥 Dietes Clíniques i Especials de la Setmana")
-                    c_d1, c_d2, c_d3 = st.columns(3)
-                    with c_d1:
-                        dieta_tipus = st.text_input("Tipus de dieta", value=regles_cfg.get("dieta_tipus", ""), placeholder="Ex. Dieta tova, Baix en sal", key="in_dieta_tipus")
-                    with c_d2:
-                        dieta_duracio = st.text_input("Duració de la dieta", value=regles_cfg.get("dieta_duracio", ""), placeholder="Ex. Tota la setmana, Fins dimecres", key="in_dieta_duracio")
-                    with c_d3:
-                        dieta_malaltia = st.text_input("Alimentació específica", value=regles_cfg.get("dieta_malaltia", ""), placeholder="Ex. Evitar picant per gastritis", key="in_dieta_malaltia")
-                        
                     st.write("")
                     if st.button("💾 Desar aquests ajustos a la configuració permanent de la família (config.json)", key="btn_save_fam_from_planner", use_container_width=True):
                         from core.config_manager import load_app_config, save_app_config
@@ -1025,14 +1023,12 @@ def render():
                                 memb["circunstancies"] = cur_al
                                 memb["vetos"] = [v.strip() for v in str(vet_txt).split(",") if v.strip()]
                                 memb["comodins"] = [c.strip() for c in str(com_txt).split(",") if c.strip()]
+                                
+                                memb["dieta_tipus"] = st.session_state.get(f"d_tip_{idx_f}", "")
+                                memb["dieta_duracio"] = st.session_state.get(f"d_dur_{idx_f}", "")
+                                memb["dieta_malaltia"] = st.session_state.get(f"d_mal_{idx_f}", "")
+                                
                         cur_cfg["familia"] = cur_fam
-                        
-                        # Desar dietes
-                        if "regles_menjar" not in cur_cfg:
-                            cur_cfg["regles_menjar"] = {}
-                        cur_cfg["regles_menjar"]["dieta_tipus"] = st.session_state.get("in_dieta_tipus", "")
-                        cur_cfg["regles_menjar"]["dieta_duracio"] = st.session_state.get("in_dieta_duracio", "")
-                        cur_cfg["regles_menjar"]["dieta_malaltia"] = st.session_state.get("in_dieta_malaltia", "")
                         
                         if save_app_config(cur_cfg):
                             st.toast("✅ Ajustos de la família i dieta desats correctament a config.json!", icon="💾")
@@ -1174,10 +1170,7 @@ def render():
                                     "min_llegums": min_lleg,
                                     "max_embotits_sopar": max_embotits,
                                     "no_repetir_hidrats": chk_hidrats,
-                                    "us_forn": sel_forn,
-                                    "dieta_tipus": dieta_tipus,
-                                    "dieta_duracio": dieta_duracio,
-                                    "dieta_malaltia": dieta_malaltia
+                                    "us_forn": sel_forn
                                 },
                                 "eines_disponibles": eines_actives_llista,
                                 "stock_disponible": stock_list,
