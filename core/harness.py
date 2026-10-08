@@ -103,6 +103,19 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
 - CRÍTIC: NO pots servir arròs ni pasta en dies consecutius (si avui hi ha arròs/pasta, demà NO n'hi pot haver). Intercala amb llegums, verdures o carn/peix.
 - Disponibilitat del forn: {us_forn}."""
 
+    dieta_tipus = regles.get("dieta_tipus", "").strip()
+    dieta_duracio = regles.get("dieta_duracio", "").strip()
+    dieta_malaltia = regles.get("dieta_malaltia", "").strip()
+    if dieta_tipus or dieta_duracio or dieta_malaltia:
+        regles_txt += "\n\n### 🏥 DIETA CLÍNICA I ESPECIAL (PRIORITAT MÀXIMA AQUESTA SETMANA):"
+        if dieta_tipus:
+            regles_txt += f"\n- Tipus de dieta a seguir: {dieta_tipus}"
+        if dieta_duracio:
+            regles_txt += f"\n- Duració aplicable: {dieta_duracio}"
+        if dieta_malaltia:
+            regles_txt += f"\n- Instruccions específiques / Malaltia: {dieta_malaltia}"
+        regles_txt += "\n⚠️ AQUESTES RESTRICCIONS SUPEREN QUALSEVOL ALTRA REGLA NUTRICIONAL (com repeticions de carn/peix). Modifica tots els àpats afectats per adaptar-los a aquesta dieta."
+
     stock_list = test_case.get("stock_disponible", [])
     stock_rebost = [s for s in stock_list if "Rebost" in s.get("ubicacio", "")]
     stock_congelador = [s for s in stock_list if "Congelador" in s.get("ubicacio", "")]
@@ -120,7 +133,8 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
     peticions_list = test_case.get("peticions_setmanals", [])
     peticions_txt = "Cap"
     if peticions_list:
-        peticions_txt = "\n".join([f"- {p.get('comensal')}: '{p.get('plat')}' (Preferència: {p.get('dia_preferit', 'Qualsevol')}) [Consens Aprovat]" for p in peticions_list])
+        peticions_txt = "\n".join([f"- {p.get('comensal')}: '{p.get('plat')}' (Preferència: {p.get('dia_preferit', 'Qualsevol')})" for p in peticions_list])
+        peticions_txt += "\n⚠️ Llegeix bé les excepcions on membres estiguin absents, ja que s'han d'ignorar absolutament els seus vetos per aquells àpats concrets i reduir-ne la quantitat de menjar."
 
     valoracions = test_case.get("valoracions_previes", {})
     val_txt = "Cap"

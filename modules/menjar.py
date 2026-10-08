@@ -999,6 +999,16 @@ def render():
                                     st.caption("*(Fora de la llar aquesta setmana)*")
                     
                     st.write("")
+                    st.markdown("##### 🏥 Dietes Clíniques i Especials de la Setmana")
+                    c_d1, c_d2, c_d3 = st.columns(3)
+                    with c_d1:
+                        dieta_tipus = st.text_input("Tipus de dieta", value=regles_cfg.get("dieta_tipus", ""), placeholder="Ex. Dieta tova, Baix en sal", key="in_dieta_tipus")
+                    with c_d2:
+                        dieta_duracio = st.text_input("Duració de la dieta", value=regles_cfg.get("dieta_duracio", ""), placeholder="Ex. Tota la setmana, Fins dimecres", key="in_dieta_duracio")
+                    with c_d3:
+                        dieta_malaltia = st.text_input("Alimentació específica", value=regles_cfg.get("dieta_malaltia", ""), placeholder="Ex. Evitar picant per gastritis", key="in_dieta_malaltia")
+                        
+                    st.write("")
                     if st.button("💾 Desar aquests ajustos a la configuració permanent de la família (config.json)", key="btn_save_fam_from_planner", use_container_width=True):
                         from core.config_manager import load_app_config, save_app_config
                         cur_cfg = load_app_config()
@@ -1016,9 +1026,17 @@ def render():
                                 memb["vetos"] = [v.strip() for v in str(vet_txt).split(",") if v.strip()]
                                 memb["comodins"] = [c.strip() for c in str(com_txt).split(",") if c.strip()]
                         cur_cfg["familia"] = cur_fam
+                        
+                        # Desar dietes
+                        if "regles_menjar" not in cur_cfg:
+                            cur_cfg["regles_menjar"] = {}
+                        cur_cfg["regles_menjar"]["dieta_tipus"] = st.session_state.get("in_dieta_tipus", "")
+                        cur_cfg["regles_menjar"]["dieta_duracio"] = st.session_state.get("in_dieta_duracio", "")
+                        cur_cfg["regles_menjar"]["dieta_malaltia"] = st.session_state.get("in_dieta_malaltia", "")
+                        
                         if save_app_config(cur_cfg):
-                            st.toast("✅ Ajustos de la família desats correctament a config.json!", icon="💾")
-                            st.success("✅ Ajustos de la família desats correctament a config.json!")
+                            st.toast("✅ Ajustos de la família i dieta desats correctament a config.json!", icon="💾")
+                            st.success("✅ Ajustos de la família i dieta desats correctament a config.json!")
                             st.rerun()
                 
                 with st.expander("🥗 2. Regles Nutricionals de la Llar", expanded=False):
@@ -1057,6 +1075,9 @@ def render():
                         dies_setmana.append(f"{noms_base[i]} {d.strftime('%d/%m')}")
                     peticions_dies = {}
                     
+                    membres_actius_noms = [m.get("nom") for m in familia_cfg if m.get("actiu", True)]
+                    opts_fora = ["Tots a fora"] + membres_actius_noms
+                    
                     tabs_dies = st.tabs([f"🗓️ {d}" for d in dies_setmana])
                     for idx_d, tab_d in enumerate(tabs_dies):
                         dia_nom = dies_setmana[idx_d]
@@ -1065,23 +1086,37 @@ def render():
                             with col_pd1:
                                 with st.container(border=True):
                                     st.markdown("##### ☀️ Dinar")
-                                    exc_dinar = st.checkbox("🚫 Fora (No som a casa)", key=f"exc_din_{idx_d}")
-                                    if exc_dinar:
+                                    exc_dinar = st.multiselect("🚫 Membres absents", options=opts_fora, key=f"exc_din_{idx_d}")
+                                    if "Tots a fora" in exc_dinar:
                                         peticions_dies[f"{dia_nom} dinar"] = "NÚL·L (NO PLANIFICAR, no som a casa)"
                                     else:
                                         fix_dinar = st.text_input(f"Plat fixat:", key=f"fix_din_{idx_d}", placeholder="Ex. Arròs de verdures")
+                                        
+                                        peticio_final_d = ""
+                                        if exc_dinar:
+                                            peticio_final_d += f"Membres absents per aquest àpat: {', '.join(exc_dinar)}. No apliquis els seus vetos. "
                                         if fix_dinar.strip():
-                                            peticions_dies[f"{dia_nom} dinar"] = fix_dinar.strip()
+                                            peticio_final_d += fix_dinar.strip()
+                                            
+                                        if peticio_final_d:
+                                            peticions_dies[f"{dia_nom} dinar"] = peticio_final_d.strip()
                             with col_pd2:
                                 with st.container(border=True):
                                     st.markdown("##### 🌙 Sopar")
-                                    exc_sopar = st.checkbox("🚫 Fora (No som a casa)", key=f"exc_sop_{idx_d}")
-                                    if exc_sopar:
+                                    exc_sopar = st.multiselect("🚫 Membres absents", options=opts_fora, key=f"exc_sop_{idx_d}")
+                                    if "Tots a fora" in exc_sopar:
                                         peticions_dies[f"{dia_nom} sopar"] = "NÚL·L (NO PLANIFICAR, no som a casa)"
                                     else:
                                         fix_sopar = st.text_input(f"Plat fixat:", key=f"fix_sop_{idx_d}", placeholder="Ex. Truita de patates")
+                                        
+                                        peticio_final_s = ""
+                                        if exc_sopar:
+                                            peticio_final_s += f"Membres absents per aquest àpat: {', '.join(exc_sopar)}. No apliquis els seus vetos. "
                                         if fix_sopar.strip():
-                                            peticions_dies[f"{dia_nom} sopar"] = fix_sopar.strip()
+                                            peticio_final_s += fix_sopar.strip()
+                                            
+                                        if peticio_final_s:
+                                            peticions_dies[f"{dia_nom} sopar"] = peticio_final_s.strip()
                     
                     st.markdown("---")
                     peticio_general = st.text_area("💬 Petició especial o comentaris addicionals:", key="m_peticio_gen", placeholder="Ex. Diumenge dinar serem 6 comensals per la paella. Sopars de dimarts i dijous molt lleugers.", height=85)
@@ -1139,7 +1174,10 @@ def render():
                                     "min_llegums": min_lleg,
                                     "max_embotits_sopar": max_embotits,
                                     "no_repetir_hidrats": chk_hidrats,
-                                    "us_forn": sel_forn
+                                    "us_forn": sel_forn,
+                                    "dieta_tipus": dieta_tipus,
+                                    "dieta_duracio": dieta_duracio,
+                                    "dieta_malaltia": dieta_malaltia
                                 },
                                 "eines_disponibles": eines_actives_llista,
                                 "stock_disponible": stock_list,
