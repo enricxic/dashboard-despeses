@@ -206,6 +206,8 @@ def _get_all_family_members_from_state_and_config():
             m["plats_alternatius"] = _parse_comma_str_to_list(st.session_state[f"f_alt_{m_id}"])
         if f"f_icon_{m_id}" in st.session_state:
             m["icona"] = st.session_state[f"f_icon_{m_id}"]
+        if f"f_tel_{m_id}" in st.session_state:
+            m["telefon"] = str(st.session_state[f"f_tel_{m_id}"]).strip()
         if f"f_gcal_{m_id}" in st.session_state:
             m["google_calendar_ical"] = str(st.session_state[f"f_gcal_{m_id}"]).strip()
         if f"f_col_{m_id}" in st.session_state:
@@ -864,7 +866,11 @@ def render():
                         cur_col = mem.get("color", "#3b82f6" if i % 2 == 0 else "#ec4899")
                         st.color_picker("Color al calendari", value=cur_col, key=f"f_col_{mem_id}")
                         
-                    st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{mem_id}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
+                    c_tel, c_gcal = st.columns([3, 7])
+                    with c_tel:
+                        st.text_input("📱 Telèfon mòbil", value=mem.get("telefon", ""), key=f"f_tel_{mem_id}", placeholder="ex: 600000000")
+                    with c_gcal:
+                        st.text_input("📅 Enllaç privat iCal de Google Calendar (opcional)", value=mem.get("google_calendar_ical", ""), key=f"f_gcal_{mem_id}", placeholder="https://calendar.google.com/calendar/ical/.../basic.ics")
                         
             st.write("")
             _render_flash_message()
