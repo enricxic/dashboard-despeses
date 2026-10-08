@@ -112,6 +112,14 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
 - CRÍTIC: NO pots servir arròs ni pasta en dies consecutius (si avui hi ha arròs/pasta, demà NO n'hi pot haver). Intercala amb llegums, verdures o carn/peix.
 - Disponibilitat del forn: {us_forn}."""
 
+    plats_recents = regles.get("plats_recents", [])
+    if plats_recents and regles.get("dies_no_repetir", 15) > 0:
+        regles_txt += f"\n- 🛑 PROHIBIT REPETIR: Aquests plats s'han menjat en els últims {regles.get('dies_no_repetir', 15)} dies i tens absolutament prohibit incloure'ls de nou sota cap concepte: {', '.join(plats_recents)}."
+        
+    if regles.get("prioritzar_estrelles", True):
+        regles_txt += "\n- ⭐ PRIORITAT ESTRELLES: Rebràs els plats del catàleg amb una nota (ex: [⭐4]). Prioritza SEMPRE que puguis els plats que tinguin 4 o 5 estrelles i evita si és possible els de menor nota."
+
+
     stock_list = test_case.get("stock_disponible", [])
     stock_rebost = [s for s in stock_list if "Rebost" in s.get("ubicacio", "")]
     stock_congelador = [s for s in stock_list if "Congelador" in s.get("ubicacio", "")]
@@ -156,6 +164,9 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
                 titol = r.get("titol", "")
                 cat = str(r.get("categoria", "")).lower()
                 apat = str(r.get("apat", "")).lower()
+                estrelles = r.get("estrelles", 4)
+                if titol:
+                    titol = f"{titol} [⭐{estrelles}]"
             else:
                 titol = str(r)
                 cat = "primer"

@@ -8,19 +8,19 @@ SUPABASE_URL = cfg['SUPABASE_URL']
 SUPABASE_KEY = cfg['SUPABASE_KEY_PUBLISHABLE']
 
 images_to_upload = [
-    (116, r"e:\Dashboard\imatges\116.png"),
-    (184, r"e:\Dashboard\imatges\184.png"),
-    (53, r"e:\Dashboard\imatges\53.png"),
-    (134, r"e:\Dashboard\imatges\134.png"),
-    (169, r"e:\Dashboard\imatges\169.png"),
-    (55, r"e:\Dashboard\imatges\55.png"),
-    (133, r"e:\Dashboard\imatges\133.png"),
-    (148, r"e:\Dashboard\imatges\148.png"),
-    (64, r"e:\Dashboard\imatges\64.png"),
-    (66, r"e:\Dashboard\imatges\66.png"),
-    (67, r"e:\Dashboard\imatges\67.png"),
-    (68, r"e:\Dashboard\imatges\68.png"),
-    (71, r"e:\Dashboard\imatges\71.png")
+    (50, r"e:\Dashboard\imatges\50.png"),
+    (176, r"e:\Dashboard\imatges\176.png"),
+    (85, r"e:\Dashboard\imatges\85.png"),
+    (163, r"e:\Dashboard\imatges\163.png"),
+    (21, r"e:\Dashboard\imatges\21.png"),
+    (36, r"e:\Dashboard\imatges\36.png"),
+    (46, r"e:\Dashboard\imatges\46.png"),
+    (47, r"e:\Dashboard\imatges\47.png"),
+    (48, r"e:\Dashboard\imatges\48.png"),
+    (212, r"e:\Dashboard\imatges\212.png"),
+    (38, r"e:\Dashboard\imatges\38.png"),
+    (185, r"e:\Dashboard\imatges\185.png"),
+    (128, r"e:\Dashboard\imatges\128.png")
 ]
 
 headers_storage = {

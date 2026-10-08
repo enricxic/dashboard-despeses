@@ -353,6 +353,57 @@ def modal_recepta(row):
                     st.caption(f"{f_ico} **{f_nom}**")
                     st.slider("Nota", 0, 5, 4, key=f"val_{row['id']}_{idx_f}", label_visibility="collapsed")
 
+def sync_historial_menjars(supabase_client, menu_json):
+    if not supabase_client or not menu_json:
+        return
+    try:
+        import datetime
+        menu_setmanal = menu_json.get("menu_setmanal", [])
+        data_inici_iso = menu_json.get("data_inici_iso")
+        if not data_inici_iso:
+            return
+            
+        data_inici = datetime.datetime.fromisoformat(data_inici_iso).date()
+        
+        dates_in_menu = []
+        for i in range(len(menu_setmanal)):
+            d_str = (data_inici + datetime.timedelta(days=i)).isoformat()
+            dates_in_menu.append(d_str)
+            
+        if not dates_in_menu:
+            return
+            
+        for d in dates_in_menu:
+            supabase_client.table('tb_historial_menjars').delete().eq("data_apat", d).execute()
+            
+        nous_registres = []
+        for i, dia_data in enumerate(menu_setmanal):
+            d_str = (data_inici + datetime.timedelta(days=i)).isoformat()
+            
+            dinar = dia_data.get("dinar", {})
+            sopar = dia_data.get("sopar", {})
+            
+            if not dinar.get("fora", False):
+                p1 = dinar.get("primer") or dinar.get("plat")
+                if p1 and p1 != "-":
+                    nous_registres.append({"data_apat": d_str, "tipus_apat": "Dinar", "nom_plat": p1, "tipus_plat": "Primer"})
+                p2 = dinar.get("segon")
+                if p2 and p2 != "-":
+                    nous_registres.append({"data_apat": d_str, "tipus_apat": "Dinar", "nom_plat": p2, "tipus_plat": "Segon"})
+                    
+            if not sopar.get("fora", False):
+                p1 = sopar.get("primer") or sopar.get("plat")
+                if p1 and p1 != "-":
+                    nous_registres.append({"data_apat": d_str, "tipus_apat": "Sopar", "nom_plat": p1, "tipus_plat": "Primer"})
+                p2 = sopar.get("segon")
+                if p2 and p2 != "-":
+                    nous_registres.append({"data_apat": d_str, "tipus_apat": "Sopar", "nom_plat": p2, "tipus_plat": "Segon"})
+                    
+        if nous_registres:
+            supabase_client.table('tb_historial_menjars').insert(nous_registres).execute()
+    except Exception as e:
+        print(f"Error sincronitzant historial: {e}")
+
 def cercar_recepta_per_nom(nom_plat: str, df_receptes: pd.DataFrame):
     """Cerca de forma tolerant una recepta al DataFrame pel nom o paraules clau."""
     if not nom_plat or df_receptes is None or df_receptes.empty or str(nom_plat).strip() in ['-', '', 'null', 'None']:
@@ -771,7 +822,7 @@ def render():
             if not df_receptes.empty and 'categoria' in df_receptes.columns and 'titol' in df_receptes.columns:
                 df_receptes = df_receptes.sort_values(by=['categoria', 'titol'], ascending=[True, True]).reset_index(drop=True)
             
-            subtab_menu, subtab_mise, subtab_gen, subtab_list, subtab_add = st.tabs(["📅 Menú Setmanal (Actiu)", "🔪 Mise en place", "🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta"])
+            subtab_menu, subtab_mise, subtab_gen, subtab_list, subtab_add, subtab_busti = st.tabs(["📅 Menú Setmanal (Actiu)", "🔪 Mise en place", "🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta", "📥 Bústia Peticions"])
             
             with subtab_list:
                 # Sistema de Filtres
@@ -1052,6 +1103,8 @@ def render():
                     with c_r3:
                         max_embotits = st.number_input("Màx. sopars embotits / freds", min_value=0, max_value=7, value=int(regles_cfg.get("max_embotits_sopar", 2)), key="m_max_embotits")
                         chk_hidrats = st.checkbox("🚫 Zero repeticions d'hidrats en dies consecutius", value=True, key="m_chk_hidrats")
+                        dies_no_repetir = st.number_input("⏳ Dies de marge sense repetir plat", min_value=0, max_value=60, value=int(regles_cfg.get("dies_no_repetir", 15)), key="m_dies_no_repetir")
+                        prioritzar_estrelles = st.checkbox("⭐ Prioritzar plats amb més estrelles", value=bool(regles_cfg.get("prioritzar_estrelles", True)), key="m_prio_estrelles")
                         forn_options = ["Cada dia / Qualsevol dia", "Només cap de setmana (Dissabte i Diumenge)"]
                         def_forn = regles_cfg.get("us_forn", forn_options[1])
                         sel_forn = st.selectbox("🔥 Disponibilitat del forn", forn_options, index=forn_options.index(def_forn) if def_forn in forn_options else 1, key="m_sel_forn")
@@ -1146,6 +1199,15 @@ def render():
                                 peticions_list.append({"comensal": "Família", "plat": peticio_general.strip(), "dia_preferit": "Qualsevol"})
                             for k_dia, p_plat in peticions_dies.items():
                                 peticions_list.append({"comensal": "Família", "plat": p_plat, "dia_preferit": k_dia})
+                                
+                            if supabase:
+                                try:
+                                    res_acc = supabase.table("tb_peticions_menjar").select("*").eq("estat", "Acceptat").execute()
+                                    if res_acc.data:
+                                        for p in res_acc.data:
+                                            peticions_list.append({"comensal": p["comensal_nom"], "plat": p["plat_demanat"], "dia_preferit": "Qualsevol"})
+                                except Exception as e:
+                                    print(f"Error llegint bústia peticions: {e}")
                             
                             stock_list = list(pantry_tag_stock)
                             if stock_rebost.strip():
@@ -1157,10 +1219,22 @@ def render():
                                     if s_line.strip():
                                         stock_list.append({"producte": s_line.strip(), "quantitat": "1", "ubicacio": "Congelador (Prioritat Màxima)"})
                             
+                            plats_recents = []
+                            if dies_no_repetir > 0 and supabase:
+                                try:
+                                    import datetime
+                                    d_limit = (data_inici - datetime.timedelta(days=dies_no_repetir)).isoformat()
+                                    res_hist = supabase.table("tb_historial_menjars").select("nom_plat").gte("data_apat", d_limit).execute()
+                                    if res_hist.data:
+                                        plats_recents = list(set([r["nom_plat"] for r in res_hist.data if r.get("nom_plat")]))
+                                except Exception as e:
+                                    print(f"Error llegint historial: {e}")
+
                             # Construir el cas de prova dinàmic
                             active_case = {
                                 "id": "PLAN_SETMANAL_ACTUAL",
                                 "titol": "Planificació Setmanal XiquiHouse",
+                                "data_inici_iso": data_inici.isoformat(),
                                 "perfil_familia": comensals_seleccionats,
                                 "regles_llar": {
                                     "temporada": sel_temp,
@@ -1170,7 +1244,10 @@ def render():
                                     "min_llegums": min_lleg,
                                     "max_embotits_sopar": max_embotits,
                                     "no_repetir_hidrats": chk_hidrats,
-                                    "us_forn": sel_forn
+                                    "us_forn": sel_forn,
+                                    "dies_no_repetir": dies_no_repetir,
+                                    "prioritzar_estrelles": prioritzar_estrelles,
+                                    "plats_recents": plats_recents
                                 },
                                 "eines_disponibles": eines_actives_llista,
                                 "stock_disponible": stock_list,
@@ -1180,7 +1257,10 @@ def render():
                             
                             rec_list = []
                             if not df_receptes.empty:
-                                rec_list = df_receptes[['id', 'titol', 'categoria', 'apat', 'tags_nutricionals']].to_dict('records')
+                                cols_to_keep = ['id', 'titol', 'categoria', 'apat', 'tags_nutricionals']
+                                if 'estrelles' in df_receptes.columns:
+                                    cols_to_keep.append('estrelles')
+                                rec_list = df_receptes[cols_to_keep].to_dict('records')
                             
                             prompt_str = build_system_prompt_for_case(active_case, recipes_catalog=rec_list)
                             
@@ -1222,6 +1302,7 @@ def render():
                                     break
                             
                             if final_json:
+                                final_json["data_inici_iso"] = active_case.get("data_inici_iso")
                                 st.session_state['ai_menu_result'] = final_json
                                 st.session_state['ai_menu_prompt_json'] = active_case
                                 st.success(f"🎉 Menú generat amb èxit en {round(total_latency, 1)} segons!")
@@ -1240,6 +1321,7 @@ def render():
                         try:
                             if supabase:
                                 supabase.table('tb_menu_actiu').update({"menu_json": menu_obj}).eq("id", 1).execute()
+                                sync_historial_menjars(supabase, menu_obj)
                                 st.toast("Menú guardat correctament a la pestanya principal! 📅", icon="✅")
                             else:
                                 st.error("No hi ha connexió a Supabase per guardar-ho.")
@@ -1510,6 +1592,7 @@ def render():
                                                     dinar["fora"] = not is_fora_d
                                                     # Desar a Supabase
                                                     supabase.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
+                                                    sync_historial_menjars(supabase, saved_menu_obj)
                                                     st.rerun()
                                             
                                             if dinar.get("fora", False):
@@ -1536,6 +1619,7 @@ def render():
                                                     sopar["fora"] = not is_fora_s
                                                     # Desar a Supabase
                                                     supabase.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
+                                                    sync_historial_menjars(supabase, saved_menu_obj)
                                                     st.rerun()
                                                     
                                             if sopar.get("fora", False):
@@ -1588,6 +1672,7 @@ def render():
                                 if "❌ Error" not in res_mise:
                                     saved_menu_obj["mise_en_place_md"] = res_mise
                                     supabase.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
+                                    sync_historial_menjars(supabase, saved_menu_obj)
                                     st.session_state["gen_mise"] = False
                                     st.rerun()
                                 else:
@@ -1597,6 +1682,60 @@ def render():
                         st.info("No hi ha cap menú actiu. Vés al 'Recomanador de Menús' i desa'n un per poder generar la Mise en place.")
                 else:
                     st.error("Sense connexió a la base de dades.")
+
+            with subtab_busti:
+                st.markdown("### 📥 Bústia de Peticions")
+                st.write("Demana el plat que et ve de gust menjar aquesta setmana. La persona que cuini decidirà si ho accepta per al proper menú!")
+                
+                with st.form("form_peticio"):
+                    c_com, c_plat = st.columns(2)
+                    with c_com:
+                        f_nom = st.text_input("Qui ho demana? (El teu nom)")
+                    with c_plat:
+                        f_plat = st.text_input("Quin plat vols?")
+                    submit_pet = st.form_submit_button("Enviar Petició")
+                    if submit_pet:
+                        if f_nom.strip() and f_plat.strip() and supabase:
+                            supabase.table("tb_peticions_menjar").insert({
+                                "comensal_nom": f_nom.strip(),
+                                "plat_demanat": f_plat.strip(),
+                                "estat": "Pendent"
+                            }).execute()
+                            st.success("Petició enviada! 🎉")
+                            st.rerun()
+                        else:
+                            st.error("Omple tots els camps.")
+                            
+                st.markdown("---")
+                st.markdown("#### 📋 Llistat de Peticions")
+                if supabase:
+                    res_pet = supabase.table("tb_peticions_menjar").select("*").order("id", desc=True).execute()
+                    if res_pet.data:
+                        for p in res_pet.data:
+                            with st.container(border=True):
+                                c1, c2, c3 = st.columns([5, 2, 3])
+                                with c1:
+                                    icon = "⏳" if p['estat'] == 'Pendent' else "✅" if p['estat'] == 'Acceptat' else "❌"
+                                    st.markdown(f"{icon} **{p['comensal_nom']}** ha demanat: **{p['plat_demanat']}**")
+                                with c2:
+                                    st.caption(f"Estat: {p['estat']}")
+                                with c3:
+                                    if p['estat'] == 'Pendent':
+                                        cc1, cc2 = st.columns(2)
+                                        with cc1:
+                                            if st.button("✔️", key=f"acc_{p['id']}", help="Acceptar per al menú"):
+                                                supabase.table("tb_peticions_menjar").update({"estat": "Acceptat"}).eq("id", p['id']).execute()
+                                                st.rerun()
+                                        with cc2:
+                                            if st.button("❌", key=f"reb_{p['id']}", help="Rebutjar"):
+                                                supabase.table("tb_peticions_menjar").update({"estat": "Rebutjat"}).eq("id", p['id']).execute()
+                                                st.rerun()
+                                    else:
+                                        if st.button("🗑️ Eliminar", key=f"del_{p['id']}"):
+                                            supabase.table("tb_peticions_menjar").delete().eq("id", p['id']).execute()
+                                            st.rerun()
+                    else:
+                        st.info("No hi ha peticions actualment.")
 
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
