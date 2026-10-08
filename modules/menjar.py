@@ -771,7 +771,7 @@ def render():
             if not df_receptes.empty and 'categoria' in df_receptes.columns and 'titol' in df_receptes.columns:
                 df_receptes = df_receptes.sort_values(by=['categoria', 'titol'], ascending=[True, True]).reset_index(drop=True)
             
-            subtab_menu, subtab_gen, subtab_list, subtab_add = st.tabs(["📅 Menú Setmanal (Actiu)", "🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta"])
+            subtab_menu, subtab_mise, subtab_gen, subtab_list, subtab_add = st.tabs(["📅 Menú Setmanal (Actiu)", "🔪 Mise en place", "🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta"])
             
             with subtab_list:
                 # Sistema de Filtres
@@ -1524,6 +1524,49 @@ def render():
                 else:
                     st.error("No s'ha pogut connectar amb la base de dades.")
                     
+            with subtab_mise:
+                st.markdown("### 🔪 Organització i Mise en Place")
+                st.write("Genera una guia pràctica de Batch Cooking per estalviar temps durant la setmana basant-te en el Menú Setmanal Actiu.")
+                
+                if supabase:
+                    res = supabase.table('tb_menu_actiu').select('menu_json, data_guardat').eq('id', 1).execute()
+                    if res.data and len(res.data) > 0 and res.data[0].get('menu_json'):
+                        saved_menu_obj = res.data[0]['menu_json']
+                        
+                        mise_actual = saved_menu_obj.get("mise_en_place_md", "")
+                        if mise_actual:
+                            st.success("Ja tens una Mise en place generada per a aquest menú.")
+                            with st.container(border=True):
+                                st.markdown(mise_actual)
+                                
+                            if st.button("🔄 Tornar a generar (Sobreescriure)", type="secondary"):
+                                st.session_state["gen_mise"] = True
+                                st.rerun()
+                        else:
+                            st.info("Encara no has generat la Mise en place per al menú actiu.")
+                            if st.button("✨ Generar Pla de Batch Cooking", type="primary", use_container_width=True):
+                                st.session_state["gen_mise"] = True
+                                st.rerun()
+                                
+                        # Executar generació si s'ha premut el botó
+                        if st.session_state.get("gen_mise", False):
+                            with st.spinner("🧑‍🍳 El xef d'IA està analitzant les receptes del menú i planificant els talls i coccions..."):
+                                from core.harness import generate_mise_en_place_call
+                                res_mise = generate_mise_en_place_call(saved_menu_obj, df_receptes.to_dict('records') if not df_receptes.empty else [])
+                                
+                                if "❌ Error" not in res_mise:
+                                    saved_menu_obj["mise_en_place_md"] = res_mise
+                                    supabase.table('tb_menu_actiu').update({"menu_json": saved_menu_obj}).eq('id', 1).execute()
+                                    st.session_state["gen_mise"] = False
+                                    st.rerun()
+                                else:
+                                    st.error(res_mise)
+                                    st.session_state["gen_mise"] = False
+                    else:
+                        st.info("No hi ha cap menú actiu. Vés al 'Recomanador de Menús' i desa'n un per poder generar la Mise en place.")
+                else:
+                    st.error("Sense connexió a la base de dades.")
+
         except Exception as e:
             st.error(f"Error carregant Menjar: {e}")
 

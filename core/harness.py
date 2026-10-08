@@ -1214,3 +1214,85 @@ def generate_harness_markdown_report(data: Dict[str, Any], is_single: bool = Fal
                     
     lines.append("\n\n---\n*Informe generat automàticament pel Laboratori d'IA i Harness Nutricional de XiquiHouse.*")
     return "\n".join(lines)
+
+
+def build_mise_en_place_prompt(menu_json, receptes_cataleg):
+    """
+    Genera el prompt per a la IA per a extreure i organitzar la 'Mise en place' d'un menú ja planificat.
+    """
+    import json
+    menu_str = json.dumps(menu_json, indent=2, ensure_ascii=False)
+    
+    # Recopilar els noms dels plats per incloure només les receptes rellevants i estalviar tokens
+    noms_plats = set()
+    for dia in menu_json.get("menu_setmanal", []):
+        for apat in ["dinar", "sopar"]:
+            obj = dia.get(apat, {})
+            if obj.get("primer") and obj.get("primer") != "-":
+                noms_plats.add(obj.get("primer"))
+            if obj.get("segon") and obj.get("segon") != "-":
+                noms_plats.add(obj.get("segon"))
+            if obj.get("postre") and obj.get("postre") != "-":
+                noms_plats.add(obj.get("postre"))
+            if obj.get("plat_alternatiu"):
+                alt = obj.get("plat_alternatiu")
+                if isinstance(alt, dict) and alt.get("plat"):
+                    noms_plats.add(alt.get("plat"))
+                    
+    receptes_filtrades = []
+    for r in receptes_cataleg:
+        if r.get("titol") in noms_plats:
+            receptes_filtrades.append(r)
+            
+    receptes_str = json.dumps(receptes_filtrades, indent=2, ensure_ascii=False)
+    
+    prompt = f"""
+Ets un xef d'alta cuina expert en "Batch Cooking" i "Mise en place" per a famílies.
+El teu objectiu és analitzar un Menú Setmanal ja generat i el detall de les seves receptes, i crear una guia d'organització extremadament pràctica per estalviar temps durant la setmana.
+
+### MENÚ SETMANAL ACTIU:
+```json
+{menu_str}
+```
+
+### RECEPTES ASSOCIADES (amb ingredients i preparació):
+```json
+{receptes_str}
+```
+
+### INSTRUCCIONS DE SORTIDA:
+Escriu el resultat EXCLUSIVAMENT en format Markdown (visualment atractiu, usant emojis i llistes).
+NO expliquis el menú dia per dia. Has d'AGRUPAR les tasques.
+
+Estructura obligatòria:
+1. **🥬 Talls i Preparacions (Mise en place bàsica)**: (Ex: "Ceba: Picar 4 cebes grans perquè es necessiten pel Dilluns (Sofregit) i Dimecres (Paella). Guarda-les en un tàper.")
+2. **🍳 Batch Cooking (Cocció prèvia)**: (Ex: "Fes un sofregit base el diumenge per a X i Y", "Bull 4 ous i guarda'ls a la nevera per a les amanides", "Deixa els cigrons en remull la nit abans")
+3. **🧊 Marinar i Descongelar**: Quins dies concrets s'ha de treure alguna cosa del congelador per al dia següent.
+
+Sigues directe, pràctic, en català, i no t'inventis ingredients que no estiguin a les receptes o al menú.
+Només has de respondre amb el text Markdown de la "Mise en Place".
+"""
+    return prompt.strip()
+
+
+def generate_mise_en_place_call(menu_json, receptes_cataleg, model="gemini-2.5-flash"):
+    """
+    Crida a l'API del LLM per generar la Mise en place a partir del menú actiu.
+    """
+    from core.api_clients import call_llm
+    
+    prompt = build_mise_en_place_prompt(menu_json, receptes_cataleg)
+    system_prompt = "Ets el millor Xef Organitzador de Batch Cooking del món. La teva sortida ha de ser exclusivament Markdown pràctic."
+    
+    try:
+        raw_response = call_llm(
+            prompt=prompt,
+            system_prompt=system_prompt,
+            model=model,
+            response_format="text",
+            temperature=0.3
+        )
+        return raw_response
+    except Exception as e:
+        return f"❌ Error generant la Mise en place: {e}"
+
