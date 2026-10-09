@@ -330,6 +330,7 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
         "primer": "Crema de carbassó amb crostons",
         "segon": "Lluç a la planxa amb verdures saltades",
         "postre": "Poma de temporada",
+        "calories_aprox": 650,
         "ingredients_principals": ["carbassó", "ceba", "lluç", "verdures", "poma"],
         "apte_per": ["Nom1", "Nom2"],
         "plat_alternatiu": null
@@ -338,6 +339,7 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
         "primer": "Amanida verda de tomàquet",
         "segon": "Truita francesa amb tomàquet amanit",
         "postre": "Pera de temporada",
+        "calories_aprox": 400,
         "ingredients_principals": ["enciam", "tomàquet", "ous", "pera"],
         "apte_per": ["Nom1", "Nom2"],
         "plat_alternatiu": {{
