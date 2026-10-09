@@ -843,7 +843,12 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
             "puntuacio_dietetic": 0.0,
             "latencia_s": latency,
             "errors": [raw_resp],
-            "resposta_json": {}
+            "resposta_json": {},
+            "parametres_avaluats": {
+                "perfil_familia": test_case.get("perfil_familia", []),
+                "regles_llar": test_case.get("regles_llar", {}),
+                "eines_disponibles": test_case.get("eines_disponibles", {})
+            }
         }
         
     json_ok, json_data, json_err = parse_and_clean_json(raw_resp)
@@ -863,7 +868,12 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
             "puntuacio_dietetic": 0.0,
             "latencia_s": latency,
             "errors": [f"Error estructural: {json_err}"],
-            "resposta_json": {}
+            "resposta_json": {},
+            "parametres_avaluats": {
+                "perfil_familia": test_case.get("perfil_familia", []),
+                "regles_llar": test_case.get("regles_llar", {}),
+                "eines_disponibles": test_case.get("eines_disponibles", {})
+            }
         }
         
     # Execució dels Graders
@@ -894,7 +904,12 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
         "puntuacio_dietetic": score_dietetic,
         "latencia_s": latency,
         "errors": all_errors,
-        "resposta_json": json_data
+        "resposta_json": json_data,
+        "parametres_avaluats": {
+            "perfil_familia": test_case.get("perfil_familia", []),
+            "regles_llar": test_case.get("regles_llar", {}),
+            "eines_disponibles": test_case.get("eines_disponibles", {})
+        }
     }
 
 def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", provider: str = "gemini", progress_callback: Optional[Callable[[int, int, str], None]] = None) -> Dict[str, Any]:
