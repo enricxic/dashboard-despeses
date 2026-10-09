@@ -309,16 +309,20 @@ def modal_recepta(row):
                     st.video(vid_str)
         
         with col_d:
-            c_ing_title, c_com = st.columns([2.2, 1.8], vertical_alignment="center")
+            c_ing_title, c_stats = st.columns([2.2, 1.8], vertical_alignment="center")
             with c_ing_title:
                 st.markdown("### Ingredients:")
-            with c_com:
-                num_c = st.number_input("Comensals", min_value=1, max_value=30, value=3, step=1, key=f"rec_comensals_{row['id']}")
+            with c_stats:
+                salut_val = row.get('puntuacio_salut', 0)
+                salut_num = int(salut_val) if pd.notna(salut_val) and str(salut_val).strip().lower() != 'nan' else 0
+                cals_val = row.get('calories', 0)
+                cals_num = int(cals_val) if pd.notna(cals_val) and str(cals_val).strip().lower() != 'nan' else 0
+                
+                cals_str = f"{cals_num} kcal" if cals_num > 0 else "N/A"
+                st.markdown(f"<div style='text-align:right; font-size:1.05rem; padding-top:10px;'>🔥 <b>{cals_str}</b> &nbsp;|&nbsp; 💚 <b>Salut: {salut_num}/10</b></div>", unsafe_allow_html=True)
             
-            st.caption(f"Quantitats calculades per a **{num_c} comensals** (recepta base: 3 persones):")
             ing_val = row.get('ingredients', '')
-            scaled_ing = scale_ingredients(ing_val, base=3, target=num_c)
-            st.info(scaled_ing)
+            st.info(ing_val)
             
             mise = row.get('mise_en_place', '')
             if pd.notna(mise) and str(mise).strip() != '' and str(mise).strip().lower() != 'nan':
@@ -326,15 +330,12 @@ def modal_recepta(row):
                 st.info(str(mise).strip())
                 
             st.markdown("### Info Addicional:")
-            salut = row.get('puntuacio_salut', 0)
-            salut_str = int(salut) if pd.notna(salut) and str(salut).strip().lower() != 'nan' else 0
             temp = row.get('temporada', '')
             temp_str = temp if pd.notna(temp) and str(temp).strip().lower() != 'nan' else "Tot l'any"
             ori = row.get('origen', 'Desconegut')
             ori_str = ori if pd.notna(ori) and str(ori).strip().lower() != 'nan' else 'Desconegut'
             
-            st.write(f"**Salut:** {salut_str}/10 | **Temporada:** {temp_str}")
-            st.write(f"**Origen:** {ori_str}")
+            st.write(f"**Temporada:** {temp_str} | **Origen:** {ori_str}")
             
             st.markdown("### Instruccions:")
             ins_val = row.get('instruccions', '')

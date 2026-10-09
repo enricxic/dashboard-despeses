@@ -6,7 +6,7 @@ from core.llm import call_llm_api
 
 # Load config
 cfg = toml.load('e:/Dashboard/.streamlit/secrets.toml')
-gemini_key = cfg['GEMINI_API_KEY']
+gemini_key = cfg.get('GEMINI_API_KEY')
 
 def estimate_calories(titol, ingredients):
     prompt = f"""
@@ -17,13 +17,17 @@ def estimate_calories(titol, ingredients):
     RESPON ÚNICAMENT AMB EL NÚMERO ENTER EN KCAL, res més. Per exemple: 450
     """
     try:
-        ok, resp, lat = call_llm_api(prompt, gemini_key, "gemini-1.5-flash", "gemini")
+        ok, resp, lat = call_llm_api(prompt, gemini_key, "gemini-2.5-flash", "gemini")
         if ok:
             text = resp.strip().replace('kcal', '').replace('Kcal', '').strip()
             # Keep only numbers
             cal_str = ''.join([c for c in text if c.isdigit()])
             if cal_str:
                 return int(cal_str)
+            else:
+                print(f"Failed to parse number from: {resp}")
+        else:
+            print(f"API Error: {resp}")
         return 0
     except Exception as e:
         print(f"Error estimating for {titol}: {e}")
