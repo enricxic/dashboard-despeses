@@ -73,6 +73,21 @@ def load_harness_cases(file_path: Optional[str] = None, include_live: bool = Tru
         if live_case and live_case.get("id"):
             cases.append(live_case)
             
+    try:
+        from core.config_manager import load_app_config
+        cfg = load_app_config()
+        overrides = cfg.get("harness_overrides", {})
+        if overrides:
+            r_ov = overrides.get("regles_menjar")
+            e_ov = overrides.get("eines_cuina")
+            for c in cases:
+                if r_ov:
+                    c.setdefault("regles_llar", {}).update(r_ov)
+                if e_ov:
+                    c["eines_disponibles"] = e_ov
+    except Exception as e:
+        print(f"Error aplicant overrides a harness cases: {e}")
+        
     return cases
 
 def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Optional[List[Any]] = None, recipes_sample: Optional[List[Any]] = None, **kwargs) -> str:

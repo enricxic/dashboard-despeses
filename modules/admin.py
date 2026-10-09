@@ -1266,34 +1266,72 @@ def render():
                     else:
                         st.info("Cap membre familiar actiu.")
                         
-                with st.expander("🍳 Eines i Forn", expanded=True):
-                    regles = cfg.get("regles_menjar", {})
-                    st.markdown(f"- **Ús del Forn:** {regles.get('us_forn', 'Cada dia')}")
-                    eines = cfg.get("eines_cuina", {})
-                    eines_actives = [k for k, v in eines.items() if v]
-                    if eines_actives:
-                        st.markdown(f"- **Eines Actives:** {', '.join(eines_actives).replace('_', ' ').title()}")
-                    else:
-                        st.markdown("- Cap eina addicional activa.")
+                with st.expander("🍳 Eines i Forn (Editables per a Proves)", expanded=True):
+                    overrides = cfg.get("harness_overrides", {})
+                    regles = overrides.get("regles_menjar", cfg.get("regles_menjar", {}))
+                    eines = overrides.get("eines_cuina", cfg.get("eines_cuina", {}))
+                    
+                    forn_opts = ["Cada dia / Qualsevol dia", "Només cap de setmana (Dissabte i Diumenge)"]
+                    c_forn = regles.get("us_forn", forn_opts[1])
+                    idx_forn = forn_opts.index(c_forn) if c_forn in forn_opts else 1
+                    h_forn = st.selectbox("Ús del Forn", forn_opts, index=idx_forn, key="h_forn")
+                    
+                    st.markdown("---")
+                    st.markdown("**Eines Actives**")
+                    h_eines = {}
+                    for e_id, e_val in eines.items():
+                        h_eines[e_id] = st.checkbox(e_id.replace('_', ' ').title(), value=e_val, key=f"he_{e_id}")
+                    
+                    if st.button("💾 Aplicar Eines a les Proves", key="btn_save_he"):
+                        cur_cfg = load_app_config()
+                        cur_overrides = cur_cfg.setdefault("harness_overrides", {})
+                        r_ov = cur_overrides.setdefault("regles_menjar", cur_cfg.get("regles_menjar", {}).copy())
+                        r_ov["us_forn"] = h_forn
+                        cur_overrides["eines_cuina"] = h_eines
+                        if save_app_config(cur_cfg):
+                            st.success("Configuració de proves actualitzada!")
+                            st.rerun()
 
             with c_param2:
-                with st.expander("🥗 Regles Nutricionals i Format", expanded=True):
-                    regles = cfg.get("regles_menjar", {})
-                    st.markdown(f"- **Format àpats:** {regles.get('mode_apats', 'Tota la setmana')}")
-                    st.markdown(f"- **Comensals per defecte:** {regles.get('comensals_defecte', 3)}")
-                    st.markdown("---")
-                    st.markdown(f"- **Max Carn Vermella:** {regles.get('max_carn_vermella', 1)} dies/setmana")
-                    st.markdown(f"- **Freqüència Peix:** {regles.get('freq_peix', regles.get('min_peix', 2))} cops/setmana")
-                    st.markdown(f"- **Min Llegums:** {regles.get('min_llegums', 2)} dies/setmana")
-                    st.markdown(f"- **Max Embotits Sopar:** {regles.get('max_embotits_sopar', 2)} dies/setmana")
-                    if regles.get("no_repetir_hidrats", True):
-                        st.markdown("- 🚫 No repetir hidrats seguits")
+                with st.expander("🥗 Regles Nutricionals (Editables per a Proves)", expanded=True):
+                    overrides = cfg.get("harness_overrides", {})
+                    regles = overrides.get("regles_menjar", cfg.get("regles_menjar", {}))
                     
-                    if regles.get("control_dietetic", False):
-                        st.markdown("---")
-                        st.markdown("**🟢 Control Dietètic Activat**")
-                        st.markdown(f"- Límit Dinar: {regles.get('limit_cals_dinar', 800)} kcal")
-                        st.markdown(f"- Límit Sopar: {regles.get('limit_cals_sopar', 500)} kcal")
+                    c_mod1, c_mod2 = st.columns(2)
+                    with c_mod1:
+                        h_carn = st.number_input("Max Carn Vermella", 0, 7, int(regles.get('max_carn_vermella', 1)), key="hr_carn")
+                        h_llegums = st.number_input("Min Llegums", 0, 7, int(regles.get('min_llegums', 2)), key="hr_lleg")
+                    with c_mod2:
+                        h_peix = st.number_input("Cops Peix", 0, 7, int(regles.get('freq_peix', regles.get('min_peix', 2))), key="hr_peix")
+                        h_emb = st.number_input("Max Embotits Sopar", 0, 7, int(regles.get('max_embotits_sopar', 2)), key="hr_emb")
+                    
+                    h_no_rep = st.toggle("No repetir hidrats", value=bool(regles.get("no_repetir_hidrats", True)), key="hr_rep")
+                    
+                    st.markdown("---")
+                    h_diet = st.toggle("Control Dietètic", value=bool(regles.get("control_dietetic", False)), key="hr_diet")
+                    
+                    c_cals1, c_cals2 = st.columns(2)
+                    with c_cals1:
+                        h_cd = st.number_input("Límit Dinar", 500, 2500, int(regles.get("limit_cals_dinar", 800)), step=50, disabled=not h_diet, key="hr_cd")
+                    with c_cals2:
+                        h_cs = st.number_input("Límit Sopar", 300, 1500, int(regles.get("limit_cals_sopar", 500)), step=50, disabled=not h_diet, key="hr_cs")
+                        
+                    if st.button("💾 Aplicar Regles a les Proves", type="primary", use_container_width=True, key="btn_save_hr"):
+                        cur_cfg = load_app_config()
+                        cur_overrides = cur_cfg.setdefault("harness_overrides", {})
+                        r = cur_overrides.setdefault("regles_menjar", cur_cfg.get("regles_menjar", {}).copy())
+                        r["max_carn_vermella"] = h_carn
+                        r["freq_peix"] = h_peix
+                        r["min_peix"] = h_peix
+                        r["min_llegums"] = h_llegums
+                        r["max_embotits_sopar"] = h_emb
+                        r["no_repetir_hidrats"] = h_no_rep
+                        r["control_dietetic"] = h_diet
+                        r["limit_cals_dinar"] = h_cd
+                        r["limit_cals_sopar"] = h_cs
+                        if save_app_config(cur_cfg):
+                            st.success("Regles de prova actualitzades!")
+                            st.rerun()
 
             st.write("")
             
