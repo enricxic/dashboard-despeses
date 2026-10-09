@@ -1,0 +1,80 @@
+[
+  {
+    "id": 150,
+    "titol": "Cocktail de llagostins",
+    "imatge_url": null,
+    "ingredients": "- Llagostins o llagostins cuits i pelats\n- Enciam (idealment tipus iceberg pel toc cruixent)\n- Pinya natural o en el seu suc\n- Palets de cranc (surimi) - opcional\n- Per a la salsa rosa: maionesa, quètxup, un raig de conyac o brandi, suc de mitja taronja i gotes de tabasco (opcional)"
+  },
+  {
+    "id": 199,
+    "titol": "Panotxes de blat de moro fregides",
+    "imatge_url": "",
+    "ingredients": "- Panotxes de blat de moro\n- Mantega\n- Sal\n- Pebre negre"
+  },
+  {
+    "id": 181,
+    "titol": "Crema de carbassa",
+    "imatge_url": null,
+    "ingredients": "- 800g de carbassa (pelada i sense llavors)\n- 1 porro gran (només la part blanca) o 1 ceba dolça\n- 1 patata mitjana\n- 1 pastanaga\n- 750ml de brou de verdures, de pollastre o aigua\n- Un raig de crema de llet o un parell de formatgets (per la cremositat)\n- Oli d'oliva verge extra, sal i pebre negre\n- (Opcional) Llavors de carbassa o crostons de pa per decorar"
+  },
+  {
+    "id": 35,
+    "titol": "Escamarlans a la planxa",
+    "imatge_url": null,
+    "ingredients": "- Escamarlans (frescos de mercat o comprats frescos i congelats per tu)\n- 3 grans d'all\n- Un manat de julivert fresc\n- Oli d'oliva verge extra\n- Sal grossa o sal en escates (tipus Maldon)\n- (Opcional) Un raig de vi blanc, brandi o conyac"
+  },
+  {
+    "id": 96,
+    "titol": "Daus de tonyina, alvocat i ceba amb fulles d'arròs",
+    "imatge_url": null,
+    "ingredients": "- Tonyina fresca (tallada a daus)\n- 1 Alvocat madur\n- 1 Ceba tendra o ceba morada\n- Salsa de soja\n- Oli de sèsam i llavors de sèsam\n- (Opcional) Un raig de suc de llima i gingebre fresc\n- Fulles d'arròs (les dels rotlles vietnamites)\n- Oli de girasol per fregir"
+  },
+  {
+    "id": 40,
+    "titol": "Patata i mongeta tendra",
+    "imatge_url": null,
+    "ingredients": "- 400g de mongeta tendra (tipus perona plana o rodona bobby)\n- 3-4 patates mitjanes (Monalisa o Kennebec, genials per bullir)\n- Aigua i sal\n- Oli d'oliva verge extra\n- (Opcional): 2 grans d'all i una culleradeta de pebre vermell dolç (pimentón)"
+  },
+  {
+    "id": 73,
+    "titol": "Iogurt amb fruits secs i melmelada",
+    "imatge_url": "",
+    "ingredients": "- Iogurt (natural o grec)\n- Barreja de fruits secs (nous, ametlles, avellanes, etc.)\n- Melmelada al gust"
+  },
+  {
+    "id": 63,
+    "titol": "Amanida d'alvocat",
+    "imatge_url": null,
+    "ingredients": "- 1 o 2 alvocats madurs\n- Tomàquets xerri\n- Ceba morada\n- Formatge fresc o mozzarella a daus\n- Coriandre o julivert fresc picat\n- Suc de llimona o llima\n- Oli d'oliva verge extra, sal i pebre negre"
+  },
+  {
+    "id": 201,
+    "titol": "Empanadilles de carn",
+    "imatge_url": null,
+    "ingredients": "- 1 paquet d'oblees/massa d'empanadilles (tipus La Cocinera)\n- 250g de carn picada (meitat porc, meitat vedella)\n- 1 ceba i 1 gra d'all\n- 2-3 cullerades de tomàquet fregit o sofregit\n- (Opcional) 1 ou dur picat i olives farcides a rodanxes\n- Oli d'oliva, sal, pebre negre i pebre vermell dolç\n- 1 ou batut (per pintar-les, si es fan al forn)"
+  },
+  {
+    "id": 81,
+    "titol": "Palpís de gall d'indi",
+    "imatge_url": null,
+    "ingredients": "500g de palpís de gall d'indi tallat a daus * 1 gra d'all * Julivert fresc * 1 raig de vi blanc * Oli d'oliva, sal i pebre"
+  },
+  {
+    "id": 82,
+    "titol": "Pebrots del piquillo farcits",
+    "imatge_url": null,
+    "ingredients": "9 pebrots del piquillo de pot * 2 llaunes de tonyina en oli (160g) * 2 ous durs * 150ml de beixamel o salsa de tomàquet casolana * Sal i pebre"
+  },
+  {
+    "id": 83,
+    "titol": "Estofat de patates i carxofes",
+    "imatge_url": null,
+    "ingredients": "3 carxofes * 3 patates mitjanes * 1 ceba * 2 grans d'all * 1 tomàquet ratllat * 600ml de brou de verdures * 1 fulla de llorer * Oli d'oliva i sal"
+  },
+  {
+    "id": 88,
+    "titol": "Pit de pollastre a la planxa",
+    "imatge_url": null,
+    "ingredients": "6 talls fins de pit de pollastre (2 per persona) * 1 gra d'all * Julivert * Suc de 1/2 llimona * Sal, pebre i oli d'oliva"
+  }
+]

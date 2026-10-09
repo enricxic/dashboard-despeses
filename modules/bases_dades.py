@@ -15,6 +15,7 @@ PK_MAP = {
     'limitsDespeses': 'id',
     'pagaments': 'id',
     'tb_productes': 'idProducte',
+    'tb_receptes_pro': 'id',
     'tb_receptes': 'id',
     'tb_menus': 'id',
     'tb_supers': 'id',

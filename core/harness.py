@@ -112,6 +112,11 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
 - CRÍTIC: NO pots servir arròs ni pasta en dies consecutius (si avui hi ha arròs/pasta, demà NO n'hi pot haver). Intercala amb llegums, verdures o carn/peix.
 - Disponibilitat del forn: {us_forn}."""
 
+    if regles.get("control_dietetic"):
+        limit_din = regles.get("limit_cals_dinar", 800)
+        limit_sop = regles.get("limit_cals_sopar", 500)
+        regles_txt += f"\n- 🟢 CONTROL DIETÈTIC ACTIU: Tens l'obligació estricta de generar un menú baix en calories. El límit de calories pel Dinar és de {limit_din} kcal per persona, i el límit pel Sopar és de {limit_sop} kcal per persona. Tria plats lleugers de la base de dades i omet carbohidrats pesats a la nit. A més, a cada objecte 'dinar' i 'sopar' del JSON retornaràs un atribut obligatori 'calories_aprox' (nombre enter) amb la suma estimada de calories d'aquell àpat per a 1 persona."
+
     plats_recents = regles.get("plats_recents", [])
     if plats_recents and regles.get("dies_no_repetir", 15) > 0:
         regles_txt += f"\n- 🛑 PROHIBIT REPETIR: Aquests plats s'han menjat en els últims {regles.get('dies_no_repetir', 15)} dies i tens absolutament prohibit incloure'ls de nou sota cap concepte: {', '.join(plats_recents)}."
@@ -165,8 +170,10 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
                 cat = str(r.get("categoria", "")).lower()
                 apat = str(r.get("apat", "")).lower()
                 estrelles = r.get("estrelles", 4)
+                calories = r.get("calories", 0)
                 if titol:
-                    titol = f"{titol} [⭐{estrelles}]"
+                    cal_str = f", 🔥 {calories} kcal" if calories else ""
+                    titol = f"{titol} [⭐{estrelles}{cal_str}]"
             else:
                 titol = str(r)
                 cat = "primer"

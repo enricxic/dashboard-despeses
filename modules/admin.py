@@ -903,6 +903,15 @@ def render():
             st.markdown("#### 🥗 Regles de Salut i Freqüències Setmanals")
             st.markdown("<div style='font-size:0.86rem; color:#94a3b8; margin-bottom:12px;'>Aquestes regles les avaluarà automàticament el generador de menús i el banc de proves (Harness).</div>", unsafe_allow_html=True)
             
+            c_r01, c_r02, c_r03 = st.columns([2, 1.5, 1.5])
+            with c_r01:
+                r_dietetic = st.toggle("🟢 Activar Control Dietètic", value=bool(regles.get("control_dietetic", False)), help="Si s'activa, la IA intentarà generar menús que no superin els límits establerts per Dinar i Sopar.")
+            with c_r02:
+                r_cals_din = st.number_input("☀️ Límit Dinar (kcal/persona)", min_value=500, max_value=2500, value=int(regles.get("limit_cals_dinar", 800)), step=50, disabled=not bool(regles.get("control_dietetic", False)))
+            with c_r03:
+                r_cals_sop = st.number_input("🌙 Límit Sopar (kcal/persona)", min_value=300, max_value=1500, value=int(regles.get("limit_cals_sopar", 500)), step=50, disabled=not bool(regles.get("control_dietetic", False)))
+            st.markdown("<div style='margin-bottom:10px;'></div>", unsafe_allow_html=True)
+            
             c_r1, c_r2 = st.columns(2)
             with c_r1:
                 r_carn = st.slider("🔴 Màxim de dies de Carn Vermella / setmana", min_value=0, max_value=7, value=int(regles.get("max_carn_vermella", 1)), help="Limita els àpats amb vedella, bou, porc o carn vermella.")
@@ -1077,6 +1086,9 @@ def render():
             if st.button("💾 Desar Regles de Menús i Nutrició", type="primary", use_container_width=True, key="save_regles_menjar"):
                 cur_cfg = load_app_config()
                 cur_cfg["regles_menjar"] = {
+                    "control_dietetic": r_dietetic,
+                    "limit_cals_dinar": r_cals_din,
+                    "limit_cals_sopar": r_cals_sop,
                     "max_carn_vermella": r_carn,
                     "freq_peix": r_peix,
                     "min_peix": r_peix, # Guardar-ho també com a min_peix per compatibilitat

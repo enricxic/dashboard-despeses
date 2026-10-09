@@ -126,4 +126,25 @@ def verify_menu_constraints(menu_json: Dict[str, Any], test_case: Dict[str, Any]
             if not found:
                 errors.append(f"TENS L'OBLIGACIÓ D'UTILITZAR EL CONGELADOR. No has utilitzat ni esmentat l'ítem '{prod}' del congelador.")
 
+    # 5. Control Dietètic Validation
+    if regles.get("control_dietetic"):
+        limit_din = regles.get("limit_cals_dinar", 800)
+        limit_sop = regles.get("limit_cals_sopar", 500)
+        for dia_info in dies_planificats:
+            dia_nom = dia_info.get("dia", "")
+            for ap in ["dinar", "sopar"]:
+                apat = dia_info.get(ap)
+                if apat:
+                    cals = apat.get("calories_aprox", 0)
+                    if not cals:
+                        errors.append(f"El Control Dietètic està actiu però no has retornat 'calories_aprox' (o és 0) pel {ap} del {dia_nom}.")
+                    else:
+                        try:
+                            cal_ap = int(cals)
+                            lim_ap = limit_din if ap == "dinar" else limit_sop
+                            if cal_ap > lim_ap + 100: # Marge de 100 kcal
+                                errors.append(f"El {ap} del {dia_nom} té {cal_ap} kcal, superant excessivament el límit dietètic de {lim_ap} kcal. Canvia algun plat per un de més lleuger.")
+                        except ValueError:
+                            errors.append(f"Les calories del {ap} de {dia_nom} no són un número vàlid ('{cals}').")
+
     return list(set(errors))

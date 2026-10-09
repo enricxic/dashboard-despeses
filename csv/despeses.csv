@@ -5146,8 +5146,12 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2002;BBVA;VISA;14/03/2023;marzo;2023;0.0;16.94;Càrrec;neteja;Action Girona;;False
 2003;Efectiu;;13/03/2023;marzo;2023;0.0;11.0;Càrrec;menjar;Pa i pastisseria;;False
 2004;Efectiu;;13/03/2023;marzo;2023;0.0;8.84;Càrrec;menjar;Fruiteria;;False
+8133;BBVA;Compte;06/10/2026;octubre;2026;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False
 2009;BBVA;Compte;15/03/2023;marzo;2023;0.0;44.65;Càrrec;despesa_general;Lowi;;False
+8135;Efectiu;;06/10/2026;octubre;2026;0.0;5.33;Càrrec;menjar;Fruiterra;;False
 2011;Efectiu;;15/03/2023;marzo;2023;0.0;10.62;Càrrec;menjar;AreaGuissona;;False
+8136;Efectiu;;06/10/2026;octubre;2026;0.0;2.7;Càrrec;menjar;Fruiteria Deepak;;False
+8137;Efectiu;;05/10/2026;octubre;2026;0.0;2.6;Càrrec;menjar;Pastisseria Ayma;;False
 2018;Efectiu;;17/03/2023;marzo;2023;0.0;48.23;Càrrec;restaurant;Restaurant;Buffet Xino Platja d'Aro;False
 2019;Efectiu;;17/03/2023;marzo;2023;0.0;48.36;Càrrec;menjar;LIDL;;False
 2020;Efectiu;;17/03/2023;marzo;2023;0.0;15.0;Càrrec;Parallar;Jysk;Catifa;False
@@ -5210,6 +5214,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2127;Efectiu;;20/04/2023;abril;2023;0.0;11.81;Càrrec;neteja;Clarel;;False
 2128;Efectiu;;20/04/2023;abril;2023;0.0;4.25;Càrrec;menjar;Dia;;False
 2094;Efectiu;;09/04/2023;abril;2023;0.0;40.0;Càrrec;restaurant;Restaurant;Pizza Palamós;False
+8134;TradeRep.;Compte;06/10/2026;octubre;2026;200.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 2096;Efectiu;;09/04/2023;abril;2023;0.0;20.0;Càrrec;restaurant;Restaurant;gelats Palamós;False
 2063;Efectiu;;02/04/2023;abril;2023;0.0;17.95;Càrrec;menjar;Plaça;;False
 2090;Efectiu;;09/04/2023;abril;2023;0.0;9.8;Càrrec;menjar;Plaça;;False
@@ -5241,6 +5246,8 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2159;BBVA;Compte;30/04/2023;abril;2023;0.0;472.91;Càrrec;despesa_general;Hipoteca;;False
 2188;Efectiu;;04/05/2023;mayo;2023;0.0;10.0;Càrrec;restaurant;Bar;Palamós;False
 2162;BBVA;Compte;02/05/2023;mayo;2023;0.0;56.0;Càrrec;despesa_general;Piscina;;False
+8138;TradeRep.;Dèbit;05/10/2026;octubre;2026;0.0;19.37;Càrrec;menjar;Novavenda;;False
+8139;TradeRep.;Dèbit;05/10/2026;octubre;2026;0.0;1.0;Càrrec;neteja;Novavenda;;False
 2167;BBVA;Compte;03/05/2023;mayo;2023;0.0;14.88;Càrrec;despesa_general;Endesa;;False
 2178;Efectiu;;03/05/2023;mayo;2023;0.0;150.0;Càrrec;proveidor;Soloimprenta;Xarrup. Estovalles;False
 2179;Efectiu;;01/05/2023;mayo;2023;0.0;6.67;Càrrec;menjar;Dia;;False
@@ -5272,6 +5279,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2222;BBVA;Compte;17/05/2023;mayo;2023;0.0;43.8;Càrrec;despesa_general;Lowi;;False
 2224;BBVA;VISA;15/05/2023;mayo;2023;0.0;6.37;Càrrec;manteniment;Aliexpress;lamina fusta noguera;False
 2225;BBVA;VISA;16/05/2023;mayo;2023;0.0;2.16;Càrrec;manteniment;Aliexpress;burlet finestra;False
+8140;Efectiu;;06/10/2026;octubre;2026;0.0;5.0;Càrrec;personal;Jordi;;False
 2234;Efectiu;;18/05/2023;mayo;2023;0.0;186.0;Càrrec;rebost;Altres menjar;Oli Ma Carmen;False
 2235;Efectiu;;15/05/2023;mayo;2023;0.0;3.97;Càrrec;menjar;Dia;;False
 2236;Efectiu;;18/05/2023;mayo;2023;0.0;4.0;Càrrec;personal;Jordi;;False
@@ -5327,6 +5335,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2326;Efectiu;;18/06/2023;junio;2023;0.0;9.31;Càrrec;menjar;Novavenda;;False
 2344;Efectiu;Efectiu;25/06/2023;junio;2023;0.0;10.0;Càrrec;restaurant;Restaurant;Gelats Palamós;False
 2345;Efectiu;;26/06/2023;junio;2023;0.0;24.0;Càrrec;menjar;Altres menjar;Dinar família;False
+8141;TradeRep.;Dèbit;07/10/2026;octubre;2026;0.0;26.12;Càrrec;menjar;AreaGuissona;;False
 2334;Efectiu;;23/06/2023;junio;2023;0.0;7.4;Càrrec;menjar;Fruiteria;;False
 2335;Efectiu;;23/06/2023;junio;2023;0.0;7.6;Càrrec;menjar;Pa i pastisseria;;False
 2339;Efectiu;;09/06/2023;junio;2023;0.0;11.93;Càrrec;menjar;Dia;;False
@@ -5357,6 +5366,8 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2419;BBVA;VISA;14/07/2023;julio;2023;0.0;404.91;Càrrec;Parallar;Altres mobles;Emma matalàs;False
 2412;Efectiu;;11/07/2023;julio;2023;0.0;20.0;Càrrec;personal;Enric;Excurció Sant Marçal;False
 2404;BBVA;VISA;10/07/2023;julio;2023;0.0;2.18;Càrrec;manteniment;Aliexpress;Globus+pinçes+auricul;False
+8142;TradeRep.;Dèbit;08/10/2026;octubre;2026;0.0;6.94;Càrrec;menjar;Dia;;False
+8143;TradeRep.;Dèbit;08/10/2026;octubre;2026;0.0;1.19;Càrrec;neteja;Dia;;False
 2392;BBVA;VISA;05/07/2023;julio;2023;0.0;206.21;Càrrec;proveidor;Exaprint;3000 estovalles Xarrup;False
 2395;Efectiu;;05/07/2023;julio;2023;0.0;1.3;Càrrec;menjar;Pa i pastisseria;;False
 2396;Efectiu;;05/07/2023;julio;2023;0.0;5.0;Càrrec;personal;Jordi;;False
@@ -5380,6 +5391,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2441;Efectiu;;16/07/2023;julio;2023;0.0;4.61;Càrrec;menjar;BonPreu;;False
 2442;Efectiu;Efectiu;19/07/2023;julio;2023;0.0;26.0;Càrrec;menjar;Fruiteria;Moro;False
 2443;Efectiu;;19/07/2023;julio;2023;0.0;9.0;Càrrec;menjar;Fruiteria;Moro.Mel;False
+8144;BBVA;Dèbit;07/10/2026;octubre;2026;0.0;30.43;Càrrec;farmàcia;Farmàcia;;False
 2447;BBVA;Compte;20/07/2023;julio;2023;0.0;868.0;Càrrec;varis;Compres: varis;Matricula Opos Mireia;False
 2585;Efectiu;;28/08/2023;agosto;2023;0.0;11.0;Càrrec;menjar;Fruiteria;;False
 2448;BBVA;Compte;20/07/2023;julio;2023;0.0;187.0;Càrrec;varis;Compres: varis;Matricula Opos Mireia;False
@@ -5401,6 +5413,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2516;BBVA;Compte;08/08/2023;agosto;2023;0.0;17.13;Càrrec;menjar;Altres menjar;Carniceria Matilde;False
 2517;BBVA;Compte;08/08/2023;agosto;2023;0.0;48.03;Càrrec;despesa_general;Aigua;;False
 2559;BBVA;Compte;16/08/2023;agosto;2023;0.0;25.0;Càrrec;varis;Llibres;Bizum Mireia.Jubilació;False
+8145;TradeRep.;Dèbit;08/10/2026;octubre;2026;0.0;4.4;Càrrec;menjar;Fleca Arnau;;False
 2526;Efectiu;;26/07/2023;julio;2023;0.0;2.83;Càrrec;menjar;Dia;;False
 2527;Efectiu;;03/08/2023;agosto;2023;0.0;1.9;Càrrec;manteniment;LeroyMerlin;;False
 2528;Efectiu;;28/07/2023;julio;2023;0.0;13.1;Càrrec;menjar;Altres menjar;Pepco;False

@@ -1247,7 +1247,10 @@ def render():
                                     "us_forn": sel_forn,
                                     "dies_no_repetir": dies_no_repetir,
                                     "prioritzar_estrelles": prioritzar_estrelles,
-                                    "plats_recents": plats_recents
+                                    "plats_recents": plats_recents,
+                                    "control_dietetic": regles_cfg.get("control_dietetic", False),
+                                    "limit_cals_dinar": regles_cfg.get("limit_cals_dinar", 800),
+                                    "limit_cals_sopar": regles_cfg.get("limit_cals_sopar", 500)
                                 },
                                 "eines_disponibles": eines_actives_llista,
                                 "stock_disponible": stock_list,
@@ -1374,7 +1377,9 @@ def render():
                                 with st.container(border=True):
                                     c_title_d, c_btn_d = st.columns([4, 1.5])
                                     with c_title_d:
-                                        st.markdown("##### ☀️ Dinar")
+                                        cal_d = dinar.get("calories_aprox", 0)
+                                        cal_str_d = f" <span style='font-size:0.9rem; color:#f39c12;'>({cal_d} kcal)</span>" if cal_d else ""
+                                        st.markdown(f"##### ☀️ Dinar{cal_str_d}", unsafe_allow_html=True)
                                     with c_btn_d:
                                         if st.button("🕐 Organització", key=f"btn_org_d_{idx_d}", use_container_width=True):
                                             modal_organitzacio(dia_nom, "Dinar", dinar, df_receptes)
@@ -1411,7 +1416,9 @@ def render():
                                 with st.container(border=True):
                                     c_title_s, c_btn_s = st.columns([4, 1.5])
                                     with c_title_s:
-                                        st.markdown("##### 🌙 Sopar")
+                                        cal_s = sopar.get("calories_aprox", 0)
+                                        cal_str_s = f" <span style='font-size:0.9rem; color:#f39c12;'>({cal_s} kcal)</span>" if cal_s else ""
+                                        st.markdown(f"##### 🌙 Sopar{cal_str_s}", unsafe_allow_html=True)
                                     with c_btn_s:
                                         if st.button("🕐 Organització", key=f"btn_org_s_{idx_d}", use_container_width=True):
                                             modal_organitzacio(dia_nom, "Sopar", sopar, df_receptes)
@@ -1441,6 +1448,33 @@ def render():
                                                 st.session_state[f"editing_{rec_alt_s['id']}"] = False
                                                 st.session_state[f"rec_comensals_{rec_alt_s['id']}"] = 1
                                                 modal_recepta(rec_alt_s)
+                            
+                            # Mostrar Total de Calories si estan definides
+                            cals_d = dinar.get("calories_aprox", 0)
+                            cals_s = sopar.get("calories_aprox", 0)
+                            if cals_d or cals_s:
+                                lim_d = active_case.get("regles_llar", {}).get("limit_cals_dinar", 800)
+                                lim_s = active_case.get("regles_llar", {}).get("limit_cals_sopar", 500)
+                                
+                                if active_case.get("regles_llar", {}).get("control_dietetic"):
+                                    c_d = "#2ecc71" if int(cals_d) <= lim_d + 50 else "#e74c3c"
+                                    c_s = "#2ecc71" if int(cals_s) <= lim_s + 50 else "#e74c3c"
+                                    
+                                    html_cals = f"""
+                                    <div style='display:flex; justify-content: space-around; padding:8px; background:#1e293b; border-radius:8px; margin-top:10px;'>
+                                        <div>☀️ Dinar: <strong style='color:{c_d};'>{cals_d} kcal</strong> / límit {lim_d}</div>
+                                        <div>🌙 Sopar: <strong style='color:{c_s};'>{cals_s} kcal</strong> / límit {lim_s}</div>
+                                    </div>
+                                    """
+                                    st.markdown(html_cals, unsafe_allow_html=True)
+                                else:
+                                    html_cals = f"""
+                                    <div style='display:flex; justify-content: space-around; padding:8px; background:#1e293b; border-radius:8px; margin-top:10px;'>
+                                        <div>☀️ Dinar: <strong>{cals_d} kcal</strong></div>
+                                        <div>🌙 Sopar: <strong>{cals_s} kcal</strong></div>
+                                    </div>
+                                    """
+                                    st.markdown(html_cals, unsafe_allow_html=True)
                     
                     st.write("")
                     
