@@ -780,6 +780,42 @@ def grade_aprofitament_estoc(menu_data: Dict[str, Any], test_case: Dict[str, Any
         
     return 1.0, []
 
+def grade_control_dietetic(menu_data: Dict[str, Any], test_case: Dict[str, Any]) -> Tuple[float, List[str]]:
+    """Comprova que els àpats respectin els límits de calories i el control dietètic."""
+    regles = test_case.get("regles_llar", {})
+    if not regles.get("control_dietetic"):
+        return 1.0, []
+        
+    limit_din = regles.get("limit_cals_dinar", 800)
+    limit_sop = regles.get("limit_cals_sopar", 500)
+    
+    infraccions = []
+    
+    for dia_obj in menu_data.get("menu_setmanal", []):
+        dia_nom = dia_obj.get("dia", "")
+        for apat_k, limit in [("dinar", limit_din), ("sopar", limit_sop)]:
+            apat = dia_obj.get(apat_k, {})
+            if not isinstance(apat, dict): continue
+            
+            cals = apat.get("calories_aprox") or apat.get("calories")
+            
+            if cals is None:
+                infraccions.append(f"{dia_nom} ({apat_k}): No s'ha reportat l'atribut 'calories_aprox'")
+            else:
+                try:
+                    cals_val = int(cals)
+                    if cals_val > limit:
+                        infraccions.append(f"{dia_nom} ({apat_k}): Excés de calories ({cals_val} kcal > límit {limit} kcal)")
+                except ValueError:
+                    infraccions.append(f"{dia_nom} ({apat_k}): Format invàlid de calories ({cals})")
+                    
+    if infraccions:
+        total_apats = 14
+        complerts = max(0, total_apats - len(infraccions))
+        return round(complerts / total_apats, 2), infraccions
+        
+    return 1.0, []
+
 # =========================================================================
 # EXECUTOR PRINCIPAL DEL HARNESS
 # =========================================================================
@@ -801,6 +837,8 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
             "puntuacio_varietat": 0.0,
             "puntuacio_estrelles": 0.0,
             "puntuacio_eines": 0.0,
+            "puntuacio_estoc": 0.0,
+            "puntuacio_dietetic": 0.0,
             "latencia_s": latency,
             "errors": [raw_resp],
             "resposta_json": {}
@@ -819,6 +857,8 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
             "puntuacio_varietat": 0.0,
             "puntuacio_estrelles": 0.0,
             "puntuacio_eines": 0.0,
+            "puntuacio_estoc": 0.0,
+            "puntuacio_dietetic": 0.0,
             "latencia_s": latency,
             "errors": [f"Error estructural: {json_err}"],
             "resposta_json": {}
@@ -832,9 +872,10 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
     score_estrelles, err_estrelles = grade_puntuacions_estrelles(json_data, test_case)
     score_eines, err_eines = grade_eines_i_forn(json_data, test_case)
     score_estoc, err_estoc = grade_aprofitament_estoc(json_data, test_case)
+    score_dietetic, err_dietetic = grade_control_dietetic(json_data, test_case)
     
-    all_errors = err_alergies + err_vetos + err_regles + err_varietat + err_estrelles + err_eines + err_estoc
-    exit_global = (score_alergies == 1.0 and score_vetos == 1.0 and score_regles >= 0.75 and score_varietat == 1.0 and score_estrelles == 1.0 and score_eines == 1.0 and score_estoc >= 0.5)
+    all_errors = err_alergies + err_vetos + err_regles + err_varietat + err_estrelles + err_eines + err_estoc + err_dietetic
+    exit_global = (score_alergies == 1.0 and score_vetos == 1.0 and score_regles >= 0.75 and score_varietat == 1.0 and score_estrelles == 1.0 and score_eines == 1.0 and score_estoc >= 0.5 and score_dietetic >= 0.8)
     
     return {
         "id": test_case.get("id"),
@@ -848,6 +889,7 @@ def run_harness_single_test(test_case: Dict[str, Any], api_key: str, model_name:
         "puntuacio_estrelles": score_estrelles,
         "puntuacio_eines": score_eines,
         "puntuacio_estoc": score_estoc,
+        "puntuacio_dietetic": score_dietetic,
         "latencia_s": latency,
         "errors": all_errors,
         "resposta_json": json_data
@@ -875,6 +917,7 @@ def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", provid
     passed_seguretat = sum(1 for r in results if r["puntuacio_seguretat"] == 1.0)
     passed_vetos = sum(1 for r in results if r["puntuacio_vetos"] == 1.0)
     passed_eines = sum(1 for r in results if r.get("puntuacio_eines", 1.0) == 1.0)
+    passed_dietetic = sum(1 for r in results if r.get("puntuacio_dietetic", 1.0) == 1.0)
     avg_latency = round(sum(r["latencia_s"] for r in results) / total_cases, 2) if total_cases > 0 else 0.0
     
     return {
@@ -885,6 +928,7 @@ def run_harness_suite(api_key: str, model_name: str = "gemini-3.8-flash", provid
         "taxa_seguretat_alergies": round((passed_seguretat / total_cases) * 100, 1),
         "taxa_desdoblament_vetos": round((passed_vetos / total_cases) * 100, 1),
         "taxa_equipament_forn": round((passed_eines / total_cases) * 100, 1),
+        "taxa_control_dietetic": round((passed_dietetic / total_cases) * 100, 1),
         "latencia_mitjana_s": avg_latency,
         "model_avaluat": model_name,
         "detall_resultats": results
@@ -990,6 +1034,7 @@ def _harness_background_worker(api_key: str, model_name: str, provider: str = "g
     passed_seguretat = sum(1 for r in results if r["puntuacio_seguretat"] == 1.0)
     passed_vetos = sum(1 for r in results if r["puntuacio_vetos"] == 1.0)
     passed_eines = sum(1 for r in results if r.get("puntuacio_eines", 1.0) == 1.0)
+    passed_dietetic = sum(1 for r in results if r.get("puntuacio_dietetic", 1.0) == 1.0)
     avg_latency = round(sum(r["latencia_s"] for r in results) / total_cases, 2) if total_cases > 0 else 0.0
     
     suite_res = {
@@ -1000,6 +1045,7 @@ def _harness_background_worker(api_key: str, model_name: str, provider: str = "g
         "taxa_seguretat_alergies": round((passed_seguretat / total_cases) * 100, 1),
         "taxa_desdoblament_vetos": round((passed_vetos / total_cases) * 100, 1),
         "taxa_equipament_forn": round((passed_eines / total_cases) * 100, 1),
+        "taxa_control_dietetic": round((passed_dietetic / total_cases) * 100, 1),
         "latencia_mitjana_s": avg_latency,
         "model_avaluat": model_name,
         "durada_total_s": total_duration_s,
@@ -1059,6 +1105,7 @@ def generate_harness_txt_report(data: Dict[str, Any], is_single: bool = False) -
         lines.append(f"  - Varietat i Calendari d'Hidrats: {int(data.get('puntuacio_varietat', 0)*100)}%")
         lines.append(f"  - Adaptacio a Eines de Cuina i Forn: {int(data.get('puntuacio_eines', 1)*100)}%")
         lines.append(f"  - Aprofitament d'Estoc de Rebost: {int(data.get('puntuacio_estoc', 1)*100)}%")
+        lines.append(f"  - Control Dietètic (Calories/Tags): {int(data.get('puntuacio_dietetic', 1)*100)}%")
         lines.append("--------------------------------------------------------------------------------")
         lines.append("INCIDÈNCIES I INCIDÈNCIES:")
         errors = data.get("errors", [])
@@ -1087,6 +1134,7 @@ def generate_harness_txt_report(data: Dict[str, Any], is_single: bool = False) -
         lines.append(f"  - Seguretat Medica d'Alergies: {data.get('taxa_seguretat_alergies', 0)}% (Objectiu: 100%)")
         lines.append(f"  - Desdoblament de Vetos Personals: {data.get('taxa_desdoblament_vetos', 0)}% (Objectiu: 100%)")
         lines.append(f"  - Adaptacio a Eines i Forn: {data.get('taxa_equipament_forn', 0)}% (Objectiu: 100%)")
+        lines.append(f"  - Control Dietètic: {data.get('taxa_control_dietetic', 0)}% (Objectiu: 100%)")
         lines.append("--------------------------------------------------------------------------------")
         lines.append("TAULA RESUM DE CASOS DE PROVA:")
         lines.append(f"{'ID':<35} | {'ESTAT':<6} | {'LATÈNCIA':<10} | INCIDÈNCIES")

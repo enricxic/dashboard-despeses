@@ -1253,7 +1253,7 @@ def render():
             with c_param1:
                 with st.expander("👨‍👩‍👧‍👦 Perfils Familiars Actius", expanded=True):
                     familia = cfg.get("familia", [])
-                    actius = [m for m in familia if m.get("present", True)]
+                    actius = [m for m in familia if m.get("actiu", True)]
                     if actius:
                         for m in actius:
                             st.markdown(f"**{m.get('nom', 'Membre')}**")
@@ -1263,6 +1263,10 @@ def render():
                             if vt: st.markdown(f"- 🚫 Vetos: {', '.join(vt)}")
                             com = m.get("comodins", [])
                             if com: st.markdown(f"- 🍗 Comodins: {', '.join(com)}")
+                            dt = m.get("dieta_tipus", "").strip()
+                            if dt:
+                                d_mal = m.get("dieta_malaltia", "").strip()
+                                st.markdown(f"- 🏥 Dieta: {dt}" + (f" ({d_mal})" if d_mal else ""))
                     else:
                         st.info("Cap membre familiar actiu.")
                         
@@ -1432,7 +1436,7 @@ def render():
                     if harness_bg.get("finished_at"):
                         st.caption(f"🕒 Darrer benchmarking completat el: **{harness_bg.get('finished_at')}** | ⏱️ **Durada total del procés:** `{tot_dur_txt}` (Model: `{res.get('model_avaluat', selected_model)}`)")
                     
-                    k1, k2, k3, k4, k5 = st.columns(5)
+                    k1, k2, k3, k4, k5, k6 = st.columns(6)
                     with k1:
                         st.metric("🏆 Èxit Global", f"{res.get('percentatge_exit', 0)}%", f"{res.get('proves_superades', 0)}/{res.get('total_proves', 0)} passats")
                     with k2:
@@ -1440,8 +1444,10 @@ def render():
                     with k3:
                         st.metric("🚫 Vetos", f"{res.get('taxa_desdoblament_vetos', 0)}%", "Plats comodí")
                     with k4:
-                        st.metric("🍳 Eines i Forn", f"{res.get('taxa_equipament_forn', 100)}%", "Adaptació 100%")
+                        st.metric("🍳 Eines", f"{res.get('taxa_equipament_forn', 100)}%", "Adaptació 100%")
                     with k5:
+                        st.metric("⚖️ Dietètica", f"{res.get('taxa_control_dietetic', 100)}%", "Calories")
+                    with k6:
                         st.metric("⚡ Latència", f"{res.get('latencia_mitjana_s', 0)} s", res.get('model_avaluat', selected_model))
                         
                     st.markdown("#### 📋 Detall de cada Test")
