@@ -280,7 +280,7 @@ NOTA SOBRE PUNTUACIONS: Prioritza plats amb 4-5 estrelles. MAI programis plats q
 
 ### 🔥 REGLA D'ÚS DEL FORN I PRIORITAT DE PETICIONS:
 1. Regla d'ús del forn configurada: '{us_forn}'.
-2. Si la regla és 'Només cap de setmana (Dissabte i Diumenge)': MAI ENCENGUIS EL FORN DE DILLUNS A DIVENDRES. Els plats que requereixin forn (rostits, peix al forn, gratinats, pastissos al forn, etc.) s'han de programar EXCLUSIVAMENT en dissabte o diumenge.
+2. Si la regla és 'Només cap de setmana (Dissabte i Diumenge)': MAI ENCENGUIS EL FORN DE DILLUNS A DIVENDRES. Els plats que requereixin forn (rostits, peix al forn, gratinats, pastissos al forn) i especialment les GUARNICIONS (com 'patates al forn', 'verdures al forn') s'han de programar EXCLUSIVAMENT en dissabte o diumenge. Tota cocció 'al forn' de dilluns a divendres està terminantment prohibida.
 3. ⚡ EXCEPCIÓ DE PRIORITAT ABSOLUTA (PETICIÓ FAMILIAR): L'únic cas on pots encendre el forn de Dilluns a Divendres és si la família ho ha demanat explícitament a les PETICIONS APROVADES. La voluntat de la família TÉ PRIORITAT ABSOLUTA.
 
 ### 🚫 PROHIBICIÓ ESTRICTA: EL 2N PLAT MAI POT SER FRUITA NI IOGURT:
@@ -311,7 +311,7 @@ Respon EXCLUSIVAMENT amb l'objecte JSON vàlid (sense text previ ni posterior, a
 {{
   "reflexio_obligatoria": {{
     "assignacio_hidrats": "Indica l'esquema d'hidrats per cada dia. Ex: Dl: Llegums, Dm: Pasta, Dc: Verdures, Dj: Arròs, Dv: Llegums, Ds: Pasta, Dg: Arròs. REVISA bé que NO hi hagi pasta o arròs en dies consecutius.",
-    "dies_us_forn": "Indica quins dies concrets encendràs el forn. Recorda: Només cap de setmana (Ds i Dg) a no ser que hi hagi una petició expressa familiar.",
+    "dies_us_forn": "Indica quins dies concrets encendràs el forn. Recorda: Només cap de setmana (Ds i Dg) a no ser que hi hagi una petició expressa familiar. Verifica exhaustivament que no has posat 'al forn' a cap plat ni guarnició (com patates) de Dilluns a Divendres.",
     "mapa_vetos_actius": "Llista NOMÉS els comensals que estan presents a la llar i els seus vetos. IGNORE i OMET qualsevol veto de familiars 'FORA DE LA LLAR'. Verifica que els ingredients vetats coincideixen exactament (ex: llom NO és fetge).",
     "recompte_setmanal": {{
       "cops_carn_vermella": "Quants cops apareix carn vermella? (Màxim 1, en cap de setmana)",
