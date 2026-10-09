@@ -1245,6 +1245,56 @@ def render():
             harness_bg = get_harness_status()
             bg_status = harness_bg.get("status", "idle")
             
+            st.markdown("---")
+            st.markdown("##### 📋 Paràmetres Actuals de la Prova")
+            st.markdown("<div style='font-size:0.86rem; color:#94a3b8; margin-bottom:12px;'>Aquestes són les regles i perfils que s'utilitzaran durant l'avaluació. Per modificar-los, ves a les seccions 'Família' o 'Menús i Nutrició'.</div>", unsafe_allow_html=True)
+            
+            c_param1, c_param2 = st.columns(2)
+            with c_param1:
+                with st.expander("👨‍👩‍👧‍👦 Perfils Familiars Actius", expanded=True):
+                    familia = cfg.get("familia", [])
+                    actius = [m for m in familia if m.get("present", True)]
+                    if actius:
+                        for m in actius:
+                            st.markdown(f"**{m.get('nom', 'Membre')}**")
+                            al = m.get("alergies", m.get("circunstancies", []))
+                            if al: st.markdown(f"- 🔴 Al·lèrgies: {', '.join(al)}")
+                            vt = m.get("vetos", [])
+                            if vt: st.markdown(f"- 🚫 Vetos: {', '.join(vt)}")
+                            com = m.get("comodins", [])
+                            if com: st.markdown(f"- 🍗 Comodins: {', '.join(com)}")
+                    else:
+                        st.info("Cap membre familiar actiu.")
+                        
+                with st.expander("🍳 Eines i Forn", expanded=True):
+                    regles = cfg.get("regles_menjar", {})
+                    st.markdown(f"- **Ús del Forn:** {regles.get('us_forn', 'Cada dia')}")
+                    eines = cfg.get("eines_cuina", {})
+                    eines_actives = [k for k, v in eines.items() if v]
+                    if eines_actives:
+                        st.markdown(f"- **Eines Actives:** {', '.join(eines_actives).replace('_', ' ').title()}")
+                    else:
+                        st.markdown("- Cap eina addicional activa.")
+
+            with c_param2:
+                with st.expander("🥗 Regles Nutricionals i Format", expanded=True):
+                    regles = cfg.get("regles_menjar", {})
+                    st.markdown(f"- **Format àpats:** {regles.get('mode_apats', 'Tota la setmana')}")
+                    st.markdown(f"- **Comensals per defecte:** {regles.get('comensals_defecte', 3)}")
+                    st.markdown("---")
+                    st.markdown(f"- **Max Carn Vermella:** {regles.get('max_carn_vermella', 1)} dies/setmana")
+                    st.markdown(f"- **Freqüència Peix:** {regles.get('freq_peix', regles.get('min_peix', 2))} cops/setmana")
+                    st.markdown(f"- **Min Llegums:** {regles.get('min_llegums', 2)} dies/setmana")
+                    st.markdown(f"- **Max Embotits Sopar:** {regles.get('max_embotits_sopar', 2)} dies/setmana")
+                    if regles.get("no_repetir_hidrats", True):
+                        st.markdown("- 🚫 No repetir hidrats seguits")
+                    
+                    if regles.get("control_dietetic", False):
+                        st.markdown("---")
+                        st.markdown("**🟢 Control Dietètic Activat**")
+                        st.markdown(f"- Límit Dinar: {regles.get('limit_cals_dinar', 800)} kcal")
+                        st.markdown(f"- Límit Sopar: {regles.get('limit_cals_sopar', 500)} kcal")
+
             st.write("")
             
             # 1. Si hi ha una bateria executant-se en segon pla
