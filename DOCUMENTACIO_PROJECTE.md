@@ -54,11 +54,13 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari familiar, esdeveniments i sincronització.
 9. **💊 Control Medicació**: `modules/medicacio.py` *(Icona pastilles / flascó)* - Pautes mèdiques, dosis, horaris i farmaciola.
 10. **🍽️ Menús i Cuina**: `modules/menjar.py` *(Icona coberts)* - Gestió gastronòmica i nutricional intel·ligent:
-    - `🧠 Recomanador de Menús`: Generació setmanal amb IA (`gemini-2.5-flash`) seguint al·lèrgies mèdiques strictly, desdoblament de vetos personals (assignació automàtica de plat comodí sense imposar-lo a la resta), regles de freqüència nutricional (carn vermella, peix, llegums, hidrats no consecutius), eines de cuina disponibles i membres actius/fora de la llar.
-    - `📲 Consens Familiar per WhatsApp`: Botó d'un sol clic (`wa.me/?text=...`) per compartir el resum del menú amb el grup familiar abans de validar la compra.
-    - `⏱️ Batch Cooking & Mise en Place`: Guia de preparacions base de diumenge (patates probiòtiques amb midó resistent, brous concentrats, sofregits) i sincronització d'ingredients a comprar.
-    - `📖 Llibre de Receptes`: Escalat automàtic d'ingredients per nombre de comensals (base 3) i valoració d'estrelles (0-5) per membre de la família.
-    - `➕ Afegir Recepta`: Formulari amb càrrega d'imatges a Supabase Storage (`imatges-receptes`).
+    - `🧠 Recomanador de Menús`: Generació setmanal amb IA (`gemini-2.5-flash`) seguint al·lèrgies mèdiques strictly, desdoblament de vetos personals, regles de freqüència nutricional (carn vermella, peix, llegums), eines de cuina i membres actius.
+    - `🟢 Control Dietètic`: Sistema híbrid avançat de dietètica que permet fixar un límit de calories separat per a dinars i sopars. El recomanador prioritza receptes amb `puntuacio_salut` alta i s'assegura de retornar els menús amb una estimació real sota el límit estipulat utilitzant els `tags_nutricionals` per a balancejar macronutrients.
+    - `📲 Consens Familiar per WhatsApp`: Botó d'un sol clic per compartir el resum del menú.
+    - `⏱️ Batch Cooking & Mise en Place`: Guia de preparacions base de diumenge i llista de compra associada.
+    - `📖 Llibre de Receptes`: Base de dades de receptes. Visualització directa de la fitxa nutricional amb 💚 Puntuació de Salut i 🔥 Calories estimades per ració.
+    - `➕ Afegir Recepta`: Formulari amb càrrega d'imatges a Supabase Storage.
+    - **Scripts d'enriquiment en segon pla**: `populate_calories.py` (càlcul exacte de kcal amb IA via OpenRouter/Google), `heuristic_calories.py` (càlcul d'emergència en base a ingredients) i `populate_tags.py` (etiquetatge nutricional avançat de receptes).
 11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Gestió del vehicle organitzada en pestanyes:
     - `🛣️ Registre Km i Rutes`: Formulari per registrar lectures d'odòmetre, càlcul automàtic de km del trajecte, selector/plantilles de rutes i taula d'històric.
     - `⛽ Repostatge`: Taula històrica de proveïments de la BBDD `gasolina` (alimentada des d'Ingressos/Despeses) amb mètriques de preu últim repostatge, preu més alt i més baix.
