@@ -2924,19 +2924,13 @@ def render():
             # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
             st.rerun()
 
-    active_tab = st.radio(
-        "Navegació:",
-        ["📄 Compres Super", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques", "🔍 Comparador d'Ofertes", "📰 Fulletons"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    st.write("---")
+    t0, t1, t2, t3, t4, t5 = st.tabs(["📄 Compres Super", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques", "🔍 Comparador d'Ofertes", "📰 Fulletons"])
     
 
-    if active_tab == "📄 Compres Super":
+    with t0:
         render_compres_super_interface()
 
-    if active_tab == "📋 Llista de la Compra":
+    with t1:
         st.markdown("<h2 style='color:#f39c12; margin-top:0;'>🛒 Llista de la Compra</h2>", unsafe_allow_html=True)
         st.write("Aquesta llista mostra els productes del teu rebost on l'stock actual està per sota de l'stock mínim.")
         try:
@@ -3145,7 +3139,7 @@ def render():
 
 
     
-    if active_tab == "📦 Rebost / Stock":
+    with t2:
         try:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_prods = fetch_all_supabase(supabase, 'tb_productes')
@@ -3467,7 +3461,7 @@ def render():
         except Exception as e:
             st.error(f"Error carregant dades del rebost: {e}")
 
-    if active_tab == "📊 Estadístiques":
+    with t3:
         st.markdown("<h3 style='color:#f39c12;'>📊 Estadístiques i Distribució de Compres</h3>", unsafe_allow_html=True)
         try:
             from core.db import ensure_session_dfs
@@ -3605,7 +3599,7 @@ def render():
             st.error(f"Error carregant estadístiques de compres: {e}")
             st.code(traceback.format_exc())
 
-    if active_tab == "🔍 Comparador d'Ofertes":
+    with t4:
         st.write("Aquesta secció permet comparar els preus històrics de la Llista de la Compra i el Rebost, així com introduir ofertes setmanals.")
 
         # --- CARREGAR DADES ---
@@ -3770,7 +3764,7 @@ def render():
 
 
 
-    if active_tab == "📰 Fulletons":
+    with t5:
         st.markdown("### 📖 Fulletons i Catàlegs Setmanals")
         st.write("Accés directe als catàlegs oficials d'ofertes dels supermercats habituals:")
 
