@@ -115,7 +115,7 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
     if regles.get("control_dietetic"):
         limit_din = regles.get("limit_cals_dinar", 800)
         limit_sop = regles.get("limit_cals_sopar", 500)
-        regles_txt += f"\n- 🟢 CONTROL DIETÈTIC ACTIU: Tens l'obligació estricta de generar un menú baix en calories i ALTA puntuació de salut. El límit de calories pel Dinar és de {limit_din} kcal per persona, i el límit pel Sopar és de {limit_sop} kcal per persona. Tria plats lleugers de la base de dades i omet carbohidrats pesats a la nit. A més, a cada objecte 'dinar' i 'sopar' del JSON retornaràs un atribut obligatori 'calories_aprox' (nombre enter) amb la suma estimada de calories d'aquell àpat per a 1 persona."
+        regles_txt += f"\n- 🟢 CONTROL DIETÈTIC ACTIU: Tens l'obligació estricta de generar un menú baix en calories, d'alta puntuació de salut i EQUILIBRAT. El límit és de {limit_din} kcal pel Dinar i {limit_sop} kcal pel Sopar. A més, has de garantir que a la setmana hi hagi almenys 3 plats amb el tag 'peix_blau' o 'peix_blanc', almenys 2 amb 'llegums', i evitar repetir 'carn_vermella'. Usa els 'Tags' que t'indico al costat de cada plat per equilibrar la setmana. Retorna a cada àpat l'atribut 'calories_aprox' (nombre enter)."
 
     plats_recents = regles.get("plats_recents", [])
     if plats_recents and regles.get("dies_no_repetir", 15) > 0:
@@ -172,10 +172,13 @@ def build_system_prompt_for_case(test_case: Dict[str, Any], recipes_catalog: Opt
                 estrelles = r.get("estrelles", 4)
                 calories = r.get("calories", 0)
                 salut = r.get("puntuacio_salut", 0)
+                tags = r.get("tags_nutricionals") or []
+                
                 if titol:
                     cal_str = f", 🔥 {calories} kcal" if calories else ""
                     salut_str = f", 💚 Salut: {salut}/10" if salut else ""
-                    titol = f"{titol} [⭐{estrelles}{cal_str}{salut_str}]"
+                    tags_str = f", Tags: {', '.join(tags)}" if tags else ""
+                    titol = f"{titol} [⭐{estrelles}{cal_str}{salut_str}{tags_str}]"
             else:
                 titol = str(r)
                 cat = "primer"
