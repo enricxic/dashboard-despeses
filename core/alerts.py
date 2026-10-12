@@ -24,8 +24,8 @@ def get_global_alerts():
     config = load_alerts_config()
     
     try:
-        # Assegurar que les dades estan carregades
-        data = load_dashboard_data()
+        # Assegurar que només les dades necessàries estan carregades per optimitzar l'arrencada
+        data = load_dashboard_data(tables_to_load=['despeses', 'kmCotxe', 'limitsDespeses'])
         if data and len(data) >= 10:
             df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_cartera, df_est, df_limits, df_pag = data
         else:

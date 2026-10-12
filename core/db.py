@@ -182,6 +182,12 @@ def fetch_table_fast(table_name):
         supabase = get_supabase_client(role)
         df_result = fetch_all_supabase(supabase, table_name)
         
+    if df_result.empty and os.path.exists(csv_path):
+        try:
+            df_result = pd.read_csv(csv_path, sep=';')
+        except Exception as e:
+            print(f"Fallback CSV local per a {table_name}: {e}")
+            
     # Guardar còpia local al CSV si s'ha pogut baixar del núvol per properes avaries
     if not df_result.empty:
         os.makedirs("csv", exist_ok=True)

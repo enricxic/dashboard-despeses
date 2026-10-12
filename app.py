@@ -101,12 +101,10 @@ observer.observe(window.parent.document.body, { childList: true, subtree: true }
 if not check_password():
     st.stop()
 
-# Si StartDashboard.py ha engegat el mode d'emergència, fixem l'estat offline d'entrada
+# Quan s'engega l'app, sempre ho ha de fer primer en mode ONLINE
+os.environ.pop("STREAMLIT_OFFLINE_MODE", None)
 if "is_offline" not in st.session_state:
-    st.session_state["is_offline"] = (os.environ.get("STREAMLIT_OFFLINE_MODE") == "1")
-    if st.session_state["is_offline"]:
-        import time
-        st.session_state["offline_banner_shown_at"] = time.time()
+    st.session_state["is_offline"] = False
 
 app_cfg = load_app_config()
 

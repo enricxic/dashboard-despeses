@@ -35,9 +35,7 @@ def main():
         print("Engegant actualització de fons dels CSVs locals...")
         subprocess.Popen([sys.executable, "scripts/update_csvs_background.py"], creationflags=subprocess.CREATE_NO_WINDOW)
     else:
-        print("Sense Internet. Iniciant entorn local d'emergència...")
-        # Iniciar streamlit en mode local amb flag offline via variable d'entorn
-        os.environ["STREAMLIT_OFFLINE_MODE"] = "1"
+        print("Iniciant entorn local...")
         try:
             import time
             process = subprocess.Popen([sys.executable, "-m", "streamlit", "run", "app.py", "--server.headless=true"])
