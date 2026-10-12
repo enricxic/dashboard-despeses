@@ -60,6 +60,44 @@ st.markdown('''
     .stMarkdown h1 a *, .stMarkdown h2 a *, .stMarkdown h3 a *, .stMarkdown h4 a * {
         display: none !important;
     }
+
+    /* Icona offline neta: treure qualsevol subratllat, vora inferior, linia o sombra */
+    .offline-icon-link,
+    .offline-icon-link:link,
+    .offline-icon-link:visited,
+    .offline-icon-link:hover,
+    .offline-icon-link:active,
+    .offline-icon-link:focus,
+    a.offline-icon-link,
+    a.offline-icon-link:hover,
+    a.offline-icon-link:focus,
+    a.offline-icon-link:active,
+    div a.offline-icon-link {
+        text-decoration: none !important;
+        text-decoration-line: none !important;
+        text-decoration-color: transparent !important;
+        border: none !important;
+        border-bottom: none !important;
+        border-bottom-width: 0px !important;
+        outline: none !important;
+        box-shadow: none !important;
+        background-image: none !important;
+    }
+    .offline-icon-link::before,
+    .offline-icon-link::after,
+    a.offline-icon-link::before,
+    a.offline-icon-link::after {
+        display: none !important;
+        content: none !important;
+        border: none !important;
+    }
+    .offline-icon-link span {
+        text-decoration: none !important;
+        text-decoration-line: none !important;
+        border: none !important;
+        border-bottom: none !important;
+        outline: none !important;
+    }
     </style>
 ''', unsafe_allow_html=True)
 
@@ -641,8 +679,8 @@ def render_traditional_menubar():
     
     offline_badge_html = ""
     if st.session_state.get("is_offline"):
-        offline_badge_html = f'''<a href="?action=toggle_offline{auth_suffix}" target="_self" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.5rem; display: flex; align-items: center; text-decoration: none !important; border: none !important; background: transparent !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; margin-right: 12px; line-height: 1;">
-<span>🔌</span>
+        offline_badge_html = f'''<a href="?action=toggle_offline{auth_suffix}" target="_self" class="offline-icon-link" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.5rem; display: flex; align-items: center; text-decoration: none !important; text-decoration-line: none !important; text-decoration-color: transparent !important; border: none !important; border-bottom: none !important; border-bottom-width: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; background-image: none !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; margin-right: 12px; line-height: 1;">
+<span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>'''
     
     menubar_html = f"""<style>
@@ -1155,8 +1193,8 @@ if st.session_state.current_module is None:
 
 <!-- Capçalera dreta: Indicador Offline, Campana Notificacions i Rol d'Usuari -->
 <div style="position: fixed; top: 14px; right: 20px; z-index: 99999; display: flex; align-items: center; gap: 8px;">
-{f'''<a href="?action=toggle_offline{auth_suffix}" target="_self" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.75rem; display: flex; align-items: center; text-decoration: none !important; border: none !important; background: transparent !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; padding: 0 4px; line-height: 1;">
-    <span>🔌</span>
+{f'''<a href="?action=toggle_offline{auth_suffix}" target="_self" class="offline-icon-link" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.75rem; display: flex; align-items: center; text-decoration: none !important; text-decoration-line: none !important; text-decoration-color: transparent !important; border: none !important; border-bottom: none !important; border-bottom-width: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; background-image: none !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; padding: 0 4px; line-height: 1;">
+    <span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>''' if st.session_state.get("is_offline") else ''}
 <div class="bell-container" style="position: relative; cursor: pointer;">
 <span style="font-size: 1.75rem; display: flex; align-items: center; position: relative; padding: 5px 6px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
