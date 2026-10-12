@@ -173,7 +173,13 @@ def fetch_table_fast(table_name):
             _DB_ENGINE_FAILED = True
             print(f"Error connexio directa PostgreSQL a {table_name}, fallback a REST API: {e}")
     if df_result.empty:
-        supabase = get_supabase_client(st.session_state.get("role", "guest"))
+        role = "guest"
+        try:
+            import streamlit as st
+            role = st.session_state.get("role", "guest")
+        except:
+            pass
+        supabase = get_supabase_client(role)
         df_result = fetch_all_supabase(supabase, table_name)
         
     # Guardar còpia local al CSV si s'ha pogut baixar del núvol per properes avaries
