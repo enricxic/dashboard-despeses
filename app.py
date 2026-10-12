@@ -104,6 +104,9 @@ if not check_password():
 # Si StartDashboard.py ha engegat el mode d'emergència, fixem l'estat offline d'entrada
 if "is_offline" not in st.session_state:
     st.session_state["is_offline"] = (os.environ.get("STREAMLIT_OFFLINE_MODE") == "1")
+    if st.session_state["is_offline"]:
+        import time
+        st.session_state["offline_banner_shown_at"] = time.time()
 
 app_cfg = load_app_config()
 
@@ -163,10 +166,15 @@ if "action" in st.query_params:
         st.cache_data.clear()
         st.session_state["db_synced_toast"] = True
     elif act == "toggle_offline":
+        import time
         if "is_offline" not in st.session_state:
             st.session_state["is_offline"] = True
         else:
             st.session_state["is_offline"] = not st.session_state["is_offline"]
+        if st.session_state["is_offline"]:
+            st.session_state["offline_banner_shown_at"] = time.time()
+        else:
+            st.session_state.pop("offline_banner_shown_at", None)
         st.session_state["offline_toast"] = True
     elif act == "backup_db":
         import zipfile
@@ -219,13 +227,39 @@ if st.session_state.get("show_notifications"):
                     st.warning(f"**{al['icon']} {al['title']}**: {al['message']}")
     notifications_dialog()
 
-# Mostra una franja permanent de mode offline si està activat
+# Mostra una franja temporal de mode offline durant uns 12 segons abans de retirar-se a la icona superior
 if st.session_state.get("is_offline"):
-    st.markdown('''
-    <div style="background-color: #ef4444; color: white; text-align: center; padding: 10px; font-weight: bold; border-radius: 5px; margin-bottom: 15px; border: 2px solid #b91c1c; animation: pulse 2s infinite;">
-        ⚠️ ATENCIÓ: Estàs treballant en MODE OFFLINE. Totes les dades s'estan desant localment i s'encuaran per sincronitzar-les quan torni Internet.
-    </div>
-    ''', unsafe_allow_html=True)
+    import time
+    banner_start = st.session_state.get("offline_banner_shown_at")
+    if banner_start is None:
+        st.session_state["offline_banner_shown_at"] = time.time()
+        banner_start = st.session_state["offline_banner_shown_at"]
+    
+    if time.time() - banner_start <= 14:
+        st.markdown('''
+        <style>
+        @keyframes fadeOutOfflineBanner {
+            0% { opacity: 1; max-height: 80px; margin-bottom: 15px; }
+            75% { opacity: 1; max-height: 80px; margin-bottom: 15px; }
+            100% { opacity: 0; max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; display: none; }
+        }
+        .offline-banner-temp {
+            background-color: #ef4444;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 2px solid #b91c1c;
+            animation: fadeOutOfflineBanner 14s forwards;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        </style>
+        <div class="offline-banner-temp">
+            ⚠️ ATENCIÓ: Estàs treballant en MODE OFFLINE. Totes les dades s'estan desant localment i s'encuaran per sincronitzar-les quan torni Internet.
+        </div>
+        ''', unsafe_allow_html=True)
 
 if st.session_state.get("db_backup_toast"):
     st.toast(f"💾 Còpia de seguretat desada a backup_dades/{st.session_state['db_backup_toast']}", icon="✅")
@@ -607,6 +641,12 @@ def render_traditional_menubar():
     if not json_items_html:
         json_items_html = '<span style="display:block; padding: 6px 14px; color: #64748b; font-size: 0.78rem;">Cap arxiu trobat</span>'
     
+    offline_badge_html = ""
+    if st.session_state.get("is_offline"):
+        offline_badge_html = f'''<a href="?action=toggle_offline{auth_suffix}" target="_self" title="MODE OFFLINE ACTIVAT - Fes clic per tornar al mode Online" style="display: flex; align-items: center; gap: 4px; background: #dc2626; color: #ffffff !important; padding: 2px 8px; border-radius: 12px; font-size: 0.74rem; font-weight: bold; text-decoration: none !important; margin-right: 12px; border: 1px solid #b91c1c; box-shadow: 0 0 6px rgba(220, 38, 38, 0.6); animation: pulse 2s infinite; cursor: pointer;">
+<span style="font-size: 0.88rem;">🔌</span><span>OFFLINE</span>
+</a>'''
+    
     menubar_html = f"""<style>
 div.block-container {{
     padding-top: 0.2rem !important;
@@ -835,8 +875,9 @@ div.block-container {{
 </div>
 
 
-<!-- Campana Notificacions -->
+<!-- Campana Notificacions i Indicador Offline -->
 <div class="menu-item" style="margin-left: auto; display: flex; align-items: center;">
+{offline_badge_html}
 <div style="position: relative;">
 <span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 <div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
