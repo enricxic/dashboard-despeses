@@ -753,12 +753,27 @@ div.block-container {{
 <div class="menu-dropdown">
 <a href="?action=home{auth_suffix}" target="_self">🏠 Pantalla d'inici</a>
 <a href="?action=reset{auth_suffix}" target="_self">🔄 Reiniciar aplicació / memòria cau</a>
+<a href="?action=toggle_offline{auth_suffix}" target="_self" style="color: #f87171 !important;">🔌 Commutar Mode Offline</a>
 <a href="?action=logout" target="_self">🔒 Tancar sessió</a>
 </div>
 </div>
 <div class="menu-item">
 <span class="menu-title">Editar</span>
 <div class="menu-dropdown">
+<div class="submenu-item">
+<a href="?mod=modules.admin{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>⚙️ Configuració general</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<div class="submenu-dropdown">
+<a href="?mod=modules.admin{auth_suffix}" target="_self">⚙️ Tauler de Configuració</a>
+<a href="?mod=modules.admin&tab=admin{auth_suffix}" target="_self">👤 Perfil Administrador</a>
+<a href="?mod=modules.admin&tab=titol{auth_suffix}" target="_self">🏷️ Títol de la casa</a>
+<a href="?mod=modules.admin&tab=familia{auth_suffix}" target="_self">👨‍👩‍👧‍👦 Membres de la família</a>
+<a href="?mod=modules.admin&tab=tutelats{auth_suffix}" target="_self">🤝 Persones Tutelades</a>
+<a href="?mod=modules.admin&tab=bancs{auth_suffix}" target="_self">🏦 Bancs i Comptes</a>
+<a href="?mod=modules.admin&tab=tema{auth_suffix}" target="_self">🎨 Aspecte i tema</a>
+<a href="?mod=modules.admin&tab=icones{auth_suffix}" target="_self">🔘 Icones actives d'inici</a>
+<a href="?mod=modules.admin&tab=idioma{auth_suffix}" target="_self">🌐 Idioma i traducció</a>
+</div>
+</div>
 <div class="submenu-item">
 <div class="submenu-title"><span>📂 Arxius JSON</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></div>
 <div class="submenu-dropdown">
@@ -816,21 +831,6 @@ div.block-container {{
 <a href="?action=sync_db{auth_suffix}" target="_self">🔄 Sincronitzar / Recarregar dades</a>
 <a href="?mod=modules.sincronitzacio{auth_suffix}" target="_self" style="color: #60a5fa !important;">🌍 Consolidar Dades Offline</a>
 <a href="?action=backup_db{auth_suffix}" target="_self">💾 Crear Còpia de seguretat (ZIP)</a>
-</div>
-</div>
-<div class="menu-item">
-<span class="menu-title">Ajustos</span>
-<div class="menu-dropdown">
-<a href="?mod=modules.admin{auth_suffix}" target="_self">⚙️ Configuració general</a>
-<a href="?mod=modules.admin&tab=admin{auth_suffix}" target="_self">👤 Perfil Administrador</a>
-<a href="?mod=modules.admin&tab=titol{auth_suffix}" target="_self">🏷️ Títol de la casa</a>
-<a href="?mod=modules.admin&tab=familia{auth_suffix}" target="_self">👨‍👩‍👧‍👦 Membres de la família</a>
-<a href="?mod=modules.admin&tab=tutelats{auth_suffix}" target="_self">🤝 Persones Tutelades</a>
-<a href="?mod=modules.admin&tab=bancs{auth_suffix}" target="_self">🏦 Bancs i Comptes</a>
-<a href="?mod=modules.admin&tab=tema{auth_suffix}" target="_self">🎨 Aspecte i tema</a>
-<a href="?mod=modules.admin&tab=icones{auth_suffix}" target="_self">🔘 Icones actives d'inici</a>
-<a href="?mod=modules.admin&tab=idioma{auth_suffix}" target="_self">🌐 Idioma i traducció</a>
-<a href="?action=toggle_offline{auth_suffix}" target="_self" style="color: #f87171 !important;">🔌 Commutar Mode Offline</a>
 </div>
 </div>
 

@@ -604,34 +604,98 @@ def get_config_families():
     df_prod = get_tb_productes_cached()
     if not df_prod.empty and 'familia' in df_prod.columns:
         families.update([str(f).strip() for f in df_prod['familia'].dropna().unique() if str(f).strip()])
-    if cat_config and "families_compres" in cat_config:
-        families.update([str(f).strip() for f in cat_config["families_compres"] if str(f).strip()])
-    if cat_config and "articles_compres" in cat_config:
-        families.update([str(f).strip() for f in cat_config["articles_compres"].keys() if str(f).strip()])
+    cfg = load_categories_conceptes()
+    if cfg and "families_compres" in cfg:
+        families.update([str(f).strip() for f in cfg["families_compres"] if str(f).strip()])
+    if cfg and "articles_compres" in cfg:
+        families.update([str(f).strip() for f in cfg["articles_compres"].keys() if str(f).strip()])
+    try:
+        import streamlit as st
+        extra_arts = st.session_state.get("extra_articles", {})
+        if extra_arts:
+            for art_fam in extra_arts.values():
+                if art_fam and str(art_fam).strip():
+                    families.add(str(art_fam).strip())
+    except Exception:
+        pass
     families.discard('')
     families.discard('nan')
     return sorted(list(families))
 
-def get_config_articles(family):
-    if not family:
-        return []
-    fam_str = str(family).strip().lower()
+def get_config_articles(family=None):
     articles = set()
+    fam_str = str(family).strip().lower() if family else None
     
     df_prod = get_tb_productes_cached()
-    if not df_prod.empty and 'familia' in df_prod.columns and 'nom_estandard' in df_prod.columns:
-        mask = df_prod['familia'].astype(str).str.strip().str.lower() == fam_str
-        matched_arts = df_prod[mask]['nom_estandard'].dropna().unique()
-        articles.update([str(a).strip() for a in matched_arts if str(a).strip()])
+    if not df_prod.empty and 'nom_estandard' in df_prod.columns:
+        if fam_str:
+            if 'familia' in df_prod.columns:
+                mask = df_prod['familia'].astype(str).str.strip().str.lower() == fam_str
+                matched_arts = df_prod[mask]['nom_estandard'].dropna().unique()
+                articles.update([str(a).strip() for a in matched_arts if str(a).strip()])
+        else:
+            articles.update([str(a).strip() for a in df_prod['nom_estandard'].dropna().unique() if str(a).strip()])
         
-    if cat_config and "articles_compres" in cat_config:
-        for k, v in cat_config["articles_compres"].items():
-            if str(k).strip().lower() == fam_str and isinstance(v, list):
-                articles.update([str(a).strip() for a in v if str(a).strip()])
+    cfg = load_categories_conceptes()
+    if cfg and "articles_compres" in cfg:
+        for k, v in cfg["articles_compres"].items():
+            if isinstance(v, list):
+                if fam_str:
+                    if str(k).strip().lower() == fam_str:
+                        articles.update([str(a).strip() for a in v if str(a).strip()])
+                else:
+                    articles.update([str(a).strip() for a in v if str(a).strip()])
                 
+    try:
+        import streamlit as st
+        extra_arts = st.session_state.get("extra_articles", {})
+        if extra_arts:
+            for art_name, art_fam in extra_arts.items():
+                if fam_str:
+                    if str(art_fam).strip().lower() == fam_str:
+                        articles.add(str(art_name).strip())
+                else:
+                    articles.add(str(art_name).strip())
+    except Exception:
+        pass
+
     articles.discard('')
     articles.discard('nan')
     return sorted(list(articles))
+
+def get_article_family(article_name):
+    """Retorna la família d'un article buscant a extra_articles, cat_config i tb_productes."""
+    if not article_name:
+        return ""
+    art_target = str(article_name).strip().lower()
+    
+    try:
+        import streamlit as st
+        extra_arts = st.session_state.get("extra_articles", {})
+        for art_name, art_fam in extra_arts.items():
+            if str(art_name).strip().lower() == art_target:
+                return str(art_fam).strip()
+    except Exception:
+        pass
+
+    cfg = load_categories_conceptes()
+    if cfg and "articles_compres" in cfg:
+        for fam, arts in cfg["articles_compres"].items():
+            if isinstance(arts, list):
+                for a in arts:
+                    if str(a).strip().lower() == art_target:
+                        return str(fam).strip()
+                        
+    df_prod = get_tb_productes_cached()
+    if not df_prod.empty and 'nom_estandard' in df_prod.columns and 'familia' in df_prod.columns:
+        mask = df_prod['nom_estandard'].astype(str).str.strip().str.lower() == art_target
+        matched = df_prod[mask]['familia'].dropna()
+        if not matched.empty:
+            res = str(matched.iloc[0]).strip()
+            if res.lower() not in ('nan', 'none', ''):
+                return res
+            
+    return ""
 def save_to_csv(df, filename):
     import numpy as np
     table_name = filename.replace('.csv', '')

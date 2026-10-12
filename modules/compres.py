@@ -5,6 +5,7 @@ from datetime import datetime, date
 from core.db import (
     get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row, append_to_db, delete_db_row,
     get_config_supers, get_config_banks, get_config_payment_methods, get_config_families, get_config_articles,
+    get_article_family, get_tb_productes_cached, load_categories_conceptes,
     get_config_categories, get_config_concepts, get_config_routes, add_concept_to_config, add_route_to_config,
     load_dashboard_data, get_csv_mtimes, BANK_MAPPING, MONTHS_MAP, clean_numeric, parse_excel_date, fix_mojibake_df, get_next_id, load_ofertes, save_ofertes
 )
@@ -853,6 +854,7 @@ def cb_edit_ticket_item(idx):
     st.session_state["manual_qty_num"] = int(float(item['quantitat']))
     st.session_state["manual_preu_num"] = float(item['preuUnit'])
     st.session_state["manual_prom_num"] = float(item['prom'])
+    st.session_state["manual_pct_num"] = 0.0
     st.session_state["manual_reb_chk"] = (item['rebost'] == 'rebost')
     st.session_state["editing_ticket_item_idx"] = idx
 
@@ -894,6 +896,10 @@ def cb_add_ticket_line():
         del st.session_state["finalize_error"]
     fam = st.session_state.get("manual_fam_selectbox", "")
     art = st.session_state.get("manual_art_selectbox", "")
+    if art and not fam:
+        fam = get_article_family(art)
+        if fam:
+            st.session_state["manual_fam_selectbox"] = fam
     pes_raw = st.session_state.get("manual_pes_num", "0")
     qty_raw = st.session_state.get("manual_qty_num", 1)
     qty = int(qty_raw) if qty_raw is not None else 1
@@ -964,28 +970,21 @@ def cb_add_ticket_line():
 def cb_recalculate_manual_pct():
     pct = st.session_state.get("manual_pct_num", 0.0)
     if pct is None: pct = 0.0
-    preu_final = st.session_state.get("manual_preu_num", 0.0)
-    if preu_final is None: preu_final = 0.0
-    existing_prom = st.session_state.get("manual_prom_num", 0.0)
-    if existing_prom is None: existing_prom = 0.0
+    preu = st.session_state.get("manual_preu_num", 0.0)
+    if preu is None: preu = 0.0
+    qty = st.session_state.get("manual_qty_num", 1)
+    qty = int(qty) if qty is not None and int(qty) > 0 else 1
     
-    if pct > 0.0 and pct < 100.0 and preu_final > 0.0:
-        qty = st.session_state.get("manual_qty_num", 1)
-        qty = int(qty) if qty is not None and int(qty) > 0 else 1
-        
-        # El preu final inamovible de la línia que el client vol mantenir
-        total_final_desitjat = preu_final * qty
-        
-        # Calculem el preu original (més car) abans del descompte
-        p_orig = preu_final / (1.0 - (pct / 100.0))
-        p_orig_rounded = round(p_orig, 2)
-        
-        # La promoció ha de ser EXACTAMENT la diferència per clavar el total final
-        prom_from_pct = (p_orig_rounded * qty) - total_final_desitjat
-        
-        st.session_state["manual_prom_num"] = round(existing_prom + prom_from_pct, 2)
-        st.session_state["manual_preu_num"] = p_orig_rounded
-        st.session_state["manual_pct_num"] = 0.0
+    if pct > 0.0 and pct <= 100.0:
+        if preu > 0.0:
+            st.session_state["manual_prom_num"] = round(preu * qty * (pct / 100.0), 2)
+    elif pct == 0.0:
+        st.session_state["manual_prom_num"] = 0.0
+
+def cb_manual_prom_changed():
+    # Quan l'usuari introdueix o canvia directament la promoció en euros:
+    # Resetejar el % a 0.0 per no crear bucles ni conflictes d'estat
+    st.session_state["manual_pct_num"] = 0.0
 
 
 def cb_set_date_today():
@@ -1443,7 +1442,23 @@ def render_compres_super_interface():
         uploaded_file = chosen_file
         
         st.write("")
-        ocr_mode = st.radio("Mètode d'Escaneig", ["⚡ Híbrid (Tesseract+IA, recomanat)", "🤖 Visió Pura (Només Gemini)"], horizontal=True, help="Si la IA dóna error 503 per saturació, el mètode Híbrid sol funcionar gairebé sempre perqué és més lleuger.")
+        col_ocr_m, col_ocr_ai = st.columns([1.3, 1.0], vertical_alignment="bottom")
+        with col_ocr_m:
+            ocr_mode = st.radio(
+                "Mètode d'Escaneig",
+                ["⚡ Híbrid (Tesseract+IA, recomanat)", "👁️ Visió Pura (Directa)"],
+                horizontal=False,
+                help="Híbrid: Tesseract OCR extreu el text i la IA seleccionada n'estructura els articles (funciona amb totes les IA i estalvia saturació). Visió Pura: envia la imatge directament a un model multimodal (Gemini)."
+            )
+        with col_ocr_ai:
+            from core.llm_ui import render_ai_selector
+            prov, mod, ai_key = render_ai_selector(key_prefix="compres_ocr", default_model="Gemini (2.5 Flash)")
+            
+        # Si s'ha canviat de model després d'un error, netegem processed_file_id per reintentar immediatament amb el nou model
+        last_mod = st.session_state.get("last_ocr_model")
+        if last_mod and last_mod != mod and st.session_state.get("ocr_failed", False):
+            if "processed_file_id" in st.session_state:
+                del st.session_state["processed_file_id"]
         
         if uploaded_file is not None:
             col_f1, col_f2 = st.columns([3, 1], vertical_alignment="center")
@@ -1481,17 +1496,23 @@ def render_compres_super_interface():
                         st.rerun()
                 else:
                     try:
-                        import requests
                         import base64
                         import json
                         import pytesseract
                         from PIL import Image
                         import io
+                        from core.llm import call_llm_api
                         
-                        api_key = st.secrets.get("GEMINI_API_KEY", "")
-                        
+                        st.session_state["last_ocr_model"] = mod
                         use_hybrid = "Híbrid" in ocr_mode
                         raw_text = ""
+                        
+                        # Si l'usuari tria Visió Pura però el model no té visió (ex. DeepSeek, Llama),
+                        # fem fallback automàtic a Híbrid amb Tesseract per evitar errors d'API.
+                        if not use_hybrid and prov != "gemini":
+                            use_hybrid = True
+                            st.toast(f"ℹ️ El model {mod} no té visió d'imatges; s'usarà Tesseract OCR per extreure el text primer.", icon="ℹ️")
+
                         if use_hybrid:
                             with st.spinner("1/2 - Llegint tiquet amb Tesseract OCR..."):
                                 uploaded_file.seek(0)
@@ -1503,11 +1524,11 @@ def render_compres_super_interface():
                                         raw_text = pytesseract.image_to_string(img)
                                     except Exception as e_tess:
                                         raw_text = ""
-                                        print(f"Tesseract OCR no disponible: {e_tess}. S'utilitzarà Gemini Vision.")
+                                        print(f"Tesseract OCR no disponible: {e_tess}. S'utilitzarà visió multimodal si el model ho suporta.")
                                         use_hybrid = False
                                 
                         if use_hybrid and raw_text.strip():
-                            with st.spinner("2/2 - Endreçant i raonant dades amb IA (Gemini Text)..."):
+                            with st.spinner(f"2/2 - Endreçant i estructurant dades amb IA ({mod})..."):
                                 prompt = f"""Ets un expert en extracció de dades de tiquets de compra.
 T'han donat aquest text OCR brut d'un tiquet de supermercat (conté errors i soroll):
 ---
@@ -1531,31 +1552,25 @@ Extreu i neteja els productes en un format JSON estricte:
         }}
     ]
 }}
-Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes reals.
+Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes reals. Retorna ÚNICAMENT l'objecte JSON.
 """
-                                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-                                payload = {
-                                    "contents": [
-                                        {
-                                            "parts": [
-                                                {"text": prompt}
-                                            ]
-                                        }
-                                    ],
-                                    "generationConfig": {
-                                        "responseMimeType": "application/json"
-                                    }
-                                }
+                                ok_call, response_text, latency = call_llm_api(
+                                    prompt=prompt,
+                                    api_key=ai_key,
+                                    model_name=mod,
+                                    provider=prov,
+                                    json_mode=True
+                                )
+                                if not ok_call:
+                                    raise Exception(f"Error cridant la IA ({mod}): {response_text}")
                         else:
-                            with st.spinner("Llegint tiquet amb IA (Gemini Vision)..."):
+                            with st.spinner(f"Llegint tiquet amb IA ({mod} Vision)..."):
                                 mime_type = "image/jpeg"
                                 if uploaded_file.name.lower().endswith(".png"):
                                     mime_type = "image/png"
                                     
                                 uploaded_file.seek(0)
                                 try:
-                                    from PIL import Image
-                                    import io
                                     img_to_resize = Image.open(io.BytesIO(uploaded_file.read()))
                                     if img_to_resize.mode in ("RGBA", "P"):
                                         img_to_resize = img_to_resize.convert("RGB")
@@ -1566,15 +1581,14 @@ Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes 
                                         
                                     buffer = io.BytesIO()
                                     img_to_resize.save(buffer, format="JPEG", quality=85)
-                                    encoded_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
+                                    image_bytes_to_send = buffer.getvalue()
                                     mime_type = "image/jpeg"
                                 except Exception as e_img:
                                     print(f"Error comprimint imatge: {e_img}")
                                     uploaded_file.seek(0)
-                                    encoded_image = base64.b64encode(uploaded_file.read()).decode("utf-8")
+                                    image_bytes_to_send = uploaded_file.read()
                                 
-                                prompt = """
-Ets un expert en extracció de dades de tiquets de compra.
+                                prompt = """Ets un expert en extracció de dades de tiquets de compra.
 Llegeix aquest tiquet de supermercat i retorna les dades en un format JSON net i estricte.
 
 IMPORTANT: En tiquets com els de bonArea / AreaGuissona, sovint apareix el tipus d'IVA (ex: 4.0, 10.0) al final de la línia del producte. 
@@ -1599,53 +1613,36 @@ Notes importants:
 1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal, Ofertes, Cupons).
 2. Assegura't de capturar bé el 'preu_total' de la línia.
 3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
+Retorna ÚNICAMENT l'objecte JSON.
 """
-                                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-                                payload = {
-                                    "contents": [
-                                        {
-                                            "parts": [
-                                                {"text": prompt},
-                                                {
-                                                    "inline_data": {
-                                                        "mime_type": mime_type,
-                                                        "data": encoded_image
-                                                    }
-                                                }
-                                            ]
-                                        }
-                                    ],
-                                    "generationConfig": {
-                                        "responseMimeType": "application/json"
-                                    }
-                                }
+                                ok_call, response_text, latency = call_llm_api(
+                                    prompt=prompt,
+                                    api_key=ai_key,
+                                    model_name=mod,
+                                    provider=prov,
+                                    json_mode=True,
+                                    image_bytes=image_bytes_to_send,
+                                    mime_type=mime_type
+                                )
+                                if not ok_call:
+                                    raise Exception(f"Error cridant la IA ({mod}): {response_text}")
                                 
-                        import time
-                        max_retries = 3
-                        for attempt in range(max_retries):
-                            try:
-                                req = requests.post(url, json=payload, timeout=150)
-                                if req.status_code == 503 or req.status_code == 429:
-                                    if attempt < max_retries - 1:
-                                        time.sleep(3 + (2 ** attempt))
-                                        continue
-                                if req.status_code != 200:
-                                    raise Exception(f"API Error {req.status_code}: {req.text}")
-                                break
-                            except requests.exceptions.Timeout:
-                                if attempt < max_retries - 1:
-                                    time.sleep(3 + (2 ** attempt))
-                                    continue
-                                else:
-                                    raise Exception("El servidor de la IA triga massa a respondre. Prova de retallar o comprimir la imatge (és molt grossa) o utilitza el mètode Híbrid.")
+                        # Neteja resilient de JSON
+                        clean_json = response_text.strip()
+                        if "```json" in clean_json:
+                            clean_json = clean_json.split("```json")[1].split("```")[0].strip()
+                        elif "```" in clean_json:
+                            clean_json = clean_json.split("```")[1].split("```")[0].strip()
                             
-                        response_data = req.json()
+                        s_idx = clean_json.find('{')
+                        e_idx = clean_json.rfind('}')
+                        if s_idx != -1 and e_idx != -1:
+                            clean_json = clean_json[s_idx:e_idx+1]
+                            
                         try:
-                            response_text = response_data['candidates'][0]['content']['parts'][0]['text']
-                            response_text = response_text.replace('```json', '').replace('```', '').strip()
-                            data = json.loads(response_text)
+                            data = json.loads(clean_json)
                         except Exception as e:
-                            raise Exception(f"Failed to parse AI response: {str(e)}. Raw: {str(response_data)[:200]}")
+                            raise Exception(f"No s'ha pogut interpretar la resposta JSON de {mod}: {str(e)}. Resposta: {response_text[:200]}")
                         
                         # 1. Update supermercat
                         super_trobat = data.get("supermercat", "")
@@ -1728,11 +1725,11 @@ Notes importants:
                         st.session_state["ticket_items"] = parsed
                         save_unknown_products(parsed, current_super)
                         st.session_state["ocr_failed"] = False
-                        st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA (Gemini)! S'han detectat {len(parsed)} articles."
+                        st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA ({mod})! S'han detectat {len(parsed)} articles."
                         st.rerun()
                     except Exception as e:
                         st.session_state["ocr_failed"] = True
-                        st.session_state["ticket_msg_error"] = f"Error al processar l'imatge amb OCR: {str(e)}. Si us plau, introdueix els productes manualment."
+                        st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {str(e)}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior i reintentar."
                         st.rerun()
         
     # Row 2: Data, Super, Import, Nº Despesa
@@ -1813,6 +1810,10 @@ Notes importants:
         st.session_state["manual_fam_selectbox"] = ""
     if "manual_art_selectbox" not in st.session_state:
         st.session_state["manual_art_selectbox"] = ""
+    if "force_family_selection" in st.session_state:
+        st.session_state["manual_fam_selectbox"] = st.session_state.pop("force_family_selection")
+    if "force_article_selection" in st.session_state:
+        st.session_state["manual_art_selectbox"] = st.session_state.pop("force_article_selection")
     if "manual_pes_num" not in st.session_state:
         st.session_state["manual_pes_num"] = "0"
     if "manual_qty_num" not in st.session_state:
@@ -1825,6 +1826,22 @@ Notes importants:
         st.session_state["manual_prom_num"] = 0.0
     if "manual_reb_chk" not in st.session_state:
         st.session_state["manual_reb_chk"] = False
+
+    def cb_manual_fam_changed():
+        new_fam = st.session_state.get("manual_fam_selectbox", "")
+        current_art = st.session_state.get("manual_art_selectbox", "")
+        if new_fam and current_art:
+            arts_for_fam = get_config_articles(new_fam)
+            if current_art not in arts_for_fam:
+                st.session_state["manual_art_selectbox"] = ""
+
+    def cb_manual_art_changed():
+        chosen_art = st.session_state.get("manual_art_selectbox", "")
+        current_fam = st.session_state.get("manual_fam_selectbox", "")
+        if chosen_art:
+            auto_fam = get_article_family(chosen_art)
+            if auto_fam and (not current_fam or current_fam == ""):
+                st.session_state["manual_fam_selectbox"] = auto_fam
 
     # Manual Line Input Section
     st.write("")
@@ -1842,17 +1859,65 @@ Notes importants:
     
     with col_fam:
         fam_options = [""] + get_config_families()
-        fam_sel = st.selectbox("FAMILIA", fam_options, key="manual_fam_selectbox")
+        curr_fam = st.session_state.get("manual_fam_selectbox", "")
+        if curr_fam and curr_fam not in fam_options:
+            fam_options.append(curr_fam)
+            fam_options = [""] + sorted(list(set([f for f in fam_options if f])))
+        fam_idx = fam_options.index(curr_fam) if curr_fam in fam_options else 0
+        fam_sel = st.selectbox("FAMILIA", fam_options, index=fam_idx, key="manual_fam_selectbox", on_change=cb_manual_fam_changed)
         
     with col_art:
         @st.dialog("➕ Afegir nou article")
-        def show_add_article_dialog(family):
-            st.markdown(f"Introduïu el nom del nou article per a la família **{family}**:")
-            new_art_name = st.text_input("Nom de l'article:", key="new_article_name_input_dialog")
-            if st.button("Guardar article", key="btn_save_dialog_article", use_container_width=True):
-                if new_art_name.strip():
+        def show_add_article_dialog(default_family=None):
+            fam_list = get_config_families()
+            def_idx = 0
+            if default_family and default_family in fam_list:
+                def_idx = fam_list.index(default_family)
+            
+            chosen_family = st.selectbox("Família:", fam_list, index=def_idx, key="dialog_article_family")
+            
+            suggested_name = ""
+            editing_idx = st.session_state.get("editing_ticket_item_idx", None)
+            if editing_idx is not None and 0 <= editing_idx < len(st.session_state.get("ticket_items", [])):
+                ed_item = st.session_state["ticket_items"][editing_idx]
+                if ed_item.get('article') == 'pendent':
+                    suggested_name = str(ed_item.get('nom_brut', '')).strip().title()
+                    
+            new_art_name = st.text_input("Nom de l'article:", value=suggested_name, key="new_article_name_input_dialog")
+            if st.button("Guardar article", key="btn_save_dialog_article", use_container_width=True, type="primary"):
+                if new_art_name.strip() and chosen_family:
                     new_art = new_art_name.strip()
-                    from core.db import load_categories_conceptes, save_categories_conceptes
+                    family = chosen_family.strip()
+                    from core.db import (
+                        load_categories_conceptes,
+                        save_categories_conceptes,
+                        get_tb_productes_cached,
+                        get_supabase_client,
+                        get_next_id
+                    )
+                    
+                    # 1. Assegurar que el producte s'afegeix o actualitza a tb_productes
+                    try:
+                        supabase = get_supabase_client("admin")
+                        if supabase:
+                            res_chk = supabase.table('tb_productes').select('idProducte').ilike('nom_estandard', new_art).execute()
+                            if not res_chk.data:
+                                next_id = get_next_id('tb_productes', 'idProducte')
+                                new_prod_db = {
+                                    'idProducte': next_id,
+                                    'nom_estandard': new_art,
+                                    'familia': family,
+                                    'stock_actual': 0.0,
+                                    'select_stock': 1
+                                }
+                                supabase.table('tb_productes').insert(new_prod_db).execute()
+                            else:
+                                existing_id = res_chk.data[0]['idProducte']
+                                supabase.table('tb_productes').update({'familia': family}).eq('idProducte', existing_id).execute()
+                    except Exception as e_db:
+                        print(f"Avís al desar a tb_productes: {e_db}")
+                    
+                    # 2. Assegurar que s'actualitza cat_config (categories_conceptes)
                     cat_config = load_categories_conceptes()
                     if not cat_config:
                         cat_config = {}
@@ -1861,63 +1926,73 @@ Notes importants:
                     if family not in cat_config["articles_compres"]:
                         cat_config["articles_compres"][family] = []
                     if new_art not in cat_config["articles_compres"][family]:
-                        try:
-                            supabase = get_supabase_client(st.session_state.get("role", "guest"))
-                            if supabase:
-                                new_prod_db = {'nom_estandard': new_art, 'familia': family}
-                                supabase.table('tb_productes').insert(new_prod_db).execute()
-                                get_tb_productes_cached.clear()
-                                # Actualitzem manualment el json
-                                cat_config["articles_compres"][family].append(new_art)
-                                cat_config["articles_compres"][family].sort()
-                                save_categories_conceptes(cat_config)
-                        except Exception as e:
-                            print(f"Error saving to tb_productes: {e}")
-                            
-                        st.toast(f"Article '{new_art}' afegit correctament!")
-                    else:
-                        st.toast(f"L'article '{new_art}' ja estava afegit prèviament.")
-                        
+                        cat_config["articles_compres"][family].append(new_art)
+                        cat_config["articles_compres"][family].sort()
+                    save_categories_conceptes(cat_config)
+                    
+                    # 3. Netejar només la memòria cau específica de productes i categories (mai les taules generals)
+                    try:
+                        get_tb_productes_cached.clear()
+                    except Exception:
+                        pass
+                    try:
+                        load_categories_conceptes.clear()
+                    except Exception:
+                        pass
+                    
+                    # 3. Guardar a extra_articles per disponibilitat immediata al combobox
+                    if "extra_articles" not in st.session_state:
+                        st.session_state["extra_articles"] = {}
+                    st.session_state["extra_articles"][new_art] = family
+                    
+                    # 4. Actualitzar estat de selecció
+                    st.session_state["force_family_selection"] = family
                     st.session_state["force_article_selection"] = new_art
+                    st.session_state["manual_fam_selectbox"] = family
+                    st.session_state["manual_art_selectbox"] = new_art
+                    
+                    # Si s'estava editant una línia de tiquet pendent, actualitzar-la directament
+                    if editing_idx is not None and 0 <= editing_idx < len(st.session_state.get("ticket_items", [])):
+                        ed_item = st.session_state["ticket_items"][editing_idx]
+                        if ed_item.get('article') == 'pendent':
+                            ed_item['article'] = new_art
+                            ed_item['familia'] = family
+                    
+                    st.toast(f"Article '{new_art}' afegit correctament!")
                     st.rerun()
                 else:
-                    st.error("El nom de l'article no pot estar buit.")
+                    st.error("El nom de l'article i la família no poden estar buits.")
 
         if fam_sel:
             art_options = [""] + get_config_articles(fam_sel)
         else:
-            art_options = [""]
-        if "force_article_selection" in st.session_state:
-            force_art = st.session_state.pop("force_article_selection")
-            if force_art in art_options:
-                st.session_state["manual_art_selectbox"] = force_art
-                
-        curr_art = st.session_state.get("manual_art_selectbox", "")
-        if curr_art not in art_options:
-            st.session_state["manual_art_selectbox"] = ""
+            art_options = [""] + get_config_articles()
             
-        art_sel = st.selectbox("ARTICLE", art_options, key="manual_art_selectbox")
+        curr_art = st.session_state.get("manual_art_selectbox", "")
+        if curr_art and curr_art not in art_options:
+            art_options.append(curr_art)
+            art_options = [""] + sorted(list(set([a for a in art_options if a])))
+            
+        art_idx = art_options.index(curr_art) if curr_art in art_options else 0
+        art_sel = st.selectbox("ARTICLE", art_options, index=art_idx, key="manual_art_selectbox", on_change=cb_manual_art_changed)
         
     with col_art_btn:
         st.markdown("<div style='margin-bottom: 2px;'></div>", unsafe_allow_html=True)
         if st.button("✚", key="btn_trigger_add_art", help="Afegir nou article", use_container_width=True):
-            if fam_sel:
-                show_add_article_dialog(fam_sel)
-            else:
-                st.warning("Tria una FAMÍLIA abans d'afegir un article.")
+            show_add_article_dialog(fam_sel if fam_sel else None)
                 
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
     with col_qty:
-        qty_val = st.number_input("QUANTITAT", min_value=0, step=1, key="manual_qty_num", on_change=cb_recalculate_manual_pct, value=None, placeholder="1")
+        qty_val = st.number_input("QUANTITAT", min_value=0, step=1, key="manual_qty_num", value=None, placeholder="1")
     with col_preu:
-        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", on_change=cb_recalculate_manual_pct, value=None, placeholder="0.0")
+        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", value=None, placeholder="0.0")
     with col_pct:
         pct_val = st.number_input("%", min_value=0.0, max_value=100.0, step=1.0, key="manual_pct_num", on_change=cb_recalculate_manual_pct)
     with col_prom:
-        prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num")
+        prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num", on_change=cb_manual_prom_changed)
         
-    tot_linea_val = ((qty_val or 1.0) * (preu_val or 0.0)) - prom_val
+    tot_linea_val = ((qty_val or 1.0) * (preu_val or 0.0)) - (prom_val or 0.0)
     with col_tot:
         st.text_input("TOTAL LÍNIA", value=f"{tot_linea_val:,.2f} €", disabled=True)
     with col_reb:
@@ -2014,33 +2089,28 @@ Notes importants:
     st.components.v1.html(
         """
         <script>
-        const doc = window.parent.document;
+        (function() {
+            try {
+                const doc = window.parent.document;
+                if (!doc || window.parent.__compres_nav_attached) return;
+                window.parent.__compres_nav_attached = true;
+
                 doc.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const target = e.target;
-                if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
-                    const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
-                    const index = inputs.indexOf(target);
-                    if (index > -1 && index < inputs.length - 1) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        inputs[index + 1].focus();
+                    if (e.key === 'Enter') {
+                        const target = e.target;
+                        if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
+                            const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
+                            const index = inputs.indexOf(target);
+                            if (index > -1 && index < inputs.length - 1) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                inputs[index + 1].focus();
+                            }
+                        }
                     }
-                }
-            }
-        }, true);
-        
-        doc.addEventListener('focusin', function(e) {
-            const target = e.target;
-            if (target.tagName === 'INPUT') {
-                const val = target.value.trim();
-                if (val === '0' || val === '0,00' || val === '0.00' || val === '0.0' || val === '0,0') {
-                    setTimeout(() => {
-                        target.select();
-                    }, 50);
-                }
-            }
-        }, true);
+                });
+            } catch(e) {}
+        })();
         </script>
         """,
         height=0,
@@ -2133,7 +2203,10 @@ def modal_inventari(df_inv):
                     supabase.table('tb_productes').update(changes).eq('idProducte', int(idx)).execute()
                 st.success(f"S'han guardat {len(st.session_state.inv_changes)} canvis correctament!")
                 st.session_state.inv_changes = {}
-                st.cache_data.clear()
+                try:
+                    get_tb_productes_cached.clear()
+                except Exception:
+                    pass
                 st.rerun()
             except Exception as e:
                 st.error(f"Error guardant: {e}")
@@ -2317,32 +2390,39 @@ def render_ingres_despesa_general_interface():
     st.components.v1.html(
         """
         <script>
-        const doc = window.parent.document;
-        doc.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const target = e.target;
-                if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
-                    const ariaLabel = target.getAttribute('aria-label') || "";
-                    if (ariaLabel.includes('Import Càrrec') || ariaLabel.includes('Import Ingrés')) {
-                        const catCombobox = doc.querySelector('[aria-label="Categoria"]');
-                        if (catCombobox) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            catCombobox.focus();
-                            return;
+        (function() {
+            try {
+                const doc = window.parent.document;
+                if (!doc || window.parent.__general_nav_attached) return;
+                window.parent.__general_nav_attached = true;
+
+                doc.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        const target = e.target;
+                        if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
+                            const ariaLabel = target.getAttribute('aria-label') || "";
+                            if (ariaLabel.includes('Import Càrrec') || ariaLabel.includes('Import Ingrés')) {
+                                const catCombobox = doc.querySelector('[aria-label="Categoria"]');
+                                if (catCombobox) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    catCombobox.focus();
+                                    return;
+                                }
+                            }
+
+                            const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
+                            const index = inputs.indexOf(target);
+                            if (index > -1 && index < inputs.length - 1) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                inputs[index + 1].focus();
+                            }
                         }
                     }
-
-                    const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
-                    const index = inputs.indexOf(target);
-                    if (index > -1 && index < inputs.length - 1) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        inputs[index + 1].focus();
-                    }
-                }
-            }
-        }, true);
+                });
+            } catch(e) {}
+        })();
         </script>
         """,
         height=0,
@@ -3190,14 +3270,20 @@ def render():
                                             new_stock = float(prod['stock_actual']) + 1.0
                                             supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', id_prod).execute()
                                             st.success(f"Afegit! Nou stock: {new_stock}")
-                                            st.cache_data.clear()
+                                            try:
+                                                get_tb_productes_cached.clear()
+                                            except Exception:
+                                                pass
                                             st.rerun()
                                     with col2:
                                         if st.button("➖ Gastar 1 de l'stock", type="secondary", use_container_width=True, key=f"sub_{barcode}"):
                                             new_stock = max(0.0, float(prod['stock_actual']) - 1.0)
                                             supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', id_prod).execute()
                                             st.success(f"Gastat! Nou stock: {new_stock}")
-                                            st.cache_data.clear()
+                                            try:
+                                                get_tb_productes_cached.clear()
+                                            except Exception:
+                                                pass
                                             st.rerun()
                             else:
                                 # Not found. Ask to associate.
@@ -3361,7 +3447,10 @@ def render():
                                         new_stock = stock - 1.0
                                         supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', row['idProducte']).execute()
                                         st.success(f"➖ 1x {prod_name} gastat! (Et queden {int(new_stock)})")
-                                        st.cache_data.clear() # Clear cache so other devices see it
+                                        try:
+                                            get_tb_productes_cached.clear()
+                                        except Exception:
+                                            pass
                                         st.rerun()
                 else:
                     st.info("Actualment no tens cap producte controlat amb stock disponible (> 0).")
@@ -3453,7 +3542,10 @@ def render():
                             
                     if updates_made > 0:
                         st.success(f"S'han actualitzat {updates_made} productes!")
-                        st.cache_data.clear()
+                        try:
+                            get_tb_productes_cached.clear()
+                        except Exception:
+                            pass
                         st.rerun()
                     else:
                         st.info("No s'ha detectat cap canvi.")

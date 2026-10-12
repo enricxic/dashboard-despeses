@@ -5459,6 +5459,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2605;Efectiu;;01/09/2023;septiembre;2023;0.0;5.4;Càrrec;menjar;Novavenda;;False
 2606;Efectiu;;01/09/2023;septiembre;2023;0.0;7.96;Càrrec;rebost;Novavenda;Tonyina 4;False
 2568;BBVA;Dèbit;18/08/2023;agosto;2023;0.0;17.28;Càrrec;manteniment;LeroyMerlin;Imprimació + cargols;False
+8146;LaCaixa;Compte;10/10/2026;octubre;2026;0.0;250.0;op_banc;op_banc;Traspàs comptes;;False
 2625;BBVA;VISA;05/09/2023;septiembre;2023;0.0;62.62;Càrrec;gasolina;GasolinaAreaGuissona;;False
 2630;Efectiu;;30/08/2023;agosto;2023;0.0;24.0;Càrrec;menjar;Ous casolans;;False
 2631;Efectiu;;01/09/2023;septiembre;2023;0.0;24.0;Càrrec;menjar;Ous casolans;;False
@@ -5472,6 +5473,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2643;BBVA;VISA;11/09/2023;septiembre;2023;0.0;8.97;Càrrec;manteniment;Aliexpress;fresa,llàpis i bossa gran;False
 2673;Efectiu;;18/09/2023;septiembre;2023;0.0;20.0;Càrrec;menjar;Altres menjar;Vehí moro;False
 2646;Efectiu;;13/09/2023;septiembre;2023;0.0;1.59;Càrrec;manteniment;Xino Sta.Coloma;disc multifulles;False
+8147;BBVA;Compte;10/10/2026;octubre;2026;250.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 2648;BBVA;Compte;15/09/2023;septiembre;2023;0.0;43.9;Càrrec;despesa_general;Lowi;;False
 2664;Efectiu;;19/09/2023;septiembre;2023;0.0;4.6;Càrrec;menjar;Dia;;False
 2665;Efectiu;;17/09/2023;septiembre;2023;0.0;13.5;Càrrec;restaurant;Restaurant;Creps fira;False
@@ -5519,6 +5521,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2748;Efectiu;;08/10/2023;octubre;2023;0.0;0.99;Càrrec;farmàcia;Farmàcia;Esparadrap;False
 2733;BBVA;Compte;04/10/2023;octubre;2023;0.0;100.0;Càrrec;varis;Bizum;Mireia.Tenerife Anglès;False
 2742;Efectiu;;05/10/2023;octubre;2023;0.0;2.98;Càrrec;menjar;Fruiteria Deepak;;False
+8148;BBVA;Compte;10/10/2026;octubre;2026;0.0;250.0;op_banc;op_banc;Traspàs comptes;;False
 2746;Efectiu;;08/10/2023;octubre;2023;0.0;1.16;Càrrec;menjar;Fruiteria Deepak;;False
 2750;Efectiu;;10/10/2023;octubre;2023;0.0;2.8;Càrrec;menjar;Pa i pastisseria;;False
 2751;Efectiu;;09/10/2023;octubre;2023;0.0;5.0;Càrrec;personal;Jordi;;False
@@ -5554,6 +5557,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2840;Efectiu;;05/11/2023;noviembre;2023;0.0;3.2;Càrrec;farmàcia;Farmàcia;;False
 2824;Efectiu;;02/11/2023;noviembre;2023;0.0;2.1;Càrrec;manteniment;Xino Sta.Coloma;Plat plàstic;False
 2782;Efectiu;;22/10/2023;octubre;2023;0.0;6.0;Càrrec;restaurant;Restaurant;Dinar Plaça;False
+8149;TradeRep.;Compte;10/10/2026;octubre;2026;250.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 2804;Efectiu;;29/10/2023;octubre;2023;0.0;4.2;Càrrec;menjar;Fruiteria Bayes;;False
 2805;Efectiu;;29/10/2023;octubre;2023;0.0;5.93;Càrrec;menjar;Fruiteria Deepak;;False
 2809;BBVA;Compte;30/10/2023;octubre;2023;0.0;6.21;Càrrec;proveidor;Hofmann;;False
@@ -5576,6 +5580,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2880;Efectiu;;20/11/2023;noviembre;2023;0.0;7.9;Càrrec;farmàcia;Farmàcia;;False
 2849;BBVA;Compte;09/11/2023;noviembre;2023;0.0;225.0;Càrrec;proveidor;Exaprint;Bizum Mireia. 206,21?;False
 2858;Efectiu;;12/11/2023;noviembre;2023;0.0;10.0;Càrrec;varis;Loteria;TOM Arbúcies;False
+8150;TradeRep.;Dèbit;09/10/2026;octubre;2026;0.0;2.98;Càrrec;restaurant;Bar;IKEA;False
 2856;Efectiu;;12/11/2023;noviembre;2023;0.0;3.77;Càrrec;menjar;Fruiteria Deepak;;False
 2857;Efectiu;;12/11/2023;noviembre;2023;0.0;10.0;Càrrec;restaurant;Restaurant;kebab Jordi;False
 2868;BBVA;Compte;16/11/2023;noviembre;2023;0.0;43.8;Càrrec;despesa_general;Lowi;;False
