@@ -5622,6 +5622,8 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2950;Efectiu;;11/12/2023;diciembre;2023;0.0;20.0;Càrrec;manteniment;Reparacions;Paqui.Mòvil Jordi;False
 2951;Efectiu;;11/12/2023;diciembre;2023;0.0;2.4;Càrrec;varis;Papereria;Fotocòpies;False
 2973;Efectiu;;17/12/2023;diciembre;2023;0.0;3.0;Càrrec;varis;Expectacles/Teatre;Dança Arbúcies;False
+8151;TradeRep.;Dèbit;10/10/2026;octubre;2026;0.0;34.89;Càrrec;menjar;BonPreu;;False
+8152;TradeRep.;Dèbit;10/10/2026;octubre;2026;0.0;5.88;Càrrec;neteja;BonPreu;;False
 2958;Efectiu;;14/12/2023;diciembre;2023;0.0;5.0;Càrrec;personal;Jordi;;False
 2959;Efectiu;;14/12/2023;diciembre;2023;0.0;3.0;Càrrec;menjar;Fruiteria Deepak;;False
 2961;BBVA;Compte;15/12/2023;diciembre;2023;0.0;44.23;Càrrec;despesa_general;Lowi;;False
@@ -5650,6 +5652,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3001;Efectiu;;23/12/2023;diciembre;2023;0.0;4.0;Càrrec;menjar;Ous casolans;;False
 3002;Efectiu;;20/12/2023;diciembre;2023;0.0;8.59;Càrrec;menjar;AreaGuissona;;False
 3003;Efectiu;;23/12/2023;diciembre;2023;0.0;10.0;Càrrec;personal;Jordi;;False
+8153;TradeRep.;Dèbit;09/10/2026;octubre;2026;0.0;7.35;Càrrec;parallar;IKEA;Gots,tassa;False
 3007;Efectiu;;23/12/2023;diciembre;2023;0.0;2.99;Càrrec;menjar;Fruiteria Deepak;;False
 3012;Efectiu;;27/12/2023;diciembre;2023;0.0;7.38;Càrrec;menjar;Novavenda;;False
 3016;LaCaixa;Compte;27/12/2023;diciembre;2023;0.0;56.7;Càrrec;varis;Curs;Opos Mireia catalunya;False
@@ -5673,6 +5676,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3123;BBVA;Compte;01/02/2024;febrero;2024;0.0;25.75;Càrrec;assegurança;Ocaso;;False
 3092;Efectiu;;18/01/2024;enero;2024;0.0;16.3;Càrrec;butà;Butà reparto;;False
 3086;Efectiu;;15/01/2024;enero;2024;0.0;6.4;Càrrec;farmàcia;Farmàcia;;False
+8154;TradeRep.;Dèbit;09/10/2026;octubre;2026;0.0;17.0;Càrrec;parallar;JYSK;Tovalloles;False
 3075;Efectiu;;12/01/2024;enero;2024;0.0;8.2;Càrrec;menjar;Altres menjar;;False
 3076;Efectiu;;12/01/2024;enero;2024;0.0;2.92;Càrrec;menjar;Fruiteria Deepak;;False
 3077;Efectiu;;12/01/2024;enero;2024;0.0;5.0;Càrrec;personal;Jordi;;False
@@ -5713,6 +5717,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3140;BBVA;Compte;05/02/2024;febrero;2024;0.0;14.92;Càrrec;assegurança;DP Morts Enric;;False
 3141;BBVA;Compte;05/02/2024;febrero;2024;0.0;20.38;Càrrec;assegurança;DP MP Mireia;;False
 3157;Efectiu;;09/02/2024;febrero;2024;0.0;4.15;Càrrec;menjar;Novavenda;;False
+8155;Efectiu;;10/10/2026;octubre;2026;0.0;31.0;Càrrec;restaurant;Restaurant;Fira de l'Olla Breda;False
 3173;Efectiu;;15/02/2024;febrero;2024;0.0;6.1;Càrrec;menjar;Fruiteria Deepak;;False
 3174;Efectiu;;15/02/2024;febrero;2024;0.0;3.0;Càrrec;personal;Jordi;;False
 3176;BBVA;Compte;16/02/2024;febrero;2024;0.0;43.8;Càrrec;despesa_general;Lowi;;False
@@ -5742,6 +5747,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3234;BBVA;VISA;04/03/2024;marzo;2024;0.0;2.36;Càrrec;manteniment;Xino Sta.Coloma;espelmes 65+globus;False
 3237;Efectiu;;07/03/2024;marzo;2024;0.0;52.0;Càrrec;proveidor;Prolab;Àlbum Lidia Cerrillo;False
 3256;Efectiu;;07/03/2024;marzo;2024;0.0;10.0;Càrrec;restaurant;Bar;Geriàtric;False
+8156;Efectiu;;10/10/2026;octubre;2026;0.0;1.89;Càrrec;menjar;Dia;;False
 3242;BBVA;VISA;06/03/2024;marzo;2024;0.0;37.5;Càrrec;varis;Parking;Isabel BCN;False
 3243;BBVA;VISA;06/03/2024;marzo;2024;0.0;16.66;Càrrec;restaurant;Restaurant;Taco Bell;False
 3249;Efectiu;;08/03/2024;marzo;2024;0.0;40.03;Càrrec;menjar;Can Rinsa;;False
@@ -5767,6 +5773,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3333;Efectiu;;30/03/2024;marzo;2024;0.0;6.0;Càrrec;restaurant;Bar;gelats Palamós;False
 3285;Efectiu;;15/03/2024;marzo;2024;0.0;11.94;Càrrec;menjar;Fruiteria Deepak;;False
 3279;BBVA;Dèbit;14/03/2024;marzo;2024;0.0;7.5;Càrrec;restaurant;Restaurant;Els gerds. 1 menú;False
+8157;Efectiu;;11/10/2026;octubre;2026;0.0;12.9;Càrrec;menjar;Plaça;;False
 3289;Efectiu;;16/03/2024;marzo;2024;0.0;2.5;Càrrec;menjar;Fruiteria Bayes;;False
 3290;Efectiu;;16/03/2024;marzo;2024;0.0;3.9;Càrrec;menjar;Pa i pastisseria;;False
 3291;Efectiu;;16/03/2024;marzo;2024;0.0;4.83;Càrrec;menjar;Fruiteria Deepak;;False
@@ -5801,6 +5808,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3399;BBVA;Compte;15/04/2024;abril;2024;0.0;800.0;Càrrec;proveidor;Ssangyong;reserva Tívoli.Alacant;False
 3362;Efectiu;;04/04/2024;abril;2024;0.0;1.72;Càrrec;menjar;Fruiteria Deepak;;False
 3422;BBVA;Compte;23/04/2024;abril;2024;0.0;40.0;Càrrec;varis;Bizum;Mireia. Fotocòpies;False
+8158;Efectiu;;11/10/2026;octubre;2026;0.0;10.0;Càrrec;menjar;Pastisseria Ayma;;False
 3366;BBVA;Compte;02/04/2024;abril;2024;0.0;31.56;Càrrec;despesa_general;Endesa;;False
 3368;Efectiu;;08/04/2024;abril;2024;0.0;24.0;Càrrec;menjar;Ous casolans;;False
 3370;Efectiu;;07/04/2024;abril;2024;0.0;6.0;Càrrec;menjar;Pa i pastisseria;;False
@@ -5839,6 +5847,9 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3472;Efectiu;;02/05/2024;mayo;2024;0.0;17.0;Càrrec;butà;Butà reparto;;False
 3431;Efectiu;;24/04/2024;abril;2024;0.0;8.6;Càrrec;farmàcia;Farmàcia;;False
 3429;Efectiu;;23/04/2024;abril;2024;0.0;5.0;Càrrec;varis;Llibres;2a. Mà Drisa;False
+8159;TradeRep.;Dèbit;11/10/2026;octubre;2026;0.0;16.26;Càrrec;menjar;Can Rinsa;;False
+8160;TradeRep.;Dèbit;09/10/2026;octubre;2026;0.0;16.63;Càrrec;menjar;Dia;;False
+8161;TradeRep.;Dèbit;11/10/2026;octubre;2026;0.0;13.97;Càrrec;menjar;Dia;;False
 3455;BBVA;Compte;30/04/2024;abril;2024;0.0;489.43;Càrrec;despesa_general;Hipoteca;;False
 3459;Efectiu;;28/04/2024;abril;2024;0.0;15.0;Càrrec;personal;Isa;Mireia;False
 3460;Efectiu;;28/04/2024;abril;2024;0.0;5.0;Càrrec;personal;Jordi;;False
@@ -5867,6 +5878,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3514;BBVA;Compte;17/05/2024;mayo;2024;0.0;43.97;Càrrec;despesa_general;Lowi;;False
 3548;BBVA;VISA;27/05/2024;mayo;2024;0.0;12.5;Càrrec;restaurant;Bar;El racó. Arbúcies;False
 3567;BBVA;Compte;31/05/2024;mayo;2024;0.0;19.54;Càrrec;varis;Interesos;Crèdit cotxe;False
+8162;TradeRep.;Dèbit;09/10/2026;octubre;2026;0.0;88.2;Càrrec;restaurant;Restaurant;Aiguaviva;False
 3519;Efectiu;;19/05/2024;mayo;2024;0.0;16.0;Càrrec;menjar;Taronges Cisco;;False
 3520;Efectiu;;19/05/2024;mayo;2024;0.0;1.91;Càrrec;menjar;Fruiteria Deepak;;False
 3521;Efectiu;;17/05/2024;mayo;2024;0.0;3.0;Càrrec;restaurant;Bar;St.Feliu G. SS;False
@@ -5895,6 +5907,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3584;BBVA;Compte;05/06/2024;junio;2024;0.0;14.63;Càrrec;assegurança;DP Morts Enric;;False
 3586;BBVA;Compte;05/06/2024;junio;2024;0.0;20.98;Càrrec;assegurança;DP MP Mireia;;False
 3623;Efectiu;;09/06/2024;junio;2024;0.0;66.0;Càrrec;restaurant;Restaurant;Cal Javi. Palamós;False
+8163;Efectiu;;09/10/2026;octubre;2026;0.0;2.5;Càrrec;parallar;JYSK;Tovallola;False
 3596;BBVA;VISA;28/05/2024;mayo;2024;0.0;39.5;Càrrec;varis;Extra;Banderetes Enramar;False
 3597;BBVA;VISA;30/05/2024;mayo;2024;0.0;2.15;Càrrec;varis;Autopista;;False
 3598;BBVA;VISA;30/05/2024;mayo;2024;0.0;20.0;Càrrec;gasolina;Gasolina altres;Autopista;False

@@ -139,10 +139,12 @@ observer.observe(window.parent.document.body, { childList: true, subtree: true }
 if not check_password():
     st.stop()
 
-# Quan s'engega l'app, sempre ho ha de fer primer en mode ONLINE
+# Quan s'engega l'app, sempre ho ha de fer primer en mode ONLINE (es manté offline si la URL porta offline=1)
 os.environ.pop("STREAMLIT_OFFLINE_MODE", None)
 if "is_offline" not in st.session_state:
-    st.session_state["is_offline"] = False
+    st.session_state["is_offline"] = (st.query_params.get("offline") == "1")
+elif st.query_params.get("offline") == "1" and not st.session_state["is_offline"]:
+    st.session_state["is_offline"] = True
 
 app_cfg = load_app_config()
 
@@ -209,8 +211,11 @@ if "action" in st.query_params:
             st.session_state["is_offline"] = not st.session_state["is_offline"]
         if st.session_state["is_offline"]:
             st.session_state["offline_banner_shown_at"] = time.time()
+            st.query_params["offline"] = "1"
         else:
             st.session_state.pop("offline_banner_shown_at", None)
+            if "offline" in st.query_params:
+                del st.query_params["offline"]
         st.session_state["offline_toast"] = True
     elif act == "backup_db":
         import zipfile
@@ -242,9 +247,9 @@ if st.session_state.get("db_synced_toast"):
 
 if st.session_state.get("offline_toast"):
     if st.session_state.get("is_offline"):
-        st.toast("⚠️ MODE OFFLINE ACTIVAT. Els canvis es guarden en local.", icon="⚠️")
+        st.toast("⚠️ MODE OFFLINE ACTIVAT. Fes clic a l'endoll 🔌 o al menú Arxiu per tornar a Online.", icon="🔌")
     else:
-        st.toast("🌐 MODE ONLINE RECUPERAT. Es tornarà a utilitzar el núvol.", icon="🌐")
+        st.toast("🌐 MODE ONLINE RECUPERAT. Es torna a connectar al núvol.", icon="🌐")
     del st.session_state["offline_toast"]
 
 if st.session_state.get("show_notifications"):
@@ -664,9 +669,11 @@ if st.session_state.get("cleaning_ocr_orphans"):
 def render_traditional_menubar():
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
+    offline_suffix = "&offline=1" if st.session_state.get("is_offline") else ""
+    url_suffix = f"{auth_suffix}{offline_suffix}"
     curr_mod = st.session_state.get("current_module")
     mod_suffix = f"&mod={curr_mod}" if curr_mod else ""
-    action_suffix = f"{mod_suffix}{auth_suffix}"
+    action_suffix = f"{mod_suffix}{url_suffix}"
     
     icones_actives = app_cfg.get("icones_actives", {})
     
@@ -827,8 +834,8 @@ div.block-container {{
 <div class="menu-item">
 <span class="menu-title">Arxiu</span>
 <div class="menu-dropdown">
-<a href="?action=home{auth_suffix}" target="_self">🏠 Pantalla d'inici</a>
-<a href="?action=reset{auth_suffix}" target="_self">🔄 Reiniciar aplicació / memòria cau</a>
+<a href="?action=home{url_suffix}" target="_self">🏠 Pantalla d'inici</a>
+<a href="?action=reset{url_suffix}" target="_self">🔄 Reiniciar aplicació / memòria cau</a>
 <a href="?action=toggle_offline{auth_suffix}" target="_self" style="color: #f87171 !important;">🔌 Commutar Mode Offline</a>
 <a href="?action=logout" target="_self">🔒 Tancar sessió</a>
 </div>
@@ -837,17 +844,17 @@ div.block-container {{
 <span class="menu-title">Editar</span>
 <div class="menu-dropdown">
 <div class="submenu-item">
-<a href="?mod=modules.admin{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>⚙️ Configuració general</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<a href="?mod=modules.admin{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>⚙️ Configuració general</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
-<a href="?mod=modules.admin{auth_suffix}" target="_self">⚙️ Tauler de Configuració</a>
-<a href="?mod=modules.admin&tab=admin{auth_suffix}" target="_self">👤 Perfil Administrador</a>
-<a href="?mod=modules.admin&tab=titol{auth_suffix}" target="_self">🏷️ Títol de la casa</a>
-<a href="?mod=modules.admin&tab=familia{auth_suffix}" target="_self">👨‍👩‍👧‍👦 Membres de la família</a>
-<a href="?mod=modules.admin&tab=tutelats{auth_suffix}" target="_self">🤝 Persones Tutelades</a>
-<a href="?mod=modules.admin&tab=bancs{auth_suffix}" target="_self">🏦 Bancs i Comptes</a>
-<a href="?mod=modules.admin&tab=tema{auth_suffix}" target="_self">🎨 Aspecte i tema</a>
-<a href="?mod=modules.admin&tab=icones{auth_suffix}" target="_self">🔘 Icones actives d'inici</a>
-<a href="?mod=modules.admin&tab=idioma{auth_suffix}" target="_self">🌐 Idioma i traducció</a>
+<a href="?mod=modules.admin{url_suffix}" target="_self">⚙️ Tauler de Configuració</a>
+<a href="?mod=modules.admin&tab=admin{url_suffix}" target="_self">👤 Perfil Administrador</a>
+<a href="?mod=modules.admin&tab=titol{url_suffix}" target="_self">🏷️ Títol de la casa</a>
+<a href="?mod=modules.admin&tab=familia{url_suffix}" target="_self">👨‍👩‍👧‍👦 Membres de la família</a>
+<a href="?mod=modules.admin&tab=tutelats{url_suffix}" target="_self">🤝 Persones Tutelades</a>
+<a href="?mod=modules.admin&tab=bancs{url_suffix}" target="_self">🏦 Bancs i Comptes</a>
+<a href="?mod=modules.admin&tab=tema{url_suffix}" target="_self">🎨 Aspecte i tema</a>
+<a href="?mod=modules.admin&tab=icones{url_suffix}" target="_self">🔘 Icones actives d'inici</a>
+<a href="?mod=modules.admin&tab=idioma{url_suffix}" target="_self">🌐 Idioma i traducció</a>
 </div>
 </div>
 <div class="submenu-item">
@@ -863,32 +870,32 @@ div.block-container {{
 <div class="menu-item">
 <span class="menu-title">Mòduls</span>
 <div class="menu-dropdown">
-<a href="?mod=modules.dashboard{auth_suffix}" target="_self">📊 Resum General (Dashboard)</a>
+<a href="?mod=modules.dashboard{url_suffix}" target="_self">📊 Resum General (Dashboard)</a>
 {f'''<div class="submenu-item">
-<a href="?mod=modules.economic{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>📈 Mòdul Econòmic complet</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<a href="?mod=modules.economic{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>📈 Mòdul Econòmic complet</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
-<a href="?mod=modules.economic&action=show_faq_economic{auth_suffix}" target="_self">❓ Preguntes i Respostes</a>
+<a href="?mod=modules.economic&action=show_faq_economic{url_suffix}" target="_self">❓ Preguntes i Respostes</a>
 </div>
 </div>''' if icones_actives.get('economic', True) else ''}
-{f'<a href="?mod=modules.compres{auth_suffix}" target="_self">🛒 Compres Super i Stock</a>' if icones_actives.get('compres', True) else ''}
+{f'<a href="?mod=modules.compres{url_suffix}" target="_self">🛒 Compres Super i Stock</a>' if icones_actives.get('compres', True) else ''}
 <div class="submenu-item">
-<a href="?mod=modules.cotxe{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🚗 Cotxe</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<a href="?mod=modules.cotxe{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🚗 Cotxe</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
 <a href="?action=edit_routes{action_suffix}" target="_self">📝 Editar Rutes</a>
 </div>
 </div>
 {f'''<div class="submenu-item">
-<a href="?mod=modules.menjar{auth_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🍽️ Menús i cuina</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<a href="?mod=modules.menjar{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🍽️ Menús i cuina</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
-<a href="?mod=modules.menjar&action=show_faq_menjar{auth_suffix}" target="_self">❓ Preguntes i Respostes</a>
+<a href="?mod=modules.menjar&action=show_faq_menjar{url_suffix}" target="_self">❓ Preguntes i Respostes</a>
 </div>
 </div>''' if icones_actives.get('menjar', True) else ''}
-{f'<a href="?mod=modules.manteniment{auth_suffix}" target="_self">🛠️ Manteniment de la llar</a>' if icones_actives.get('manteniment', True) else ''}
-{f'<a href="?mod=modules.domotica{auth_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
-{f'<a href="?mod=modules.seguretat{auth_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
-{f'<a href="?mod=modules.calendari{auth_suffix}" target="_self">📅 Agenda i esdeveniments</a>' if icones_actives.get('agenda', True) else ''}
-{f'<a href="?mod=modules.medicacio{auth_suffix}" target="_self">💊 Control de medicació</a>' if icones_actives.get('medicacio', True) else ''}
-{f'<a href="?mod=modules.jocs{auth_suffix}" target="_self">🎲 Jocs i oci</a>' if icones_actives.get('jocs', True) else ''}
+{f'<a href="?mod=modules.manteniment{url_suffix}" target="_self">🛠️ Manteniment de la llar</a>' if icones_actives.get('manteniment', True) else ''}
+{f'<a href="?mod=modules.domotica{url_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
+{f'<a href="?mod=modules.seguretat{url_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
+{f'<a href="?mod=modules.calendari{url_suffix}" target="_self">📅 Agenda i esdeveniments</a>' if icones_actives.get('agenda', True) else ''}
+{f'<a href="?mod=modules.medicacio{url_suffix}" target="_self">💊 Control de medicació</a>' if icones_actives.get('medicacio', True) else ''}
+{f'<a href="?mod=modules.jocs{url_suffix}" target="_self">🎲 Jocs i oci</a>' if icones_actives.get('jocs', True) else ''}
 </div>
 </div>
 <div class="menu-item">
@@ -897,16 +904,16 @@ div.block-container {{
 <div class="submenu-item">
 <div class="submenu-title"><span>🗄️ Gestor de Bases de Dades</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></div>
 <div class="submenu-dropdown">
-<a href="?mod=modules.bases_dades&db=despeses{auth_suffix}" target="_self">💸 Despeses</a>
-<a href="?mod=modules.bases_dades&db=ingressos{auth_suffix}" target="_self">💰 Ingressos</a>
-<a href="?mod=modules.bases_dades&db=compresSuper{auth_suffix}" target="_self">🛒 Compres Super</a>
-<a href="?mod=modules.bases_dades&db=tb_productes{auth_suffix}" target="_self">📦 Productes (Catàleg)</a>
-<a href="?mod=modules.bases_dades{auth_suffix}" target="_self">🔍 Totes les taules...</a>
+<a href="?mod=modules.bases_dades&db=despeses{url_suffix}" target="_self">💸 Despeses</a>
+<a href="?mod=modules.bases_dades&db=ingressos{url_suffix}" target="_self">💰 Ingressos</a>
+<a href="?mod=modules.bases_dades&db=compresSuper{url_suffix}" target="_self">🛒 Compres Super</a>
+<a href="?mod=modules.bases_dades&db=tb_productes{url_suffix}" target="_self">📦 Productes (Catàleg)</a>
+<a href="?mod=modules.bases_dades{url_suffix}" target="_self">🔍 Totes les taules...</a>
 </div>
 </div>
-<a href="?action=sync_db{auth_suffix}" target="_self">🔄 Sincronitzar / Recarregar dades</a>
-<a href="?mod=modules.sincronitzacio{auth_suffix}" target="_self" style="color: #60a5fa !important;">🌍 Consolidar Dades Offline</a>
-<a href="?action=backup_db{auth_suffix}" target="_self">💾 Crear Còpia de seguretat (ZIP)</a>
+<a href="?action=sync_db{url_suffix}" target="_self">🔄 Sincronitzar / Recarregar dades</a>
+<a href="?mod=modules.sincronitzacio{url_suffix}" target="_self" style="color: #60a5fa !important;">🌍 Consolidar Dades Offline</a>
+<a href="?action=backup_db{url_suffix}" target="_self">💾 Crear Còpia de seguretat (ZIP)</a>
 </div>
 </div>
 
@@ -958,6 +965,8 @@ if st.session_state.current_module is None:
 
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
+    offline_suffix = "&offline=1" if st.session_state.get("is_offline") else ""
+    url_suffix = f"{auth_suffix}{offline_suffix}"
 
     role = st.session_state.get("role", "admin")
     role_icon = "👑" if role == "admin" else ("👁️‍🗨️" if role == "viewer" else "👤")
@@ -989,7 +998,7 @@ if st.session_state.current_module is None:
     def render_hotspot(mod_key, title_str, always_active=False):
         is_active = always_active or icones_actives.get(mod_key, True) or (mod_key == "calendari" and icones_actives.get("agenda", True))
         cls = "hotspot" if is_active else "hotspot-disabled"
-        href = f'href="?mod=modules.{mod_key}{auth_suffix}" target="_self"' if is_active else ""
+        href = f'href="?mod=modules.{mod_key}{url_suffix}" target="_self"' if is_active else ""
         if is_active:
             return f'<a {href} class="{cls} hs-{mod_key}" title="{title_str}"></a>'
         return f'<div class="{cls} hs-{mod_key}" title="{title_str} (Desactivat)"></div>'
