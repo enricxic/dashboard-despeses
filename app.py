@@ -1155,15 +1155,18 @@ if st.session_state.current_module is None:
 .bell-container:hover .bell-dropdown {{ display: block; }}
 </style>
 
-<!-- Indicador de Rol Usuari -->
-<div class="role-badge" title="{role_title}">
+<!-- Capçalera dreta: Indicador Offline, Campana Notificacions i Rol d'Usuari -->
+<div style="position: fixed; top: 14px; right: 20px; z-index: 99999; display: flex; align-items: center; gap: 8px;">
+{f'''<a href="?action=toggle_offline{auth_suffix}" target="_self" title="MODE OFFLINE ACTIVAT - Fes clic per tornar al mode Online" style="display: flex; align-items: center; gap: 5px; background: #dc2626; color: #ffffff !important; padding: 4px 10px; border-radius: 14px; font-size: 0.78rem; font-weight: bold; text-decoration: none !important; border: 1px solid #b91c1c; box-shadow: 0 0 10px rgba(220, 38, 38, 0.75); animation: pulse 2s infinite; cursor: pointer;">
+    <span style="font-size: 1rem;">🔌</span><span>OFFLINE</span>
+</a>''' if st.session_state.get("is_offline") else ''}
+<div class="bell-container" style="position: relative; cursor: pointer;">
+<span style="font-size: 1.75rem; display: flex; align-items: center; position: relative; padding: 5px 6px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
+<div class="bell-dropdown">{alerts_html}</div>
+</div>
+<div class="role-badge" title="{role_title}" style="position: static; font-size: 1.75rem; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: default; padding: 0 4px;">
     <span>{role_icon}</span>
 </div>
-
-<!-- Campana Notificacions a la pantalla d'inici -->
-<div class="bell-container" style="position: fixed; top: 14px; right: 70px; z-index: 99999; cursor: pointer;">
-<span style="font-size: 1.75rem; display: flex; align-items: center; position: relative; padding: 5px 10px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
-<div class="bell-dropdown">{alerts_html}</div>
 </div>
 
 <div class="main-wrapper">
