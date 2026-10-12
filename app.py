@@ -141,9 +141,11 @@ if not check_password():
 
 # Quan s'engega l'app, sempre ho ha de fer primer en mode ONLINE (es manté offline si la URL porta offline=1)
 os.environ.pop("STREAMLIT_OFFLINE_MODE", None)
-if "is_offline" not in st.session_state:
+if st.query_params.get("action") in ("set_online", "online"):
+    st.session_state["is_offline"] = False
+elif "is_offline" not in st.session_state:
     st.session_state["is_offline"] = (st.query_params.get("offline") == "1")
-elif st.query_params.get("offline") == "1" and not st.session_state["is_offline"]:
+elif st.query_params.get("offline") == "1" and not st.session_state["is_offline"] and st.query_params.get("action") not in ("set_online", "online", "toggle_offline"):
     st.session_state["is_offline"] = True
 
 app_cfg = load_app_config()
@@ -203,19 +205,30 @@ if "action" in st.query_params:
     elif act == "sync_db":
         st.cache_data.clear()
         st.session_state["db_synced_toast"] = True
+    elif act in ("set_online", "online"):
+        st.session_state["is_offline"] = False
+        st.session_state.pop("offline_banner_shown_at", None)
+        if "offline" in st.query_params:
+            del st.query_params["offline"]
+        st.session_state["offline_toast"] = True
+    elif act in ("set_offline", "offline"):
+        import time
+        st.session_state["is_offline"] = True
+        st.session_state["offline_banner_shown_at"] = time.time()
+        st.query_params["offline"] = "1"
+        st.session_state["offline_toast"] = True
     elif act == "toggle_offline":
         import time
-        if "is_offline" not in st.session_state:
-            st.session_state["is_offline"] = True
-        else:
-            st.session_state["is_offline"] = not st.session_state["is_offline"]
-        if st.session_state["is_offline"]:
-            st.session_state["offline_banner_shown_at"] = time.time()
-            st.query_params["offline"] = "1"
-        else:
+        was_offline = st.session_state.get("is_offline", False) or (st.query_params.get("offline") == "1")
+        if was_offline:
+            st.session_state["is_offline"] = False
             st.session_state.pop("offline_banner_shown_at", None)
             if "offline" in st.query_params:
                 del st.query_params["offline"]
+        else:
+            st.session_state["is_offline"] = True
+            st.session_state["offline_banner_shown_at"] = time.time()
+            st.query_params["offline"] = "1"
         st.session_state["offline_toast"] = True
     elif act == "backup_db":
         import zipfile
@@ -686,7 +699,7 @@ def render_traditional_menubar():
     
     offline_badge_html = ""
     if st.session_state.get("is_offline"):
-        offline_badge_html = f'''<a href="?action=toggle_offline{auth_suffix}" target="_self" class="offline-icon-link" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.5rem; display: flex; align-items: center; text-decoration: none !important; text-decoration-line: none !important; text-decoration-color: transparent !important; border: none !important; border-bottom: none !important; border-bottom-width: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; background-image: none !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; margin-right: 12px; line-height: 1;">
+        offline_badge_html = f'''<a href="?action=set_online{auth_suffix}{mod_suffix}" target="_self" class="offline-icon-link" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.5rem; display: flex; align-items: center; text-decoration: none !important; text-decoration-line: none !important; text-decoration-color: transparent !important; border: none !important; border-bottom: none !important; border-bottom-width: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; background-image: none !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; padding: 0 4px; line-height: 1;">
 <span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>'''
     
@@ -836,7 +849,7 @@ div.block-container {{
 <div class="menu-dropdown">
 <a href="?action=home{url_suffix}" target="_self">🏠 Pantalla d'inici</a>
 <a href="?action=reset{url_suffix}" target="_self">🔄 Reiniciar aplicació / memòria cau</a>
-<a href="?action=toggle_offline{auth_suffix}" target="_self" style="color: #f87171 !important;">🔌 Commutar Mode Offline</a>
+{f'<a href="?action=set_online{auth_suffix}{mod_suffix}" target="_self" style="color: #4ade80 !important;">🌐 Tornar a Mode Online</a>' if st.session_state.get("is_offline") else f'<a href="?action=set_offline{auth_suffix}{mod_suffix}" target="_self" style="color: #f87171 !important;">🔌 Commutar Mode Offline</a>'}
 <a href="?action=logout" target="_self">🔒 Tancar sessió</a>
 </div>
 </div>
@@ -918,17 +931,17 @@ div.block-container {{
 </div>
 
 
-<!-- Campana Notificacions i Indicador Offline -->
-<div class="menu-item" style="margin-left: auto; display: flex; align-items: center;">
+<!-- Capçalera dreta: Indicador Offline, Campana Notificacions i Avatar Rol -->
+<div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
 {offline_badge_html}
-<div style="position: relative;">
-<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
+<div class="menu-item" style="position: relative;">
+<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer; padding: 0 4px;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 <div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
 {alerts_html}
 </div>
 </div>
 <!-- Avatar Administrador -->
-<div class="role-badge-menubar" title="Rol actual" style="margin-left: 15px; font-size: 1.5rem; display: flex; align-items: center; cursor: default; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
+<div class="role-badge-menubar" title="Rol actual" style="font-size: 1.5rem; display: flex; align-items: center; cursor: default; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
 { "👑" if st.session_state.get("role") == "admin" else ("👁️‍🗨️" if st.session_state.get("role") == "viewer" else "👤") }
 </div>
 </div>
@@ -1202,7 +1215,7 @@ if st.session_state.current_module is None:
 
 <!-- Capçalera dreta: Indicador Offline, Campana Notificacions i Rol d'Usuari -->
 <div style="position: fixed; top: 14px; right: 20px; z-index: 99999; display: flex; align-items: center; gap: 8px;">
-{f'''<a href="?action=toggle_offline{auth_suffix}" target="_self" class="offline-icon-link" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.75rem; display: flex; align-items: center; text-decoration: none !important; text-decoration-line: none !important; text-decoration-color: transparent !important; border: none !important; border-bottom: none !important; border-bottom-width: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; background-image: none !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; padding: 0 4px; line-height: 1;">
+{f'''<a href="?action=set_online{auth_suffix}" target="_self" class="offline-icon-link" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.75rem; display: flex; align-items: center; text-decoration: none !important; text-decoration-line: none !important; text-decoration-color: transparent !important; border: none !important; border-bottom: none !important; border-bottom-width: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; background-image: none !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; padding: 0 4px; line-height: 1;">
     <span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>''' if st.session_state.get("is_offline") else ''}
 <div class="bell-container" style="position: relative; cursor: pointer;">
