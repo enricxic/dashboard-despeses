@@ -1,4 +1,4 @@
-﻿import streamlit as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -409,18 +409,24 @@ def render():
         # ---------- TALLER / AVARIES ----------
         st.markdown("<h4 style='color:#f39c12;'>🛠️ Taller i Avaries</h4>", unsafe_allow_html=True)
         with st.expander("➕ Registrar entrada a taller / avaria / altre manteniment"):
-            with st.form("form_taller", clear_on_submit=True):
+            with st.form("form_taller"):
                 t1, t2, t3 = st.columns(3)
                 t_data = t1.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="t_data")
                 t_km = t2.number_input("Km del cotxe", min_value=0, value=int(car_kms_actuals), step=100, key="t_km")
                 t_tipus = t3.selectbox("Tipus", ["Avaria", "Revisió", "ITV", "Frens", "Bateria", "Filtres", "Carrosseria", "Altres"], key="t_tipus")
                 t4, t5, t6 = st.columns(3)
                 t_taller = t4.text_input("Taller", key="t_taller")
-                t_cost = t5.number_input("Cost (€)", min_value=0.0, value=0.0, step=10.0, key="t_cost")
+                t_cost_txt = t5.text_input("Cost (€)", value="", placeholder="Ex: 226,51", key="t_cost")
                 t_estat = t6.selectbox("Estat", ["Resolt", "Pendent", "En taller"], key="t_estat")
                 t_desc = st.text_area("Descripció (què ha passat / què s'ha fet)", key="t_desc")
                 if st.form_submit_button("💾 Desar registre", type="primary"):
-                    if not t_desc.strip():
+                    try:
+                        t_cost = float(t_cost_txt.replace("€", "").replace(" ", "").replace(".", "").replace(",", ".")) if "," in t_cost_txt else float(t_cost_txt.replace("€", "").strip() or 0)
+                    except ValueError:
+                        t_cost = None
+                    if t_cost is None:
+                        st.error("El cost no és un número vàlid.")
+                    elif not t_desc.strip():
                         st.error("Escriu una descripció.")
                     else:
                         mant["historic"].append({
@@ -428,6 +434,8 @@ def render():
                             "detall": t_desc.strip(), "taller": t_taller.strip(), "cost": float(t_cost), "estat": t_estat
                         })
                         _save_mant(mant)
+                        for k in ["t_cost", "t_desc", "t_taller"]:
+                            st.session_state.pop(k, None)
                         st.rerun()
 
         pendents = [h for h in mant["historic"] if h.get("estat") in ("Pendent", "En taller")]
@@ -466,15 +474,17 @@ def render():
                     "rodes": "Rodes", "detall": "Detall", "taller": "Taller",
                     "cost": st.column_config.NumberColumn("Cost (€)", format="%.2f"),
                     "estat": st.column_config.SelectboxColumn("Estat", options=["", "Resolt", "Pendent", "En taller"]),
+                    "tipus": st.column_config.SelectboxColumn("Tipus", options=sorted(set(["Oli", "Rodes", "Avaria", "Revisió", "ITV", "Frens", "Bateria", "Filtres", "Carrosseria", "Altres"] + tipus_disp))),
                 },
-                disabled=["data", "tipus", "km", "rodes"],
+                disabled=["rodes"],
             )
             c_save, c_del = st.columns(2)
             if c_save.button("💾 Desar canvis de l'històric"):
                 for _, r in edited.iterrows():
                     h = mant["historic"][int(r["_idx"])]
-                    for col in ["detall", "taller", "estat"]:
+                    for col in ["data", "tipus", "detall", "taller", "estat"]:
                         h[col] = "" if pd.isna(r[col]) else r[col]
+                    h["km"] = 0 if pd.isna(r["km"]) else int(r["km"])
                     h["cost"] = 0.0 if pd.isna(r["cost"]) else float(r["cost"])
                 _save_mant(mant)
                 st.rerun()
