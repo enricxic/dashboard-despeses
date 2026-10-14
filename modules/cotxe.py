@@ -1,4 +1,4 @@
-﻿import streamlit as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -59,6 +59,50 @@ def render():
             df_km_car_sorted = df_km_car_sorted.sort_values(by='parsed_date', ascending=False)
             last_km = float(df_km_car_sorted.dropna(subset=['contador'])['contador'].iloc[0])
 
+        # --- Lectura per foto del comptaquilòmetres ---
+        odo_key = f"km_odo_{km_version}"
+        with st.expander("📸 Llegir km amb una foto del comptaquilòmetres", expanded=False):
+            st.caption("Al mòbil, toca el botó i tria **Càmera** per fer la foto directament.")
+            foto = st.file_uploader("Foto del quadre", type=["jpg", "jpeg", "png", "webp", "heic"], key=f"km_foto_{km_version}", label_visibility="collapsed")
+            if foto is not None:
+                st.image(foto, width=220)
+                if st.button("🔍 Llegir quilòmetres", key=f"km_ocr_btn_{km_version}", type="primary"):
+                    try:
+                        import io, json, re
+                        from PIL import Image, ImageOps
+                        img = ImageOps.exif_transpose(Image.open(foto)).convert("RGB")
+                        img.thumbnail((1600, 1600))
+                        buf = io.BytesIO()
+                        img.save(buf, format="JPEG", quality=85)
+                        from core.llm import call_llm_api
+                        prompt = (
+                            "Aquesta és una foto del quadre d'instruments d'un cotxe. Llegeix el valor del "
+                            "COMPTAQUILÒMETRES TOTAL (odòmetre, normalment un número de 5-6 xifres seguit de 'km'). "
+                            "Ignora rpm, velocitat, hora, temperatura, pressió de pneumàtics i parcials (TRIP). "
+                            f"Com a referència, l'última lectura registrada és {int(last_km)} km, i el valor hauria de ser igual o una mica superior. "
+                            "Respon NOMÉS amb JSON: {\"km\": <enter>, \"confianca\": \"alta|mitjana|baixa\"}"
+                        )
+                        with st.spinner("Llegint el comptaquilòmetres..."):
+                            ok, resp, _ = call_llm_api(prompt, st.secrets["GEMINI_API_KEY"], json_mode=True, image_bytes=buf.getvalue())
+                        if not ok:
+                            st.error(f"No s'ha pogut llegir: {resp[:300]}")
+                        else:
+                            m = re.search(r"\{.*\}", resp, re.S)
+                            data_ocr = json.loads(m.group(0) if m else resp)
+                            km_llegit = float(data_ocr.get("km"))
+                            st.session_state[odo_key] = km_llegit
+                            st.session_state["km_ocr_info"] = (km_llegit, data_ocr.get("confianca", ""))
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"Error llegint la foto: {e}")
+            info = st.session_state.get("km_ocr_info")
+            if info:
+                km_l, conf = info
+                if km_l < last_km:
+                    st.warning(f"⚠️ Llegit {int(km_l):,} km, però és inferior a l'última lectura ({int(last_km):,}). Revisa-ho.")
+                else:
+                    st.success(f"✅ Llegit: **{int(km_l):,} km** (confiança {conf}). S'ha omplert la lectura de l'odòmetre; revisa-la abans de desar.")
+
         r1_col1, r1_col2, r1_col3 = st.columns([2, 4, 4])
         with r1_col1:
             data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"km_data_{km_version}")
@@ -95,6 +139,7 @@ def render():
             cancelled = st.button("Cancel·lar", key=f"cancel_km_{km_version}", use_container_width=True)
             
         if cancelled:
+            st.session_state.pop("km_ocr_info", None)
             st.session_state["km_version"] = st.session_state.get("km_version", 0) + 1
             st.rerun()
             
@@ -129,6 +174,7 @@ def render():
                         else:
                             init_routes_config(df_km)
                     st.success("Ruta desada correctament!")
+                    st.session_state.pop("km_ocr_info", None)
                     st.session_state["km_version"] = st.session_state.get("km_version", 0) + 1
                     st.rerun()
 
