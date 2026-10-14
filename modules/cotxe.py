@@ -206,10 +206,15 @@ def render():
             car_kms_actuals = pd.to_numeric(df_km_oli['contador'], errors='coerce').max()
             if pd.isna(car_kms_actuals): car_kms_actuals = 0.0
 
+        _DEF_MANT = {
+            "oli": {"ultim_canvi_km": 30000, "interval_km": 16000, "data_ultim_canvi": ""},
+            "rodes": {"ultim_canvi_km": 30000, "interval_km": 40000, "quantes_rodes": 4, "posicio": "Totes 4", "data_ultim_canvi": ""},
+            "historic": []
+        }
         app_cfg = load_app_config()
-        mant = copy.deepcopy(app_cfg.get("manteniment_cotxe") or DEFAULT_CONFIG["manteniment_cotxe"])
-        mant.setdefault("oli", copy.deepcopy(DEFAULT_CONFIG["manteniment_cotxe"]["oli"]))
-        mant.setdefault("rodes", copy.deepcopy(DEFAULT_CONFIG["manteniment_cotxe"]["rodes"]))
+        mant = copy.deepcopy(app_cfg.get("manteniment_cotxe") or DEFAULT_CONFIG.get("manteniment_cotxe") or _DEF_MANT)
+        mant.setdefault("oli", copy.deepcopy(_DEF_MANT["oli"]))
+        mant.setdefault("rodes", copy.deepcopy(_DEF_MANT["rodes"]))
         mant.setdefault("historic", [])
 
         def _save_mant(new_mant):
