@@ -1,4 +1,4 @@
-import streamlit as st
+﻿import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -262,6 +262,23 @@ def render():
         mant.setdefault("oli", copy.deepcopy(_DEF_MANT["oli"]))
         mant.setdefault("rodes", copy.deepcopy(_DEF_MANT["rodes"]))
         mant.setdefault("historic", [])
+        avis_km = float(mant.get("avis_km", 20000))
+
+        with st.expander(f"🔔 Configuració d'avisos (ara: {int(avis_km):,} km abans)"):
+            a1, a2 = st.columns([3, 1])
+            nou_avis = a1.number_input("Avisar quan faltin (km)", min_value=0, value=int(avis_km), step=500)
+            a2.write("")
+            if a2.button("💾 Desar", key="save_avis"):
+                mant["avis_km"] = int(nou_avis)
+                cfg_tmp = copy.deepcopy(load_app_config())
+                cfg_tmp["manteniment_cotxe"] = mant
+                save_app_config(cfg_tmp)
+                try:
+                    from core.alerts import get_global_alerts
+                    get_global_alerts.clear()
+                except Exception:
+                    pass
+                st.rerun()
 
         def _save_mant(new_mant):
             cfg = copy.deepcopy(load_app_config())
@@ -279,7 +296,7 @@ def render():
             st.progress(usat, text=f"Desgast: {usat*100:.0f}%")
             if left <= 0:
                 st.error(f"🚨 Canvi superat per {int(abs(left)):,} km!")
-            elif left <= 1000:
+            elif left <= avis_km:
                 st.warning(f"⚠️ Queden només {int(left):,} km!")
             else:
                 st.success(f"✅ Tot correcte. Queden {int(left):,} km.")
@@ -345,7 +362,7 @@ def render():
             if previst.get("km"):
                 if r_left <= 0:
                     st.error(f"🚨 Ja has superat els km previstos per al canvi de rodes ({int(abs(r_left)):,} km).")
-                elif r_left <= 1000:
+                elif r_left <= avis_km:
                     st.warning(f"⚠️ Queden {int(r_left):,} km per al canvi previst de {previst.get('quantes', 2)} rodes.")
                 else:
                     st.info(f"📅 Previst canviar {previst.get('quantes', 2)} rodes ({previst.get('posicio', '')}) cap a {previst.get('data', '')} · queden {int(r_left):,} km.")

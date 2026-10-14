@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 import streamlit as st
 from datetime import datetime
 import json
@@ -47,12 +47,13 @@ def get_global_alerts():
                 mant = load_app_config().get("manteniment_cotxe", {})
                 oli = mant.get("oli", {})
                 rodes = mant.get("rodes", {})
+                avis_km = float(mant.get("avis_km", 20000))
                 oli_next = float(oli.get("ultim_canvi_km", 30000)) + float(oli.get("interval_km", 16000))
                 kms_left = oli_next - car_kms_actuals
                 if kms_left <= 0:
                     alerts.append({"type": "error", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
                                    "message": f"Cal fer el canvi d'oli (previst als {int(oli_next):,} km). Superat per {int(abs(kms_left)):,} km."})
-                elif kms_left <= 1000:
+                elif kms_left <= avis_km:
                     alerts.append({"type": "warning", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
                                    "message": f"Queden {int(kms_left):,} km per al canvi d'oli (als {int(oli_next):,} km)."})
                 previst = rodes.get("previst") or {}
@@ -63,7 +64,7 @@ def get_global_alerts():
                 else:
                     rodes_next = None
                 rodes_left = (rodes_next - car_kms_actuals) if rodes_next else None
-                if rodes_left is not None and rodes_left <= 1000:
+                if rodes_left is not None and rodes_left <= avis_km:
                     alerts.append({"type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": "Pneumàtics (Tivoli)",
                                    "message": f"Revisar/canviar rodes: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants)."})
                     
