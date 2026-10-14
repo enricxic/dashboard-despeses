@@ -389,15 +389,81 @@ def render():
 
         st.write("---")
 
+        # ---------- TALLER / AVARIES ----------
+        st.markdown("<h4 style='color:#f39c12;'>🛠️ Taller i Avaries</h4>", unsafe_allow_html=True)
+        with st.expander("➕ Registrar entrada a taller / avaria / altre manteniment"):
+            with st.form("form_taller", clear_on_submit=True):
+                t1, t2, t3 = st.columns(3)
+                t_data = t1.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="t_data")
+                t_km = t2.number_input("Km del cotxe", min_value=0, value=int(car_kms_actuals), step=100, key="t_km")
+                t_tipus = t3.selectbox("Tipus", ["Avaria", "Revisió", "ITV", "Frens", "Bateria", "Filtres", "Carrosseria", "Altres"], key="t_tipus")
+                t4, t5, t6 = st.columns(3)
+                t_taller = t4.text_input("Taller", key="t_taller")
+                t_cost = t5.number_input("Cost (€)", min_value=0.0, value=0.0, step=10.0, key="t_cost")
+                t_estat = t6.selectbox("Estat", ["Resolt", "Pendent", "En taller"], key="t_estat")
+                t_desc = st.text_area("Descripció (què ha passat / què s'ha fet)", key="t_desc")
+                if st.form_submit_button("💾 Desar registre", type="primary"):
+                    if not t_desc.strip():
+                        st.error("Escriu una descripció.")
+                    else:
+                        mant["historic"].append({
+                            "data": t_data.strftime("%d/%m/%Y"), "tipus": t_tipus, "km": int(t_km), "rodes": "",
+                            "detall": t_desc.strip(), "taller": t_taller.strip(), "cost": float(t_cost), "estat": t_estat
+                        })
+                        _save_mant(mant)
+                        st.rerun()
+
+        pendents = [h for h in mant["historic"] if h.get("estat") in ("Pendent", "En taller")]
+        for p in pendents:
+            st.warning(f"🔧 **{p.get('tipus')}** ({p.get('estat')}) · {p.get('data')} · {p.get('detall')}")
+
+        st.write("---")
+
         # ---------- HISTÒRIC ----------
-        st.markdown("<h4 style='color:#f39c12;'>📋 Històric de Manteniment</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color:#f39c12;'>📋 Històric de Manteniment i Taller</h4>", unsafe_allow_html=True)
         if mant["historic"]:
             df_h = pd.DataFrame(mant["historic"])
-            df_h = df_h.sort_values("km", ascending=False).reset_index(drop=True)
-            df_h.insert(0, "Eliminar", False)
-            edited = st.data_editor(df_h, hide_index=True, use_container_width=True, disabled=[c for c in df_h.columns if c != "Eliminar"], key="hist_mant")
-            if edited["Eliminar"].any() and st.button("🗑️ Eliminar seleccionats"):
-                mant["historic"] = edited[~edited["Eliminar"]].drop(columns=["Eliminar"]).to_dict("records")
+            for col in ["data", "tipus", "km", "rodes", "detall", "taller", "cost", "estat"]:
+                if col not in df_h.columns:
+                    df_h[col] = None
+            df_h["_ord"] = pd.to_datetime(df_h["data"], format="%d/%m/%Y", errors="coerce")
+            df_h["_idx"] = range(len(df_h))
+            df_h = df_h.sort_values(["_ord", "km"], ascending=False)
+
+            tipus_disp = sorted(df_h["tipus"].dropna().unique().tolist())
+            filtre = st.multiselect("Filtrar per tipus", tipus_disp, default=[], placeholder="Tots")
+            if filtre:
+                df_h = df_h[df_h["tipus"].isin(filtre)]
+
+            cost_total = pd.to_numeric(df_h["cost"], errors="coerce").fillna(0).sum()
+            m1, m2 = st.columns(2)
+            m1.metric("Registres", len(df_h))
+            m2.metric("Cost total", f"{cost_total:,.2f} €")
+
+            vista = df_h[["_idx", "data", "tipus", "km", "rodes", "detall", "taller", "cost", "estat"]].copy()
+            vista.insert(0, "Eliminar", False)
+            edited = st.data_editor(
+                vista, hide_index=True, use_container_width=True, key="hist_mant",
+                column_config={
+                    "_idx": None, "data": "Data", "tipus": "Tipus", "km": st.column_config.NumberColumn("Km", format="%d"),
+                    "rodes": "Rodes", "detall": "Detall", "taller": "Taller",
+                    "cost": st.column_config.NumberColumn("Cost (€)", format="%.2f"),
+                    "estat": st.column_config.SelectboxColumn("Estat", options=["", "Resolt", "Pendent", "En taller"]),
+                },
+                disabled=["data", "tipus", "km", "rodes"],
+            )
+            c_save, c_del = st.columns(2)
+            if c_save.button("💾 Desar canvis de l'històric"):
+                for _, r in edited.iterrows():
+                    h = mant["historic"][int(r["_idx"])]
+                    for col in ["detall", "taller", "estat"]:
+                        h[col] = "" if pd.isna(r[col]) else r[col]
+                    h["cost"] = 0.0 if pd.isna(r["cost"]) else float(r["cost"])
+                _save_mant(mant)
+                st.rerun()
+            if edited["Eliminar"].any() and c_del.button("🗑️ Eliminar seleccionats"):
+                borrar = set(edited.loc[edited["Eliminar"], "_idx"].astype(int))
+                mant["historic"] = [h for i, h in enumerate(mant["historic"]) if i not in borrar]
                 _save_mant(mant)
                 st.rerun()
         else:
