@@ -1,4 +1,4 @@
-import streamlit as st
+﻿import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -208,7 +208,7 @@ def render():
 
         _DEF_MANT = {
             "oli": {"ultim_canvi_km": 30000, "interval_km": 16000, "data_ultim_canvi": ""},
-            "rodes": {"ultim_canvi_km": 30000, "interval_km": 40000, "quantes_rodes": 4, "posicio": "Totes 4", "data_ultim_canvi": ""},
+            "rodes": {"ultim_canvi_km": None, "interval_km": 40000, "previst": {"km": 39600, "quantes": 2, "posicio": "Davanteres", "data": "Nadal 2026"}},
             "historic": []
         }
         app_cfg = load_app_config()
@@ -274,25 +274,61 @@ def render():
 
         # ---------- RODES ----------
         rodes = mant["rodes"]
-        r_last = float(rodes.get("ultim_canvi_km", 30000))
+        r_last_raw = rodes.get("ultim_canvi_km")
         r_int = float(rodes.get("interval_km", 40000))
-        r_next = r_last + r_int
-        r_left = r_next - car_kms_actuals
+        previst = rodes.get("previst") or {}
+        if previst.get("km"):
+            r_next = float(previst["km"])
+        elif r_last_raw:
+            r_next = float(r_last_raw) + r_int
+        else:
+            r_next = None
+        r_left = (r_next - car_kms_actuals) if r_next is not None else None
 
         st.markdown("<h4 style='color:#f39c12;'>🛞 Canvi de Rodes</h4>", unsafe_allow_html=True)
         d1, d2, d3, d4 = st.columns(4)
-        d1.metric("Últim canvi", f"{int(r_last):,} km", help=rodes.get("data_ultim_canvi") or None)
-        d2.metric("Rodes canviades", f"{rodes.get('quantes_rodes', 4)}", help=rodes.get("posicio", ""))
-        d3.metric("Proper canvi", f"{int(r_next):,} km")
-        d4.metric("Kms restants", f"{int(r_left):,}")
-        _estat(r_left, r_int)
+        d1.metric("Últim canvi", f"{int(r_last_raw):,} km" if r_last_raw else "Sense registre",
+                  help=(f"{rodes.get('quantes_rodes', '')} rodes ({rodes.get('posicio', '')}) - {rodes.get('data_ultim_canvi', '')}" if r_last_raw else None))
+        if previst.get("km"):
+            d2.metric("Canvi previst", f"{previst.get('quantes', 2)} rodes", help=f"{previst.get('posicio', '')} · {previst.get('data', '')}")
+        else:
+            d2.metric("Rodes canviades", f"{rodes.get('quantes_rodes', '-')}" if r_last_raw else "-")
+        d3.metric("Proper canvi", f"{int(r_next):,} km" if r_next else "-", help=previst.get("data") or None)
+        d4.metric("Kms restants", f"{int(r_left):,}" if r_left is not None else "-")
+        if r_left is not None:
+            if previst.get("km"):
+                if r_left <= 0:
+                    st.error(f"🚨 Ja has superat els km previstos per al canvi de rodes ({int(abs(r_left)):,} km).")
+                elif r_left <= 1000:
+                    st.warning(f"⚠️ Queden {int(r_left):,} km per al canvi previst de {previst.get('quantes', 2)} rodes.")
+                else:
+                    st.info(f"📅 Previst canviar {previst.get('quantes', 2)} rodes ({previst.get('posicio', '')}) cap a {previst.get('data', '')} · queden {int(r_left):,} km.")
+            else:
+                _estat(r_left, r_int)
 
-        with st.expander("✏️ Registrar canvi de rodes"):
+        with st.expander("📅 Planificar canvi de rodes"):
+            with st.form("form_rodes_previst"):
+                p1, p2, p3, p4 = st.columns(4)
+                pv_km = p1.number_input("Km previstos", min_value=0, value=int(previst.get("km") or (car_kms_actuals + 4000)), step=100)
+                pv_q = p2.radio("Quantes rodes?", [1, 2, 4], index=[1, 2, 4].index(int(previst.get("quantes", 2))) if int(previst.get("quantes", 2)) in [1, 2, 4] else 1, horizontal=True, key="pv_q")
+                pv_pos = p3.selectbox("Posició", ["Davanteres", "Posteriors", "Totes 4", "Davantera esquerra", "Davantera dreta", "Posterior esquerra", "Posterior dreta"], key="pv_pos")
+                pv_data = p4.text_input("Data aproximada", value=previst.get("data", "Nadal 2026"))
+                b1, b2 = st.columns(2)
+                if b1.form_submit_button("💾 Desar previsió", type="primary"):
+                    mant["rodes"]["previst"] = {"km": int(pv_km), "quantes": int(pv_q), "posicio": pv_pos, "data": pv_data}
+                    _save_mant(mant)
+                    st.rerun()
+                if b2.form_submit_button("🗑️ Esborrar previsió"):
+                    mant["rodes"].pop("previst", None)
+                    _save_mant(mant)
+                    st.rerun()
+
+        with st.expander("✏️ Registrar canvi de rodes fet"):
             with st.form("form_rodes"):
                 g1, g2, g3 = st.columns(3)
-                nr_km = g1.number_input("Km del canvi", min_value=0, value=int(r_last), step=100, key="r_km")
-                nr_q = g2.radio("Quantes rodes?", [1, 2, 4], index=[1, 2, 4].index(int(rodes.get("quantes_rodes", 4))) if int(rodes.get("quantes_rodes", 4)) in [1, 2, 4] else 2, horizontal=True)
-                nr_pos = g3.selectbox("Posició", ["Totes 4", "Davanteres", "Posteriors", "Davantera esquerra", "Davantera dreta", "Posterior esquerra", "Posterior dreta"])
+                nr_km = g1.number_input("Km del canvi", min_value=0, value=int(car_kms_actuals), step=100, key="r_km")
+                nr_q = g2.radio("Quantes rodes?", [1, 2, 4], index=1, horizontal=True)
+                nr_pos = g3.selectbox("Posició", ["Davanteres", "Posteriors", "Totes 4", "Davantera esquerra", "Davantera dreta", "Posterior esquerra", "Posterior dreta"])
                 h1, h2 = st.columns(2)
                 nr_int = h1.number_input("Interval estimat (km)", min_value=1000, value=int(r_int), step=1000)
                 nr_data = h2.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="r_data")

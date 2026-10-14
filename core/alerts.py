@@ -55,9 +55,15 @@ def get_global_alerts():
                 elif kms_left <= 1000:
                     alerts.append({"type": "warning", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
                                    "message": f"Queden {int(kms_left):,} km per al canvi d'oli (als {int(oli_next):,} km)."})
-                rodes_next = float(rodes.get("ultim_canvi_km", 30000)) + float(rodes.get("interval_km", 40000))
-                rodes_left = rodes_next - car_kms_actuals
-                if rodes_left <= 1000:
+                previst = rodes.get("previst") or {}
+                if previst.get("km"):
+                    rodes_next = float(previst["km"])
+                elif rodes.get("ultim_canvi_km"):
+                    rodes_next = float(rodes["ultim_canvi_km"]) + float(rodes.get("interval_km", 40000))
+                else:
+                    rodes_next = None
+                rodes_left = (rodes_next - car_kms_actuals) if rodes_next else None
+                if rodes_left is not None and rodes_left <= 1000:
                     alerts.append({"type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": "Pneumàtics (Tivoli)",
                                    "message": f"Revisar/canviar rodes: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants)."})
                     
