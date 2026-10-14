@@ -40,15 +40,26 @@ def get_global_alerts():
             
             if not df_km_tivoli.empty:
                 df_km_tivoli = df_km_tivoli.sort_values(by='data', ascending=False)
-                car_kms_actuals = df_km_tivoli.dropna(subset=['contador'])['contador'].iloc[0]
-                kms_left = st.session_state.get("kms_canvi_oli", 31491.0) - car_kms_actuals
+                car_kms_actuals = pd.to_numeric(df_km_tivoli['contador'], errors='coerce').max()
+                if pd.isna(car_kms_actuals):
+                    car_kms_actuals = 0.0
+                from core.config_manager import load_app_config
+                mant = load_app_config().get("manteniment_cotxe", {})
+                oli = mant.get("oli", {})
+                rodes = mant.get("rodes", {})
+                oli_next = float(oli.get("ultim_canvi_km", 30000)) + float(oli.get("interval_km", 16000))
+                kms_left = oli_next - car_kms_actuals
                 if kms_left <= 0:
-                    alerts.append({
-                        "type": "error",
-                        "icon": "🔧",
-                        "title": "Canvi d'Oli (Tivoli)",
-                        "message": f"Cal fer el canvi d'oli del cotxe. Teniu el límit superat per {int(abs(kms_left))} km."
-                    })
+                    alerts.append({"type": "error", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
+                                   "message": f"Cal fer el canvi d'oli (previst als {int(oli_next):,} km). Superat per {int(abs(kms_left)):,} km."})
+                elif kms_left <= 1000:
+                    alerts.append({"type": "warning", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
+                                   "message": f"Queden {int(kms_left):,} km per al canvi d'oli (als {int(oli_next):,} km)."})
+                rodes_next = float(rodes.get("ultim_canvi_km", 30000)) + float(rodes.get("interval_km", 40000))
+                rodes_left = rodes_next - car_kms_actuals
+                if rodes_left <= 1000:
+                    alerts.append({"type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": "Pneumàtics (Tivoli)",
+                                   "message": f"Revisar/canviar rodes: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants)."})
                     
         # 2. Alerta de Loteria
         loteria_cfg = config.get("regles_alertes", {}).get("loteria", {})

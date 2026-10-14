@@ -39,7 +39,7 @@ def render():
     df_km = st.session_state.get("df_km", pd.DataFrame())
     df_gas = st.session_state.get("df_gas", pd.DataFrame())
 
-    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(["🛣️ Km i Rutes", "⛽ Repostatge", "🔧 Canvi d'Oli", "📊 Consum"])
+    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(["🛣️ Km i Rutes", "⛽ Repostatge", "🔧 Manteniment (Oli i Rodes)", "📊 Consum"])
 
     # ----------------------------------------------------
     # TAB 1: REGISTRE DE KM I RUTES
@@ -197,30 +197,124 @@ def render():
     # TAB 3: CANVI D'OLI I MANTENIMENT
     # ----------------------------------------------------
     with tab_oli:
-        st.markdown("<h4 style='color:#f39c12;'>🔧 Estat del Canvi d'Oli</h4>", unsafe_allow_html=True)
-        
+        from core.config_manager import load_app_config, save_app_config, DEFAULT_CONFIG
+        import copy
+
         car_kms_actuals = 0.0
         df_km_oli = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
         if not df_km_oli.empty and 'contador' in df_km_oli.columns:
             car_kms_actuals = pd.to_numeric(df_km_oli['contador'], errors='coerce').max()
             if pd.isna(car_kms_actuals): car_kms_actuals = 0.0
 
-        if "kms_canvi_oli" not in st.session_state:
-            st.session_state["kms_canvi_oli"] = 150000.0
+        app_cfg = load_app_config()
+        mant = copy.deepcopy(app_cfg.get("manteniment_cotxe") or DEFAULT_CONFIG["manteniment_cotxe"])
+        mant.setdefault("oli", copy.deepcopy(DEFAULT_CONFIG["manteniment_cotxe"]["oli"]))
+        mant.setdefault("rodes", copy.deepcopy(DEFAULT_CONFIG["manteniment_cotxe"]["rodes"]))
+        mant.setdefault("historic", [])
 
-        col_oil1, col_oil2, col_oil3 = st.columns([1, 1, 1])
-        with col_oil1:
-            st.metric("Kms actuals del cotxe", f"{int(car_kms_actuals):,}")
-        with col_oil2:
-            st.session_state["kms_canvi_oli"] = st.number_input("Objectiu proper canvi d'oli (km)", value=float(st.session_state["kms_canvi_oli"]), step=1000.0)
-        with col_oil3:
-            kms_left = st.session_state["kms_canvi_oli"] - car_kms_actuals
-            st.metric("Kms restants", f"{int(kms_left):,}", delta=f"{int(kms_left)} km per al canvi", delta_color="normal" if kms_left > 1000 else "inverse")
+        def _save_mant(new_mant):
+            cfg = copy.deepcopy(load_app_config())
+            cfg["manteniment_cotxe"] = new_mant
+            save_app_config(cfg)
+            try:
+                from core.alerts import get_global_alerts
+                get_global_alerts.clear()
+            except Exception:
+                pass
 
-        if kms_left <= 1000:
-            st.warning(f"⚠️ Atenció: Queden només {int(kms_left)} km per al proper canvi d'oli!")
+        def _estat(left, interval):
+            usat = 1 - (left / interval) if interval else 1
+            usat = min(max(usat, 0.0), 1.0)
+            st.progress(usat, text=f"Desgast: {usat*100:.0f}%")
+            if left <= 0:
+                st.error(f"🚨 Canvi superat per {int(abs(left)):,} km!")
+            elif left <= 1000:
+                st.warning(f"⚠️ Queden només {int(left):,} km!")
+            else:
+                st.success(f"✅ Tot correcte. Queden {int(left):,} km.")
+
+        # ---------- OLI ----------
+        oli = mant["oli"]
+        oli_last = float(oli.get("ultim_canvi_km", 30000))
+        oli_int = float(oli.get("interval_km", 16000))
+        oli_next = oli_last + oli_int
+        oli_left = oli_next - car_kms_actuals
+
+        st.markdown("<h4 style='color:#f39c12;'>🛢️ Canvi d'Oli</h4>", unsafe_allow_html=True)
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Kms actuals", f"{int(car_kms_actuals):,}")
+        c2.metric("Últim canvi", f"{int(oli_last):,} km", help=oli.get("data_ultim_canvi") or None)
+        c3.metric("Proper canvi", f"{int(oli_next):,} km", help=f"{int(oli_last):,} + {int(oli_int):,}")
+        c4.metric("Kms restants", f"{int(oli_left):,}")
+        _estat(oli_left, oli_int)
+
+        with st.expander("✏️ Registrar canvi d'oli"):
+            with st.form("form_oli"):
+                f1, f2, f3 = st.columns(3)
+                n_km = f1.number_input("Km del canvi", min_value=0, value=int(oli_last), step=100)
+                n_int = f2.number_input("Interval (km)", min_value=1000, value=int(oli_int), step=1000)
+                n_data = f3.date_input("Data", value=datetime.today(), format="DD/MM/YYYY")
+                n_nota = st.text_input("Observacions", value="Oli i filtre")
+                afegir_hist = st.checkbox("Afegir a l'històric", value=True)
+                if st.form_submit_button("💾 Desar canvi d'oli", type="primary"):
+                    d = n_data.strftime("%d/%m/%Y")
+                    mant["oli"] = {"ultim_canvi_km": int(n_km), "interval_km": int(n_int), "data_ultim_canvi": d}
+                    if afegir_hist:
+                        mant["historic"].append({"data": d, "tipus": "Oli", "km": int(n_km), "rodes": "", "detall": n_nota})
+                    _save_mant(mant)
+                    st.success(f"Desat! Proper canvi als {int(n_km + n_int):,} km.")
+                    st.rerun()
+
+        st.write("---")
+
+        # ---------- RODES ----------
+        rodes = mant["rodes"]
+        r_last = float(rodes.get("ultim_canvi_km", 30000))
+        r_int = float(rodes.get("interval_km", 40000))
+        r_next = r_last + r_int
+        r_left = r_next - car_kms_actuals
+
+        st.markdown("<h4 style='color:#f39c12;'>🛞 Canvi de Rodes</h4>", unsafe_allow_html=True)
+        d1, d2, d3, d4 = st.columns(4)
+        d1.metric("Últim canvi", f"{int(r_last):,} km", help=rodes.get("data_ultim_canvi") or None)
+        d2.metric("Rodes canviades", f"{rodes.get('quantes_rodes', 4)}", help=rodes.get("posicio", ""))
+        d3.metric("Proper canvi", f"{int(r_next):,} km")
+        d4.metric("Kms restants", f"{int(r_left):,}")
+        _estat(r_left, r_int)
+
+        with st.expander("✏️ Registrar canvi de rodes"):
+            with st.form("form_rodes"):
+                g1, g2, g3 = st.columns(3)
+                nr_km = g1.number_input("Km del canvi", min_value=0, value=int(r_last), step=100, key="r_km")
+                nr_q = g2.radio("Quantes rodes?", [1, 2, 4], index=[1, 2, 4].index(int(rodes.get("quantes_rodes", 4))) if int(rodes.get("quantes_rodes", 4)) in [1, 2, 4] else 2, horizontal=True)
+                nr_pos = g3.selectbox("Posició", ["Totes 4", "Davanteres", "Posteriors", "Davantera esquerra", "Davantera dreta", "Posterior esquerra", "Posterior dreta"])
+                h1, h2 = st.columns(2)
+                nr_int = h1.number_input("Interval estimat (km)", min_value=1000, value=int(r_int), step=1000)
+                nr_data = h2.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="r_data")
+                nr_nota = st.text_input("Observacions (marca, model...)", key="r_nota")
+                if st.form_submit_button("💾 Desar canvi de rodes", type="primary"):
+                    d = nr_data.strftime("%d/%m/%Y")
+                    mant["rodes"] = {"ultim_canvi_km": int(nr_km), "interval_km": int(nr_int), "quantes_rodes": int(nr_q), "posicio": nr_pos, "data_ultim_canvi": d}
+                    mant["historic"].append({"data": d, "tipus": "Rodes", "km": int(nr_km), "rodes": f"{nr_q} ({nr_pos})", "detall": nr_nota})
+                    _save_mant(mant)
+                    st.success("Canvi de rodes desat!")
+                    st.rerun()
+
+        st.write("---")
+
+        # ---------- HISTÒRIC ----------
+        st.markdown("<h4 style='color:#f39c12;'>📋 Històric de Manteniment</h4>", unsafe_allow_html=True)
+        if mant["historic"]:
+            df_h = pd.DataFrame(mant["historic"])
+            df_h = df_h.sort_values("km", ascending=False).reset_index(drop=True)
+            df_h.insert(0, "Eliminar", False)
+            edited = st.data_editor(df_h, hide_index=True, use_container_width=True, disabled=[c for c in df_h.columns if c != "Eliminar"], key="hist_mant")
+            if edited["Eliminar"].any() and st.button("🗑️ Eliminar seleccionats"):
+                mant["historic"] = edited[~edited["Eliminar"]].drop(columns=["Eliminar"]).to_dict("records")
+                _save_mant(mant)
+                st.rerun()
         else:
-            st.success("✅ El vehicle està dins dels marges òptims de quilometratge per a l'oli.")
+            st.info("Encara no hi ha cap manteniment registrat.")
 
     # ----------------------------------------------------
     # TAB 4: CONSUM ANUAL

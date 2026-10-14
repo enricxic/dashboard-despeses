@@ -78,7 +78,12 @@ DEFAULT_CONFIG = {
         "compres": True,
         "admin": True
     },
-    "idioma": "ca"
+    "idioma": "ca",
+    "manteniment_cotxe": {
+        "oli": {"ultim_canvi_km": 30000, "interval_km": 16000, "data_ultim_canvi": ""},
+        "rodes": {"ultim_canvi_km": 30000, "interval_km": 40000, "quantes_rodes": 4, "posicio": "Totes 4", "data_ultim_canvi": ""},
+        "historic": []
+    }
 }
 
 TRANSLATIONS = {
