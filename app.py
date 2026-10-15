@@ -163,7 +163,7 @@ if not alerts_html:
 if "mod" in st.query_params:
     selected_mod = st.query_params.get("mod")
     if st.session_state.get("current_module") != selected_mod:
-        for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar"]:
+        for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar", "show_afegir_any_comptable"]:
             st.session_state.pop(k, None)
     st.session_state.current_module = selected_mod
     if "db" in st.query_params:
@@ -196,6 +196,8 @@ if "action" in st.query_params:
         st.session_state["editing_routes"] = True
     elif act == "show_faq_economic":
         st.session_state["show_faq_economic"] = True
+    elif act == "afegir_any_comptable":
+        st.session_state["show_afegir_any_comptable"] = True
     elif act == "show_faq_menjar":
         st.session_state["show_faq_menjar"] = True
     elif act == "edit_rules":
@@ -887,6 +889,7 @@ div.block-container {{
 {f'''<div class="submenu-item">
 <a href="?mod=modules.economic{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>📈 Mòdul Econòmic complet</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
+<a href="?mod=modules.economic&action=afegir_any_comptable{url_suffix}" target="_self">📅 Afegir nou any comptable</a>
 <a href="?mod=modules.economic&action=show_faq_economic{url_suffix}" target="_self">❓ Preguntes i Respostes</a>
 </div>
 </div>''' if icones_actives.get('economic', True) else ''}

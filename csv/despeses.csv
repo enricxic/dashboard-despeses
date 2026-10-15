@@ -5459,7 +5459,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2605;Efectiu;;01/09/2023;septiembre;2023;0.0;5.4;Càrrec;menjar;Novavenda;;False
 2606;Efectiu;;01/09/2023;septiembre;2023;0.0;7.96;Càrrec;rebost;Novavenda;Tonyina 4;False
 2568;BBVA;Dèbit;18/08/2023;agosto;2023;0.0;17.28;Càrrec;manteniment;LeroyMerlin;Imprimació + cargols;False
-8146;LaCaixa;Compte;10/10/2026;octubre;2026;0.0;250.0;op_banc;op_banc;Traspàs comptes;;False
+8146;LaCaixa;Compte;10/10/2026;octubre;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
 2625;BBVA;VISA;05/09/2023;septiembre;2023;0.0;62.62;Càrrec;gasolina;GasolinaAreaGuissona;;False
 2630;Efectiu;;30/08/2023;agosto;2023;0.0;24.0;Càrrec;menjar;Ous casolans;;False
 2631;Efectiu;;01/09/2023;septiembre;2023;0.0;24.0;Càrrec;menjar;Ous casolans;;False
@@ -5954,6 +5954,8 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3687;Efectiu;;27/06/2024;junio;2024;0.0;1.23;Càrrec;farmàcia;Farmàcia;;False
 3667;Efectiu;;24/06/2024;junio;2024;0.0;-34.0;Càrrec;restaurant;Restaurant;Mònica.Palamós. Manolo;False
 3674;Efectiu;;22/06/2024;junio;2024;0.0;18.0;Càrrec;restaurant;Bar;Pirata.Palamós;False
+8164;TradeRep.;Dèbit;12/10/2026;octubre;2026;0.0;13.35;Càrrec;menjar;AreaGuissona;;False
+8165;TradeRep.;Dèbit;12/10/2026;octubre;2026;0.0;0.8;Càrrec;neteja;AreaGuissona;;False
 3671;Efectiu;;24/06/2024;junio;2024;0.0;6.29;Càrrec;menjar;Dia;;False
 3672;Efectiu;;24/06/2024;junio;2024;0.0;10.7;Càrrec;menjar;AreaGuissona;;False
 3673;Efectiu;;24/06/2024;junio;2024;0.0;4.37;Càrrec;menjar;Fruiteria Deepak;;False
@@ -5998,6 +6000,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3751;BBVA;VISA;12/07/2024;julio;2024;0.0;1.58;Càrrec;neteja;LIDL;;False
 3753;BBVA;VISA;12/07/2024;julio;2024;0.0;12.99;Càrrec;neteja;BonPreu;;False
 3754;BBVA;VISA;12/07/2024;julio;2024;0.0;6.49;Càrrec;manteniment;Xino Sta.Coloma;Doble interruptor;False
+8166;TradeRep.;Dèbit;13/10/2026;octubre;2026;0.0;12.96;Càrrec;menjar;Mercadona;;False
 3758;BBVA;Compte;15/07/2024;julio;2024;0.0;43.8;Càrrec;despesa_general;Lowi;;False
 3760;Efectiu;;13/07/2024;julio;2024;0.0;3.0;Càrrec;personal;Jordi;;False
 3762;Efectiu;;14/07/2024;julio;2024;0.0;6.0;Càrrec;menjar;Pa i pastisseria;;False
@@ -6008,7 +6011,10 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3767;Efectiu;;17/07/2024;julio;2024;0.0;2.49;Càrrec;neteja;Novavenda;;False
 3768;Efectiu;;15/07/2024;julio;2024;0.0;4.57;Càrrec;menjar;Fruiteria Deepak;;False
 3770;Efectiu;;19/07/2024;julio;2024;0.0;10.0;Càrrec;menjar;Mercadona;;False
+8167;TradeRep.;Dèbit;13/10/2026;octubre;2026;0.0;3.25;Càrrec;neteja;Mercadona;;False
 3773;Efectiu;;19/07/2024;julio;2024;0.0;5.34;Càrrec;manteniment;Xino Sta.Coloma;festa Mireia;False
+8168;TradeRep.;Dèbit;14/10/2026;octubre;2026;0.0;11.33;Càrrec;menjar;Dia;;False
+8169;TradeRep.;Dèbit;14/10/2026;octubre;2026;0.0;6.44;Càrrec;neteja;Dia;;False
 3778;Efectiu;;21/07/2024;julio;2024;0.0;2.22;Càrrec;menjar;Fruiteria Deepak;;False
 3779;Efectiu;;21/07/2024;julio;2024;0.0;3.0;Càrrec;menjar;Pa i pastisseria;;False
 3780;Efectiu;;21/07/2024;julio;2024;0.0;13.15;Càrrec;menjar;Dia;;False
@@ -6027,6 +6033,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3839;BBVA;Compte;05/08/2024;agosto;2024;0.0;14.63;Càrrec;assegurança;DP Morts Enric;;False
 3802;Efectiu;;27/07/2024;julio;2024;0.0;32.0;Càrrec;varis;Expectacles/Teatre;Diversiones;False
 3841;BBVA;Compte;05/08/2024;agosto;2024;0.0;20.98;Càrrec;assegurança;DP MP Mireia;;False
+8170;TradeRep.;Dèbit;13/10/2026;octubre;2026;0.0;13.1;Càrrec;restaurant;Bar;La Trona;False
 3807;BBVA;Compte;01/08/2024;agosto;2024;0.0;30.16;Càrrec;despesa_general;Endesa;;False
 3809;Efectiu;;24/07/2024;julio;2024;0.0;3.3;Càrrec;menjar;AreaGuissona;;False
 3815;BBVA;Compte;31/07/2024;julio;2024;0.0;489.43;Càrrec;despesa_general;Hipoteca;;False
@@ -6062,6 +6069,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3892;Efectiu;;14/08/2024;agosto;2024;0.0;6.5;Càrrec;restaurant;Bar;Gelats Palamós;False
 3924;BBVA;VISA;27/08/2024;agosto;2024;0.0;354.53;Càrrec;Parallar;MediaMarkt;Inducció Bosch;False
 3875;BBVA;Dèbit;13/08/2024;agosto;2024;0.0;22.0;Càrrec;restaurant;Restaurant;Pizzeria Palamós;False
+8171;TradeRep.;Dèbit;13/10/2026;octubre;2026;0.0;60.71;Càrrec;gasolina;GasolinaAreaGuissona;;False
 3912;Efectiu;;22/08/2024;agosto;2024;0.0;16.09;Càrrec;menjar;Novavenda;;False
 3913;Efectiu;;25/08/2024;agosto;2024;0.0;3.4;Càrrec;menjar;Dia;;False
 3914;Efectiu;;25/08/2024;agosto;2024;0.0;3.9;Càrrec;menjar;Fruiteria Deepak;;False
@@ -6082,6 +6090,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3950;BBVA;Compte;04/09/2024;septiembre;2024;0.0;14.63;Càrrec;assegurança;DP Morts Enric;;False
 3953;BBVA;Compte;04/09/2024;septiembre;2024;0.0;20.98;Càrrec;assegurança;DP MP Mireia;;False
 3943;BBVA;Compte;31/08/2024;agosto;2024;0.0;489.43;Càrrec;despesa_general;Hipoteca;;False
+8172;LaCaixa;Compte;14/10/2026;octubre;2026;0.0;13.7;Càrrec;despesa_general;Ajunt. Arbúcies;;False
 3948;BBVA;Compte;02/09/2024;septiembre;2024;0.0;61.6;Càrrec;despesa_general;Piscina;;False
 3951;BBVA;Compte;04/09/2024;septiembre;2024;0.0;200.0;Càrrec;despesa_general;PJ Isabel;;False
 3952;Efectiu;;05/09/2024;septiembre;2024;0.0;55.0;Càrrec;despesa_general;Lloguer Parking;;False
@@ -6104,6 +6113,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 3938;BBVA;Dèbit;29/08/2024;agosto;2024;0.0;7.92;Càrrec;menjar;Dia;;False
 4057;BBVA;Compte;01/10/2024;octubre;2024;0.0;25.75;Càrrec;assegurança;Ocaso;;False
 4070;BBVA;Compte;03/10/2024;octubre;2024;0.0;20.98;Càrrec;assegurança;DP MP Mireia;;False
+8173;BBVA;Compte;15/10/2026;octubre;2026;0.0;35.9;Càrrec;despesa_general;Lowi;;False
 4012;Efectiu;;22/09/2024;septiembre;2024;0.0;15.0;Càrrec;personal;Jordi;;False
 4014;Efectiu;;22/09/2024;septiembre;2024;0.0;8.25;Càrrec;menjar;Fruiteria Deepak;;False
 4035;BBVA;Compte;26/09/2024;septiembre;2024;0.0;378.12;Càrrec;proveidor;Trama;Calendaris Pepe;False
@@ -6154,6 +6164,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4087;BBVA;VISA;05/10/2024;octubre;2024;0.0;0.8;Càrrec;varis;Interesos;Traspàs VISA a Cta.;False
 4141;Efectiu;;24/10/2024;octubre;2024;0.0;35.0;Càrrec;restaurant;Restaurant;Arrós Jubilats. Manolo;False
 4080;BBVA;Compte;04/10/2024;octubre;2024;0.0;12.03;Càrrec;varis;Interesos;Aplaçat VISA;False
+8174;BBVA;Compte;15/10/2026;octubre;2026;10.0;0.0;Ingrés;ingres_extra;Promos;;False
 4137;Efectiu;;26/10/2024;octubre;2024;0.0;13.08;Càrrec;menjar;Can Rinsa;;False
 4138;Efectiu;;26/10/2024;octubre;2024;0.0;5.4;Càrrec;menjar;Peixeteria;;False
 4139;Efectiu;;26/10/2024;octubre;2024;0.0;5.1;Càrrec;menjar;Fruiteria Deepak;;False
@@ -6182,6 +6193,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4170;BBVA;Compte;01/11/2024;noviembre;2024;0.0;17.55;Càrrec;despesa_general;Endesa;;False
 4172;BBVA;Compte;01/11/2024;noviembre;2024;0.0;61.6;Càrrec;despesa_general;Piscina;;False
 4156;Efectiu;;27/10/2024;octubre;2024;0.0;9.0;Càrrec;restaurant;Restaurant;Dinar Plaça Arbúcies;False
+8175;TradeRep.;Dèbit;15/10/2026;octubre;2026;0.0;4.4;Càrrec;menjar;Fleca Arnau;;False
 4180;Efectiu;;03/11/2024;noviembre;2024;0.0;6.5;Càrrec;restaurant;Restaurant;Pastissoa. Fira flabiol;False
 4181;Efectiu;;03/11/2024;noviembre;2024;0.0;10.0;Càrrec;restaurant;Restaurant;Crep+bolets. Fira flabiol;False
 4182;Efectiu;;03/11/2024;noviembre;2024;0.0;5.0;Càrrec;menjar;Altres menjar;Fuet. Fira Flabiol;False

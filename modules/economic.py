@@ -1140,16 +1140,280 @@ def render(view_mode="economic"):
         if st.button("🔙 Inici", use_container_width=True, key=f"btn_back_{view_mode}"):
             st.session_state.current_module = None
             st.rerun()
-    
-    
-    
-    
-    
-    # Determine default year/month before the tab runs
-    years_list = sorted(list(df_desp['any'].dropna().unique()), reverse=True)
-    if 2026 not in years_list:
-        years_list.insert(0, 2026)
-    
+
+    # ----------------- MODAL: AFEGIR NOU ANY COMPTABLE -----------------
+    @st.dialog("📅 Afegir Nou Any Comptable", width="large")
+    def show_afegir_any_comptable_dialog():
+        nonlocal df_pag, df_ing
+        
+        st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin-bottom:12px;'>Aquesta eina genera automàticament les previsions mensuals d'ingressos i despeses per a tot el nou any (12 mesos, de gener a desembre), precarregant els últims imports coneguts. Pots revisar-los i retocar-los abans de generar-los.</p>", unsafe_allow_html=True)
+        
+        # 1. Determinar l'any per defecte a proposar
+        existing_years = set()
+        if not df_desp.empty and 'any' in df_desp.columns:
+            existing_years.update(pd.to_numeric(df_desp['any'], errors='coerce').dropna().astype(int).tolist())
+        if not df_pag.empty and 'any' in df_pag.columns:
+            existing_years.update(pd.to_numeric(df_pag['any'], errors='coerce').dropna().astype(int).tolist())
+        if not df_ing.empty and 'any' in df_ing.columns:
+            existing_years.update(pd.to_numeric(df_ing['any'], errors='coerce').dropna().astype(int).tolist())
+            
+        proposat_any = (max(existing_years) + 1) if existing_years else (datetime.today().year + 1)
+        
+        col_y1, col_y2 = st.columns([3, 5])
+        with col_y1:
+            nou_any = st.number_input("📅 Any comptable a generar:", min_value=2024, max_value=2050, value=proposat_any, step=1, key="input_nou_any_target")
+        with col_y2:
+            st.write("")
+            st.write("")
+            has_pag = not df_pag.empty and (df_pag['any'] == nou_any).any()
+            has_ing = not df_ing.empty and (df_ing['any'] == nou_any).any()
+            if has_pag or has_ing:
+                st.warning(f"⚠️ Ja existeixen registres per a l'any {nou_any}. Si continues, s'actualitzaran o s'afegiran els mesos pendents.")
+            else:
+                st.success(f"✨ L'any {nou_any} és completament nou. Es crearan 252 previsions (12 mesos x 21 conceptes).")
+                
+        # 2. Llistes de conceptes oficials
+        ING_CONFIG = [
+            {"concepte": "Complement Generalitat", "banc": "LaCaixa", "cat": "ingres_general", "dia": 25, "default_imp": 68.25},
+            {"concepte": "Pensió Enric", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 940.74},
+            {"concepte": "Pensió Isabel", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 962.50},
+            {"concepte": "Cartera DP Gran", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 47.14},
+            {"concepte": "Cartera DP Petit", "banc": "BBVA", "cat": "ingres_general", "dia": 29, "default_imp": 13.99},
+            {"concepte": "Pensió no contributiva", "banc": "LaCaixa", "cat": "ingres_general", "dia": 25, "default_imp": 628.80},
+            {"concepte": "Hisenda 50 2", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 50.00},
+            {"concepte": "Hisenda 100", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 100.00},
+            {"concepte": "Hisenda 50 1", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 50.00},
+        ]
+        
+        DESP_CONFIG = [
+            {"concepte": "Hipoteca", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 30, "default_imp": 489.43},
+            {"concepte": "Lowi", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 19, "default_imp": 35.90},
+            {"concepte": "DP Morts Enric", "banc": "BBVA", "forma": "Compte", "cat": "assegurança", "dia": 7, "default_imp": 14.04},
+            {"concepte": "BBVA Asseg. Casa", "banc": "BBVA", "forma": "Compte", "cat": "assegurança", "dia": 7, "default_imp": 42.34},
+            {"concepte": "PJ Isabel", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 5, "default_imp": 231.53},
+            {"concepte": "Ajunt. Arbúcies", "banc": "LaCaixa", "forma": "Compte", "cat": "despesa_general", "dia": 5, "default_imp": 68.46},
+            {"concepte": "Piscina", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 4, "default_imp": 90.28},
+            {"concepte": "Accions NVIDIA", "banc": "TradeRep.", "forma": "Compte", "cat": "despesa_general", "dia": 2, "default_imp": 25.00},
+            {"concepte": "Accions S&P500", "banc": "TradeRep.", "forma": "Compte", "cat": "despesa_general", "dia": 2, "default_imp": 25.00},
+            {"concepte": "Ocaso", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 2, "default_imp": 12.90},
+            {"concepte": "Endesa", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 1, "default_imp": 25.00},
+            {"concepte": "Lloguer Parking", "banc": "Efectiu", "forma": "Compte", "cat": "despesa_general", "dia": 1, "default_imp": 55.00},
+        ]
+        
+        # Recuperar últim import real de la BD si existeix per actualitzar la referència
+        for item in ING_CONFIG:
+            m = df_ing[df_ing['Concepte'].astype(str).str.strip().str.lower() == item['concepte'].lower()]
+            if not m.empty:
+                m_sorted = m.sort_values(by=['any'], ascending=True)
+                last_val = m_sorted.iloc[-1].get('Import')
+                if pd.notna(last_val) and float(last_val) > 0:
+                    item['default_imp'] = float(last_val)
+                    
+        for item in DESP_CONFIG:
+            m = df_pag[df_pag['Concepte'].astype(str).str.strip().str.lower() == item['concepte'].lower()]
+            if not m.empty:
+                m_sorted = m.sort_values(by=['any'], ascending=True)
+                last_val = m_sorted.iloc[-1].get('Import')
+                if pd.notna(last_val) and float(last_val) > 0:
+                    item['default_imp'] = float(last_val)
+
+        # 3. Mostrar les dues pestanyes amb formulari d'edició
+        tab_modal_ing, tab_modal_desp = st.tabs(["🟢 Previsions d'Ingressos (9)", "🔴 Previsions de Despeses (12)"])
+        
+        valors_ingressos = {}
+        with tab_modal_ing:
+            st.markdown("##### Ingressos mensuals recurrents")
+            cols_i_header = st.columns([4, 3, 2, 3])
+            cols_i_header[0].markdown("**Concepte**")
+            cols_i_header[1].markdown("**Banc**")
+            cols_i_header[2].markdown("**Dia mes**")
+            cols_i_header[3].markdown("**Import mensual (€)**")
+            
+            tot_ing_mensual = 0.0
+            for idx, item in enumerate(ING_CONFIG):
+                c_row = st.columns([4, 3, 2, 3])
+                c_row[0].write(f"🟢 **{item['concepte']}**")
+                c_row[1].write(item['banc'])
+                c_row[2].write(f"Dia {item['dia']}")
+                val_imp = c_row[3].number_input(
+                    f"Import {item['concepte']}", 
+                    min_value=0.0, 
+                    value=float(item['default_imp']), 
+                    step=1.0, 
+                    format="%.2f",
+                    key=f"modal_ing_imp_{idx}",
+                    label_visibility="collapsed"
+                )
+                valors_ingressos[item['concepte']] = {**item, "import": val_imp}
+                tot_ing_mensual += val_imp
+                
+            st.markdown(f"**Total Ingressos mensuals previstos:** `{tot_ing_mensual:,.2f} €` *(Anual: `{tot_ing_mensual * 12:,.2f} €`)*")
+
+        valors_despeses = {}
+        with tab_modal_desp:
+            st.markdown("##### Despeses mensuals recurrents")
+            cols_d_header = st.columns([4, 3, 2, 3])
+            cols_d_header[0].markdown("**Concepte**")
+            cols_d_header[1].markdown("**Banc**")
+            cols_d_header[2].markdown("**Dia mes**")
+            cols_d_header[3].markdown("**Import mensual (€)**")
+            
+            tot_desp_mensual = 0.0
+            for idx, item in enumerate(DESP_CONFIG):
+                c_row = st.columns([4, 3, 2, 3])
+                c_row[0].write(f"🔴 **{item['concepte']}**")
+                c_row[1].write(f"{item['banc']} ({item.get('forma', 'Compte')})")
+                c_row[2].write(f"Dia {item['dia']}")
+                val_imp = c_row[3].number_input(
+                    f"Import {item['concepte']}", 
+                    min_value=0.0, 
+                    value=float(item['default_imp']), 
+                    step=1.0, 
+                    format="%.2f",
+                    key=f"modal_desp_imp_{idx}",
+                    label_visibility="collapsed"
+                )
+                valors_despeses[item['concepte']] = {**item, "import": val_imp}
+                tot_desp_mensual += val_imp
+                
+            st.markdown(f"**Total Despeses mensuals previstes:** `{tot_desp_mensual:,.2f} €` *(Anual: `{tot_desp_mensual * 12:,.2f} €`)*")
+
+        st.divider()
+        col_m_balance, col_m_btn1, col_m_btn2 = st.columns([5, 3, 2], vertical_alignment="center")
+        balanc_mensual = tot_ing_mensual - tot_desp_mensual
+        bal_color = "#22c55e" if balanc_mensual >= 0 else "#ef4444"
+        with col_m_balance:
+            st.markdown(f"**Balanç mensual estimat:** <span style='color:{bal_color}; font-size:1.15rem; font-weight:700;'>{balanc_mensual:+,.2f} €/mes</span>", unsafe_allow_html=True)
+            
+        with col_m_btn1:
+            if st.button(f"💾 Generar Previsions {nou_any}", type="primary", use_container_width=True, key="btn_confirm_gen_year"):
+                with st.spinner(f"Generant les previsions per a l'any {nou_any}..."):
+                    # 1. Processar Ingressos
+                    current_max_id_ing = int(df_ing['idIngres'].max() + 1) if not df_ing.empty and 'idIngres' in df_ing.columns else 1
+                    ing_created = 0
+                    ing_updated = 0
+                    
+                    for m_idx in range(1, 13):
+                        m_cat = CATALAN_MONTHS[m_idx - 1]
+                        m_data = month_translations[m_cat]
+                        
+                        for item in valors_ingressos.values():
+                            c_name = item['concepte']
+                            c_banc = item['banc']
+                            c_cat = item['cat']
+                            c_dia = item['dia']
+                            c_imp = float(item['import'])
+                            
+                            mask = (df_ing['any'] == nou_any) & (df_ing['mes'].astype(str).str.strip().str.lower() == m_data) & (df_ing['Concepte'].astype(str).str.strip().str.lower() == c_name.lower())
+                            if mask.any():
+                                df_ing.loc[mask, 'Import'] = c_imp
+                                df_ing.loc[mask, 'Banc'] = c_banc
+                                df_ing.loc[mask, 'Categoria'] = c_cat
+                                df_ing.loc[mask, 'cobrat'] = 'pendent'
+                                ing_updated += 1
+                            else:
+                                new_row = {
+                                    'idIngres': current_max_id_ing,
+                                    'Banc': c_banc,
+                                    'Data': f"{c_dia:02d}/{m_idx:02d}/{nou_any}",
+                                    'dia': c_dia,
+                                    'mes': m_data,
+                                    'any': nou_any,
+                                    'Categoria': c_cat,
+                                    'Concepte': c_name,
+                                    'Import': c_imp,
+                                    'comentari': '',
+                                    'cobrat': 'pendent'
+                                }
+                                df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
+                                current_max_id_ing += 1
+                                ing_created += 1
+                                
+                    save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                    st.session_state["df_ing"] = df_ing
+                    
+                    # 2. Processar Despeses
+                    current_max_id_pag = int(df_pag['idPago'].max() + 1) if not df_pag.empty and 'idPago' in df_pag.columns else 1
+                    pag_created = 0
+                    pag_updated = 0
+                    
+                    for m_idx in range(1, 13):
+                        m_cat = CATALAN_MONTHS[m_idx - 1]
+                        m_data = month_translations[m_cat]
+                        
+                        for item in valors_despeses.values():
+                            c_name = item['concepte']
+                            c_banc = item['banc']
+                            c_forma = item.get('forma', 'Compte')
+                            c_cat = item['cat']
+                            c_dia = item['dia']
+                            c_imp = float(item['import'])
+                            
+                            mask = (df_pag['any'] == nou_any) & (df_pag['mes'].astype(str).str.strip().str.lower() == m_data) & (df_pag['Concepte'].astype(str).str.strip().str.lower() == c_name.lower())
+                            if mask.any():
+                                df_pag.loc[mask, 'Import'] = c_imp
+                                df_pag.loc[mask, 'Banc'] = c_banc
+                                df_pag.loc[mask, 'Formapago'] = c_forma
+                                df_pag.loc[mask, 'Categoria'] = c_cat
+                                df_pag.loc[mask, 'pagat'] = 'pendent'
+                                pag_updated += 1
+                            else:
+                                new_row = {
+                                    'idPago': current_max_id_pag,
+                                    'Banc': c_banc,
+                                    'Formapago': c_forma,
+                                    'Data': f"{c_dia:02d}/{m_idx:02d}/{nou_any}",
+                                    'dia': c_dia,
+                                    'mes': m_data,
+                                    'any': nou_any,
+                                    'Categoria': c_cat,
+                                    'Concepte': c_name,
+                                    'Import': c_imp,
+                                    'pagat': 'pendent',
+                                    'banc_desti_traspas': None
+                                }
+                                df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
+                                current_max_id_pag += 1
+                                pag_created += 1
+                                
+                    save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                    st.session_state["df_pag"] = df_pag
+                    
+                    log_action("sistema", "CREATE_YEAR", {
+                        "any": nou_any,
+                        "ingressos_creats": ing_created,
+                        "ingressos_actualitzats": ing_updated,
+                        "pagaments_creats": pag_created,
+                        "pagaments_actualitzats": pag_updated
+                    })
+                    
+                    st.session_state["show_afegir_any_comptable"] = False
+                    st.session_state["toast_any_creat"] = f"🎉 Previsions de l'any {nou_any} creades amb èxit ({ing_created + pag_created} noves, {ing_updated + pag_updated} actualitzades)!"
+                    st.rerun()
+                    
+        with col_m_btn2:
+            if st.button("Cancel·lar", key="btn_cancel_gen_year", use_container_width=True):
+                st.session_state["show_afegir_any_comptable"] = False
+                st.rerun()
+
+    if st.session_state.get("toast_any_creat"):
+        st.toast(st.session_state.pop("toast_any_creat"), icon="🎉")
+
+    if st.session_state.get("show_afegir_any_comptable"):
+        show_afegir_any_comptable_dialog()
+
+    # Determine default year/month before the tab runs - unificant anys de despeses i previsions
+    all_db_years = set()
+    if not df_desp.empty and 'any' in df_desp.columns:
+        all_db_years.update(pd.to_numeric(df_desp['any'], errors='coerce').dropna().astype(int).tolist())
+    if not df_pag.empty and 'any' in df_pag.columns:
+        all_db_years.update(pd.to_numeric(df_pag['any'], errors='coerce').dropna().astype(int).tolist())
+    if not df_ing.empty and 'any' in df_ing.columns:
+        all_db_years.update(pd.to_numeric(df_ing['any'], errors='coerce').dropna().astype(int).tolist())
+    if 2026 not in all_db_years:
+        all_db_years.add(2026)
+    years_list = sorted(list(all_db_years), reverse=True)
+
     # Access or default the values
     selected_year = st.session_state.get("detalls_sel_year", st.session_state.get("sel_year", datetime.today().year))
     
@@ -1748,7 +2012,8 @@ def render(view_mode="economic"):
         cur_month_idx = today.month - 1
 
         chart_data = []
-        for yr in [selected_year - 1, selected_year]:
+        chart_years = [selected_year - 1, selected_year, selected_year + 1]
+        for yr in chart_years:
             year_desp_c = df_desp[df_desp['any'] == yr]
             year_ing_c = df_ing[df_ing['any'] == yr]
             
@@ -1807,8 +2072,11 @@ def render(view_mode="economic"):
                     ing_color = '#f1c40f'  # Groc previsió
                     ing_hover = f"🟡 Ingressos (Previsió): <b>{ing_val:,.2f} €</b>"
                     
+                    sub_pag_future = df_pag[(df_pag['any'] == yr) & (df_pag['clean_mes'] == m_data)]
+                    pag_future_sum = sub_pag_future['Import'].sum() if not sub_pag_future.empty else 0.0
+                    
                     exp_real_val = 0.0
-                    exp_prev_val = avg_monthly_expense
+                    exp_prev_val = max(avg_monthly_expense, pag_future_sum) if pag_future_sum > 0 else avg_monthly_expense
                     exp_real_hover = ""
                     exp_prev_hover = f"🔻 Despeses (Previsió): <b>{exp_prev_val:,.2f} €</b>"
                     exp_real_hoverinfo = 'skip'
@@ -2370,7 +2638,13 @@ def render(view_mode="economic"):
     # ================= TAB: PREVISIÓ DE DESPESES =================
     if tab_prev_desp:
         with tab_prev_desp:
-            st.markdown("<h3 style='color:#f39c12;'>🔴 Previsió de Despeses (Pagaments Programats)</h3>", unsafe_allow_html=True)
+            col_t_title, col_t_btn = st.columns([3, 1])
+            with col_t_title:
+                st.markdown("<h3 style='color:#f39c12; margin:0;'>🔴 Previsió de Despeses (Pagaments Programats)</h3>", unsafe_allow_html=True)
+            with col_t_btn:
+                if st.button("📅 Afegir nou any comptable", key="btn_shortcut_nou_any_desp", use_container_width=True):
+                    st.session_state["show_afegir_any_comptable"] = True
+                    st.rerun()
             
             with st.expander("➕ Nova Previsió de Pagament", expanded=True):
                 # Row 1 (4 columns)
@@ -2669,7 +2943,13 @@ def render(view_mode="economic"):
     # ================= TAB: PREVISIÓ D'INGRESSOS =================
     if tab_prev_ing:
         with tab_prev_ing:
-            st.markdown("<h3 style='color:#f39c12;'>🟢 Previsió d'Ingressos (Nòmines i Altres)</h3>", unsafe_allow_html=True)
+            col_t_title_ing, col_t_btn_ing = st.columns([3, 1])
+            with col_t_title_ing:
+                st.markdown("<h3 style='color:#f39c12; margin:0;'>🟢 Previsió d'Ingressos (Nòmines i Altres)</h3>", unsafe_allow_html=True)
+            with col_t_btn_ing:
+                if st.button("📅 Afegir nou any comptable", key="btn_shortcut_nou_any_ing", use_container_width=True):
+                    st.session_state["show_afegir_any_comptable"] = True
+                    st.rerun()
             
             with st.expander("➕ Nova Previsió d'Ingrés", expanded=True):
                 # Row 1 (4 columns)
