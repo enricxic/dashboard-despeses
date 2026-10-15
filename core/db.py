@@ -511,10 +511,16 @@ def get_config_concepts(category):
         return []
     cfg = load_categories_conceptes()
     concepts = set()
+    import unicodedata
+    norm_cat = unicodedata.normalize('NFKD', str(category)).encode('ASCII', 'ignore').decode('utf-8').lower()
     
     # 1. From active config
-    if cfg and category in cfg:
-        concepts.update([str(c).strip() for c in cfg[category] if c and str(c).strip()])
+    if cfg:
+        if category in cfg:
+            concepts.update([str(c).strip() for c in cfg[category] if c and str(c).strip()])
+        for k in cfg:
+            if unicodedata.normalize('NFKD', str(k)).encode('ASCII', 'ignore').decode('utf-8').lower() == norm_cat:
+                concepts.update([str(c).strip() for c in cfg[k] if c and str(c).strip()])
         
     # 2. From local json file
     filepath = "categories_conceptes.json"
@@ -522,8 +528,12 @@ def get_config_concepts(category):
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 local_cfg = json.load(f)
-                if local_cfg and category in local_cfg:
-                    concepts.update([str(c).strip() for c in local_cfg[category] if c and str(c).strip()])
+                if local_cfg:
+                    if category in local_cfg:
+                        concepts.update([str(c).strip() for c in local_cfg[category] if c and str(c).strip()])
+                    for k in local_cfg:
+                        if unicodedata.normalize('NFKD', str(k)).encode('ASCII', 'ignore').decode('utf-8').lower() == norm_cat:
+                            concepts.update([str(c).strip() for c in local_cfg[k] if c and str(c).strip()])
         except Exception:
             pass
             

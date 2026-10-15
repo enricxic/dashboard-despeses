@@ -548,20 +548,37 @@ def render(view_mode="economic"):
         return core_get_cats()
     
     def get_config_concepts(category):
+        if not category:
+            return []
         cfg = load_categories_conceptes()
         concepts = set()
-        if cfg and category in cfg:
-            concepts.update([c for c in cfg[category] if c])
+        import unicodedata
+        norm_cat = unicodedata.normalize('NFKD', str(category)).encode('ASCII', 'ignore').decode('utf-8').lower()
+        if cfg:
+            if category in cfg:
+                concepts.update([c for c in cfg[category] if c])
+            for k in cfg:
+                k_norm = unicodedata.normalize('NFKD', str(k)).encode('ASCII', 'ignore').decode('utf-8').lower()
+                if k_norm == norm_cat:
+                    concepts.update([c for c in cfg[k] if c])
+                    
+        # També cercar a df_ing si és categoria d'ingrés
+        if "ingres" in norm_cat:
+            if "df_ing" in st.session_state and isinstance(st.session_state.get("df_ing"), pd.DataFrame) and not st.session_state["df_ing"].empty:
+                df_i = st.session_state["df_ing"]
+                if "Categoria" in df_i.columns and "Concepte" in df_i.columns:
+                    cat_col = df_i["Categoria"].astype(str).str.lower()
+                    m_concs = df_i[cat_col.apply(lambda x: unicodedata.normalize('NFKD', x).encode('ASCII', 'ignore').decode('utf-8').lower() == norm_cat)]["Concepte"].dropna().unique()
+                    concepts.update([str(c).strip() for c in m_concs if str(c).strip()])
+
         if category == "op_banc":
             concepts.update(["Amortització", "Cashback TR", "TR Cashback", "Embargament", "Gestions Banc", "Pago ElCorteInglés", "Pago VISA", "Reintegre Caixer", "Transferència", "Traspàs comptes"])
-        # (Línies de cerca a df_desp eliminades a petició de l'usuari per mantenir neteja de conceptes des del JSON)
             
         cleaned_dict = {}
         for c in concepts:
             if c and not str(c).startswith("➕"):
                 c_str = str(c).strip()
                 if not c_str: continue
-                import unicodedata
                 norm = unicodedata.normalize('NFKD', c_str).encode('ASCII', 'ignore').decode('utf-8').lower()
                 if norm in cleaned_dict:
                     if len(c_str.encode('ascii', 'ignore')) < len(c_str):
@@ -2965,7 +2982,10 @@ def render(view_mode="economic"):
                 with r1_col3:
                     import_ing_val = st.number_input("Import Ingrés (€)", min_value=0.0, value=None, step=0.01, key="ing_import")
                 with r1_col4:
-                    cat_val_ing = st.selectbox("Categoria", ["", "ingrés_general", "ingrés_extra"], index=0, key="ing_cat")
+                    cat_options_ing = ["", "ingres_general", "ingres_extra"]
+                    if st.session_state.get("ing_cat") in ["ingrés_general", "ingrés_extra"]:
+                        cat_options_ing = ["", "ingrés_general", "ingrés_extra", "ingres_general", "ingres_extra"]
+                    cat_val_ing = st.selectbox("Categoria", cat_options_ing, index=0, key="ing_cat")
                     
                 # Row 2 (4 columns)
                 r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
@@ -2994,6 +3014,7 @@ def render(view_mode="economic"):
                     if not concept_val_ing or not banc_ing or import_ing_val is None or import_ing_val <= 0:
                         st.error("⚠️ Heu d'omplir Banc, Concepte i un Import vàlid.")
                     else:
+                        canon_cat_ing = "ingres_general" if "general" in str(cat_val_ing).lower() else ("ingres_extra" if "extra" in str(cat_val_ing).lower() else cat_val_ing)
                         if repetir_ing:
                             current_max_id = int(df_ing['idIngres'].max() + 1) if not df_ing.empty and 'idIngres' in df_ing.columns else 1
                             updated_count = 0
@@ -3008,7 +3029,7 @@ def render(view_mode="economic"):
                                     if mask.any():
                                         df_ing.loc[mask, 'Import'] = import_ing_val
                                         df_ing.loc[mask, 'Banc'] = banc_ing
-                                        df_ing.loc[mask, 'Categoria'] = cat_val_ing
+                                        df_ing.loc[mask, 'Categoria'] = canon_cat_ing
                                         df_ing.loc[mask, 'cobrat'] = cobrat_val_ing
                                         updated_count += 1
                                     else:
@@ -3019,7 +3040,7 @@ def render(view_mode="economic"):
                                             'dia': data_val_ing.day,
                                             'mes': m_data,
                                             'any': yr,
-                                            'Categoria': cat_val_ing,
+                                            'Categoria': canon_cat_ing,
                                             'Concepte': concept_val_ing,
                                             'Import': import_ing_val,
                                             'comentari': '',
@@ -3039,7 +3060,7 @@ def render(view_mode="economic"):
                                 'dia': data_val_ing.day,
                                 'mes': mes_val_ing,
                                 'any': any_val_ing,
-                                'Categoria': cat_val_ing,
+                                'Categoria': canon_cat_ing,
                                 'Concepte': concept_val_ing,
                                 'Import': import_ing_val,
                                 'comentari': '',
