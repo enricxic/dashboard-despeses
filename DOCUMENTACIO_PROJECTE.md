@@ -14,7 +14,12 @@ L'aplicació utilitza una **arquitectura modular consolidada**, neta, extensible
 - **Entrada Principal (Router Canònic)**: L'arxiu **[`app.py`](file:///e:/Dashboard/app.py)** actua com a menú principal (Landing Screen interactiva) i gestor de navegació global.
 - **Bridge de Compatibilitat**: L'arxiu **[`app_v2.py`](file:///e:/Dashboard/app_v2.py)** actua com a *forwarder* transparent per garantir compatibilitat amb desplegaments de Streamlit Cloud.
 - **Arxiu Històric**: L'antic fitxer monolític de 6.700 línies es conserva a [`legacy/app_monolithic_legacy.py`](file:///e:/Dashboard/legacy/app_monolithic_legacy.py).
-- **Barra Superior de Menús (Estil Tradicional d'Escriptori)**: Dins de qualsevol mòdul, es disposa d'un menú superior clàssic (`Arxiu`, `Finances`, `Llar`, `Família`, `Ajustos`, `Ajuda`) amb submenús desplegables per activar directament qualsevol secció o acció de l'aplicació.
+- **Barra Superior de Menús (Estil Tradicional d'Escriptori)**: Barra de navegació global permanent a la part superior de l'aplicació amb 4 menús clàssics desplegables i controls d'estat:
+  - `Arxiu`: Tornar a la pantalla d'inici, reiniciar app / memòria cau, commutar mode Online/Offline i tancar sessió.
+  - `Editar`: Accés directe a la configuració general (amb submenús per a Tauler, Administrador, Títol, Família, Tutelats, Bancs, Tema, Icones, Idiomes), editor interactiu d'arxius JSON, regles súper OCR i neteja d'orfes.
+  - `Mòduls`: Selector complet dels mòduls de la llar (Dashboard, Econòmic, Compres, Cotxe, Menús i Cuina, Manteniment, Domòtica, Seguretat, Agenda, Medicació, Jocs) amb submenús d'accions ràpides i FAQs.
+  - `Bases de dades`: Gestor de taules Supabase (Despeses, Ingressos, Compres Super, Catàleg de Productes), sincronització, consolidació de dades offline i còpies de seguretat en fitxer ZIP.
+  - *Controls d'estat (dreta)*: Indicador de connectivitat Online/Offline, campaneta de notificacions i alertes globals amb comptador en temps real, i insígnia del rol d'usuari (👑 Administrador / 👤 Visualitzador).
 - **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/Disseny/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/Disseny/fons xiquiHouse.jpg`), amb 12 punts d'accés interactius mapejats.
 - **Base de Dades**: **Supabase** (PostgreSQL) com a mestre i **CSV** com a font local d'emergència. Tota la comunicació CRUD està centralitzada a `core/db.py`. L'arrencada local integra un tallacorrents de 3 segons si PostgreSQL està bloquejat pel proveïdor d'internet, passant automàticament a l'API REST.
 - **Autenticació**: Gestionada a `core/auth.py`. Incorpora persistència de sessió mitjançant paràmetre de consulta (`?auth=<token>`).
