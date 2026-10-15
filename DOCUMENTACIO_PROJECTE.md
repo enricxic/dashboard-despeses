@@ -15,7 +15,7 @@ L'aplicació utilitza una **arquitectura modular consolidada**, neta, extensible
 - **Bridge de Compatibilitat**: L'arxiu **[`app_v2.py`](file:///e:/Dashboard/app_v2.py)** actua com a *forwarder* transparent per garantir compatibilitat amb desplegaments de Streamlit Cloud.
 - **Arxiu Històric**: L'antic fitxer monolític de 6.700 línies es conserva a [`legacy/app_monolithic_legacy.py`](file:///e:/Dashboard/legacy/app_monolithic_legacy.py).
 - **Barra Superior de Menús (Estil Tradicional d'Escriptori)**: Dins de qualsevol mòdul, es disposa d'un menú superior clàssic (`Arxiu`, `Finances`, `Llar`, `Família`, `Ajustos`, `Ajuda`) amb submenús desplegables per activar directament qualsevol secció o acció de l'aplicació.
-- **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/fons xiquiHouse.jpg`), amb 12 punts d'accés interactius mapejats.
+- **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/Disseny/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/Disseny/fons xiquiHouse.jpg`), amb 12 punts d'accés interactius mapejats.
 - **Base de Dades**: **Supabase** (PostgreSQL) com a mestre i **CSV** com a font local d'emergència. Tota la comunicació CRUD està centralitzada a `core/db.py`. L'arrencada local integra un tallacorrents de 3 segons si PostgreSQL està bloquejat pel proveïdor d'internet, passant automàticament a l'API REST.
 - **Autenticació**: Gestionada a `core/auth.py`. Incorpora persistència de sessió mitjançant paràmetre de consulta (`?auth=<token>`).
 - **Estat de Navegació**: Es controla mitjançant `st.session_state.current_module`. Per tornar enrere, cada mòdul disposa del botó `🏡 Inici` a la barra superior i `🔙 Tornar a l'inici` a la capçalera que restableix l'estat a `None`.
@@ -94,11 +94,10 @@ Dashboard/
 │   ├── harness_menu_cases.json # Banc d'11 casos de prova exhaustius per al test de menús
 │   └── harness_status.json     # Estat de progrés en temps real per a l'execució de proves en segon pla
 ├── imatges/
-│   ├── logo xiquiHouse.png   # Logotip interactiu transparent (1024x682)
-│   ├── fons xiquiHouse.jpg   # Fons de pantalla complet per a la Home
-│   ├── forn.png              # Miniatura d'estudi forn
-│   ├── airfryer.png          # Miniatura d'estudi airfryer
-│   └── ...                   # Imatges de les eines de cuina
+│   ├── Disseny/              # Logotips, icones i fons de pantalla de la interfície
+│   ├── Eines/                # Miniatures dels 14 aparells i eines de cuina
+│   ├── Productes/            # Fotografies dels articles de la compra i rebost
+│   └── Receptes/             # Imatges generades dels plats i receptes per ID
 ├── legacy/
 │   └── app_monolithic_legacy.py # Arxiu històric del fitxer monolític original (6.700 línies)
 ├── modules/
@@ -284,6 +283,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **06/10/2026**: Afegit suport per a una nova columna `stockXmenu` (booleana) a la taula `tb_productes`. Aquesta casella d'activació, editable des de la Taula Ràpida de Rebost a `modules/compres.py`, filtra de manera estricta els productes que es passen com a candidats per generar plats al Recomanador de Menús (amagant així articles inútils com sal, llet, paper, etc.).
 - **08/10/2026**: Integració de la **Bústia de Peticions**, permetent als membres demanar plats que seran validats i inclosos automàticament al proper menú de la IA. Implementació del registre de l'**Historial de Menjars**, aplicant una regla estricta que impedeix a la IA repetir plats ja consumits en els últims X dies. Finalment, adició del paràmetre del **telèfon mòbil** al perfil de membres de la família (preparació per l'enviament de menús) i millora del *prompt* per afavorir les receptes amb les millors **estrelles (valoració)**.
 - **15/10/2026**: Integració de la funcionalitat "Afegir nou any comptable" al Mòdul Econòmic (accessible des del menú superior Mòduls > Mòdul Econòmic > 📅 Afegir nou any comptable i botons d'accés ràpid a les pestanyes de Previsions). Permet revisar i editar els imports per defecte dels 9 conceptes d'ingressos i 12 de despeses abans de generar els 12 mesos pendents de l'any següent (ex. 2027). A més, el selector d'anys del Dashboard unifica anys reals i de previsions, i el gràfic de barres s'ha ampliat a una finestra de 3 anys ([any-1, any, any+1]) amb barres grogues de projecció per als mesos futurs.
+- **15/10/2026**: Reorganització i classificació completa de la carpeta `imatges/` en 4 subcarpetes estructurades (`Productes/`, `Eines/`, `Disseny/`, `Receptes/`). Actualitzades totes les rutes del codi font (`app.py`, `modules/admin.py`, `modules/compres.py`, `modules/avatar_widget.py`, `modules/economic.py`, `csv/tb_productes.csv`) amb mecanismes de resolució retrocompatibles.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**

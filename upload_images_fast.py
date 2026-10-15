@@ -8,19 +8,19 @@ SUPABASE_URL = cfg['SUPABASE_URL']
 SUPABASE_KEY = cfg['SUPABASE_KEY_PUBLISHABLE']
 
 images_to_upload = [
-    (50, r"e:\Dashboard\imatges\50.png"),
-    (176, r"e:\Dashboard\imatges\176.png"),
-    (85, r"e:\Dashboard\imatges\85.png"),
-    (163, r"e:\Dashboard\imatges\163.png"),
-    (21, r"e:\Dashboard\imatges\21.png"),
-    (36, r"e:\Dashboard\imatges\36.png"),
-    (46, r"e:\Dashboard\imatges\46.png"),
-    (47, r"e:\Dashboard\imatges\47.png"),
-    (48, r"e:\Dashboard\imatges\48.png"),
-    (212, r"e:\Dashboard\imatges\212.png"),
-    (38, r"e:\Dashboard\imatges\38.png"),
-    (185, r"e:\Dashboard\imatges\185.png"),
-    (128, r"e:\Dashboard\imatges\128.png")
+    (50, r"e:\Dashboard\imatges\Receptes\50.png"),
+    (176, r"e:\Dashboard\imatges\Receptes\176.png"),
+    (85, r"e:\Dashboard\imatges\Receptes\85.png"),
+    (163, r"e:\Dashboard\imatges\Receptes\163.png"),
+    (21, r"e:\Dashboard\imatges\Receptes\21.png"),
+    (36, r"e:\Dashboard\imatges\Receptes\36.png"),
+    (46, r"e:\Dashboard\imatges\Receptes\46.png"),
+    (47, r"e:\Dashboard\imatges\Receptes\47.png"),
+    (48, r"e:\Dashboard\imatges\Receptes\48.png"),
+    (212, r"e:\Dashboard\imatges\Receptes\212.png"),
+    (38, r"e:\Dashboard\imatges\Receptes\38.png"),
+    (185, r"e:\Dashboard\imatges\Receptes\185.png"),
+    (128, r"e:\Dashboard\imatges\Receptes\128.png")
 ]
 
 headers_storage = {

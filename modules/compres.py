@@ -2921,7 +2921,8 @@ def render():
     with col_t1:
         col_logo_c, col_title_c = st.columns([0.7, 8.5], vertical_alignment="center")
         with col_logo_c:
-            st.image("imatges/logo.png", width=65)
+            logo_path_c = "imatges/Disseny/logo.png" if os.path.exists("imatges/Disseny/logo.png") else "imatges/logo.png"
+            st.image(logo_path_c, width=65)
         with col_title_c:
             st.markdown("<h2 style='margin:0; color:#f39c12;'>Compres Super i Stock</h2>", unsafe_allow_html=True)
     with col_t2:
@@ -3411,10 +3412,20 @@ def render():
                                         img_src = foto_src
                                         if not foto_src.startswith("http"):
                                             # It's a local file
-                                            if os.path.exists(foto_src):
-                                                with open(foto_src, "rb") as f:
+                                            resolved_path = None
+                                            candidates = [
+                                                foto_src,
+                                                os.path.join("imatges", "Productes", os.path.basename(foto_src)),
+                                                os.path.join("imatges", os.path.basename(foto_src))
+                                            ]
+                                            for cand in candidates:
+                                                if os.path.exists(cand) and os.path.isfile(cand):
+                                                    resolved_path = cand
+                                                    break
+                                            if resolved_path:
+                                                with open(resolved_path, "rb") as f:
                                                     b64_data = base64.b64encode(f.read()).decode("utf-8")
-                                                    ext = foto_src.split('.')[-1].lower()
+                                                    ext = resolved_path.split('.')[-1].lower()
                                                     mime = f"image/{ext}" if ext != 'jpg' else "image/jpeg"
                                                     img_src = f"data:{mime};base64,{b64_data}"
                                             else:

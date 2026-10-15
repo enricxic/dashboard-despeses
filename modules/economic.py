@@ -1126,7 +1126,9 @@ def render(view_mode="economic"):
     with col_logo:
         import os, base64
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        logo_path = os.path.join(root_dir, "imatges", "logo.png")
+        logo_path = os.path.join(root_dir, "imatges", "Disseny", "logo.png")
+        if not os.path.exists(logo_path):
+            logo_path = os.path.join(root_dir, "imatges", "logo.png")
         if os.path.exists(logo_path):
             with open(logo_path, "rb") as f:
                 b64 = base64.b64encode(f.read()).decode()

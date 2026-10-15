@@ -9,7 +9,7 @@ from core.db import get_supabase_client
 client = get_supabase_client('admin')
 res = client.table('tb_receptes_pro').select('id, titol, ingredients').execute()
 
-local_images = os.listdir('e:/Dashboard/imatges')
+local_images = os.listdir('e:/Dashboard/imatges/Receptes')
 local_pngs = [f.split('.')[0] for f in local_images if f.endswith('.png') and f.split('.')[0].isdigit()]
 
 missing = []

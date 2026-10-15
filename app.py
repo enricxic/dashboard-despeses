@@ -955,14 +955,20 @@ div.block-container {{
 if st.session_state.current_module is None:
     # ------------------ PANTALLA PRINCIPAL (LOGO INTERACTIU) ------------------
     # Carregar el fons de pantalla completa
-    fons_path = os.path.join(os.path.dirname(__file__), "imatges", "fons xiquiHouse.jpg")
+    fons_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "fons xiquiHouse.jpg")
+    if not os.path.exists(fons_path):
+        fons_path = os.path.join(os.path.dirname(__file__), "imatges", "fons xiquiHouse.jpg")
     b64_fons = ""
     if os.path.exists(fons_path):
         with open(fons_path, "rb") as f_img:
             b64_fons = base64.b64encode(f_img.read()).decode()
 
     # Carregar el logotip horitzontal
-    logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse ampliat.png")
+    logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse ampliat.png")
+    if not os.path.exists(logo_h_path):
+        logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse.png")
+    if not os.path.exists(logo_h_path):
+        logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse ampliat.png")
     if not os.path.exists(logo_h_path):
         logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
     b64_logo_h = ""
@@ -971,7 +977,9 @@ if st.session_state.current_module is None:
             b64_logo_h = base64.b64encode(img_file.read()).decode()
 
     # Carregar el logotip vertical
-    logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse vertical.png")
+    logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse vertical.png")
+    if not os.path.exists(logo_v_path):
+        logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse vertical.png")
     if not os.path.exists(logo_v_path):
         logo_v_path = logo_h_path
     b64_logo_v = ""
