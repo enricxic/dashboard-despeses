@@ -3275,7 +3275,8 @@ def render(view_mode="economic"):
                             supabase.table("tr_cartera").insert([new_tr_row]).execute()
                             
                             rows_to_insert = []
-                            max_id = int(df_desp_local['ID_mov'].max()) if not df_desp_local.empty else 0
+                            df_desp_local = st.session_state.get("df_desp", df_desp)
+                            max_id = int(df_desp_local['ID_mov'].max()) if not df_desp_local.empty and 'ID_mov' in df_desp_local.columns else 0
                             
                             if tr_concepte_inv == "Compra":
                                 row_traderep = {'ID_mov': max_id + 1, 'Data': data_val_tr.strftime('%d/%m/%Y'), 'mes': mes_val_tr, 'any': any_val_tr, 'Banc': 'TradeRep.', 'FormaPago': 'Compte', 'Import càrrec': tr_import_inv, 'import ingrés': 0.0, 'grup': 'op_banc', 'Idcategoria': 'op_banc', 'Idconcepte': tr_concepte_inv, 'Comentari': f"[{cartera_val_tr}] {tr_comentari_inv}".strip(), 'ticketPendent': False}
