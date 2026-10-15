@@ -2483,6 +2483,133 @@ def render(view_mode="economic"):
                             if k.startswith("pag_") or k == "rep_any_pag": del st.session_state[k]
                         st.rerun()
 
+            # --- MODIFICACIÓ D'IMPORTS EN BLOC (DESPESES) ---
+            with st.expander("🔄 Modificació d'Imports en Bloc (Previsió Despeses)", expanded=False):
+                st.markdown("<p style='color:#94a3b8; font-size:0.9rem; margin-bottom:12px;'>Permet actualitzar l'import de totes les previsions pendents d'un concepte a partir d'un mes i any determinats.</p>", unsafe_allow_html=True)
+                
+                conceptes_pag_disponibles = sorted([str(c).strip() for c in df_pag['Concepte'].dropna().unique() if str(c).strip()]) if not df_pag.empty else []
+                
+                b1_col1, b1_col2, b1_col3 = st.columns([3, 3, 2])
+                with b1_col1:
+                    sel_bulk_concepte_pag = st.selectbox(
+                        "Concepte a modificar", 
+                        [""] + conceptes_pag_disponibles, 
+                        key="bulk_pag_concepte",
+                        help="Selecciona el concepte del qual vols canviar l'import per a les dates futures."
+                    )
+                with b1_col2:
+                    if sel_bulk_concepte_pag:
+                        bancs_filtrats = sorted([str(b).strip() for b in df_pag[df_pag['Concepte'].astype(str).str.strip().str.lower() == sel_bulk_concepte_pag.strip().lower()]['Banc'].dropna().unique() if str(b).strip()])
+                        bancs_opcions = ["Tots els bancs"] + bancs_filtrats
+                    else:
+                        bancs_opcions = ["Tots els bancs"] + sorted([str(b).strip() for b in df_pag['Banc'].dropna().unique() if str(b).strip()]) if not df_pag.empty else ["Tots els bancs"]
+                    sel_bulk_banc_pag = st.selectbox("Banc", bancs_opcions, key="bulk_pag_banc")
+                with b1_col3:
+                    bulk_nou_import_pag = st.number_input("Nou Import (€)", min_value=0.0, value=None, step=0.01, format="%.2f", key="bulk_pag_nou_import")
+
+                b2_col1, b2_col2, b2_col3 = st.columns(3)
+                current_year = datetime.today().year
+                current_month_idx = datetime.today().month - 1
+                anys_disponibles_pag = sorted(list(set(pd.to_numeric(df_pag['any'], errors='coerce').dropna().astype(int).tolist() + [current_year, current_year + 1, current_year + 2]))) if not df_pag.empty else [current_year, current_year + 1]
+                
+                with b2_col1:
+                    sel_bulk_mes_pag = st.selectbox("A partir del mes:", CATALAN_MONTHS, index=current_month_idx, key="bulk_pag_mes")
+                with b2_col2:
+                    default_any_pag_idx = anys_disponibles_pag.index(current_year) if current_year in anys_disponibles_pag else 0
+                    sel_bulk_any_pag = st.selectbox("A partir de l'any:", anys_disponibles_pag, index=default_any_pag_idx, key="bulk_pag_any")
+                with b2_col3:
+                    limit_options_pag = ["Tots els mesos futurs"] + [y for y in anys_disponibles_pag if y >= sel_bulk_any_pag]
+                    sel_bulk_limit_pag = st.selectbox("Fins a l'any:", limit_options_pag, index=0, key="bulk_pag_limit")
+
+                if sel_bulk_concepte_pag and not df_pag.empty:
+                    mes_start_idx = CATALAN_MONTHS.index(sel_bulk_mes_pag) + 1
+                    start_score = sel_bulk_any_pag * 12 + mes_start_idx
+                    
+                    def calc_row_score(row):
+                        try:
+                            yr = int(float(row.get('any', 0)))
+                        except Exception:
+                            yr = 0
+                        m_str = str(row.get('mes', '')).strip().lower()
+                        m_num = MONTHS_MAP.get(m_str, 0)
+                        if m_num == 0 and m_str.isdigit():
+                            m_num = int(m_str)
+                        if (yr == 0 or m_num == 0) and pd.notna(row.get('Data')):
+                            try:
+                                parts = str(row['Data']).strip().split('/')
+                                if len(parts) == 3:
+                                    if m_num == 0: m_num = int(parts[1])
+                                    if yr == 0: yr = int(parts[2])
+                            except Exception:
+                                pass
+                        return yr * 12 + m_num
+                    
+                    df_calc_pag = df_pag.copy()
+                    scores = df_calc_pag.apply(calc_row_score, axis=1)
+                    
+                    cond_concepte = df_calc_pag['Concepte'].astype(str).str.strip().str.lower() == sel_bulk_concepte_pag.strip().lower()
+                    cond_estat = df_calc_pag['pagat'].astype(str).str.strip().str.lower() == 'pendent'
+                    cond_period = scores >= start_score
+                    if sel_bulk_limit_pag != "Tots els mesos futurs":
+                        end_score = int(sel_bulk_limit_pag) * 12 + 12
+                        cond_period = cond_period & (scores <= end_score)
+                    
+                    cond_banc = pd.Series(True, index=df_calc_pag.index)
+                    if sel_bulk_banc_pag != "Tots els bancs":
+                        cond_banc = df_calc_pag['Banc'].astype(str).str.strip().str.lower() == sel_bulk_banc_pag.strip().lower()
+                        
+                    mask_afectats_pag = cond_concepte & cond_estat & cond_period & cond_banc
+                    df_afectats_pag = df_calc_pag[mask_afectats_pag]
+                    
+                    st.divider()
+                    if df_afectats_pag.empty:
+                        st.info(f"ℹ️ No s'ha trobat cap previsió pendent per al concepte **'{sel_bulk_concepte_pag}'** a partir de **{sel_bulk_mes_pag} de {sel_bulk_any_pag}**.")
+                    else:
+                        st.markdown(f"🔍 **Previsualització:** S'han trobat **{len(df_afectats_pag)}** previsions pendents que seran modificades.")
+                        
+                        cols_prev = [c for c in ['Data', 'mes', 'any', 'Concepte', 'Banc', 'Import', 'pagat'] if c in df_afectats_pag.columns]
+                        df_preview = df_afectats_pag[cols_prev].copy()
+                        if bulk_nou_import_pag is not None and bulk_nou_import_pag > 0:
+                            df_preview['Nou Import (€)'] = bulk_nou_import_pag
+                        
+                        col_configs = {"Import": st.column_config.NumberColumn("Import Actual", format="%.2f €")}
+                        if 'Nou Import (€)' in df_preview.columns:
+                            col_configs["Nou Import (€)"] = st.column_config.NumberColumn("Nou Import", format="%.2f €")
+                            
+                        st.dataframe(
+                            df_preview,
+                            use_container_width=True,
+                            hide_index=True,
+                            column_config=col_configs
+                        )
+                        
+                        col_btn_apply, col_btn_cancel = st.columns([3.5, 2.0])
+                        with col_btn_apply:
+                            if st.button("💾 Aplicar Canvis en Bloc a les Previsions", type="primary", use_container_width=True, key="btn_apply_bulk_pag"):
+                                if bulk_nou_import_pag is None or bulk_nou_import_pag <= 0:
+                                    st.error("⚠️ Cal indicar un 'Nou Import (€)' vàlid i superior a 0 abans d'aplicar.")
+                                else:
+                                    with st.spinner("Actualitzant previsions en bloc..."):
+                                        indices_to_update = df_afectats_pag.index
+                                        df_pag.loc[indices_to_update, 'Import'] = float(bulk_nou_import_pag)
+                                        
+                                        save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                                        st.session_state["df_pag"] = df_pag
+                                        log_action("pagaments", "UPDATE_BULK", {
+                                            "concepte": sel_bulk_concepte_pag,
+                                            "nou_import": float(bulk_nou_import_pag),
+                                            "mes_inici": sel_bulk_mes_pag,
+                                            "any_inici": sel_bulk_any_pag,
+                                            "registres_actualitzats": len(indices_to_update)
+                                        })
+                                        st.success(f"🎉 S'han actualitzat correctament {len(indices_to_update)} previsions de despesa del concepte '{sel_bulk_concepte_pag}' a {bulk_nou_import_pag:.2f} €!")
+                                        st.rerun()
+                        with col_btn_cancel:
+                            if st.button("Cancel·lar", key="cancel_bulk_pag", use_container_width=True):
+                                for k in ["bulk_pag_concepte", "bulk_pag_banc", "bulk_pag_nou_import", "bulk_pag_mes", "bulk_pag_any", "bulk_pag_limit"]:
+                                    if k in st.session_state: del st.session_state[k]
+                                st.rerun()
+
             col_t_pag, col_chk_pag = st.columns([7, 3], vertical_alignment="bottom")
             with col_t_pag:
                 st.markdown("#### 📋 Llistat de Pagaments Previstos")
@@ -2630,6 +2757,133 @@ def render(view_mode="economic"):
                         for k in list(st.session_state.keys()):
                             if k.startswith("ing_") or k == "rep_any_ing": del st.session_state[k]
                         st.rerun()
+
+            # --- MODIFICACIÓ D'IMPORTS EN BLOC (INGRESSOS) ---
+            with st.expander("🔄 Modificació d'Imports en Bloc (Previsió Ingressos)", expanded=False):
+                st.markdown("<p style='color:#94a3b8; font-size:0.9rem; margin-bottom:12px;'>Permet actualitzar l'import de totes les previsions pendents d'un concepte d'ingrés a partir d'un mes i any determinats.</p>", unsafe_allow_html=True)
+                
+                conceptes_ing_disponibles = sorted([str(c).strip() for c in df_ing['Concepte'].dropna().unique() if str(c).strip()]) if not df_ing.empty else []
+                
+                b1_col1, b1_col2, b1_col3 = st.columns([3, 3, 2])
+                with b1_col1:
+                    sel_bulk_concepte_ing = st.selectbox(
+                        "Concepte d'ingrés a modificar", 
+                        [""] + conceptes_ing_disponibles, 
+                        key="bulk_ing_concepte",
+                        help="Selecciona el concepte d'ingrés del qual vols canviar l'import per a les dates futures."
+                    )
+                with b1_col2:
+                    if sel_bulk_concepte_ing:
+                        bancs_filtrats = sorted([str(b).strip() for b in df_ing[df_ing['Concepte'].astype(str).str.strip().str.lower() == sel_bulk_concepte_ing.strip().lower()]['Banc'].dropna().unique() if str(b).strip()])
+                        bancs_opcions = ["Tots els bancs"] + bancs_filtrats
+                    else:
+                        bancs_opcions = ["Tots els bancs"] + sorted([str(b).strip() for b in df_ing['Banc'].dropna().unique() if str(b).strip()]) if not df_ing.empty else ["Tots els bancs"]
+                    sel_bulk_banc_ing = st.selectbox("Banc", bancs_opcions, key="bulk_ing_banc")
+                with b1_col3:
+                    bulk_nou_import_ing = st.number_input("Nou Import (€)", min_value=0.0, value=None, step=0.01, format="%.2f", key="bulk_ing_nou_import")
+
+                b2_col1, b2_col2, b2_col3 = st.columns(3)
+                current_year = datetime.today().year
+                current_month_idx = datetime.today().month - 1
+                anys_disponibles_ing = sorted(list(set(pd.to_numeric(df_ing['any'], errors='coerce').dropna().astype(int).tolist() + [current_year, current_year + 1, current_year + 2]))) if not df_ing.empty else [current_year, current_year + 1]
+                
+                with b2_col1:
+                    sel_bulk_mes_ing = st.selectbox("A partir del mes:", CATALAN_MONTHS, index=current_month_idx, key="bulk_ing_mes")
+                with b2_col2:
+                    default_any_ing_idx = anys_disponibles_ing.index(current_year) if current_year in anys_disponibles_ing else 0
+                    sel_bulk_any_ing = st.selectbox("A partir de l'any:", anys_disponibles_ing, index=default_any_ing_idx, key="bulk_ing_any")
+                with b2_col3:
+                    limit_options_ing = ["Tots els mesos futurs"] + [y for y in anys_disponibles_ing if y >= sel_bulk_any_ing]
+                    sel_bulk_limit_ing = st.selectbox("Fins a l'any:", limit_options_ing, index=0, key="bulk_ing_limit")
+
+                if sel_bulk_concepte_ing and not df_ing.empty:
+                    mes_start_idx = CATALAN_MONTHS.index(sel_bulk_mes_ing) + 1
+                    start_score = sel_bulk_any_ing * 12 + mes_start_idx
+                    
+                    def calc_row_score_ing(row):
+                        try:
+                            yr = int(float(row.get('any', 0)))
+                        except Exception:
+                            yr = 0
+                        m_str = str(row.get('mes', '')).strip().lower()
+                        m_num = MONTHS_MAP.get(m_str, 0)
+                        if m_num == 0 and m_str.isdigit():
+                            m_num = int(m_str)
+                        if (yr == 0 or m_num == 0) and pd.notna(row.get('Data')):
+                            try:
+                                parts = str(row['Data']).strip().split('/')
+                                if len(parts) == 3:
+                                    if m_num == 0: m_num = int(parts[1])
+                                    if yr == 0: yr = int(parts[2])
+                            except Exception:
+                                pass
+                        return yr * 12 + m_num
+                    
+                    df_calc_ing = df_ing.copy()
+                    scores_ing = df_calc_ing.apply(calc_row_score_ing, axis=1)
+                    
+                    cond_concepte = df_calc_ing['Concepte'].astype(str).str.strip().str.lower() == sel_bulk_concepte_ing.strip().lower()
+                    cond_estat = df_calc_ing['cobrat'].astype(str).str.strip().str.lower() == 'pendent'
+                    cond_period = scores_ing >= start_score
+                    if sel_bulk_limit_ing != "Tots els mesos futurs":
+                        end_score = int(sel_bulk_limit_ing) * 12 + 12
+                        cond_period = cond_period & (scores_ing <= end_score)
+                    
+                    cond_banc = pd.Series(True, index=df_calc_ing.index)
+                    if sel_bulk_banc_ing != "Tots els bancs":
+                        cond_banc = df_calc_ing['Banc'].astype(str).str.strip().str.lower() == sel_bulk_banc_ing.strip().lower()
+                        
+                    mask_afectats_ing = cond_concepte & cond_estat & cond_period & cond_banc
+                    df_afectats_ing = df_calc_ing[mask_afectats_ing]
+                    
+                    st.divider()
+                    if df_afectats_ing.empty:
+                        st.info(f"ℹ️ No s'ha trobat cap previsió d'ingrés pendent per al concepte **'{sel_bulk_concepte_ing}'** a partir de **{sel_bulk_mes_ing} de {sel_bulk_any_ing}**.")
+                    else:
+                        st.markdown(f"🔍 **Previsualització:** S'han trobat **{len(df_afectats_ing)}** previsions pendents que seran modificades.")
+                        
+                        cols_prev = [c for c in ['Data', 'mes', 'any', 'Concepte', 'Banc', 'Import', 'cobrat'] if c in df_afectats_ing.columns]
+                        df_preview = df_afectats_ing[cols_prev].copy()
+                        if bulk_nou_import_ing is not None and bulk_nou_import_ing > 0:
+                            df_preview['Nou Import (€)'] = bulk_nou_import_ing
+                        
+                        col_configs = {"Import": st.column_config.NumberColumn("Import Actual", format="%.2f €")}
+                        if 'Nou Import (€)' in df_preview.columns:
+                            col_configs["Nou Import (€)"] = st.column_config.NumberColumn("Nou Import", format="%.2f €")
+                            
+                        st.dataframe(
+                            df_preview,
+                            use_container_width=True,
+                            hide_index=True,
+                            column_config=col_configs
+                        )
+                        
+                        col_btn_apply, col_btn_cancel = st.columns([3.5, 2.0])
+                        with col_btn_apply:
+                            if st.button("💾 Aplicar Canvis en Bloc a les Previsions", type="primary", use_container_width=True, key="btn_apply_bulk_ing"):
+                                if bulk_nou_import_ing is None or bulk_nou_import_ing <= 0:
+                                    st.error("⚠️ Cal indicar un 'Nou Import (€)' vàlid i superior a 0 abans d'aplicar.")
+                                else:
+                                    with st.spinner("Actualitzant previsions d'ingrés en bloc..."):
+                                        indices_to_update = df_afectats_ing.index
+                                        df_ing.loc[indices_to_update, 'Import'] = float(bulk_nou_import_ing)
+                                        
+                                        save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                                        st.session_state["df_ing"] = df_ing
+                                        log_action("ingressos", "UPDATE_BULK", {
+                                            "concepte": sel_bulk_concepte_ing,
+                                            "nou_import": float(bulk_nou_import_ing),
+                                            "mes_inici": sel_bulk_mes_ing,
+                                            "any_inici": sel_bulk_any_ing,
+                                            "registres_actualitzats": len(indices_to_update)
+                                        })
+                                        st.success(f"🎉 S'han actualitzat correctament {len(indices_to_update)} previsions d'ingrés del concepte '{sel_bulk_concepte_ing}' a {bulk_nou_import_ing:.2f} €!")
+                                        st.rerun()
+                        with col_btn_cancel:
+                            if st.button("Cancel·lar", key="cancel_bulk_ing", use_container_width=True):
+                                for k in ["bulk_ing_concepte", "bulk_ing_banc", "bulk_ing_nou_import", "bulk_ing_mes", "bulk_ing_any", "bulk_ing_limit"]:
+                                    if k in st.session_state: del st.session_state[k]
+                                st.rerun()
 
             col_t_ing, col_chk_ing = st.columns([7, 3], vertical_alignment="bottom")
             with col_t_ing:

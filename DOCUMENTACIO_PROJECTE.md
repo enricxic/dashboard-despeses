@@ -40,8 +40,8 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 ### 🔵 Part Esquerra (5 nodes amb rodona):
 3. **📈 Mòdul Econòmic**: `modules/economic.py` *(Icona gràfic ascens)* - Gestió econòmica i financera organitzada en pestanyes especialitzades:
    - `📈 Detalls del Mes`: Saldos bancaris, rebuts, pagaments, hipoteca, taula anual i gràfic comparatiu de barres amb previsions vs real.
-   - `🔴 Prev. Despeses`: Formulari d'alta i llistat de previsions de despeses amb recurrència mensual.
-   - `🟢 Prev. Ingressos`: Formulari d'alta i llistat de previsions d'ingressos amb recurrència mensual.
+   - `🔴 Prev. Despeses`: Formulari d'alta, secció de modificació d'imports en bloc per a pagaments pendents futurs i llistat de pagaments programats.
+   - `🟢 Prev. Ingressos`: Formulari d'alta, secció de modificació d'imports en bloc per a ingressos pendents futurs i llistat d'ingressos previstos.
    - `📈 Inversions`: Formulari de moviments de TR Cartera (S&P500, NVIDIA), KPIs i taula d'inversions.
    - `💰 Estalvis`: Fons d'estalvi `estalviDP`, quotes, aportacions, rescats i gràfic interactiu d'evolució del capital acumulat.
    - `🤖 Xat IA`: Assistent financer intel·ligent Gemini.
