@@ -196,6 +196,7 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
         safe_html = re.sub(r'[\U00010000-\U0010ffff]', '', safe_html) # Netejar emojis grans
         safe_html = safe_html.replace("⚙️", "").replace("🗄️", "").replace("📅", "").replace("🚗", "").replace("🏠", "").replace("🎲", "").replace("🛠️", "").replace("💊", "").replace("🍽️", "").replace("📹", "").replace("🌍", "")
         
+        c_logo, c_text = st.columns([0.7, 8.5], vertical_alignment="center")
         with c_logo:
             import os
             logo_file = "imatges/Disseny/logo.png" if os.path.exists("imatges/Disseny/logo.png") else "imatges/logo.png"
