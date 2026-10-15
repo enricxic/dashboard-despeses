@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 
 _CURR_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -64,6 +64,7 @@ DEFAULT_CONFIG = {
         "sifo_n2o": False,
         "mandolina": True
     },
+    "eines_extra": [],
     "icones_actives": {
         "dashboard": True,
         "economic": True,
@@ -231,6 +232,35 @@ def get_translation(key, lang="ca"):
     lang_dict = TRANSLATIONS.get(lang, TRANSLATIONS["ca"])
     return lang_dict.get(key, key)
 
+DEFAULT_CATALEG_EINES = [
+    {"id": "forn", "nom": "Forn", "foto": "imatges/Eines/forn.png", "desc": "Rostits, gratinats, pastissos i pizzes"},
+    {"id": "microones", "nom": "Microones", "foto": "imatges/Eines/microones.jpg", "desc": "Escalfat ràpid i vapor"},
+    {"id": "airfryer", "nom": "Airfryer", "foto": "imatges/Eines/airfryer.jpg", "desc": "Fregits saludables i cruixents"},
+    {"id": "bascula", "nom": "Bàscula de cuina", "foto": "imatges/Eines/bascula.jpg", "desc": "Pesat precís de racions"},
+    {"id": "minipimer", "nom": "Minipimer", "foto": "imatges/Eines/minipimer.jpg", "desc": "Cremes, purés i maioneses"},
+    {"id": "batedora_vas", "nom": "Batedora de vas", "foto": "imatges/Eines/batedora_vas.jpg", "desc": "Batuts, smoothies i gaspatxos"},
+    {"id": "motlles_silicona", "nom": "Motlles de silicona", "foto": "imatges/Eines/motlles_silicona.jpg", "desc": "Rebosteria i flameres"},
+    {"id": "olla_pressio", "nom": "Olla a pressió", "foto": "imatges/Eines/olla_pressio.jpg", "desc": "Llegums i estofats exprés"},
+    {"id": "liquadora", "nom": "Liquadora", "foto": "imatges/Eines/liquadora.jpg", "desc": "Sucs naturals i liquats"},
+    {"id": "tallafiambres", "nom": "Tallafiambres", "foto": "imatges/Eines/tallafiambres.jpg", "desc": "Talls fins d'embotits"},
+    {"id": "robot_cuina", "nom": "Robot de cuina", "foto": "imatges/Eines/robot_cuina.jpg", "desc": "Emulsions i cocció guiada"},
+    {"id": "picadora", "nom": "Picadora", "foto": "imatges/Eines/picadora.jpg", "desc": "Picar carn i sofregits"},
+    {"id": "sifo_n2o", "nom": "Sifó N2O", "foto": "imatges/Eines/sifo_n2o.jpg", "desc": "Espumes d'avantguarda"},
+    {"id": "mandolina", "nom": "Mandolina", "foto": "imatges/Eines/mandolina.jpg", "desc": "Talls laminats precisos"},
+]
+
+def get_cataleg_eines(cfg=None):
+    if cfg is None:
+        cfg = load_app_config()
+    extra = cfg.get("eines_extra", [])
+    default_ids = {e["id"] for e in DEFAULT_CATALEG_EINES}
+    result = list(DEFAULT_CATALEG_EINES)
+    for e in extra:
+        if isinstance(e, dict) and e.get("id") and e["id"] not in default_ids:
+            result.append(e)
+    return result
+
 # Àlies per compatibilitat
 load_config = load_app_config
 save_config = save_app_config
+

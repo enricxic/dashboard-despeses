@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
+from typing import List, Dict, Any, Optional
 from core.db import (
     get_supabase_client, fetch_all_supabase, update_db_row, log_action, insert_db_row, get_config_supers
 )
-from core.config_manager import load_config
+from core.config_manager import load_config, get_cataleg_eines
 from core.harness import build_system_prompt_for_case, parse_and_clean_json
 from core.llm import call_llm_api
 import re
@@ -1111,7 +1112,9 @@ def render():
                         sel_forn = st.selectbox("🔥 Disponibilitat del forn", forn_options, index=forn_options.index(def_forn) if def_forn in forn_options else 1, key="m_sel_forn")
 
                     eines_cfg = cfg.get("eines_cuina", {})
-                    eines_actives_llista = [k for k, v in eines_cfg.items() if v]
+                    cataleg_all = get_cataleg_eines(cfg)
+                    id_a_nom = {e["id"]: e["nom"] for e in cataleg_all}
+                    eines_actives_llista = [id_a_nom.get(k, k) for k, v in eines_cfg.items() if v]
                     st.caption(f"🍳 **Equipament de cuina actiu:** {', '.join(eines_actives_llista) if eines_actives_llista else 'Bàsic'}")
 
                 with st.expander("📌 3. Fixar Plats per Dies i Excepcions", expanded=False):

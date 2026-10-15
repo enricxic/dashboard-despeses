@@ -4,7 +4,7 @@ import copy
 import os
 import base64
 from datetime import datetime, date
-from core.config_manager import load_app_config, save_app_config, get_translation
+from core.config_manager import load_app_config, save_app_config, get_translation, get_cataleg_eines, DEFAULT_CATALEG_EINES
 
 def _get_eina_foto_src(foto_val):
     if not foto_val:
@@ -37,17 +37,18 @@ def _get_eina_foto_src(foto_val):
     return foto_val
 
 def _render_eina_thumb_html(eina, foto_src):
-    e_id = eina['id']
-    nom = eina['nom']
-    desc = eina['desc']
+    e_id = eina.get('id', '')
+    nom = eina.get('nom', 'Eina')
+    desc = eina.get('desc', '')
+    if not foto_src:
+        img_thumb = """<div style="width:56px; height:56px; min-width:56px; min-height:56px; border-radius:8px; border:1px solid #334155; background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 2px 4px rgba(0,0,0,0.15);">🍳</div>"""
+        img_modal = """<div style="background:#020617; border-radius:12px; padding:36px; border:1px solid #1e293b; margin-bottom:14px; display:flex; justify-content:center; align-items:center; font-size:4.5rem;">🍳</div>"""
+    else:
+        img_thumb = f"""<img src="{foto_src}" alt="{nom}" loading="lazy" title="Fes clic per veure {nom} en gran" style="width:56px; height:56px; min-width:56px; min-height:56px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15); transition:transform 0.15s ease;" />"""
+        img_modal = f"""<div style="background:#020617; border-radius:12px; padding:14px; border:1px solid #1e293b; margin-bottom:14px; display:flex; justify-content:center;"><img src="{foto_src}" alt="{nom}" style="max-width:100%; max-height:420px; object-fit:contain; border-radius:8px;" /></div>"""
     return f"""
     <label for="zoom_{e_id}" style="cursor:pointer; display:flex; justify-content:center; align-items:center; margin:0;">
-        <img src="{foto_src}" 
-             alt="{nom}" 
-             loading="lazy" 
-             title="Fes clic per veure {nom} en gran" 
-             style="width:56px; height:56px; min-width:56px; min-height:56px; object-fit:cover; border-radius:8px; border:1px solid #334155; box-shadow:0 2px 4px rgba(0,0,0,0.15); transition:transform 0.15s ease;" 
-        />
+        {img_thumb}
     </label>
     <input type="checkbox" id="zoom_{e_id}" class="eina-modal-toggle" />
     <div class="eina-modal-backdrop">
@@ -55,9 +56,7 @@ def _render_eina_thumb_html(eina, foto_src):
         <div class="eina-modal-box">
             <label for="zoom_{e_id}" class="eina-modal-close-btn">&times;</label>
             <h3 style="margin:0 0 14px 0; color:#f8fafc; font-size:1.25rem;">🍳 {nom}</h3>
-            <div style="background:#020617; border-radius:12px; padding:14px; border:1px solid #1e293b; margin-bottom:14px; display:flex; justify-content:center;">
-                <img src="{foto_src}" alt="{nom}" style="max-width:100%; max-height:420px; object-fit:contain; border-radius:8px;" />
-            </div>
+            {img_modal}
             <div style="color:#94a3b8; font-size:0.92rem; line-height:1.4;">{desc}</div>
         </div>
     </div>
@@ -361,6 +360,28 @@ def _on_eina_change(e_id):
     if save_app_config(cur_cfg):
         status_txt = "activada" if val else "desactivada"
         st.session_state["flash_success"] = f"✅ Eina de cuina {status_txt} i desada correctament!"
+
+def _on_delete_custom_eina(e_id):
+    cur_cfg = load_app_config()
+    eines_extra = cur_cfg.get("eines_extra", [])
+    target = next((e for e in eines_extra if e.get("id") == e_id), None)
+    cur_cfg["eines_extra"] = [e for e in eines_extra if e.get("id") != e_id]
+    if "eines_cuina" in cur_cfg and e_id in cur_cfg["eines_cuina"]:
+        del cur_cfg["eines_cuina"][e_id]
+    if target and target.get("foto"):
+        foto_p = target["foto"]
+        if "imatges/Eines/" in foto_p or "imatges\\Eines\\" in foto_p:
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            full_p = os.path.join(project_root, foto_p.replace("/", os.sep))
+            if os.path.exists(full_p):
+                try:
+                    os.remove(full_p)
+                except Exception:
+                    pass
+    st.session_state.pop(f"chk_eina_{e_id}", None)
+    if save_app_config(cur_cfg):
+        nom = target.get("nom", e_id) if target else e_id
+        st.session_state["flash_success"] = f"🗑️ Eina '{nom}' eliminada correctament!"
 
 def _on_icona_change(key_m):
     val = st.session_state.get(f"tog_{key_m}")
@@ -944,14 +965,12 @@ def render():
             
             st.markdown("---")
             st.markdown("#### 🍳 Aparells i Eines de Cuina Disponibles a la Llar")
-            st.markdown("<div style='font-size:0.86rem; color:#94a3b8; margin-bottom:12px;'>El nivell de complexitat i les tècniques de les receptes proposades per la IA s'adaptaran exclusivament a l'equipament disponible a la llar.</div>", unsafe_allow_html=True)
             
             st.markdown(
                 """
                 <style>
                 div[data-testid="stVerticalBlockBorderWrapper"]:has(.eina-marker) {
                     min-height: 104px !important;
-                    height: 104px !important;
                     display: flex !important;
                     flex-direction: column !important;
                     justify-content: center !important;
@@ -968,6 +987,20 @@ def render():
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
                     margin-top: 1px;
+                }
+                .btn-del-eina button {
+                    border: none !important;
+                    background: transparent !important;
+                    color: #ef4444 !important;
+                    padding: 2px 4px !important;
+                    font-size: 1.15rem !important;
+                    transition: transform 0.15s ease, background-color 0.15s ease;
+                }
+                .btn-del-eina button:hover {
+                    background: rgba(239, 68, 68, 0.18) !important;
+                    color: #f87171 !important;
+                    border-radius: 6px !important;
+                    transform: scale(1.1);
                 }
                 .eina-modal-toggle {
                     display: none !important;
@@ -1036,22 +1069,111 @@ def render():
                 unsafe_allow_html=True
             )
             
-            CATALEG_EINES_CUINA = [
-                {"id": "forn", "nom": "Forn", "foto": "imatges/Eines/forn.png", "desc": "Rostits, gratinats, pastissos i pizzes"},
-                {"id": "microones", "nom": "Microones", "foto": "imatges/Eines/microones.jpg", "desc": "Escalfat ràpid i vapor"},
-                {"id": "airfryer", "nom": "Airfryer", "foto": "imatges/Eines/airfryer.jpg", "desc": "Fregits saludables i cruixents"},
-                {"id": "bascula", "nom": "Bàscula de cuina", "foto": "imatges/Eines/bascula.jpg", "desc": "Pesat precís de racions"},
-                {"id": "minipimer", "nom": "Minipimer", "foto": "imatges/Eines/minipimer.jpg", "desc": "Cremes, purés i maioneses"},
-                {"id": "batedora_vas", "nom": "Batedora de vas", "foto": "imatges/Eines/batedora_vas.jpg", "desc": "Batuts, smoothies i gaspatxos"},
-                {"id": "motlles_silicona", "nom": "Motlles de silicona", "foto": "imatges/Eines/motlles_silicona.jpg", "desc": "Rebosteria i flameres"},
-                {"id": "olla_pressio", "nom": "Olla a pressió", "foto": "imatges/Eines/olla_pressio.jpg", "desc": "Llegums i estofats exprés"},
-                {"id": "liquadora", "nom": "Liquadora", "foto": "imatges/Eines/liquadora.jpg", "desc": "Sucs naturals i liquats"},
-                {"id": "tallafiambres", "nom": "Tallafiambres", "foto": "imatges/Eines/tallafiambres.jpg", "desc": "Talls fins d'embotits"},
-                {"id": "robot_cuina", "nom": "Robot de cuina", "foto": "imatges/Eines/robot_cuina.jpg", "desc": "Emulsions i cocció guiada"},
-                {"id": "picadora", "nom": "Picadora", "foto": "imatges/Eines/picadora.jpg", "desc": "Picar carn i sofregits"},
-                {"id": "sifo_n2o", "nom": "Sifó N2O", "foto": "imatges/Eines/sifo_n2o.jpg", "desc": "Espumes d'avantguarda"},
-                {"id": "mandolina", "nom": "Mandolina", "foto": "imatges/Eines/mandolina.jpg", "desc": "Talls laminats precisos"},
-            ]
+            c_head1, c_head2 = st.columns([7, 3], vertical_alignment="center")
+            with c_head1:
+                st.markdown("<div style='font-size:0.86rem; color:#94a3b8;'>El nivell de complexitat i les tècniques de les receptes proposades per la IA s'adaptaran exclusivament a l'equipament disponible a la llar.</div>", unsafe_allow_html=True)
+            with c_head2:
+                if st.button("➕ Afegir Nova Eina", type="primary", use_container_width=True, key="btn_toggle_add_eina"):
+                    st.session_state["show_add_eina_form"] = not st.session_state.get("show_add_eina_form", False)
+                    st.rerun()
+
+            with st.expander("➕ **Afegir Nova Eina de Cuina** (amb foto i descripció)", expanded=st.session_state.get("show_add_eina_form", False)):
+                st.markdown("##### 🍳 Nova Eina o Aparell de Cuina")
+                c_f1, c_f2 = st.columns([1, 1])
+                with c_f1:
+                    new_eina_nom = st.text_input("Nom de l'eina o aparell *", placeholder="Ex: Gofrera, Paella Wok, Torradora...", key="inp_new_eina_nom")
+                    new_eina_desc = st.text_input("Descripció d'ús o tècnica", placeholder="Ex: Gofres artesans, arrebossats cruixents...", key="inp_new_eina_desc")
+                    new_eina_activa = st.checkbox("✅ Disponible i activa a la llar", value=True, key="chk_new_eina_activa", help="Si està marcada, la IA podrà proposar plats que requereixin aquesta eina.")
+                with c_f2:
+                    st.markdown("**🖼️ Foto de l'eina**")
+                    tab_up, tab_url = st.tabs(["📁 Pujar fitxer (PC / Mòbil)", "🔗 Enllaç URL"])
+                    with tab_up:
+                        uploaded_eina_img = st.file_uploader("Selecciona una imatge", type=["jpg", "jpeg", "png", "webp"], key="upload_new_eina")
+                    with tab_url:
+                        url_eina_img = st.text_input("O enganxa la URL d'una foto web", placeholder="https://...", key="url_new_eina")
+                    
+                    if uploaded_eina_img:
+                        st.image(uploaded_eina_img, caption="Vista prèvia de la imatge seleccionada", width=110)
+                    elif url_eina_img.strip():
+                        try:
+                            st.image(url_eina_img.strip(), caption="Vista prèvia de la URL", width=110)
+                        except Exception:
+                            st.caption("⚠️ No s'ha pogut carregar la vista prèvia.")
+                    else:
+                        st.caption("💡 Opcional: Si no puges foto, s'utilitzarà una icona per defecte.")
+                
+                c_sb1, c_sb2, _ = st.columns([2.5, 2.5, 5])
+                with c_sb1:
+                    if st.button("💾 Desar Nova Eina", type="primary", use_container_width=True, key="btn_save_new_eina"):
+                        if not new_eina_nom.strip():
+                            st.error("⚠️ El nom de l'eina és obligatori.")
+                        else:
+                            import re, unicodedata, uuid
+                            raw_slug = unicodedata.normalize('NFKD', new_eina_nom.strip()).encode('ASCII', 'ignore').decode('utf-8').lower()
+                            eina_id = re.sub(r'[^a-z0-9]+', '_', raw_slug).strip('_')
+                            if not eina_id:
+                                eina_id = f"eina_{uuid.uuid4().hex[:6]}"
+                            
+                            cur_cfg = load_app_config()
+                            existing_ids = {e["id"] for e in get_cataleg_eines(cur_cfg)}
+                            base_id = eina_id
+                            counter = 2
+                            while eina_id in existing_ids:
+                                eina_id = f"{base_id}_{counter}"
+                                counter += 1
+                            
+                            final_foto_path = ""
+                            if uploaded_eina_img is not None:
+                                try:
+                                    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+                                    eines_dir = os.path.join(project_root, "imatges", "Eines")
+                                    os.makedirs(eines_dir, exist_ok=True)
+                                    file_ext = os.path.splitext(uploaded_eina_img.name)[1].lower()
+                                    if file_ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+                                        file_ext = ".jpg"
+                                    target_fname = f"{eina_id}{file_ext}"
+                                    target_path = os.path.join(eines_dir, target_fname)
+                                    with open(target_path, "wb") as f:
+                                        f.write(uploaded_eina_img.getvalue())
+                                    final_foto_path = f"imatges/Eines/{target_fname}"
+                                    
+                                    try:
+                                        from core.db import get_supabase_client
+                                        sb = get_supabase_client("admin")
+                                        sb.storage.from_("imatges-receptes").upload(f"eines_{target_fname}", uploaded_eina_img.getvalue())
+                                    except Exception:
+                                        pass
+                                except Exception as ex:
+                                    print(f"Error desant foto eina: {ex}")
+                            elif url_eina_img.strip():
+                                final_foto_path = url_eina_img.strip()
+                            
+                            new_entry = {
+                                "id": eina_id,
+                                "nom": new_eina_nom.strip(),
+                                "foto": final_foto_path,
+                                "desc": new_eina_desc.strip() if new_eina_desc.strip() else new_eina_nom.strip(),
+                                "personalitzada": True
+                            }
+                            if "eines_extra" not in cur_cfg:
+                                cur_cfg["eines_extra"] = []
+                            cur_cfg["eines_extra"].append(new_entry)
+                            if "eines_cuina" not in cur_cfg:
+                                cur_cfg["eines_cuina"] = {}
+                            cur_cfg["eines_cuina"][eina_id] = bool(new_eina_activa)
+                            
+                            if save_app_config(cur_cfg):
+                                st.session_state["show_add_eina_form"] = False
+                                st.session_state["flash_success"] = f"✅ Eina '{new_eina_nom.strip()}' afegida correctament!"
+                                st.rerun()
+                with c_sb2:
+                    if st.button("❌ Cancel·lar", use_container_width=True, key="btn_cancel_add_eina"):
+                        st.session_state["show_add_eina_form"] = False
+                        st.rerun()
+            
+            st.write("")
+            CATALEG_EINES_CUINA = get_cataleg_eines(cfg)
+            eines_extra_ids = {e.get("id") for e in cfg.get("eines_extra", [])}
             
             cur_eines = cfg.get("eines_cuina", {})
             updated_eines = {}
@@ -1060,17 +1182,32 @@ def render():
             for idx_e, eina in enumerate(CATALEG_EINES_CUINA):
                 col_e = cols_eines[idx_e % 3]
                 e_id = eina["id"]
+                is_custom = eina.get("personalitzada", False) or (e_id in eines_extra_ids)
                 val_def = cur_eines.get(e_id, True if e_id in ["forn", "microones", "airfryer", "bascula", "minipimer", "batedora_vas", "motlles_silicona", "olla_pressio", "picadora", "mandolina"] else False)
                 with col_e:
                     with st.container(border=True):
                         st.markdown("<span class='eina-marker' style='display:none;'></span>", unsafe_allow_html=True)
-                        foto_src = _get_eina_foto_src(eina["foto"])
-                        c_ico, c_chk = st.columns([1.1, 3.4], vertical_alignment="center")
-                        with c_ico:
-                            st.markdown(_render_eina_thumb_html(eina, foto_src), unsafe_allow_html=True)
-                        with c_chk:
-                            chk_val = st.checkbox(f"**{eina['nom']}**", value=bool(val_def), key=f"chk_eina_{e_id}", on_change=_on_eina_change, args=(e_id,))
-                            st.markdown(f"<div class='eina-desc-fixed'>{eina['desc']}</div>", unsafe_allow_html=True)
+                        foto_src = _get_eina_foto_src(eina.get("foto", ""))
+                        if is_custom:
+                            c_ico, c_chk, c_del = st.columns([1.1, 2.7, 0.7], vertical_alignment="center")
+                            with c_ico:
+                                st.markdown(_render_eina_thumb_html(eina, foto_src), unsafe_allow_html=True)
+                            with c_chk:
+                                chk_val = st.checkbox(f"**{eina['nom']}**", value=bool(val_def), key=f"chk_eina_{e_id}", on_change=_on_eina_change, args=(e_id,))
+                                st.markdown(f"<div class='eina-desc-fixed'>{eina.get('desc', '')}</div>", unsafe_allow_html=True)
+                            with c_del:
+                                st.markdown("<div class='btn-del-eina'>", unsafe_allow_html=True)
+                                if st.button("🗑️", key=f"del_eina_{e_id}", help=f"Eliminar l'eina '{eina['nom']}'"):
+                                    _on_delete_custom_eina(e_id)
+                                    st.rerun()
+                                st.markdown("</div>", unsafe_allow_html=True)
+                        else:
+                            c_ico, c_chk = st.columns([1.1, 3.4], vertical_alignment="center")
+                            with c_ico:
+                                st.markdown(_render_eina_thumb_html(eina, foto_src), unsafe_allow_html=True)
+                            with c_chk:
+                                chk_val = st.checkbox(f"**{eina['nom']}**", value=bool(val_def), key=f"chk_eina_{e_id}", on_change=_on_eina_change, args=(e_id,))
+                                st.markdown(f"<div class='eina-desc-fixed'>{eina.get('desc', '')}</div>", unsafe_allow_html=True)
                         updated_eines[e_id] = chk_val
             
             st.markdown("---")
