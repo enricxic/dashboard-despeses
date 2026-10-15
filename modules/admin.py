@@ -6,35 +6,62 @@ import base64
 from datetime import datetime, date
 from core.config_manager import load_app_config, save_app_config, get_translation, get_cataleg_eines, DEFAULT_CATALEG_EINES
 
-def _get_eina_foto_src(foto_val):
-    if not foto_val:
-        return ""
-    if foto_val.startswith("http://") or foto_val.startswith("https://") or foto_val.startswith("data:"):
+def _get_eina_foto_src(foto_val, e_id=None, nom=None):
+    if foto_val and (foto_val.startswith("http://") or foto_val.startswith("https://") or foto_val.startswith("data:")):
         return foto_val
     curr_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(curr_dir, ".."))
-    fname = os.path.basename(foto_val)
-    candidates = [
-        foto_val,
-        os.path.join(project_root, foto_val),
-        os.path.join(os.getcwd(), foto_val),
-        os.path.join(project_root, "imatges", "Eines", fname),
-        os.path.join(project_root, "imatges", "Disseny", fname),
-        os.path.join(project_root, "imatges", "Productes", fname),
-        os.path.join(os.getcwd(), "imatges", "Eines", fname),
-        os.path.join(os.getcwd(), "imatges", "Disseny", fname),
-        os.path.join(os.getcwd(), "imatges", "Productes", fname)
-    ]
-    for c in candidates:
-        if os.path.exists(c) and os.path.isfile(c):
-            try:
-                with open(c, "rb") as f:
-                    b64_data = base64.b64encode(f.read()).decode("utf-8")
-                    ext = "png" if c.lower().endswith(".png") else "jpeg"
-                    return f"data:image/{ext};base64,{b64_data}"
-            except Exception:
-                pass
-    return foto_val
+    
+    cand_path = None
+    if foto_val:
+        fname = os.path.basename(foto_val)
+        candidates = [
+            foto_val,
+            os.path.join(project_root, foto_val),
+            os.path.join(os.getcwd(), foto_val),
+            os.path.join(project_root, "imatges", "Eines", fname),
+            os.path.join(project_root, "imatges", "Disseny", fname),
+            os.path.join(project_root, "imatges", "Productes", fname),
+            os.path.join(os.getcwd(), "imatges", "Eines", fname),
+            os.path.join(os.getcwd(), "imatges", "Disseny", fname),
+            os.path.join(os.getcwd(), "imatges", "Productes", fname)
+        ]
+        for c in candidates:
+            if os.path.exists(c) and os.path.isfile(c):
+                cand_path = c
+                break
+                
+    if not cand_path:
+        eines_dir = os.path.join(project_root, "imatges", "Eines")
+        if os.path.exists(eines_dir):
+            import re, unicodedata
+            files = os.listdir(eines_dir)
+            search_tokens = []
+            if e_id:
+                search_tokens.extend([t for t in e_id.lower().split('_') if len(t) > 2 and t not in ['una', 'les', 'els', 'del', 'dels']])
+            if nom:
+                nom_norm = unicodedata.normalize('NFKD', nom).encode('ASCII', 'ignore').decode('utf-8').lower()
+                search_tokens.extend([t for t in re.split(r'[^a-z0-9]+', nom_norm) if len(t) > 2 and t not in ['una', 'les', 'els', 'del', 'dels']])
+            
+            search_tokens = list(set(search_tokens))
+            for f in files:
+                f_low = f.lower()
+                if any(f_low.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+                    stem = os.path.splitext(f_low)[0]
+                    if search_tokens and all(tok in stem for tok in search_tokens):
+                        cand_path = os.path.join(eines_dir, f)
+                        break
+
+    if cand_path and os.path.exists(cand_path) and os.path.isfile(cand_path):
+        try:
+            with open(cand_path, "rb") as f:
+                b64_data = base64.b64encode(f.read()).decode("utf-8")
+                ext = "png" if cand_path.lower().endswith(".png") else "jpeg"
+                return f"data:image/{ext};base64,{b64_data}"
+        except Exception:
+            pass
+            
+    return foto_val if foto_val else ""
 
 def _render_eina_thumb_html(eina, foto_src):
     e_id = eina.get('id', '')
@@ -1187,7 +1214,7 @@ def render():
                 with col_e:
                     with st.container(border=True):
                         st.markdown("<span class='eina-marker' style='display:none;'></span>", unsafe_allow_html=True)
-                        foto_src = _get_eina_foto_src(eina.get("foto", ""))
+                        foto_src = _get_eina_foto_src(eina.get("foto", ""), e_id=e_id, nom=eina.get("nom"))
                         if is_custom:
                             c_ico, c_chk, c_del = st.columns([1.1, 2.7, 0.7], vertical_alignment="center")
                             with c_ico:

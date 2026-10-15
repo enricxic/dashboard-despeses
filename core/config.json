@@ -2,10 +2,10 @@
     "admin": {
         "nom": "Enric Xicars",
         "email": "enricxicars@gmail.com",
-        "telefon": "+34 600 000 000",
+        "telefon": "+34 619611270",
         "avatar": "👑",
         "rol": "Administrador",
-        "pin": "1234"
+        "pin": "0301"
     },
     "casa": {
         "paraula1": "Xiqui",
@@ -17,93 +17,92 @@
     "familia": [
         {
             "id": 1,
-            "nom": "Enric Test",
+            "nom": "Enric",
             "rol": "Pare",
-            "data_naixement": "23/09/1957",
-            "edat": "68",
+            "edat": "69",
             "actiu": true,
-            "alergies": [],
+            "color": "#3b82f6",
+            "icona": "👨",
             "vetos": [
                 "fetge",
                 "casqueria"
             ],
+            "telefon": "619611270",
+            "alergies": [],
             "comodins": [
                 "Pit de pollastre a la planxa",
                 "Truita francesa"
             ],
-            "icona": "👨",
-            "google_calendar_ical": "",
-            "color": "#3b82f6"
+            "circunstancies": [],
+            "data_naixement": "23/09/1957",
+            "plats_alternatius": [],
+            "google_calendar_ical": ""
         },
         {
             "id": 2,
             "nom": "Isabel",
             "rol": "Mare",
-            "data_naixement": "06/03/1959",
             "edat": "67",
             "actiu": true,
-            "alergies": [],
+            "color": "#ec4899",
+            "icona": "👩",
             "vetos": [],
+            "telefon": "",
+            "alergies": [],
             "comodins": [
                 "Amanida completa",
                 "Salmó a la planxa"
             ],
-            "icona": "👩",
-            "google_calendar_ical": "",
-            "color": "#ec4899"
+            "circunstancies": [],
+            "data_naixement": "06/03/1959",
+            "plats_alternatius": [],
+            "google_calendar_ical": ""
         },
         {
             "id": 3,
             "nom": "Jordi",
             "rol": "Fill",
-            "data_naixement": "18/12/1988",
             "edat": "37",
             "actiu": true,
-            "alergies": [],
+            "color": "#10b981",
+            "icona": "👦",
             "vetos": [],
+            "telefon": "",
+            "alergies": [],
             "comodins": [
                 "Macarrons",
                 "Hamburguesa"
             ],
-            "icona": "👦",
-            "google_calendar_ical": "",
-            "color": "#10b981"
+            "circunstancies": [],
+            "data_naixement": "18/12/1988",
+            "plats_alternatius": [],
+            "google_calendar_ical": ""
         },
         {
             "id": 4,
             "nom": "Mireia",
             "rol": "Filla",
-            "data_naixement": "01/08/1994",
             "edat": "32",
             "actiu": false,
-            "alergies": [
-                "Lactosa"
-            ],
+            "color": "#f59e0b",
+            "icona": "👧",
             "vetos": [
                 "Carn vermella"
+            ],
+            "telefon": "",
+            "alergies": [
+                "Lactosa"
             ],
             "comodins": [
                 "Wok de verdures amb tofu",
                 "Arròs vegetal"
             ],
-            "icona": "👧",
-            "google_calendar_ical": "",
-            "color": "#f59e0b"
-        },
-        {
-            "id": 5,
-            "nom": "Miquel Modificat",
-            "rol": "Altres",
-            "data_naixement": "01/01/1999",
-            "edat": "27",
-            "actiu": true,
-            "alergies": [],
-            "circunstancies": [],
-            "vetos": [],
-            "comodins": [],
-            "icona": "👲",
-            "google_calendar_ical": "",
-            "color": "#3b82f6"
+            "circunstancies": [
+                "Lactosa"
+            ],
+            "data_naixement": "01/08/1994",
+            "plats_alternatius": [],
+            "google_calendar_ical": ""
         }
     ],
     "tutelats": [],
@@ -112,80 +111,80 @@
             "id": 1,
             "nom": "BBVA",
             "actiu": true,
-            "icona": "🏦",
             "color": "#004481",
-            "descripcio": "Compte Corrent BBVA",
+            "icona": "🏦",
             "titular": "Enric Xicars",
+            "descripcio": "Compte Corrent BBVA",
             "compte_iban": ""
         },
         {
             "id": 2,
             "nom": "LaCaixa",
             "actiu": true,
-            "icona": "🏦",
             "color": "#007eae",
-            "descripcio": "Compte Corrent CaixaBank",
+            "icona": "🏦",
             "titular": "Enric Xicars",
+            "descripcio": "Compte Corrent CaixaBank",
             "compte_iban": ""
         },
         {
             "id": 3,
             "nom": "TradeRep.",
             "actiu": true,
-            "icona": "📈",
             "color": "#111827",
-            "descripcio": "Compte Inversió Trade Republic",
+            "icona": "📈",
             "titular": "Enric Xicars",
+            "descripcio": "Compte Inversió Trade Republic",
             "compte_iban": ""
         },
         {
             "id": 4,
             "nom": "Casa",
             "actiu": true,
-            "icona": "🏠",
             "color": "#10b981",
-            "descripcio": "Diners guardats a casa",
+            "icona": "🏠",
             "titular": "Llar",
+            "descripcio": "Diners guardats a casa",
             "compte_iban": ""
         },
         {
             "id": 5,
             "nom": "T.Moneder",
             "actiu": true,
-            "icona": "👛",
             "color": "#f59e0b",
-            "descripcio": "Targeta Moneder / Prepago",
+            "icona": "👛",
             "titular": "Enric Xicars",
+            "descripcio": "Targeta Moneder / Prepago",
             "compte_iban": ""
         },
         {
             "id": 6,
             "nom": "T.CorteInglés",
             "actiu": true,
-            "icona": "🛒",
             "color": "#047857",
-            "descripcio": "Targeta El Corte Inglés",
+            "icona": "🛒",
             "titular": "Enric Xicars",
+            "descripcio": "Targeta El Corte Inglés",
             "compte_iban": ""
         },
         {
             "id": 7,
             "nom": "Pago VISA",
             "actiu": true,
-            "icona": "💳",
             "color": "#6366f1",
-            "descripcio": "Targeta de Crèdit VISA",
+            "icona": "💳",
             "titular": "Enric Xicars",
+            "descripcio": "Targeta de Crèdit VISA",
             "compte_iban": ""
         },
         {
             "id": 8,
             "nom": "Efectiu",
             "actiu": true,
-            "icona": "💵",
             "color": "#059669",
-            "descripcio": "Pagaments en efectiu",
+            "icona": "💵",
             "titular": "Llar",
+            "descripcio": "Pagaments en efectiu",
             "compte_iban": ""
         }
     ],
@@ -214,9 +213,18 @@
         "robot_cuina": false,
         "picadora": true,
         "sifo_n2o": false,
-        "mandolina": true
+        "mandolina": true,
+        "cassola_de_fang": true
     },
-    "eines_extra": [],
+    "eines_extra": [
+        {
+            "id": "cassola_de_fang",
+            "nom": "Cassola de fang",
+            "desc": "Cuinar estofats",
+            "foto": "imatges/Eines/Cassola_fang.jpg",
+            "personalitzada": true
+        }
+    ],
     "icones_actives": {
         "dashboard": true,
         "economic": true,
@@ -233,8 +241,48 @@
     },
     "idioma": "ca",
     "manteniment_cotxe": {
-        "oli": {"ultim_canvi_km": 30000, "interval_km": 16000, "data_ultim_canvi": ""},
-        "rodes": {"ultim_canvi_km": null, "interval_km": 40000, "previst": {"km": 39600, "quantes": 2, "posicio": "Davanteres", "data": "Nadal 2026"}},
-        "historic": []
+        "oli": {
+            "interval_km": 16000,
+            "ultim_canvi_km": 30000,
+            "data_ultim_canvi": ""
+        },
+        "rodes": {
+            "previst": {
+                "km": 39600,
+                "data": "Nadal 2026",
+                "posicio": "Davanteres",
+                "quantes": 2
+            },
+            "interval_km": 40000,
+            "ultim_canvi_km": null
+        },
+        "historic": [
+            {
+                "km": 35684,
+                "cost": 226.51,
+                "data": "14/10/2026",
+                "estat": "Resolt",
+                "rodes": "",
+                "tipus": "Avaria",
+                "detall": "Revisió i canvi de oli i filtres. Segellat llibre oficial",
+                "taller": "Aurgi"
+            }
+        ]
+    },
+    "harness_overrides": {
+        "regles_menjar": {
+            "us_forn": "Només cap de setmana (Dissabte i Diumenge)",
+            "min_peix": 2,
+            "freq_peix": 2,
+            "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+            "min_llegums": 2,
+            "control_dietetic": true,
+            "limit_cals_dinar": 800,
+            "limit_cals_sopar": 500,
+            "comensals_defecte": 3,
+            "max_carn_vermella": 1,
+            "max_embotits_sopar": 2,
+            "no_repetir_hidrats": true
+        }
     }
 }
