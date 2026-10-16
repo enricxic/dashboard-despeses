@@ -84,11 +84,13 @@ def formatar_linies_tiquet(supermercat, items, total_super=0.0):
     linies.append(f"TOTAL ESTIMAT:        {final_total:>7.2f} EUR")
     linies.append(f"TOTAL ARTICLES:       {len(records):>7}")
     linies.append("================================")
-    linies.append("          Bona compra!          ")
-    linies.append("================================")
-    # 6 salts de línia per superar la distància física entre el capçal i la guillotina de tall
-    for _ in range(6):
-        linies.append("")
+    # 6 salts de línia físics amb caràcter final perquè l'impressora avanci el paper obligatòriament
+    linies.append(" ")
+    linies.append(" ")
+    linies.append(" ")
+    linies.append(" ")
+    linies.append(" ")
+    linies.append(".")
     
     return linies
 
@@ -133,11 +135,13 @@ def formatar_tots_els_supermercats(df_shopping):
             
     linies.append(f"GRAN TOTAL ESTIMAT:   {gran_total:>7.2f} EUR")
     linies.append("================================")
-    linies.append("          Bona compra!          ")
-    linies.append("================================")
-    # 6 salts de línia per avançar el paper més enllà del capçal i la guillotina
-    for _ in range(6):
-        linies.append("")
+    # 6 salts de línia físics amb caràcter final perquè l'impressora avanci el paper obligatòriament
+    linies.append(" ")
+    linies.append(" ")
+    linies.append(" ")
+    linies.append(" ")
+    linies.append(" ")
+    linies.append(".")
     return linies
 
 
@@ -190,7 +194,7 @@ def imprimir_directe_bixolon(supermercat, items, total_super=0.0, printer_name=D
         raw.extend(b"\x1bE\x00\x1ba\x00")
         
         # Contingut del tiquet
-        for l in linies[4:-10]:
+        for l in linies[4:-8]:
             raw.extend((l + "\n").encode('latin-1', 'replace'))
             
         # Peu centrat
@@ -199,9 +203,6 @@ def imprimir_directe_bixolon(supermercat, items, total_super=0.0, printer_name=D
         if tot_line:
             raw.extend(b"\x1bE\x01" + (tot_line[0] + "\n").encode('latin-1', 'replace') + b"\x1bE\x00")
             
-        raw.extend(b"================================\n")
-        raw.extend(b"\x1ba\x01")
-        raw.extend(b"          Bona compra!          \n")
         raw.extend(b"================================\n")
         
         # Avenç de 7 línies perquè el paper superi la línia de tall abans de tallar
