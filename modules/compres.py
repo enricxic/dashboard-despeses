@@ -1312,16 +1312,10 @@ def cb_finalize_ticket():
 
 def render_compres_super_interface():
     global df_super, df_desp
-    col_h1, col_h2, col_h3 = st.columns([0.88, 0.06, 0.06], vertical_alignment="bottom")
+    col_h1, col_h2 = st.columns([0.94, 0.06], vertical_alignment="bottom")
     with col_h1:
         st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
     with col_h2:
-        st.markdown('<div style="display:flex; justify-content:flex-end;">', unsafe_allow_html=True)
-        if st.button("🖨️", key="btn_shortcut_prn", help="Gestionar impressora BIXOLON i fer prova de paper"):
-            st.session_state["show_bixolon_dialog"] = True
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    with col_h3:
         st.markdown('<div style="display:flex; justify-content:flex-end;">', unsafe_allow_html=True)
         if st.button("⚡", key="tunnel_to_economic", help="Anar directe a Ingrés / Despesa General"):
             st.session_state.current_module = "modules.economic"
