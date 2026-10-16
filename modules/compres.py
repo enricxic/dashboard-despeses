@@ -3283,19 +3283,6 @@ def render():
                     # Group by super_habitual
                     gran_total_compra = df_shopping['total_linia'].sum()
                     
-                    # Barra superior amb total i opció d'impressió global
-                    col_top_info, col_top_print = st.columns([2, 1])
-                    with col_top_info:
-                        st.markdown(f"<div style='font-size:1.05rem; padding-top:6px;'><b>Total compra estimada:</b> <span style='color:#27ae60;'>{gran_total_compra:,.2f} €</span> ({len(df_shopping)} articles)</div>", unsafe_allow_html=True)
-                    with col_top_print:
-                        try:
-                            import modules.impressora as imp_bixolon
-                            with st.popover("🖨️ Tiquet global"):
-                                imp_bixolon.render_printer_widget("__ALL__", df_shopping, gran_total_compra, key_prefix="global_shop")
-                        except Exception:
-                            pass
-                    st.write("")
-                    
                     for superm, group in df_shopping.groupby('super_habitual'):
                         total_super = group['total_linia'].sum()
                         items_sense_preu = len(group[group['preuUnit'] == 0])
