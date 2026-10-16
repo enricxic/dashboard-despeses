@@ -893,7 +893,14 @@ div.block-container {{
 <a href="?mod=modules.economic&action=show_faq_economic{url_suffix}" target="_self">❓ Preguntes i Respostes</a>
 </div>
 </div>''' if icones_actives.get('economic', True) else ''}
-{f'<a href="?mod=modules.compres{url_suffix}" target="_self">🛒 Compres Super i Stock</a>' if icones_actives.get('compres', True) else ''}
+{f'''<div class="submenu-item">
+<a href="?mod=modules.compres{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🛒 Compres Super i Stock</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<div class="submenu-dropdown">
+<a href="?mod=modules.compres{url_suffix}" target="_self">🛒 Entrada de tiquets</a>
+<a href="?mod=modules.compres&tab=llista_compra{url_suffix}" target="_self">📋 Llista de la Compra</a>
+<a href="?mod=modules.compres&action=bixolon_test{url_suffix}" target="_self">🖨️ Impressora BIXOLON SRP-275</a>
+</div>
+</div>''' if icones_actives.get('compres', True) else ''}
 <div class="submenu-item">
 <a href="?mod=modules.cotxe{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🚗 Cotxe</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">

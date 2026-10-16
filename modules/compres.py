@@ -1312,10 +1312,16 @@ def cb_finalize_ticket():
 
 def render_compres_super_interface():
     global df_super, df_desp
-    col_h1, col_h2 = st.columns([0.94, 0.06], vertical_alignment="bottom")
+    col_h1, col_h2, col_h3 = st.columns([0.88, 0.06, 0.06], vertical_alignment="bottom")
     with col_h1:
         st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
     with col_h2:
+        st.markdown('<div style="display:flex; justify-content:flex-end;">', unsafe_allow_html=True)
+        if st.button("🖨️", key="btn_shortcut_prn", help="Gestionar impressora BIXOLON i fer prova de paper"):
+            st.session_state["show_bixolon_dialog"] = True
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col_h3:
         st.markdown('<div style="display:flex; justify-content:flex-end;">', unsafe_allow_html=True)
         if st.button("⚡", key="tunnel_to_economic", help="Anar directe a Ingrés / Despesa General"):
             st.session_state.current_module = "modules.economic"
@@ -3077,15 +3083,98 @@ def render():
             # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
             st.rerun()
 
+    # Comprovar si s'ha sol·licitat acció d'impressora BIXOLON des del menú o des de botons
+    if st.query_params.get("action") == "bixolon_test" or st.session_state.get("show_bixolon_dialog", False):
+        try:
+            import modules.impressora as imp_b
+            @st.dialog("🖨️ Gestor d'Impressora BIXOLON SRP-275")
+            def dialeg_bixolon():
+                is_loc = imp_b.is_local_printer_available()
+                st.markdown("#### Estat de la Connexió")
+                if is_loc:
+                    st.success("✅ **BIXOLON_SRP275 connectada i a punt a Windows (Port USB001)**")
+                    st.caption("Controlador: `Generic / Text Only` | Mode: ESC/POS directe amb tall automàtic.")
+                else:
+                    st.info("🌐 **Mode Navegador / Web Print actiu.**")
+                    st.caption("Pots generar i imprimir els tiquets directament des del navegador (Chrome) a qualsevol impressora. Per a impressió directa per cable USB, executa l'aplicació en local amb `StartDashboard.py`.")
+                
+                st.markdown("---")
+                st.markdown("#### Prova física de la impressora")
+                col_d1, col_d2 = st.columns(2)
+                with col_d1:
+                    btn_usb_txt = "⚡ Prova directa USB" if is_loc else "⚡ Prova USB (Només local)"
+                    if st.button(btn_usb_txt, type="primary", disabled=not is_loc, key="dlg_btn_usb"):
+                        proves = [
+                            {'nom_estandard': 'Producte Prova 1', 'falta': 1, 'total_linia': 1.50},
+                            {'nom_estandard': 'Producte Prova 2', 'falta': 2, 'total_linia': 3.00}
+                        ]
+                        ok, msg = imp_b.imprimir_directe_bixolon("PROVA BIXOLON", proves, 4.50)
+                        if ok:
+                            st.success(f"✅ {msg}")
+                        else:
+                            st.error(f"❌ {msg}")
+                with col_d2:
+                    if st.button("👁️ Previsualitzar tiquet web", key="dlg_btn_web"):
+                        st.session_state["preview_test_ticket"] = True
+                
+                if st.session_state.get("preview_test_ticket", False):
+                    proves = [
+                        {'nom_estandard': 'Producte Prova 1', 'falta': 1, 'total_linia': 1.50},
+                        {'nom_estandard': 'Producte Prova 2', 'falta': 2, 'total_linia': 3.00}
+                    ]
+                    html_code = imp_b.generar_html_imprimir_tiquet("PROVA BIXOLON", proves, 4.50)
+                    import streamlit.components.v1 as components
+                    components.html(html_code, height=350, scrolling=True)
+                    
+                st.write("")
+                if st.button("Tancar", use_container_width=True, key="dlg_close_btn"):
+                    st.query_params.pop("action", None)
+                    st.session_state["show_bixolon_dialog"] = False
+                    st.rerun()
+            dialeg_bixolon()
+        except Exception as e_dlg:
+            st.error(f"Error mostrant el gestor d'impressora: {e_dlg}")
+
+    # Si venim del menú superior amb tab=llista_compra, canviar automàticament a la pestanya 1
+    if st.query_params.get("tab") == "llista_compra":
+        import streamlit.components.v1 as components
+        components.html("""
+        <script>
+        setTimeout(() => {
+            const tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
+            if (tabs && tabs.length > 1) {
+                tabs[1].click();
+            }
+        }, 150);
+        </script>
+        """, height=0, width=0)
+
     t0, t1, t2, t3, t4, t5 = st.tabs(["📄 Compres Super", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques", "🔍 Comparador d'Ofertes", "📰 Fulletons"])
     
-
     with t0:
         render_compres_super_interface()
 
     with t1:
         st.markdown("<h2 style='color:#f39c12; margin-top:0;'>🛒 Llista de la Compra</h2>", unsafe_allow_html=True)
         st.write("Aquesta llista mostra els productes del teu rebost on l'stock actual està per sota de l'stock mínim.")
+        
+        # Panell superior de la impressora BIXOLON
+        try:
+            import modules.impressora as imp_b
+            is_loc = imp_b.is_local_printer_available()
+            with st.container():
+                col_ban1, col_ban2 = st.columns([3, 1])
+                with col_ban1:
+                    if is_loc:
+                        st.markdown("<div style='background:#1e293b; border:1px solid #334155; padding:8px 12px; border-radius:6px; font-size:0.9rem; margin-bottom:10px;'>🖨️ <b>Impressora BIXOLON SRP-275:</b> <span style='color:#22c55e;'>Connectada a USB001</span> (Controlador Generic/Text Only)</div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown("<div style='background:#1e293b; border:1px solid #334155; padding:8px 12px; border-radius:6px; font-size:0.9rem; margin-bottom:10px;'>🖨️ <b>Impressora BIXOLON SRP-275:</b> Mode Web Print disponible</div>", unsafe_allow_html=True)
+                with col_ban2:
+                    if st.button("⚙️ Prova d'impressora", key="btn_test_prn_t1_top", use_container_width=True):
+                        st.session_state["show_bixolon_dialog"] = True
+                        st.rerun()
+        except Exception:
+            pass
         try:
             supabase = get_supabase_client(st.session_state.get("role", "guest"))
             df_prods = fetch_all_supabase(supabase, 'tb_productes')
@@ -3304,6 +3393,7 @@ def render():
                                                 st.error(f"Error movent: {e}")
                 else:
                     st.success("Ho tens tot! El teu stock està per sobre del mínim a tot arreu i no tens peticions puntuals.")
+                    st.info("💡 La impressora BIXOLON està connectada i a punt. Pots fer una prova física de paper i tall amb el botó '⚙️ Prova d'impressora' de dalt.")
             else:
                 st.info("No hi ha productes a la base de dades.")
                 
