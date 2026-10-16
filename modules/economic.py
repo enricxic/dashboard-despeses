@@ -1251,9 +1251,9 @@ def render(view_mode="economic"):
 
         # 3. Mostrar les tres pestanyes amb formulari d'edició i checkboxes de selecció
         tab_modal_ing, tab_modal_desp, tab_modal_extra = st.tabs([
-            f"🟢 Previsions d'Ingressos ({len(ING_CONFIG)})", 
-            f"🔴 Previsions de Despeses ({len(DESP_CONFIG)})",
-            f"🎁 Pagues Extraordinàries ({len(EXTRA_CONFIG)})"
+            f"🟢 Ingressos ({len(ING_CONFIG)})", 
+            f"🔴 Despeses ({len(DESP_CONFIG)})",
+            f"🎁 Pagues Extres ({len(EXTRA_CONFIG)})"
         ])
         
         valors_ingressos = {}
@@ -2802,13 +2802,7 @@ def render(view_mode="economic"):
     # ================= TAB: PREVISIÓ DE DESPESES =================
     if tab_prev_desp:
         with tab_prev_desp:
-            col_t_title, col_t_btn = st.columns([3, 1])
-            with col_t_title:
-                st.markdown("<h3 style='color:#f39c12; margin:0;'>🔴 Previsió de Despeses (Pagaments Programats)</h3>", unsafe_allow_html=True)
-            with col_t_btn:
-                if st.button("📅 Afegir nou any comptable", key="btn_shortcut_nou_any_desp", use_container_width=True):
-                    st.session_state["show_afegir_any_comptable"] = True
-                    st.rerun()
+            st.markdown("<h3 style='color:#f39c12; margin:0 0 10px 0;'>🔴 Previsió de Despeses (Pagaments Programats)</h3>", unsafe_allow_html=True)
             
             with st.expander("➕ Nova Previsió de Pagament", expanded=True):
                 # Row 1 (4 columns)
@@ -3107,13 +3101,7 @@ def render(view_mode="economic"):
     # ================= TAB: PREVISIÓ D'INGRESSOS =================
     if tab_prev_ing:
         with tab_prev_ing:
-            col_t_title_ing, col_t_btn_ing = st.columns([3, 1])
-            with col_t_title_ing:
-                st.markdown("<h3 style='color:#f39c12; margin:0;'>🟢 Previsió d'Ingressos (Nòmines i Altres)</h3>", unsafe_allow_html=True)
-            with col_t_btn_ing:
-                if st.button("📅 Afegir nou any comptable", key="btn_shortcut_nou_any_ing", use_container_width=True):
-                    st.session_state["show_afegir_any_comptable"] = True
-                    st.rerun()
+            st.markdown("<h3 style='color:#2ecc71; margin:0 0 10px 0;'>🟢 Previsió d'Ingressos (Nòmines i Altres)</h3>", unsafe_allow_html=True)
             
             with st.expander("➕ Nova Previsió d'Ingrés", expanded=True):
                 # Row 1 (4 columns)
