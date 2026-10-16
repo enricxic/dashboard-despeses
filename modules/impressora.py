@@ -86,6 +86,9 @@ def formatar_linies_tiquet(supermercat, items, total_super=0.0):
     linies.append("================================")
     linies.append("          Bona compra!          ")
     linies.append("================================")
+    # 6 salts de línia per superar la distància física entre el capçal i la guillotina de tall
+    for _ in range(6):
+        linies.append("")
     
     return linies
 
@@ -129,10 +132,12 @@ def formatar_tots_els_supermercats(df_shopping):
             linies.append("--------------------------------")
             
     linies.append(f"GRAN TOTAL ESTIMAT:   {gran_total:>7.2f} EUR")
-    linies.append(f"TOTAL ARTICLES:       {total_articles:>7}")
     linies.append("================================")
     linies.append("          Bona compra!          ")
     linies.append("================================")
+    # 6 salts de línia per avançar el paper més enllà del capçal i la guillotina
+    for _ in range(6):
+        linies.append("")
     return linies
 
 
@@ -185,7 +190,7 @@ def imprimir_directe_bixolon(supermercat, items, total_super=0.0, printer_name=D
         raw.extend(b"\x1bE\x00\x1ba\x00")
         
         # Contingut del tiquet
-        for l in linies[4:-4]:
+        for l in linies[4:-10]:
             raw.extend((l + "\n").encode('latin-1', 'replace'))
             
         # Peu centrat
@@ -199,8 +204,8 @@ def imprimir_directe_bixolon(supermercat, items, total_super=0.0, printer_name=D
         raw.extend(b"          Bona compra!          \n")
         raw.extend(b"================================\n")
         
-        # Avenç de paper i tall automàtic
-        raw.extend(b"\n\n\n\n\n")
+        # Avenç de 7 línies perquè el paper superi la línia de tall abans de tallar
+        raw.extend(b"\n\n\n\n\n\n\n")
         raw.extend(b"\x1dV\x00") # GS V 0 (Auto cut)
         
         hPrinter = win32print.OpenPrinter(printer_name)
@@ -301,6 +306,7 @@ def generar_html_imprimir_tiquet(supermercat, items, total_super=0.0):
           border: none;
           box-shadow: none;
           padding: 2mm;
+          padding-bottom: 30mm;
           max-width: 100%;
         }}
         .no-print {{
