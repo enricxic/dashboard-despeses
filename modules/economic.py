@@ -1189,7 +1189,7 @@ def render(view_mode="economic"):
             if has_pag or has_ing:
                 st.warning(f"⚠️ Ja existeixen registres per a l'any {nou_any}. Si continues, s'actualitzaran o s'afegiran els mesos pendents.")
             else:
-                st.success(f"✨ L'any {nou_any} és completament nou. Es crearan 252 previsions (12 mesos x 21 conceptes).")
+                st.success(f"✨ L'any {nou_any} és completament nou. Revisa les partides i les pagues extraordinàries a continuació abans de generar-lo.")
                 
         # 2. Llistes de conceptes oficials
         ING_CONFIG = [
@@ -1218,6 +1218,12 @@ def render(view_mode="economic"):
             {"concepte": "Endesa", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 1, "default_imp": 25.00},
             {"concepte": "Lloguer Parking", "banc": "Efectiu", "forma": "Compte", "cat": "despesa_general", "dia": 1, "default_imp": 55.00},
         ]
+
+        EXTRA_CONFIG = [
+            {"concepte": "Paga extra Enric", "origen": "Pensió Enric", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 940.74, "mesos": [6, 11]},
+            {"concepte": "Paga extra Isa", "origen": "Pensió Isabel", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 962.50, "mesos": [6, 11]},
+            {"concepte": "Paga extra Pensió no contributiva", "origen": "Pensió no contributiva", "banc": "LaCaixa", "cat": "ingres_general", "dia": 25, "default_imp": 628.80, "mesos": [6, 11]},
+        ]
         
         # Recuperar últim import real de la BD si existeix per actualitzar la referència
         for item in ING_CONFIG:
@@ -1236,78 +1242,154 @@ def render(view_mode="economic"):
                 if pd.notna(last_val) and float(last_val) > 0:
                     item['default_imp'] = float(last_val)
 
-        # 3. Mostrar les dues pestanyes amb formulari d'edició
-        tab_modal_ing, tab_modal_desp = st.tabs(["🟢 Previsions d'Ingressos (9)", "🔴 Previsions de Despeses (12)"])
+        # Les pagues extres adopten per defecte l'import actualitzat de la seva pensió de referència
+        ing_ref_map = {it['concepte'].lower(): it['default_imp'] for it in ING_CONFIG}
+        for item in EXTRA_CONFIG:
+            orig_lower = item['origen'].lower()
+            if orig_lower in ing_ref_map:
+                item['default_imp'] = ing_ref_map[orig_lower]
+
+        # 3. Mostrar les tres pestanyes amb formulari d'edició i checkboxes de selecció
+        tab_modal_ing, tab_modal_desp, tab_modal_extra = st.tabs([
+            f"🟢 Previsions d'Ingressos ({len(ING_CONFIG)})", 
+            f"🔴 Previsions de Despeses ({len(DESP_CONFIG)})",
+            f"🎁 Pagues Extraordinàries ({len(EXTRA_CONFIG)})"
+        ])
         
         valors_ingressos = {}
         with tab_modal_ing:
-            st.markdown("##### Ingressos mensuals recurrents")
-            cols_i_header = st.columns([4, 3, 2, 3])
-            cols_i_header[0].markdown("**Concepte**")
-            cols_i_header[1].markdown("**Banc**")
-            cols_i_header[2].markdown("**Dia mes**")
-            cols_i_header[3].markdown("**Import mensual (€)**")
+            st.markdown("##### Ingressos mensuals recurrents (12 mesos)")
+            st.caption("Marca o desmarca les caselles per decidir quines partides s'afegiran al nou any.")
+            cols_i_header = st.columns([0.8, 3.8, 2.4, 2.0, 3.0])
+            cols_i_header[0].markdown("**Inc.**")
+            cols_i_header[1].markdown("**Concepte**")
+            cols_i_header[2].markdown("**Banc**")
+            cols_i_header[3].markdown("**Dia mes**")
+            cols_i_header[4].markdown("**Import mensual (€)**")
             
             tot_ing_mensual = 0.0
             for idx, item in enumerate(ING_CONFIG):
-                c_row = st.columns([4, 3, 2, 3])
-                c_row[0].write(f"🟢 **{item['concepte']}**")
-                c_row[1].write(item['banc'])
-                c_row[2].write(f"Dia {item['dia']}")
-                val_imp = c_row[3].number_input(
+                c_row = st.columns([0.8, 3.8, 2.4, 2.0, 3.0])
+                chk_actiu = c_row[0].checkbox("Afegir partida", value=True, key=f"modal_ing_chk_{idx}", label_visibility="collapsed")
+                
+                label_prefix = "🟢" if chk_actiu else "⚪"
+                c_row[1].markdown(f"{label_prefix} **{item['concepte']}**" if chk_actiu else f"<span style='color:#64748b; text-decoration:line-through;'>{item['concepte']}</span>", unsafe_allow_html=True)
+                c_row[2].write(item['banc'] if chk_actiu else f"~{item['banc']}~")
+                c_row[3].write(f"Dia {item['dia']}")
+                val_imp = c_row[4].number_input(
                     f"Import {item['concepte']}", 
                     min_value=0.0, 
                     value=float(item['default_imp']), 
                     step=1.0, 
                     format="%.2f",
                     key=f"modal_ing_imp_{idx}",
+                    disabled=not chk_actiu,
                     label_visibility="collapsed"
                 )
-                valors_ingressos[item['concepte']] = {**item, "import": val_imp}
-                tot_ing_mensual += val_imp
+                valors_ingressos[item['concepte']] = {**item, "import": val_imp, "actiu": chk_actiu}
+                if chk_actiu:
+                    tot_ing_mensual += val_imp
                 
-            st.markdown(f"**Total Ingressos mensuals previstos:** `{tot_ing_mensual:,.2f} €` *(Anual: `{tot_ing_mensual * 12:,.2f} €`)*")
+            n_ing_sel = sum(1 for v in valors_ingressos.values() if v['actiu'])
+            st.markdown(f"**Total Ingressos mensuals seleccionats ({n_ing_sel}/{len(ING_CONFIG)}):** `{tot_ing_mensual:,.2f} €` *(Anual ordinari: `{tot_ing_mensual * 12:,.2f} €`)*")
 
         valors_despeses = {}
         with tab_modal_desp:
-            st.markdown("##### Despeses mensuals recurrents")
-            cols_d_header = st.columns([4, 3, 2, 3])
-            cols_d_header[0].markdown("**Concepte**")
-            cols_d_header[1].markdown("**Banc**")
-            cols_d_header[2].markdown("**Dia mes**")
-            cols_d_header[3].markdown("**Import mensual (€)**")
+            st.markdown("##### Despeses mensuals recurrents (12 mesos)")
+            st.caption("Marca o desmarca les caselles per decidir quines partides s'afegiran al nou any.")
+            cols_d_header = st.columns([0.8, 3.8, 2.4, 2.0, 3.0])
+            cols_d_header[0].markdown("**Inc.**")
+            cols_d_header[1].markdown("**Concepte**")
+            cols_d_header[2].markdown("**Banc**")
+            cols_d_header[3].markdown("**Dia mes**")
+            cols_d_header[4].markdown("**Import mensual (€)**")
             
             tot_desp_mensual = 0.0
             for idx, item in enumerate(DESP_CONFIG):
-                c_row = st.columns([4, 3, 2, 3])
-                c_row[0].write(f"🔴 **{item['concepte']}**")
-                c_row[1].write(f"{item['banc']} ({item.get('forma', 'Compte')})")
-                c_row[2].write(f"Dia {item['dia']}")
-                val_imp = c_row[3].number_input(
+                c_row = st.columns([0.8, 3.8, 2.4, 2.0, 3.0])
+                chk_actiu = c_row[0].checkbox("Afegir partida", value=True, key=f"modal_desp_chk_{idx}", label_visibility="collapsed")
+                
+                label_prefix = "🔴" if chk_actiu else "⚪"
+                c_row[1].markdown(f"{label_prefix} **{item['concepte']}**" if chk_actiu else f"<span style='color:#64748b; text-decoration:line-through;'>{item['concepte']}</span>", unsafe_allow_html=True)
+                c_row[2].write(f"{item['banc']} ({item.get('forma', 'Compte')})" if chk_actiu else f"~{item['banc']}~")
+                c_row[3].write(f"Dia {item['dia']}")
+                val_imp = c_row[4].number_input(
                     f"Import {item['concepte']}", 
                     min_value=0.0, 
                     value=float(item['default_imp']), 
                     step=1.0, 
                     format="%.2f",
                     key=f"modal_desp_imp_{idx}",
+                    disabled=not chk_actiu,
                     label_visibility="collapsed"
                 )
-                valors_despeses[item['concepte']] = {**item, "import": val_imp}
-                tot_desp_mensual += val_imp
+                valors_despeses[item['concepte']] = {**item, "import": val_imp, "actiu": chk_actiu}
+                if chk_actiu:
+                    tot_desp_mensual += val_imp
                 
-            st.markdown(f"**Total Despeses mensuals previstes:** `{tot_desp_mensual:,.2f} €` *(Anual: `{tot_desp_mensual * 12:,.2f} €`)*")
+            n_desp_sel = sum(1 for v in valors_despeses.values() if v['actiu'])
+            st.markdown(f"**Total Despeses mensuals seleccionades ({n_desp_sel}/{len(DESP_CONFIG)}):** `{tot_desp_mensual:,.2f} €` *(Anual: `{tot_desp_mensual * 12:,.2f} €`)*")
+
+        valors_extra = {}
+        with tab_modal_extra:
+            st.markdown("##### Pagues extraordinàries (Juny i Novembre - Dia 25)")
+            st.caption("Aquests ingressos puntuals es cobren 2 vegades l'any (el 25 de juny i el 25 de novembre). Per defecte es repeteix l'import mensual de la pensió corresponent.")
+            cols_e_header = st.columns([0.8, 3.8, 2.4, 2.0, 3.0])
+            cols_e_header[0].markdown("**Inc.**")
+            cols_e_header[1].markdown("**Concepte Paga Extra**")
+            cols_e_header[2].markdown("**Banc**")
+            cols_e_header[3].markdown("**Mesos i Dia**")
+            cols_e_header[4].markdown("**Import per paga (€)**")
+            
+            tot_extra_anual = 0.0
+            for idx, item in enumerate(EXTRA_CONFIG):
+                c_row = st.columns([0.8, 3.8, 2.4, 2.0, 3.0])
+                chk_actiu = c_row[0].checkbox("Afegir paga extra", value=True, key=f"modal_extra_chk_{idx}", label_visibility="collapsed")
+                
+                label_prefix = "🎁" if chk_actiu else "⚪"
+                c_row[1].markdown(
+                    f"{label_prefix} **{item['concepte']}**<br><span style='font-size:0.8rem; color:#94a3b8;'>({item['origen']})</span>" if chk_actiu 
+                    else f"<span style='color:#64748b; text-decoration:line-through;'>{item['concepte']}</span>", 
+                    unsafe_allow_html=True
+                )
+                c_row[2].write(item['banc'] if chk_actiu else f"~{item['banc']}~")
+                c_row[3].write("Juny i Nov. (d. 25)")
+                val_imp = c_row[4].number_input(
+                    f"Import {item['concepte']}", 
+                    min_value=0.0, 
+                    value=float(item['default_imp']), 
+                    step=1.0, 
+                    format="%.2f",
+                    key=f"modal_extra_imp_{idx}",
+                    disabled=not chk_actiu,
+                    label_visibility="collapsed"
+                )
+                valors_extra[item['concepte']] = {**item, "import": val_imp, "actiu": chk_actiu}
+                if chk_actiu:
+                    tot_extra_anual += (val_imp * 2.0)
+                
+            n_extra_sel = sum(1 for v in valors_extra.values() if v['actiu'])
+            st.markdown(f"**Total Pagues Extres anuals ({n_extra_sel}/{len(EXTRA_CONFIG)} conceptes x 2 pagues):** `{tot_extra_anual:,.2f} €`")
 
         st.divider()
         col_m_balance, col_m_btn1, col_m_btn2 = st.columns([5, 3, 2], vertical_alignment="center")
-        balanc_mensual = tot_ing_mensual - tot_desp_mensual
-        bal_color = "#22c55e" if balanc_mensual >= 0 else "#ef4444"
+        tot_ing_anual_global = (tot_ing_mensual * 12) + tot_extra_anual
+        tot_desp_anual_global = tot_desp_mensual * 12
+        balanc_anual = tot_ing_anual_global - tot_desp_anual_global
+        balanc_mensual_mig = balanc_anual / 12.0
+        bal_color = "#22c55e" if balanc_anual >= 0 else "#ef4444"
         with col_m_balance:
-            st.markdown(f"**Balanç mensual estimat:** <span style='color:{bal_color}; font-size:1.15rem; font-weight:700;'>{balanc_mensual:+,.2f} €/mes</span>", unsafe_allow_html=True)
+            st.markdown(
+                f"**Balanç anual estimat:** <span style='color:{bal_color}; font-size:1.15rem; font-weight:700;'>{balanc_anual:+,.2f} €/any</span> "
+                f"<span style='color:#94a3b8; font-size:0.85rem;'>(Mitjana mensual: {balanc_mensual_mig:+,.2f} €/mes)</span>", 
+                unsafe_allow_html=True
+            )
             
         with col_m_btn1:
-            if st.button(f"💾 Generar Previsions {nou_any}", type="primary", use_container_width=True, key="btn_confirm_gen_year"):
+            total_previs_to_create = (n_ing_sel * 12) + (n_desp_sel * 12) + (n_extra_sel * 2)
+            if st.button(f"💾 Generar Previsions {nou_any} ({total_previs_to_create})", type="primary", use_container_width=True, key="btn_confirm_gen_year"):
                 with st.spinner(f"Generant les previsions per a l'any {nou_any}..."):
-                    # 1. Processar Ingressos
+                    # 1. Processar Ingressos mensuals ordinaris
                     current_max_id_ing = int(df_ing['idIngres'].max() + 1) if not df_ing.empty and 'idIngres' in df_ing.columns else 1
                     ing_created = 0
                     ing_updated = 0
@@ -1317,6 +1399,8 @@ def render(view_mode="economic"):
                         m_data = month_translations[m_cat]
                         
                         for item in valors_ingressos.values():
+                            if not item.get('actiu', False):
+                                continue
                             c_name = item['concepte']
                             c_banc = item['banc']
                             c_cat = item['cat']
@@ -1347,11 +1431,59 @@ def render(view_mode="economic"):
                                 df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
                                 current_max_id_ing += 1
                                 ing_created += 1
+
+                    # 1b. Processar Pagues Extraordinàries (Juny i Novembre, dia 25)
+                    extra_created = 0
+                    extra_updated = 0
+                    for item in valors_extra.values():
+                        if not item.get('actiu', False):
+                            continue
+                        c_name = item['concepte']
+                        c_banc = item['banc']
+                        c_cat = item['cat']
+                        c_dia = item['dia']
+                        c_imp = float(item['import'])
+                        
+                        for m_idx in item.get('mesos', [6, 11]):
+                            m_cat = CATALAN_MONTHS[m_idx - 1]
+                            m_data = month_translations[m_cat]
+                            
+                            mask = (df_ing['any'] == nou_any) & (df_ing['mes'].astype(str).str.strip().str.lower() == m_data) & (df_ing['Concepte'].astype(str).str.strip().str.lower() == c_name.lower())
+                            if mask.any():
+                                df_ing.loc[mask, 'Import'] = c_imp
+                                df_ing.loc[mask, 'Banc'] = c_banc
+                                df_ing.loc[mask, 'Categoria'] = c_cat
+                                df_ing.loc[mask, 'cobrat'] = 'pendent'
+                                extra_updated += 1
+                            else:
+                                new_row = {
+                                    'idIngres': current_max_id_ing,
+                                    'Banc': c_banc,
+                                    'Data': f"{c_dia:02d}/{m_idx:02d}/{nou_any}",
+                                    'dia': c_dia,
+                                    'mes': m_data,
+                                    'any': nou_any,
+                                    'Categoria': c_cat,
+                                    'Concepte': c_name,
+                                    'Import': c_imp,
+                                    'comentari': 'Paga extraordinària',
+                                    'cobrat': 'pendent'
+                                }
+                                df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
+                                current_max_id_ing += 1
+                                extra_created += 1
                                 
                     save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                    # Assegurar persistència al CSV local si existeix
+                    csv_ing_path = os.path.join("csv", "ingressos.csv")
+                    if os.path.exists(csv_ing_path):
+                        try:
+                            df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore').to_csv(csv_ing_path, sep=';', index=False)
+                        except Exception:
+                            pass
                     st.session_state["df_ing"] = df_ing
                     
-                    # 2. Processar Despeses
+                    # 2. Processar Despeses mensuals
                     current_max_id_pag = int(df_pag['idPago'].max() + 1) if not df_pag.empty and 'idPago' in df_pag.columns else 1
                     pag_created = 0
                     pag_updated = 0
@@ -1361,6 +1493,8 @@ def render(view_mode="economic"):
                         m_data = month_translations[m_cat]
                         
                         for item in valors_despeses.values():
+                            if not item.get('actiu', False):
+                                continue
                             c_name = item['concepte']
                             c_banc = item['banc']
                             c_forma = item.get('forma', 'Compte')
@@ -1396,18 +1530,29 @@ def render(view_mode="economic"):
                                 pag_created += 1
                                 
                     save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                    csv_pag_path = os.path.join("csv", "pagaments.csv")
+                    if os.path.exists(csv_pag_path):
+                        try:
+                            df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore').to_csv(csv_pag_path, sep=';', index=False)
+                        except Exception:
+                            pass
                     st.session_state["df_pag"] = df_pag
+                    
+                    total_creats = ing_created + extra_created + pag_created
+                    total_actualitzats = ing_updated + extra_updated + pag_updated
                     
                     log_action("sistema", "CREATE_YEAR", {
                         "any": nou_any,
                         "ingressos_creats": ing_created,
                         "ingressos_actualitzats": ing_updated,
+                        "pagues_extres_creades": extra_created,
+                        "pagues_extres_actualitzades": extra_updated,
                         "pagaments_creats": pag_created,
                         "pagaments_actualitzats": pag_updated
                     })
                     
                     st.session_state["show_afegir_any_comptable"] = False
-                    st.session_state["toast_any_creat"] = f"🎉 Previsions de l'any {nou_any} creades amb èxit ({ing_created + pag_created} noves, {ing_updated + pag_updated} actualitzades)!"
+                    st.session_state["toast_any_creat"] = f"🎉 Previsions de l'any {nou_any} creades amb èxit ({total_creats} noves, {total_actualitzats} actualitzades)!"
                     st.rerun()
                     
         with col_m_btn2:
