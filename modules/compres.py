@@ -2093,23 +2093,94 @@ Retorna ÚNICAMENT l'objecte JSON.
         (function() {
             try {
                 const doc = window.parent.document;
-                if (!doc || window.parent.__compres_nav_attached) return;
-                window.parent.__compres_nav_attached = true;
+                if (!doc) return;
 
-                doc.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        const target = e.target;
-                        if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.getAttribute('role') === 'combobox') {
-                            const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])'));
-                            const index = inputs.indexOf(target);
-                            if (index > -1 && index < inputs.length - 1) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                inputs[index + 1].focus();
-                            }
-                        }
+                // Netejar listener previ si ja existia per evitar duplicats
+                if (window.parent.__compres_enter_handler) {
+                    doc.removeEventListener('keydown', window.parent.__compres_enter_handler, true);
+                }
+
+                window.parent.__compres_enter_handler = function(e) {
+                    if (e.key !== 'Enter') return;
+
+                    const target = e.target;
+                    if (!target || target.tagName !== 'INPUT') return;
+
+                    // Comprovar si estem al mòdul de Compres Super
+                    const isCompres = Array.from(doc.querySelectorAll('h2, span')).some(el => 
+                        el.textContent && (el.textContent.includes('Compres Super') || el.textContent.includes('Llista de la Compra'))
+                    );
+                    if (!isCompres) return;
+
+                    // Botó 'Intro línia'
+                    const addBtn = Array.from(doc.querySelectorAll('button')).find(b => 
+                        b.textContent && (b.textContent.includes('Intro línia') || b.textContent.includes('Intro linia'))
+                    );
+
+                    // Si l'usuari prem Shift + Enter a qualsevol camp, afegir la línia directament
+                    if (e.shiftKey && addBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        target.dispatchEvent(new Event('input', { bubbles: true }));
+                        target.dispatchEvent(new Event('change', { bubbles: true }));
+                        setTimeout(() => { addBtn.click(); }, 30);
+                        return;
                     }
-                });
+
+                    // Si hi ha un menú desplegable de selecció obert (BaseWeb listbox), deixar que Enter seleccioni l'opció
+                    const listbox = doc.querySelector('ul[role="listbox"], [role="listbox"][id*="popover"]');
+                    if (listbox && listbox.offsetParent !== null) {
+                        return;
+                    }
+
+                    // Obtenir tots els inputs de text i numèrics visibles i editables
+                    const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not([type="file"])'))
+                        .filter(el => {
+                            const style = window.parent.getComputedStyle(el);
+                            return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+                        });
+
+                    const index = inputs.indexOf(target);
+                    if (index === -1) return;
+
+                    // Aturar comportament per defecte abans que React / Streamlit intercepti l'Enter
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Forçar que Streamlit actualitzi el valor escrit
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                    target.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    // Comprovar si estem al camp de PROMOCIÓ (últim camp editable de la línia)
+                    const container = target.closest('[data-testid="stNumberInputContainer"]') || target.closest('[data-testid="stTextInputContainer"]');
+                    const labelElem = container ? (container.parentElement ? container.parentElement.querySelector('label') : null) : null;
+                    const labelText = labelElem ? labelElem.textContent.toUpperCase() : '';
+
+                    if (labelText.includes('PROMOCIÓ') && addBtn) {
+                        setTimeout(() => {
+                            addBtn.click();
+                        }, 40);
+                        return;
+                    }
+
+                    // Passar al següent input de la línia
+                    if (index < inputs.length - 1) {
+                        const nextInput = inputs[index + 1];
+                        setTimeout(() => {
+                            nextInput.focus();
+                            if (typeof nextInput.select === 'function') {
+                                nextInput.select();
+                            }
+                        }, 25);
+                    } else if (addBtn) {
+                        setTimeout(() => {
+                            addBtn.click();
+                        }, 40);
+                    }
+                };
+
+                // Registrar en fase de captura (true) per avançar-se a React i Streamlit
+                doc.addEventListener('keydown', window.parent.__compres_enter_handler, true);
             } catch(e) {}
         })();
         </script>
