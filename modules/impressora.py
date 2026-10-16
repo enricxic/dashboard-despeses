@@ -292,23 +292,6 @@ def generar_html_imprimir_tiquet(supermercat, items, total_super=0.0):
       .print-btn:hover {{
         background: #219150;
       }}
-      .popup-btn {{
-        background: #2980b9;
-        color: white;
-        border: none;
-        padding: 8px 14px;
-        font-size: 13px;
-        font-weight: bold;
-        border-radius: 6px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: background 0.2s;
-      }}
-      .popup-btn:hover {{
-        background: #1f6692;
-      }}
       @media print {{
         body {{
           padding: 0;
@@ -330,16 +313,6 @@ def generar_html_imprimir_tiquet(supermercat, items, total_super=0.0):
         window.focus();
         window.print();
       }}
-      function openInNewWindow() {{
-        const ticketContent = document.getElementById('ticket-content').innerText;
-        const w = window.open('', '_blank', 'width=380,height=600');
-        w.document.write('<html><head><title>Tiquet Compra - XiquiHouse</title>');
-        w.document.write('<style>@page {{ size: 76mm auto; margin: 0; }} body {{ font-family: monospace; font-size: 13px; padding: 10px; margin: 0; }}</style>');
-        w.document.write('</head><body><pre>' + ticketContent + '</pre>');
-        w.document.write('<script>window.onload = function() {{ window.print(); }}<\\/script>');
-        w.document.write('</body></html>');
-        w.document.close();
-      }}
     </script>
     </head>
     <body>
@@ -348,9 +321,6 @@ def generar_html_imprimir_tiquet(supermercat, items, total_super=0.0):
         <div class="btn-bar no-print">
           <button class="print-btn" onclick="doPrint()">
             🖨️ Imprimir ara
-          </button>
-          <button class="popup-btn" onclick="openInNewWindow()">
-            ↗️ Nova pestanya
           </button>
         </div>
       </div>
