@@ -1249,6 +1249,14 @@ def render(view_mode="economic"):
             if orig_lower in ing_ref_map:
                 item['default_imp'] = ing_ref_map[orig_lower]
 
+        # Càlcul previ de les pagues extres per poder sumar-les a la línia d'ingressos
+        tot_extra_anual = 0.0
+        for idx, item in enumerate(EXTRA_CONFIG):
+            chk_val = st.session_state.get(f"modal_extra_chk_{idx}", True)
+            imp_val = float(st.session_state.get(f"modal_extra_imp_{idx}", item['default_imp']))
+            if chk_val:
+                tot_extra_anual += (imp_val * 2.0)
+
         # 3. Mostrar les tres pestanyes amb formulari d'edició i checkboxes de selecció
         tab_modal_ing, tab_modal_desp, tab_modal_extra = st.tabs([
             f"🟢 Ingressos ({len(ING_CONFIG)})", 
@@ -1291,7 +1299,8 @@ def render(view_mode="economic"):
                     tot_ing_mensual += val_imp
                 
             n_ing_sel = sum(1 for v in valors_ingressos.values() if v['actiu'])
-            st.markdown(f"**Total Ingressos mensuals seleccionats ({n_ing_sel}/{len(ING_CONFIG)}):** `{tot_ing_mensual:,.2f} €` *(Anual ordinari: `{tot_ing_mensual * 12:,.2f} €`)*")
+            tot_ing_anual_global = (tot_ing_mensual * 12) + tot_extra_anual
+            st.markdown(f"**Total Ingressos mensuals seleccionats ({n_ing_sel}/{len(ING_CONFIG)}):** `{tot_ing_mensual:,.2f} €` *(Anual amb extres: `{tot_ing_anual_global:,.2f} €`)*")
 
         valors_despeses = {}
         with tab_modal_desp:
@@ -1372,18 +1381,7 @@ def render(view_mode="economic"):
             st.markdown(f"**Total Pagues Extres anuals ({n_extra_sel}/{len(EXTRA_CONFIG)} conceptes x 2 pagues):** `{tot_extra_anual:,.2f} €`")
 
         st.divider()
-        col_m_balance, col_m_btn1, col_m_btn2 = st.columns([5, 3, 2], vertical_alignment="center")
-        tot_ing_anual_global = (tot_ing_mensual * 12) + tot_extra_anual
-        tot_desp_anual_global = tot_desp_mensual * 12
-        balanc_anual = tot_ing_anual_global - tot_desp_anual_global
-        balanc_mensual_mig = balanc_anual / 12.0
-        bal_color = "#22c55e" if balanc_anual >= 0 else "#ef4444"
-        with col_m_balance:
-            st.markdown(
-                f"**Balanç anual estimat:** <span style='color:{bal_color}; font-size:1.15rem; font-weight:700;'>{balanc_anual:+,.2f} €/any</span> "
-                f"<span style='color:#94a3b8; font-size:0.85rem;'>(Mitjana mensual: {balanc_mensual_mig:+,.2f} €/mes)</span>", 
-                unsafe_allow_html=True
-            )
+        col_m_spacer, col_m_btn1, col_m_btn2 = st.columns([5, 3, 2], vertical_alignment="center")
             
         with col_m_btn1:
             total_previs_to_create = (n_ing_sel * 12) + (n_desp_sel * 12) + (n_extra_sel * 2)
