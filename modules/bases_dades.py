@@ -120,38 +120,52 @@ def render():
         
     df = df.reset_index(drop=True)
     
-    if ordenar_recent:
-        if selected_table == 'registre_accions' and 'data_hora' in df.columns:
-            try:
-                df = df.sort_values(by='data_hora', ascending=False).reset_index(drop=True)
-            except Exception:
-                pass
-        elif pk_col in df.columns:
-            try:
-                df = df.sort_values(by=pk_col, ascending=False).reset_index(drop=True)
-            except Exception:
-                pass
-    else:
-        if selected_table == 'registre_accions' and 'data_hora' in df.columns:
-            try:
-                df = df.sort_values(by='data_hora', ascending=True).reset_index(drop=True)
-            except Exception:
-                pass
-        elif pk_col in df.columns:
-            try:
-                df = df.sort_values(by=pk_col, ascending=True).reset_index(drop=True)
-            except Exception:
-                pass
+    # Detectar columna de data per a ordenació cronològica autèntica
+    date_col = next((c for c in df.columns if c.lower() in ['data', 'data_hora', 'data_inici', 'created_at']), None)
+    
+    if date_col:
+        try:
+            if 'hora' in date_col.lower() or 'created_at' in date_col.lower():
+                s_dt = pd.to_datetime(df[date_col], errors='coerce')
+            else:
+                s_dt = pd.to_datetime(df[date_col], format='%d/%m/%Y', errors='coerce')
+                if s_dt.isna().sum() > len(df) * 0.5:
+                    s_dt = pd.to_datetime(df[date_col], errors='coerce', dayfirst=True)
+            
+            df['_sort_dt'] = s_dt
+            sort_cols = ['_sort_dt']
+            ascending_orders = [not ordenar_recent]
+            
+            if pk_col in df.columns:
+                df['_sort_pk'] = pd.to_numeric(df[pk_col], errors='coerce').fillna(0)
+                sort_cols.append('_sort_pk')
+                ascending_orders.append(not ordenar_recent)
+                
+            df = df.sort_values(by=sort_cols, ascending=ascending_orders).drop(columns=['_sort_dt', '_sort_pk'], errors='ignore').reset_index(drop=True)
+        except Exception:
+            pass
+    elif pk_col in df.columns:
+        try:
+            df['_sort_pk'] = pd.to_numeric(df[pk_col], errors='coerce')
+            if df['_sort_pk'].notna().any():
+                df = df.sort_values(by='_sort_pk', ascending=not ordenar_recent).drop(columns=['_sort_pk'], errors='ignore').reset_index(drop=True)
+            else:
+                df = df.sort_values(by=pk_col, ascending=not ordenar_recent).drop(columns=['_sort_pk'], errors='ignore').reset_index(drop=True)
+        except Exception:
+            pass
 
     st.write("---")
     
     # Key to force re-render if needed
-    editor_key = f"db_editor_{selected_table}"
+    editor_key = f"db_editor_{selected_table}_{ordenar_recent}"
     
     col_config = {}
     for col in df.columns:
         if col.upper() == 'DATA':
-            df[col] = pd.to_datetime(df[col], format="%d/%m/%Y", errors='coerce').dt.date
+            s_d = pd.to_datetime(df[col], format="%d/%m/%Y", errors='coerce')
+            if s_d.isna().sum() > len(df) * 0.5:
+                s_d = pd.to_datetime(df[col], errors='coerce', dayfirst=True)
+            df[col] = s_d.dt.date
             col_config[col] = st.column_config.DateColumn(col, format="DD/MM/YYYY")
             
     edited_data = st.data_editor(
