@@ -898,7 +898,6 @@ div.block-container {{
 <div class="submenu-dropdown">
 <a href="?mod=modules.compres{url_suffix}" target="_self">🛒 Entrada de tiquets</a>
 <a href="?mod=modules.compres&tab=llista_compra{url_suffix}" target="_self">📋 Llista de la Compra</a>
-<a href="?mod=modules.compres&action=bixolon_test{url_suffix}" target="_self">🖨️ Impressora BIXOLON SRP-275</a>
 </div>
 </div>''' if icones_actives.get('compres', True) else ''}
 <div class="submenu-item">
