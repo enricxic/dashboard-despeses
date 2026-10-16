@@ -1,4 +1,6 @@
 import streamlit as st
+import os
+import re
 from core.avatar_manager import (
     get_avatar_role_for_module,
     get_avatar_image_base64,

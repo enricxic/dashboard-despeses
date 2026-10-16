@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
@@ -3404,10 +3405,6 @@ def render():
                                     # This guarantees all buttons align perfectly at the bottom
                                     if 'foto_url' in row and pd.notna(row['foto_url']) and str(row['foto_url']).strip() != "":
                                         foto_src = str(row['foto_url']).strip()
-                                        
-                                        # Handle local files by converting to base64 for HTML img tag
-                                        import base64
-                                        import os
                                         
                                         img_src = foto_src
                                         if not foto_src.startswith("http"):
