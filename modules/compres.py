@@ -2782,6 +2782,16 @@ def render_ingres_despesa_general_interface():
     
     df_desp = st.session_state.get("df_desp", pd.DataFrame())
     df_ing = st.session_state.get("df_ing", pd.DataFrame())
+    df_super = st.session_state.get("df_super", pd.DataFrame())
+    if df_super is None or df_super.empty:
+        try:
+            from core.db import get_supabase_client, fetch_all_supabase
+            sb = get_supabase_client("guest")
+            if sb:
+                df_super = fetch_all_supabase(sb, 'compresSuper')
+                st.session_state["df_super"] = df_super
+        except Exception:
+            df_super = pd.DataFrame()
     df_pag = st.session_state.get("df_pag", pd.DataFrame())
     df_gas = st.session_state.get("df_gas", pd.DataFrame())
     df_km = st.session_state.get("df_km", pd.DataFrame())
@@ -3247,7 +3257,7 @@ def render_ingres_despesa_general_interface():
     st.markdown("<h5 style='color:#f39c12; margin-top: 5px; margin-bottom: 5px;'>🛒 Tickets Pendents de Desglossar</h5>", unsafe_allow_html=True)
     
     pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])] if 'ticketPendent' in df_desp.columns else pd.DataFrame()
-    if not df_super.empty and 'IdDespesa' in df_super.columns and not pendents.empty:
+    if df_super is not None and not df_super.empty and 'IdDespesa' in df_super.columns and not pendents.empty:
         desglossats_ids = set(pd.to_numeric(df_super['IdDespesa'], errors='coerce').dropna().astype(int).unique())
         pendents = pendents[~pendents['ID_mov'].isin(desglossats_ids)]
     if not pendents.empty:
