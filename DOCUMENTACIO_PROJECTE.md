@@ -325,6 +325,10 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - **Targetes KPI**: 4 blocs de mètriques (Total Compra Pagada, Total Estalvi Generat amb indicador de delta %, Preu Sense Ofertes i Nº Línies / Articles).
     - **Gràfic de Rodones (Donut Chart Plotly)**: Representació circular interactiva de la "Compra Total Pagada" vs "Promoció / Estalvi", amb colors corporatius, percentatges i etiquetes emergents.
     - **Panell de Desglossament i Supermercat Líder**: Targeta visual amb el desglossament de pagat net, promocions directes, descomptes globals i estalvi total, acompanyat del supermercat on s'ha aconseguit més estalvi.
+  - **Generació de 13 Imatges Gastronòmiques per al Receptari (`tb_receptes_pro` / `imatges/Receptes/`)**:
+    - **Pautes Estètiques**: Imatges creades seguint les pautes de la secció 4.3 (primer pla 45°, format horitzontal 4:3, llum natural càlida, taula rústica de fusta i fidelitat total als ingredients).
+    - **Receptes cobertes**: ID 31 (Conill rostit), ID 106 (Sardines a la planxa), ID 115 (Orada al forn Bon Preu), ID 125 (Espaguetis amb all), ID 135 (Tataki de tonyina amb alvocat), ID 142 (Pollastre al forn amb patates), ID 146 (Carxofes farcides al forn), ID 151 (Empanadilles de tonyina), ID 161 (Maduixes amb nata), ID 170 (Cargols a la llauna), ID 174 (Faves a la catalana), ID 196 (Macarrons amb tomàquet cherry i alfàbrega), ID 209 (Amanida de cigrons).
+    - **Emmagatzematge Híbrid**: Desades en format PNG d'alta qualitat a la carpeta local [`imatges/Receptes/`](file:///e:/Dashboard/imatges/Receptes/) com a còpia de seguretat i sincronitzades al bucket de Supabase Storage `imatges-receptes`, actualitzant el camp `imatge_url` de cada fitxa per a visualització directa i instantània a la web.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**
