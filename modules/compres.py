@@ -745,6 +745,93 @@ def parse_novavenda_ticket(text_content):
     res = group_duplicate_ticket_items(raw_products)
     return res
 
+def sanitize_ticket_date(val, m=None, y=None):
+    """
+    Valida i neteja una data de tiquet de compra per evitar dates futures o errors típics d'OCR (ex: 2076 o 2028 per 2026).
+    Admet:
+      - sanitize_ticket_date(d, m, y)
+      - sanitize_ticket_date("DD/MM/YYYY") o "YYYY-MM-DD" o "DD-MM-YYYY"
+      - sanitize_ticket_date(date_object) / datetime_object
+    Retorna un objecte datetime.date vàlid o None si no és una data vàlida.
+    """
+    from datetime import date, datetime
+    today = date.today()
+    curr_year = today.year
+
+    d_val, m_val, y_val = None, None, None
+
+    if isinstance(val, (datetime, date)):
+        d_val, m_val, y_val = val.day, val.month, val.year
+    elif m is not None and y is not None:
+        try:
+            d_val, m_val, y_val = int(val), int(m), int(y)
+        except (ValueError, TypeError):
+            return None
+    elif isinstance(val, str):
+        import re
+        parts = re.split(r'[-/.]', val.strip())
+        if len(parts) == 3:
+            try:
+                if len(parts[0]) == 4:
+                    y_val, m_val, d_val = map(int, parts)
+                else:
+                    d_val, m_val, y_val = map(int, parts)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+    else:
+        return None
+
+    if d_val is None or m_val is None or y_val is None:
+        return None
+
+    # Correcció d'anys de 2 dígits o confusions freqüents d'OCR en tiquets:
+    # '76' sovint és '26' (la barra de la impressora matricial confon el 2 amb un 7)
+    # '28' sovint és '26' (la impressió tènue o trencada fa semblar el 6 com un 8)
+    if y_val < 100:
+        if y_val == 76 or y_val == 28:
+            y_val = curr_year
+        elif y_val > (curr_year % 100):
+            if str(y_val).endswith(str(curr_year % 100)[-1]):
+                y_val = curr_year
+            else:
+                y_val = curr_year
+        else:
+            y_val += 2000
+    else:
+        # 4 dígits: ex: 2076, 2028, etc.
+        if y_val == 2076 or y_val == 2028 or y_val == 2027:
+            y_val = curr_year
+        elif y_val > curr_year:
+            # Mai pot ser futur
+            y_val = curr_year
+        elif y_val < 2018:
+            y_val = curr_year
+
+    # Correcció possible d'intercanvi dia / mes (si mes > 12 i dia <= 12)
+    if m_val > 12 and 1 <= d_val <= 12:
+        d_val, m_val = m_val, d_val
+
+    if not (1 <= m_val <= 12):
+        return None
+    if not (1 <= d_val <= 31):
+        return None
+
+    try:
+        cand_date = date(y_val, m_val, d_val)
+    except ValueError:
+        try:
+            cand_date = date(y_val, m_val, min(d_val, 28))
+        except ValueError:
+            return None
+
+    # Cap tiquet pot ser futur a la data d'avui
+    if cand_date > today:
+        cand_date = today
+
+    return cand_date
+
 def parse_text_ticket(text_content):
     import re
     
@@ -754,8 +841,9 @@ def parse_text_ticket(text_content):
     for match in re.finditer(r'\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b', text_content_date):
         try:
             d_val, m_val, y_val = map(int, match.groups())
-            if 1980 <= y_val <= 2090 and 1 <= m_val <= 12 and 1 <= d_val <= 31:
-                found_date = datetime(y_val, m_val, d_val).date()
+            cand = sanitize_ticket_date(d_val, m_val, y_val)
+            if cand:
+                found_date = cand
                 break
         except ValueError:
             continue
@@ -766,8 +854,10 @@ def parse_text_ticket(text_content):
                 y_val = int(match.group(1))
                 m_val = int(match.group(2))
                 d_val = int(match.group(3))
-                found_date = datetime(y_val, m_val, d_val).date()
-                break
+                cand = sanitize_ticket_date(d_val, m_val, y_val)
+                if cand:
+                    found_date = cand
+                    break
             except ValueError:
                 continue
                 
@@ -1019,7 +1109,7 @@ def cb_clear_ticket():
     for k in list(st.session_state.keys()):
         if k.startswith("btn_edit_row_") or k.startswith("btn_del_row_"):
             del st.session_state[k]
-    for k in ["finalize_error", "ticket_msg_error", "ticket_msg_success", "manual_input_error", "pending_ticket_mismatch"]:
+    for k in ["finalize_error", "ticket_msg_error", "ticket_msg_success", "manual_input_error", "pending_ticket_mismatch", "ticket_date_confirmed_for", "ask_confirm_old_ticket_date"]:
         st.session_state.pop(k, None)
     st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
@@ -1075,6 +1165,24 @@ def cb_finalize_ticket():
         
     if isinstance(ticket_date, datetime):
         ticket_date = ticket_date.date()
+        
+    cleaned_date = sanitize_ticket_date(ticket_date)
+    if cleaned_date:
+        ticket_date = cleaned_date
+        
+    today_date = datetime.today().date()
+    if ticket_date > today_date:
+        st.session_state["finalize_error"] = f"La data ({ticket_date.strftime('%d/%m/%Y')}) no pot ser superior a la data actual ({today_date.strftime('%d/%m/%Y')})!"
+        return
+        
+    # Si la data fa més d'una setmana (més de 7 dies), cal preguntar si és correcta
+    days_old = (today_date - ticket_date).days
+    if days_old > 7 and st.session_state.get("ticket_date_confirmed_for") != str(ticket_date):
+        st.session_state["ask_confirm_old_ticket_date"] = {
+            "date": ticket_date,
+            "days": days_old
+        }
+        return
         
     mes_val = month_translations[CATALAN_MONTHS[ticket_date.month - 1]]
     any_val = ticket_date.year
@@ -1300,7 +1408,7 @@ def cb_finalize_ticket():
             del st.session_state[k]
 
     # Clear pending ticket state and any lingering messages
-    for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum', 'last_ocr_text', 'finalize_error', 'ticket_msg_error', 'ticket_msg_success', 'manual_input_error']:
+    for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum', 'last_ocr_text', 'finalize_error', 'ticket_msg_error', 'ticket_msg_success', 'manual_input_error', 'ticket_date_confirmed_for', 'ask_confirm_old_ticket_date']:
         st.session_state.pop(key, None)
     try:
         from core.alerts import get_global_alerts
@@ -1316,6 +1424,27 @@ def cb_finalize_ticket():
 
 def render_compres_super_interface():
     global df_super, df_desp
+
+    @st.dialog("📅 Confirmació de Data del Tiquet")
+    def dialog_confirm_old_date(target_date, days_ago):
+        st.warning(f"⚠️ La data d'aquest tiquet és **{target_date.strftime('%d/%m/%Y')}**, que és de fa **{days_ago} dies** (més d'una setmana d'antiguitat).")
+        st.markdown("És correcta aquesta data per al tiquet?")
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("✅ Sí, és correcta i vull desar", type="primary", use_container_width=True):
+                st.session_state["ticket_date_confirmed_for"] = str(target_date)
+                st.session_state.pop("ask_confirm_old_ticket_date", None)
+                cb_finalize_ticket()
+                st.rerun()
+        with c2:
+            if st.button("❌ No, vull canviar-la", use_container_width=True):
+                st.session_state.pop("ask_confirm_old_ticket_date", None)
+                st.rerun()
+
+    if "ask_confirm_old_ticket_date" in st.session_state and st.session_state["ask_confirm_old_ticket_date"]:
+        dlg_info = st.session_state["ask_confirm_old_ticket_date"]
+        dialog_confirm_old_date(dlg_info["date"], dlg_info["days"])
+
     col_h1, col_h2 = st.columns([0.94, 0.06], vertical_alignment="bottom")
     with col_h1:
         st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
@@ -1642,6 +1771,8 @@ RUTINA DE CONTROL: MAI confonguis aquest tipus d'IVA amb el preu_total. Verifica
 
 RUTINA PES/FRUITA: Si un producte es ven a pes (ex: 0.915 kg x 1.50 €/kg = 1.37 €), la 'quantitat' ha de ser SEMPRE 1 (mai el pes decimal). El 'preu_unitari' i el 'preu_total' han de ser IGUALS al preu final de la línia (ex: 1.37). No utilitzis mai el preu per quilo ni el pes en aquest JSON.
 
+RUTINA DATA: L'any actual és 2026. Els tiquets de compra NUNCA són del futur. En tiquets matricials, l'any '26' sovint és confós per l'OCR com '76' o '28' (ex: 18/08/76 o 03/09/28). Interpreta SEMPRE '26' com l'any 2026. MAI retornis un any futur (com 2027, 2028 o 2076).
+
 Extreu i neteja els productes en un format JSON estricte:
 {{
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
@@ -1695,6 +1826,8 @@ IMPORTANT: En tiquets com els de bonArea / AreaGuissona, sovint apareix el tipus
 RUTINA DE CONTROL: MAI confonguis aquest tipus d'IVA amb el preu_total. Verifica sempre que la multiplicació quantitat * preu_unitari tingui sentit respecte al preu_total.
 
 RUTINA PES/FRUITA: Si un producte es ven a pes (ex: 0.915 kg x 1.50 €/kg = 1.37 €), la 'quantitat' ha de ser SEMPRE 1 (mai un pes decimal). El 'preu_unitari' i el 'preu_total' han de ser IGUALS al preu final de la línia (ex: 1.37). No utilitzis mai el preu per quilo ni el pes en aquest JSON.
+
+RUTINA DATA: L'any actual és 2026. Els tiquets de compra NUNCA són del futur. En tiquets matricials, l'any '26' sovint sembla '76' o '28' (ex: 18/08/76 o 03/09/28). Interpreta SEMPRE '26' com l'any 2026. MAI retornis un any futur (com 2027, 2028 o 2076).
 
 L'estructura del JSON ha de ser EXACTAMENT aquesta:
 {
@@ -1777,12 +1910,10 @@ Retorna ÚNICAMENT l'objecte JSON.
                     # 2. Update date
                     data_trobada = data.get("data", "")
                     if data_trobada:
-                        try:
-                            d_val, m_val, y_val = map(int, data_trobada.split('/'))
-                            st.session_state["ticket_date"] = datetime(y_val, m_val, d_val).date()
-                            st.session_state["ticket_date_widget"] = datetime(y_val, m_val, d_val).date()
-                        except Exception:
-                            pass
+                        cand = sanitize_ticket_date(data_trobada)
+                        if cand:
+                            st.session_state["ticket_date"] = cand
+                            st.session_state["ticket_date_widget"] = cand
 
                     # 3. Mapejar els articles
                     parsed = []
@@ -1839,8 +1970,27 @@ Retorna ÚNICAMENT l'objecte JSON.
     with col_row2_1:
         col_d1, col_d2 = st.columns([3, 1], vertical_alignment="bottom")
         with col_d1:
-            ticket_date = st.date_input("Data:", value=st.session_state.get("ticket_date") or datetime.today().date(), format="DD/MM/YYYY", key="ticket_date_widget")
+            raw_tdate = st.session_state.get("ticket_date") or datetime.today().date()
+            if isinstance(raw_tdate, datetime):
+                raw_tdate = raw_tdate.date()
+            cleaned_tdate = sanitize_ticket_date(raw_tdate)
+            if not cleaned_tdate or cleaned_tdate > datetime.today().date():
+                cleaned_tdate = datetime.today().date()
+                st.session_state["ticket_date"] = cleaned_tdate
+                st.session_state["ticket_date_widget"] = cleaned_tdate
+                
+            ticket_date = st.date_input(
+                "Data:", 
+                value=cleaned_tdate, 
+                max_value=datetime.today().date(), 
+                format="DD/MM/YYYY", 
+                key="ticket_date_widget"
+            )
             st.session_state["ticket_date"] = ticket_date
+            
+            days_old = (datetime.today().date() - ticket_date).days
+            if days_old > 7:
+                st.caption(f"⚠️ Data de fa {days_old} dies (> 1 setmana)")
         with col_d2:
             st.button("Avui", key="btn_avui", on_click=cb_set_date_today)
                 
@@ -2633,7 +2783,7 @@ def render_ingres_despesa_general_interface():
             st.session_state[f"desp_forma_pago_{version}"] = "Compte"
         forma_pago = st.selectbox("Forma de Pagament", pay_methods_opt, key=f"desp_forma_pago_{version}")
     with r1_col3:
-        data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"desp_data_{version}")
+        data_val = st.date_input("Data", value=datetime.today(), max_value=datetime.today().date(), format="DD/MM/YYYY", key=f"desp_data_{version}")
         mes_val = month_translations[CATALAN_MONTHS[data_val.month - 1]]
         any_val = data_val.year
     with r1_col4:
@@ -2811,6 +2961,8 @@ def render_ingres_despesa_general_interface():
             st.error("⚠️ Per a op_banc s'ha d'introduir un import (Càrrec o Ingrés).")
         elif import_carg == 0.0 and import_ing == 0.0:
             st.error("⚠️ S'ha d'introduir un import vàlid (Càrrec o Ingrés).")
+        elif data_val > datetime.today().date():
+            st.error("❌ La data no pot ser superior a la data actual.")
         elif not banc or (banc not in ["Efectiu", "Casa", "CASA"] and not forma_pago) or not cat_val or not actual_concept or actual_concept == "➕ Afegir nou..." or not grup_val:
             st.error("⚠️ Tots els camps (Banc, Categoria, Concepte i Grup) han d'estar omplerts (excepte Forma de Pagament si el banc és Efectiu o Casa).")
         elif is_gas_cat and (gas_preu_l is None or gas_preu_l <= 0.0):
