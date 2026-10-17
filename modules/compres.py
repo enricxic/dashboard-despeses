@@ -1606,6 +1606,11 @@ def render_compres_super_interface():
     pending_ticket_id = st.session_state.get('pending_ticket_id')
     pendents = pd.DataFrame()
     if 'ticketPendent' in df_desp.columns and not df_desp.empty:
+        # Excloure qualsevol tiquet que ja tingui productes desglossats a compresSuper
+        if not df_super.empty and 'IdDespesa' in df_super.columns:
+            desglossats_ids = set(pd.to_numeric(df_super['IdDespesa'], errors='coerce').dropna().astype(int).unique())
+            df_desp.loc[df_desp['ID_mov'].isin(desglossats_ids), 'ticketPendent'] = False
+            st.session_state['df_desp'] = df_desp
         pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
 
     # Línia compartida: Info tiquet pendent (Foto 2) + Upload (Foto 3) sota de Compres Super
@@ -3241,7 +3246,10 @@ def render_ingres_despesa_general_interface():
     st.write("---")
     st.markdown("<h5 style='color:#f39c12; margin-top: 5px; margin-bottom: 5px;'>🛒 Tickets Pendents de Desglossar</h5>", unsafe_allow_html=True)
     
-    pendents = df_desp[df_desp['ticketPendent'] == True] if 'ticketPendent' in df_desp.columns else pd.DataFrame()
+    pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])] if 'ticketPendent' in df_desp.columns else pd.DataFrame()
+    if not df_super.empty and 'IdDespesa' in df_super.columns and not pendents.empty:
+        desglossats_ids = set(pd.to_numeric(df_super['IdDespesa'], errors='coerce').dropna().astype(int).unique())
+        pendents = pendents[~pendents['ID_mov'].isin(desglossats_ids)]
     if not pendents.empty:
         for idx, row in pendents.iterrows():
             cols = st.columns([1, 2, 2, 2, 2, 3])

@@ -184,8 +184,15 @@ def get_global_alerts():
                 if df_target is None or df_target.empty:
                     df_target = df_desp
                     
+                df_sup_check = st.session_state.get("df_super")
+                if df_sup_check is None or df_sup_check.empty:
+                    df_sup_check = df_super
+                    
                 if df_target is not None and not df_target.empty and 'ticketPendent' in df_target.columns:
-                    pendents = df_target[df_target['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
+                    pendents = df_target[df_target['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])].copy()
+                    if df_sup_check is not None and not df_sup_check.empty and 'IdDespesa' in df_sup_check.columns and not pendents.empty:
+                        desglossats_ids = set(pd.to_numeric(df_sup_check['IdDespesa'], errors='coerce').dropna().astype(int).unique())
+                        pendents = pendents[~pendents['ID_mov'].isin(desglossats_ids)]
                     if not pendents.empty:
                         n_pend = len(pendents)
                         t_details = []
