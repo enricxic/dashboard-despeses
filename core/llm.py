@@ -35,7 +35,7 @@ def _call_gemini(
     mime_type: str = "image/jpeg"
 ) -> Tuple[bool, str, float]:
     models_to_try = [model_name]
-    for alt in ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-flash-latest", "gemini-pro-latest"]:
+    for alt in ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.5-pro", "gemini-flash-latest", "gemini-pro-latest"]:
         if alt not in models_to_try:
             models_to_try.append(alt)
         

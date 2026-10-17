@@ -1019,8 +1019,8 @@ def cb_clear_ticket():
     for k in list(st.session_state.keys()):
         if k.startswith("btn_edit_row_") or k.startswith("btn_del_row_"):
             del st.session_state[k]
-    if "finalize_error" in st.session_state:
-        del st.session_state["finalize_error"]
+    for k in ["finalize_error", "ticket_msg_error", "ticket_msg_success", "manual_input_error", "pending_ticket_mismatch"]:
+        st.session_state.pop(k, None)
     st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
@@ -1299,10 +1299,9 @@ def cb_finalize_ticket():
         if k.startswith("btn_edit_row_") or k.startswith("btn_del_row_"):
             del st.session_state[k]
 
-    # Clear pending ticket state if any
-    for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum', 'last_ocr_text']:
-        if key in st.session_state:
-            del st.session_state[key]
+    # Clear pending ticket state and any lingering messages
+    for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum', 'last_ocr_text', 'finalize_error', 'ticket_msg_error', 'ticket_msg_success', 'manual_input_error']:
+        st.session_state.pop(key, None)
             
     st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
@@ -1343,6 +1342,7 @@ def render_compres_super_interface():
         del st.session_state["ticket_msg_error"]
     if "finalize_error" in st.session_state:
         st.error(st.session_state["finalize_error"])
+        del st.session_state["finalize_error"]
 
     if "ticket_items" not in st.session_state:
         st.session_state["ticket_items"] = []
@@ -1444,9 +1444,14 @@ def render_compres_super_interface():
                 horizontal=False,
                 help="Híbrid: Tesseract OCR o lectura de PDF extreu el text i la IA seleccionada n'estructura els articles. Visió Pura: envia la imatge o PDF directament al model multimodal (Gemini)."
             )
+        use_vision_only = "Visió Pura" in ocr_mode
         with col_ocr_ai:
             from core.llm_ui import render_ai_selector
-            prov, mod, ai_key = render_ai_selector(key_prefix="compres_ocr", default_model="Gemini (2.5 Flash)")
+            prov, mod, ai_key = render_ai_selector(
+                key_prefix="compres_ocr", 
+                default_model="Gemini (2.5 Flash)",
+                vision_only=use_vision_only
+            )
             
         # Si s'ha canviat de model després d'un error, netegem processed_file_id per reintentar immediatament amb el nou model
         last_mod = st.session_state.get("last_ocr_model")
@@ -2039,6 +2044,7 @@ Retorna ÚNICAMENT l'objecte JSON.
     # Render error if validation failed in callback
     if "manual_input_error" in st.session_state:
         st.error(st.session_state["manual_input_error"])
+        del st.session_state["manual_input_error"]
 
     # Table Grid
     if items:
