@@ -3340,8 +3340,13 @@ def render():
         with col_title_c:
             st.markdown("<h2 style='margin:0; color:#f39c12;'>Compres Super i Stock</h2>", unsafe_allow_html=True)
     with col_t2:
-        if st.button("🔙 Inici", use_container_width=True):
+        if st.button("🔙 Inici", use_container_width=True, key="btn_nav_inici_compres"):
             st.session_state.current_module = None
+            if "mod" in st.query_params:
+                try:
+                    del st.query_params["mod"]
+                except Exception:
+                    pass
             st.rerun()
 
     @st.dialog("⚠️ Avís: Diferència amb la Previsió")

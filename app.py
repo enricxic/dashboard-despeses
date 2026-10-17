@@ -162,23 +162,24 @@ if not alerts_html:
 # Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu)
 if "mod" in st.query_params:
     selected_mod = st.query_params.get("mod")
-    if st.session_state.get("current_module") != selected_mod:
-        for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar", "show_afegir_any_comptable"]:
-            st.session_state.pop(k, None)
-    st.session_state.current_module = selected_mod
-    if "db" in st.query_params:
-        st.session_state["db_to_open"] = st.query_params.get("db")
-    try:
-        del st.query_params["mod"]
-    except Exception:
-        pass
-    st.rerun()
+    if selected_mod:
+        if st.session_state.get("current_module") != selected_mod:
+            for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar", "show_afegir_any_comptable"]:
+                st.session_state.pop(k, None)
+            st.session_state.current_module = selected_mod
+        if "db" in st.query_params:
+            st.session_state["db_to_open"] = st.query_params.get("db")
 
 # Comprovar si s'ha sol·licitat una acció des del menú superior (Home, Reset, Logout, DB Actions, Edit JSON)
 if "action" in st.query_params:
     act = st.query_params.get("action")
     if act == "home":
         st.session_state.current_module = None
+        if "mod" in st.query_params:
+            try:
+                del st.query_params["mod"]
+            except Exception:
+                pass
     elif act == "reset":
         for k in list(st.session_state.keys()):
             del st.session_state[k]
@@ -322,7 +323,18 @@ if st.session_state.get("db_backup_toast"):
     del st.session_state["db_backup_toast"]
 
 if 'current_module' not in st.session_state:
-    st.session_state.current_module = None
+    st.session_state.current_module = st.query_params.get("mod", None)
+
+# Sincronitzar query param 'mod' amb l'estat del mòdul actiu
+if st.session_state.get("current_module"):
+    if st.query_params.get("mod") != st.session_state.current_module:
+        st.query_params["mod"] = st.session_state.current_module
+else:
+    if "mod" in st.query_params:
+        try:
+            del st.query_params["mod"]
+        except Exception:
+            pass
 
 def get_project_json_files():
     json_files = []

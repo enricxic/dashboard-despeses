@@ -224,4 +224,9 @@ def render_header_with_avatar(title_html: str, module_name: str = None, extra_bu
         with cols[col_idx]:
             if st.button("🔙 Inici", use_container_width=True, key=f"btn_nav_inici_{module_name}"):
                 st.session_state.current_module = None
+                if "mod" in st.query_params:
+                    try:
+                        del st.query_params["mod"]
+                    except Exception:
+                        pass
                 st.rerun()

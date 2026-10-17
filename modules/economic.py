@@ -1163,6 +1163,11 @@ def render(view_mode="economic"):
     with col_super:
         if st.button("🔙 Inici", use_container_width=True, key=f"btn_back_{view_mode}"):
             st.session_state.current_module = None
+            if "mod" in st.query_params:
+                try:
+                    del st.query_params["mod"]
+                except Exception:
+                    pass
             st.rerun()
 
     # ----------------- MODAL: AFEGIR NOU ANY COMPTABLE -----------------
@@ -2727,7 +2732,7 @@ def render(view_mode="economic"):
                     month_desp_filtered = month_desp[(month_desp['Idcategoria'] != 'op_banc') & (month_desp['grup'] != 'op_banc')]
                 
                     grouped_desp = month_desp_filtered.groupby('Idcategoria')['Import càrrec'].sum().reset_index()
-                    grouped_desp = grouped_desp[grouped_desp['Import càrrec'] > 0].sort_values(by='Import càrrec', ascending=False)
+                    grouped_desp = grouped_desp[grouped_desp['Import càrrec'] > 0].sort_values(by='Import càrrec', ascending=False).reset_index(drop=True)
                 
                     try:
                         event = st.dataframe(
@@ -2736,6 +2741,7 @@ def render(view_mode="economic"):
                             hide_index=True,
                             on_select="rerun",
                             selection_mode="single-row",
+                            key=f"df_cats_desp_{selected_year}_{selected_month_data}",
                             column_config={
                                 "Idcategoria": st.column_config.TextColumn("Idcategoria"),
                                 "Import càrrec": st.column_config.NumberColumn("Import càrrec", format="%.2f €", width="small")
@@ -2747,24 +2753,57 @@ def render(view_mode="economic"):
                     st.metric("Total Gastat", f"{grouped_desp['Import càrrec'].sum():,.2f} €")
                 
                     # Show details of selected group if clicked
-                    if event and 'rows' in event.selection and event.selection['rows']:
-                        selected_row_idx = event.selection['rows'][0]
-                        selected_cat = grouped_desp.iloc[selected_row_idx]['Idcategoria']
-                        st.write("")
-                        st.markdown(f"**🔍 Desglòs de despeses: {selected_cat}**")
-                    
-                        cat_details = month_desp_filtered[month_desp_filtered['Idcategoria'] == selected_cat][
-                            ['Data', 'FormaPago', 'Idconcepte', 'Import càrrec', 'Comentari']
-                        ].copy()
-                    
-                        try:
-                            st.dataframe(
-                                cat_details.style.format({'Import càrrec': '{:,.2f} €'}),
-                                use_container_width=True,
-                                hide_index=True
-                            )
-                        except Exception as e:
-                            st.error(f"Error rendering cat_details: {e}")
+                    sel_rows = []
+                    if event and hasattr(event, "selection") and event.selection is not None:
+                        if isinstance(event.selection, dict):
+                            sel_rows = event.selection.get("rows", [])
+                        elif hasattr(event.selection, "rows"):
+                            sel_rows = event.selection.rows or []
+
+                    if sel_rows:
+                        selected_row_idx = sel_rows[0]
+                        if 0 <= selected_row_idx < len(grouped_desp):
+                            selected_cat = grouped_desp.iloc[selected_row_idx]['Idcategoria']
+                            st.write("")
+                            st.markdown(f"**🔍 Desglòs de despeses: {selected_cat}**")
+                        
+                            desired_cols = ['Data', 'FormaPago', 'Idconcepte', 'Import càrrec', 'Comentari']
+                            avail_cols = [c for c in desired_cols if c in month_desp_filtered.columns]
+                            cat_details = month_desp_filtered[month_desp_filtered['Idcategoria'] == selected_cat][avail_cols].copy()
+                            if 'Data' in cat_details.columns:
+                                try:
+                                    cat_details = cat_details.sort_values(by='Data', ascending=False)
+                                except Exception:
+                                    pass
+                        
+                            try:
+                                col_cfg_details = {}
+                                if 'Import càrrec' in cat_details.columns:
+                                    col_cfg_details['Import càrrec'] = st.column_config.NumberColumn("Import càrrec", format="%.2f €")
+                                st.dataframe(
+                                    cat_details,
+                                    use_container_width=True,
+                                    hide_index=True,
+                                    column_config=col_cfg_details,
+                                    key=f"df_cat_details_{selected_year}_{selected_month_data}_{selected_cat}"
+                                )
+                            except Exception as e:
+                                st.error(f"Error rendering cat_details: {e}")
+
+                            cat_lower = str(selected_cat).strip().lower()
+                            if any(k in cat_lower for k in ['menjar', 'alimentaci', 'super']):
+                                st.write("")
+                                c_btn1, c_btn2 = st.columns(2)
+                                with c_btn1:
+                                    if st.button("🍽️ Anar a Menús i Cuina", key=f"btn_nav_cuina_{selected_year}_{selected_month_data}", use_container_width=True):
+                                        st.session_state.current_module = "modules.menjar"
+                                        st.query_params["mod"] = "modules.menjar"
+                                        st.rerun()
+                                with c_btn2:
+                                    if st.button("🛒 Anar a Compres Super", key=f"btn_nav_compres_{selected_year}_{selected_month_data}", use_container_width=True):
+                                        st.session_state.current_module = "modules.compres"
+                                        st.query_params["mod"] = "modules.compres"
+                                        st.rerun()
                 else:
                     st.info("No hi ha dades de despeses per aquest mes.")
     
