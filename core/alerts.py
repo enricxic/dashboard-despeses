@@ -18,18 +18,24 @@ def load_alerts_config():
             }
         }
 
-@st.cache_data(ttl=600, show_spinner=False)
 def get_global_alerts():
     alerts = []
     config = load_alerts_config()
     
     try:
-        # Assegurar que només les dades necessàries estan carregades per optimitzar l'arrencada
+        # Prioritzar df_desp carregat a la sessió activa
+        df_desp = None
+        if "df_desp" in st.session_state and isinstance(st.session_state["df_desp"], pd.DataFrame) and not st.session_state["df_desp"].empty:
+            df_desp = st.session_state["df_desp"]
+            
         data = load_dashboard_data(tables_to_load=['despeses', 'kmCotxe', 'limitsDespeses'])
         if data and len(data) >= 10:
-            df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_cartera, df_est, df_limits, df_pag = data
+            d_desp, df_ing, df_super, df_gas, df_km, df_hip, df_cartera, df_est, df_limits, df_pag = data
+            if df_desp is None or df_desp.empty:
+                df_desp = d_desp
         else:
-            return alerts
+            if df_desp is None:
+                return alerts
             
         # 1. Alerta de canvi d'oli (Cotxe)
         if df_km is not None and not df_km.empty:
@@ -165,13 +171,17 @@ def get_global_alerts():
         # 4. Alerta Tiquets de súper pendents de desglossar
         tiquets_cfg = config.get("regles_alertes", {}).get("tiquets_pendents", {})
         if tiquets_cfg.get("mostrar_a_campana", True):
-            if df_desp is not None and not df_desp.empty and 'ticketPendent' in df_desp.columns:
-                pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
+            df_target = st.session_state.get("df_desp")
+            if df_target is None or df_target.empty:
+                df_target = df_desp
+                
+            if df_target is not None and not df_target.empty and 'ticketPendent' in df_target.columns:
+                pendents = df_target[df_target['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
                 if not pendents.empty:
                     n_pend = len(pendents)
                     t_details = []
                     for _, p_row in pendents.iterrows():
-                        p_id = p_row['ID_mov']
+                        p_id = str(p_row['ID_mov']).replace('.0', '')
                         p_super = str(p_row.get('Idconcepte', '')).capitalize()
                         try:
                             p_imp = f"{float(p_row['Import càrrec']):.2f} €"
@@ -190,3 +200,12 @@ def get_global_alerts():
         print(f"Error generant alertes globals: {e}")
         
     return alerts
+
+def _clear_alerts_cache():
+    try:
+        from core.db import load_dashboard_data
+        load_dashboard_data.clear()
+    except Exception:
+        pass
+
+get_global_alerts.clear = _clear_alerts_cache

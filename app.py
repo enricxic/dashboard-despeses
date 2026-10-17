@@ -692,6 +692,16 @@ def render_traditional_menubar():
     
     icones_actives = app_cfg.get("icones_actives", {})
     
+    from core.alerts import get_global_alerts
+    current_alerts = get_global_alerts()
+    st.session_state["global_alerts_list"] = current_alerts
+    current_alerts_html = ""
+    for al in current_alerts:
+        color = "#fecaca" if al['type'] == 'error' else "#fef08a"
+        current_alerts_html += f'<div style="padding: 8px; margin-bottom: 5px; background: {color}; color: #1e293b; border-radius: 4px; font-size: 0.8rem; line-height: 1.2;"><strong>{al["icon"]} {al["title"]}</strong><br>{al["message"]}</div>'
+    if not current_alerts_html:
+        current_alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
+    
     json_files = get_project_json_files()
     json_items_html = ""
     for jf in json_files:
@@ -944,9 +954,9 @@ div.block-container {{
 <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
 {offline_badge_html}
 <div class="menu-item" style="position: relative;">
-<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer; padding: 0 4px;">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
+<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer; padding: 0 4px;">🔔<span style="background: {'red' if len(current_alerts) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(current_alerts)}</span></span>
 <div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
-{alerts_html}
+{current_alerts_html}
 </div>
 </div>
 <!-- Avatar Administrador -->
