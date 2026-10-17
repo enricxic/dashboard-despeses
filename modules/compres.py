@@ -1428,19 +1428,12 @@ def render_compres_super_interface():
             
     with col_hdr4:
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
-        uploaded_file = st.file_uploader("📷 Llegir ticket", type=["png", "jpg", "jpeg"], label_visibility="collapsed", key=uploader_key)
-        
-        candidates = [f for f in [uploaded_file, st.session_state.get("scanned_file")] if f is not None]
-        chosen_file = None
-        for f in candidates:
-            fid = f"{f.name}_{f.size}"
-            if fid != st.session_state.get("processed_file_id"):
-                chosen_file = f
-                break
-        if chosen_file is None and candidates:
-            chosen_file = candidates[0]
-            
-        uploaded_file = chosen_file
+        uploaded_file = st.file_uploader(
+            "📷 Llegir ticket",
+            type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "jfif", "bmp"],
+            label_visibility="collapsed",
+            key=uploader_key
+        )
         
         st.write("")
         col_ocr_m, col_ocr_ai = st.columns([1.3, 1.0], vertical_alignment="bottom")
@@ -1449,7 +1442,7 @@ def render_compres_super_interface():
                 "Mètode d'Escaneig",
                 ["⚡ Híbrid (Tesseract+IA, recomanat)", "👁️ Visió Pura (Directa)"],
                 horizontal=False,
-                help="Híbrid: Tesseract OCR extreu el text i la IA seleccionada n'estructura els articles (funciona amb totes les IA i estalvia saturació). Visió Pura: envia la imatge directament a un model multimodal (Gemini)."
+                help="Híbrid: Tesseract OCR o lectura de PDF extreu el text i la IA seleccionada n'estructura els articles. Visió Pura: envia la imatge o PDF directament al model multimodal (Gemini)."
             )
         with col_ocr_ai:
             from core.llm_ui import render_ai_selector
@@ -1464,20 +1457,26 @@ def render_compres_super_interface():
         if uploaded_file is not None:
             col_f1, col_f2 = st.columns([3, 1], vertical_alignment="center")
             with col_f1:
-                st.caption(f"📁 **Fitxer:** `{uploaded_file.name}`")
+                size_kb = round(uploaded_file.size / 1024, 1) if hasattr(uploaded_file, 'size') else 0
+                st.caption(f"📁 **Fitxer:** `{uploaded_file.name}` ({size_kb} KB)")
             with col_f2:
                 file_id = f"{uploaded_file.name}_{uploaded_file.size}"
                 if st.session_state.get("ocr_failed", False) or st.session_state.get("processed_file_id") == file_id:
                     if st.button("🔄 Reintentar", key="btn_retry_ocr_ui", help="Torna a passar el tiquet per la IA"):
-                        if "processed_file_id" in st.session_state:
-                            del st.session_state["processed_file_id"]
+                        st.session_state.pop("processed_file_id", None)
+                        st.session_state.pop("ocr_failed", None)
                         st.rerun()
         
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-            if st.session_state.get("processed_file_id") != file_id:
+            # Processar si és un fitxer nou o si el tiquet actual està buit
+            if st.session_state.get("processed_file_id") != file_id or not st.session_state.get("ticket_items"):
                 st.session_state["processed_file_id"] = file_id
-                if uploaded_file.name.endswith(".txt"):
+                fname_lower = uploaded_file.name.lower()
+                is_txt = fname_lower.endswith(".txt")
+                is_pdf = fname_lower.endswith(".pdf")
+                
+                if is_txt:
                     try:
                         text_content = uploaded_file.read().decode("utf-8")
                         st.session_state["last_ocr_text"] = text_content
@@ -1486,6 +1485,7 @@ def render_compres_super_interface():
                         if not st.session_state.get("ticket_super_val"):
                             st.session_state["ticket_msg_error"] = "⚠️ No s'ha detectat automàticament el supermercat. Si us plau, selecciona'l al desplegable inferior perquè es puguin processar els articles."
                             st.session_state["ticket_items"] = []
+                            st.session_state.pop("processed_file_id", None)
                             st.rerun()
                             
                         st.session_state["ticket_items"] = parsed
@@ -1493,6 +1493,7 @@ def render_compres_super_interface():
                         st.session_state["ticket_msg_success"] = f"Tiquet de text llegit correctament! S'han trobat {len(parsed)} línies."
                         st.rerun()
                     except Exception as e:
+                        st.session_state.pop("processed_file_id", None)
                         st.session_state["ticket_msg_error"] = f"Error al llegir el tiquet de text: {str(e)}"
                         st.rerun()
                 else:
@@ -1507,26 +1508,62 @@ def render_compres_super_interface():
                         st.session_state["last_ocr_model"] = mod
                         use_hybrid = "Híbrid" in ocr_mode
                         raw_text = ""
+                        image_bytes_to_send = None
                         
-                        # Si l'usuari tria Visió Pura però el model no té visió (ex. DeepSeek, Llama),
-                        # fem fallback automàtic a Híbrid amb Tesseract per evitar errors d'API.
-                        if not use_hybrid and prov != "gemini":
-                            use_hybrid = True
-                            st.toast(f"ℹ️ El model {mod} no té visió d'imatges; s'usarà Tesseract OCR per extreure el text primer.", icon="ℹ️")
-
-                        if use_hybrid:
-                            with st.spinner("1/2 - Llegint tiquet amb Tesseract OCR..."):
+                        # Determinar tipus MIME segons extensió
+                        if is_pdf:
+                            mime_type = "application/pdf"
+                            # Intentar extracció directa de text del PDF primer amb pypdf
+                            try:
+                                from pypdf import PdfReader
                                 uploaded_file.seek(0)
-                                img = Image.open(io.BytesIO(uploaded_file.read()))
-                                try:
-                                    raw_text = pytesseract.image_to_string(img, lang='cat+spa')
-                                except Exception:
+                                reader = PdfReader(uploaded_file)
+                                pdf_pages_text = []
+                                for page in reader.pages:
+                                    t = page.extract_text()
+                                    if t:
+                                        pdf_pages_text.append(t)
+                                pdf_full_text = "\n".join(pdf_pages_text)
+                                if pdf_full_text.strip():
+                                    raw_text = pdf_full_text
+                                    use_hybrid = True
+                            except Exception as e_pdf:
+                                print(f"Error extraient text del PDF amb pypdf: {e_pdf}")
+                                
+                            if not raw_text.strip():
+                                # PDF basat en imatge -> enviar directament com application/pdf a Gemini Vision
+                                uploaded_file.seek(0)
+                                image_bytes_to_send = uploaded_file.read()
+                                use_hybrid = False
+                        else:
+                            if fname_lower.endswith(".png"):
+                                mime_type = "image/png"
+                            elif fname_lower.endswith(".webp"):
+                                mime_type = "image/webp"
+                            elif fname_lower.endswith(".bmp"):
+                                mime_type = "image/bmp"
+                            else:
+                                mime_type = "image/jpeg"
+
+                            # Si l'usuari tria Visió Pura però el model no té visió (ex. DeepSeek, Llama),
+                            # fem fallback automàtic a Híbrid amb Tesseract per evitar errors d'API.
+                            if not use_hybrid and prov != "gemini":
+                                use_hybrid = True
+                                st.toast(f"ℹ️ El model {mod} no té visió d'imatges; s'usarà Tesseract OCR per extreure el text primer.", icon="ℹ️")
+
+                            if use_hybrid:
+                                with st.spinner("1/2 - Llegint tiquet amb Tesseract OCR..."):
+                                    uploaded_file.seek(0)
+                                    img = Image.open(io.BytesIO(uploaded_file.read()))
                                     try:
-                                        raw_text = pytesseract.image_to_string(img)
-                                    except Exception as e_tess:
-                                        raw_text = ""
-                                        print(f"Tesseract OCR no disponible: {e_tess}. S'utilitzarà visió multimodal si el model ho suporta.")
-                                        use_hybrid = False
+                                        raw_text = pytesseract.image_to_string(img, lang='cat+spa')
+                                    except Exception:
+                                        try:
+                                            raw_text = pytesseract.image_to_string(img)
+                                        except Exception as e_tess:
+                                            raw_text = ""
+                                            print(f"Tesseract OCR no disponible: {e_tess}. S'utilitzarà visió multimodal si el model ho suporta.")
+                                            use_hybrid = False
                                 
                         if use_hybrid and raw_text.strip():
                             with st.spinner(f"2/2 - Endreçant i estructurant dades amb IA ({mod})..."):
@@ -1566,28 +1603,25 @@ Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes 
                                     raise Exception(f"Error cridant la IA ({mod}): {response_text}")
                         else:
                             with st.spinner(f"Llegint tiquet amb IA ({mod} Vision)..."):
-                                mime_type = "image/jpeg"
-                                if uploaded_file.name.lower().endswith(".png"):
-                                    mime_type = "image/png"
-                                    
-                                uploaded_file.seek(0)
-                                try:
-                                    img_to_resize = Image.open(io.BytesIO(uploaded_file.read()))
-                                    if img_to_resize.mode in ("RGBA", "P"):
-                                        img_to_resize = img_to_resize.convert("RGB")
-                                    
-                                    max_size = 1800
-                                    if max(img_to_resize.size) > max_size:
-                                        img_to_resize.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-                                        
-                                    buffer = io.BytesIO()
-                                    img_to_resize.save(buffer, format="JPEG", quality=85)
-                                    image_bytes_to_send = buffer.getvalue()
-                                    mime_type = "image/jpeg"
-                                except Exception as e_img:
-                                    print(f"Error comprimint imatge: {e_img}")
+                                if image_bytes_to_send is None:
                                     uploaded_file.seek(0)
-                                    image_bytes_to_send = uploaded_file.read()
+                                    try:
+                                        img_to_resize = Image.open(io.BytesIO(uploaded_file.read()))
+                                        if img_to_resize.mode in ("RGBA", "P"):
+                                            img_to_resize = img_to_resize.convert("RGB")
+                                        
+                                        max_size = 1800
+                                        if max(img_to_resize.size) > max_size:
+                                            img_to_resize.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                                            
+                                        buffer = io.BytesIO()
+                                        img_to_resize.save(buffer, format="JPEG", quality=85)
+                                        image_bytes_to_send = buffer.getvalue()
+                                        mime_type = "image/jpeg"
+                                    except Exception as e_img:
+                                        print(f"Error comprimint imatge: {e_img}")
+                                        uploaded_file.seek(0)
+                                        image_bytes_to_send = uploaded_file.read()
                                 
                                 prompt = """Ets un expert en extracció de dades de tiquets de compra.
 Llegeix aquest tiquet de supermercat i retorna les dades en un format JSON net i estricte.
@@ -1730,7 +1764,8 @@ Retorna ÚNICAMENT l'objecte JSON.
                         st.rerun()
                     except Exception as e:
                         st.session_state["ocr_failed"] = True
-                        st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {str(e)}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior i reintentar."
+                        st.session_state.pop("processed_file_id", None)
+                        st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {str(e)}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior o prémer Reintentar."
                         st.rerun()
         
     # Row 2: Data, Super, Import, Nº Despesa

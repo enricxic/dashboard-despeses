@@ -1,14 +1,14 @@
 import streamlit as st
 
-def render_ai_selector(key_prefix="global", default_model="Gemini (1.5 Pro)") -> tuple[str, str, str]:
+def render_ai_selector(key_prefix="global", default_model="Gemini (2.5 Flash)") -> tuple[str, str, str]:
     """
     Renderitza un desplegable per seleccionar el motor d'IA.
     Retorna: provider, model_name, api_key
     """
     options = [
-        "Gemini (1.5 Pro)",
-        "DeepSeek (deepseek-chat)",
         "Gemini (2.5 Flash)",
+        "Gemini (2.5 Pro)",
+        "DeepSeek (deepseek-chat)",
         "Llama 3.1 70B",
         "Qwen 2.5 72B"
     ]
@@ -34,13 +34,13 @@ def render_ai_selector(key_prefix="global", default_model="Gemini (1.5 Pro)") ->
         prov = "openrouter"
         mod = "qwen/qwen-2.5-72b-instruct"
         ai_key = st.secrets.get("OPENROUTER_API_KEY", "")
-    elif "2.5 Flash" in selected:
+    elif "2.5 Pro" in selected:
         prov = "gemini"
-        mod = "gemini-2.5-flash"
+        mod = "gemini-2.5-pro"
         ai_key = st.secrets.get("GEMINI_API_KEY", "")
     else:
         prov = "gemini"
-        mod = "gemini-1.5-pro"
+        mod = "gemini-2.5-flash"
         ai_key = st.secrets.get("GEMINI_API_KEY", "")
         
     return prov, mod, ai_key
