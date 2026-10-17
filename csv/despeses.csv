@@ -6226,6 +6226,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4261;Efectiu;;21/11/2024;noviembre;2024;0.0;52.0;Càrrec;proveidor;Prolab;Àlbum Lidia Cerrillo;False
 4241;Efectiu;;17/11/2024;noviembre;2024;0.0;3.21;Càrrec;menjar;Fruiteria Deepak;;False
 4242;Efectiu;;17/11/2024;noviembre;2024;0.0;4.0;Càrrec;menjar;Can Rinsa;;False
+8176;TradeRep.;Dèbit;15/10/2026;octubre;2026;0.0;14.45;Càrrec;menjar;AreaGuissona;;False
 4251;Efectiu;;17/11/2024;noviembre;2024;0.0;4.74;Càrrec;menjar;Dia;;False
 4262;Efectiu;;25/11/2024;noviembre;2024;0.0;7.0;Càrrec;personal;Jordi;;False
 4263;Efectiu;;25/11/2024;noviembre;2024;0.0;7.0;Càrrec;menjar;Pa i pastisseria;;False
@@ -6255,6 +6256,8 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4314;BBVA;Compte;04/12/2024;diciembre;2024;0.0;14.63;Càrrec;assegurança;DP Morts Enric;;False
 4315;BBVA;Compte;05/12/2024;diciembre;2024;0.0;210.0;Càrrec;despesa_general;PJ Isabel;;False
 4316;BBVA;Compte;04/12/2024;diciembre;2024;0.0;20.98;Càrrec;assegurança;DP MP Mireia;;False
+8177;TradeRep.;Dèbit;16/10/2026;octubre;2026;0.0;62.04;Càrrec;menjar;BonPreu;;False
+8178;TradeRep.;Dèbit;16/10/2026;octubre;2026;0.0;16.01;Càrrec;neteja;BonPreu;;False
 4326;Efectiu;;06/12/2024;diciembre;2024;0.0;16.0;Càrrec;menjar;Pa i pastisseria;;False
 4327;Efectiu;;07/12/2024;diciembre;2024;0.0;20.0;Càrrec;manteniment;Altres mant.;Crema. Fira Vic;False
 4328;Efectiu;;07/12/2024;diciembre;2024;0.0;5.0;Càrrec;manteniment;Altres mant.;Sandal. Fira Vic;False
@@ -6289,6 +6292,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4385;Efectiu;;21/12/2024;diciembre;2024;0.0;3.0;Càrrec;personal;Jordi;;False
 4390;BBVA;VISA;21/12/2024;diciembre;2024;0.0;20.69;Càrrec;manteniment;Aliexpress;Disc dur portàtil;False
 4388;BBVA;VISA;08/12/2024;diciembre;2024;0.0;27.41;Càrrec;manteniment;Aliexpress;Aixeta Lavabo;False
+8179;TradeRep.;Dèbit;16/10/2026;octubre;2026;0.0;6.48;Càrrec;menjar;dia;;True
 4411;Efectiu;;21/12/2024;diciembre;2024;0.0;8.8;Càrrec;menjar;Pa i pastisseria;;False
 4417;BBVA;Compte;30/12/2024;diciembre;2024;0.0;58.95;Càrrec;despesa_general;Endesa;;False
 4418;Efectiu;;30/12/2024;diciembre;2024;0.0;15.0;Càrrec;menjar;Pa i pastisseria;;False

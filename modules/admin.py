@@ -1333,6 +1333,12 @@ def render():
             with c6:
                 dies_esdev = st.number_input("Antelació avís esdeveniments (dies)", min_value=1, max_value=60, value=esdeveniment.get("dies_antelacio", 7), key="num_esdev_dies")
             
+            st.markdown("---")
+            # Tiquets de súper pendents
+            st.markdown("#### 🛒 Tiquets de Súper Pendents")
+            tiquets_pend = regles.get("tiquets_pendents", {})
+            mostrar_tiquets = st.checkbox("Mostrar alertes de tiquets pendents de desglossar a la campana", value=tiquets_pend.get("mostrar_a_campana", True), key="chk_tiquets_show")
+            
             st.write("")
             _render_flash_message()
             
@@ -1351,7 +1357,10 @@ def render():
                         "mostrar_a_campana": mostrar_esdev,
                         "dies_antelacio": dies_esdev
                     },
-                    "medicacio": regles.get("medicacio", {"mostrar_a_campana": False})
+                    "medicacio": regles.get("medicacio", {"mostrar_a_campana": False}),
+                    "tiquets_pendents": {
+                        "mostrar_a_campana": mostrar_tiquets
+                    }
                 }
                 try:
                     with open(alerts_config_path, 'w', encoding='utf-8') as f:

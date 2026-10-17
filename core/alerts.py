@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 import streamlit as st
 from datetime import datetime
 import json
@@ -160,6 +160,30 @@ def get_global_alerts():
                         "icon": "⚠️",
                         "title": "Valor superat",
                         "message": ", ".join(exceeded)
+                    })
+                    
+        # 4. Alerta Tiquets de súper pendents de desglossar
+        tiquets_cfg = config.get("regles_alertes", {}).get("tiquets_pendents", {})
+        if tiquets_cfg.get("mostrar_a_campana", True):
+            if df_desp is not None and not df_desp.empty and 'ticketPendent' in df_desp.columns:
+                pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
+                if not pendents.empty:
+                    n_pend = len(pendents)
+                    t_details = []
+                    for _, p_row in pendents.iterrows():
+                        p_id = p_row['ID_mov']
+                        p_super = str(p_row.get('Idconcepte', '')).capitalize()
+                        try:
+                            p_imp = f"{float(p_row['Import càrrec']):.2f} €"
+                        except Exception:
+                            p_imp = f"{p_row.get('Import càrrec', '')} €"
+                        t_details.append(f"Nº {p_id} ({p_super} - {p_imp})")
+                    
+                    alerts.append({
+                        "type": "warning",
+                        "icon": "🛒",
+                        "title": f"Tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} de desglossar ({n_pend})",
+                        "message": f"Tens {n_pend} tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} de desglossar a Compres Súper: {', '.join(t_details)}."
                     })
                         
     except Exception as e:

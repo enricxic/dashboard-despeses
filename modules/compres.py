@@ -1302,6 +1302,11 @@ def cb_finalize_ticket():
     # Clear pending ticket state and any lingering messages
     for key in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum', 'last_ocr_text', 'finalize_error', 'ticket_msg_error', 'ticket_msg_success', 'manual_input_error']:
         st.session_state.pop(key, None)
+    try:
+        from core.alerts import get_global_alerts
+        get_global_alerts.clear()
+    except Exception:
+        pass
             
     st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
@@ -1396,63 +1401,88 @@ def render_compres_super_interface():
         st.session_state["added_supers"] = []
         
     pending_ticket_id = st.session_state.get('pending_ticket_id')
-    if pending_ticket_id:
-        col_pmsg, col_pcancel = st.columns([0.82, 0.18], vertical_alignment="center")
-        with col_pmsg:
-            imp_c = st.session_state.get('pending_import_carrec', '')
-            try:
-                imp_fmt = f"{float(imp_c):.2f} €"
-            except Exception:
-                imp_fmt = f"{imp_c} €"
-            st.info(f"🛒 **Desglossant ticket pendent:** Nº **{pending_ticket_id}** ({st.session_state.get('pending_super', '')} - {st.session_state.get('pending_data', '')} - **{imp_fmt}**)")
-        with col_pcancel:
-            if st.button("❌ Cancel·lar", key="btn_cancel_pending_ticket", help="Desvincular aquest tiquet pendent i crear-ne un de nou"):
-                for k in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum']:
-                    st.session_state.pop(k, None)
-                st.rerun()
-    else:
-        if 'ticketPendent' in df_desp.columns and not df_desp.empty:
-            pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
-            if not pendents.empty:
-                n_pend = len(pendents)
-                st.warning(f"⚠️ **Atenció:** Tens **{n_pend} tiquet{'s' if n_pend > 1 else ''} de súper pendent{'s' if n_pend > 1 else ''} de desglossar** procedent{'s' if n_pend > 1 else ''} de Despeses!")
-                with st.expander(f"👁️ Veure tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} ({n_pend})", expanded=True):
-                    for _, p_row in pendents.iterrows():
-                        p_id = p_row['ID_mov']
-                        p_data = p_row['Data']
-                        p_super = str(p_row['Idconcepte']).capitalize()
+    pendents = pd.DataFrame()
+    if 'ticketPendent' in df_desp.columns and not df_desp.empty:
+        pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
+
+    # Línia compartida: Info tiquet pendent (Foto 2) + Upload (Foto 3) sota de Compres Super
+    col_top_left, col_top_right = st.columns([0.60, 0.40], vertical_alignment="center")
+    
+    with col_top_left:
+        if pending_ticket_id:
+            col_pmsg, col_pcancel = st.columns([0.72, 0.28], vertical_alignment="center")
+            with col_pmsg:
+                imp_c = st.session_state.get('pending_import_carrec', '')
+                try:
+                    imp_fmt = f"{float(imp_c):.2f} €"
+                except Exception:
+                    imp_fmt = f"{imp_c} €"
+                st.markdown(f"<p style='margin:0; font-size:1.02rem;'>🛒 <b>Desglossant:</b> Nº <b>{pending_ticket_id}</b> — <b>{st.session_state.get('pending_super', '')}</b> ({st.session_state.get('pending_data', '')}) — <b>{imp_fmt}</b></p>", unsafe_allow_html=True)
+            with col_pcancel:
+                if st.button("❌ Desvincular", key="btn_cancel_pending_ticket", help="Desvincular aquest tiquet pendent i crear-ne un de nou", use_container_width=True):
+                    for k in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum']:
+                        st.session_state.pop(k, None)
+                    st.rerun()
+        elif not pendents.empty:
+            for _, p_row in pendents.iterrows():
+                p_id = p_row['ID_mov']
+                p_data = p_row['Data']
+                p_super = str(p_row['Idconcepte']).capitalize()
+                try:
+                    p_imp = f"{float(p_row['Import càrrec']):.2f} €"
+                except Exception:
+                    p_imp = f"{p_row['Import càrrec']} €"
+                p_banc = p_row.get('Banc', '')
+                p_fp = p_row.get('FormaPago', '')
+                
+                col_pt1, col_pt2 = st.columns([0.68, 0.32], vertical_alignment="center")
+                with col_pt1:
+                    st.markdown(f"<p style='margin:0; font-size:1.02rem;'>• <b>Nº {p_id}</b> — <b>{p_super}</b> ({p_data}) — <b>{p_imp}</b> ({p_banc})</p>", unsafe_allow_html=True)
+                with col_pt2:
+                    if st.button(f"🛒 Desglossar Nº {p_id}", key=f"btn_quick_desg_{p_id}", type="primary", use_container_width=True):
+                        st.session_state['pending_ticket_id'] = p_id
+                        st.session_state['pending_super'] = p_super
+                        st.session_state['pending_data'] = p_data
+                        st.session_state['pending_banc'] = p_banc
+                        st.session_state['pending_forma_pago'] = p_fp
+                        st.session_state['pending_import_carrec'] = p_row['Import càrrec']
+                        st.session_state['ticket_super_val'] = p_super
+                        st.session_state['ticket_super_widget'] = p_super
                         try:
-                            p_imp = f"{float(p_row['Import càrrec']):.2f} €"
+                            st.session_state['ticket_date'] = datetime.strptime(str(p_data), '%d/%m/%Y').date()
+                            st.session_state['ticket_date_widget'] = datetime.strptime(str(p_data), '%d/%m/%Y').date()
                         except Exception:
-                            p_imp = f"{p_row['Import càrrec']} €"
-                        p_banc = p_row.get('Banc', '')
-                        p_fp = p_row.get('FormaPago', '')
-                        
-                        col_pt1, col_pt2 = st.columns([0.76, 0.24], vertical_alignment="center")
-                        with col_pt1:
-                            st.markdown(f"• **Nº {p_id}** — **{p_super}** ({p_data}) — **{p_imp}** ({p_banc})")
-                        with col_pt2:
-                            if st.button(f"🛒 Desglossar Nº {p_id}", key=f"btn_quick_desg_{p_id}", type="primary"):
-                                st.session_state['pending_ticket_id'] = p_id
-                                st.session_state['pending_super'] = p_super
-                                st.session_state['pending_data'] = p_data
-                                st.session_state['pending_banc'] = p_banc
-                                st.session_state['pending_forma_pago'] = p_fp
-                                st.session_state['pending_import_carrec'] = p_row['Import càrrec']
-                                st.session_state['ticket_super_val'] = p_super
-                                st.session_state['ticket_super_widget'] = p_super
-                                try:
-                                    st.session_state['ticket_date'] = datetime.strptime(str(p_data), '%d/%m/%Y').date()
-                                    st.session_state['ticket_date_widget'] = datetime.strptime(str(p_data), '%d/%m/%Y').date()
-                                except Exception:
-                                    pass
-                                st.session_state['ticket_bank_sel'] = p_banc
-                                st.session_state['ticket_pay_method_sel'] = p_fp
-                                st.session_state['ticket_send_expense'] = True
-                                st.rerun()
+                            pass
+                        st.session_state['ticket_bank_sel'] = p_banc
+                        st.session_state['ticket_pay_method_sel'] = p_fp
+                        st.session_state['ticket_send_expense'] = True
+                        st.rerun()
+        else:
+            st.write("")
+            
+    with col_top_right:
+        uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
+        uploaded_file = st.file_uploader(
+            "📷 Llegir ticket",
+            type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "jfif", "bmp"],
+            label_visibility="collapsed",
+            key=uploader_key
+        )
+        if uploaded_file is not None:
+            col_f1, col_f2 = st.columns([3, 1], vertical_alignment="center")
+            with col_f1:
+                size_kb = round(uploaded_file.size / 1024, 1) if hasattr(uploaded_file, 'size') else 0
+                st.caption(f"📁 **Fitxer:** `{uploaded_file.name}` ({size_kb} KB)")
+            with col_f2:
+                file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+                if st.session_state.get("ocr_failed", False) or st.session_state.get("processed_file_id") == file_id:
+                    if st.button("🔄 Reintentar", key="btn_retry_ocr_ui", help="Torna a passar el tiquet per la IA"):
+                        st.session_state.pop("processed_file_id", None)
+                        st.session_state.pop("ocr_failed", None)
+                        st.rerun()
         
-    # Row 1: Send to expense checkbox, Bank, Payment Method, File Uploader
-    col_hdr1, col_hdr2, col_hdr3, col_hdr4 = st.columns([2.5, 2.5, 2.5, 4.5], vertical_alignment="bottom")
+    # Row 1: Send to expense checkbox, Bank, Payment Method, Mètode d'Escaneig + Selector IA
+    col_hdr1, col_hdr2, col_hdr3, col_hdr4 = st.columns([2.0, 2.5, 2.5, 5.0], vertical_alignment="bottom")
     with col_hdr1:
         send_expense = st.checkbox("Enviar a despeses", key="ticket_send_expense")
     
@@ -1479,15 +1509,6 @@ def render_compres_super_interface():
             st.error("Si us plau, selecciona una Forma de Pagament per a la despesa!")
             
     with col_hdr4:
-        uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
-        uploaded_file = st.file_uploader(
-            "📷 Llegir ticket",
-            type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "jfif", "bmp"],
-            label_visibility="collapsed",
-            key=uploader_key
-        )
-        
-        st.write("")
         col_ocr_m, col_ocr_ai = st.columns([1.3, 1.0], vertical_alignment="bottom")
         with col_ocr_m:
             ocr_mode = st.radio(
@@ -1505,126 +1526,113 @@ def render_compres_super_interface():
                 vision_only=use_vision_only
             )
             
-        # Si s'ha canviat de model després d'un error, netegem processed_file_id per reintentar immediatament amb el nou model
-        last_mod = st.session_state.get("last_ocr_model")
-        if last_mod and last_mod != mod and st.session_state.get("ocr_failed", False):
-            if "processed_file_id" in st.session_state:
-                del st.session_state["processed_file_id"]
-        
-        if uploaded_file is not None:
-            col_f1, col_f2 = st.columns([3, 1], vertical_alignment="center")
-            with col_f1:
-                size_kb = round(uploaded_file.size / 1024, 1) if hasattr(uploaded_file, 'size') else 0
-                st.caption(f"📁 **Fitxer:** `{uploaded_file.name}` ({size_kb} KB)")
-            with col_f2:
-                file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-                if st.session_state.get("ocr_failed", False) or st.session_state.get("processed_file_id") == file_id:
-                    if st.button("🔄 Reintentar", key="btn_retry_ocr_ui", help="Torna a passar el tiquet per la IA"):
-                        st.session_state.pop("processed_file_id", None)
-                        st.session_state.pop("ocr_failed", None)
-                        st.rerun()
-        
-        if uploaded_file is not None:
-            file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-            # Processar si és un fitxer nou o si el tiquet actual està buit
-            if st.session_state.get("processed_file_id") != file_id or not st.session_state.get("ticket_items"):
-                st.session_state["processed_file_id"] = file_id
-                fname_lower = uploaded_file.name.lower()
-                is_txt = fname_lower.endswith(".txt")
-                is_pdf = fname_lower.endswith(".pdf")
-                
-                if is_txt:
-                    try:
-                        text_content = uploaded_file.read().decode("utf-8")
-                        st.session_state["last_ocr_text"] = text_content
-                        parsed = parse_text_ticket(text_content)
-                        
-                        if not st.session_state.get("ticket_super_val"):
-                            st.session_state["ticket_msg_error"] = "⚠️ No s'ha detectat automàticament el supermercat. Si us plau, selecciona'l al desplegable inferior perquè es puguin processar els articles."
-                            st.session_state["ticket_items"] = []
-                            st.session_state.pop("processed_file_id", None)
-                            st.rerun()
-                            
-                        st.session_state["ticket_items"] = parsed
-                        save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
-                        st.session_state["ticket_msg_success"] = f"Tiquet de text llegit correctament! S'han trobat {len(parsed)} línies."
-                        st.rerun()
-                    except Exception as e:
-                        st.session_state.pop("processed_file_id", None)
-                        st.session_state["ticket_msg_error"] = f"Error al llegir el tiquet de text: {str(e)}"
-                        st.rerun()
-                else:
-                    try:
-                        import base64
-                        import json
-                        import pytesseract
-                        from PIL import Image
-                        import io
-                        from core.llm import call_llm_api
-                        
-                        st.session_state["last_ocr_model"] = mod
-                        use_hybrid = "Híbrid" in ocr_mode
-                        raw_text = ""
-                        image_bytes_to_send = None
-                        
-                        # Determinar tipus MIME segons extensió
-                        if is_pdf:
-                            mime_type = "application/pdf"
-                            # Intentar extracció directa de text del PDF primer amb pypdf
-                            try:
-                                from pypdf import PdfReader
-                                uploaded_file.seek(0)
-                                reader = PdfReader(uploaded_file)
-                                pdf_pages_text = []
-                                for page in reader.pages:
-                                    t = page.extract_text()
-                                    if t:
-                                        pdf_pages_text.append(t)
-                                pdf_full_text = "\n".join(pdf_pages_text)
-                                if pdf_full_text.strip():
-                                    raw_text = pdf_full_text
-                                    use_hybrid = True
-                            except Exception as e_pdf:
-                                print(f"Error extraient text del PDF amb pypdf: {e_pdf}")
-                                
-                            if not raw_text.strip():
-                                # PDF basat en imatge -> enviar directament com application/pdf a Gemini Vision
-                                uploaded_file.seek(0)
-                                image_bytes_to_send = uploaded_file.read()
-                                use_hybrid = False
-                        else:
-                            if fname_lower.endswith(".png"):
-                                mime_type = "image/png"
-                            elif fname_lower.endswith(".webp"):
-                                mime_type = "image/webp"
-                            elif fname_lower.endswith(".bmp"):
-                                mime_type = "image/bmp"
-                            else:
-                                mime_type = "image/jpeg"
+    # Si s'ha canviat de model després d'un error, netegem processed_file_id per reintentar immediatament amb el nou model
+    last_mod = st.session_state.get("last_ocr_model")
+    if last_mod and last_mod != mod and st.session_state.get("ocr_failed", False):
+        if "processed_file_id" in st.session_state:
+            del st.session_state["processed_file_id"]
 
-                            # Si l'usuari tria Visió Pura però el model no té visió (ex. DeepSeek, Llama),
-                            # fem fallback automàtic a Híbrid amb Tesseract per evitar errors d'API.
-                            if not use_hybrid and prov != "gemini":
+    if uploaded_file is not None:
+        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+        # Processar si és un fitxer nou o si el tiquet actual està buit
+        if st.session_state.get("processed_file_id") != file_id or not st.session_state.get("ticket_items"):
+            st.session_state["processed_file_id"] = file_id
+            fname_lower = uploaded_file.name.lower()
+            is_txt = fname_lower.endswith(".txt")
+            is_pdf = fname_lower.endswith(".pdf")
+            
+            if is_txt:
+                try:
+                    text_content = uploaded_file.read().decode("utf-8")
+                    st.session_state["last_ocr_text"] = text_content
+                    parsed = parse_text_ticket(text_content)
+                    
+                    if not st.session_state.get("ticket_super_val"):
+                        st.session_state["ticket_msg_error"] = "⚠️ No s'ha detectat automàticament el supermercat. Si us plau, selecciona'l al desplegable inferior perquè es puguin processar els articles."
+                        st.session_state["ticket_items"] = []
+                        st.session_state.pop("processed_file_id", None)
+                        st.rerun()
+                        
+                    st.session_state["ticket_items"] = parsed
+                    save_unknown_products(parsed, st.session_state.get("ticket_super_val", ""))
+                    st.session_state["ticket_msg_success"] = f"Tiquet de text llegit correctament! S'han trobat {len(parsed)} línies."
+                    st.rerun()
+                except Exception as e:
+                    st.session_state.pop("processed_file_id", None)
+                    st.session_state["ticket_msg_error"] = f"Error al llegir el tiquet de text: {str(e)}"
+                    st.rerun()
+            else:
+                try:
+                    import base64
+                    import json
+                    import pytesseract
+                    from PIL import Image
+                    import io
+                    from core.llm import call_llm_api
+                    
+                    st.session_state["last_ocr_model"] = mod
+                    use_hybrid = "Híbrid" in ocr_mode
+                    raw_text = ""
+                    image_bytes_to_send = None
+                    
+                    # Determinar tipus MIME segons extensió
+                    if is_pdf:
+                        mime_type = "application/pdf"
+                        # Intentar extracció directa de text del PDF primer amb pypdf
+                        try:
+                            from pypdf import PdfReader
+                            uploaded_file.seek(0)
+                            reader = PdfReader(uploaded_file)
+                            pdf_pages_text = []
+                            for page in reader.pages:
+                                t = page.extract_text()
+                                if t:
+                                    pdf_pages_text.append(t)
+                            pdf_full_text = "\n".join(pdf_pages_text)
+                            if pdf_full_text.strip():
+                                raw_text = pdf_full_text
                                 use_hybrid = True
-                                st.toast(f"ℹ️ El model {mod} no té visió d'imatges; s'usarà Tesseract OCR per extreure el text primer.", icon="ℹ️")
+                        except Exception as e_pdf:
+                            print(f"Error extraient text del PDF amb pypdf: {e_pdf}")
+                            
+                        if not raw_text.strip():
+                            # PDF basat en imatge -> enviar directament com application/pdf a Gemini Vision
+                            uploaded_file.seek(0)
+                            image_bytes_to_send = uploaded_file.read()
+                            use_hybrid = False
+                    else:
+                        if fname_lower.endswith(".png"):
+                            mime_type = "image/png"
+                        elif fname_lower.endswith(".webp"):
+                            mime_type = "image/webp"
+                        elif fname_lower.endswith(".bmp"):
+                            mime_type = "image/bmp"
+                        else:
+                            mime_type = "image/jpeg"
 
-                            if use_hybrid:
-                                with st.spinner("1/2 - Llegint tiquet amb Tesseract OCR..."):
-                                    uploaded_file.seek(0)
-                                    img = Image.open(io.BytesIO(uploaded_file.read()))
+                        # Si l'usuari tria Visió Pura però el model no té visió (ex. DeepSeek, Llama),
+                        # fem fallback automàtic a Híbrid amb Tesseract per evitar errors d'API.
+                        if not use_hybrid and prov != "gemini":
+                            use_hybrid = True
+                            st.toast(f"ℹ️ El model {mod} no té visió d'imatges; s'usarà Tesseract OCR per extreure el text primer.", icon="ℹ️")
+
+                        if use_hybrid:
+                            with st.spinner("1/2 - Llegint tiquet amb Tesseract OCR..."):
+                                uploaded_file.seek(0)
+                                img = Image.open(io.BytesIO(uploaded_file.read()))
+                                try:
+                                    raw_text = pytesseract.image_to_string(img, lang='cat+spa')
+                                except Exception:
                                     try:
-                                        raw_text = pytesseract.image_to_string(img, lang='cat+spa')
-                                    except Exception:
-                                        try:
-                                            raw_text = pytesseract.image_to_string(img)
-                                        except Exception as e_tess:
-                                            raw_text = ""
-                                            print(f"Tesseract OCR no disponible: {e_tess}. S'utilitzarà visió multimodal si el model ho suporta.")
-                                            use_hybrid = False
-                                
-                        if use_hybrid and raw_text.strip():
-                            with st.spinner(f"2/2 - Endreçant i estructurant dades amb IA ({mod})..."):
-                                prompt = f"""Ets un expert en extracció de dades de tiquets de compra.
+                                        raw_text = pytesseract.image_to_string(img)
+                                    except Exception as e_tess:
+                                        raw_text = ""
+                                        print(f"Tesseract OCR no disponible: {e_tess}. S'utilitzarà visió multimodal si el model ho suporta.")
+                                        use_hybrid = False
+                            
+                    if use_hybrid and raw_text.strip():
+                        with st.spinner(f"2/2 - Endreçant i estructurant dades amb IA ({mod})..."):
+                            prompt = f"""Ets un expert en extracció de dades de tiquets de compra.
 T'han donat aquest text OCR brut d'un tiquet de supermercat (conté errors i soroll):
 ---
 {raw_text}
@@ -1639,48 +1647,48 @@ Extreu i neteja els productes en un format JSON estricte:
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
     "data": "DD/MM/YYYY (si la trobes)",
     "articles": [
-        {{
-            "nom_brut": "Nom exacte del producte, corregint errors d'OCR",
-            "quantitat": 1,
-            "preu_unitari": 0.0,
-            "preu_total": 0.0
-        }}
+    {{
+        "nom_brut": "Nom exacte del producte, corregint errors d'OCR",
+        "quantitat": 1,
+        "preu_unitari": 0.0,
+        "preu_total": 0.0
+    }}
     ]
 }}
 Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes reals. Retorna ÚNICAMENT l'objecte JSON.
 """
-                                ok_call, response_text, latency = call_llm_api(
-                                    prompt=prompt,
-                                    api_key=ai_key,
-                                    model_name=mod,
-                                    provider=prov,
-                                    json_mode=True
-                                )
-                                if not ok_call:
-                                    raise Exception(f"Error cridant la IA ({mod}): {response_text}")
-                        else:
-                            with st.spinner(f"Llegint tiquet amb IA ({mod} Vision)..."):
-                                if image_bytes_to_send is None:
-                                    uploaded_file.seek(0)
-                                    try:
-                                        img_to_resize = Image.open(io.BytesIO(uploaded_file.read()))
-                                        if img_to_resize.mode in ("RGBA", "P"):
-                                            img_to_resize = img_to_resize.convert("RGB")
+                            ok_call, response_text, latency = call_llm_api(
+                                prompt=prompt,
+                                api_key=ai_key,
+                                model_name=mod,
+                                provider=prov,
+                                json_mode=True
+                            )
+                            if not ok_call:
+                                raise Exception(f"Error cridant la IA ({mod}): {response_text}")
+                    else:
+                        with st.spinner(f"Llegint tiquet amb IA ({mod} Vision)..."):
+                            if image_bytes_to_send is None:
+                                uploaded_file.seek(0)
+                                try:
+                                    img_to_resize = Image.open(io.BytesIO(uploaded_file.read()))
+                                    if img_to_resize.mode in ("RGBA", "P"):
+                                        img_to_resize = img_to_resize.convert("RGB")
+                                    
+                                    max_size = 1800
+                                    if max(img_to_resize.size) > max_size:
+                                        img_to_resize.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
                                         
-                                        max_size = 1800
-                                        if max(img_to_resize.size) > max_size:
-                                            img_to_resize.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-                                            
-                                        buffer = io.BytesIO()
-                                        img_to_resize.save(buffer, format="JPEG", quality=85)
-                                        image_bytes_to_send = buffer.getvalue()
-                                        mime_type = "image/jpeg"
-                                    except Exception as e_img:
-                                        print(f"Error comprimint imatge: {e_img}")
-                                        uploaded_file.seek(0)
-                                        image_bytes_to_send = uploaded_file.read()
-                                
-                                prompt = """Ets un expert en extracció de dades de tiquets de compra.
+                                    buffer = io.BytesIO()
+                                    img_to_resize.save(buffer, format="JPEG", quality=85)
+                                    image_bytes_to_send = buffer.getvalue()
+                                    mime_type = "image/jpeg"
+                                except Exception as e_img:
+                                    print(f"Error comprimint imatge: {e_img}")
+                                    uploaded_file.seek(0)
+                                    image_bytes_to_send = uploaded_file.read()
+                            
+                            prompt = """Ets un expert en extracció de dades de tiquets de compra.
 Llegeix aquest tiquet de supermercat i retorna les dades en un format JSON net i estricte.
 
 IMPORTANT: En tiquets com els de bonArea / AreaGuissona, sovint apareix el tipus d'IVA (ex: 4.0, 10.0) al final de la línia del producte. 
@@ -1693,12 +1701,12 @@ L'estructura del JSON ha de ser EXACTAMENT aquesta:
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
     "data": "DD/MM/YYYY (si la trobes)",
     "articles": [
-        {
-            "nom_brut": "Nom exacte del producte que surt al tiquet, respectant lletres",
-            "quantitat": 1,
-            "preu_unitari": 0.0,
-            "preu_total": 0.0
-        }
+    {
+        "nom_brut": "Nom exacte del producte que surt al tiquet, respectant lletres",
+        "quantitat": 1,
+        "preu_unitari": 0.0,
+        "preu_total": 0.0
+    }
     ]
 }
 Notes importants:
@@ -1707,124 +1715,125 @@ Notes importants:
 3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 Retorna ÚNICAMENT l'objecte JSON.
 """
-                                ok_call, response_text, latency = call_llm_api(
-                                    prompt=prompt,
-                                    api_key=ai_key,
-                                    model_name=mod,
-                                    provider=prov,
-                                    json_mode=True,
-                                    image_bytes=image_bytes_to_send,
-                                    mime_type=mime_type
-                                )
-                                if not ok_call:
-                                    raise Exception(f"Error cridant la IA ({mod}): {response_text}")
-                                
-                        # Neteja resilient de JSON
-                        clean_json = response_text.strip()
-                        if "```json" in clean_json:
-                            clean_json = clean_json.split("```json")[1].split("```")[0].strip()
-                        elif "```" in clean_json:
-                            clean_json = clean_json.split("```")[1].split("```")[0].strip()
+                            ok_call, response_text, latency = call_llm_api(
+                                prompt=prompt,
+                                api_key=ai_key,
+                                model_name=mod,
+                                provider=prov,
+                                json_mode=True,
+                                image_bytes=image_bytes_to_send,
+                                mime_type=mime_type
+                            )
+                            if not ok_call:
+                                raise Exception(f"Error cridant la IA ({mod}): {response_text}")
                             
-                        s_idx = clean_json.find('{')
-                        e_idx = clean_json.rfind('}')
-                        if s_idx != -1 and e_idx != -1:
-                            clean_json = clean_json[s_idx:e_idx+1]
-                            
-                        try:
-                            data = json.loads(clean_json)
-                        except Exception as e:
-                            raise Exception(f"No s'ha pogut interpretar la resposta JSON de {mod}: {str(e)}. Resposta: {response_text[:200]}")
+                    # Neteja resilient de JSON
+                    clean_json = response_text.strip()
+                    if "```json" in clean_json:
+                        clean_json = clean_json.split("```json")[1].split("```")[0].strip()
+                    elif "```" in clean_json:
+                        clean_json = clean_json.split("```")[1].split("```")[0].strip()
                         
-                        # 1. Update supermercat
-                        super_trobat = data.get("supermercat", "")
-                        if super_trobat:
-                            import unicodedata
-                            def normalize_str(s):
-                                return ''.join(c for c in unicodedata.normalize('NFD', str(s)) if unicodedata.category(c) != 'Mn').lower()
-                                
-                            valid_supers = get_config_supers()
-                            super_definitiu = None
-                            norm_trobat = normalize_str(super_trobat)
-                            for sp in valid_supers:
-                                norm_sp = normalize_str(sp)
-                                if norm_sp in norm_trobat or norm_trobat in norm_sp:
-                                    super_definitiu = sp
-                                    break
-                            
-                            if not super_definitiu and 'comerbal' in norm_trobat:
-                                super_definitiu = 'Novavenda'
-                                
-                            if super_definitiu:
-                                if super_definitiu.lower() == 'bonarea':
-                                    super_definitiu = 'AreaGuissona'
-                                st.session_state["ticket_super_val"] = super_definitiu
-                                st.session_state["ticket_super_widget"] = super_definitiu
-                            else:
-                                if super_trobat.lower() == 'bonarea':
-                                    super_trobat = 'AreaGuissona'
-                                st.session_state["ticket_super_val"] = super_trobat
-                                st.session_state["ticket_super_widget"] = super_trobat
-
-                        # 2. Update date
-                        data_trobada = data.get("data", "")
-                        if data_trobada:
-                            try:
-                                d_val, m_val, y_val = map(int, data_trobada.split('/'))
-                                st.session_state["ticket_date"] = datetime(y_val, m_val, d_val).date()
-                                st.session_state["ticket_date_widget"] = datetime(y_val, m_val, d_val).date()
-                            except Exception:
-                                pass
-
-                        # 3. Mapejar els articles
-                        parsed = []
-                        df_mapping = load_product_mappings()
-                        current_super = st.session_state.get("ticket_super_val", "")
+                    s_idx = clean_json.find('{')
+                    e_idx = clean_json.rfind('}')
+                    if s_idx != -1 and e_idx != -1:
+                        clean_json = clean_json[s_idx:e_idx+1]
                         
-                        for art in data.get("articles", []):
-                            nom_brut = art.get("nom_brut", "")
-                            if not nom_brut: continue
-                            
-                            q_val = float(art.get("quantitat", 1))
-                            p_unit = float(art.get("preu_unitari", 0.0))
-                            p_tot = float(art.get("preu_total", 0.0))
-                            
-                            if p_tot == 0.0 and p_unit > 0.0:
-                                p_tot = p_unit * q_val
-                                
-                            curr_item = {
-                                'familia': 'Pendent',
-                                'article': 'pendent',
-                                'pes': 0,
-                                'quantitat': q_val,
-                                'preuUnit': p_unit,
-                                'prom': 0.0,
-                                'totLinea': p_tot,
-                                'rebost': None,
-                                'nom_brut': nom_brut,
-                                'nom_super': current_super
-                            }
-                            
-                            db_match = find_product_in_db(nom_brut, current_super, df_mapping)
-                            if db_match:
-                                curr_item['familia'] = db_match['familia']
-                                curr_item['article'] = db_match['nomEstandard']
-                                curr_item['nom_super'] = db_match.get('nom_super', nom_brut)
-                                
-                            parsed.append(curr_item)
-
-                        parsed = group_duplicate_ticket_items(parsed)
-                        st.session_state["ticket_items"] = parsed
-                        save_unknown_products(parsed, current_super)
-                        st.session_state["ocr_failed"] = False
-                        st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA ({mod})! S'han detectat {len(parsed)} articles."
-                        st.rerun()
+                    try:
+                        data = json.loads(clean_json)
                     except Exception as e:
-                        st.session_state["ocr_failed"] = True
-                        st.session_state.pop("processed_file_id", None)
-                        st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {str(e)}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior o prémer Reintentar."
-                        st.rerun()
-        
+                        raise Exception(f"No s'ha pogut interpretar la resposta JSON de {mod}: {str(e)}. Resposta: {response_text[:200]}")
+                    
+                    # 1. Update supermercat
+                    super_trobat = data.get("supermercat", "")
+                    if super_trobat:
+                        import unicodedata
+                        def normalize_str(s):
+                            return ''.join(c for c in unicodedata.normalize('NFD', str(s)) if unicodedata.category(c) != 'Mn').lower()
+                            
+                        valid_supers = get_config_supers()
+                        super_definitiu = None
+                        norm_trobat = normalize_str(super_trobat)
+                        for sp in valid_supers:
+                            norm_sp = normalize_str(sp)
+                            if norm_sp in norm_trobat or norm_trobat in norm_sp:
+                                super_definitiu = sp
+                                break
+                        
+                        if not super_definitiu and 'comerbal' in norm_trobat:
+                            super_definitiu = 'Novavenda'
+                            
+                        if super_definitiu:
+                            if super_definitiu.lower() == 'bonarea':
+                                super_definitiu = 'AreaGuissona'
+                            st.session_state["ticket_super_val"] = super_definitiu
+                            st.session_state["ticket_super_widget"] = super_definitiu
+                        else:
+                            if super_trobat.lower() == 'bonarea':
+                                super_trobat = 'AreaGuissona'
+                            st.session_state["ticket_super_val"] = super_trobat
+                            st.session_state["ticket_super_widget"] = super_trobat
+
+                    # 2. Update date
+                    data_trobada = data.get("data", "")
+                    if data_trobada:
+                        try:
+                            d_val, m_val, y_val = map(int, data_trobada.split('/'))
+                            st.session_state["ticket_date"] = datetime(y_val, m_val, d_val).date()
+                            st.session_state["ticket_date_widget"] = datetime(y_val, m_val, d_val).date()
+                        except Exception:
+                            pass
+
+                    # 3. Mapejar els articles
+                    parsed = []
+                    df_mapping = load_product_mappings()
+                    current_super = st.session_state.get("ticket_super_val", "")
+                    
+                    for art in data.get("articles", []):
+                        nom_brut = art.get("nom_brut", "")
+                        if not nom_brut: continue
+                        
+                        q_val = float(art.get("quantitat", 1))
+                        p_unit = float(art.get("preu_unitari", 0.0))
+                        p_tot = float(art.get("preu_total", 0.0))
+                        
+                        if p_tot == 0.0 and p_unit > 0.0:
+                            p_tot = p_unit * q_val
+                            
+                        curr_item = {
+                            'familia': 'Pendent',
+                            'article': 'pendent',
+                            'pes': 0,
+                            'quantitat': q_val,
+                            'preuUnit': p_unit,
+                            'prom': 0.0,
+                            'totLinea': p_tot,
+                            'rebost': None,
+                            'nom_brut': nom_brut,
+                            'nom_super': current_super
+                        }
+                        
+                        db_match = find_product_in_db(nom_brut, current_super, df_mapping)
+                        if db_match:
+                            curr_item['familia'] = db_match['familia']
+                            curr_item['article'] = db_match['nomEstandard']
+                            curr_item['nom_super'] = db_match.get('nom_super', nom_brut)
+                            
+                        parsed.append(curr_item)
+
+                    parsed = group_duplicate_ticket_items(parsed)
+                    st.session_state["ticket_items"] = parsed
+                    save_unknown_products(parsed, current_super)
+                    st.session_state["ocr_failed"] = False
+                    st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA ({mod})! S'han detectat {len(parsed)} articles."
+                    st.rerun()
+                except Exception as e:
+                    st.session_state["ocr_failed"] = True
+                    st.session_state.pop("processed_file_id", None)
+                    st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {str(e)}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior o prémer Reintentar."
+                    st.rerun()
+    
+
     # Row 2: Data, Super, Import, Nº Despesa
     col_row2_1, col_row2_2, col_row2_3, col_row2_4 = st.columns([3.5, 3.5, 2.5, 2.5], vertical_alignment="center")
     with col_row2_1:

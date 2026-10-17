@@ -930,6 +930,11 @@ def render(view_mode="economic"):
             supabase.table("despeses").update({"ticketPendent": status}).eq("ID_mov", id_mov).execute()
             if "df_desp" in st.session_state:
                 st.session_state["df_desp"].loc[st.session_state["df_desp"]["ID_mov"] == id_mov, "ticketPendent"] = status
+            try:
+                from core.alerts import get_global_alerts
+                get_global_alerts.clear()
+            except Exception:
+                pass
         except Exception as e:
             print(f"Error updating ticketPendent for {id_mov}: {e}")
     

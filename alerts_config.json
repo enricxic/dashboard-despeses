@@ -27,6 +27,9 @@
     "esdeveniment_familiar": {
       "mostrar_a_campana": true,
       "dies_antelacio": 7
+    },
+    "tiquets_pendents": {
+      "mostrar_a_campana": true
     }
   }
 }
