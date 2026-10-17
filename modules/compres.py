@@ -4013,6 +4013,8 @@ def render():
                 
             if not df_super_stats.empty:
                 df_super_stats['totLinea'] = clean_numeric(df_super_stats.get('totLinea', 0))
+                df_super_stats['prom'] = clean_numeric(df_super_stats.get('prom', 0))
+                df_super_stats['descompte'] = clean_numeric(df_super_stats.get('descompte', 0))
                 if 'parsed_date' not in df_super_stats.columns or df_super_stats['parsed_date'].isna().all():
                     df_super_stats['parsed_date'] = df_super_stats['data'].apply(parse_excel_date)
                     
@@ -4052,21 +4054,88 @@ def render():
                         mask_m = mask_m | (filtered_df['clean_mes'].astype(str).str.lower().str.strip() == m_val)
                     filtered_df = filtered_df[mask_m]
 
-                if not filtered_df.empty and filtered_df['totLinea'].sum() > 0:
-                    total_exp = filtered_df['totLinea'].sum()
+                if not filtered_df.empty and (filtered_df['totLinea'].sum() > 0 or filtered_df['prom'].sum() > 0):
+                    total_exp = float(filtered_df['totLinea'].sum())
+                    total_prom = float(filtered_df['prom'].sum())
+                    total_desc = float(filtered_df['descompte'].sum())
+                    total_estalvi = total_prom + total_desc
+                    total_teoric = total_exp + total_estalvi
+                    pct_estalvi = (total_estalvi / total_teoric * 100.0) if total_teoric > 0 else 0.0
+                    
                     n_articles = len(filtered_df)
                     top_super = filtered_df['super'].mode().iloc[0] if 'super' in filtered_df.columns and not filtered_df['super'].dropna().empty else "-"
                     
                     # Top metric cards
-                    k1, k2, k3 = st.columns(3)
+                    k1, k2, k3, k4 = st.columns(4)
                     with k1:
-                        st.metric("Total Despesa Súper", f"{total_exp:,.2f} €")
+                        st.metric("Total Compra Pagada", f"{total_exp:,.2f} €")
                     with k2:
-                        st.metric("Nº Línies / Articles", f"{n_articles:,}")
+                        st.metric("Total Estalvi Generat", f"{total_estalvi:,.2f} €", delta=f"{pct_estalvi:.1f} % d'estalvi" if pct_estalvi > 0 else None)
                     with k3:
-                        st.metric("Súper Principal", f"{top_super}")
+                        st.metric("Preu Sense Ofertes", f"{total_teoric:,.2f} €")
+                    with k4:
+                        st.metric("Nº Línies / Articles", f"{n_articles:,}")
                     
                     st.markdown("<div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
+                    
+                    # Gràfic de rodones de Compra Total vs Promoció Sumada
+                    st.markdown("<h4 style='color:#f39c12;'>💰 Estalvi en Compres: Compra Pagada vs Promocions</h4>", unsafe_allow_html=True)
+                    col_save_chart, col_save_info = st.columns([1.3, 1.0], vertical_alignment="center")
+                    
+                    with col_save_chart:
+                        df_save_pie = pd.DataFrame([
+                            {"Concepte": "Compra Total Pagada", "Import": round(total_exp, 2)},
+                            {"Concepte": "Promoció / Estalvi", "Import": round(total_estalvi, 2)}
+                        ])
+                        fig_save = px.pie(
+                            df_save_pie,
+                            values='Import',
+                            names='Concepte',
+                            hole=0.50,
+                            color='Concepte',
+                            color_discrete_map={
+                                "Compra Total Pagada": "#0284c7",
+                                "Promoció / Estalvi": "#10b981"
+                            }
+                        )
+                        fig_save.update_traces(
+                            textposition='inside', 
+                            textinfo='percent+label',
+                            hovertemplate="<b>%{label}</b><br>Import: %{value:,.2f} €<br>Percentatge: %{percent}<extra></extra>"
+                        )
+                        fig_save.update_layout(
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='#f8fafc', size=12),
+                            margin=dict(t=15, b=15, l=15, r=15),
+                            showlegend=True,
+                            legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
+                            height=330
+                        )
+                        st.plotly_chart(fig_save, use_container_width=True, config={'displayModeBar': False})
+
+                    with col_save_info:
+                        pct_pagat = (total_exp / total_teoric * 100.0) if total_teoric > 0 else 100.0
+                        st.markdown(f"""
+                        <div style='background-color:#1e293b; border:1px solid #334155; border-radius:8px; padding:16px;'>
+                            <h5 style='color:#38bdf8; margin:0 0 10px 0;'>📊 Desglossament de l'Estalvi</h5>
+                            <p style='margin:6px 0; font-size:0.95rem;'>💳 <b>Pagat net:</b> <span style='float:right; font-weight:bold; color:#f8fafc;'>{total_exp:,.2f} € ({pct_pagat:.1f}%)</span></p>
+                            <p style='margin:6px 0; font-size:0.95rem;'>🏷️ <b>Promocions directes:</b> <span style='float:right; font-weight:bold; color:#10b981;'>{total_prom:,.2f} €</span></p>
+                            <p style='margin:6px 0; font-size:0.95rem;'>🎟️ <b>Descomptes globals:</b> <span style='float:right; font-weight:bold; color:#10b981;'>{total_desc:,.2f} €</span></p>
+                            <hr style='border-color:#334155; margin:10px 0;'/>
+                            <p style='margin:6px 0; font-size:1.05rem; color:#10b981;'>✨ <b>Estalvi total:</b> <span style='float:right; font-weight:bold;'>{total_estalvi:,.2f} € ({pct_estalvi:.1f}%)</span></p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        if 'super' in filtered_df.columns and total_estalvi > 0:
+                            filtered_df['estalvi_linia'] = filtered_df['prom'] + filtered_df['descompte']
+                            super_save = filtered_df.groupby('super')['estalvi_linia'].sum().reset_index()
+                            super_save = super_save[super_save['estalvi_linia'] > 0].sort_values(by='estalvi_linia', ascending=False)
+                            if not super_save.empty:
+                                best_s = super_save.iloc[0]
+                                st.caption(f"🏆 Supermercat amb més estalvi: **{best_s['super']}** ({best_s['estalvi_linia']:,.2f} €)")
+
+                    st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
                     
                     # Distribution by family
                     if 'familia' in filtered_df.columns:

@@ -319,6 +319,12 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - **Tancament del tiquet Nº 8179 (Dia 6.48 €)**: S'ha actualitzat directament a Supabase i a `csv/despeses.csv` passant `ticketPendent` a `False` i normalitzant el concepte a `Dia`.
     - **Verificació creuada d'integritat automàtica (`IdDespesa`)**: Tant a [`core/alerts.py`](file:///e:/Dashboard/core/alerts.py) com a la capçalera i llistat de pendents de [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py), el filtre de tiquets pendents ara creua les dades amb `compresSuper` (`IdDespesa`). Si un tiquet ja té articles desglossats a la base de dades, s'exclou immediatament dels pendents i es corregeix al vol a la memòria de la sessió de l'usuari, evitant que romangui bloquejat per culpa de la memòria cau residual.
     - **Normalització automàtica de noms de supermercat**: Tant a l'entrada manual com a la finalització de tiquets, els noms escrits o rebuts en minúscules (ex. `dia`) es comparen de forma insensible a majúscules/minúscules amb el catàleg oficial de supermercats (`get_config_supers()`) i es guarden canònicament amb majúscula inicial (`Dia`, `Mercadona`, `bonArea`, etc.).
+  - **Anàlisi d'Estalvi i Gràfic de Rodones a Estadístiques de Compres Super (`modules/compres.py`)**:
+    - **Càlcul d'Estalvi i Preu Teòric**: Còmput netejat i automatitzat de les promocions d'article (`prom`) i descomptes de tiquet (`descompte`) davant l'import net pagat (`totLinea`). Es dedueix el Preu Teòric Sense Ofertes ($\text{Compra Pagada} + \text{Estalvi}$) i el % global d'estalvi assolit.
+    - **Filtres Dinàmics**: Totalment integrat amb els filtres interactius d'Any i Mes de la pestanya Estadístiques.
+    - **Targetes KPI**: 4 blocs de mètriques (Total Compra Pagada, Total Estalvi Generat amb indicador de delta %, Preu Sense Ofertes i Nº Línies / Articles).
+    - **Gràfic de Rodones (Donut Chart Plotly)**: Representació circular interactiva de la "Compra Total Pagada" vs "Promoció / Estalvi", amb colors corporatius, percentatges i etiquetes emergents.
+    - **Panell de Desglossament i Supermercat Líder**: Targeta visual amb el desglossament de pagat net, promocions directes, descomptes globals i estalvi total, acompanyat del supermercat on s'ha aconseguit més estalvi.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**
