@@ -2789,21 +2789,6 @@ def render(view_mode="economic"):
                                 )
                             except Exception as e:
                                 st.error(f"Error rendering cat_details: {e}")
-
-                            cat_lower = str(selected_cat).strip().lower()
-                            if any(k in cat_lower for k in ['menjar', 'alimentaci', 'super']):
-                                st.write("")
-                                c_btn1, c_btn2 = st.columns(2)
-                                with c_btn1:
-                                    if st.button("🍽️ Anar a Menús i Cuina", key=f"btn_nav_cuina_{selected_year}_{selected_month_data}", use_container_width=True):
-                                        st.session_state.current_module = "modules.menjar"
-                                        st.query_params["mod"] = "modules.menjar"
-                                        st.rerun()
-                                with c_btn2:
-                                    if st.button("🛒 Anar a Compres Super", key=f"btn_nav_compres_{selected_year}_{selected_month_data}", use_container_width=True):
-                                        st.session_state.current_module = "modules.compres"
-                                        st.query_params["mod"] = "modules.compres"
-                                        st.rerun()
                 else:
                     st.info("No hi ha dades de despeses per aquest mes.")
     
