@@ -6292,7 +6292,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4385;Efectiu;;21/12/2024;diciembre;2024;0.0;3.0;Càrrec;personal;Jordi;;False
 4390;BBVA;VISA;21/12/2024;diciembre;2024;0.0;20.69;Càrrec;manteniment;Aliexpress;Disc dur portàtil;False
 4388;BBVA;VISA;08/12/2024;diciembre;2024;0.0;27.41;Càrrec;manteniment;Aliexpress;Aixeta Lavabo;False
-8179;TradeRep.;Dèbit;16/10/2026;octubre;2026;0.0;6.48;Càrrec;menjar;dia;;True
+8179;TradeRep.;Dèbit;16/10/2026;octubre;2026;0.0;6.48;Càrrec;menjar;Dia;;False
 4411;Efectiu;;21/12/2024;diciembre;2024;0.0;8.8;Càrrec;menjar;Pa i pastisseria;;False
 4417;BBVA;Compte;30/12/2024;diciembre;2024;0.0;58.95;Càrrec;despesa_general;Endesa;;False
 4418;Efectiu;;30/12/2024;diciembre;2024;0.0;15.0;Càrrec;menjar;Pa i pastisseria;;False

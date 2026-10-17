@@ -1133,6 +1133,11 @@ def cb_finalize_ticket():
         return
         
     ticket_super = st.session_state.get("ticket_super_val", "")
+    if ticket_super:
+        for sp in get_config_supers():
+            if ticket_super.strip().lower() == sp.lower():
+                ticket_super = sp
+                break
     if not ticket_super:
         st.session_state["finalize_error"] = "Si us plau, selecciona un Supermercat abans de desar el tiquet!"
         return
@@ -1279,17 +1284,84 @@ def cb_finalize_ticket():
             
         # Assign IDs to new_entries
         next_id = get_next_id('despeses', 'ID_mov', df_desp)
-        for i, entry in enumerate(new_entries):
-            if i == 0 and pending_ticket_id:
-                entry['ID_mov'] = pending_ticket_id
-                if entry['Idcategoria'] == 'menjar':
+        
+        if pending_ticket_id:
+            # Cas A: Tiquet pendent que s'està desglossant
+            # 1. El primer apunt actualitza el registre pendent existent per desmarcar ticketPendent
+            if new_entries:
+                first_entry = new_entries[0]
+                first_entry['ID_mov'] = pending_ticket_id
+                first_entry['ticketPendent'] = False
+                if first_entry['Idcategoria'] == 'menjar':
                     id_despesa_menjar = pending_ticket_id
-                elif entry['Idcategoria'] == 'neteja':
+                elif first_entry['Idcategoria'] == 'neteja':
                     id_despesa_neteja = pending_ticket_id
-                elif entry['Idcategoria'] == 'rebost':
+                elif first_entry['Idcategoria'] == 'rebost':
                     id_despesa_rebost = pending_ticket_id
+                    
+                try:
+                    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                    supabase.table('despeses').update({
+                        'Banc': first_entry['Banc'],
+                        'FormaPago': first_entry['FormaPago'],
+                        'Data': first_entry['Data'],
+                        'mes': first_entry['mes'],
+                        'any': first_entry['any'],
+                        'import ingrés': first_entry['import ingrés'],
+                        'Import càrrec': first_entry['Import càrrec'],
+                        'grup': first_entry['grup'],
+                        'Idcategoria': first_entry['Idcategoria'],
+                        'Idconcepte': first_entry['Idconcepte'],
+                        'Comentari': first_entry.get('Comentari', ''),
+                        'ticketPendent': False
+                    }).eq('ID_mov', pending_ticket_id).execute()
+                    
+                    if 'df_desp' in st.session_state and not st.session_state['df_desp'].empty:
+                        m_idx = st.session_state['df_desp']['ID_mov'] == pending_ticket_id
+                        for k, v in first_entry.items():
+                            if k in st.session_state['df_desp'].columns:
+                                st.session_state['df_desp'].loc[m_idx, k] = v
+                        df_desp = st.session_state['df_desp']
+                        
+                    # Actualitzar còpia local al CSV
+                    import os
+                    csv_p = os.path.join("csv", "despeses.csv")
+                    if os.path.exists(csv_p) and 'df_desp' in st.session_state:
+                        try:
+                            st.session_state['df_desp'].to_csv(csv_p, sep=';', index=False)
+                        except Exception:
+                            pass
+                except Exception as e:
+                    print(f"Error actualitzant tiquet pendent {pending_ticket_id}: {e}")
+                    
+                # 2. Si hi ha apunts addicionals (ex: tiquet dividit entre menjar i neteja/rebost)
+                remaining_entries = new_entries[1:]
+                if remaining_entries:
+                    for r_entry in remaining_entries:
+                        r_entry['ID_mov'] = next_id
+                        r_entry['ticketPendent'] = False
+                        if r_entry['Idcategoria'] == 'menjar':
+                            id_despesa_menjar = next_id
+                        elif r_entry['Idcategoria'] == 'neteja':
+                            id_despesa_neteja = next_id
+                        elif r_entry['Idcategoria'] == 'rebost':
+                            id_despesa_rebost = next_id
+                        next_id += 1
+                    append_to_db(pd.DataFrame(remaining_entries), 'despeses', 'df_desp')
             else:
+                try:
+                    supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                    supabase.table('despeses').update({'ticketPendent': False}).eq('ID_mov', pending_ticket_id).execute()
+                    if 'df_desp' in st.session_state and not st.session_state['df_desp'].empty:
+                        st.session_state['df_desp'].loc[st.session_state['df_desp']['ID_mov'] == pending_ticket_id, 'ticketPendent'] = False
+                        df_desp = st.session_state['df_desp']
+                except Exception as e:
+                    print(f"Error desmarcant tiquet pendent {pending_ticket_id}: {e}")
+        else:
+            # Cas B: Tiquet nou (no prové de cap tiquet pendent)
+            for entry in new_entries:
                 entry['ID_mov'] = next_id
+                entry['ticketPendent'] = False
                 if entry['Idcategoria'] == 'menjar':
                     id_despesa_menjar = next_id
                 elif entry['Idcategoria'] == 'neteja':
@@ -1297,17 +1369,19 @@ def cb_finalize_ticket():
                 elif entry['Idcategoria'] == 'rebost':
                     id_despesa_rebost = next_id
                 next_id += 1
-            
-        if new_entries:
-            success = append_to_db(pd.DataFrame(new_entries), 'despeses', 'df_desp')
-            if success and pending_ticket_id:
-                try:
-                    supabase = get_supabase_client(st.session_state.get("role", "guest"))
-                    supabase.table('despeses').delete().eq('ID_mov', pending_ticket_id).execute()
-                    df_desp.drop(df_desp[df_desp['ID_mov'] == pending_ticket_id].index, inplace=True)
-                    st.session_state['df_desp'] = df_desp
-                except Exception as e:
-                    print(f"Error deleting pending ticket {pending_ticket_id}: {e}")
+            if new_entries:
+                append_to_db(pd.DataFrame(new_entries), 'despeses', 'df_desp')
+    else:
+        # send_expense is False
+        if pending_ticket_id:
+            try:
+                supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                supabase.table('despeses').update({'ticketPendent': False}).eq('ID_mov', pending_ticket_id).execute()
+                if 'df_desp' in st.session_state and not st.session_state['df_desp'].empty:
+                    st.session_state['df_desp'].loc[st.session_state['df_desp']['ID_mov'] == pending_ticket_id, 'ticketPendent'] = False
+                    df_desp = st.session_state['df_desp']
+            except Exception as e:
+                print(f"Error desmarcant tiquet pendent {pending_ticket_id}: {e}")
     
     new_rows = []
     base_id = get_next_id('compresSuper', 'IdCompra', df_super)
@@ -2968,6 +3042,12 @@ def render_ingres_despesa_general_interface():
         elif is_gas_cat and (gas_preu_l is None or gas_preu_l <= 0.0):
             st.error("⚠️ Heu d'introduir un preu per litre vàlid per calcular els litres de gasolina.")
         else:
+            # Normalitzar nom del supermercat si coincideix amb algun conegut (ex: 'dia' -> 'Dia', 'mercadona' -> 'Mercadona')
+            for sp in get_config_supers():
+                if actual_concept.strip().lower() == sp.lower():
+                    actual_concept = sp
+                    break
+
             if (is_new_mode or concept_val == "➕ Afegir nou...") and st.session_state.get(f"desp_save_new_concept_{version}", True) and actual_concept:
                 add_concept_to_config(cat_val, actual_concept)
                 
