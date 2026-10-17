@@ -125,76 +125,90 @@ def get_global_alerts():
                             pass
                         
         # 3. Alerta Límits de despesa (Valor superat)
-        if df_desp is not None and not df_desp.empty:
-            avui = datetime.today()
-            curr_year = str(avui.year)
-            from core.db import CATALAN_MONTHS, get_limits_for
-            curr_month_str = CATALAN_MONTHS[avui.month - 1]
-            
-            # Filter df_desp for current year and month
-            df_curr = df_desp[(df_desp['any'].astype(str) == curr_year) & (df_desp['mes'].str.lower() == curr_month_str)].copy()
-            
-            if not df_curr.empty:
-                df_curr['Categoria'] = df_curr['Categoria'].str.strip().str.lower()
-                sum_menjar = df_curr[df_curr['Categoria'] == 'menjar']['import'].sum()
-                sum_gasolina = df_curr[df_curr['Categoria'] == 'gasolina']['import'].sum()
-                sum_restaurant = df_curr[df_curr['Categoria'] == 'restaurant']['import'].sum()
-                sum_farmacia = df_curr[df_curr['Categoria'] == 'farmàcia']['import'].sum()
-                sum_neteja = df_curr[df_curr['Categoria'] == 'neteja']['import'].sum()
-                sum_varis = df_curr[df_curr['Categoria'] == 'varis']['import'].sum()
+        try:
+            if df_desp is not None and not df_desp.empty:
+                avui = datetime.today()
+                curr_year = str(avui.year)
+                from core.db import CATALAN_MONTHS, get_limits_for
+                curr_month_str = CATALAN_MONTHS[avui.month - 1]
                 
-                curr_limits = get_limits_for(avui.year, curr_month_str)
-                
-                col_mapping_alert = {
-                    'menjar': ('menjar', sum_menjar),
-                    'gasolina': ('gasolina', sum_gasolina),
-                    'restaurant': ('restaurant', sum_restaurant),
-                    'farmacia': ('farmàcia', sum_farmacia),
-                    'neteja': ('neteja', sum_neteja),
-                    'varis': ('varis', sum_varis)
-                }
-                
-                exceeded = []
-                for limit_key, (display_lbl, val) in col_mapping_alert.items():
-                    lim = curr_limits.get(limit_key, float('inf'))
-                    if val > lim:
-                        exceeded.append(f"{display_lbl} ({val:,.2f} € > {lim:,.2f} €)")
-                
-                if exceeded:
-                    alerts.append({
-                        "type": "error",
-                        "icon": "⚠️",
-                        "title": "Valor superat",
-                        "message": ", ".join(exceeded)
-                    })
+                # Filter df_desp for current year and month
+                if 'any' in df_desp.columns and 'mes' in df_desp.columns:
+                    df_curr = df_desp[(df_desp['any'].astype(str) == curr_year) & (df_desp['mes'].str.lower() == curr_month_str)].copy()
+                    
+                    if not df_curr.empty:
+                        cat_col = 'Idcategoria' if 'Idcategoria' in df_curr.columns else ('Categoria' if 'Categoria' in df_curr.columns else None)
+                        imp_col = 'Import càrrec' if 'Import càrrec' in df_curr.columns else ('import' if 'import' in df_curr.columns else None)
+                        
+                        if cat_col and imp_col:
+                            df_curr[cat_col] = df_curr[cat_col].astype(str).str.strip().str.lower()
+                            sum_menjar = df_curr[df_curr[cat_col] == 'menjar'][imp_col].sum()
+                            sum_gasolina = df_curr[df_curr[cat_col] == 'gasolina'][imp_col].sum()
+                            sum_restaurant = df_curr[df_curr[cat_col] == 'restaurant'][imp_col].sum()
+                            sum_farmacia = df_curr[df_curr[cat_col] == 'farmàcia'][imp_col].sum()
+                            sum_neteja = df_curr[df_curr[cat_col] == 'neteja'][imp_col].sum()
+                            sum_varis = df_curr[df_curr[cat_col] == 'varis'][imp_col].sum()
+                            
+                            curr_limits = get_limits_for(avui.year, curr_month_str)
+                            
+                            col_mapping_alert = {
+                                'menjar': ('menjar', sum_menjar),
+                                'gasolina': ('gasolina', sum_gasolina),
+                                'restaurant': ('restaurant', sum_restaurant),
+                                'farmacia': ('farmàcia', sum_farmacia),
+                                'neteja': ('neteja', sum_neteja),
+                                'varis': ('varis', sum_varis)
+                            }
+                            
+                            exceeded = []
+                            for limit_key, (display_lbl, val) in col_mapping_alert.items():
+                                lim = curr_limits.get(limit_key, float('inf'))
+                                if val > lim:
+                                    exceeded.append(f"{display_lbl} ({val:,.2f} € > {lim:,.2f} €)")
+                            
+                            if exceeded:
+                                alerts.append({
+                                    "type": "error",
+                                    "icon": "⚠️",
+                                    "title": "Valor superat",
+                                    "message": ", ".join(exceeded)
+                                })
+        except Exception as e_limits:
+            print(f"Error alerta limits: {e_limits}")
                     
         # 4. Alerta Tiquets de súper pendents de desglossar
-        tiquets_cfg = config.get("regles_alertes", {}).get("tiquets_pendents", {})
-        if tiquets_cfg.get("mostrar_a_campana", True):
-            df_target = st.session_state.get("df_desp")
-            if df_target is None or df_target.empty:
-                df_target = df_desp
-                
-            if df_target is not None and not df_target.empty and 'ticketPendent' in df_target.columns:
-                pendents = df_target[df_target['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
-                if not pendents.empty:
-                    n_pend = len(pendents)
-                    t_details = []
-                    for _, p_row in pendents.iterrows():
-                        p_id = str(p_row['ID_mov']).replace('.0', '')
-                        p_super = str(p_row.get('Idconcepte', '')).capitalize()
-                        try:
-                            p_imp = f"{float(p_row['Import càrrec']):.2f} €"
-                        except Exception:
-                            p_imp = f"{p_row.get('Import càrrec', '')} €"
-                        t_details.append(f"Nº {p_id} ({p_super} - {p_imp})")
+        try:
+            tiquets_cfg = config.get("regles_alertes", {}).get("tiquets_pendents", {})
+            if tiquets_cfg.get("mostrar_a_campana", True):
+                df_target = st.session_state.get("df_desp")
+                if df_target is None or df_target.empty:
+                    df_target = df_desp
                     
-                    alerts.append({
-                        "type": "warning",
-                        "icon": "🛒",
-                        "title": f"Tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} de desglossar ({n_pend})",
-                        "message": f"Tens {n_pend} tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} de desglossar a Compres Súper: {', '.join(t_details)}."
-                    })
+                if df_target is not None and not df_target.empty and 'ticketPendent' in df_target.columns:
+                    pendents = df_target[df_target['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
+                    if not pendents.empty:
+                        n_pend = len(pendents)
+                        t_details = []
+                        for _, p_row in pendents.iterrows():
+                            p_id = str(p_row.get('ID_mov', '')).replace('.0', '')
+                            p_super = str(p_row.get('Idconcepte', '')).capitalize()
+                            p_imp_raw = p_row.get('Import càrrec')
+                            if p_imp_raw is None or pd.isna(p_imp_raw) or str(p_imp_raw).strip() == '':
+                                p_imp_raw = p_row.get('import', '')
+                            try:
+                                p_imp = f"{float(p_imp_raw):.2f} €"
+                            except Exception:
+                                p_imp = f"{p_imp_raw} €"
+                            t_details.append(f"Nº {p_id} ({p_super} - {p_imp})")
+                        
+                        alerts.append({
+                            "type": "warning",
+                            "icon": "🛒",
+                            "title": f"Tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} de desglossar ({n_pend})",
+                            "message": f"Tens {n_pend} tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} a Compres Súper: {', '.join(t_details)}."
+                        })
+        except Exception as e_tiquets:
+            print(f"Error alerta tiquets pendents: {e_tiquets}")
                         
     except Exception as e:
         print(f"Error generant alertes globals: {e}")
