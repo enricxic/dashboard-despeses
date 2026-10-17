@@ -301,6 +301,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
   - **Neteja de missatges residuals**: S'ha solucionat el problema on avisos o errors previs (`finalize_error`, `manual_input_error`, etc.) no s'esborraven en desar o netejar el tiquet. Ara s'eliminen de la sessió immediatament després de mostrar-se i es netegen en tancar o buidar el formulari per a nous tiquets.
   - **Incorporació del model Gemini (3.8 Flash)**: S'ha afegit el nou model d'alta velocitat `gemini-3.8-flash` tant al selector [`core/llm_ui.py`](file:///e:/Dashboard/core/llm_ui.py) com a la cadena de redundància de [`core/llm.py`](file:///e:/Dashboard/core/llm.py).
   - **Filtre intel·ligent segons mètode d'escaneig**: Si l'usuari tria **Híbrid (Tesseract+IA)**, el desplegable de models mostra totes les IAs disponibles (Gemini, DeepSeek, Llama, Qwen); si tria **Visió Pura (Directa)**, el desplegable es filtra dinàmicament per mostrar exclusivament els models que admeten imatges i visió multimodal (Gemini 2.5 Flash, Gemini 3.8 Flash, Gemini 2.5 Pro).
+  - **Avís i accés ràpid a tiquets pendents de desglossar**: S'ha integrat un panell d'alerta a la part superior de la pestanya Compres Super que detecta si hi ha despeses pendents de desglossar (amb `ticketPendent = True`, com el tiquet Nº 8179 del Dia per 6.48 €). Mostra la llista amb els detalls i un botó directe per desglossar-lo al moment, així com un botó de cancel·lació per poder desvincular-lo fàcilment.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**

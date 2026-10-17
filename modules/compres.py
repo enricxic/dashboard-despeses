@@ -1397,7 +1397,59 @@ def render_compres_super_interface():
         
     pending_ticket_id = st.session_state.get('pending_ticket_id')
     if pending_ticket_id:
-        st.info(f"🛒 **Desglossant ticket pendent:** de {st.session_state.get('pending_super', '')} el {st.session_state.get('pending_data', '')}")
+        col_pmsg, col_pcancel = st.columns([0.82, 0.18], vertical_alignment="center")
+        with col_pmsg:
+            imp_c = st.session_state.get('pending_import_carrec', '')
+            try:
+                imp_fmt = f"{float(imp_c):.2f} €"
+            except Exception:
+                imp_fmt = f"{imp_c} €"
+            st.info(f"🛒 **Desglossant ticket pendent:** Nº **{pending_ticket_id}** ({st.session_state.get('pending_super', '')} - {st.session_state.get('pending_data', '')} - **{imp_fmt}**)")
+        with col_pcancel:
+            if st.button("❌ Cancel·lar", key="btn_cancel_pending_ticket", help="Desvincular aquest tiquet pendent i crear-ne un de nou"):
+                for k in ['pending_ticket_id', 'pending_super', 'pending_data', 'pending_banc', 'pending_forma_pago', 'pending_import_carrec', 'pending_ticket_mismatch', 'pending_ticket_sum']:
+                    st.session_state.pop(k, None)
+                st.rerun()
+    else:
+        if 'ticketPendent' in df_desp.columns and not df_desp.empty:
+            pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
+            if not pendents.empty:
+                n_pend = len(pendents)
+                st.warning(f"⚠️ **Atenció:** Tens **{n_pend} tiquet{'s' if n_pend > 1 else ''} de súper pendent{'s' if n_pend > 1 else ''} de desglossar** procedent{'s' if n_pend > 1 else ''} de Despeses!")
+                with st.expander(f"👁️ Veure tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} ({n_pend})", expanded=True):
+                    for _, p_row in pendents.iterrows():
+                        p_id = p_row['ID_mov']
+                        p_data = p_row['Data']
+                        p_super = str(p_row['Idconcepte']).capitalize()
+                        try:
+                            p_imp = f"{float(p_row['Import càrrec']):.2f} €"
+                        except Exception:
+                            p_imp = f"{p_row['Import càrrec']} €"
+                        p_banc = p_row.get('Banc', '')
+                        p_fp = p_row.get('FormaPago', '')
+                        
+                        col_pt1, col_pt2 = st.columns([0.76, 0.24], vertical_alignment="center")
+                        with col_pt1:
+                            st.markdown(f"• **Nº {p_id}** — **{p_super}** ({p_data}) — **{p_imp}** ({p_banc})")
+                        with col_pt2:
+                            if st.button(f"🛒 Desglossar Nº {p_id}", key=f"btn_quick_desg_{p_id}", type="primary"):
+                                st.session_state['pending_ticket_id'] = p_id
+                                st.session_state['pending_super'] = p_super
+                                st.session_state['pending_data'] = p_data
+                                st.session_state['pending_banc'] = p_banc
+                                st.session_state['pending_forma_pago'] = p_fp
+                                st.session_state['pending_import_carrec'] = p_row['Import càrrec']
+                                st.session_state['ticket_super_val'] = p_super
+                                st.session_state['ticket_super_widget'] = p_super
+                                try:
+                                    st.session_state['ticket_date'] = datetime.strptime(str(p_data), '%d/%m/%Y').date()
+                                    st.session_state['ticket_date_widget'] = datetime.strptime(str(p_data), '%d/%m/%Y').date()
+                                except Exception:
+                                    pass
+                                st.session_state['ticket_bank_sel'] = p_banc
+                                st.session_state['ticket_pay_method_sel'] = p_fp
+                                st.session_state['ticket_send_expense'] = True
+                                st.rerun()
         
     # Row 1: Send to expense checkbox, Bank, Payment Method, File Uploader
     col_hdr1, col_hdr2, col_hdr3, col_hdr4 = st.columns([2.5, 2.5, 2.5, 4.5], vertical_alignment="bottom")
