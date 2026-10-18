@@ -2811,32 +2811,112 @@ def render(view_mode="economic"):
     # Sincronització de pestanya des de la URL (si es ve del menú superior amb tab=...)
     tab_param = st.query_params.get("tab")
     tab_mapping = {
-        "ingres_despesa": (0, "Ingrés / Despesa"),
-        "prev_despeses": (1, "Prev. Despeses"),
-        "prev_ingressos": (2, "Prev. Ingressos"),
-        "inversions": (3, "Inversions"),
-        "estalvis": (4, "Estalvis"),
-        "xat_ia": (5, "Xat IA")
+        "ingres_despesa": (0, "ingrés"),
+        "prev_despeses": (1, "prev. despeses"),
+        "prev_ingressos": (2, "prev. ingressos"),
+        "inversions": (3, "inversions"),
+        "estalvis": (4, "estalvis"),
+        "xat_ia": (5, "xat")
     }
     if tab_param in tab_mapping:
         target_tab_idx, target_tab_text = tab_mapping[tab_param]
         import streamlit.components.v1 as components
+        import time
+        script_id = f"tab_switch_{tab_param}_{int(time.time() * 1000)}"
         components.html(f"""
-        <script>
-        setTimeout(() => {{
-            const tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
-            let clicked = false;
-            for (const t of tabs) {{
-                if (t.innerText && t.innerText.toLowerCase().includes("{target_tab_text.lower()}")) {{
-                    t.click();
-                    clicked = true;
-                    break;
+        <script id="{script_id}">
+        (function() {{
+            try {{
+                const doc = window.parent.document;
+                if (!doc) return;
+
+                const targetText = "{target_tab_text.lower()}";
+                const targetIdx = {target_tab_idx};
+                let tabFound = false;
+
+                function clickTab(el) {{
+                    try {{
+                        el.focus();
+                        el.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window.parent }}));
+                        el.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window.parent }}));
+                        el.click();
+                    }} catch(e) {{
+                        el.click();
+                    }}
                 }}
+
+                function trySelect() {{
+                    if (tabFound) return true;
+                    const tabs = Array.from(doc.querySelectorAll(
+                        '[data-testid="stTabs"] button, div[role="tablist"] button, button[data-baseweb="tab"], button[role="tab"], [data-testid="stTab"]'
+                    ));
+
+                    if (tabs && tabs.length > 0) {{
+                        // 1. Cercar per text
+                        for (let i = 0; i < tabs.length; i++) {{
+                            const btn = tabs[i];
+                            const txt = (btn.innerText || btn.textContent || "").toLowerCase();
+                            if (targetText && txt.includes(targetText)) {{
+                                clickTab(btn);
+                                tabFound = true;
+                                cleanUrl();
+                                return true;
+                            }}
+                        }}
+
+                        // 2. Cercar per índex si no s'ha trobat per text
+                        if (targetIdx >= 0 && targetIdx < tabs.length) {{
+                            clickTab(tabs[targetIdx]);
+                            tabFound = true;
+                            cleanUrl();
+                            return true;
+                        }}
+                    }}
+                    return false;
+                }}
+
+                function cleanUrl() {{
+                    try {{
+                        const curUrl = new URL(window.parent.location.href);
+                        if (curUrl.searchParams.has('tab')) {{
+                            curUrl.searchParams.delete('tab');
+                            window.parent.history.replaceState({{}}, '', curUrl.toString());
+                        }}
+                    }} catch(e) {{}}
+                }}
+
+                // Intent immediat
+                if (trySelect()) return;
+
+                // Observer per detectar quan Streamlit insereix els tabs al DOM
+                const observer = new MutationObserver(() => {{
+                    if (trySelect()) {{
+                        observer.disconnect();
+                    }}
+                }});
+                if (doc.body) {{
+                    observer.observe(doc.body, {{ childList: true, subtree: true }});
+                }}
+
+                // Polling periòdic de seguretat cada 60ms durant 4.5 segons
+                let attempts = 0;
+                const interval = setInterval(() => {{
+                    attempts++;
+                    if (trySelect() || attempts >= 75) {{
+                        clearInterval(interval);
+                        observer.disconnect();
+                    }}
+                }}, 60);
+
+                setTimeout(() => {{
+                    clearInterval(interval);
+                    observer.disconnect();
+                }}, 4500);
+
+            }} catch(err) {{
+                console.error("Error canviant pestanya:", err);
             }}
-            if (!clicked && tabs && tabs.length > {target_tab_idx}) {{
-                tabs[{target_tab_idx}].click();
-            }}
-        }}, 150);
+        }})();
         </script>
         """, height=0, width=0)
 
