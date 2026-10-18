@@ -124,12 +124,117 @@ function attachSelectAllToNumberInputs() {
         });
     } catch(e) {}
 }
-attachSelectAllToNumberInputs();
+
+function attachMenuTabInterceptors() {
+    try {
+        const doc = window.parent.document;
+        if (!doc) return;
+        const links = doc.querySelectorAll('.submenu-dropdown a');
+        links.forEach(link => {
+            if (!link.dataset.hasTabInterceptor) {
+                link.dataset.hasTabInterceptor = "true";
+                link.addEventListener('click', function(e) {
+                    const href = link.getAttribute('href') || '';
+                    if (!href.includes('tab=')) return;
+
+                    const curHref = window.parent.location.href;
+                    let belongsToCurrentMod = false;
+                    const mods = ['modules.compres', 'modules.economic', 'modules.cotxe', 'modules.menjar', 'modules.medicacio'];
+                    for (const m of mods) {
+                        if (href.includes('mod=' + m) && curHref.includes('mod=' + m)) {
+                            belongsToCurrentMod = true;
+                            break;
+                        }
+                    }
+
+                    if (belongsToCurrentMod) {
+                        let targetIdx = -1;
+                        let targetText = '';
+
+                        if (href.includes('mod=modules.compres')) {
+                            if (href.includes('tab=compres_super')) { targetIdx = 0; targetText = 'compres super'; }
+                            else if (href.includes('tab=llista_compra')) { targetIdx = 1; targetText = 'llista'; }
+                            else if (href.includes('tab=rebost_stock')) { targetIdx = 2; targetText = 'rebost'; }
+                            else if (href.includes('tab=estadistiques')) { targetIdx = 3; targetText = 'estadist'; }
+                            else if (href.includes('tab=comparador')) { targetIdx = 4; targetText = 'comparador'; }
+                            else if (href.includes('tab=fulletons')) { targetIdx = 5; targetText = 'fulletons'; }
+                        } else if (href.includes('mod=modules.economic')) {
+                            if (href.includes('tab=ingres_despesa')) { targetIdx = 0; targetText = 'ingres'; }
+                            else if (href.includes('tab=prev_despeses')) { targetIdx = 1; targetText = 'prev. despeses'; }
+                            else if (href.includes('tab=prev_ingressos')) { targetIdx = 2; targetText = 'prev. ingressos'; }
+                            else if (href.includes('tab=inversions')) { targetIdx = 3; targetText = 'inversions'; }
+                            else if (href.includes('tab=estalvis')) { targetIdx = 4; targetText = 'estalvis'; }
+                            else if (href.includes('tab=xat_ia')) { targetIdx = 5; targetText = 'xat'; }
+                        } else if (href.includes('mod=modules.cotxe')) {
+                            if (href.includes('tab=km_rutes')) { targetIdx = 0; targetText = 'km'; }
+                            else if (href.includes('tab=repostatge')) { targetIdx = 1; targetText = 'repostatge'; }
+                            else if (href.includes('tab=manteniment')) { targetIdx = 2; targetText = 'manteniment'; }
+                            else if (href.includes('tab=consum')) { targetIdx = 3; targetText = 'consum'; }
+                        } else if (href.includes('mod=modules.menjar')) {
+                            if (href.includes('tab=menu_setmanal') || href.includes('tab=planificador')) { targetIdx = 0; targetText = 'menu'; }
+                            else if (href.includes('tab=mise_en_place')) { targetIdx = 1; targetText = 'mise'; }
+                            else if (href.includes('tab=recomanador') || href.includes('tab=generador')) { targetIdx = 2; targetText = 'recomanador'; }
+                            else if (href.includes('tab=llibre_receptes') || href.includes('tab=llistat_receptes')) { targetIdx = 3; targetText = 'llibre'; }
+                            else if (href.includes('tab=afegir_recepta')) { targetIdx = 4; targetText = 'afegir'; }
+                            else if (href.includes('tab=bustia_peticions') || href.includes('tab=bustia')) { targetIdx = 5; targetText = 'bustia'; }
+                        } else if (href.includes('mod=modules.medicacio')) {
+                            if (href.includes('tab=avui_supervisio') || href.includes('tab=avui')) { targetIdx = 0; targetText = 'preses'; }
+                            else if (href.includes('tab=crear_pla') || href.includes('tab=nou')) { targetIdx = 1; targetText = 'crear'; }
+                            else if (href.includes('tab=plans_historial') || href.includes('tab=plans')) { targetIdx = 2; targetText = 'plans'; }
+                            else if (href.includes('tab=google_calendar') || href.includes('tab=config')) { targetIdx = 3; targetText = 'calendar'; }
+                        }
+
+                        if (targetIdx >= 0) {
+                            const tabs = Array.from(doc.querySelectorAll('button[data-baseweb="tab"], div[data-testid="stTabs"] button[role="tab"]'))
+                                .filter(b => b.tagName === 'BUTTON');
+                            if (tabs && tabs.length > 0) {
+                                let targetBtn = null;
+                                for (let i = 0; i < tabs.length; i++) {
+                                    const txt = (tabs[i].innerText || tabs[i].textContent || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                    if (targetText && txt.includes(targetText)) {
+                                        targetBtn = tabs[i];
+                                        break;
+                                    }
+                                }
+                                if (!targetBtn && targetIdx < tabs.length) {
+                                    targetBtn = tabs[targetIdx];
+                                }
+                                if (targetBtn) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    try {
+                                        const curUrl = new URL(window.parent.location.href);
+                                        const newUrl = new URL(href, window.parent.location.origin);
+                                        const tabVal = newUrl.searchParams.get('tab');
+                                        if (tabVal) {
+                                            curUrl.searchParams.set('tab', tabVal);
+                                        }
+                                        window.parent.history.replaceState({}, '', curUrl.toString());
+                                    } catch(err) {}
+                                    targetBtn.focus();
+                                    targetBtn.click();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }, true);
+            }
+        });
+    } catch(e) {}
+}
+
+function onAppDomMutated() {
+    attachSelectAllToNumberInputs();
+    attachMenuTabInterceptors();
+}
+
+onAppDomMutated();
 try {
 let debounceTimer = null;
 const observer = new MutationObserver(() => {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(attachSelectAllToNumberInputs, 500);
+    debounceTimer = setTimeout(onAppDomMutated, 300);
 });
 observer.observe(window.parent.document.body, { childList: true, subtree: true });
 } catch(e) {}
