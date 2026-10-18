@@ -3516,23 +3516,125 @@ def render():
     st.session_state.pop("show_bixolon_dialog", None)
     st.session_state.pop("preview_test_ticket", None)
 
-    # Sincronització de pestanya nativa des de la URL (si es ve del menú superior amb tab=...)
+    # Sincronització de pestanya des de la URL (si es ve del menú superior amb tab=...)
     tabs_list = ["📄 Compres Super", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques", "🔍 Comparador d'Ofertes", "📰 Fulletons"]
     tab_mapping = {
-        "compres_super": "📄 Compres Super",
-        "entrada_tiquets": "📄 Compres Super",
-        "llista_compra": "📋 Llista de la Compra",
-        "rebost_stock": "📦 Rebost / Stock",
-        "estadistiques": "📊 Estadístiques",
-        "comparador": "🔍 Comparador d'Ofertes",
-        "fulletons": "📰 Fulletons"
+        "compres_super": (0, "compres super"),
+        "entrada_tiquets": (0, "compres super"),
+        "llista_compra": (1, "llista de la compra"),
+        "rebost_stock": (2, "rebost"),
+        "rebost": (2, "rebost"),
+        "estadistiques": (3, "estadístiques"),
+        "comparador": (4, "comparador"),
+        "fulletons": (5, "fulletons")
     }
     tab_param = st.query_params.get("tab")
-    default_tab = tab_mapping.get(tab_param)
-    if default_tab not in tabs_list:
-        default_tab = None
+    target_info = tab_mapping.get(tab_param)
+    default_tab = None
+    if target_info:
+        target_idx, target_text = target_info
+        if 0 <= target_idx < len(tabs_list):
+            default_tab = tabs_list[target_idx]
 
-    t0, t1, t2, t3, t4, t5 = st.tabs(tabs_list, default=default_tab)
+    tabs_key = f"tabs_compres_{tab_param or 'main'}"
+    t0, t1, t2, t3, t4, t5 = st.tabs(tabs_list, default=default_tab, key=tabs_key)
+
+    if target_info:
+        target_tab_idx, target_tab_text = target_info
+        import streamlit.components.v1 as components
+        import time
+        script_id = f"tab_switch_compres_{tab_param}_{int(time.time() * 1000)}"
+        components.html(f"""
+        <script id="{script_id}">
+        (function() {{
+            try {{
+                const doc = window.parent.document;
+                if (!doc) return;
+
+                const targetText = "{target_tab_text.lower()}";
+                const targetIdx = {target_tab_idx};
+                let tabFound = false;
+
+                function clickTab(el) {{
+                    try {{
+                        el.focus();
+                        el.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window.parent }}));
+                        el.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window.parent }}));
+                        el.click();
+                    }} catch(e) {{
+                        el.click();
+                    }}
+                }}
+
+                function trySelect() {{
+                    if (tabFound) return true;
+                    const tabs = Array.from(doc.querySelectorAll(
+                        '[data-testid="stTabs"] button, div[role="tablist"] button, button[data-baseweb="tab"], button[role="tab"], [data-testid="stTab"]'
+                    ));
+
+                    if (tabs && tabs.length > 0) {{
+                        for (let i = 0; i < tabs.length; i++) {{
+                            const btn = tabs[i];
+                            const txt = (btn.innerText || btn.textContent || "").toLowerCase();
+                            if (targetText && txt.includes(targetText)) {{
+                                clickTab(btn);
+                                tabFound = true;
+                                cleanUrl();
+                                return true;
+                            }}
+                        }}
+
+                        if (targetIdx >= 0 && targetIdx < tabs.length) {{
+                            clickTab(tabs[targetIdx]);
+                            tabFound = true;
+                            cleanUrl();
+                            return true;
+                        }}
+                    }}
+                    return false;
+                }}
+
+                function cleanUrl() {{
+                    try {{
+                        const curUrl = new URL(window.parent.location.href);
+                        if (curUrl.searchParams.has('tab')) {{
+                            curUrl.searchParams.delete('tab');
+                            window.parent.history.replaceState({{}}, '', curUrl.toString());
+                        }}
+                    }} catch(e) {{}}
+                }}
+
+                if (trySelect()) return;
+
+                const observer = new MutationObserver(() => {{
+                    if (trySelect()) {{
+                        observer.disconnect();
+                    }}
+                }});
+                if (doc.body) {{
+                    observer.observe(doc.body, {{ childList: true, subtree: true }});
+                }}
+
+                let attempts = 0;
+                const interval = setInterval(() => {{
+                    attempts++;
+                    if (trySelect() || attempts >= 75) {{
+                        clearInterval(interval);
+                        observer.disconnect();
+                    }}
+                }}, 60);
+
+                setTimeout(() => {{
+                    clearInterval(interval);
+                    observer.disconnect();
+                }}, 4500);
+
+            }} catch(err) {{
+                console.error("Error canviant pestanya:", err);
+            }}
+        }})();
+        </script>
+        """, height=0, width=0)
     
     with t0:
         render_compres_super_interface()

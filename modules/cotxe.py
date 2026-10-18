@@ -53,7 +53,7 @@ def render():
     if default_tab not in tabs_list:
         default_tab = None
 
-    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(tabs_list, default=default_tab)
+    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(tabs_list, default=default_tab, key=f"tabs_cotxe_{tab_param or 'main'}")
 
     # ----------------------------------------------------
     # TAB 1: REGISTRE DE KM I RUTES

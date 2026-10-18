@@ -202,17 +202,19 @@ def render():
         "avui": "🕒 Preses d'Avui & Supervisió",
         "crear_pla": "➕ Crear Pla de Medicació",
         "nou_pla": "➕ Crear Pla de Medicació",
+        "nou": "➕ Crear Pla de Medicació",
         "plans_historial": "📋 Plans Actius i Historial",
         "plans": "📋 Plans Actius i Historial",
         "google_calendar": "⚙️ Connexió Google Calendar API",
-        "calendar_api": "⚙️ Connexió Google Calendar API"
+        "calendar_api": "⚙️ Connexió Google Calendar API",
+        "config": "⚙️ Connexió Google Calendar API"
     }
     tab_param = st.query_params.get("tab")
     default_tab = tab_mapping.get(tab_param)
     if default_tab not in tabs_list:
         default_tab = None
 
-    tab_avui, tab_nou, tab_plans, tab_config = st.tabs(tabs_list, default=default_tab)
+    tab_avui, tab_nou, tab_plans, tab_config = st.tabs(tabs_list, default=default_tab, key=f"tabs_medicacio_{tab_param or 'main'}")
 
     # -------------------------------------------------------------------------
     # 1. PESTANYA: PRESES D'AVUI & SUPERVISIÓ

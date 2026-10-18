@@ -2820,7 +2820,7 @@ def render(view_mode="economic"):
         default_tab = None
 
     if tabs_list:
-        tabs = st.tabs(tabs_list, default=default_tab)
+        tabs = st.tabs(tabs_list, default=default_tab, key=f"tabs_economic_{tab_param or 'main'}")
 
     tab_ingres_despesa = tabs[0]
     if st.session_state.get("role") in ["admin", "guest"]:
