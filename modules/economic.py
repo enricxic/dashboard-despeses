@@ -2811,7 +2811,7 @@ def render(view_mode="economic"):
     # Sincronització de pestanya des de la URL (si es ve del menú superior amb tab=...)
     tab_param = st.query_params.get("tab")
     tab_mapping = {
-        "ingres_despesa": (0, "ingrés"),
+        "ingres_despesa": (0, "ingres"),
         "prev_despeses": (1, "prev. despeses"),
         "prev_ingressos": (2, "prev. ingressos"),
         "inversions": (3, "inversions"),
@@ -2832,63 +2832,42 @@ def render(view_mode="economic"):
 
                 const targetText = "{target_tab_text.lower()}";
                 const targetIdx = {target_tab_idx};
-                let tabFound = false;
 
-                function clickTab(el) {{
-                    try {{
-                        el.focus();
-                        el.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window.parent }}));
-                        el.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window.parent }}));
-                        el.click();
-                    }} catch(e) {{
-                        el.click();
-                    }}
+                function norm(s) {{
+                    return (s || "").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
                 }}
 
                 function trySelect() {{
-                    if (tabFound) return true;
-                    const tabs = Array.from(doc.querySelectorAll(
-                        '[data-testid="stTabs"] button, div[role="tablist"] button, button[data-baseweb="tab"], button[role="tab"], [data-testid="stTab"]'
-                    ));
+                    const allTabs = Array.from(doc.querySelectorAll('button[data-baseweb="tab"], div[data-testid="stTabs"] button[role="tab"]'))
+                        .filter(b => b.tagName === 'BUTTON');
 
-                    if (tabs && tabs.length > 0) {{
-                        // 1. Cercar per text
-                        for (let i = 0; i < tabs.length; i++) {{
-                            const btn = tabs[i];
-                            const txt = (btn.innerText || btn.textContent || "").toLowerCase();
+                    if (allTabs && allTabs.length > 0) {{
+                        let targetBtn = null;
+                        for (let i = 0; i < allTabs.length; i++) {{
+                            const txt = norm(allTabs[i].innerText || allTabs[i].textContent || "");
                             if (targetText && txt.includes(targetText)) {{
-                                clickTab(btn);
-                                tabFound = true;
-                                cleanUrl();
-                                return true;
+                                targetBtn = allTabs[i];
+                                break;
                             }}
                         }}
+                        if (!targetBtn && targetIdx >= 0 && targetIdx < allTabs.length) {{
+                            targetBtn = allTabs[targetIdx];
+                        }}
 
-                        // 2. Cercar per índex si no s'ha trobat per text
-                        if (targetIdx >= 0 && targetIdx < tabs.length) {{
-                            clickTab(tabs[targetIdx]);
-                            tabFound = true;
-                            cleanUrl();
-                            return true;
+                        if (targetBtn) {{
+                            if (targetBtn.getAttribute('aria-selected') === 'true') {{
+                                return true;
+                            }}
+                            targetBtn.focus();
+                            targetBtn.click();
+                            return (targetBtn.getAttribute('aria-selected') === 'true');
                         }}
                     }}
                     return false;
                 }}
 
-                function cleanUrl() {{
-                    try {{
-                        const curUrl = new URL(window.parent.location.href);
-                        if (curUrl.searchParams.has('tab')) {{
-                            curUrl.searchParams.delete('tab');
-                            window.parent.history.replaceState({{}}, '', curUrl.toString());
-                        }}
-                    }} catch(e) {{}}
-                }}
-
-                // Intent immediat
                 if (trySelect()) return;
 
-                // Observer per detectar quan Streamlit insereix els tabs al DOM
                 const observer = new MutationObserver(() => {{
                     if (trySelect()) {{
                         observer.disconnect();
@@ -2898,15 +2877,14 @@ def render(view_mode="economic"):
                     observer.observe(doc.body, {{ childList: true, subtree: true }});
                 }}
 
-                // Polling periòdic de seguretat cada 60ms durant 4.5 segons
                 let attempts = 0;
                 const interval = setInterval(() => {{
                     attempts++;
-                    if (trySelect() || attempts >= 75) {{
+                    if (trySelect() || attempts >= 90) {{
                         clearInterval(interval);
                         observer.disconnect();
                     }}
-                }}, 60);
+                }}, 50);
 
                 setTimeout(() => {{
                     clearInterval(interval);
