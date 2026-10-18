@@ -6388,6 +6388,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 4609;Efectiu;;14/02/2025;febrero;2025;0.0;14.0;Càrrec;personal;Jordi;;False
 4645;BBVA;VISA;25/02/2025;febrero;2025;0.0;-32.99;Càrrec;Parallar;Altres mobles;Devolució Ufesa;False
 4592;BBVA;Compte;11/02/2025;febrero;2025;0.0;2000.0;Càrrec;despesa_general;Crèdit Cotxe;Amortització parcial;False
+8180;TradeRep.;Dèbit;17/10/2026;octubre;2026;0.0;10.99;Càrrec;menjar;Novavenda;;True
 4616;BBVA;VISA;15/02/2025;febrero;2025;0.0;21.45;Càrrec;restaurant;Restaurant;Pizzeria El Niu;False
 4617;BBVA;VISA;16/02/2025;febrero;2025;0.0;5.65;Càrrec;restaurant;Bar;El casino;False
 4621;BBVA;VISA;19/02/2025;febrero;2025;0.0;3.0;Càrrec;restaurant;Bar;Jubilats;False

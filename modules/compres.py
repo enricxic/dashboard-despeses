@@ -2954,6 +2954,7 @@ def render_ingres_despesa_general_interface():
         comentari_val = st.text_input("Comentari", value="", key=f"desp_comentari_{version}")
 
     dest_banc = None
+    dest_import = None
     if grup_val == "op_banc" and cat_val == "op_banc" and concept_val == "Traspàs comptes":
         st.markdown("<h5 style='color:#3498db; margin-top:5px; margin-bottom:5px;'>🔁 Traspàs entre comptes</h5>", unsafe_allow_html=True)
         dest_col1, dest_col2 = st.columns(2)
@@ -2962,6 +2963,31 @@ def render_ingres_despesa_general_interface():
             if banc in dest_banc_opt:
                 dest_banc_opt.remove(banc)
             dest_banc = st.selectbox("Banc de Destí", dest_banc_opt, index=0, key=f"desp_dest_banc_{version}")
+        with dest_col2:
+            orig_amt = float(import_carg if import_carg > 0 else import_ing)
+            dest_key = f"desp_dest_import_{version}"
+            last_orig_key = f"desp_dest_last_orig_{version}"
+            
+            prev_orig = st.session_state.get(last_orig_key, 0.0)
+            if orig_amt > 0 and (dest_key not in st.session_state or st.session_state.get(dest_key, 0.0) == prev_orig or st.session_state.get(dest_key, 0.0) == 0.0):
+                st.session_state[dest_key] = orig_amt
+            st.session_state[last_orig_key] = orig_amt
+            
+            dest_import = st.number_input(
+                "Quantitat al banc de destí (€)",
+                min_value=0.0,
+                value=st.session_state.get(dest_key, orig_amt),
+                step=None,
+                format="%.2f",
+                key=dest_key,
+                help="Quantitat editable que arribarà al compte destí. Pots modificar-la si no tots els diners es traspassen directament."
+            )
+            if orig_amt > 0 and dest_import > 0 and abs(orig_amt - dest_import) > 0.001:
+                diff = orig_amt - dest_import
+                if diff > 0:
+                    st.caption(f"ℹ️ Diferència: **{diff:.2f} €** (no traspassats a aquest compte)")
+                else:
+                    st.caption(f"ℹ️ Diferència: **{abs(diff):.2f} €** addicionals al compte de destí")
 
     is_loteria = (str(concept_val).strip().lower() == "loteria")
     if is_loteria:
@@ -3042,6 +3068,8 @@ def render_ingres_despesa_general_interface():
             st.error("⚠️ El grup és Ingrés, per tant l'Import Càrrec ha de ser 0.")
         elif grup_val == "op_banc" and cat_val == "op_banc" and actual_concept == "Traspàs comptes" and not dest_banc:
             st.error("❌ Per a un traspàs entre comptes has d'escollir un banc de destí.")
+        elif grup_val == "op_banc" and cat_val == "op_banc" and actual_concept == "Traspàs comptes" and (dest_import is None or dest_import <= 0.0):
+            st.error("❌ Per a un traspàs entre comptes has d'introduir una quantitat vàlida per al compte de destí.")
         elif grup_val == "op_banc" and import_carg != 0.0 and import_ing != 0.0:
             st.error("⚠️ Per a op_banc s'ha d'emplenar només un dels dos imports (Càrrec o Ingrés), no tots dos.")
         elif grup_val == "op_banc" and import_carg == 0.0 and import_ing == 0.0:
@@ -3172,12 +3200,39 @@ def render_ingres_despesa_general_interface():
                         row_dest = new_row_desp.copy()
                         row_dest['ID_mov'] = get_next_id('despeses', 'ID_mov')
                         row_dest['Banc'] = dest_banc
-                        for k in list(row_dest.keys()):
-                            if 'ingr' in k.lower(): ing_key = k
-                            if 'rrec' in k.lower(): carg_key = k
-                        row_dest[ing_key] = new_row_desp[carg_key]
-                        row_dest[carg_key] = new_row_desp[ing_key]
+                        if dest_banc in ["Efectiu", "Casa", "CASA"]:
+                            row_dest['FormaPago'] = ""
+                        
+                        dest_amt = float(dest_import) if (dest_import is not None and dest_import > 0) else (new_row_desp['Import càrrec'] if new_row_desp['Import càrrec'] > 0 else new_row_desp['import ingrés'])
+                        
+                        if new_row_desp['Import càrrec'] > 0:
+                            row_dest['import ingrés'] = round(dest_amt, 2)
+                            row_dest['Import càrrec'] = 0.0
+                        else:
+                            row_dest['Import càrrec'] = round(dest_amt, 2)
+                            row_dest['import ingrés'] = 0.0
+                            
                         insert_db_row('despeses', row_dest)
+                        
+                        if dest_banc == 'TR Cartera':
+                            row_dest['FormaPago'] = 'Compte'
+                            concept_lower = str(new_row_desp.get('Idconcepte', '')).lower()
+                            cartera_val = "NVIDIA" if "nvidia" in concept_lower else "S&P500"
+                            new_tr_row = {
+                                'DATA': new_row_desp.get('Data', ''),
+                                'mes': new_row_desp.get('mes', ''),
+                                'any': new_row_desp.get('any', 2026),
+                                'COMPRA': dest_amt,
+                                'VENDA': 0.0,
+                                'CARTERA': cartera_val,
+                                'CONCEPTE': 'Compra',
+                                'COMENTARI': f"Traspàs: {new_row_desp.get('Comentari', '')}".strip()
+                            }
+                            try:
+                                supabase = get_supabase_client(st.session_state.get("role", "guest"))
+                                supabase.table("tr_cartera").insert([new_tr_row]).execute()
+                            except Exception as e:
+                                st.error(f"Error inserint a TR Cartera: {e}")
                         
                     # Lògica per a la compensació (Compte compartit restaurant/altres)
                     if bill_split and import_carg > 0 and bill_own_portion < import_carg:
