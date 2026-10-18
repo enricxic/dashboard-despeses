@@ -1519,15 +1519,14 @@ def render_compres_super_interface():
         dlg_info = st.session_state["ask_confirm_old_ticket_date"]
         dialog_confirm_old_date(dlg_info["date"], dlg_info["days"])
 
-    col_h1, col_h2 = st.columns([0.94, 0.06], vertical_alignment="bottom")
+    col_h1, col_h2 = st.columns([0.72, 0.28], vertical_alignment="center")
     with col_h1:
         st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
     with col_h2:
-        st.markdown('<div style="display:flex; justify-content:flex-end;">', unsafe_allow_html=True)
-        if st.button("⚡", key="tunnel_to_economic", help="Anar directe a Ingrés / Despesa General"):
+        if st.button("⚡ Mòdul Econòmic", key="tunnel_to_economic", use_container_width=True, help="Túnel directe a Mòdul Econòmic (Ingrés / Despesa General)"):
             st.session_state.current_module = "modules.economic"
+            st.query_params["mod"] = "modules.economic"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
     
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     if "df_desp" not in st.session_state:
@@ -2850,15 +2849,14 @@ def render_ingres_despesa_general_interface():
             if k.startswith(prefix) and k != "desp_version":
                 del st.session_state[k]
 
-    col_h1, col_h2 = st.columns([0.94, 0.06], vertical_alignment="bottom")
+    col_h1, col_h2 = st.columns([0.72, 0.28], vertical_alignment="center")
     with col_h1:
-        st.markdown("<h3 style='color:#f39c12; margin-top:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#f39c12; margin:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
     with col_h2:
-        st.markdown('<div style="display:flex; justify-content:flex-end;">', unsafe_allow_html=True)
-        if st.button("⚡", key="tunnel_to_compres", help="Anar directe a Compres Super"):
+        if st.button("⚡ Compres Super", key="tunnel_to_compres", use_container_width=True, help="Túnel directe a Compres Super"):
             st.session_state.current_module = "modules.compres"
+            st.query_params["mod"] = "modules.compres"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
     st.write("---")
 
     # Row 1 (4 columns)
@@ -3276,6 +3274,8 @@ def render_ingres_despesa_general_interface():
                 st.session_state['pending_banc'] = row['Banc']
                 st.session_state['pending_forma_pago'] = row['FormaPago']
                 st.session_state['pending_import_carrec'] = row['Import càrrec']
+                st.session_state.current_module = "modules.compres"
+                st.query_params["mod"] = "modules.compres"
                 st.rerun()
     else:
         st.info("No hi ha cap ticket pendent de desglossar.")
