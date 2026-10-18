@@ -2805,98 +2805,22 @@ def render(view_mode="economic"):
     if st.session_state.get("role") in ["admin", "guest"]:
         tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🤖 Xat IA"])
     
-    if tabs_list:
-        tabs = st.tabs(tabs_list)
-
-    # Sincronització de pestanya des de la URL (si es ve del menú superior amb tab=...)
+    # Sincronització de pestanya nativa des de la URL (si es ve del menú superior amb tab=...)
     tab_param = st.query_params.get("tab")
     tab_mapping = {
-        "ingres_despesa": (0, "ingres"),
-        "prev_despeses": (1, "prev. despeses"),
-        "prev_ingressos": (2, "prev. ingressos"),
-        "inversions": (3, "inversions"),
-        "estalvis": (4, "estalvis"),
-        "xat_ia": (5, "xat")
+        "ingres_despesa": "📝 Ingrés / Despesa General",
+        "prev_despeses": "🔴 Prev. Despeses",
+        "prev_ingressos": "🟢 Prev. Ingressos",
+        "inversions": "📈 Inversions",
+        "estalvis": "💰 Estalvis",
+        "xat_ia": "🤖 Xat IA"
     }
-    if tab_param in tab_mapping:
-        target_tab_idx, target_tab_text = tab_mapping[tab_param]
-        import streamlit.components.v1 as components
-        import time
-        script_id = f"tab_switch_{tab_param}_{int(time.time() * 1000)}"
-        components.html(f"""
-        <script id="{script_id}">
-        (function() {{
-            try {{
-                const doc = window.parent.document;
-                if (!doc) return;
+    default_tab = tab_mapping.get(tab_param)
+    if default_tab not in tabs_list:
+        default_tab = None
 
-                const targetText = "{target_tab_text.lower()}";
-                const targetIdx = {target_tab_idx};
-
-                function norm(s) {{
-                    return (s || "").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
-                }}
-
-                function trySelect() {{
-                    const allTabs = Array.from(doc.querySelectorAll('button[data-baseweb="tab"], div[data-testid="stTabs"] button[role="tab"]'))
-                        .filter(b => b.tagName === 'BUTTON');
-
-                    if (allTabs && allTabs.length > 0) {{
-                        let targetBtn = null;
-                        for (let i = 0; i < allTabs.length; i++) {{
-                            const txt = norm(allTabs[i].innerText || allTabs[i].textContent || "");
-                            if (targetText && txt.includes(targetText)) {{
-                                targetBtn = allTabs[i];
-                                break;
-                            }}
-                        }}
-                        if (!targetBtn && targetIdx >= 0 && targetIdx < allTabs.length) {{
-                            targetBtn = allTabs[targetIdx];
-                        }}
-
-                        if (targetBtn) {{
-                            if (targetBtn.getAttribute('aria-selected') === 'true') {{
-                                return true;
-                            }}
-                            targetBtn.focus();
-                            targetBtn.click();
-                            return (targetBtn.getAttribute('aria-selected') === 'true');
-                        }}
-                    }}
-                    return false;
-                }}
-
-                if (trySelect()) return;
-
-                const observer = new MutationObserver(() => {{
-                    if (trySelect()) {{
-                        observer.disconnect();
-                    }}
-                }});
-                if (doc.body) {{
-                    observer.observe(doc.body, {{ childList: true, subtree: true }});
-                }}
-
-                let attempts = 0;
-                const interval = setInterval(() => {{
-                    attempts++;
-                    if (trySelect() || attempts >= 90) {{
-                        clearInterval(interval);
-                        observer.disconnect();
-                    }}
-                }}, 50);
-
-                setTimeout(() => {{
-                    clearInterval(interval);
-                    observer.disconnect();
-                }}, 4500);
-
-            }} catch(err) {{
-                console.error("Error canviant pestanya:", err);
-            }}
-        }})();
-        </script>
-        """, height=0, width=0)
+    if tabs_list:
+        tabs = st.tabs(tabs_list, default=default_tab)
 
     tab_ingres_despesa = tabs[0]
     if st.session_state.get("role") in ["admin", "guest"]:

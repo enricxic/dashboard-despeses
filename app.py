@@ -124,73 +124,14 @@ function attachSelectAllToNumberInputs() {
         });
     } catch(e) {}
 }
-
-function attachMenuTabInterceptors() {
-    try {
-        const doc = window.parent.document;
-        if (!doc) return;
-        const links = doc.querySelectorAll('.desktop-menubar a[href*="mod=modules.economic"][href*="tab="]');
-        links.forEach(link => {
-            if (!link.dataset.hasTabInterceptor) {
-                link.dataset.hasTabInterceptor = "true";
-                link.addEventListener('click', function(e) {
-                    const curUrl = new URL(window.parent.location.href);
-                    const isEconomic = (curUrl.searchParams.get('mod') === 'modules.economic');
-                    if (isEconomic) {
-                        const href = this.getAttribute('href') || '';
-                        let targetText = '';
-                        let targetIdx = -1;
-                        if (href.includes('tab=ingres_despesa')) { targetIdx = 0; targetText = 'ingres'; }
-                        else if (href.includes('tab=prev_despeses')) { targetIdx = 1; targetText = 'prev. despeses'; }
-                        else if (href.includes('tab=prev_ingressos')) { targetIdx = 2; targetText = 'prev. ingressos'; }
-                        else if (href.includes('tab=inversions')) { targetIdx = 3; targetText = 'inversions'; }
-                        else if (href.includes('tab=estalvis')) { targetIdx = 4; targetText = 'estalvis'; }
-                        else if (href.includes('tab=xat_ia')) { targetIdx = 5; targetText = 'xat'; }
-
-                        if (targetIdx >= 0) {
-                            const tabs = Array.from(doc.querySelectorAll('button[data-baseweb="tab"], div[data-testid="stTabs"] button[role="tab"]'))
-                                .filter(b => b.tagName === 'BUTTON');
-                            if (tabs && tabs.length > 0) {
-                                let targetBtn = null;
-                                for (let i = 0; i < tabs.length; i++) {
-                                    const txt = (tabs[i].innerText || tabs[i].textContent || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                                    if (targetText && txt.includes(targetText)) {
-                                        targetBtn = tabs[i];
-                                        break;
-                                    }
-                                }
-                                if (!targetBtn && targetIdx < tabs.length) {
-                                    targetBtn = tabs[targetIdx];
-                                }
-                                if (targetBtn) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    targetBtn.focus();
-                                    targetBtn.click();
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }, true);
-            }
-        });
-    } catch(e) {}
-}
-
-function onDomMutated() {
-    attachSelectAllToNumberInputs();
-    attachMenuTabInterceptors();
-}
-
-onDomMutated();
+attachSelectAllToNumberInputs();
 try {
-    let debounceTimer = null;
-    const observer = new MutationObserver(() => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(onDomMutated, 200);
-    });
-    observer.observe(window.parent.document.body, { childList: true, subtree: true });
+let debounceTimer = null;
+const observer = new MutationObserver(() => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(attachSelectAllToNumberInputs, 500);
+});
+observer.observe(window.parent.document.body, { childList: true, subtree: true });
 } catch(e) {}
 </script>
 ''', height=0, width=0)
