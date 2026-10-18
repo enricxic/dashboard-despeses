@@ -1525,6 +1525,7 @@ def render_compres_super_interface():
     with col_h2:
         if st.button("⚡ Mòdul Econòmic", key="tunnel_to_economic", use_container_width=True, help="Túnel directe a Mòdul Econòmic (Ingrés / Despesa General)"):
             st.session_state.current_module = "modules.economic"
+            st.session_state["_browser_mod"] = "modules.economic"
             st.query_params["mod"] = "modules.economic"
             st.rerun()
     
@@ -2855,6 +2856,7 @@ def render_ingres_despesa_general_interface():
     with col_h2:
         if st.button("⚡ Compres Super", key="tunnel_to_compres", use_container_width=True, help="Túnel directe a Compres Super"):
             st.session_state.current_module = "modules.compres"
+            st.session_state["_browser_mod"] = "modules.compres"
             st.query_params["mod"] = "modules.compres"
             st.rerun()
     st.write("---")
@@ -3322,14 +3324,34 @@ def render_ingres_despesa_general_interface():
             cols[3].write(f"{row['Import càrrec']} €")
             cols[4].write(row['grup'])
             if cols[5].button("Desglossar", key=f"desg_{row['ID_mov']}"):
+                p_id = row['ID_mov']
+                p_data = row['Data']
+                p_super = str(row['Idconcepte']).capitalize()
+                p_banc = row.get('Banc', '')
+                p_fp = row.get('FormaPago', '')
+                p_imp = row['Import càrrec']
+
                 st.session_state['viewing_compres_super'] = True
-                st.session_state['pending_ticket_id'] = row['ID_mov']
-                st.session_state['pending_super'] = row['Idconcepte']
-                st.session_state['pending_data'] = row['Data']
-                st.session_state['pending_banc'] = row['Banc']
-                st.session_state['pending_forma_pago'] = row['FormaPago']
-                st.session_state['pending_import_carrec'] = row['Import càrrec']
+                st.session_state['pending_ticket_id'] = p_id
+                st.session_state['pending_super'] = p_super
+                st.session_state['pending_data'] = p_data
+                st.session_state['pending_banc'] = p_banc
+                st.session_state['pending_forma_pago'] = p_fp
+                st.session_state['pending_import_carrec'] = p_imp
+                st.session_state['ticket_super_val'] = p_super
+                st.session_state['ticket_super_widget'] = p_super
+                try:
+                    parsed_d = datetime.strptime(str(p_data), '%d/%m/%Y').date()
+                    st.session_state['ticket_date'] = parsed_d
+                    st.session_state['ticket_date_widget'] = parsed_d
+                except Exception:
+                    pass
+                st.session_state['ticket_bank_sel'] = p_banc
+                st.session_state['ticket_pay_method_sel'] = p_fp
+                st.session_state['ticket_send_expense'] = True
+                
                 st.session_state.current_module = "modules.compres"
+                st.session_state["_browser_mod"] = "modules.compres"
                 st.query_params["mod"] = "modules.compres"
                 st.rerun()
     else:
@@ -3407,6 +3429,7 @@ def render():
     with col_t2:
         if st.button("🔙 Inici", use_container_width=True, key="btn_nav_inici_compres"):
             st.session_state.current_module = None
+            st.session_state["_browser_mod"] = None
             if "mod" in st.query_params:
                 try:
                     del st.query_params["mod"]

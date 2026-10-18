@@ -159,14 +159,17 @@ for al in st.session_state["global_alerts_list"]:
 if not alerts_html:
     alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
 
-# Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu)
+# Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu o URL del navegador)
 if "mod" in st.query_params:
     selected_mod = st.query_params.get("mod")
     if selected_mod:
-        if st.session_state.get("current_module") != selected_mod:
-            for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar", "show_afegir_any_comptable"]:
-                st.session_state.pop(k, None)
-            st.session_state.current_module = selected_mod
+        # Només actualitzem current_module si la URL ha canviat externament respecte a l'últim mòdul sincronitzat
+        if selected_mod != st.session_state.get("_browser_mod"):
+            if st.session_state.get("current_module") != selected_mod:
+                for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar", "show_afegir_any_comptable"]:
+                    st.session_state.pop(k, None)
+                st.session_state.current_module = selected_mod
+            st.session_state["_browser_mod"] = selected_mod
         if "db" in st.query_params:
             st.session_state["db_to_open"] = st.query_params.get("db")
 
@@ -175,6 +178,7 @@ if "action" in st.query_params:
     act = st.query_params.get("action")
     if act == "home":
         st.session_state.current_module = None
+        st.session_state["_browser_mod"] = None
         if "mod" in st.query_params:
             try:
                 del st.query_params["mod"]
@@ -329,7 +333,9 @@ if 'current_module' not in st.session_state:
 if st.session_state.get("current_module"):
     if st.query_params.get("mod") != st.session_state.current_module:
         st.query_params["mod"] = st.session_state.current_module
+    st.session_state["_browser_mod"] = st.session_state.current_module
 else:
+    st.session_state["_browser_mod"] = None
     if "mod" in st.query_params:
         try:
             del st.query_params["mod"]

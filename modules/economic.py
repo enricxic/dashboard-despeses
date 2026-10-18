@@ -1163,6 +1163,7 @@ def render(view_mode="economic"):
     with col_super:
         if st.button("🔙 Inici", use_container_width=True, key=f"btn_back_{view_mode}"):
             st.session_state.current_module = None
+            st.session_state["_browser_mod"] = None
             if "mod" in st.query_params:
                 try:
                     del st.query_params["mod"]
