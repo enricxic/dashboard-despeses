@@ -39,7 +39,21 @@ def render():
     df_km = st.session_state.get("df_km", pd.DataFrame())
     df_gas = st.session_state.get("df_gas", pd.DataFrame())
 
-    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(["🛣️ Km i Rutes", "⛽ Repostatge", "🔧 Manteniment (Oli i Rodes)", "📊 Consum"])
+    tabs_list = ["🛣️ Km i Rutes", "⛽ Repostatge", "🔧 Manteniment (Oli i Rodes)", "📊 Consum"]
+    tab_mapping = {
+        "km_rutes": "🛣️ Km i Rutes",
+        "km": "🛣️ Km i Rutes",
+        "repostatge": "⛽ Repostatge",
+        "manteniment": "🔧 Manteniment (Oli i Rodes)",
+        "oli_rodes": "🔧 Manteniment (Oli i Rodes)",
+        "consum": "📊 Consum"
+    }
+    tab_param = st.query_params.get("tab")
+    default_tab = tab_mapping.get(tab_param)
+    if default_tab not in tabs_list:
+        default_tab = None
+
+    tab_km, tab_repostatge, tab_oli, tab_consum = st.tabs(tabs_list, default=default_tab)
 
     # ----------------------------------------------------
     # TAB 1: REGISTRE DE KM I RUTES

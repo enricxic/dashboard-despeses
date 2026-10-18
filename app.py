@@ -936,19 +936,35 @@ div.block-container {{
 {f'''<div class="submenu-item">
 <a href="?mod=modules.compres{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🛒 Compres Super i Stock</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
-<a href="?mod=modules.compres{url_suffix}" target="_self">🛒 Entrada de tiquets</a>
+<a href="?mod=modules.compres&tab=compres_super{url_suffix}" target="_self">📄 Compres Super</a>
 <a href="?mod=modules.compres&tab=llista_compra{url_suffix}" target="_self">📋 Llista de la Compra</a>
+<a href="?mod=modules.compres&tab=rebost_stock{url_suffix}" target="_self">📦 Rebost / Stock</a>
+<a href="?mod=modules.compres&tab=estadistiques{url_suffix}" target="_self">📊 Estadístiques</a>
+<a href="?mod=modules.compres&tab=comparador{url_suffix}" target="_self">🔍 Comparador d'Ofertes</a>
+<a href="?mod=modules.compres&tab=fulletons{url_suffix}" target="_self">📰 Fulletons</a>
 </div>
 </div>''' if icones_actives.get('compres', True) else ''}
 <div class="submenu-item">
 <a href="?mod=modules.cotxe{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🚗 Cotxe</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
+<a href="?mod=modules.cotxe&tab=km_rutes{url_suffix}" target="_self">🛣️ Km i Rutes</a>
+<a href="?mod=modules.cotxe&tab=repostatge{url_suffix}" target="_self">⛽ Repostatge</a>
+<a href="?mod=modules.cotxe&tab=manteniment{url_suffix}" target="_self">🔧 Manteniment (Oli i Rodes)</a>
+<a href="?mod=modules.cotxe&tab=consum{url_suffix}" target="_self">📊 Consum</a>
+<div class="menu-separator"></div>
 <a href="?action=edit_routes{action_suffix}" target="_self">📝 Editar Rutes</a>
 </div>
 </div>
 {f'''<div class="submenu-item">
 <a href="?mod=modules.menjar{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🍽️ Menús i cuina</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
+<a href="?mod=modules.menjar&tab=menu_setmanal{url_suffix}" target="_self">📅 Menú Setmanal (Actiu)</a>
+<a href="?mod=modules.menjar&tab=mise_en_place{url_suffix}" target="_self">🔪 Mise en place</a>
+<a href="?mod=modules.menjar&tab=recomanador{url_suffix}" target="_self">🧠 Recomanador de Menús</a>
+<a href="?mod=modules.menjar&tab=llibre_receptes{url_suffix}" target="_self">📖 Llibre de Receptes</a>
+<a href="?mod=modules.menjar&tab=afegir_recepta{url_suffix}" target="_self">➕ Afegir Recepta</a>
+<a href="?mod=modules.menjar&tab=bustia_peticions{url_suffix}" target="_self">📥 Bústia Peticions</a>
+<div class="menu-separator"></div>
 <a href="?mod=modules.menjar&action=show_faq_menjar{url_suffix}" target="_self">❓ Preguntes i Respostes</a>
 </div>
 </div>''' if icones_actives.get('menjar', True) else ''}
@@ -956,7 +972,15 @@ div.block-container {{
 {f'<a href="?mod=modules.domotica{url_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
 {f'<a href="?mod=modules.seguretat{url_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
 {f'<a href="?mod=modules.calendari{url_suffix}" target="_self">📅 Agenda i esdeveniments</a>' if icones_actives.get('agenda', True) else ''}
-{f'<a href="?mod=modules.medicacio{url_suffix}" target="_self">💊 Control de medicació</a>' if icones_actives.get('medicacio', True) else ''}
+{f'''<div class="submenu-item">
+<a href="?mod=modules.medicacio{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>💊 Control de medicació</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<div class="submenu-dropdown">
+<a href="?mod=modules.medicacio&tab=avui_supervisio{url_suffix}" target="_self">🕒 Preses d'Avui & Supervisió</a>
+<a href="?mod=modules.medicacio&tab=crear_pla{url_suffix}" target="_self">➕ Crear Pla de Medicació</a>
+<a href="?mod=modules.medicacio&tab=plans_historial{url_suffix}" target="_self">📋 Plans Actius i Historial</a>
+<a href="?mod=modules.medicacio&tab=google_calendar{url_suffix}" target="_self">⚙️ Connexió Google Calendar API</a>
+</div>
+</div>''' if icones_actives.get('medicacio', True) else ''}
 {f'<a href="?mod=modules.jocs{url_suffix}" target="_self">🎲 Jocs i oci</a>' if icones_actives.get('jocs', True) else ''}
 </div>
 </div>

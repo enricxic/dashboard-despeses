@@ -824,7 +824,25 @@ def render():
             if not df_receptes.empty and 'categoria' in df_receptes.columns and 'titol' in df_receptes.columns:
                 df_receptes = df_receptes.sort_values(by=['categoria', 'titol'], ascending=[True, True]).reset_index(drop=True)
             
-            subtab_menu, subtab_mise, subtab_gen, subtab_list, subtab_add, subtab_busti = st.tabs(["📅 Menú Setmanal (Actiu)", "🔪 Mise en place", "🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta", "📥 Bústia Peticions"])
+            tabs_list = ["📅 Menú Setmanal (Actiu)", "🔪 Mise en place", "🧠 Recomanador de Menús", "📖 Llibre de Receptes", "➕ Afegir Recepta", "📥 Bústia Peticions"]
+            tab_mapping = {
+                "menu_setmanal": "📅 Menú Setmanal (Actiu)",
+                "menu": "📅 Menú Setmanal (Actiu)",
+                "mise_en_place": "🔪 Mise en place",
+                "mise": "🔪 Mise en place",
+                "recomanador": "🧠 Recomanador de Menús",
+                "llibre_receptes": "📖 Llibre de Receptes",
+                "receptes": "📖 Llibre de Receptes",
+                "afegir_recepta": "➕ Afegir Recepta",
+                "bustia_peticions": "📥 Bústia Peticions",
+                "bustia": "📥 Bústia Peticions"
+            }
+            tab_param = st.query_params.get("tab")
+            default_tab = tab_mapping.get(tab_param)
+            if default_tab not in tabs_list:
+                default_tab = None
+
+            subtab_menu, subtab_mise, subtab_gen, subtab_list, subtab_add, subtab_busti = st.tabs(tabs_list, default=default_tab)
             
             with subtab_list:
                 # Sistema de Filtres

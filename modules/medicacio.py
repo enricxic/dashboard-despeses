@@ -191,12 +191,28 @@ def render():
     # =========================================================================
     # PESTANYES PRINCIPALS DEL MÒDUL
     # =========================================================================
-    tab_avui, tab_nou, tab_plans, tab_config = st.tabs([
+    tabs_list = [
         "🕒 Preses d'Avui & Supervisió",
         "➕ Crear Pla de Medicació",
         "📋 Plans Actius i Historial",
         "⚙️ Connexió Google Calendar API"
-    ])
+    ]
+    tab_mapping = {
+        "avui_supervisio": "🕒 Preses d'Avui & Supervisió",
+        "avui": "🕒 Preses d'Avui & Supervisió",
+        "crear_pla": "➕ Crear Pla de Medicació",
+        "nou_pla": "➕ Crear Pla de Medicació",
+        "plans_historial": "📋 Plans Actius i Historial",
+        "plans": "📋 Plans Actius i Historial",
+        "google_calendar": "⚙️ Connexió Google Calendar API",
+        "calendar_api": "⚙️ Connexió Google Calendar API"
+    }
+    tab_param = st.query_params.get("tab")
+    default_tab = tab_mapping.get(tab_param)
+    if default_tab not in tabs_list:
+        default_tab = None
+
+    tab_avui, tab_nou, tab_plans, tab_config = st.tabs(tabs_list, default=default_tab)
 
     # -------------------------------------------------------------------------
     # 1. PESTANYA: PRESES D'AVUI & SUPERVISIÓ

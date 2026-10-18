@@ -3516,21 +3516,23 @@ def render():
     st.session_state.pop("show_bixolon_dialog", None)
     st.session_state.pop("preview_test_ticket", None)
 
-    # Si venim del menú superior amb tab=llista_compra, canviar automàticament a la pestanya 1
-    if st.query_params.get("tab") == "llista_compra":
-        import streamlit.components.v1 as components
-        components.html("""
-        <script>
-        setTimeout(() => {
-            const tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
-            if (tabs && tabs.length > 1) {
-                tabs[1].click();
-            }
-        }, 150);
-        </script>
-        """, height=0, width=0)
+    # Sincronització de pestanya nativa des de la URL (si es ve del menú superior amb tab=...)
+    tabs_list = ["📄 Compres Super", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques", "🔍 Comparador d'Ofertes", "📰 Fulletons"]
+    tab_mapping = {
+        "compres_super": "📄 Compres Super",
+        "entrada_tiquets": "📄 Compres Super",
+        "llista_compra": "📋 Llista de la Compra",
+        "rebost_stock": "📦 Rebost / Stock",
+        "estadistiques": "📊 Estadístiques",
+        "comparador": "🔍 Comparador d'Ofertes",
+        "fulletons": "📰 Fulletons"
+    }
+    tab_param = st.query_params.get("tab")
+    default_tab = tab_mapping.get(tab_param)
+    if default_tab not in tabs_list:
+        default_tab = None
 
-    t0, t1, t2, t3, t4, t5 = st.tabs(["📄 Compres Super", "📋 Llista de la Compra", "📦 Rebost / Stock", "📊 Estadístiques", "🔍 Comparador d'Ofertes", "📰 Fulletons"])
+    t0, t1, t2, t3, t4, t5 = st.tabs(tabs_list, default=default_tab)
     
     with t0:
         render_compres_super_interface()
