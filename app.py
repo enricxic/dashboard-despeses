@@ -872,6 +872,11 @@ div.block-container {{
     background-color: #0284c7 !important;
     color: #ffffff !important;
 }}
+.desktop-menubar .menu-separator {{
+    height: 1px;
+    background-color: #334155;
+    margin: 4px 0;
+}}
 </style>
 <nav class="desktop-menubar">
 <div class="menu-item">
@@ -915,8 +920,15 @@ div.block-container {{
 <div class="menu-dropdown">
 <a href="?mod=modules.dashboard{url_suffix}" target="_self">📊 Resum General (Dashboard)</a>
 {f'''<div class="submenu-item">
-<a href="?mod=modules.economic{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>📈 Mòdul Econòmic complet</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<a href="?mod=modules.economic{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>📈 Mòdul Econòmic</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
+<a href="?mod=modules.economic&tab=ingres_despesa{url_suffix}" target="_self">📝 Ingrés / Despesa General</a>
+<a href="?mod=modules.economic&tab=prev_despeses{url_suffix}" target="_self">🔴 Prev. Despeses</a>
+<a href="?mod=modules.economic&tab=prev_ingressos{url_suffix}" target="_self">🟢 Prev. Ingressos</a>
+<a href="?mod=modules.economic&tab=inversions{url_suffix}" target="_self">📈 Inversions</a>
+<a href="?mod=modules.economic&tab=estalvis{url_suffix}" target="_self">💰 Estalvis</a>
+<a href="?mod=modules.economic&tab=xat_ia{url_suffix}" target="_self">🤖 Xat IA</a>
+<div class="menu-separator"></div>
 <a href="?mod=modules.economic&action=afegir_any_comptable{url_suffix}" target="_self">📅 Afegir nou any comptable</a>
 <a href="?mod=modules.economic&action=show_faq_economic{url_suffix}" target="_self">❓ Preguntes i Respostes</a>
 </div>

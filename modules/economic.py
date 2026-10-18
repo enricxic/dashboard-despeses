@@ -2807,7 +2807,39 @@ def render(view_mode="economic"):
     
     if tabs_list:
         tabs = st.tabs(tabs_list)
-    
+
+    # Sincronització de pestanya des de la URL (si es ve del menú superior amb tab=...)
+    tab_param = st.query_params.get("tab")
+    tab_mapping = {
+        "ingres_despesa": (0, "Ingrés / Despesa"),
+        "prev_despeses": (1, "Prev. Despeses"),
+        "prev_ingressos": (2, "Prev. Ingressos"),
+        "inversions": (3, "Inversions"),
+        "estalvis": (4, "Estalvis"),
+        "xat_ia": (5, "Xat IA")
+    }
+    if tab_param in tab_mapping:
+        target_tab_idx, target_tab_text = tab_mapping[tab_param]
+        import streamlit.components.v1 as components
+        components.html(f"""
+        <script>
+        setTimeout(() => {{
+            const tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
+            let clicked = false;
+            for (const t of tabs) {{
+                if (t.innerText && t.innerText.toLowerCase().includes("{target_tab_text.lower()}")) {{
+                    t.click();
+                    clicked = true;
+                    break;
+                }}
+            }}
+            if (!clicked && tabs && tabs.length > {target_tab_idx}) {{
+                tabs[{target_tab_idx}].click();
+            }}
+        }}, 150);
+        </script>
+        """, height=0, width=0)
+
     tab_ingres_despesa = tabs[0]
     if st.session_state.get("role") in ["admin", "guest"]:
         tab_prev_desp = tabs[1]
