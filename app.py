@@ -1,6 +1,7 @@
 # Dashboard XiquiHouse - Punt d'Entrada Canònic (Consolidat)
 import streamlit as st
 import importlib
+import sys
 import base64
 import os
 import textwrap
@@ -139,7 +140,7 @@ function attachMenuTabInterceptors() {
 
                     const curHref = window.parent.location.href;
                     let belongsToCurrentMod = false;
-                    const mods = ['modules.compres', 'modules.economic', 'modules.cotxe', 'modules.menjar', 'modules.medicacio'];
+                    const mods = ['modules.compres', 'modules.economic', 'modules.cotxe', 'modules.menjar', 'modules.medicacio', 'modules.manteniment'];
                     for (const m of mods) {
                         if (href.includes('mod=' + m) && curHref.includes('mod=' + m)) {
                             belongsToCurrentMod = true;
@@ -1462,11 +1463,30 @@ if st.session_state.current_module is None:
     st.markdown(html_content, unsafe_allow_html=True)
 
 
+_MODULE_MTIMES = {}
+
 def render_module_view(module_name):
     from core.db import ensure_session_dfs
     ensure_session_dfs()
     
-    mod = importlib.import_module(module_name)
+    mod = sys.modules.get(module_name)
+    if mod is None:
+        mod = importlib.import_module(module_name)
+        if hasattr(mod, "__file__") and mod.__file__:
+            try:
+                _MODULE_MTIMES[module_name] = os.path.getmtime(mod.__file__)
+            except Exception:
+                pass
+    else:
+        # Si el codi font al disc s'ha actualitzat (p. ex. nou commit de git), recarregar-lo automàticament
+        if hasattr(mod, "__file__") and mod.__file__:
+            try:
+                cur_mtime = os.path.getmtime(mod.__file__)
+                if cur_mtime > _MODULE_MTIMES.get(module_name, 0):
+                    mod = importlib.reload(mod)
+                    _MODULE_MTIMES[module_name] = cur_mtime
+            except Exception:
+                pass
     mod.render()
 
 

@@ -384,6 +384,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
   - **Sincronització automàtica amb el Calendari Familiar**: En activar la casella o crear tasques amb data prevista, s'afegeix automàticament un esdeveniment a l'agenda (`core/calendar_manager.py`) sota la categoria "Llar" amb l'etiqueta `#idManteniment`.
   - **Integració amb el Sistema Global d'Alertes (`core/alerts.py`)**: Generació dinàmica d'avisos per a la campaneta de notificacions de la barra superior (`🔔`) per a tasques no acomplertes pendents o vençudes, adreçades específicament al membre familiar assignat o a tothom.
   - **Accés directe i navegació per URL**: Integració al router d'`app.py` (`tab=registre`) i inclusió del submenú `📋 Registre Manteniment` a la barra superior.
+  - **Recàrrega automàtica de mòduls per `mtime` a `render_module_view` (`app.py` i `app_v2.py`)**: S'ha implementat un detector automàtic de temps de modificació de fitxer (`os.path.getmtime`) que recarrega els mòduls en memòria quan el codi font al disc ha canviat sense penalitzar el rendiment ni esborrar la memòria cau de la sessió. S'ha actualitzat `app_v2.py` per assegurar que el watchdog de Streamlit Cloud detecti el nou desplegament.
 
 
 > [!IMPORTANT]
