@@ -328,8 +328,14 @@ def save_registre_manteniment(records: list) -> bool:
     try:
         import pandas as pd
         os.makedirs(os.path.dirname(REGISTRE_CSV), exist_ok=True)
-        df = pd.DataFrame(records)
-        cols_order = ["idManteniment", "dataAlta", "dataManteniment", "feina", "tipus", "alertaA", "acompliment", "observacions"]
+        records_csv = []
+        for r in records:
+            r_copy = dict(r)
+            if isinstance(r_copy.get("alertaA"), list):
+                r_copy["alertaA"] = ", ".join(r_copy["alertaA"])
+            records_csv.append(r_copy)
+        df = pd.DataFrame(records_csv)
+        cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "acompliment", "observacions"]
         for c in cols_order:
             if c not in df.columns:
                 df[c] = ""
@@ -347,6 +353,7 @@ def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dic
     task_data["idManteniment"] = next_id
     if not task_data.get("dataAlta"):
         task_data["dataAlta"] = datetime.now().strftime("%d/%m/%Y")
+    task_data.setdefault("diesAvis", 2)
     task_data.setdefault("feina", "")
     task_data.setdefault("acompliment", "No")
     
@@ -371,7 +378,11 @@ def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dic
             desc_curta = feina if feina else obs
             tit = f"[{tip}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tip}] {desc_curta or 'Tasca de manteniment'}"
             
-            cal_desc = f"Tasca de Manteniment #{next_id}\nFeina: {feina}\nTipus: {tip}\nAlerta a: {task_data.get('alertaA', 'Tothom')}"
+            alerta_raw = task_data.get("alertaA", "Tothom")
+            alerta_str = ", ".join(alerta_raw) if isinstance(alerta_raw, list) else str(alerta_raw)
+            dies_av = task_data.get("diesAvis", 2)
+            
+            cal_desc = f"Tasca de Manteniment #{next_id}\nFeina: {feina}\nTipus: {tip}\nAlerta a: {alerta_str}\nAvís amb {dies_av} dies d'antelació"
             if obs:
                 cal_desc += f"\n\nObservacions:\n{obs}"
             
@@ -381,7 +392,7 @@ def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dic
                 "time": "09:00",
                 "category": "Llar",
                 "description": cal_desc,
-                "assigned_to": task_data.get("alertaA", "Tothom"),
+                "assigned_to": alerta_str,
                 "notify": True
             })
             if ev and isinstance(ev, dict) and "id" in ev:

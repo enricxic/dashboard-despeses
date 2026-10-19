@@ -614,7 +614,7 @@ def edit_task_dialog(task: dict, family_names: list):
     st.markdown(f"<h3 style='margin-top:0; color:#f39c12;'>✏️ Editar Tasca #{task_id}</h3>", unsafe_allow_html=True)
     
     with st.form(f"form_edit_task_{task_id}"):
-        c1, c2 = st.columns(2)
+        c1, c2, c_avis = st.columns([1.5, 1.5, 1])
         with c1:
             d_raw = str(task.get("dataManteniment", "")).strip()
             d_val = datetime.today().date()
@@ -630,6 +630,13 @@ def edit_task_dialog(task: dict, family_names: list):
             cur_tip = task.get("tipus", "Feina casa")
             tip_idx = tipus_opts.index(cur_tip) if cur_tip in tipus_opts else 0
             tipus = st.selectbox("Tipus Feina *", tipus_opts, index=tip_idx)
+        with c_avis:
+            cur_avis = task.get("diesAvis", 2)
+            try:
+                cur_avis = int(cur_avis)
+            except (ValueError, TypeError):
+                cur_avis = 2
+            dies_avis = st.number_input("Dies d'avís", min_value=0, max_value=60, value=cur_avis, step=1, help="Dies abans de la tasca en què sortirà l'alerta")
             
         cur_feina = str(task.get("feina", "")).strip()
         c_feina1, c_feina2 = st.columns([1.5, 1.5])
@@ -640,11 +647,19 @@ def edit_task_dialog(task: dict, family_names: list):
             default_custom = cur_feina if cur_feina not in OPCIONS_FEINA else ""
             feina_custom = st.text_input("O una altra feina concreta:", value=default_custom, placeholder="Escriu si vols canviar-la...")
 
-        c3, c4 = st.columns(2)
+        c3, c4 = st.columns([2, 1])
         with c3:
-            cur_alerta = task.get("alertaA", "Tothom")
-            al_idx = family_names.index(cur_alerta) if cur_alerta in family_names else 0
-            alertaA = st.selectbox("Alerta a *", family_names, index=al_idx)
+            raw_alerta = task.get("alertaA", ["Tothom"])
+            if isinstance(raw_alerta, str):
+                default_alerta = [x.strip() for x in raw_alerta.split(",") if x.strip()]
+            elif isinstance(raw_alerta, list):
+                default_alerta = raw_alerta
+            else:
+                default_alerta = ["Tothom"]
+            default_alerta = [x for x in default_alerta if x in family_names]
+            if not default_alerta:
+                default_alerta = ["Tothom"]
+            alertaA = st.multiselect("Alerta a *", options=family_names, default=default_alerta, help="Membre(s) de la família que rebran l'alerta")
         with c4:
             cur_acomp = str(task.get("acompliment", "No")).strip().lower()
             ac_idx = 1 if cur_acomp in ["sí", "si", "true"] else 0
@@ -660,11 +675,13 @@ def edit_task_dialog(task: dict, family_names: list):
                 st.error("Cal indicar la feina concreta a realitzar.")
                 return
             d_str = d_manteniment.strftime("%d/%m/%Y")
+            alerta_final = alertaA if alertaA else ["Tothom"]
             upd = {
                 "dataManteniment": d_str,
+                "diesAvis": int(dies_avis),
                 "feina": feina_final.strip(),
                 "tipus": tipus,
-                "alertaA": alertaA,
+                "alertaA": alerta_final,
                 "acompliment": acompliment,
                 "observacions": observacions.strip()
             }
@@ -672,10 +689,11 @@ def edit_task_dialog(task: dict, family_names: list):
                 try:
                     from core.calendar_manager import add_event, update_event
                     ev_id = task.get("calendar_event_id")
-                    desc_curta = feina.strip() if feina.strip() else observacions.strip()
+                    desc_curta = feina_final.strip() if feina_final.strip() else observacions.strip()
                     tit = f"[{tipus}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tipus}] {desc_curta}"
                     iso_date = d_manteniment.strftime("%Y-%m-%d")
-                    cal_desc = f"Tasca de Manteniment #{task_id}\nFeina: {feina.strip()}\nTipus: {tipus}\nAlerta a: {alertaA}"
+                    alerta_str = ", ".join(alerta_final)
+                    cal_desc = f"Tasca de Manteniment #{task_id}\nFeina: {feina_final.strip()}\nTipus: {tipus}\nAlerta a: {alerta_str}\nAvís amb {dies_avis} dies d'antelació"
                     if observacions.strip():
                         cal_desc += f"\n\nObservacions:\n{observacions.strip()}"
                     if ev_id:
@@ -685,7 +703,7 @@ def edit_task_dialog(task: dict, family_names: list):
                             "time": "09:00",
                             "category": "Llar",
                             "description": cal_desc,
-                            "assigned_to": alertaA,
+                            "assigned_to": alerta_str,
                             "notify": True
                         })
                     else:
@@ -695,7 +713,7 @@ def edit_task_dialog(task: dict, family_names: list):
                             "time": "09:00",
                             "category": "Llar",
                             "description": cal_desc,
-                            "assigned_to": alertaA,
+                            "assigned_to": alerta_str,
                             "notify": True
                         })
                         if ev and isinstance(ev, dict) and "id" in ev:
@@ -773,8 +791,9 @@ def render():
         # 1. FORMULARI D'ENTRADA
         with st.container(border=True):
             st.markdown("<h4 style='color:#f39c12; margin-top:0; margin-bottom:12px;'>➕ Nova Tasca de Manteniment</h4>", unsafe_allow_html=True)
-            with st.form("form_alta_tasca_manteniment", clear_on_submit=True):
-                c_f1, c_f2 = st.columns(2)
+            form_counter = st.session_state.get("mant_form_count", 0)
+            with st.form(f"form_alta_tasca_manteniment_{form_counter}", clear_on_submit=True):
+                c_f1, c_f2, c_f3 = st.columns([1.5, 1.5, 1])
                 with c_f1:
                     data_manteniment_input = st.date_input(
                         "Data Prevista *",
@@ -787,6 +806,15 @@ def render():
                         "Tipus Feina *",
                         ["Feina casa", "Manteniment", "Reparació", "Neteja a fons", "Revisió periòdica", "Instal·lació / Millora", "Altres"],
                         index=0
+                    )
+                with c_f3:
+                    dies_avis_input = st.number_input(
+                        "Dies d'avís",
+                        min_value=0,
+                        max_value=60,
+                        value=2,
+                        step=1,
+                        help="Dies abans de la tasca en què començarà a sortir l'alerta a la campaneta"
                     )
                 
                 c_feina1, c_feina2 = st.columns([1.5, 1.5])
@@ -804,13 +832,13 @@ def render():
                         help="Si escrius aquí, s'utilitzarà aquest text en lloc del desplegable"
                     )
 
-                c_al1, c_al2 = st.columns(2)
+                c_al1, c_al2 = st.columns([2, 1])
                 with c_al1:
-                    alerta_input = st.selectbox(
+                    alerta_input = st.multiselect(
                         "Alerta a *",
-                        family_names,
-                        index=0,
-                        help="Persona o grup a qui li apareixerà com a avís a la campaneta"
+                        options=family_names,
+                        default=["Tothom"],
+                        help="Membre(s) de la família a qui li apareixerà com a avís a la campaneta"
                     )
                 with c_al2:
                     acompliment_input = st.selectbox(
@@ -837,16 +865,19 @@ def render():
                         st.error("Cal indicar la feina concreta a realitzar.")
                     else:
                         d_prev_str = data_manteniment_input.strftime("%d/%m/%Y")
+                        alerta_members = alerta_input if alerta_input else ["Tothom"]
                         nova_tasca = {
                             "dataAlta": datetime.now().strftime("%d/%m/%Y"),
                             "dataManteniment": d_prev_str,
+                            "diesAvis": int(dies_avis_input),
                             "feina": feina_final.strip(),
                             "tipus": tipus_input,
-                            "alertaA": alerta_input,
+                            "alertaA": alerta_members,
                             "acompliment": acompliment_input,
                             "observacions": observacions_input.strip()
                         }
                         res = add_manteniment_task(nova_tasca, send_to_calendar=send_cal_input)
+                        st.session_state["mant_form_count"] = form_counter + 1
                         st.success(f"Tasca #{res.get('idManteniment')} registrada correctament!")
                         st.rerun()
 
@@ -900,8 +931,7 @@ def render():
             all_tipus = ["Tots"] + sorted(list(set(t.get("tipus", "") for t in tasks if t.get("tipus"))))
             filtre_tipus = st.selectbox("Tipus Feina", all_tipus, key="filtre_tipus_mant")
         with col_c4:
-            all_alerta = ["Tothom"] + sorted(list(set(t.get("alertaA", "") for t in tasks if t.get("alertaA") and t.get("alertaA") != "Tothom")))
-            filtre_persona = st.selectbox("Persona", all_alerta, key="filtre_persona_mant")
+            filtre_persona = st.selectbox("Persona", family_names, key="filtre_persona_mant")
 
         # Filtrar tasques
         filtered_tasks = tasks
@@ -927,7 +957,15 @@ def render():
         if filtre_tipus != "Tots":
             filtered_tasks = [t for t in filtered_tasks if t.get("tipus") == filtre_tipus]
         if filtre_persona != "Tothom":
-            filtered_tasks = [t for t in filtered_tasks if t.get("alertaA") == filtre_persona]
+            def _member_match(t, person):
+                a = t.get("alertaA", "")
+                if isinstance(a, list):
+                    return person in a or "Tothom" in a
+                elif isinstance(a, str):
+                    parts = [p.strip() for p in a.split(",") if p.strip()]
+                    return person in parts or "Tothom" in parts
+                return False
+            filtered_tasks = [t for t in filtered_tasks if _member_match(t, filtre_persona)]
 
         # Selector de format de visualització
         c_mode1, c_mode2 = st.columns([3, 1], vertical_alignment="center")
@@ -936,9 +974,10 @@ def render():
         with c_mode2:
             if filtered_tasks:
                 df_export = pd.DataFrame(filtered_tasks)
-                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "feina", "tipus", "alertaA", "acompliment", "observacions"]
+                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "acompliment", "observacions"]
                 for c in cols_order:
                     if c not in df_export.columns: df_export[c] = ""
+                df_export["alertaA"] = df_export["alertaA"].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
                 df_export = df_export[cols_order]
                 csv_data = df_export.to_csv(sep=';', index=False).encode('utf-8')
                 st.download_button(
@@ -960,9 +999,10 @@ def render():
         else:
             if view_mode == "📊 Taula de dades (Dataframe / CSV)":
                 df_display = pd.DataFrame(filtered_tasks)
-                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "feina", "tipus", "alertaA", "acompliment", "observacions"]
+                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "acompliment", "observacions"]
                 for c in cols_order:
                     if c not in df_display.columns: df_display[c] = ""
+                df_display["alertaA"] = df_display["alertaA"].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
                 df_display = df_display[cols_order]
                 st.dataframe(
                     df_display,
@@ -972,9 +1012,10 @@ def render():
                         "idManteniment": st.column_config.NumberColumn("ID", width="small"),
                         "dataAlta": st.column_config.TextColumn("Data Alta", width="small"),
                         "dataManteniment": st.column_config.TextColumn("Data Prevista", width="small"),
+                        "diesAvis": st.column_config.NumberColumn("Dies Avís", width="small", help="Dies abans en què començarà l'avís"),
                         "feina": st.column_config.TextColumn("Feina Concreta", width="medium"),
                         "tipus": st.column_config.TextColumn("Tipus Feina", width="small"),
-                        "alertaA": st.column_config.TextColumn("Alerta a", width="small"),
+                        "alertaA": st.column_config.TextColumn("Alerta a", width="medium"),
                         "acompliment": st.column_config.TextColumn("Acomplert", width="small"),
                         "observacions": st.column_config.TextColumn("Observacions")
                     }
@@ -1008,6 +1049,10 @@ def render():
                     task_obs = str(task.get("observacions", "")).strip()
                     main_title = task_feina if task_feina else task_obs
 
+                    alerta_raw = task.get("alertaA", "Tothom")
+                    alerta_txt = ", ".join(alerta_raw) if isinstance(alerta_raw, list) else str(alerta_raw)
+                    dies_av_badge = task.get("diesAvis", 2)
+
                     with st.container(border=True):
                         c_card_left, c_card_right = st.columns([7.5, 2.5], vertical_alignment="center")
                         with c_card_left:
@@ -1015,8 +1060,9 @@ def render():
                             <div style='display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;'>
                                 <span style='background:#0f172a; color:#f8fafc; border:1px solid #334155; padding:2px 8px; border-radius:8px; font-weight:700; font-size:0.8rem;'>#{task_id}</span>
                                 {status_html}
-                                <span style='background:#1e293b; color:#cbd5e1; border:1px solid #475569; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🏷️ {task.get('tipus', 'Manteniment')}</span>
-                                <span style='background:#1e293b; color:#f59e0b; border:1px solid #d97706; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>👤 Alerta: {task.get('alertaA', 'Tothom')}</span>
+                                <span style='background:#1e293b; color:#cbd5e1; border:1px solid #475569; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🏷️ {task.get('tipus', 'Feina casa')}</span>
+                                <span style='background:#1e293b; color:#f59e0b; border:1px solid #d97706; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>👤 Alerta: {alerta_txt}</span>
+                                <span style='background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🔔 Avís: {dies_av_badge}d abans</span>
                                 <span style='color:#64748b; font-size:0.75rem; margin-left:auto;'>Alta: {task.get('dataAlta', '')}</span>
                             </div>
                             <div style='font-size:1.05rem; font-weight:700; color:#f8fafc; margin-top:4px;'>
@@ -1055,7 +1101,7 @@ def render():
                                                 break
                                             except Exception:
                                                 pass
-                                        cal_desc = f"Tasca #{task_id}\nFeina: {task_feina}\nTipus: {task.get('tipus')}\nAlerta a: {task.get('alertaA')}"
+                                        cal_desc = f"Tasca #{task_id}\nFeina: {task_feina}\nTipus: {task.get('tipus')}\nAlerta a: {alerta_txt}\nAvís amb {dies_av_badge} dies d'antelació"
                                         if task_obs:
                                             cal_desc += f"\n\nObservacions:\n{task_obs}"
                                         ev = add_event({
@@ -1064,7 +1110,7 @@ def render():
                                             "time": "09:00",
                                             "category": "Llar",
                                             "description": cal_desc,
-                                            "assigned_to": task.get("alertaA", "Tothom"),
+                                            "assigned_to": alerta_txt,
                                             "notify": True
                                         })
                                         if ev and isinstance(ev, dict) and "id" in ev:

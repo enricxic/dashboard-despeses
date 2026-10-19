@@ -234,7 +234,12 @@ def get_global_alerts():
                             pass
                     if d_prev:
                         delta = (d_prev - avui).days
-                        alerta_a = t.get("alertaA", "Tothom")
+                        alerta_raw = t.get("alertaA", "Tothom")
+                        alerta_a = ", ".join(alerta_raw) if isinstance(alerta_raw, list) else str(alerta_raw)
+                        try:
+                            dies_avis = int(t.get("diesAvis", 2))
+                        except (ValueError, TypeError):
+                            dies_avis = 2
                         tipus = t.get("tipus", "Manteniment")
                         feina = str(t.get("feina", "")).strip()
                         obs = str(t.get("observacions", "")).strip()
@@ -247,7 +252,7 @@ def get_global_alerts():
                                 "title": f"Manteniment vençut ({alerta_a})",
                                 "message": f"{tit}: prevista per al {d_prev.strftime('%d/%m/%Y')} (vençuda fa {abs(delta)} dies)."
                             })
-                        elif delta <= 2:
+                        elif delta <= dies_avis:
                             alerts.append({
                                 "type": "warning",
                                 "icon": "🛠️",
