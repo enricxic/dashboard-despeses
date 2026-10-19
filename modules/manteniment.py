@@ -15,7 +15,7 @@ from core.manteniment_manager import (
 
 @st.dialog("📄 Visor de Document", width="large")
 def view_pdf_dialog(doc_title: str, category: str, filename: str):
-    """Diàleg gran per visualitzar el PDF incrustat i permetre la descàrrega directa."""
+    """Diàleg gran per visualitzar el PDF incrustat amb PDF.js i permetre la descàrrega directa."""
     fpath = get_pdf_path(category, filename)
     st.markdown(f"<h3 style='margin-top:0; color:#f39c12;'>📄 {doc_title}</h3>", unsafe_allow_html=True)
     
@@ -27,7 +27,7 @@ def view_pdf_dialog(doc_title: str, category: str, filename: str):
         with open(fpath, "rb") as f:
             pdf_bytes = f.read()
             
-        c_dl, c_info = st.columns([1, 1], vertical_alignment="center")
+        c_dl, c_ext, c_info = st.columns([1.5, 1.5, 2], vertical_alignment="center")
         with c_dl:
             st.download_button(
                 label=f"📥 Descarregar {filename}",
@@ -37,20 +37,199 @@ def view_pdf_dialog(doc_title: str, category: str, filename: str):
                 use_container_width=True,
                 key=f"dl_viewer_{category}_{filename}"
             )
+        with c_ext:
+            if os.name == 'nt' and os.path.exists(fpath):
+                if st.button("🖥️ Obrir al lector extern", use_container_width=True, key=f"open_ext_{category}_{filename}"):
+                    try:
+                        os.startfile(fpath)
+                    except Exception as err:
+                        st.warning(f"No s'ha pogut obrir: {err}")
         with c_info:
             size_kb = len(pdf_bytes) / 1024
             st.markdown(f"<div style='text-align:right; color:#94a3b8; font-size:0.9rem;'>📁 <code>{category}/{filename}</code> • <b>{size_kb:.1f} KB</b></div>", unsafe_allow_html=True)
             
         b64 = base64.b64encode(pdf_bytes).decode('utf-8')
-        html_code = f"""
-        <iframe src="data:application/pdf;base64,{b64}#toolbar=1" 
-                width="100%" 
-                height="750" 
-                type="application/pdf" 
-                style="border: 1px solid #334155; border-radius: 8px; background: #1e293b;">
-        </iframe>
+        
+        pdfjs_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+          <style>
+            * {{ box-sizing: border-box; }}
+            body {{
+              margin: 0;
+              padding: 0;
+              background: #0f172a;
+              color: #f8fafc;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              min-height: 100vh;
+            }}
+            .toolbar {{
+              position: sticky;
+              top: 8px;
+              z-index: 100;
+              background: #1e293b;
+              border: 1px solid #334155;
+              padding: 6px 14px;
+              border-radius: 30px;
+              display: flex;
+              gap: 10px;
+              align-items: center;
+              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+              margin-bottom: 12px;
+            }}
+            .btn {{
+              background: #334155;
+              color: #f8fafc;
+              border: 1px solid #475569;
+              padding: 5px 12px;
+              border-radius: 16px;
+              cursor: pointer;
+              font-size: 13px;
+              font-weight: 600;
+              transition: all 0.2s ease;
+            }}
+            .btn:hover {{
+              background: #0284c7;
+              border-color: #38bdf8;
+            }}
+            .page-info {{
+              font-size: 13px;
+              color: #cbd5e1;
+              min-width: 120px;
+              text-align: center;
+              font-weight: 500;
+            }}
+            #canvas-wrapper {{
+              width: 100%;
+              display: flex;
+              justify-content: center;
+              overflow-x: auto;
+              padding-bottom: 20px;
+            }}
+            canvas {{
+              box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+              border-radius: 6px;
+              background: #ffffff;
+              max-width: 98%;
+              height: auto;
+            }}
+            #loading {{
+              padding: 40px;
+              font-size: 14px;
+              color: #94a3b8;
+            }}
+          </style>
+        </head>
+        <body>
+          <div class="toolbar">
+            <button class="btn" id="prev">◀ Anterior</button>
+            <span class="page-info">Pàgina <b id="page-num" style="color:#38bdf8;">1</b> de <b id="page-count">-</b></span>
+            <button class="btn" id="next">Següent ▶</button>
+            <span style="border-left:1px solid #475569; height:18px; margin:0 4px;"></span>
+            <button class="btn" id="zoom-out" title="Reduir mida">🔍 -</button>
+            <span id="zoom-val" style="font-size:12px; color:#94a3b8;">100%</span>
+            <button class="btn" id="zoom-in" title="Augmentar mida">🔍 +</button>
+          </div>
+          <div id="loading">Carregant document...</div>
+          <div id="canvas-wrapper">
+            <canvas id="pdf-canvas" style="display:none;"></canvas>
+          </div>
+
+          <script>
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const b64Data = "{b64}";
+            const rawData = atob(b64Data);
+            const uint8Array = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; i++) {{
+              uint8Array[i] = rawData.charCodeAt(i);
+            }}
+
+            let pdfDoc = null;
+            let pageNum = 1;
+            let pageRendering = false;
+            let pageNumPending = null;
+            let scale = 1.35;
+            const canvas = document.getElementById('pdf-canvas');
+            const ctx = canvas.getContext('2d');
+            const loadingDiv = document.getElementById('loading');
+
+            function renderPage(num) {{
+              pageRendering = true;
+              pdfDoc.getPage(num).then(function(page) {{
+                const viewport = page.getViewport({{ scale: scale }});
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                const renderContext = {{
+                  canvasContext: ctx,
+                  viewport: viewport
+                }};
+                const renderTask = page.render(renderContext);
+                renderTask.promise.then(function() {{
+                  pageRendering = false;
+                  loadingDiv.style.display = 'none';
+                  canvas.style.display = 'block';
+                  if (pageNumPending !== null) {{
+                    renderPage(pageNumPending);
+                    pageNumPending = null;
+                  }}
+                }});
+              }});
+              document.getElementById('page-num').textContent = num;
+              document.getElementById('zoom-val').textContent = Math.round((scale / 1.35) * 100) + '%';
+            }}
+
+            function queueRenderPage(num) {{
+              if (pageRendering) {{
+                pageNumPending = num;
+              }} else {{
+                renderPage(num);
+              }}
+            }}
+
+            document.getElementById('prev').addEventListener('click', function() {{
+              if (pageNum <= 1) return;
+              pageNum--;
+              queueRenderPage(pageNum);
+            }});
+
+            document.getElementById('next').addEventListener('click', function() {{
+              if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+              pageNum++;
+              queueRenderPage(pageNum);
+            }});
+
+            document.getElementById('zoom-in').addEventListener('click', function() {{
+              if (scale < 3.0) {{
+                scale += 0.25;
+                queueRenderPage(pageNum);
+              }}
+            }});
+
+            document.getElementById('zoom-out').addEventListener('click', function() {{
+              if (scale > 0.6) {{
+                scale -= 0.25;
+                queueRenderPage(pageNum);
+              }}
+            }});
+
+            pdfjsLib.getDocument({{ data: uint8Array }}).promise.then(function(pdfDoc_) {{
+              pdfDoc = pdfDoc_;
+              document.getElementById('page-count').textContent = pdfDoc.numPages;
+              renderPage(pageNum);
+            }}).catch(function(err) {{
+              loadingDiv.innerHTML = '<div style="color:#ef4444;">Error interpretant el document: ' + err.message + '</div>';
+            }});
+          </script>
+        </body>
+        </html>
         """
-        st.components.v1.html(html_code, height=760)
+        st.components.v1.html(pdfjs_html, height=800, scrolling=True)
     except Exception as e:
         st.error(f"Error obrint el fitxer PDF: {e}")
 
