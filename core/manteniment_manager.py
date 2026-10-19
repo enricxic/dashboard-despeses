@@ -329,7 +329,7 @@ def save_registre_manteniment(records: list) -> bool:
         import pandas as pd
         os.makedirs(os.path.dirname(REGISTRE_CSV), exist_ok=True)
         df = pd.DataFrame(records)
-        cols_order = ["idManteniment", "dataAlta", "dataManteniment", "tipus", "alertaA", "acompliment", "observacions"]
+        cols_order = ["idManteniment", "dataAlta", "dataManteniment", "feina", "tipus", "alertaA", "acompliment", "observacions"]
         for c in cols_order:
             if c not in df.columns:
                 df[c] = ""
@@ -347,6 +347,7 @@ def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dic
     task_data["idManteniment"] = next_id
     if not task_data.get("dataAlta"):
         task_data["dataAlta"] = datetime.now().strftime("%d/%m/%Y")
+    task_data.setdefault("feina", "")
     task_data.setdefault("acompliment", "No")
     
     # Enviar a calendari si s'ha sol·licitat
@@ -364,16 +365,22 @@ def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dic
             if not iso_date:
                 iso_date = datetime.now().strftime("%Y-%m-%d")
                 
-            obs = task_data.get("observacions", "")
+            feina = task_data.get("feina", "").strip()
+            obs = task_data.get("observacions", "").strip()
             tip = task_data.get("tipus", "Manteniment")
-            tit = f"[{tip}] {obs[:35]}..." if len(obs) > 35 else f"[{tip}] {obs or 'Tasca de manteniment'}"
+            desc_curta = feina if feina else obs
+            tit = f"[{tip}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tip}] {desc_curta or 'Tasca de manteniment'}"
+            
+            cal_desc = f"Tasca de Manteniment #{next_id}\nFeina: {feina}\nTipus: {tip}\nAlerta a: {task_data.get('alertaA', 'Tothom')}"
+            if obs:
+                cal_desc += f"\n\nObservacions:\n{obs}"
             
             ev = add_event({
                 "title": tit,
                 "date": iso_date,
                 "time": "09:00",
                 "category": "Llar",
-                "description": f"Tasca de Manteniment #{next_id}\nTipus: {tip}\nAlerta a: {task_data.get('alertaA', 'Tothom')}\n\nObservacions:\n{obs}",
+                "description": cal_desc,
                 "assigned_to": task_data.get("alertaA", "Tothom"),
                 "notify": True
             })

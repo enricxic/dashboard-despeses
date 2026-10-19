@@ -236,8 +236,10 @@ def get_global_alerts():
                         delta = (d_prev - avui).days
                         alerta_a = t.get("alertaA", "Tothom")
                         tipus = t.get("tipus", "Manteniment")
-                        obs = t.get("observacions", "")
-                        tit = f"[{tipus}] {obs[:30]}..." if len(obs) > 30 else f"[{tipus}] {obs or 'Tasca'}"
+                        feina = str(t.get("feina", "")).strip()
+                        obs = str(t.get("observacions", "")).strip()
+                        desc_text = feina if feina else obs
+                        tit = f"[{tipus}] {desc_text[:30]}..." if len(desc_text) > 30 else f"[{tipus}] {desc_text or 'Tasca'}"
                         if delta < 0:
                             alerts.append({
                                 "type": "error",
