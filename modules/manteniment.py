@@ -607,15 +607,12 @@ def render():
     # =========================================================================
     with tab_manuals:
         # Barra superior d'accions i mètriques
-        col_m1, col_m2, col_m3, col_m_btns = st.columns([1.5, 1.5, 2, 2.5], vertical_alignment="center")
+        col_m1, col_m2, col_m_btns = st.columns([2, 2, 3], vertical_alignment="center")
         with col_m1:
             st.metric("📚 Total Manuals", len(manuals))
         with col_m2:
             locations_count = len(set(d.get("ubicacio", "General") for d in manuals if d.get("ubicacio")))
             st.metric("🏠 Ubicacions", locations_count)
-        with col_m3:
-            latest_man = manuals[-1]["titol"] if manuals else "Cap"
-            st.metric("🆕 Últim afegit", latest_man if len(latest_man) <= 22 else latest_man[:20] + "...")
         with col_m_btns:
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
