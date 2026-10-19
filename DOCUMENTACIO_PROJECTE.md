@@ -368,6 +368,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
   - **Càlcul dinàmic de cobertura de garanties**: Càlcul en temps real dels dies restants de cobertura amb alertes visuals semafòriques (🟢 Vigents, ⚠️ A punt de vèncer en menys de 60 dies, 🔴 Caducades).
   - **Sincronització automàtica de fitxers de disc**: Motor que detecta qualsevol nou fitxer PDF afegit manualment a les carpetes del sistema operatiu i l'afegeix de forma transparent al registre JSON sense sobreescriure les entrades existents.
   - **Formularis interactius d'alta, edició i eliminació**: Creació de nous documents amb càrrega d'arxius (`st.file_uploader`), edició de metadades i eliminació controlada amb opció d'esborrar el fitxer del disc.
+  - **Correcció del paràmetre `rows` a `st.text_area`**: Substitució de l'atribut HTML invàlid `rows` pel paràmetre natiu de Streamlit `height` als formularis d'alta i edició, resolent l'error `TypeError` detectat a Streamlit Cloud.
 
 
 > [!IMPORTANT]

@@ -80,7 +80,7 @@ def add_manual_dialog():
                 "Il·luminació", "Fontaneria", "Mobiliari", "Eines", "General"
             ])
             
-        descripcio = st.text_area("Descripció o observacions", placeholder="Notes sobre el funcionament, configuració bàsica, manteniment...", rows=2)
+        descripcio = st.text_area("Descripció o observacions", placeholder="Notes sobre el funcionament, configuració bàsica, manteniment...", height=80)
         etiquetes_str = st.text_input("Etiquetes (separades per comes)", placeholder="calefacció, termòstat, digital, piles")
         
         uploaded_pdf = st.file_uploader("Pujar fitxer PDF del manual *", type=["pdf"], key="upload_manual_pdf")
@@ -162,7 +162,7 @@ def add_garantia_dialog():
                 "Cuina", "Menjador", "Bany", "Dormitori", "Garatge", "General", "Terrassa / Exterior"
             ])
             
-        descripcio = st.text_area("Notes de garantia o cobertura", placeholder="Condicions d'ampliació de garantia, telèfon d'assistència tècnica, cobertura de peces...", rows=2)
+        descripcio = st.text_area("Notes de garantia o cobertura", placeholder="Condicions d'ampliació de garantia, telèfon d'assistència tècnica, cobertura de peces...", height=80)
         etiquetes_str = st.text_input("Etiquetes (separades per comes)", placeholder="electrodomèstic, cuina, motor 10 anys")
         
         uploaded_pdf = st.file_uploader("Pujar fitxer PDF de la garantia / factura *", type=["pdf"], key="upload_garantia_pdf")
@@ -257,7 +257,7 @@ def edit_manual_dialog(doc: dict):
         with c4:
             subcat = st.selectbox("Àmbit / Subcategoria", subcats, index=sub_idx)
             
-        descripcio = st.text_area("Descripció o observacions", value=doc.get("descripcio", ""), rows=3)
+        descripcio = st.text_area("Descripció o observacions", value=doc.get("descripcio", ""), height=100)
         tags_str = ", ".join(doc.get("etiquetes", []))
         etiquetes_str = st.text_input("Etiquetes (separades per comes)", value=tags_str)
         
@@ -325,7 +325,7 @@ def edit_garantia_dialog(doc: dict):
             loc_idx = locations.index(cur_loc) if cur_loc in locations else 0
             ubicacio = st.selectbox("Ubicació", locations, index=loc_idx)
             
-        descripcio = st.text_area("Notes de garantia o cobertura", value=doc.get("descripcio", ""), rows=2)
+        descripcio = st.text_area("Notes de garantia o cobertura", value=doc.get("descripcio", ""), height=80)
         tags_str = ", ".join(doc.get("etiquetes", []))
         etiquetes_str = st.text_input("Etiquetes (separades per comes)", value=tags_str)
         
