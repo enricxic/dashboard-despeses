@@ -1,8 +1,10 @@
 import streamlit as st
 import os
 import base64
-from datetime import datetime, date
+import pandas as pd
+from datetime import datetime, date, timedelta
 from modules.avatar_widget import render_header_with_avatar
+from core.config_manager import load_app_config
 from core.manteniment_manager import (
     load_manteniment_docs,
     save_manteniment_docs,
@@ -10,7 +12,13 @@ from core.manteniment_manager import (
     get_pdf_path,
     get_pdf_dir,
     calculate_warranty_status,
-    get_page_count
+    get_page_count,
+    load_registre_manteniment,
+    save_registre_manteniment,
+    add_manteniment_task,
+    update_manteniment_task,
+    delete_manteniment_task,
+    toggle_manteniment_acompliment
 )
 
 @st.dialog("📄 Visor de Document", width="large")
@@ -572,6 +580,110 @@ def delete_document_dialog(category: str, doc_id: str, doc_title: str, filename:
             st.success("Document eliminat correctament!")
             st.rerun()
 
+@st.dialog("✏️ Editar Tasca de Manteniment", width="large")
+def edit_task_dialog(task: dict, family_names: list):
+    """Diàleg modal per editar una tasca de manteniment existent."""
+    task_id = task.get("idManteniment", "")
+    st.markdown(f"<h3 style='margin-top:0; color:#f39c12;'>✏️ Editar Tasca #{task_id}</h3>", unsafe_allow_html=True)
+    
+    with st.form(f"form_edit_task_{task_id}"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            d_raw = str(task.get("dataManteniment", "")).strip()
+            d_val = datetime.today().date()
+            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                try:
+                    d_val = datetime.strptime(d_raw, fmt).date()
+                    break
+                except Exception:
+                    pass
+            d_manteniment = st.date_input("Data Prevista (Manteniment) *", value=d_val)
+        with c2:
+            tipus_opts = ["Reparació", "Manteniment", "Feina casa", "Revisió periòdica", "Instal·lació / Millora", "Neteja a fons", "Altres"]
+            cur_tip = task.get("tipus", "Manteniment")
+            tip_idx = tipus_opts.index(cur_tip) if cur_tip in tipus_opts else 1
+            tipus = st.selectbox("Tipus *", tipus_opts, index=tip_idx)
+        with c3:
+            cur_alerta = task.get("alertaA", "Tothom")
+            al_idx = family_names.index(cur_alerta) if cur_alerta in family_names else 0
+            alertaA = st.selectbox("Alerta a *", family_names, index=al_idx)
+            
+        c4, c5 = st.columns([1, 2], vertical_alignment="center")
+        with c4:
+            cur_acomp = str(task.get("acompliment", "No")).strip().lower()
+            ac_idx = 1 if cur_acomp in ["sí", "si", "true"] else 0
+            acompliment = st.selectbox("Acompliment", ["No", "Sí"], index=ac_idx)
+        with c5:
+            sync_cal = st.checkbox("Actualitzar / Enviar a l'Agenda (Calendari)", value=bool(task.get("calendar_event_id")))
+
+        observacions = st.text_area("Observacions / Detall *", value=task.get("observacions", ""), height=80)
+        
+        submitted = st.form_submit_button("💾 Desar canvis", type="primary", use_container_width=True)
+        if submitted:
+            if not observacions.strip():
+                st.error("Cal indicar les observacions de la tasca.")
+                return
+            d_str = d_manteniment.strftime("%d/%m/%Y")
+            upd = {
+                "dataManteniment": d_str,
+                "tipus": tipus,
+                "alertaA": alertaA,
+                "acompliment": acompliment,
+                "observacions": observacions.strip()
+            }
+            if sync_cal:
+                try:
+                    from core.calendar_manager import add_event, update_event
+                    ev_id = task.get("calendar_event_id")
+                    tit = f"[{tipus}] {observacions[:35]}..." if len(observacions) > 35 else f"[{tipus}] {observacions}"
+                    iso_date = d_manteniment.strftime("%Y-%m-%d")
+                    if ev_id:
+                        update_event(ev_id, {
+                            "title": tit,
+                            "date": iso_date,
+                            "time": "09:00",
+                            "category": "Llar",
+                            "description": f"Tasca de Manteniment #{task_id}\nTipus: {tipus}\nAlerta a: {alertaA}\n\nObservacions:\n{observacions}",
+                            "assigned_to": alertaA,
+                            "notify": True
+                        })
+                    else:
+                        ev = add_event({
+                            "title": tit,
+                            "date": iso_date,
+                            "time": "09:00",
+                            "category": "Llar",
+                            "description": f"Tasca de Manteniment #{task_id}\nTipus: {tipus}\nAlerta a: {alertaA}\n\nObservacions:\n{observacions}",
+                            "assigned_to": alertaA,
+                            "notify": True
+                        })
+                        if ev and isinstance(ev, dict) and "id" in ev:
+                            upd["calendar_event_id"] = ev["id"]
+                except Exception as e_cal:
+                    print("Error actualitzant esdeveniment a calendari:", e_cal)
+
+            update_manteniment_task(task_id, upd)
+            st.success("Tasca actualitzada correctament!")
+            st.rerun()
+
+@st.dialog("🗑️ Eliminar Tasca de Manteniment", width="small")
+def delete_task_dialog(task_id: int, task_title: str):
+    """Diàleg de confirmació per eliminar una tasca del registre."""
+    st.markdown(f"<h3 style='margin-top:0; color:#ef4444;'>🗑️ Eliminar Tasca</h3>", unsafe_allow_html=True)
+    st.write(f"Segur que vols eliminar la tasca **#{task_id}**?")
+    if task_title:
+        st.caption(f"*{task_title}*")
+        
+    c_cancel, c_ok = st.columns(2)
+    with c_cancel:
+        if st.button("Cancel·lar", use_container_width=True):
+            st.rerun()
+    with c_ok:
+        if st.button("Sí, eliminar", type="primary", use_container_width=True):
+            delete_manteniment_task(task_id)
+            st.success("Tasca eliminada correctament!")
+            st.rerun()
+
 def render():
     render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛠️ Manteniment de la Llar</h2>", "manteniment")
     st.write("---")
@@ -588,8 +700,19 @@ def render():
     manuals = docs_data.get("manuals", [])
     garanties = docs_data.get("garanties", [])
 
-    tabs_list = ["📖 Manuals", "🛡️ Garanties"]
+    app_cfg = load_app_config()
+    fam_members = app_cfg.get("familia", [])
+    family_names = ["Tothom"] + [m.get("nom") for m in fam_members if m.get("nom")]
+    if len(family_names) == 1:
+        family_names = ["Tothom", "Enric", "Isabel", "Jordi", "Mireia"]
+
+    tasks = load_registre_manteniment()
+
+    tabs_list = ["📋 Registre Manteniment", "📖 Manuals", "🛡️ Garanties"]
     tab_mapping = {
+        "registre": "📋 Registre Manteniment",
+        "registre_manteniment": "📋 Registre Manteniment",
+        "tasques": "📋 Registre Manteniment",
         "manuals": "📖 Manuals",
         "manual": "📖 Manuals",
         "garanties": "🛡️ Garanties",
@@ -598,12 +721,294 @@ def render():
     tab_param = st.query_params.get("tab")
     default_tab = tab_mapping.get(tab_param)
     if default_tab not in tabs_list:
-        default_tab = None
+        default_tab = "📋 Registre Manteniment"
 
-    tab_manuals, tab_garanties = st.tabs(tabs_list, default=default_tab, key=f"tabs_manteniment_{tab_param or 'main'}")
+    tab_registre, tab_manuals, tab_garanties = st.tabs(tabs_list, default=default_tab, key=f"tabs_manteniment_{tab_param or 'main'}")
 
     # =========================================================================
-    # PESTANYA 1: MANUALS
+    # PESTANYA 1: REGISTRE DE MANTENIMENT
+    # =========================================================================
+    with tab_registre:
+        # 1. FORMULARI D'ENTRADA
+        with st.container(border=True):
+            st.markdown("<h4 style='color:#f39c12; margin-top:0; margin-bottom:12px;'>➕ Nova Tasca de Manteniment</h4>", unsafe_allow_html=True)
+            with st.form("form_alta_tasca_manteniment", clear_on_submit=True):
+                c_f1, c_f2, c_f3, c_f4 = st.columns([1.5, 1.5, 1.5, 1])
+                with c_f1:
+                    data_manteniment_input = st.date_input(
+                        "Data Prevista *",
+                        value=datetime.today().date(),
+                        help="Data en què s'ha de dur a terme la tasca de manteniment"
+                    )
+                with c_f2:
+                    tipus_input = st.selectbox(
+                        "Tipus *",
+                        ["Reparació", "Manteniment", "Feina casa", "Revisió periòdica", "Instal·lació / Millora", "Neteja a fons", "Altres"],
+                        index=1
+                    )
+                with c_f3:
+                    alerta_input = st.selectbox(
+                        "Alerta a *",
+                        family_names,
+                        index=0,
+                        help="Persona o grup a qui li apareixerà com a avís a la campaneta"
+                    )
+                with c_f4:
+                    acompliment_input = st.selectbox(
+                        "Acompliment",
+                        ["No", "Sí"],
+                        index=0
+                    )
+                
+                observacions_input = st.text_area(
+                    "Observacions / Descripció de la tasca *",
+                    placeholder="Descriu el manteniment, reparació o feina a realitzar (ex: Revisar pressió de la caldera i purgar radiadors)...",
+                    height=75
+                )
+
+                c_sub1, c_sub2 = st.columns([2, 1], vertical_alignment="center")
+                with c_sub1:
+                    send_cal_input = st.checkbox("📅 Enviar directament a l'Agenda (Calendari familiar)", value=True)
+                with c_sub2:
+                    sub_btn = st.form_submit_button("💾 Desar Tasca al Registre", type="primary", use_container_width=True)
+
+                if sub_btn:
+                    if not observacions_input.strip():
+                        st.error("Cal indicar les Observacions de la tasca.")
+                    else:
+                        d_prev_str = data_manteniment_input.strftime("%d/%m/%Y")
+                        nova_tasca = {
+                            "dataAlta": datetime.now().strftime("%d/%m/%Y"),
+                            "dataManteniment": d_prev_str,
+                            "tipus": tipus_input,
+                            "alertaA": alerta_input,
+                            "acompliment": acompliment_input,
+                            "observacions": observacions_input.strip()
+                        }
+                        res = add_manteniment_task(nova_tasca, send_to_calendar=send_cal_input)
+                        st.success(f"Tasca #{res.get('idManteniment')} registrada correctament!")
+                        st.rerun()
+
+        # 2. LLISTAT DE LA BD
+        st.markdown("<hr style='margin: 20px 0;'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color:#38bdf8; margin-bottom:12px;'>📋 Llistat de la Base de Dades de Manteniment</h4>", unsafe_allow_html=True)
+
+        # Càlcul de mètriques
+        total_tasques = len(tasks)
+        pendents_count = 0
+        acomplertes_count = 0
+        vencudes_count = 0
+        avui = datetime.today().date()
+
+        for t in tasks:
+            is_done = str(t.get("acompliment", "No")).strip().lower() in ["sí", "si", "true"]
+            if is_done:
+                acomplertes_count += 1
+            else:
+                pendents_count += 1
+                d_str = str(t.get("dataManteniment", "")).strip()
+                d_obj = None
+                for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                    try:
+                        d_obj = datetime.strptime(d_str, fmt).date()
+                        break
+                    except Exception:
+                        pass
+                if d_obj and d_obj < avui:
+                    vencudes_count += 1
+
+        col_t1, col_t2, col_t3, col_t4 = st.columns(4)
+        with col_t1:
+            st.metric("📌 Total Tasques", total_tasques)
+        with col_t2:
+            st.metric("⏳ Pendents", pendents_count)
+        with col_t3:
+            st.metric("✅ Acomplertes", acomplertes_count)
+        with col_t4:
+            st.metric("⚠️ Vençudes", vencudes_count)
+
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+
+        # Filtres
+        col_c1, col_c2, col_c3, col_c4 = st.columns([2.5, 1.3, 1.3, 1.3])
+        with col_c1:
+            cerca_text = st.text_input("🔍 Cercar per observació o tipus...", placeholder="Ex: caldera, radiadors, filtre...", key="search_reg_manteniment")
+        with col_c2:
+            filtre_estat = st.selectbox("Estat", ["Tots", "⏳ Pendents", "✅ Acomplertes", "⚠️ Vençudes"], key="filtre_estat_mant")
+        with col_c3:
+            all_tipus = ["Tots"] + sorted(list(set(t.get("tipus", "") for t in tasks if t.get("tipus"))))
+            filtre_tipus = st.selectbox("Tipus", all_tipus, key="filtre_tipus_mant")
+        with col_c4:
+            all_alerta = ["Tothom"] + sorted(list(set(t.get("alertaA", "") for t in tasks if t.get("alertaA") and t.get("alertaA") != "Tothom")))
+            filtre_persona = st.selectbox("Persona", all_alerta, key="filtre_persona_mant")
+
+        # Filtrar tasques
+        filtered_tasks = tasks
+        if cerca_text.strip():
+            q = cerca_text.strip().lower()
+            filtered_tasks = [t for t in filtered_tasks if q in str(t.get("observacions", "")).lower() or q in str(t.get("tipus", "")).lower() or q in str(t.get("alertaA", "")).lower()]
+        if filtre_estat == "⏳ Pendents":
+            filtered_tasks = [t for t in filtered_tasks if str(t.get("acompliment", "No")).strip().lower() not in ["sí", "si", "true"]]
+        elif filtre_estat == "✅ Acomplertes":
+            filtered_tasks = [t for t in filtered_tasks if str(t.get("acompliment", "No")).strip().lower() in ["sí", "si", "true"]]
+        elif filtre_estat == "⚠️ Vençudes":
+            def _is_vencuda(t):
+                if str(t.get("acompliment", "No")).strip().lower() in ["sí", "si", "true"]: return False
+                d_str = str(t.get("dataManteniment", "")).strip()
+                for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                    try:
+                        return datetime.strptime(d_str, fmt).date() < avui
+                    except Exception:
+                        pass
+                return False
+            filtered_tasks = [t for t in filtered_tasks if _is_vencuda(t)]
+
+        if filtre_tipus != "Tots":
+            filtered_tasks = [t for t in filtered_tasks if t.get("tipus") == filtre_tipus]
+        if filtre_persona != "Tothom":
+            filtered_tasks = [t for t in filtered_tasks if t.get("alertaA") == filtre_persona]
+
+        # Selector de format de visualització
+        c_mode1, c_mode2 = st.columns([3, 1], vertical_alignment="center")
+        with c_mode1:
+            view_mode = st.radio("Format de visualització", ["📇 Targetes interactives", "📊 Taula de dades (Dataframe / CSV)"], horizontal=True, key="view_mode_mant")
+        with c_mode2:
+            if filtered_tasks:
+                df_export = pd.DataFrame(filtered_tasks)
+                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "tipus", "alertaA", "acompliment", "observacions"]
+                for c in cols_order:
+                    if c not in df_export.columns: df_export[c] = ""
+                df_export = df_export[cols_order]
+                csv_data = df_export.to_csv(sep=';', index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Baixar CSV",
+                    data=csv_data,
+                    file_name="manteniment.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                    key="dl_csv_manteniment"
+                )
+
+        st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+
+        if not filtered_tasks:
+            if not tasks:
+                st.info("Encara no hi ha cap tasca de manteniment registrada. Fes servir el formulari superior per afegir-ne una.")
+            else:
+                st.info("No hi ha cap tasca que coincideixi amb els filtres seleccionats.")
+        else:
+            if view_mode == "📊 Taula de dades (Dataframe / CSV)":
+                df_display = pd.DataFrame(filtered_tasks)
+                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "tipus", "alertaA", "acompliment", "observacions"]
+                for c in cols_order:
+                    if c not in df_display.columns: df_display[c] = ""
+                df_display = df_display[cols_order]
+                st.dataframe(
+                    df_display,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "idManteniment": st.column_config.NumberColumn("ID", width="small"),
+                        "dataAlta": st.column_config.TextColumn("Data Alta", width="small"),
+                        "dataManteniment": st.column_config.TextColumn("Data Prevista", width="small"),
+                        "tipus": st.column_config.TextColumn("Tipus", width="medium"),
+                        "alertaA": st.column_config.TextColumn("Alerta a", width="medium"),
+                        "acompliment": st.column_config.TextColumn("Acomplert", width="small"),
+                        "observacions": st.column_config.TextColumn("Observacions")
+                    }
+                )
+            else:
+                for task in filtered_tasks:
+                    task_id = task.get("idManteniment", "")
+                    is_done = str(task.get("acompliment", "No")).strip().lower() in ["sí", "si", "true"]
+                    
+                    d_prev_str = str(task.get("dataManteniment", "")).strip()
+                    d_obj = None
+                    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                        try:
+                            d_obj = datetime.strptime(d_prev_str, fmt).date()
+                            break
+                        except Exception:
+                            pass
+                            
+                    delta = (d_obj - avui).days if d_obj else 999
+                    
+                    if is_done:
+                        status_html = "<span style='background:#14532d; color:#86efac; border:1px solid #22c55e; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.75rem;'>✅ Acomplerta</span>"
+                    elif delta < 0:
+                        status_html = f"<span style='background:#7f1d1d; color:#fca5a5; border:1px solid #ef4444; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.75rem;'>⚠️ Vençuda fa {abs(delta)} dies ({d_prev_str})</span>"
+                    elif delta == 0:
+                        status_html = f"<span style='background:#7c2d12; color:#fdba74; border:1px solid #f97316; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.75rem;'>🔔 Prevista per a AVUI!</span>"
+                    else:
+                        status_html = f"<span style='background:#1e3a8a; color:#93c5fd; border:1px solid #3b82f6; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.75rem;'>⏳ Pendent (en {delta} dies - {d_prev_str})</span>"
+
+                    with st.container(border=True):
+                        c_card_left, c_card_right = st.columns([7.5, 2.5], vertical_alignment="center")
+                        with c_card_left:
+                            st.markdown(f"""
+                            <div style='display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;'>
+                                <span style='background:#0f172a; color:#f8fafc; border:1px solid #334155; padding:2px 8px; border-radius:8px; font-weight:700; font-size:0.8rem;'>#{task_id}</span>
+                                {status_html}
+                                <span style='background:#1e293b; color:#cbd5e1; border:1px solid #475569; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🏷️ {task.get('tipus', 'Manteniment')}</span>
+                                <span style='background:#1e293b; color:#f59e0b; border:1px solid #d97706; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>👤 Alerta: {task.get('alertaA', 'Tothom')}</span>
+                                <span style='color:#64748b; font-size:0.75rem; margin-left:auto;'>Alta: {task.get('dataAlta', '')}</span>
+                            </div>
+                            <div style='font-size:1rem; color:#f1f5f9; margin-top:4px;'>
+                                {task.get('observacions', '')}
+                            </div>
+                            """, unsafe_allow_html=True)
+                            if task.get("calendar_event_id"):
+                                st.caption("📅 Tasca sincronitzada amb l'Agenda")
+                        with c_card_right:
+                            c_btn1, c_btn2 = st.columns(2)
+                            with c_btn1:
+                                if is_done:
+                                    if st.button("↩️ Pendent", key=f"btn_toggle_{task_id}", use_container_width=True, help="Marcar com a pendent"):
+                                        toggle_manteniment_acompliment(task_id)
+                                        st.rerun()
+                                else:
+                                    if st.button("✅ Fet", key=f"btn_toggle_{task_id}", type="primary", use_container_width=True, help="Marcar com a acomplerta"):
+                                        toggle_manteniment_acompliment(task_id)
+                                        st.rerun()
+                            with c_btn2:
+                                if st.button("✏️ Editar", key=f"btn_edit_task_{task_id}", use_container_width=True):
+                                    edit_task_dialog(task, family_names)
+                            
+                            c_btn3, c_btn4 = st.columns(2)
+                            with c_btn3:
+                                if st.button("📅 Agenda", key=f"btn_cal_task_{task_id}", use_container_width=True, help="Enviar o actualitzar a l'agenda"):
+                                    try:
+                                        from core.calendar_manager import add_event
+                                        tit = f"[{task.get('tipus')}] {task.get('observacions')[:35]}..." if len(task.get('observacions', '')) > 35 else f"[{task.get('tipus')}] {task.get('observacions')}"
+                                        d_raw = task.get("dataManteniment", "")
+                                        iso_d = datetime.today().strftime("%Y-%m-%d")
+                                        for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                                            try:
+                                                iso_d = datetime.strptime(d_raw, fmt).strftime("%Y-%m-%d")
+                                                break
+                                            except Exception:
+                                                pass
+                                        ev = add_event({
+                                            "title": tit,
+                                            "date": iso_d,
+                                            "time": "09:00",
+                                            "category": "Llar",
+                                            "description": f"Tasca #{task_id}\nTipus: {task.get('tipus')}\nAlerta a: {task.get('alertaA')}\n\nObservacions:\n{task.get('observacions')}",
+                                            "assigned_to": task.get("alertaA", "Tothom"),
+                                            "notify": True
+                                        })
+                                        if ev and isinstance(ev, dict) and "id" in ev:
+                                            update_manteniment_task(task_id, {"calendar_event_id": ev["id"]})
+                                        st.success("Enviat a l'Agenda correctament!")
+                                        st.rerun()
+                                    except Exception as e_cal:
+                                        st.error(f"Error: {e_cal}")
+                            with c_btn4:
+                                if st.button("🗑️ Esborrar", key=f"btn_del_task_{task_id}", use_container_width=True):
+                                    delete_task_dialog(task_id, task.get("observacions", ""))
+
+    # =========================================================================
+    # PESTANYA 2: MANUALS
     # =========================================================================
     with tab_manuals:
         # Barra superior d'accions i mètriques

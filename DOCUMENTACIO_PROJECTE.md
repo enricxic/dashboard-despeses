@@ -51,7 +51,7 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
    - `💰 Estalvis`: Fons d'estalvi `estalviDP`, quotes, aportacions, rescats i gràfic interactiu d'evolució del capital acumulat.
    - `🤖 Xat IA`: Assistent financer intel·ligent Gemini.
 4. **📹 Seguretat**: `modules/seguretat.py` *(Icona càmera)* - Estat de càmeres, accessos i alarmes.
-5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Gestió i organització de la documentació tècnica de la llar en dues pestanyes especialitzades: `📖 Manuals` (instruccions d'aparells, ubicació, especificacions) i `🛡️ Garanties` (dates de compra, terminis de vigència, factures i alertes de caducitat), connectades a un registre JSON centralitzat i amb visor interactiu de fitxers PDF integrat.
+5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Gestió i organització de les actuacions i documentació tècnica de la llar en tres pestanyes especialitzades: `📋 Registre Manteniment` (tasques, reparacions i feines de casa amb formulari d'alta ràpid, assignació d'alertes personals, control d'acompliment i sincronització automàtica a l'agenda), `📖 Manuals` (instruccions d'aparells, ubicació, especificacions) i `🛡️ Garanties` (dates de compra, terminis de vigència, factures i alertes de caducitat), connectades a registres centralitzats (Supabase app_config ID 7 i ID 8) i amb visor interactiu de fitxers PDF integrat.
 6. **📶 Domòtica**: `modules/domotica.py` *(Icona WiFi)* - Integració amb Home Assistant, llums i sensors.
 7. **🎲 Jocs**: `modules/jocs.py` *(Icona daus)* - Oci familiar, inventari de jocs i marcadors.
 
@@ -93,13 +93,14 @@ Dashboard/
 │   ├── db.py                 # Connexió i operacions CRUD a Supabase
 │   ├── config_manager.py     # Gestor de configuració JSON i perfil familiar (Ruta absoluta garanteix focalització a core/config.json)
 │   ├── config.json           # Configuració de categories, comptes, família, eines i paràmetres
-│   ├── manteniment_manager.py # Gestor documental de Manuals i Garanties (sync disc, Supabase app_config ID 7)
+│   ├── manteniment_manager.py # Gestor documental (Manuals i Garanties) i Registre de Tasques (Supabase ID 7 i ID 8)
 │   ├── ocr_rules.md          # Regles personalitzades per supermercat enviades al prompt de Gemini
 │   └── harness.py            # Motor d'avaluació IA, execució asíncrona en segon pla i generador d'informes .txt
 ├── data/
 │   ├── harness_menu_cases.json # Banc d'11 casos de prova exhaustius per al test de menús
 │   ├── harness_status.json     # Estat de progrés en temps real per a l'execució de proves en segon pla
-│   └── manteniment_docs.json   # Registre JSON canònic de documents tècnics (Manuals i Garanties)
+│   ├── manteniment_docs.json   # Registre JSON canònic de documents tècnics (Manuals i Garanties)
+│   └── registre_manteniment.json # Registre JSON de tasques de manteniment, reparacions i feines de casa
 ├── imatges/
 │   ├── Disseny/              # Logotips, icones i fons de pantalla de la interfície
 │   ├── Eines/                # Miniatures dels 14 aparells i eines de cuina
@@ -116,7 +117,7 @@ Dashboard/
 │   ├── domotica.py           # 📶 Domòtica (Home Assistant)
 │   ├── economic.py           # 📈 Detalls mes, Prev. Despeses, Prev. Ingressos, Inversions, Estalvis i Xat IA
 │   ├── jocs.py               # 🎲 Jocs i oci
-│   ├── manteniment.py        # 🛠️ Manteniment de la Llar (Pestanyes Manuals i Garanties, visors PDF, filtres)
+│   ├── manteniment.py        # 🛠️ Manteniment de la Llar (Pestanyes Registre Manteniment, Manuals i Garanties, visors PDF, filtres)
 │   ├── medicacio.py          # 💊 Control de medicació i tutelats (Pla de dosificació & sync)
 │   ├── menjar.py             # 🍽️ Receptari (Escalat base 3), Planificador IA i Batch Cooking
 │   ├── ofertes.py            # 🔍 Comparador d'Ofertes i Visor de Fulletons (Mercadona, Aldi, etc.)
@@ -242,6 +243,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **ID 5**: `data/medication_plans.json` (Plans de medicació)
 - **ID 6**: `data/ofertes.json` (Registre d'Ofertes Setmanals i Volumètriques)
 - **ID 7**: `data/manteniment_docs.json` (Registre de Documents, Manuals d'Instruccions i Garanties de la llar)
+- **ID 8**: `data/registre_manteniment.json` / `csv/manteniment.csv` (Registre de tasques de manteniment, reparacions i feina de casa)
 
 *Nota: Els fitxers locals es mantenen com a còpia de seguretat (fallback local), però la font de la veritat prioritària és sempre Supabase. Així mateix, per desig exprés de l'usuari, s'ha suprimit la renderització dels Avatars (Xiqui) i els seus botons a les capçaleres de tots els mòduls per simplificar la interfície.*
 
@@ -358,7 +360,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - **🚗 Cotxe**: `🛣️ Km i Rutes`, `⛽ Repostatge`, `🔧 Manteniment (Oli i Rodes)`, `📊 Consum`, separador, `📝 Editar Rutes`.
     - **🍽️ Menús i cuina**: `📅 Menú Setmanal (Actiu)`, `🔪 Mise en place`, `🧠 Recomanador de Menús`, `📖 Llibre de Receptes`, `➕ Afegir Recepta`, `📥 Bústia Peticions`, separador, `❓ Preguntes i Respostes`.
     - **💊 Control de medicació**: `🕒 Preses d'Avui & Supervisió`, `➕ Crear Pla de Medicació`, `📋 Plans Actius i Historial`, `⚙️ Connexió Google Calendar API`.
-    - **🛠️ Manteniment de la llar**: `📖 Manuals`, `🛡️ Garanties`.
+    - **🛠️ Manteniment de la llar**: `📋 Registre Manteniment`, `📖 Manuals`, `🛡️ Garanties`.
 - **19/10/2026**: Integració de la **Gestió Documental a Manteniment de la Llar** (`modules/manteniment.py`, `core/manteniment_manager.py`, `data/manteniment_docs.json`):
   - **Estructura física i categories**: Creació i suport complet per a la carpeta de documents `PDF` amb les seves dues subcarpetes especialitzades `PDF/Manuals/` i `PDF/Garanties/`. S'han incorporat inicialment els documents `programador hbt_100.pdf` i `termostatMenjador.pdf`.
   - **Pestanyes especialitzades ("📖 Manuals" i "🛡️ Garanties")**: Navegació nativa per pestanyes amb suport d'enllaços directes des de la barra de navegació superior (`?mod=modules.manteniment&tab=manuals` i `tab=garanties`).
@@ -369,6 +371,19 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
   - **Sincronització automàtica de fitxers de disc**: Motor que detecta qualsevol nou fitxer PDF afegit manualment a les carpetes del sistema operatiu i l'afegeix de forma transparent al registre JSON sense sobreescriure les entrades existents.
   - **Formularis interactius d'alta, edició i eliminació**: Creació de nous documents amb càrrega d'arxius (`st.file_uploader`), edició de metadades i eliminació controlada amb opció d'esborrar el fitxer del disc.
   - **Correcció del paràmetre `rows` a `st.text_area`**: Substitució de l'atribut HTML invàlid `rows` pel paràmetre natiu de Streamlit `height` als formularis d'alta i edició, resolent l'error `TypeError` detectat a Streamlit Cloud.
+- **19/10/2026**: Creació de la nova pestanya **"📋 Registre Manteniment"** al mòdul de Manteniment de la Llar (`modules/manteniment.py`, `core/manteniment_manager.py`, `core/db.py`, `core/alerts.py`, `app.py`):
+  - **Estructura de dades**: Camps normalitzats `idManteniment`, `dataAlta` (data de generació), `dataManteniment` (data prevista de la tasca enviada a calendari), `tipus` (`Reparació`, `Manteniment`, `Feina casa`, `Altres`), `alertaA` (membre familiar destinatari de l'alerta o "Tota la família"), `acompliment` (`Sí` / `No`) i `observacions`.
+  - **Arquitectura dual Cloud / Local (Supabase ID 8)**: Sincronització automàtica a Supabase (`app_config` ID 8) amb rèplica i fallback en fitxer JSON local (`data/registre_manteniment.json`) i exportació a CSV (`csv/manteniment.csv`).
+  - **Formulari d'entrada ràpida (a dalt)**: Disseny net i intuïtiu al capdamunt per registrar noves actuacions de la llar amb selector de data prevista, tipus, membre familiar a alertar, estat d'acompliment inicial, observacions detallades i casella de verificació per sincronitzar directament amb el Calendari de la Llar.
+  - **Llistat i gestió de la Base de Dades (a sota)**:
+    - **Targetes KPI**: Recompte de total actuacions, pendents d'execució, acomplertes i tasques vençudes / previstes per a avui.
+    - **Filtres interactius**: Cerca per text lliure, filtre per estat (Totes, Pendents, Acomplertes), filtre per tipus i filtre per membre assignat.
+    - **Doble visualització**: Commutador entre vista de targetes interactives (amb botó d'un sol clic per marcar com a feta/pendent, botó d'edició i eliminació) i taula de dades tabular neta.
+    - **Edició i eliminació mitjançant diàlegs modals**: Modals `@st.dialog` per modificar qualsevol dada d'una tasca o confirmar la seva supressió.
+    - **Descàrrega CSV**: Botó directe per exportar l'històric complet de manteniment a format CSV.
+  - **Sincronització automàtica amb el Calendari Familiar**: En activar la casella o crear tasques amb data prevista, s'afegeix automàticament un esdeveniment a l'agenda (`core/calendar_manager.py`) sota la categoria "Llar" amb l'etiqueta `#idManteniment`.
+  - **Integració amb el Sistema Global d'Alertes (`core/alerts.py`)**: Generació dinàmica d'avisos per a la campaneta de notificacions de la barra superior (`🔔`) per a tasques no acomplertes pendents o vençudes, adreçades específicament al membre familiar assignat o a tothom.
+  - **Accés directe i navegació per URL**: Integració al router d'`app.py` (`tab=registre`) i inclusió del submenú `📋 Registre Manteniment` a la barra superior.
 
 
 > [!IMPORTANT]

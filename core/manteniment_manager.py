@@ -249,3 +249,169 @@ def calculate_warranty_status(doc: dict) -> dict:
         "dies_restants": 9999,
         "data_venciment": d_venc_str or "Sense data"
     }
+
+# =========================================================================
+# GESTIÓ DEL REGISTRE DE MANTENIMENT (TASQUES, REPARACIONS I FEINA DE CASA)
+# =========================================================================
+
+REGISTRE_FILE = os.path.join(PROJECT_ROOT, "data", "registre_manteniment.json")
+REGISTRE_CSV = os.path.join(PROJECT_ROOT, "csv", "manteniment.csv")
+
+def load_registre_manteniment() -> list:
+    """
+    Carrega la llista de tasques de manteniment des de Supabase (id=8 a app_config).
+    Fallback 1: data/registre_manteniment.json
+    Fallback 2: csv/manteniment.csv
+    """
+    # 1. Intentar carregar de Supabase
+    try:
+        from core.db import get_supabase_client
+        import streamlit as st
+        role = st.session_state.get("role", "guest") if "role" in st.session_state else "guest"
+        supabase = get_supabase_client(role)
+        res = supabase.table("app_config").select("config_json").eq("id", 8).execute()
+        if res.data and len(res.data) > 0 and res.data[0].get("config_json"):
+            cfg = res.data[0]["config_json"]
+            if isinstance(cfg, list):
+                return cfg
+    except Exception:
+        pass
+
+    # 2. Fallback: Fitxer JSON local
+    if os.path.exists(REGISTRE_FILE):
+        try:
+            with open(REGISTRE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+        except Exception:
+            pass
+
+    # 3. Fallback: Fitxer CSV local
+    if os.path.exists(REGISTRE_CSV):
+        try:
+            import pandas as pd
+            df = pd.read_csv(REGISTRE_CSV, sep=';', encoding='utf-8')
+            return df.to_dict(orient='records')
+        except Exception:
+            pass
+
+    return []
+
+def save_registre_manteniment(records: list) -> bool:
+    """
+    Desa les tasques de manteniment a Supabase (id=8 a app_config),
+    al fitxer JSON local data/registre_manteniment.json i al fitxer CSV csv/manteniment.csv.
+    """
+    # 1. Desar a Supabase
+    try:
+        from core.db import get_supabase_client
+        import streamlit as st
+        role = st.session_state.get("role", "admin") if "role" in st.session_state else "admin"
+        supabase = get_supabase_client(role)
+        supabase.table("app_config").upsert({
+            "id": 8,
+            "config_json": records
+        }).execute()
+    except Exception as e:
+        print(f"Error desant registre manteniment a Supabase: {e}")
+
+    # 2. Desar a JSON local
+    try:
+        os.makedirs(os.path.dirname(REGISTRE_FILE), exist_ok=True)
+        with open(REGISTRE_FILE, "w", encoding="utf-8") as f:
+            json.dump(records, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error desant localment {REGISTRE_FILE}: {e}")
+
+    # 3. Desar a CSV local
+    try:
+        import pandas as pd
+        os.makedirs(os.path.dirname(REGISTRE_CSV), exist_ok=True)
+        df = pd.DataFrame(records)
+        cols_order = ["idManteniment", "dataAlta", "dataManteniment", "tipus", "alertaA", "acompliment", "observacions"]
+        for c in cols_order:
+            if c not in df.columns:
+                df[c] = ""
+        df = df[cols_order]
+        df.to_csv(REGISTRE_CSV, sep=';', index=False, encoding='utf-8')
+        return True
+    except Exception as e:
+        print(f"Error desant localment {REGISTRE_CSV}: {e}")
+        return False
+
+def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dict:
+    """Afegeix una nova tasca de manteniment, opcionalment creant l'esdeveniment a l'agenda."""
+    tasks = load_registre_manteniment()
+    next_id = max([int(t.get("idManteniment", 0)) for t in tasks if str(t.get("idManteniment", "")).isdigit()] + [0]) + 1
+    task_data["idManteniment"] = next_id
+    if not task_data.get("dataAlta"):
+        task_data["dataAlta"] = datetime.now().strftime("%d/%m/%Y")
+    task_data.setdefault("acompliment", "No")
+    
+    # Enviar a calendari si s'ha sol·licitat
+    if send_to_calendar:
+        try:
+            from core.calendar_manager import add_event
+            d_prev = task_data.get("dataManteniment", "")
+            iso_date = ""
+            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                try:
+                    iso_date = datetime.strptime(d_prev, fmt).strftime("%Y-%m-%d")
+                    break
+                except Exception:
+                    pass
+            if not iso_date:
+                iso_date = datetime.now().strftime("%Y-%m-%d")
+                
+            obs = task_data.get("observacions", "")
+            tip = task_data.get("tipus", "Manteniment")
+            tit = f"[{tip}] {obs[:35]}..." if len(obs) > 35 else f"[{tip}] {obs or 'Tasca de manteniment'}"
+            
+            ev = add_event({
+                "title": tit,
+                "date": iso_date,
+                "time": "09:00",
+                "category": "Llar",
+                "description": f"Tasca de Manteniment #{next_id}\nTipus: {tip}\nAlerta a: {task_data.get('alertaA', 'Tothom')}\n\nObservacions:\n{obs}",
+                "assigned_to": task_data.get("alertaA", "Tothom"),
+                "notify": True
+            })
+            if ev and isinstance(ev, dict) and "id" in ev:
+                task_data["calendar_event_id"] = ev["id"]
+        except Exception as err:
+            print("Error enviant al calendari:", err)
+
+    tasks.append(task_data)
+    save_registre_manteniment(tasks)
+    return task_data
+
+def update_manteniment_task(task_id: int, updated_fields: dict) -> bool:
+    """Actualitza una tasca existent."""
+    tasks = load_registre_manteniment()
+    for i, t in enumerate(tasks):
+        if int(t.get("idManteniment", -1)) == int(task_id):
+            tasks[i].update(updated_fields)
+            save_registre_manteniment(tasks)
+            return True
+    return False
+
+def delete_manteniment_task(task_id: int) -> bool:
+    """Elimina una tasca del registre."""
+    tasks = load_registre_manteniment()
+    new_tasks = [t for t in tasks if int(t.get("idManteniment", -1)) != int(task_id)]
+    if len(new_tasks) != len(tasks):
+        save_registre_manteniment(new_tasks)
+        return True
+    return False
+
+def toggle_manteniment_acompliment(task_id: int) -> bool:
+    """Commuta l'estat d'acompliment entre Sí i No."""
+    tasks = load_registre_manteniment()
+    for i, t in enumerate(tasks):
+        if int(t.get("idManteniment", -1)) == int(task_id):
+            curr = str(tasks[i].get("acompliment", "No")).strip().lower()
+            tasks[i]["acompliment"] = "No" if curr in ["sí", "si", "true"] else "Sí"
+            save_registre_manteniment(tasks)
+            return True
+    return False

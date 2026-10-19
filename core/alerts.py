@@ -216,6 +216,44 @@ def get_global_alerts():
                         })
         except Exception as e_tiquets:
             print(f"Error alerta tiquets pendents: {e_tiquets}")
+            
+        # 6. Alerta de Tasques de Manteniment pendents
+        try:
+            from core.manteniment_manager import load_registre_manteniment
+            tasks = load_registre_manteniment()
+            avui = datetime.today().date()
+            for t in tasks:
+                if str(t.get("acompliment", "No")).strip().lower() not in ["sí", "si", "true"]:
+                    d_prev_str = str(t.get("dataManteniment", "")).strip()
+                    d_prev = None
+                    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                        try:
+                            d_prev = datetime.strptime(d_prev_str, fmt).date()
+                            break
+                        except Exception:
+                            pass
+                    if d_prev:
+                        delta = (d_prev - avui).days
+                        alerta_a = t.get("alertaA", "Tothom")
+                        tipus = t.get("tipus", "Manteniment")
+                        obs = t.get("observacions", "")
+                        tit = f"[{tipus}] {obs[:30]}..." if len(obs) > 30 else f"[{tipus}] {obs or 'Tasca'}"
+                        if delta < 0:
+                            alerts.append({
+                                "type": "error",
+                                "icon": "🛠️",
+                                "title": f"Manteniment vençut ({alerta_a})",
+                                "message": f"{tit}: prevista per al {d_prev.strftime('%d/%m/%Y')} (vençuda fa {abs(delta)} dies)."
+                            })
+                        elif delta <= 2:
+                            alerts.append({
+                                "type": "warning",
+                                "icon": "🛠️",
+                                "title": f"Manteniment pendent ({alerta_a})",
+                                "message": f"{tit}: prevista per al {d_prev.strftime('%d/%m/%Y')} ({'avui!' if delta==0 else f'en {delta} dies'})."
+                            })
+        except Exception as e_mant:
+            pass
                         
     except Exception as e:
         print(f"Error generant alertes globals: {e}")

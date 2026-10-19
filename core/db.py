@@ -1147,6 +1147,14 @@ def save_manteniment_docs(data):
     from core.manteniment_manager import save_manteniment_docs as _save
     return _save(data)
 
+def load_registre_manteniment():
+    from core.manteniment_manager import load_registre_manteniment as _load_reg
+    return _load_reg()
+
+def save_registre_manteniment(records):
+    from core.manteniment_manager import save_registre_manteniment as _save_reg
+    return _save_reg(records)
+
 def delete_db_row(table_name, id_col, id_val):
     is_offline = st.session_state.get("is_offline", False)
     if is_offline:

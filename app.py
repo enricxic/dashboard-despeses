@@ -182,8 +182,9 @@ function attachMenuTabInterceptors() {
                             else if (href.includes('tab=crear_pla') || href.includes('tab=nou')) { targetIdx = 1; targetText = 'crear'; }
                             else if (href.includes('tab=plans_historial') || href.includes('tab=plans')) { targetIdx = 2; targetText = 'plans'; }
                         } else if (href.includes('mod=modules.manteniment')) {
-                            if (href.includes('tab=manuals')) { targetIdx = 0; targetText = 'manuals'; }
-                            else if (href.includes('tab=garanties')) { targetIdx = 1; targetText = 'garanties'; }
+                            if (href.includes('tab=registre')) { targetIdx = 0; targetText = 'registre'; }
+                            else if (href.includes('tab=manuals')) { targetIdx = 1; targetText = 'manuals'; }
+                            else if (href.includes('tab=garanties')) { targetIdx = 2; targetText = 'garanties'; }
                         }
 
                         if (targetIdx >= 0) {
@@ -1078,6 +1079,7 @@ div.block-container {{
 {f'''<div class="submenu-item">
 <a href="?mod=modules.manteniment{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🛠️ Manteniment de la llar</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
+<a href="?mod=modules.manteniment&tab=registre{url_suffix}" target="_self">📋 Registre Manteniment</a>
 <a href="?mod=modules.manteniment&tab=manuals{url_suffix}" target="_self">📖 Manuals</a>
 <a href="?mod=modules.manteniment&tab=garanties{url_suffix}" target="_self">🛡️ Garanties</a>
 </div>
