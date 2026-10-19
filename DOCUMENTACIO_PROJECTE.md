@@ -51,7 +51,7 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
    - `💰 Estalvis`: Fons d'estalvi `estalviDP`, quotes, aportacions, rescats i gràfic interactiu d'evolució del capital acumulat.
    - `🤖 Xat IA`: Assistent financer intel·ligent Gemini.
 4. **📹 Seguretat**: `modules/seguretat.py` *(Icona càmera)* - Estat de càmeres, accessos i alarmes.
-5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Tasques de la llar, reparacions i històric de manteniment.
+5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Gestió i organització de la documentació tècnica de la llar en dues pestanyes especialitzades: `📖 Manuals` (instruccions d'aparells, ubicació, especificacions) i `🛡️ Garanties` (dates de compra, terminis de vigència, factures i alertes de caducitat), connectades a un registre JSON centralitzat i amb visor interactiu de fitxers PDF integrat.
 6. **📶 Domòtica**: `modules/domotica.py` *(Icona WiFi)* - Integració amb Home Assistant, llums i sensors.
 7. **🎲 Jocs**: `modules/jocs.py` *(Icona daus)* - Oci familiar, inventari de jocs i marcadors.
 
@@ -93,11 +93,13 @@ Dashboard/
 │   ├── db.py                 # Connexió i operacions CRUD a Supabase
 │   ├── config_manager.py     # Gestor de configuració JSON i perfil familiar (Ruta absoluta garanteix focalització a core/config.json)
 │   ├── config.json           # Configuració de categories, comptes, família, eines i paràmetres
+│   ├── manteniment_manager.py # Gestor documental de Manuals i Garanties (sync disc, Supabase app_config ID 7)
 │   ├── ocr_rules.md          # Regles personalitzades per supermercat enviades al prompt de Gemini
 │   └── harness.py            # Motor d'avaluació IA, execució asíncrona en segon pla i generador d'informes .txt
 ├── data/
 │   ├── harness_menu_cases.json # Banc d'11 casos de prova exhaustius per al test de menús
-│   └── harness_status.json     # Estat de progrés en temps real per a l'execució de proves en segon pla
+│   ├── harness_status.json     # Estat de progrés en temps real per a l'execució de proves en segon pla
+│   └── manteniment_docs.json   # Registre JSON canònic de documents tècnics (Manuals i Garanties)
 ├── imatges/
 │   ├── Disseny/              # Logotips, icones i fons de pantalla de la interfície
 │   ├── Eines/                # Miniatures dels 14 aparells i eines de cuina
@@ -114,11 +116,14 @@ Dashboard/
 │   ├── domotica.py           # 📶 Domòtica (Home Assistant)
 │   ├── economic.py           # 📈 Detalls mes, Prev. Despeses, Prev. Ingressos, Inversions, Estalvis i Xat IA
 │   ├── jocs.py               # 🎲 Jocs i oci
-│   ├── manteniment.py        # 🛠️ Manteniment i reparacions
+│   ├── manteniment.py        # 🛠️ Manteniment de la Llar (Pestanyes Manuals i Garanties, visors PDF, filtres)
 │   ├── medicacio.py          # 💊 Control de medicació i tutelats (Pla de dosificació & sync)
 │   ├── menjar.py             # 🍽️ Receptari (Escalat base 3), Planificador IA i Batch Cooking
 │   ├── ofertes.py            # 🔍 Comparador d'Ofertes i Visor de Fulletons (Mercadona, Aldi, etc.)
-│   ├── seguretat.py          # 📹 Seguretat i càmeres
+│   └── seguretat.py          # 📹 Seguretat i càmeres
+├── PDF/
+│   ├── Manuals/              # Dipòsit de manuals d'instruccions en PDF
+│   └── Garanties/            # Dipòsit de factures i documents de garantia en PDF
 └── DOCUMENTACIO_PROJECTE.md  # Aquest document
 ```
 
@@ -236,6 +241,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **ID 4**: `data/feeds_cache.json` (Memòria cau dels Google Calendars)
 - **ID 5**: `data/medication_plans.json` (Plans de medicació)
 - **ID 6**: `data/ofertes.json` (Registre d'Ofertes Setmanals i Volumètriques)
+- **ID 7**: `data/manteniment_docs.json` (Registre de Documents, Manuals d'Instruccions i Garanties de la llar)
 
 *Nota: Els fitxers locals es mantenen com a còpia de seguretat (fallback local), però la font de la veritat prioritària és sempre Supabase. Així mateix, per desig exprés de l'usuari, s'ha suprimit la renderització dels Avatars (Xiqui) i els seus botons a les capçaleres de tots els mòduls per simplificar la interfície.*
 
@@ -352,6 +358,17 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - **🚗 Cotxe**: `🛣️ Km i Rutes`, `⛽ Repostatge`, `🔧 Manteniment (Oli i Rodes)`, `📊 Consum`, separador, `📝 Editar Rutes`.
     - **🍽️ Menús i cuina**: `📅 Menú Setmanal (Actiu)`, `🔪 Mise en place`, `🧠 Recomanador de Menús`, `📖 Llibre de Receptes`, `➕ Afegir Recepta`, `📥 Bústia Peticions`, separador, `❓ Preguntes i Respostes`.
     - **💊 Control de medicació**: `🕒 Preses d'Avui & Supervisió`, `➕ Crear Pla de Medicació`, `📋 Plans Actius i Historial`, `⚙️ Connexió Google Calendar API`.
+    - **🛠️ Manteniment de la llar**: `📖 Manuals`, `🛡️ Garanties`.
+- **19/10/2026**: Integració de la **Gestió Documental a Manteniment de la Llar** (`modules/manteniment.py`, `core/manteniment_manager.py`, `data/manteniment_docs.json`):
+  - **Estructura física i categories**: Creació i suport complet per a la carpeta de documents `PDF` amb les seves dues subcarpetes especialitzades `PDF/Manuals/` i `PDF/Garanties/`. S'han incorporat inicialment els documents `programador hbt_100.pdf` i `termostatMenjador.pdf`.
+  - **Pestanyes especialitzades ("📖 Manuals" i "🛡️ Garanties")**: Navegació nativa per pestanyes amb suport d'enllaços directes des de la barra de navegació superior (`?mod=modules.manteniment&tab=manuals` i `tab=garanties`).
+  - **Registre canònic en JSON (`data/manteniment_docs.json`)**: Base de dades centralitzada en format JSON que emmagatzema les metadades dels documents (títol, dispositiu, marca, model, ubicació, subcategoria, establiment, import, número de factura, dades de compra/venciment, nombre de pàgines i etiquetes).
+  - **Arquitectura dual Cloud / Local (Supabase ID 7)**: Sincronització automàtica del registre documental amb Supabase (`app_config` ID 7) amb còpia de seguretat i fallback en fitxer local, garantint persistència tant en execució local com a Streamlit Cloud.
+  - **Visor interactiu de PDF incrustat**: Diàleg emergent (`@st.dialog`) amb visualitzador complet mitjançant `iframe` i descàrrega directa d'arxius (`st.download_button`).
+  - **Càlcul dinàmic de cobertura de garanties**: Càlcul en temps real dels dies restants de cobertura amb alertes visuals semafòriques (🟢 Vigents, ⚠️ A punt de vèncer en menys de 60 dies, 🔴 Caducades).
+  - **Sincronització automàtica de fitxers de disc**: Motor que detecta qualsevol nou fitxer PDF afegit manualment a les carpetes del sistema operatiu i l'afegeix de forma transparent al registre JSON sense sobreescriure les entrades existents.
+  - **Formularis interactius d'alta, edició i eliminació**: Creació de nous documents amb càrrega d'arxius (`st.file_uploader`), edició de metadades i eliminació controlada amb opció d'esborrar el fitxer del disc.
+
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**

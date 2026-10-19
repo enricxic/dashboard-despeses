@@ -181,7 +181,9 @@ function attachMenuTabInterceptors() {
                             if (href.includes('tab=avui_supervisio') || href.includes('tab=avui')) { targetIdx = 0; targetText = 'preses'; }
                             else if (href.includes('tab=crear_pla') || href.includes('tab=nou')) { targetIdx = 1; targetText = 'crear'; }
                             else if (href.includes('tab=plans_historial') || href.includes('tab=plans')) { targetIdx = 2; targetText = 'plans'; }
-                            else if (href.includes('tab=google_calendar') || href.includes('tab=config')) { targetIdx = 3; targetText = 'calendar'; }
+                        } else if (href.includes('mod=modules.manteniment')) {
+                            if (href.includes('tab=manuals')) { targetIdx = 0; targetText = 'manuals'; }
+                            else if (href.includes('tab=garanties')) { targetIdx = 1; targetText = 'garanties'; }
                         }
 
                         if (targetIdx >= 0) {
@@ -1073,7 +1075,13 @@ div.block-container {{
 <a href="?mod=modules.menjar&action=show_faq_menjar{url_suffix}" target="_self">❓ Preguntes i Respostes</a>
 </div>
 </div>''' if icones_actives.get('menjar', True) else ''}
-{f'<a href="?mod=modules.manteniment{url_suffix}" target="_self">🛠️ Manteniment de la llar</a>' if icones_actives.get('manteniment', True) else ''}
+{f'''<div class="submenu-item">
+<a href="?mod=modules.manteniment{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>🛠️ Manteniment de la llar</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<div class="submenu-dropdown">
+<a href="?mod=modules.manteniment&tab=manuals{url_suffix}" target="_self">📖 Manuals</a>
+<a href="?mod=modules.manteniment&tab=garanties{url_suffix}" target="_self">🛡️ Garanties</a>
+</div>
+</div>''' if icones_actives.get('manteniment', True) else ''}
 {f'<a href="?mod=modules.domotica{url_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
 {f'<a href="?mod=modules.seguretat{url_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
 {f'<a href="?mod=modules.calendari{url_suffix}" target="_self">📅 Agenda i esdeveniments</a>' if icones_actives.get('agenda', True) else ''}

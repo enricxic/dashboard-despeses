@@ -1139,6 +1139,14 @@ def save_ofertes(ofertes_list):
         print(f"Error saving ofertes: {e}")
         return False
 
+def load_manteniment_docs():
+    from core.manteniment_manager import load_manteniment_docs as _load
+    return _load()
+
+def save_manteniment_docs(data):
+    from core.manteniment_manager import save_manteniment_docs as _save
+    return _save(data)
+
 def delete_db_row(table_name, id_col, id_val):
     is_offline = st.session_state.get("is_offline", False)
     if is_offline:

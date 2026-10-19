@@ -1,0 +1,35 @@
+{
+  "manuals": [
+    {
+      "id": "man_1",
+      "titol": "Interruptor Horari Setmanal HBT 100",
+      "dispositiu": "Programador digital HBT 100",
+      "marca": "HBT",
+      "model": "HBT 100 / HBT 100 F",
+      "ubicacio": "General",
+      "subcategoria": "Electricitat i Temporitzadors",
+      "fitxer": "programador hbt_100.pdf",
+      "categoria": "Manuals",
+      "pagines": 12,
+      "descripcio": "Manual d'instruccions i programació de l'interruptor horari setmanal electrònic models HBT 100 i HBT 100 F.",
+      "data_afegit": "19/10/2026",
+      "etiquetes": ["programador", "temporitzador", "electricitat", "hbt 100"]
+    },
+    {
+      "id": "man_2",
+      "titol": "Termòstat Menjador",
+      "dispositiu": "Termòstat d'ambient digital",
+      "marca": "General",
+      "model": "Menjador",
+      "ubicacio": "Menjador",
+      "subcategoria": "Calefacció i Climatització",
+      "fitxer": "termostatMenjador.pdf",
+      "categoria": "Manuals",
+      "pagines": 2,
+      "descripcio": "Instruccions d'ús, configuració de temperatura i manteniment del termòstat del menjador.",
+      "data_afegit": "19/10/2026",
+      "etiquetes": ["termostat", "menjador", "calefacció", "temperatura"]
+    }
+  ],
+  "garanties": []
+}
