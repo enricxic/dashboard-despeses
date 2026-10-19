@@ -580,6 +580,33 @@ def delete_document_dialog(category: str, doc_id: str, doc_title: str, filename:
             st.success("Document eliminat correctament!")
             st.rerun()
 
+OPCIONS_FEINA = [
+    "Canvi llençols",
+    "Neteja general",
+    "Netejar banys",
+    "Netejar cuina a fons",
+    "Netejar vidres",
+    "Passar aspirador i fregar",
+    "Posar rentadora i estendre",
+    "Planxar roba",
+    "Buidar / posar rentaplats",
+    "Treure brossa i reciclatge",
+    "Neteja de terrassa / pati",
+    "Purgar radiadors",
+    "Revisar pressió i caldera",
+    "Canviar filtre campana extractora",
+    "Netejar filtres aire condicionat",
+    "Descalcificar cafetera / electrodomèstics",
+    "Netejar filtre rentadora / rentaplats",
+    "Canviar bombeta / llum",
+    "Reparar cisterna / aixeta",
+    "Petites reparacions i bricolatge",
+    "Pintura i arranjaments",
+    "Regar plantes i jardineria",
+    "Revisió detector de fum / seguretat",
+    "Altres (especificar al costat)..."
+]
+
 @st.dialog("✏️ Editar Tasca de Manteniment", width="large")
 def edit_task_dialog(task: dict, family_names: list):
     """Diàleg modal per editar una tasca de manteniment existent."""
@@ -587,7 +614,7 @@ def edit_task_dialog(task: dict, family_names: list):
     st.markdown(f"<h3 style='margin-top:0; color:#f39c12;'>✏️ Editar Tasca #{task_id}</h3>", unsafe_allow_html=True)
     
     with st.form(f"form_edit_task_{task_id}"):
-        c1, c2, c3 = st.columns(3)
+        c1, c2 = st.columns(2)
         with c1:
             d_raw = str(task.get("dataManteniment", "")).strip()
             d_val = datetime.today().date()
@@ -599,36 +626,43 @@ def edit_task_dialog(task: dict, family_names: list):
                     pass
             d_manteniment = st.date_input("Data Prevista (Manteniment) *", value=d_val, format="DD/MM/YYYY")
         with c2:
-            tipus_opts = ["Reparació", "Manteniment", "Feina casa", "Revisió periòdica", "Instal·lació / Millora", "Neteja a fons", "Altres"]
-            cur_tip = task.get("tipus", "Manteniment")
-            tip_idx = tipus_opts.index(cur_tip) if cur_tip in tipus_opts else 1
-            tipus = st.selectbox("Tipus *", tipus_opts, index=tip_idx)
+            tipus_opts = ["Feina casa", "Manteniment", "Reparació", "Neteja a fons", "Revisió periòdica", "Instal·lació / Millora", "Altres"]
+            cur_tip = task.get("tipus", "Feina casa")
+            tip_idx = tipus_opts.index(cur_tip) if cur_tip in tipus_opts else 0
+            tipus = st.selectbox("Tipus Feina *", tipus_opts, index=tip_idx)
+            
+        cur_feina = str(task.get("feina", "")).strip()
+        c_feina1, c_feina2 = st.columns([1.5, 1.5])
+        with c_feina1:
+            feina_idx = OPCIONS_FEINA.index(cur_feina) if cur_feina in OPCIONS_FEINA else (len(OPCIONS_FEINA) - 1)
+            feina_sel = st.selectbox("Feina concreta *", OPCIONS_FEINA, index=feina_idx)
+        with c_feina2:
+            default_custom = cur_feina if cur_feina not in OPCIONS_FEINA else ""
+            feina_custom = st.text_input("O una altra feina concreta:", value=default_custom, placeholder="Escriu si vols canviar-la...")
+
+        c3, c4 = st.columns(2)
         with c3:
             cur_alerta = task.get("alertaA", "Tothom")
             al_idx = family_names.index(cur_alerta) if cur_alerta in family_names else 0
             alertaA = st.selectbox("Alerta a *", family_names, index=al_idx)
-            
-        feina = st.text_input("Feina concreta a realitzar *", value=task.get("feina", ""), placeholder="Ex: Purgar radiadors, canviar bombeta, netejar filtres...")
-            
-        c4, c5 = st.columns([1, 2], vertical_alignment="center")
         with c4:
             cur_acomp = str(task.get("acompliment", "No")).strip().lower()
             ac_idx = 1 if cur_acomp in ["sí", "si", "true"] else 0
             acompliment = st.selectbox("Acompliment", ["No", "Sí"], index=ac_idx)
-        with c5:
-            sync_cal = st.checkbox("Actualitzar / Enviar a l'Agenda (Calendari)", value=bool(task.get("calendar_event_id")))
 
+        sync_cal = st.checkbox("Actualitzar / Enviar a l'Agenda (Calendari)", value=bool(task.get("calendar_event_id")))
         observacions = st.text_area("Observacions / Detalls addicionals", value=task.get("observacions", ""), height=75)
         
         submitted = st.form_submit_button("💾 Desar canvis", type="primary", use_container_width=True)
         if submitted:
-            if not feina.strip():
+            feina_final = feina_custom.strip() if feina_custom.strip() else (feina_sel if feina_sel != "Altres (especificar al costat)..." else "")
+            if not feina_final.strip():
                 st.error("Cal indicar la feina concreta a realitzar.")
                 return
             d_str = d_manteniment.strftime("%d/%m/%Y")
             upd = {
                 "dataManteniment": d_str,
-                "feina": feina.strip(),
+                "feina": feina_final.strip(),
                 "tipus": tipus,
                 "alertaA": alertaA,
                 "acompliment": acompliment,
@@ -740,7 +774,7 @@ def render():
         with st.container(border=True):
             st.markdown("<h4 style='color:#f39c12; margin-top:0; margin-bottom:12px;'>➕ Nova Tasca de Manteniment</h4>", unsafe_allow_html=True)
             with st.form("form_alta_tasca_manteniment", clear_on_submit=True):
-                c_f1, c_f2, c_f3, c_f4 = st.columns([1.5, 1.5, 1.5, 1])
+                c_f1, c_f2 = st.columns(2)
                 with c_f1:
                     data_manteniment_input = st.date_input(
                         "Data Prevista *",
@@ -750,29 +784,40 @@ def render():
                     )
                 with c_f2:
                     tipus_input = st.selectbox(
-                        "Tipus *",
-                        ["Reparació", "Manteniment", "Feina casa", "Revisió periòdica", "Instal·lació / Millora", "Neteja a fons", "Altres"],
-                        index=1
+                        "Tipus Feina *",
+                        ["Feina casa", "Manteniment", "Reparació", "Neteja a fons", "Revisió periòdica", "Instal·lació / Millora", "Altres"],
+                        index=0
                     )
-                with c_f3:
+                
+                c_feina1, c_feina2 = st.columns([1.5, 1.5])
+                with c_feina1:
+                    feina_sel = st.selectbox(
+                        "Feina concreta *",
+                        OPCIONS_FEINA,
+                        index=0,
+                        help="Tria la feina concreta de la llista (ex: Canvi llençols, Neteja general...)"
+                    )
+                with c_feina2:
+                    feina_custom = st.text_input(
+                        "O una altra feina concreta (opcional):",
+                        placeholder="Escriu aquí si vols especificar una feina diferent...",
+                        help="Si escrius aquí, s'utilitzarà aquest text en lloc del desplegable"
+                    )
+
+                c_al1, c_al2 = st.columns(2)
+                with c_al1:
                     alerta_input = st.selectbox(
                         "Alerta a *",
                         family_names,
                         index=0,
                         help="Persona o grup a qui li apareixerà com a avís a la campaneta"
                     )
-                with c_f4:
+                with c_al2:
                     acompliment_input = st.selectbox(
                         "Acompliment",
                         ["No", "Sí"],
                         index=0
                     )
-                
-                feina_input = st.text_input(
-                    "Feina concreta a realitzar *",
-                    placeholder="Ex: Canviar filtre campana extractora, purgar radiadors, revisar pressió caldera...",
-                    help="Indica la feina o actuació concreta que cal dur a terme"
-                )
 
                 observacions_input = st.text_area(
                     "Observacions / Detalls addicionals",
@@ -787,14 +832,15 @@ def render():
                     sub_btn = st.form_submit_button("💾 Desar Tasca al Registre", type="primary", use_container_width=True)
 
                 if sub_btn:
-                    if not feina_input.strip():
+                    feina_final = feina_custom.strip() if feina_custom.strip() else (feina_sel if feina_sel != "Altres (especificar al costat)..." else "")
+                    if not feina_final.strip():
                         st.error("Cal indicar la feina concreta a realitzar.")
                     else:
                         d_prev_str = data_manteniment_input.strftime("%d/%m/%Y")
                         nova_tasca = {
                             "dataAlta": datetime.now().strftime("%d/%m/%Y"),
                             "dataManteniment": d_prev_str,
-                            "feina": feina_input.strip(),
+                            "feina": feina_final.strip(),
                             "tipus": tipus_input,
                             "alertaA": alerta_input,
                             "acompliment": acompliment_input,
@@ -847,12 +893,12 @@ def render():
         # Filtres
         col_c1, col_c2, col_c3, col_c4 = st.columns([2.5, 1.3, 1.3, 1.3])
         with col_c1:
-            cerca_text = st.text_input("🔍 Cercar per observació o tipus...", placeholder="Ex: caldera, radiadors, filtre...", key="search_reg_manteniment")
+            cerca_text = st.text_input("🔍 Cercar per feina, tipus o observació...", placeholder="Ex: llençols, neteja, caldera, radiadors...", key="search_reg_manteniment")
         with col_c2:
             filtre_estat = st.selectbox("Estat", ["Tots", "⏳ Pendents", "✅ Acomplertes", "⚠️ Vençudes"], key="filtre_estat_mant")
         with col_c3:
             all_tipus = ["Tots"] + sorted(list(set(t.get("tipus", "") for t in tasks if t.get("tipus"))))
-            filtre_tipus = st.selectbox("Tipus", all_tipus, key="filtre_tipus_mant")
+            filtre_tipus = st.selectbox("Tipus Feina", all_tipus, key="filtre_tipus_mant")
         with col_c4:
             all_alerta = ["Tothom"] + sorted(list(set(t.get("alertaA", "") for t in tasks if t.get("alertaA") and t.get("alertaA") != "Tothom")))
             filtre_persona = st.selectbox("Persona", all_alerta, key="filtre_persona_mant")
@@ -927,7 +973,7 @@ def render():
                         "dataAlta": st.column_config.TextColumn("Data Alta", width="small"),
                         "dataManteniment": st.column_config.TextColumn("Data Prevista", width="small"),
                         "feina": st.column_config.TextColumn("Feina Concreta", width="medium"),
-                        "tipus": st.column_config.TextColumn("Tipus", width="small"),
+                        "tipus": st.column_config.TextColumn("Tipus Feina", width="small"),
                         "alertaA": st.column_config.TextColumn("Alerta a", width="small"),
                         "acompliment": st.column_config.TextColumn("Acomplert", width="small"),
                         "observacions": st.column_config.TextColumn("Observacions")
