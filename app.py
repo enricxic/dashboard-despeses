@@ -312,6 +312,8 @@ if "action" in st.query_params:
         st.session_state["show_faq_economic"] = True
     elif act == "afegir_any_comptable":
         st.session_state["show_afegir_any_comptable"] = True
+    elif act == "generar_any_manteniment":
+        st.session_state["show_generar_any_manteniment"] = True
     elif act == "show_faq_menjar":
         st.session_state["show_faq_menjar"] = True
     elif act == "edit_rules":
@@ -1083,6 +1085,8 @@ div.block-container {{
 <a href="?mod=modules.manteniment&tab=registre{url_suffix}" target="_self">📋 Registre Manteniment</a>
 <a href="?mod=modules.manteniment&tab=manuals{url_suffix}" target="_self">📖 Manuals</a>
 <a href="?mod=modules.manteniment&tab=garanties{url_suffix}" target="_self">🛡️ Garanties</a>
+<div class="menu-separator"></div>
+<a href="?mod=modules.manteniment&action=generar_any_manteniment{url_suffix}" target="_self">📅 Generar tasques proper any</a>
 </div>
 </div>''' if icones_actives.get('manteniment', True) else ''}
 {f'<a href="?mod=modules.domotica{url_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}

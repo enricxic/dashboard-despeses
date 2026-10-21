@@ -1162,6 +1162,10 @@ def render():
 
     tasks = load_registre_manteniment()
 
+    if st.session_state.get("show_generar_any_manteniment"):
+        st.session_state["show_generar_any_manteniment"] = False
+        show_generar_any_manteniment_dialog(tasks, family_names)
+
     tabs_list = ["📋 Registre Manteniment", "📖 Manuals", "🛡️ Garanties"]
     tab_mapping = {
         "registre": "📋 Registre Manteniment",
@@ -1752,33 +1756,55 @@ def render():
                             
                             c_btn3, c_btn4 = st.columns(2)
                             with c_btn3:
-                                if st.button("📅 Agenda", key=f"btn_cal_task_{task_id}", use_container_width=True, help="Enviar o actualitzar a l'agenda"):
+                                has_cal = bool(task.get("calendar_event_id"))
+                                btn_cal_label = "📅 Veure Agenda" if has_cal else "📅 Sincro Agenda"
+                                if st.button(btn_cal_label, key=f"btn_cal_task_{task_id}", use_container_width=True, help="Obrir l'Agenda o sincronitzar la tasca"):
                                     try:
-                                        from core.calendar_manager import add_event
+                                        from core.calendar_manager import add_event, update_event
                                         tit_cal = f"[{task.get('tipus')}] {main_title[:35]}..." if len(main_title) > 35 else f"[{task.get('tipus')}] {main_title}"
                                         d_raw = task.get("dataManteniment", "")
                                         iso_d = datetime.today().strftime("%Y-%m-%d")
+                                        d_target = datetime.today().date()
                                         for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
                                             try:
-                                                iso_d = datetime.strptime(d_raw, fmt).strftime("%Y-%m-%d")
+                                                d_target = datetime.strptime(d_raw, fmt).date()
+                                                iso_d = d_target.strftime("%Y-%m-%d")
                                                 break
                                             except Exception:
                                                 pass
                                         cal_desc = f"Tasca #{task_id}\nFeina: {task_feina}\nTipus: {task.get('tipus')}\nAlerta a: {alerta_txt}\nAvís amb {dies_av_badge} dies d'antelació"
                                         if task_obs:
                                             cal_desc += f"\n\nObservacions:\n{task_obs}"
-                                        ev = add_event({
+                                        al_list = task.get("alertaA", [])
+                                        first_m = al_list[0] if isinstance(al_list, list) and al_list else str(al_list)
+                                        if first_m == "Tothom":
+                                            first_m = "Tota la família"
+
+                                        cal_payload = {
                                             "title": tit_cal,
+                                            "start_date": iso_d,
                                             "date": iso_d,
+                                            "start_time": "09:00",
                                             "time": "09:00",
                                             "category": "Llar",
                                             "description": cal_desc,
+                                            "member": first_m,
                                             "assigned_to": alerta_txt,
                                             "notify": True
-                                        })
-                                        if ev and isinstance(ev, dict) and "id" in ev:
-                                            update_manteniment_task(task_id, {"calendar_event_id": ev["id"]})
-                                        st.success("Enviat a l'Agenda correctament!")
+                                        }
+
+                                        if task.get("calendar_event_id"):
+                                            update_event(task.get("calendar_event_id"), cal_payload)
+                                        else:
+                                            ev = add_event(cal_payload)
+                                            if ev and isinstance(ev, dict) and "id" in ev:
+                                                update_manteniment_task(task_id, {"calendar_event_id": ev["id"]})
+
+                                        # Obrir directament l'Agenda situant el mes i el dia exacte de la tasca
+                                        st.session_state["cal_year"] = d_target.year
+                                        st.session_state["cal_month"] = d_target.month
+                                        st.session_state["selected_day_for_new"] = d_target
+                                        st.session_state["current_module"] = "modules.calendari"
                                         st.rerun()
                                     except Exception as e_cal:
                                         st.error(f"Error: {e_cal}")

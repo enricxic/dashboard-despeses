@@ -24,7 +24,27 @@ CATEGORIES = {
 def ensure_data_dir():
     os.makedirs(os.path.dirname(EVENTS_FILE), exist_ok=True)
 
+def _normalize_event(ev: dict) -> dict:
+    if not isinstance(ev, dict):
+        return ev
+    if "date" in ev and not ev.get("start_date"):
+        ev["start_date"] = ev["date"]
+    elif "start_date" in ev and not ev.get("date"):
+        ev["date"] = ev["start_date"]
+
+    if "time" in ev and not ev.get("start_time"):
+        ev["start_time"] = ev["time"]
+    elif "start_time" in ev and not ev.get("time"):
+        ev["time"] = ev["start_time"]
+
+    if "assigned_to" in ev and not ev.get("member"):
+        ev["member"] = ev["assigned_to"]
+    elif "member" in ev and not ev.get("assigned_to"):
+        ev["assigned_to"] = ev["member"]
+    return ev
+
 def load_local_events():
+    events_raw = []
     # Supabase (id=3)
     try:
         from core.db import get_supabase_client
@@ -32,30 +52,34 @@ def load_local_events():
         res = supabase.table("app_config").select("config_json").eq("id", 3).execute()
         if res.data and len(res.data) > 0:
             data = res.data[0]["config_json"]
-            return data if isinstance(data, list) else []
+            if isinstance(data, list):
+                events_raw = data
     except Exception as e:
         print("Supabase events load failed:", e)
 
     # Fallback local
-    ensure_data_dir()
-    if not os.path.exists(EVENTS_FILE):
-        return []
-    try:
-        with open(EVENTS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data if isinstance(data, list) else []
-    except Exception as e:
-        print(f"Error loading {EVENTS_FILE}: {e}")
-        return []
+    if not events_raw:
+        ensure_data_dir()
+        if os.path.exists(EVENTS_FILE):
+            try:
+                with open(EVENTS_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        events_raw = data
+            except Exception as e:
+                print(f"Error loading {EVENTS_FILE}: {e}")
+
+    return [_normalize_event(e) for e in events_raw]
 
 def save_local_events(events):
+    normalized = [_normalize_event(e) for e in events]
     # Supabase (id=3)
     try:
         from core.db import get_supabase_client
         supabase = get_supabase_client("admin")
         supabase.table("app_config").upsert({
             "id": 3,
-            "config_json": events
+            "config_json": normalized
         }).execute()
     except Exception as e:
         print("Error saving events to Supabase:", e)
@@ -64,7 +88,7 @@ def save_local_events(events):
     ensure_data_dir()
     try:
         with open(EVENTS_FILE, "w", encoding="utf-8") as f:
-            json.dump(events, f, indent=4, ensure_ascii=False)
+            json.dump(normalized, f, indent=4, ensure_ascii=False)
         return True
     except Exception as e:
         print(f"Error saving {EVENTS_FILE}: {e}")
@@ -75,6 +99,7 @@ def add_event(event_data):
     next_id = max([e.get("id", 0) for e in events if isinstance(e.get("id"), int)] + [0]) + 1
     event_data["id"] = next_id
     event_data["created_at"] = datetime.now().isoformat()
+    event_data = _normalize_event(event_data)
     if not event_data.get("category") or event_data["category"] not in CATEGORIES:
         event_data["category"] = "Altres"
     events.append(event_data)
@@ -87,6 +112,7 @@ def update_event(event_id, updated_data):
         if e.get("id") == event_id:
             updated_data["id"] = event_id
             updated_data["updated_at"] = datetime.now().isoformat()
+            updated_data = _normalize_event(updated_data)
             events[i] = updated_data
             save_local_events(events)
             return True

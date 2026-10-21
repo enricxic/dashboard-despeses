@@ -420,6 +420,10 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - **Límit automàtic "Fins a final d'any" per a repeticions (`modules/manteniment.py`)**:
       - Tant a l'alta com a l'edició de tasques de manteniment, s'afegeix l'opció directa `"Fins a final d'any (31/12)"` que programa exactament totes les ocurrències fins al 31 de desembre de l'any en curs.
       - Al mode "Per nombre de vegades", el camp "Nombre total de vegades a generar" té com a màxim estricte (`max_value`) el nombre d'ocurrències restants fins a final d'any, acompanyat d'un missatge explicatiu de quantes vegades hi caben com a màxim, garantint la planificació any per any.
+    - **Sincronització amb l'Agenda i opció al menú superior (`app.py`, `modules/manteniment.py`, `core/calendar_manager.py`, `core/manteniment_manager.py`)**:
+      - S'ha afegit al menú superior desplegable `Mòduls > Manteniment de la llar` la línia separadora i l'opció directa `📅 Generar tasques proper any` (exactament igual que a Mòdul Econòmic).
+      - Resolució del mapeig de camps de l'Agenda: Ara les tasques de manteniment sincronitzades guarden canònicament `start_date`, `date`, `start_time`, `time`, `member` i `assigned_to`, normalitzant automàticament qualsevol esdeveniment anterior perquè aparegui a la graella mensual i a la consulta del dia.
+      - Navegació interactiva "📅 Veure a l'Agenda": Si una tasca està sincronitzada, el botó de la targeta permet obrir directament el mòdul Agenda posicionat al mes i dia exacte de la tasca.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**

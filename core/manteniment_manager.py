@@ -610,13 +610,20 @@ def add_manteniment_tasks_batch(task_data: dict, dates: list, send_to_calendar: 
                 tit = tit_base
                 if total_dates > 1:
                     tit = f"{tit_base} ({idx + 1}/{total_dates})"
+                
+                first_mem = alerta_raw[0] if isinstance(alerta_raw, list) and alerta_raw else str(alerta_raw)
+                if first_mem == "Tothom":
+                    first_mem = "Tota la família"
                     
                 ev = add_event({
                     "title": tit,
+                    "start_date": iso_date,
                     "date": iso_date,
+                    "start_time": "09:00",
                     "time": "09:00",
                     "category": "Llar",
                     "description": cal_desc,
+                    "member": first_mem,
                     "assigned_to": alerta_str,
                     "notify": True
                 })
@@ -724,26 +731,27 @@ def _sync_single_task_calendar(task: dict, send_to_calendar: bool):
         if obs:
             cal_desc += f"\n\nObservacions:\n{obs}"
             
+        first_mem = alerta_raw[0] if isinstance(alerta_raw, list) and alerta_raw else str(alerta_raw)
+        if first_mem == "Tothom":
+            first_mem = "Tota la família"
+
+        cal_payload = {
+            "title": tit,
+            "start_date": iso_date,
+            "date": iso_date,
+            "start_time": "09:00",
+            "time": "09:00",
+            "category": "Llar",
+            "description": cal_desc,
+            "member": first_mem,
+            "assigned_to": alerta_str,
+            "notify": True
+        }
+            
         if ev_id:
-            update_event(ev_id, {
-                "title": tit,
-                "date": iso_date,
-                "time": "09:00",
-                "category": "Llar",
-                "description": cal_desc,
-                "assigned_to": alerta_str,
-                "notify": True
-            })
+            update_event(ev_id, cal_payload)
         else:
-            ev = add_event({
-                "title": tit,
-                "date": iso_date,
-                "time": "09:00",
-                "category": "Llar",
-                "description": cal_desc,
-                "assigned_to": alerta_str,
-                "notify": True
-            })
+            ev = add_event(cal_payload)
             if ev and isinstance(ev, dict) and "id" in ev:
                 task["calendar_event_id"] = ev["id"]
     except Exception as e:
@@ -889,12 +897,19 @@ def update_manteniment_task_with_recurrence(
                     if obs:
                         cal_desc += f"\n\nObservacions:\n{obs}"
                     tit = f"{tit_base} ({idx}/{total_dates})"
+                    first_mem = alerta_raw[0] if isinstance(alerta_raw, list) and alerta_raw else str(alerta_raw)
+                    if first_mem == "Tothom":
+                        first_mem = "Tota la família"
+
                     ev = add_event({
                         "title": tit,
+                        "start_date": iso_date,
                         "date": iso_date,
+                        "start_time": "09:00",
                         "time": "09:00",
                         "category": "Llar",
                         "description": cal_desc,
+                        "member": first_mem,
                         "assigned_to": alerta_str,
                         "notify": True
                     })
