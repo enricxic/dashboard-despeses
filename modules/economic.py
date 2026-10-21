@@ -2199,10 +2199,12 @@ def render(view_mode="economic"):
                 is_past = (yr < cur_year) or (yr == cur_year and m_idx < cur_month_idx)
                 is_current = (yr == cur_year and m_idx == cur_month_idx)
                 
-                # Càlcul de despeses previstes: Suma de despeses fixes del mes (df_pag) + 1.250 € de previsió de despeses variables
+                # Càlcul de despeses previstes: Suma de despeses fixes del mes (df_pag) + suma de límits/previsions per categoria (df_limits)
                 sub_pag_m = year_pag_c[year_pag_c['clean_mes'] == m_data]
                 pag_fixes_sum = float(pd.to_numeric(sub_pag_m['Import'], errors='coerce').sum()) if not sub_pag_m.empty else 0.0
-                desp_prevista_total = pag_fixes_sum + 1250.0
+                limits_m = get_limits_for(yr, m_data)
+                variables_previstes = float(sum(limits_m.values())) if limits_m else 1250.0
+                desp_prevista_total = pag_fixes_sum + variables_previstes
                 
                 if is_past:
                     ing_val = ing_real
