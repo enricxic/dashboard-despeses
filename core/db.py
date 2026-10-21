@@ -971,11 +971,23 @@ def insert_db_row(table_name, new_row_dict):
         return True
 
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
+    payload = dict(new_row_dict)
     try:
-        supabase.table(table_name).insert(new_row_dict).execute()
-        log_action(table_name, 'INSERT', new_row_dict)
+        try:
+            res = supabase.table(table_name).insert(payload).execute()
+        except Exception as e:
+            err_msg = str(e).lower()
+            if "generated always" in err_msg or "cannot insert a non-default value into column" in err_msg:
+                payload.pop('id', None)
+                payload.pop('ID', None)
+                res = supabase.table(table_name).insert(payload).execute()
+            else:
+                raise e
+
+        inserted_data = res.data[0] if (res.data and isinstance(res.data, list)) else payload
+        log_action(table_name, 'INSERT', inserted_data)
         
-        update_session_state_insert(table_name, new_row_dict)
+        update_session_state_insert(table_name, inserted_data)
         csv_table_map = {
             'despeses': 'df_desp', 'ingressos': 'df_ing',
             'compresSuper': 'df_super', 'gasolina': 'df_gas',
@@ -988,6 +1000,7 @@ def insert_db_row(table_name, new_row_dict):
         return True
     except Exception as e:
         st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
+        return False
 
 def append_to_db(df_new, table_name, state_key, extra_details=None):
     import json
