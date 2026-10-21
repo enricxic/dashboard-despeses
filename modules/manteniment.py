@@ -1187,15 +1187,7 @@ def render():
     # PESTANYA 1: REGISTRE DE MANTENIMENT
     # =========================================================================
     with tab_registre:
-        # Capçalera i botó d'acció ràpida per al proper any
-        c_top_h1, c_top_h2 = st.columns([3, 1.8], vertical_alignment="center")
-        with c_top_h1:
-            st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0;'>Gestió i planificació de manteniment periòdic i tasques de la llar.</p>", unsafe_allow_html=True)
-        with c_top_h2:
-            if st.button("📅 Generar Tasques Proper Any", type="primary", use_container_width=True, key="btn_open_gen_proper_any"):
-                show_generar_any_manteniment_dialog(tasks, family_names)
-
-        st.markdown("<div style='margin-bottom: 12px;'></div>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0 0 12px 0;'>Gestió i planificació de manteniment periòdic i tasques de la llar.</p>", unsafe_allow_html=True)
 
         # 1. FORMULARI D'ENTRADA
         with st.container(border=True):
