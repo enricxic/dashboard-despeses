@@ -16,6 +16,8 @@ from core.manteniment_manager import (
     load_registre_manteniment,
     save_registre_manteniment,
     add_manteniment_task,
+    add_manteniment_tasks_batch,
+    compute_recurring_dates,
     update_manteniment_task,
     delete_manteniment_task,
     toggle_manteniment_acompliment
@@ -624,6 +626,8 @@ def edit_task_dialog(task: dict, family_names: list):
     """Diàleg modal per editar una tasca de manteniment existent."""
     task_id = task.get("idManteniment", "")
     st.markdown(f"<h3 style='margin-top:0; color:#f39c12;'>✏️ Editar Tasca #{task_id}</h3>", unsafe_allow_html=True)
+    if task.get("recurrencia"):
+        st.info(f"🔁 Aquesta tasca forma part d'una sèrie periòdica: **{task.get('recurrencia')}**")
     
     c1, c2, c_avis = st.columns([1.5, 1.5, 1])
     with c1:
@@ -810,94 +814,222 @@ def render():
         with st.container(border=True):
             st.markdown("<h4 style='color:#f39c12; margin-top:0; margin-bottom:12px;'>➕ Nova Tasca de Manteniment</h4>", unsafe_allow_html=True)
             form_counter = st.session_state.get("mant_form_count", 0)
-            with st.form(f"form_alta_tasca_manteniment_{form_counter}", clear_on_submit=True):
-                c_f1, c_f2, c_f3 = st.columns([1.5, 1.5, 1])
-                with c_f1:
-                    data_manteniment_input = st.date_input(
-                        "Data Prevista *",
-                        value=datetime.today().date(),
-                        format="DD/MM/YYYY",
-                        help="Data en què s'ha de dur a terme la tasca de manteniment"
-                    )
-                with c_f2:
-                    tipus_input = st.selectbox(
-                        "Tipus Feina *",
-                        ["Feina casa", "Manteniment", "Reparació", "Neteja a fons", "Revisió periòdica", "Instal·lació / Millora", "Altres"],
-                        index=0
-                    )
-                with c_f3:
-                    dies_avis_input = st.number_input(
-                        "Dies d'avís",
-                        min_value=0,
-                        max_value=60,
-                        value=2,
-                        step=1,
-                        help="Dies abans de la tasca en què començarà a sortir l'alerta a la campaneta"
-                    )
-                
-                c_feina1, c_feina2 = st.columns([1.5, 1.5])
-                with c_feina1:
-                    feina_sel = st.selectbox(
-                        "Feina concreta *",
-                        OPCIONS_FEINA,
-                        index=0,
-                        help="Tria la feina concreta de la llista (ex: Canvi llençols, Neteja general...)"
-                    )
-                with c_feina2:
-                    feina_custom = st.text_input(
-                        "O una altra feina concreta (opcional):",
-                        placeholder="Escriu aquí si vols especificar una feina diferent...",
-                        help="Si escrius aquí, s'utilitzarà aquest text en lloc del desplegable"
-                    )
 
-                c_al1, c_al2 = st.columns([2, 1])
-                with c_al1:
-                    alerta_input = st.multiselect(
-                        "Alerta a *",
-                        options=family_names,
-                        default=["Tothom"],
-                        help="Membre(s) de la família a qui li apareixerà com a avís a la campaneta"
-                    )
-                with c_al2:
-                    acompliment_input = st.selectbox(
-                        "Acompliment",
-                        ["No", "Sí"],
-                        index=0
-                    )
-
-                observacions_input = st.text_area(
-                    "Observacions / Detalls addicionals",
-                    placeholder="Instruccions addicionals, eines necessàries, telèfon de contacte, passos...",
-                    height=75
+            c_f1, c_f2, c_f3 = st.columns([1.5, 1.5, 1])
+            with c_f1:
+                data_manteniment_input = st.date_input(
+                    "Data Prevista *",
+                    value=datetime.today().date(),
+                    format="DD/MM/YYYY",
+                    help="Data inicial en què s'ha de dur a terme la tasca de manteniment",
+                    key=f"new_dmant_{form_counter}"
+                )
+            with c_f2:
+                tipus_input = st.selectbox(
+                    "Tipus Feina *",
+                    ["Feina casa", "Manteniment", "Reparació", "Neteja a fons", "Revisió periòdica", "Instal·lació / Millora", "Altres"],
+                    index=0,
+                    key=f"new_tipus_{form_counter}"
+                )
+            with c_f3:
+                dies_avis_input = st.number_input(
+                    "Dies d'avís",
+                    min_value=0,
+                    max_value=60,
+                    value=2,
+                    step=1,
+                    help="Dies abans de la tasca en què començarà a sortir l'alerta a la campaneta",
+                    key=f"new_avis_{form_counter}"
+                )
+            
+            c_feina1, c_feina2 = st.columns([1.5, 1.5])
+            with c_feina1:
+                feina_sel = st.selectbox(
+                    "Feina concreta *",
+                    OPCIONS_FEINA,
+                    index=0,
+                    help="Tria la feina concreta de la llista (ex: Canvi llençols, Neteja general...)",
+                    key=f"new_feinasel_{form_counter}"
+                )
+            with c_feina2:
+                feina_custom = st.text_input(
+                    "O una altra feina concreta (opcional):",
+                    placeholder="Escriu aquí si vols especificar una feina diferent...",
+                    help="Si escrius aquí, s'utilitzarà aquest text en lloc del desplegable",
+                    key=f"new_feinacust_{form_counter}"
                 )
 
-                c_sub1, c_sub2 = st.columns([2, 1], vertical_alignment="center")
-                with c_sub1:
-                    send_cal_input = st.checkbox("📅 Enviar directament a l'Agenda (Calendari familiar)", value=True)
-                with c_sub2:
-                    sub_btn = st.form_submit_button("💾 Desar Tasca al Registre", type="primary", use_container_width=True)
+            c_al1, c_al2 = st.columns([2, 1])
+            with c_al1:
+                alerta_input = st.multiselect(
+                    "Alerta a *",
+                    options=family_names,
+                    default=["Tothom"],
+                    help="Membre(s) de la família a qui li apareixerà com a avís a la campaneta",
+                    key=f"new_alerta_{form_counter}"
+                )
+            with c_al2:
+                acompliment_input = st.selectbox(
+                    "Acompliment inicial",
+                    ["No", "Sí"],
+                    index=0,
+                    key=f"new_acomp_{form_counter}"
+                )
 
-                if sub_btn:
-                    feina_final = feina_custom.strip() if feina_custom.strip() else (feina_sel if feina_sel != "Altres (especificar al costat)..." else "")
-                    if not feina_final.strip():
-                        st.error("Cal indicar la feina concreta a realitzar.")
+            # SECCIÓ DE PERIODICITAT I EVENTS REPETITIUS
+            st.markdown("<hr style='margin: 12px 0;'>", unsafe_allow_html=True)
+            st.markdown("<h5 style='color:#a78bfa; margin-top:0; margin-bottom:8px;'>🔄 Repetició / Periodicitat de la Tasca</h5>", unsafe_allow_html=True)
+
+            freq_opts = [
+                "Puntual (una sola vegada)",
+                "Cada dia",
+                "Cada setmana",
+                "Cada 2 setmanes (quinzenal)",
+                "Cada mes",
+                "Cada 2 mesos",
+                "Cada 3 mesos (trimestral)",
+                "Cada 6 mesos (semestral)",
+                "Cada any",
+                "Personalitzat..."
+            ]
+
+            c_rec1, c_rec2 = st.columns([1.5, 1.5])
+            with c_rec1:
+                freq_sel = st.selectbox(
+                    "Freqüència de repetició",
+                    freq_opts,
+                    index=0,
+                    help="Tria si aquesta tasca s'ha de repetir periòdicament en el calendari",
+                    key=f"new_freq_{form_counter}"
+                )
+
+            is_recurring = (freq_sel != "Puntual (una sola vegada)")
+            custom_interval = 1
+            custom_unit = "Dies"
+            end_mode_code = "vegades"
+            rep_count = 1
+            until_date = None
+
+            if is_recurring:
+                with c_rec2:
+                    mode_end = st.radio(
+                        "Com vols limitar la repetició?",
+                        ["Per nombre de vegades", "Fins a una data límit"],
+                        horizontal=True,
+                        key=f"new_modeend_{form_counter}"
+                    )
+
+                if freq_sel == "Personalitzat...":
+                    c_p1, c_p2 = st.columns(2)
+                    with c_p1:
+                        custom_interval = st.number_input(
+                            "Repetir cada (número):",
+                            min_value=1,
+                            max_value=365,
+                            value=2,
+                            step=1,
+                            help="Ex: 2 per a cada 2 setmanes, 15 per a cada 15 dies, 3 per a cada 3 mesos...",
+                            key=f"new_cint_{form_counter}"
+                        )
+                    with c_p2:
+                        custom_unit = st.selectbox(
+                            "Unitat de temps:",
+                            ["Dies", "Setmanes", "Mesos", "Anys"],
+                            index=1,
+                            key=f"new_cunit_{form_counter}"
+                        )
+
+                if mode_end == "Per nombre de vegades":
+                    c_n1, c_n2 = st.columns([1.5, 1.5])
+                    with c_n1:
+                        rep_count = st.number_input(
+                            "Nombre de vegades a generar:",
+                            min_value=2,
+                            max_value=60,
+                            value=4,
+                            step=1,
+                            help="Quantes tasques es generaran en total a partir de la data prevista",
+                            key=f"new_repcount_{form_counter}"
+                        )
+                    end_mode_code = "vegades"
+                else:
+                    c_n1, c_n2 = st.columns([1.5, 1.5])
+                    with c_n1:
+                        default_until = data_manteniment_input + timedelta(days=90)
+                        until_date = st.date_input(
+                            "Fins a la data límit:",
+                            value=default_until,
+                            min_value=data_manteniment_input,
+                            format="DD/MM/YYYY",
+                            help="Es generaran tasques periòdiques fins a arribar a aquesta data",
+                            key=f"new_until_{form_counter}"
+                        )
+                    end_mode_code = "data"
+
+                preview_dates = compute_recurring_dates(
+                    data_manteniment_input,
+                    freq_sel,
+                    custom_interval=custom_interval,
+                    custom_unit=custom_unit,
+                    end_mode=end_mode_code,
+                    occurrences=rep_count,
+                    until_date=until_date
+                )
+
+                if freq_sel == "Personalitzat...":
+                    freq_label_text = f"Cada {custom_interval} {custom_unit.lower()}"
+                else:
+                    freq_label_text = freq_sel
+
+                preview_str = ", ".join([d.strftime("%d/%m/%Y") for d in preview_dates[:6]])
+                if len(preview_dates) > 6:
+                    preview_str += f"... (+{len(preview_dates) - 6} dates més)"
+                st.info(f"🔁 **Sèrie periòdica ({freq_label_text}):** Es generaran **{len(preview_dates)} esdeveniments**: {preview_str}")
+            else:
+                preview_dates = [data_manteniment_input]
+                freq_label_text = ""
+
+            st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+            observacions_input = st.text_area(
+                "Observacions / Detalls addicionals",
+                placeholder="Instruccions addicionals, eines necessàries, telèfon de contacte, passos...",
+                height=75,
+                key=f"new_obs_{form_counter}"
+            )
+
+            c_sub1, c_sub2 = st.columns([2, 1], vertical_alignment="center")
+            with c_sub1:
+                send_cal_input = st.checkbox("📅 Enviar directament a l'Agenda (Calendari familiar)", value=True, key=f"new_sendcal_{form_counter}")
+            with c_sub2:
+                btn_label = f"💾 Desar {len(preview_dates)} Tasques al Registre" if len(preview_dates) > 1 else "💾 Desar Tasca al Registre"
+                sub_btn = st.button(btn_label, type="primary", use_container_width=True, key=f"btn_sub_alta_{form_counter}")
+
+            if sub_btn:
+                feina_final = feina_custom.strip() if feina_custom.strip() else (feina_sel if feina_sel != "Altres (especificar al costat)..." else "")
+                if not feina_final.strip():
+                    st.error("Cal indicar la feina concreta a realitzar.")
+                else:
+                    alerta_members = alerta_input if alerta_input else ["Tothom"]
+                    task_base = {
+                        "feina": feina_final.strip(),
+                        "tipus": tipus_input,
+                        "diesAvis": int(dies_avis_input),
+                        "alertaA": alerta_members,
+                        "acompliment": acompliment_input,
+                        "observacions": observacions_input.strip()
+                    }
+                    res_tasks = add_manteniment_tasks_batch(
+                        task_base,
+                        preview_dates,
+                        send_to_calendar=send_cal_input,
+                        freq_label=freq_label_text
+                    )
+                    st.session_state["mant_form_count"] = form_counter + 1
+                    if len(res_tasks) > 1:
+                        st.success(f"S'han creat correctament {len(res_tasks)} tasques periòdiques de manteniment (#{res_tasks[0].get('idManteniment')} a #{res_tasks[-1].get('idManteniment')})!")
                     else:
-                        d_prev_str = data_manteniment_input.strftime("%d/%m/%Y")
-                        alerta_members = alerta_input if alerta_input else ["Tothom"]
-                        nova_tasca = {
-                            "dataAlta": datetime.now().strftime("%d/%m/%Y"),
-                            "dataManteniment": d_prev_str,
-                            "diesAvis": int(dies_avis_input),
-                            "feina": feina_final.strip(),
-                            "tipus": tipus_input,
-                            "alertaA": alerta_members,
-                            "acompliment": acompliment_input,
-                            "observacions": observacions_input.strip()
-                        }
-                        res = add_manteniment_task(nova_tasca, send_to_calendar=send_cal_input)
-                        st.session_state["mant_form_count"] = form_counter + 1
-                        st.success(f"Tasca #{res.get('idManteniment')} registrada correctament!")
-                        st.rerun()
+                        st.success(f"Tasca #{res_tasks[0].get('idManteniment')} registrada correctament!")
+                    st.rerun()
 
         # 2. LLISTAT DE LA BD
         st.markdown("<hr style='margin: 20px 0;'>", unsafe_allow_html=True)
@@ -955,7 +1087,7 @@ def render():
         filtered_tasks = tasks
         if cerca_text.strip():
             q = cerca_text.strip().lower()
-            filtered_tasks = [t for t in filtered_tasks if q in str(t.get("feina", "")).lower() or q in str(t.get("observacions", "")).lower() or q in str(t.get("tipus", "")).lower() or q in str(t.get("alertaA", "")).lower()]
+            filtered_tasks = [t for t in filtered_tasks if q in str(t.get("feina", "")).lower() or q in str(t.get("observacions", "")).lower() or q in str(t.get("tipus", "")).lower() or q in str(t.get("alertaA", "")).lower() or q in str(t.get("recurrencia", "")).lower()]
         if filtre_estat == "⏳ Pendents":
             filtered_tasks = [t for t in filtered_tasks if str(t.get("acompliment", "No")).strip().lower() not in ["sí", "si", "true"]]
         elif filtre_estat == "✅ Acomplertes":
@@ -992,7 +1124,7 @@ def render():
         with c_mode2:
             if filtered_tasks:
                 df_export = pd.DataFrame(filtered_tasks)
-                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "acompliment", "observacions"]
+                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "recurrencia", "acompliment", "observacions"]
                 for c in cols_order:
                     if c not in df_export.columns: df_export[c] = ""
                 df_export["alertaA"] = df_export["alertaA"].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
@@ -1017,7 +1149,7 @@ def render():
         else:
             if view_mode == "📊 Taula de dades (Dataframe / CSV)":
                 df_display = pd.DataFrame(filtered_tasks)
-                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "acompliment", "observacions"]
+                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "recurrencia", "acompliment", "observacions"]
                 for c in cols_order:
                     if c not in df_display.columns: df_display[c] = ""
                 df_display["alertaA"] = df_display["alertaA"].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
@@ -1034,6 +1166,7 @@ def render():
                         "feina": st.column_config.TextColumn("Feina Concreta", width="medium"),
                         "tipus": st.column_config.TextColumn("Tipus Feina", width="small"),
                         "alertaA": st.column_config.TextColumn("Alerta a", width="medium"),
+                        "recurrencia": st.column_config.TextColumn("Periodicitat", width="medium"),
                         "acompliment": st.column_config.TextColumn("Acomplert", width="small"),
                         "observacions": st.column_config.TextColumn("Observacions")
                     }
@@ -1070,6 +1203,8 @@ def render():
                     alerta_raw = task.get("alertaA", "Tothom")
                     alerta_txt = ", ".join(alerta_raw) if isinstance(alerta_raw, list) else str(alerta_raw)
                     dies_av_badge = task.get("diesAvis", 2)
+                    rec_val = task.get("recurrencia", "")
+                    rec_badge = f"<span style='background:#1e293b; color:#c084fc; border:1px solid #9333ea; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🔁 {rec_val}</span>" if rec_val else ""
 
                     with st.container(border=True):
                         c_card_left, c_card_right = st.columns([7.5, 2.5], vertical_alignment="center")
@@ -1079,6 +1214,7 @@ def render():
                                 <span style='background:#0f172a; color:#f8fafc; border:1px solid #334155; padding:2px 8px; border-radius:8px; font-weight:700; font-size:0.8rem;'>#{task_id}</span>
                                 {status_html}
                                 <span style='background:#1e293b; color:#cbd5e1; border:1px solid #475569; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🏷️ {task.get('tipus', 'Feina casa')}</span>
+                                {rec_badge}
                                 <span style='background:#1e293b; color:#f59e0b; border:1px solid #d97706; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>👤 Alerta: {alerta_txt}</span>
                                 <span style='background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🔔 Avís: {dies_av_badge}d abans</span>
                                 <span style='color:#64748b; font-size:0.75rem; margin-left:auto;'>Alta: {task.get('dataAlta', '')}</span>

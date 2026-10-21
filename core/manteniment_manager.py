@@ -1,7 +1,8 @@
 import os
 import json
 import copy
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from dateutil.relativedelta import relativedelta
 
 _CURR_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(_CURR_DIR, ".."))
@@ -335,7 +336,7 @@ def save_registre_manteniment(records: list) -> bool:
                 r_copy["alertaA"] = ", ".join(r_copy["alertaA"])
             records_csv.append(r_copy)
         df = pd.DataFrame(records_csv)
-        cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "acompliment", "observacions"]
+        cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "recurrencia", "acompliment", "observacions"]
         for c in cols_order:
             if c not in df.columns:
                 df[c] = ""
@@ -346,63 +347,154 @@ def save_registre_manteniment(records: list) -> bool:
         print(f"Error desant localment {REGISTRE_CSV}: {e}")
         return False
 
-def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dict:
-    """Afegeix una nova tasca de manteniment, opcionalment creant l'esdeveniment a l'agenda."""
+def compute_recurring_dates(
+    start_date: date,
+    freq_type: str,
+    custom_interval: int = 1,
+    custom_unit: str = "Dies",
+    end_mode: str = "vegades",
+    occurrences: int = 1,
+    until_date: date = None,
+    max_limit: int = 60
+) -> list:
+    """
+    Calcula la llista d'objectes date per a una tasca de manteniment periòdica.
+    """
+    if freq_type in ["Puntual (una sola vegada)", "Puntual", "Cap"]:
+        return [start_date]
+        
+    dates = []
+    count = max(1, min(int(occurrences), max_limit))
+    
+    for i in range(max_limit):
+        if freq_type == "Cada dia":
+            d = start_date + timedelta(days=i)
+        elif freq_type == "Cada setmana":
+            d = start_date + timedelta(weeks=i)
+        elif freq_type == "Cada 2 setmanes (quinzenal)":
+            d = start_date + timedelta(weeks=2 * i)
+        elif freq_type == "Cada mes":
+            d = start_date + relativedelta(months=i)
+        elif freq_type == "Cada 2 mesos":
+            d = start_date + relativedelta(months=2 * i)
+        elif freq_type == "Cada 3 mesos (trimestral)":
+            d = start_date + relativedelta(months=3 * i)
+        elif freq_type == "Cada 6 mesos (semestral)":
+            d = start_date + relativedelta(months=6 * i)
+        elif freq_type == "Cada any":
+            d = start_date + relativedelta(years=i)
+        elif "Personalitzat" in freq_type:
+            step = max(1, int(custom_interval))
+            if custom_unit == "Dies":
+                d = start_date + timedelta(days=step * i)
+            elif custom_unit == "Setmanes":
+                d = start_date + timedelta(weeks=step * i)
+            elif custom_unit == "Mesos":
+                d = start_date + relativedelta(months=step * i)
+            elif custom_unit == "Anys":
+                d = start_date + relativedelta(years=step * i)
+            else:
+                d = start_date + timedelta(days=step * i)
+        else:
+            d = start_date + timedelta(days=i)
+            
+        if end_mode == "data" and until_date:
+            if d > until_date:
+                break
+            dates.append(d)
+        else:
+            dates.append(d)
+            if len(dates) >= count:
+                break
+                
+    return dates if dates else [start_date]
+
+def add_manteniment_tasks_batch(task_data: dict, dates: list, send_to_calendar: bool = False, freq_label: str = "") -> list:
+    """
+    Afegeix una o múltiples tasques de manteniment (sèrie periòdica o puntual).
+    Retorna la llista de tasques creades.
+    """
     tasks = load_registre_manteniment()
     next_id = max([int(t.get("idManteniment", 0)) for t in tasks if str(t.get("idManteniment", "")).isdigit()] + [0]) + 1
-    task_data["idManteniment"] = next_id
-    if not task_data.get("dataAlta"):
-        task_data["dataAlta"] = datetime.now().strftime("%d/%m/%Y")
-    task_data.setdefault("diesAvis", 2)
-    task_data.setdefault("feina", "")
-    task_data.setdefault("acompliment", "No")
+    total_dates = len(dates)
+    serie_id = f"ser_{int(datetime.now().timestamp())}" if total_dates > 1 else ""
+    created_tasks = []
     
-    # Enviar a calendari si s'ha sol·licitat
-    if send_to_calendar:
-        try:
-            from core.calendar_manager import add_event
-            d_prev = task_data.get("dataManteniment", "")
-            iso_date = ""
-            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
-                try:
-                    iso_date = datetime.strptime(d_prev, fmt).strftime("%Y-%m-%d")
-                    break
-                except Exception:
-                    pass
-            if not iso_date:
-                iso_date = datetime.now().strftime("%Y-%m-%d")
+    feina = task_data.get("feina", "").strip()
+    obs = task_data.get("observacions", "").strip()
+    tip = task_data.get("tipus", "Manteniment")
+    desc_curta = feina if feina else obs
+    tit_base = f"[{tip}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tip}] {desc_curta or 'Tasca de manteniment'}"
+    alerta_raw = task_data.get("alertaA", ["Tothom"])
+    alerta_str = ", ".join(alerta_raw) if isinstance(alerta_raw, list) else str(alerta_raw)
+    dies_av = task_data.get("diesAvis", 2)
+    
+    for idx, d in enumerate(dates):
+        t_item = dict(task_data)
+        t_item["idManteniment"] = next_id
+        t_item["dataAlta"] = datetime.now().strftime("%d/%m/%Y")
+        t_item["dataManteniment"] = d.strftime("%d/%m/%Y")
+        t_item.setdefault("diesAvis", dies_av)
+        t_item.setdefault("feina", feina)
+        t_item.setdefault("tipus", tip)
+        t_item.setdefault("alertaA", alerta_raw)
+        t_item.setdefault("acompliment", "No")
+        t_item.setdefault("observacions", obs)
+        
+        if serie_id:
+            t_item["serie_id"] = serie_id
+            t_item["recurrencia"] = f"{freq_label} ({idx + 1}/{total_dates})"
+        else:
+            t_item["recurrencia"] = ""
+            
+        # Enviar a calendari si s'ha sol·licitat
+        if send_to_calendar:
+            try:
+                from core.calendar_manager import add_event
+                iso_date = d.strftime("%Y-%m-%d")
+                cal_desc = f"Tasca de Manteniment #{next_id}\nFeina: {feina}\nTipus: {tip}\nAlerta a: {alerta_str}\nAvís amb {dies_av} dies d'antelació"
+                if serie_id:
+                    cal_desc += f"\nSèrie: {freq_label} ({idx + 1}/{total_dates})"
+                if obs:
+                    cal_desc += f"\n\nObservacions:\n{obs}"
+                    
+                tit = tit_base
+                if total_dates > 1:
+                    tit = f"{tit_base} ({idx + 1}/{total_dates})"
+                    
+                ev = add_event({
+                    "title": tit,
+                    "date": iso_date,
+                    "time": "09:00",
+                    "category": "Llar",
+                    "description": cal_desc,
+                    "assigned_to": alerta_str,
+                    "notify": True
+                })
+                if ev and isinstance(ev, dict) and "id" in ev:
+                    t_item["calendar_event_id"] = ev["id"]
+            except Exception as err:
+                print("Error enviant al calendari:", err)
                 
-            feina = task_data.get("feina", "").strip()
-            obs = task_data.get("observacions", "").strip()
-            tip = task_data.get("tipus", "Manteniment")
-            desc_curta = feina if feina else obs
-            tit = f"[{tip}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tip}] {desc_curta or 'Tasca de manteniment'}"
-            
-            alerta_raw = task_data.get("alertaA", "Tothom")
-            alerta_str = ", ".join(alerta_raw) if isinstance(alerta_raw, list) else str(alerta_raw)
-            dies_av = task_data.get("diesAvis", 2)
-            
-            cal_desc = f"Tasca de Manteniment #{next_id}\nFeina: {feina}\nTipus: {tip}\nAlerta a: {alerta_str}\nAvís amb {dies_av} dies d'antelació"
-            if obs:
-                cal_desc += f"\n\nObservacions:\n{obs}"
-            
-            ev = add_event({
-                "title": tit,
-                "date": iso_date,
-                "time": "09:00",
-                "category": "Llar",
-                "description": cal_desc,
-                "assigned_to": alerta_str,
-                "notify": True
-            })
-            if ev and isinstance(ev, dict) and "id" in ev:
-                task_data["calendar_event_id"] = ev["id"]
-        except Exception as err:
-            print("Error enviant al calendari:", err)
-
-    tasks.append(task_data)
+        tasks.append(t_item)
+        created_tasks.append(t_item)
+        next_id += 1
+        
     save_registre_manteniment(tasks)
-    return task_data
+    return created_tasks
+
+def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dict:
+    """Afegeix una tasca de manteniment puntual."""
+    d_prev = task_data.get("dataManteniment", "")
+    d_obj = datetime.today().date()
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            d_obj = datetime.strptime(d_prev, fmt).date()
+            break
+        except Exception:
+            pass
+    res = add_manteniment_tasks_batch(task_data, [d_obj], send_to_calendar=send_to_calendar)
+    return res[0] if res else task_data
 
 def update_manteniment_task(task_id: int, updated_fields: dict) -> bool:
     """Actualitza una tasca existent."""

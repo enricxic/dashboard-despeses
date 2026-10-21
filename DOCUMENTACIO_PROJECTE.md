@@ -394,6 +394,13 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
   - **21/10/2026: Desacoblament de l'Enter als diàlegs modals d'edició (`modules/manteniment.py`)**:
     - S'ha eliminat l'embolcall `st.form` dels diàlegs modals (`edit_task_dialog`, `edit_manual_dialog`, `edit_garantia_dialog`), utilitzant la gestió d'estat aïllada nativa de `@st.dialog`.
     - D'aquesta manera, prémer la tecla `Intro` / `Enter` en qualsevol camp numèric (com `diesAvis`) o de text ja no desencadena l'enviament ni el tancament involuntari del formulari HTML. Els canvis només es desen quan l'usuari fa clic explícitament al botó "💾 Desar canvis". S'ha afegit també un botó explícit de "Cancel·lar".
+  - **21/10/2026: Generació d'Esdeveniments Periòdics i Repetitius a Manteniment (`modules/manteniment.py`, `core/manteniment_manager.py`, `csv/manteniment.csv`)**:
+    - **Selector de periodicitat**: Al formulari d'alta s'ha incorporat el bloc interactiu "🔄 Repetició / Periodicitat de la Tasca" amb múltiples opcions: `Puntual (una sola vegada)`, `Cada dia`, `Cada setmana`, `Cada 2 setmanes (quinzenal)`, `Cada mes`, `Cada 2 mesos`, `Cada 3 mesos (trimestral)`, `Cada 6 mesos (semestral)`, `Cada any` o `Personalitzat...` (interval numèric configurable en dies, setmanes, mesos o anys).
+    - **Límit configurable**: Opció de limitar la generació per **nombre de vegades** (ex: 4 ocurrències, 12 vegades) o **fins a una data límit** determinada.
+    - **Previsualització dinàmica en temps real**: Mostra immediatament un missatge informatiu amb les dates exactes que es generaran abans de desar.
+    - **Generació en sèrie (`add_manteniment_tasks_batch`)**: Crea totes les tasques individuals programades amb el seu propi ID, data prevista i estat (`Pendent`), vinculades a un identificador de sèrie (`serie_id`) i amb l'etiqueta descriptiva (`🔁 Freqüència (X/N)`).
+    - **Sincronització amb l'Agenda Familiar**: Si la casella de calendari està activada, cada ocurrència genera el seu propi esdeveniment a l'agenda a la data corresponent, amb notificació i assignació personalitzada.
+    - **Visualització i exportació**: La columna `recurrencia` s'ha afegit a la base de dades, a `csv/manteniment.csv` i a la taula interactiva, mentre que a les targetes es mostra la insígnia lila `🔁 Periodicitat (X/N)` i al modal d'edició s'informa de la sèrie a la qual pertany.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**
