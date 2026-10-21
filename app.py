@@ -1112,6 +1112,7 @@ div.block-container {{
 <div class="submenu-dropdown">
 <a href="?mod=modules.bases_dades&db=despeses{url_suffix}" target="_self">💸 Despeses</a>
 <a href="?mod=modules.bases_dades&db=ingressos{url_suffix}" target="_self">💰 Ingressos</a>
+<a href="?mod=modules.bases_dades&db=pagaments{url_suffix}" target="_self">💳 Pagaments</a>
 <a href="?mod=modules.bases_dades&db=compresSuper{url_suffix}" target="_self">🛒 Compres Super</a>
 <a href="?mod=modules.bases_dades&db=tb_productes{url_suffix}" target="_self">📦 Productes (Catàleg)</a>
 <a href="?mod=modules.bases_dades{url_suffix}" target="_self">🔍 Totes les taules...</a>
