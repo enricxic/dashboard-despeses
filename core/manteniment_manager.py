@@ -1,6 +1,7 @@
 import os
 import json
 import copy
+import re
 from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
 
@@ -495,6 +496,258 @@ def add_manteniment_task(task_data: dict, send_to_calendar: bool = False) -> dic
             pass
     res = add_manteniment_tasks_batch(task_data, [d_obj], send_to_calendar=send_to_calendar)
     return res[0] if res else task_data
+
+def parse_task_recurrence(rec_str: str) -> tuple:
+    """
+    Analitza la cadena de recurrència com 'Cada setmana (1/4)' o 'Cada 15 dies (2/6)'
+    Retorna (freq_type, interval, unit, count).
+    """
+    if not rec_str:
+        return "Puntual (una sola vegada)", 1, "Dies", 1
+        
+    s = str(rec_str).strip()
+    count = 4
+    m_count = re.search(r'\((\d+)/(\d+)\)', s)
+    if m_count:
+        count = int(m_count.group(2))
+        
+    s_low = s.lower()
+    if "cada dia" in s_low:
+        return "Cada dia", 1, "Dies", count
+    if "cada 2 setmanes" in s_low or "quinzenal" in s_low:
+        return "Cada 2 setmanes (quinzenal)", 2, "Setmanes", count
+    if "cada setmana" in s_low:
+        return "Cada setmana", 1, "Setmanes", count
+    if "cada 2 mesos" in s_low:
+        return "Cada 2 mesos", 2, "Mesos", count
+    if "cada 3 mesos" in s_low or "trimestral" in s_low:
+        return "Cada 3 mesos (trimestral)", 3, "Mesos", count
+    if "cada 6 mesos" in s_low or "semestral" in s_low:
+        return "Cada 6 mesos (semestral)", 6, "Mesos", count
+    if "cada mes" in s_low:
+        return "Cada mes", 1, "Mesos", count
+    if "cada any" in s_low:
+        return "Cada any", 1, "Anys", count
+        
+    m_cust = re.search(r'cada\s+(\d+)\s+(dia|dies|setmana|setmanes|mes|mesos|any|anys)', s_low)
+    if m_cust:
+        step = int(m_cust.group(1))
+        unit_str = m_cust.group(2)
+        if "dia" in unit_str: unit = "Dies"
+        elif "setmana" in unit_str: unit = "Setmanes"
+        elif "mes" in unit_str: unit = "Mesos"
+        else: unit = "Anys"
+        return "Personalitzat...", step, unit, count
+        
+    return "Puntual (una sola vegada)", 1, "Dies", 1
+
+def _sync_single_task_calendar(task: dict, send_to_calendar: bool):
+    """Crea o actualitza l'esdeveniment a l'agenda per a una sola tasca."""
+    if not send_to_calendar:
+        return
+    try:
+        from core.calendar_manager import add_event, update_event
+        ev_id = task.get("calendar_event_id")
+        d_raw = task.get("dataManteniment", "")
+        iso_date = ""
+        for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+            try:
+                iso_date = datetime.strptime(d_raw, fmt).strftime("%Y-%m-%d")
+                break
+            except Exception:
+                pass
+        if not iso_date:
+            iso_date = datetime.today().strftime("%Y-%m-%d")
+            
+        feina = task.get("feina", "").strip()
+        obs = task.get("observacions", "").strip()
+        tip = task.get("tipus", "Manteniment")
+        desc_curta = feina if feina else obs
+        tit = f"[{tip}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tip}] {desc_curta}"
+        alerta_raw = task.get("alertaA", ["Tothom"])
+        alerta_str = ", ".join(alerta_raw) if isinstance(alerta_raw, list) else str(alerta_raw)
+        dies_av = task.get("diesAvis", 2)
+        rec = task.get("recurrencia", "")
+        
+        cal_desc = f"Tasca de Manteniment #{task.get('idManteniment')}\nFeina: {feina}\nTipus: {tip}\nAlerta a: {alerta_str}\nAvís amb {dies_av} dies d'antelació"
+        if rec:
+            cal_desc += f"\nSèrie: {rec}"
+        if obs:
+            cal_desc += f"\n\nObservacions:\n{obs}"
+            
+        if ev_id:
+            update_event(ev_id, {
+                "title": tit,
+                "date": iso_date,
+                "time": "09:00",
+                "category": "Llar",
+                "description": cal_desc,
+                "assigned_to": alerta_str,
+                "notify": True
+            })
+        else:
+            ev = add_event({
+                "title": tit,
+                "date": iso_date,
+                "time": "09:00",
+                "category": "Llar",
+                "description": cal_desc,
+                "assigned_to": alerta_str,
+                "notify": True
+            })
+            if ev and isinstance(ev, dict) and "id" in ev:
+                task["calendar_event_id"] = ev["id"]
+    except Exception as e:
+        print("Error sync calendar:", e)
+
+def update_manteniment_task_with_recurrence(
+    task_id: int,
+    updated_fields: dict,
+    new_dates: list,
+    freq_label: str = "",
+    regenerate_future: bool = False,
+    send_to_calendar: bool = False
+) -> bool:
+    """
+    Actualitza una tasca existent i opcionalment regenera les properes ocurrències de la sèrie.
+    """
+    tasks = load_registre_manteniment()
+    curr_idx = -1
+    for i, t in enumerate(tasks):
+        if int(t.get("idManteniment", -1)) == int(task_id):
+            curr_idx = i
+            break
+            
+    if curr_idx == -1:
+        return False
+        
+    curr_task = tasks[curr_idx]
+    old_serie_id = curr_task.get("serie_id", "")
+    
+    # 1. Si s'ha triat Puntual (new_dates té 1 sol element)
+    if len(new_dates) <= 1:
+        updated_fields["recurrencia"] = ""
+        updated_fields["serie_id"] = ""
+        curr_task.update(updated_fields)
+        
+        # Si demanat, eliminar futures tasques pendents de l'antiga sèrie
+        if old_serie_id and regenerate_future:
+            try:
+                from core.calendar_manager import delete_event
+            except Exception:
+                delete_event = None
+                
+            tasks_to_keep = []
+            for t in tasks:
+                if t.get("serie_id") == old_serie_id and int(t.get("idManteniment", -1)) != int(task_id):
+                    is_done = str(t.get("acompliment", "No")).strip().lower() in ["sí", "si", "true"]
+                    if not is_done:
+                        cal_ev = t.get("calendar_event_id")
+                        if cal_ev and delete_event:
+                            try:
+                                delete_event(cal_ev)
+                            except Exception:
+                                pass
+                        continue
+                tasks_to_keep.append(t)
+            tasks = tasks_to_keep
+            
+        _sync_single_task_calendar(curr_task, send_to_calendar)
+        save_registre_manteniment(tasks)
+        return True
+
+    # 2. Si s'ha triat una sèrie periòdica (len(new_dates) > 1)
+    serie_id = old_serie_id if (old_serie_id and regenerate_future) else f"ser_{int(datetime.now().timestamp())}"
+    total_dates = len(new_dates)
+    
+    # Si cal regenerar futures tasques de la sèrie antiga
+    if old_serie_id and regenerate_future:
+        try:
+            from core.calendar_manager import delete_event
+        except Exception:
+            delete_event = None
+            
+        tasks_to_keep = []
+        for t in tasks:
+            if t.get("serie_id") == old_serie_id and int(t.get("idManteniment", -1)) != int(task_id):
+                is_done = str(t.get("acompliment", "No")).strip().lower() in ["sí", "si", "true"]
+                if not is_done:
+                    cal_ev = t.get("calendar_event_id")
+                    if cal_ev and delete_event:
+                        try:
+                            delete_event(cal_ev)
+                        except Exception:
+                            pass
+                    continue
+            tasks_to_keep.append(t)
+        tasks = tasks_to_keep
+        
+        # Localitzar de nou curr_idx
+        for i, t in enumerate(tasks):
+            if int(t.get("idManteniment", -1)) == int(task_id):
+                curr_idx = i
+                break
+        curr_task = tasks[curr_idx]
+
+    # Actualitzar la tasca actual amb la primera data
+    updated_fields["dataManteniment"] = new_dates[0].strftime("%d/%m/%Y")
+    updated_fields["serie_id"] = serie_id
+    updated_fields["recurrencia"] = f"{freq_label} (1/{total_dates})"
+    curr_task.update(updated_fields)
+    _sync_single_task_calendar(curr_task, send_to_calendar)
+
+    # Generar les següents tasques de la sèrie (new_dates[1:])
+    if regenerate_future and len(new_dates) > 1:
+        next_id = max([int(t.get("idManteniment", 0)) for t in tasks if str(t.get("idManteniment", "")).isdigit()] + [0]) + 1
+        feina = curr_task.get("feina", "").strip()
+        obs = curr_task.get("observacions", "").strip()
+        tip = curr_task.get("tipus", "Manteniment")
+        tit_base = f"[{tip}] {feina[:35]}..." if len(feina) > 35 else f"[{tip}] {feina or 'Tasca'}"
+        alerta_raw = curr_task.get("alertaA", ["Tothom"])
+        alerta_str = ", ".join(alerta_raw) if isinstance(alerta_raw, list) else str(alerta_raw)
+        dies_av = curr_task.get("diesAvis", 2)
+        
+        try:
+            from core.calendar_manager import add_event
+        except Exception:
+            add_event = None
+
+        for idx, d in enumerate(new_dates[1:], start=2):
+            new_t = dict(curr_task)
+            new_t["idManteniment"] = next_id
+            new_t["dataAlta"] = datetime.now().strftime("%d/%m/%Y")
+            new_t["dataManteniment"] = d.strftime("%d/%m/%Y")
+            new_t["acompliment"] = "No"
+            new_t["serie_id"] = serie_id
+            new_t["recurrencia"] = f"{freq_label} ({idx}/{total_dates})"
+            new_t["calendar_event_id"] = None
+            
+            if send_to_calendar and add_event:
+                try:
+                    iso_date = d.strftime("%Y-%m-%d")
+                    cal_desc = f"Tasca de Manteniment #{next_id}\nFeina: {feina}\nTipus: {tip}\nAlerta a: {alerta_str}\nAvís amb {dies_av} dies d'antelació\nSèrie: {freq_label} ({idx}/{total_dates})"
+                    if obs:
+                        cal_desc += f"\n\nObservacions:\n{obs}"
+                    tit = f"{tit_base} ({idx}/{total_dates})"
+                    ev = add_event({
+                        "title": tit,
+                        "date": iso_date,
+                        "time": "09:00",
+                        "category": "Llar",
+                        "description": cal_desc,
+                        "assigned_to": alerta_str,
+                        "notify": True
+                    })
+                    if ev and isinstance(ev, dict) and "id" in ev:
+                        new_t["calendar_event_id"] = ev["id"]
+                except Exception as err:
+                    print("Error calendar:", err)
+                    
+            tasks.append(new_t)
+            next_id += 1
+
+    save_registre_manteniment(tasks)
+    return True
 
 def update_manteniment_task(task_id: int, updated_fields: dict) -> bool:
     """Actualitza una tasca existent."""

@@ -401,6 +401,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - **Generació en sèrie (`add_manteniment_tasks_batch`)**: Crea totes les tasques individuals programades amb el seu propi ID, data prevista i estat (`Pendent`), vinculades a un identificador de sèrie (`serie_id`) i amb l'etiqueta descriptiva (`🔁 Freqüència (X/N)`).
     - **Sincronització amb l'Agenda Familiar**: Si la casella de calendari està activada, cada ocurrència genera el seu propi esdeveniment a l'agenda a la data corresponent, amb notificació i assignació personalitzada.
     - **Visualització i exportació**: La columna `recurrencia` s'ha afegit a la base de dades, a `csv/manteniment.csv` i a la taula interactiva, mentre que a les targetes es mostra la insígnia lila `🔁 Periodicitat (X/N)` i al modal d'edició s'informa de la sèrie a la qual pertany.
+    - **Modificació de la configuració de repeticions a l'edició (`edit_task_dialog`)**: El diàleg modal d'edició permet ara canviar la periodicitat d'una tasca existent (convertir una tasca puntual en periòdica, canviar la freqüència d'una sèrie existent o desvincular-la a puntual). Amb l'opció `🔄 Actualitzar i regenerar les properes tasques d'aquesta sèrie`, el sistema reajusta i regenera automàticament les futures tasques pendents de la sèrie i els seus esdeveniments de calendari, preservant sempre l'històric de tasques ja acomplertes.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**

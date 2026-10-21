@@ -18,6 +18,8 @@ from core.manteniment_manager import (
     add_manteniment_task,
     add_manteniment_tasks_batch,
     compute_recurring_dates,
+    parse_task_recurrence,
+    update_manteniment_task_with_recurrence,
     update_manteniment_task,
     delete_manteniment_task,
     toggle_manteniment_acompliment
@@ -680,8 +682,126 @@ def edit_task_dialog(task: dict, family_names: list):
         ac_idx = 1 if cur_acomp in ["sí", "si", "true"] else 0
         acompliment = st.selectbox("Acompliment", ["No", "Sí"], index=ac_idx)
 
-    sync_cal = st.checkbox("Actualitzar / Enviar a l'Agenda (Calendari)", value=bool(task.get("calendar_event_id")))
-    observacions = st.text_area("Observacions / Detalls addicionals", value=task.get("observacions", ""), height=75)
+    # SECCIÓ DE PERIODICITAT I REPETICIONS
+    st.markdown("<hr style='margin: 12px 0;'>", unsafe_allow_html=True)
+    st.markdown("<h5 style='color:#a78bfa; margin-top:0; margin-bottom:8px;'>🔄 Repetició / Periodicitat de la Tasca</h5>", unsafe_allow_html=True)
+
+    cur_rec_str = task.get("recurrencia", "")
+    cur_freq_guess, cur_int_guess, cur_unit_guess, cur_count_guess = parse_task_recurrence(cur_rec_str)
+    
+    freq_opts = [
+        "Puntual (una sola vegada)",
+        "Cada dia",
+        "Cada setmana",
+        "Cada 2 setmanes (quinzenal)",
+        "Cada mes",
+        "Cada 2 mesos",
+        "Cada 3 mesos (trimestral)",
+        "Cada 6 mesos (semestral)",
+        "Cada any",
+        "Personalitzat..."
+    ]
+    def_idx = freq_opts.index(cur_freq_guess) if cur_freq_guess in freq_opts else 0
+
+    c_rec1, c_rec2 = st.columns([1.5, 1.5])
+    with c_rec1:
+        edit_freq_sel = st.selectbox(
+            "Freqüència de repetició",
+            freq_opts,
+            index=def_idx,
+            key=f"edit_freq_{task_id}"
+        )
+
+    edit_is_recurring = (edit_freq_sel != "Puntual (una sola vegada)")
+    edit_custom_interval = cur_int_guess
+    edit_custom_unit = cur_unit_guess
+    edit_end_mode_code = "vegades"
+    edit_rep_count = cur_count_guess if cur_count_guess > 1 else 4
+    edit_until_date = None
+    regenerate_future = False
+
+    if edit_is_recurring:
+        with c_rec2:
+            edit_mode_end = st.radio(
+                "Com vols limitar la repetició?",
+                ["Per nombre de vegades", "Fins a una data límit"],
+                horizontal=True,
+                key=f"edit_modeend_{task_id}"
+            )
+
+        if edit_freq_sel == "Personalitzat...":
+            c_p1, c_p2 = st.columns(2)
+            with c_p1:
+                edit_custom_interval = st.number_input(
+                    "Repetir cada (número):",
+                    min_value=1,
+                    max_value=365,
+                    value=max(1, int(cur_int_guess)),
+                    step=1,
+                    key=f"edit_cint_{task_id}"
+                )
+            with c_p2:
+                units = ["Dies", "Setmanes", "Mesos", "Anys"]
+                u_idx = units.index(cur_unit_guess) if cur_unit_guess in units else 1
+                edit_custom_unit = st.selectbox("Unitat de temps:", units, index=u_idx, key=f"edit_cunit_{task_id}")
+
+        if edit_mode_end == "Per nombre de vegades":
+            c_n1, c_n2 = st.columns([1.5, 1.5])
+            with c_n1:
+                edit_rep_count = st.number_input(
+                    "Nombre total de vegades a generar:",
+                    min_value=2,
+                    max_value=60,
+                    value=max(2, int(cur_count_guess)),
+                    step=1,
+                    help="Quantes tasques es programaran en total a partir d'aquesta data",
+                    key=f"edit_repcount_{task_id}"
+                )
+            edit_end_mode_code = "vegades"
+        else:
+            c_n1, c_n2 = st.columns([1.5, 1.5])
+            with c_n1:
+                default_until = d_manteniment + timedelta(days=90)
+                edit_until_date = st.date_input(
+                    "Fins a la data límit:",
+                    value=default_until,
+                    min_value=d_manteniment,
+                    format="DD/MM/YYYY",
+                    key=f"edit_until_{task_id}"
+                )
+            edit_end_mode_code = "data"
+
+        edit_preview_dates = compute_recurring_dates(
+            d_manteniment,
+            edit_freq_sel,
+            custom_interval=edit_custom_interval,
+            custom_unit=edit_custom_unit,
+            end_mode=edit_end_mode_code,
+            occurrences=edit_rep_count,
+            until_date=edit_until_date
+        )
+        if edit_freq_sel == "Personalitzat...":
+            edit_freq_label = f"Cada {edit_custom_interval} {edit_custom_unit.lower()}"
+        else:
+            edit_freq_label = edit_freq_sel
+
+        prev_dates_str = ", ".join([d.strftime("%d/%m/%Y") for d in edit_preview_dates[:6]])
+        if len(edit_preview_dates) > 6:
+            prev_dates_str += f"... (+{len(edit_preview_dates) - 6} dates més)"
+        st.info(f"🔁 **Sèrie periòdica ({edit_freq_label}):** Es programaran **{len(edit_preview_dates)} esdeveniments**: {prev_dates_str}")
+
+        if task.get("serie_id"):
+            regenerate_future = st.checkbox("🔄 Actualitzar i regenerar les properes tasques d'aquesta sèrie", value=True, help="Si està marcat, substituirà les properes tasques pendents d'aquesta sèrie per les noves dates calculades", key=f"chk_regen_{task_id}")
+        else:
+            regenerate_future = True
+    else:
+        edit_preview_dates = [d_manteniment]
+        edit_freq_label = ""
+        if task.get("serie_id"):
+            regenerate_future = st.checkbox("🗑️ Desvincular i eliminar les properes tasques pendents d'aquesta sèrie", value=True, help="Converteix aquesta tasca en puntual i suprimeix les ocurrències futures pendents de la sèrie", key=f"chk_unlink_{task_id}")
+
+    sync_cal = st.checkbox("Actualitzar / Enviar a l'Agenda (Calendari)", value=bool(task.get("calendar_event_id")), key=f"edit_cal_{task_id}")
+    observacions = st.text_area("Observacions / Detalls addicionals", value=task.get("observacions", ""), height=75, key=f"edit_obs_{task_id}")
     
     st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
     c_can, c_sub = st.columns([1, 2])
@@ -707,43 +827,14 @@ def edit_task_dialog(task: dict, family_names: list):
             "acompliment": acompliment,
             "observacions": observacions.strip()
         }
-        if sync_cal:
-            try:
-                from core.calendar_manager import add_event, update_event
-                ev_id = task.get("calendar_event_id")
-                desc_curta = feina_final.strip() if feina_final.strip() else observacions.strip()
-                tit = f"[{tipus}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tipus}] {desc_curta}"
-                iso_date = d_manteniment.strftime("%Y-%m-%d")
-                alerta_str = ", ".join(alerta_final)
-                cal_desc = f"Tasca de Manteniment #{task_id}\nFeina: {feina_final.strip()}\nTipus: {tipus}\nAlerta a: {alerta_str}\nAvís amb {dies_avis} dies d'antelació"
-                if observacions.strip():
-                    cal_desc += f"\n\nObservacions:\n{observacions.strip()}"
-                if ev_id:
-                    update_event(ev_id, {
-                        "title": tit,
-                        "date": iso_date,
-                        "time": "09:00",
-                        "category": "Llar",
-                        "description": cal_desc,
-                        "assigned_to": alerta_str,
-                        "notify": True
-                    })
-                else:
-                    ev = add_event({
-                        "title": tit,
-                        "date": iso_date,
-                        "time": "09:00",
-                        "category": "Llar",
-                        "description": cal_desc,
-                        "assigned_to": alerta_str,
-                        "notify": True
-                    })
-                    if ev and isinstance(ev, dict) and "id" in ev:
-                        upd["calendar_event_id"] = ev["id"]
-            except Exception as e_cal:
-                print("Error actualitzant esdeveniment a calendari:", e_cal)
-
-        update_manteniment_task(task_id, upd)
+        update_manteniment_task_with_recurrence(
+            task_id=task_id,
+            updated_fields=upd,
+            new_dates=edit_preview_dates,
+            freq_label=edit_freq_label,
+            regenerate_future=regenerate_future,
+            send_to_calendar=sync_cal
+        )
         st.success("Tasca actualitzada correctament!")
         st.rerun()
 
