@@ -1209,21 +1209,27 @@ def render():
                     with st.container(border=True):
                         c_card_left, c_card_right = st.columns([7.5, 2.5], vertical_alignment="center")
                         with c_card_left:
-                            st.markdown(f"""
-                            <div style='display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;'>
-                                <span style='background:#0f172a; color:#f8fafc; border:1px solid #334155; padding:2px 8px; border-radius:8px; font-weight:700; font-size:0.8rem;'>#{task_id}</span>
-                                {status_html}
-                                <span style='background:#1e293b; color:#cbd5e1; border:1px solid #475569; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🏷️ {task.get('tipus', 'Feina casa')}</span>
-                                {rec_badge}
-                                <span style='background:#1e293b; color:#f59e0b; border:1px solid #d97706; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>👤 Alerta: {alerta_txt}</span>
-                                <span style='background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🔔 Avís: {dies_av_badge}d abans</span>
-                                <span style='color:#64748b; font-size:0.75rem; margin-left:auto;'>Alta: {task.get('dataAlta', '')}</span>
-                            </div>
-                            <div style='font-size:1.05rem; font-weight:700; color:#f8fafc; margin-top:4px;'>
-                                🔨 {main_title}
-                            </div>
-                            {f"<div style='font-size:0.9rem; color:#94a3b8; margin-top:3px;'>📝 {task_obs}</div>" if (task_feina and task_obs) else ""}
-                            """, unsafe_allow_html=True)
+                            badges_list = [
+                                f"<span style='background:#0f172a; color:#f8fafc; border:1px solid #334155; padding:2px 8px; border-radius:8px; font-weight:700; font-size:0.8rem;'>#{task_id}</span>",
+                                status_html,
+                                f"<span style='background:#1e293b; color:#cbd5e1; border:1px solid #475569; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🏷️ {task.get('tipus', 'Feina casa')}</span>"
+                            ]
+                            if rec_badge:
+                                badges_list.append(rec_badge)
+                            badges_list.extend([
+                                f"<span style='background:#1e293b; color:#f59e0b; border:1px solid #d97706; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>👤 Alerta: {alerta_txt}</span>",
+                                f"<span style='background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🔔 Avís: {dies_av_badge}d abans</span>",
+                                f"<span style='color:#64748b; font-size:0.75rem; margin-left:auto;'>Alta: {task.get('dataAlta', '')}</span>"
+                            ])
+                            badges_html = "".join(badges_list)
+                            obs_html = f"<div style='font-size:0.9rem; color:#94a3b8; margin-top:3px;'>📝 {task_obs}</div>" if (task_feina and task_obs) else ""
+
+                            card_html = (
+                                f"<div style='display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;'>{badges_html}</div>"
+                                f"<div style='font-size:1.05rem; font-weight:700; color:#f8fafc; margin-top:4px;'>🔨 {main_title}</div>"
+                                f"{obs_html}"
+                            )
+                            st.markdown(card_html, unsafe_allow_html=True)
                             if task.get("calendar_event_id"):
                                 st.caption("📅 Tasca sincronitzada amb l'Agenda")
                         with c_card_right:
