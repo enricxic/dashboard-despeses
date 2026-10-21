@@ -976,6 +976,15 @@ def insert_db_row(table_name, new_row_dict):
         log_action(table_name, 'INSERT', new_row_dict)
         
         update_session_state_insert(table_name, new_row_dict)
+        csv_table_map = {
+            'despeses': 'df_desp', 'ingressos': 'df_ing',
+            'compresSuper': 'df_super', 'gasolina': 'df_gas',
+            'kmCotxe': 'df_km', 'hipoteca': 'df_hip',
+            'estalviDP': 'df_est', 'limitsDespeses': 'df_limits',
+            'pagaments': 'df_pag', 'tr_cartera': 'df_cartera'
+        }
+        if table_name in csv_table_map and csv_table_map[table_name] in st.session_state:
+            save_to_csv_local(st.session_state[csv_table_map[table_name]], table_name)
         return True
     except Exception as e:
         st.error(f"❌ Error al desar a Supabase ({table_name}): {str(e)}")
