@@ -2869,7 +2869,7 @@ def render(view_mode="economic"):
                     concept_options_pag = [""] + get_config_concepts(cat_val_pag) if cat_val_pag else [""]
                     concept_val_pag = st.selectbox("Concepte", concept_options_pag, index=0, key="pag_concepte")
                 with r2_col3:
-                    pagat_val_pag = st.selectbox("Estat", ["pendent", "pagat"], key="pag_estat")
+                    pagat_val_pag = st.selectbox("Estat", ["pendent", "pagat"], index=0, key="pag_estat")
                 with r2_col4:
                     repetir_pag = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="pag_repetir")
                 with r2_col5:
@@ -3190,7 +3190,7 @@ def render(view_mode="economic"):
                     concept_options_ing = [""] + get_config_concepts(cat_val_ing) if cat_val_ing else [""]
                     concept_val_ing = st.selectbox("Concepte", concept_options_ing, index=0, key="ing_concepte")
                 with r2_col2:
-                    cobrat_val_ing = st.selectbox("Estat", ["pendent", "cobrat"], key="ing_cobrat")
+                    cobrat_val_ing = st.selectbox("Estat", ["pendent", "cobrat"], index=0, key="ing_cobrat")
                 with r2_col3:
                     repetir_ing = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="ing_repetir")
                 with r2_col4:
