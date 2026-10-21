@@ -1207,10 +1207,11 @@ def delete_db_row(table_name, id_col, id_val):
     table_map = {
         'despeses': 'df_desp', 'ingressos': 'df_ing',
         'compresSuper': 'df_super', 'gasolina': 'df_gas',
-        'hipoteca': 'df_hip', 'estalviDP': 'df_est',
+        'kmCotxe': 'df_km', 'hipoteca': 'df_hip',
+        'estalviDP': 'df_est', 'limitsDespeses': 'df_limits',
+        'pagaments': 'df_pag', 'tr_cartera': 'df_cartera',
         'tb_productes': 'df_prod', 'tb_llocs': 'df_llocs',
-        'tb_pendents_compra': 'df_pendents',
-        'tr_cartera': 'df_tr_cartera'
+        'tb_pendents_compra': 'df_pendents'
     }
     df_key = table_map.get(table_name)
     if df_key and df_key in st.session_state:
@@ -1291,10 +1292,11 @@ def update_db_row(table_name, id_col, id_val, new_data):
     table_map = {
         'despeses': 'df_desp', 'ingressos': 'df_ing',
         'compresSuper': 'df_super', 'gasolina': 'df_gas',
-        'hipoteca': 'df_hip', 'estalviDP': 'df_est',
+        'kmCotxe': 'df_km', 'hipoteca': 'df_hip',
+        'estalviDP': 'df_est', 'limitsDespeses': 'df_limits',
+        'pagaments': 'df_pag', 'tr_cartera': 'df_cartera',
         'tb_productes': 'df_prod', 'tb_llocs': 'df_llocs',
-        'tb_pendents_compra': 'df_pendents',
-        'tr_cartera': 'df_tr_cartera'
+        'tb_pendents_compra': 'df_pendents'
     }
     df_key = table_map.get(table_name)
     if df_key and df_key in st.session_state:
@@ -1327,6 +1329,19 @@ def update_db_row(table_name, id_col, id_val, new_data):
         log_action(table_name, 'UPDATE', detalls)
         
         update_session_state_update(table_name, id_col, id_val, update_payload)
+        csv_table_map = {
+            'despeses': 'df_desp', 'ingressos': 'df_ing',
+            'compresSuper': 'df_super', 'gasolina': 'df_gas',
+            'kmCotxe': 'df_km', 'hipoteca': 'df_hip',
+            'estalviDP': 'df_est', 'limitsDespeses': 'df_limits',
+            'pagaments': 'df_pag', 'tr_cartera': 'df_cartera'
+        }
+        if table_name in csv_table_map and csv_table_map[table_name] in st.session_state:
+            save_to_csv_local(st.session_state[csv_table_map[table_name]], table_name)
+        load_dashboard_data.clear()
+        st.cache_data.clear()
+        get_db_tracker().update()
+        st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
     except Exception as e:
         print(f"FAILED PAYLOAD FOR {table_name}:", update_payload)

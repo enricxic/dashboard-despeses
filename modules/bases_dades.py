@@ -5,7 +5,7 @@ from core.db import fetch_table_fast, update_db_row, insert_db_row, delete_db_ro
 # Diccionari de taules i les seves claus primàries per permetre l'edició
 PK_MAP = {
     'despeses': 'ID_mov',
-    'ingressos': 'ID_mov',
+    'ingressos': 'idIngres',
     'compresSuper': 'IdCompra',
     'gasolina': 'idGasolina',
     'kmCotxe': 'idRuta',
@@ -13,7 +13,7 @@ PK_MAP = {
     'tr_cartera': 'idTRCartera',
     'estalviDP': 'id',
     'limitsDespeses': 'id',
-    'pagaments': 'id',
+    'pagaments': 'idPago',
     'tb_productes': 'idProducte',
     'tb_receptes_pro': 'id',
     'tb_receptes': 'id',
@@ -52,6 +52,12 @@ def render():
         st.query_params["db"] = selected_table
         
     pk_col = PK_MAP.get(selected_table, 'id')
+    if pk_col not in df.columns:
+        candidates = ['idPago', 'idIngres', 'ID_mov', 'IdCompra', 'idGasolina', 'idRuta', 'idTRCartera', 'idProducte', 'id', 'ID']
+        for c in candidates:
+            if c in df.columns:
+                pk_col = c
+                break
     
     # Fetch Data
     with st.spinner(f"Carregant dades de {selected_table}..."):
@@ -204,12 +210,15 @@ def render():
                     row_idx = int(row_idx_str)
                     if row_idx < len(df):
                         pk_val = df.iloc[row_idx].get(pk_col)
-                        if pk_val is not None:
+                        if pk_val is not None and str(pk_val).strip() != "":
                             try:
                                 update_db_row(selected_table, pk_col, pk_val, col_updates)
                             except Exception as e:
-                                st.error(f"Error actualitzant fila (ID {pk_val}): {e}")
+                                st.error(f"Error actualitzant fila ({pk_col} {pk_val}): {e}")
                                 success = False
+                        else:
+                            st.error(f"Error: No s'ha pogut determinar la clau primària '{pk_col}' per a la fila {row_idx}.")
+                            success = False
                                 
                 # 2. Delete Rows
                 for row_idx in dels:
@@ -239,7 +248,11 @@ def render():
                 if success:
                     st.success("✅ Tots els canvis s'han desat correctament.")
                     del st.session_state[editor_key]
+                    from core.db import load_dashboard_data, get_db_tracker
+                    load_dashboard_data.clear()
                     st.cache_data.clear()
+                    get_db_tracker().update()
+                    st.session_state["last_synced_time"] = get_db_tracker().last_update
                     st.rerun()
     else:
         st.write("📝 *Pots editar les caselles, afegir files a sota, o eliminar-les seleccionant la vora de l'esquerra i prement Suprimir.*")

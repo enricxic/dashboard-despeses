@@ -56,7 +56,7 @@ idPago;Banc;Formapago;Data;dia;mes;any;Categoria;Concepte;Import;pagat;banc_dest
 83;BBVA;Compte;04/01/2023;4;enero;2023;despesa_general;Piscina;56.0;pagat;;
 519;BBVA;Compte;01/12/2025;1;diciembre;2025;despesa_general;Endesa;37.35;pagat;;
 520;BBVA;Compte;02/12/2025;2;diciembre;2025;despesa_general;Ocaso;27.54;pagat;;
-662;BBVA;Compte;30/11/2026;30;noviembre;2026;despesa_general;Crèdit Cotxe;337.14;pendent;;
+662;BBVA;Compte;30/11/2026;30;noviembre;2026;despesa_general;Crèdit Cotxe;69.74;pendent;;
 624;BBVA;Compte;07/08/2026;7;agosto;2026;assegurança;BBVA Asseg. Casa;42.34;Pagat;;
 84;LaCaixa;Compte;05/01/2023;5;enero;2023;despesa_general;Ajunt. Arbúcies;60.53;pagat;;
 85;BBVA;Compte;07/01/2023;7;enero;2023;assegurança;DP MP Mireia;19.79;pagat;;
@@ -846,7 +846,7 @@ idPago;Banc;Formapago;Data;dia;mes;any;Categoria;Concepte;Import;pagat;banc_dest
 671;BBVA;Compte;07/12/2026;7;diciembre;2026;assegurança;DP Morts Enric;14.04;pendent;;
 672;BBVA;Compte;07/12/2026;7;diciembre;2026;assegurança;BBVA Asseg. Casa;42.34;pendent;;
 673;BBVA;Compte;19/12/2026;19;diciembre;2026;despesa_general;Lowi;35.9;pendent;;
-674;BBVA;Compte;30/12/2026;30;diciembre;2026;despesa_general;Crèdit Cotxe;337.14;pendent;;
+674;BBVA;Compte;30/12/2026;30;diciembre;2026;despesa_general;Crèdit Cotxe;0.0;pendent;;
 675;BBVA;Compte;30/12/2026;30;diciembre;2026;despesa_general;Hipoteca;489.43;pendent;;
 676;TradeRep.;Compte;02/01/2026;2;enero;2026;despesa_general;Accions S&P500;25.0;pagat;;
 701;BBVA;Compte;05/02/2026;5;febrero;2026;despesa_general;Aigua;68.43;pagat;;
