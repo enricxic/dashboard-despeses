@@ -2861,8 +2861,8 @@ def render(view_mode="economic"):
                 with r1_col4:
                     import_carg_pag = st.number_input("Import (€)", min_value=0.0, value=None, step=0.01, key="pag_import")
                     
-                # Row 2 (5 columns)
-                r2_col1, r2_col2, r2_col3, r2_col4, r2_col5 = st.columns([2.5, 2.5, 2.0, 2.5, 2.5])
+                # Row 2 (6 columns)
+                r2_col1, r2_col2, r2_col3, r2_col4, r2_col5, r2_col6 = st.columns([1.8, 2.0, 1.0, 1.4, 1.1, 2.2])
                 with r2_col1:
                     cat_val_pag = st.selectbox("Categoria", [""] + get_config_categories(), index=0, key="pag_cat")
                 with r2_col2:
@@ -2874,13 +2874,13 @@ def render(view_mode="economic"):
                     repetir_pag = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="pag_repetir")
                 with r2_col5:
                     repetir_any_limit_pag = st.selectbox("Fins a desembre de l'any:", [any_val_pag, any_val_pag + 1, any_val_pag + 2], index=0, key="rep_any_pag")
-                
-                # Row 3
-                r3_col1, r3_col2 = st.columns([1, 1])
-                with r3_col1:
-                    dest_banc_pag = st.selectbox("Banc de Destí (Opcional, només per Traspassos)", [""] + get_config_banks(), index=0, key="pag_dest_banc")
-                with r3_col2:
+                with r2_col6:
                     comentari_val_pag = st.text_input("Comentari", value="", key="pag_comentari")
+                
+                # Row 3 (Només si és traspàs o operació bancària)
+                dest_banc_pag = ""
+                if cat_val_pag and any(x in str(cat_val_pag).lower() for x in ["traspas", "op_banc", "banc"]):
+                    dest_banc_pag = st.selectbox("Banc de Destí (Opcional, només per Traspassos)", [""] + get_config_banks(), index=0, key="pag_dest_banc")
                 
                 col_btns_pag = st.columns([3.5, 2.0, 6.5])
                 with col_btns_pag[0]:
@@ -3184,20 +3184,19 @@ def render(view_mode="economic"):
                         cat_options_ing = ["", "ingrés_general", "ingrés_extra", "ingres_general", "ingres_extra"]
                     cat_val_ing = st.selectbox("Categoria", cat_options_ing, index=0, key="ing_cat")
                     
-                # Row 2 (4 columns)
-                r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+                # Row 2 (5 columns: Concepte, Estat, Repetir, Fins a l'any, Comentari a la mateixa línia)
+                r2_col1, r2_col2, r2_col3, r2_col4, r2_col5 = st.columns([2.0, 1.0, 1.4, 1.1, 2.5])
                 with r2_col1:
                     concept_options_ing = [""] + get_config_concepts(cat_val_ing) if cat_val_ing else [""]
                     concept_val_ing = st.selectbox("Concepte", concept_options_ing, index=0, key="ing_concepte")
                 with r2_col2:
-                    cobrat_val_ing = st.selectbox("Estat", ["cobrat", "pendent"], key="ing_cobrat")
+                    cobrat_val_ing = st.selectbox("Estat", ["pendent", "cobrat"], key="ing_cobrat")
                 with r2_col3:
                     repetir_ing = st.checkbox("Repetir mensualment?", value=False, help="Crearà o actualitzarà l'import d'aquest concepte per a tots els mesos restants fins a l'any indicat.", key="ing_repetir")
                 with r2_col4:
                     repetir_any_limit_ing = st.selectbox("Fins a desembre de l'any:", [any_val_ing, any_val_ing + 1, any_val_ing + 2], index=0, key="rep_any_ing")
-                
-                # Row 3 (Comentari)
-                comentari_val_ing = st.text_input("Comentari", value="", key="ing_comentari")
+                with r2_col5:
+                    comentari_val_ing = st.text_input("Comentari", value="", key="ing_comentari")
                 
                 col_btns_ing = st.columns([3.5, 2.0, 6.5])
                 with col_btns_ing[0]:
