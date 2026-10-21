@@ -2169,18 +2169,6 @@ def render(view_mode="economic"):
         
         st.markdown("<div style='margin-top: 55px;'></div>", unsafe_allow_html=True)
         st.markdown("<h3 style='color:#f39c12; margin-top: 10px; margin-bottom: 8px; font-size:1.35rem; font-weight:700;'>📈 Previsió ingressos/despeses</h3>", unsafe_allow_html=True)
-        # Calculate past average expense from operated months in selected_year
-        past_expenses = []
-        for m_cat in CATALAN_MONTHS:
-            m_data = month_translations[m_cat]
-            sub_desp_test = df_desp[(df_desp['any'] == selected_year) & (df_desp['clean_mes'] == m_data)]
-            sub_desp_test = sub_desp_test[(sub_desp_test['Idcategoria'] != 'op_banc') & (sub_desp_test['grup'] != 'op_banc')]
-            cat_series_test = sub_desp_test['Idcategoria'].astype(str)
-            exp_val = sub_desp_test[~cat_series_test.str.contains('op_banc|ingres_general|ingrés_general|ingres_extra|ingrés_extra', case=False, na=False)]['Import càrrec'].sum()
-            if exp_val > 100:
-                past_expenses.append(exp_val)
-        avg_monthly_expense = float(np.mean(past_expenses)) if past_expenses else 3100.0
-
         today = datetime.today()
         cur_year = today.year
         cur_month_idx = today.month - 1
@@ -2190,6 +2178,7 @@ def render(view_mode="economic"):
         for yr in chart_years:
             year_desp_c = df_desp[df_desp['any'] == yr]
             year_ing_c = df_ing[df_ing['any'] == yr]
+            year_pag_c = df_pag[df_pag['any'] == yr]
             
             for m_idx, m_cat in enumerate(CATALAN_MONTHS):
                 m_data = month_translations[m_cat]
@@ -2209,6 +2198,11 @@ def render(view_mode="economic"):
                 # Determine time frame: past, current month, or future
                 is_past = (yr < cur_year) or (yr == cur_year and m_idx < cur_month_idx)
                 is_current = (yr == cur_year and m_idx == cur_month_idx)
+                
+                # Càlcul de despeses previstes: Suma de despeses fixes del mes (df_pag) + 1.250 € de previsió de despeses variables
+                sub_pag_m = year_pag_c[year_pag_c['clean_mes'] == m_data]
+                pag_fixes_sum = float(pd.to_numeric(sub_pag_m['Import'], errors='coerce').sum()) if not sub_pag_m.empty else 0.0
+                desp_prevista_total = pag_fixes_sum + 1250.0
                 
                 if is_past:
                     ing_val = ing_real
@@ -2230,12 +2224,11 @@ def render(view_mode="economic"):
                     ing_hover = f"🟡 Ingressos (Previsió): <b>{ing_val:,.2f} €</b>"
                     
                     exp_real_val = exp_real
-                    exp_target = avg_monthly_expense if avg_monthly_expense > exp_real else exp_real
-                    exp_prev_val = max(0.0, exp_target - exp_real_val)
+                    exp_prev_val = max(0.0, desp_prevista_total - exp_real_val)
                     
                     exp_real_hover = f"🔴 Gastat fins ara: <b>{exp_real_val:,.2f} €</b>"
                     total_cur_exp = exp_real_val + exp_prev_val
-                    exp_prev_hover = f"🔻 Previsió restant: <b>{exp_prev_val:,.2f} €</b> (Total: <b>{total_cur_exp:,.2f} €</b>)"
+                    exp_prev_hover = f"🔻 Previsió restant: <b>{exp_prev_val:,.2f} €</b> (Total previst: <b>{desp_prevista_total:,.2f} €</b>)"
                     exp_real_hoverinfo = 'all'
                     exp_prev_hoverinfo = 'all' if exp_prev_val > 0 else 'skip'
                 else:  # Future month
@@ -2246,11 +2239,8 @@ def render(view_mode="economic"):
                     ing_color = '#f1c40f'  # Groc previsió
                     ing_hover = f"🟡 Ingressos (Previsió): <b>{ing_val:,.2f} €</b>"
                     
-                    sub_pag_future = df_pag[(df_pag['any'] == yr) & (df_pag['clean_mes'] == m_data)]
-                    pag_future_sum = sub_pag_future['Import'].sum() if not sub_pag_future.empty else 0.0
-                    
                     exp_real_val = 0.0
-                    exp_prev_val = max(avg_monthly_expense, pag_future_sum) if pag_future_sum > 0 else avg_monthly_expense
+                    exp_prev_val = desp_prevista_total
                     exp_real_hover = ""
                     exp_prev_hover = f"🔻 Despeses (Previsió): <b>{exp_prev_val:,.2f} €</b>"
                     exp_real_hoverinfo = 'skip'
