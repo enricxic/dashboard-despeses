@@ -52,12 +52,6 @@ def render():
         st.query_params["db"] = selected_table
         
     pk_col = PK_MAP.get(selected_table, 'id')
-    if pk_col not in df.columns:
-        candidates = ['idPago', 'idIngres', 'ID_mov', 'IdCompra', 'idGasolina', 'idRuta', 'idTRCartera', 'idProducte', 'id', 'ID']
-        for c in candidates:
-            if c in df.columns:
-                pk_col = c
-                break
     
     # Fetch Data
     with st.spinner(f"Carregant dades de {selected_table}..."):
@@ -71,6 +65,13 @@ def render():
         st.warning(f"La taula {selected_table} està buida o no s'ha pogut carregar.")
         # Create an empty dataframe with just the PK column to allow inserts
         df = pd.DataFrame(columns=[pk_col, "nou_camp_exemple"])
+
+    if pk_col not in df.columns:
+        candidates = ['idPago', 'idIngres', 'ID_mov', 'IdCompra', 'idGasolina', 'idRuta', 'idTRCartera', 'idProducte', 'id', 'ID']
+        for c in candidates:
+            if c in df.columns:
+                pk_col = c
+                break
         
     col_t, col_chk = st.columns([7, 3], vertical_alignment="bottom")
     with col_chk:
