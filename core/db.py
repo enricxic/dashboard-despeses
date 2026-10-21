@@ -294,6 +294,10 @@ def _process_tables(fetched):
             df = df.dropna(subset=['idIngres']).sort_values(by='idIngres', ascending=False).reset_index(drop=True)
         if 'Import' in df.columns: df['Import'] = clean_numeric(df['Import'])
         if 'Data' in df.columns: df['parsed_date'] = df['Data'].apply(parse_excel_date)
+        if 'comentari' not in df.columns:
+            df['comentari'] = ''
+        else:
+            df['comentari'] = df['comentari'].fillna('')
         out['ingressos'] = df
         
     if 'compresSuper' in fetched:
@@ -368,6 +372,10 @@ def _process_tables(fetched):
         if 'idPago' in df.columns: df = df.dropna(subset=['idPago'])
         if 'Import' in df.columns: df['Import'] = clean_numeric(df['Import'])
         if 'Data' in df.columns: df['parsed_date'] = df['Data'].apply(parse_excel_date)
+        if 'comentari' not in df.columns:
+            df['comentari'] = ''
+        else:
+            df['comentari'] = df['comentari'].fillna('')
         out['pagaments'] = df
         
     return out

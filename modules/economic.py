@@ -1532,7 +1532,8 @@ def render(view_mode="economic"):
                                     'Concepte': c_name,
                                     'Import': c_imp,
                                     'pagat': 'pendent',
-                                    'banc_desti_traspas': None
+                                    'banc_desti_traspas': None,
+                                    'comentari': ''
                                 }
                                 df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
                                 current_max_id_pag += 1
@@ -2878,6 +2879,8 @@ def render(view_mode="economic"):
                 r3_col1, r3_col2 = st.columns([1, 1])
                 with r3_col1:
                     dest_banc_pag = st.selectbox("Banc de Destí (Opcional, només per Traspassos)", [""] + get_config_banks(), index=0, key="pag_dest_banc")
+                with r3_col2:
+                    comentari_val_pag = st.text_input("Comentari", value="", key="pag_comentari")
                 
                 col_btns_pag = st.columns([3.5, 2.0, 6.5])
                 with col_btns_pag[0]:
@@ -2912,6 +2915,8 @@ def render(view_mode="economic"):
                                         df_pag.loc[mask, 'Categoria'] = cat_val_pag
                                         df_pag.loc[mask, 'pagat'] = pagat_val_pag
                                         df_pag.loc[mask, 'banc_desti_traspas'] = dest_banc_pag if dest_banc_pag else None
+                                        if comentari_val_pag:
+                                            df_pag.loc[mask, 'comentari'] = comentari_val_pag
                                         updated_count += 1
                                     else:
                                         new_row = {
@@ -2926,12 +2931,19 @@ def render(view_mode="economic"):
                                             'Concepte': concept_val_pag,
                                             'Import': import_carg_pag,
                                             'pagat': pagat_val_pag,
-                                            'banc_desti_traspas': dest_banc_pag if dest_banc_pag else None
+                                            'banc_desti_traspas': dest_banc_pag if dest_banc_pag else None,
+                                            'comentari': comentari_val_pag.strip() if comentari_val_pag else ''
                                         }
                                         df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
                                         current_max_id += 1
                                         added_count += 1
                             save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                            csv_pag_path = os.path.join("csv", "pagaments.csv")
+                            if os.path.exists(csv_pag_path):
+                                try:
+                                    df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore').to_csv(csv_pag_path, sep=';', index=False)
+                                except Exception:
+                                    pass
                             st.session_state["df_pag"] = df_pag
                             st.success(f"Previsions desades: {added_count} creades i {updated_count} actualitzades!")
                         else:
@@ -2947,10 +2959,17 @@ def render(view_mode="economic"):
                                 'Concepte': concept_val_pag,
                                 'Import': import_carg_pag,
                                 'pagat': pagat_val_pag,
-                                'banc_desti_traspas': dest_banc_pag if dest_banc_pag else None
+                                'banc_desti_traspas': dest_banc_pag if dest_banc_pag else None,
+                                'comentari': comentari_val_pag.strip() if comentari_val_pag else ''
                             }
                             df_pag = pd.concat([df_pag, pd.DataFrame([new_row])], ignore_index=True)
                             save_to_csv(df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'pagaments.csv')
+                            csv_pag_path = os.path.join("csv", "pagaments.csv")
+                            if os.path.exists(csv_pag_path):
+                                try:
+                                    df_pag.drop(columns=['parsed_date', 'clean_mes'], errors='ignore').to_csv(csv_pag_path, sep=';', index=False)
+                                except Exception:
+                                    pass
                             st.session_state["df_pag"] = df_pag
                             st.success("Previsió de pagament desada correctament!")
                         for k in list(st.session_state.keys()):
@@ -3125,7 +3144,7 @@ def render(view_mode="economic"):
                 if f_banc_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['Banc'].astype(str) == f_banc_pag]
                 if f_estat_pag != "Tots": df_pag_filtered = df_pag_filtered[df_pag_filtered['pagat'].astype(str) == f_estat_pag]
 
-                cols_p = [c for c in ['Data', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'pagat'] if c in df_pag_filtered.columns]
+                cols_p = [c for c in ['Data', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'Import', 'comentari', 'pagat'] if c in df_pag_filtered.columns]
                 sort_cols = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'Formapago', 'pagat'] if c in df_pag_filtered.columns]
                 if ordenar_recent_pag and 'parsed_date' in df_pag_filtered.columns:
                     df_pag_filtered = df_pag_filtered.sort_values(by=['parsed_date'], ascending=False)
@@ -3135,7 +3154,10 @@ def render(view_mode="economic"):
                     df_pag_filtered[cols_p],
                     use_container_width=True,
                     hide_index=True,
-                    column_config={"Import": st.column_config.NumberColumn(format="%.2f €")}
+                    column_config={
+                        "Import": st.column_config.NumberColumn(format="%.2f €"),
+                        "comentari": st.column_config.TextColumn("Comentari")
+                    }
                 )
             else:
                 st.info("No hi ha previsions de pagament.")
@@ -3174,6 +3196,9 @@ def render(view_mode="economic"):
                 with r2_col4:
                     repetir_any_limit_ing = st.selectbox("Fins a desembre de l'any:", [any_val_ing, any_val_ing + 1, any_val_ing + 2], index=0, key="rep_any_ing")
                 
+                # Row 3 (Comentari)
+                comentari_val_ing = st.text_input("Comentari", value="", key="ing_comentari")
+                
                 col_btns_ing = st.columns([3.5, 2.0, 6.5])
                 with col_btns_ing[0]:
                     submitted_ing = st.button("💾 Desar Previsió d'Ingrés", type="primary", use_container_width=True)
@@ -3206,6 +3231,8 @@ def render(view_mode="economic"):
                                         df_ing.loc[mask, 'Banc'] = banc_ing
                                         df_ing.loc[mask, 'Categoria'] = canon_cat_ing
                                         df_ing.loc[mask, 'cobrat'] = cobrat_val_ing
+                                        if comentari_val_ing:
+                                            df_ing.loc[mask, 'comentari'] = comentari_val_ing
                                         updated_count += 1
                                     else:
                                         new_row = {
@@ -3218,13 +3245,19 @@ def render(view_mode="economic"):
                                             'Categoria': canon_cat_ing,
                                             'Concepte': concept_val_ing,
                                             'Import': import_ing_val,
-                                            'comentari': '',
+                                            'comentari': comentari_val_ing.strip() if comentari_val_ing else '',
                                             'cobrat': cobrat_val_ing
                                         }
                                         df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
                                         current_max_id += 1
                                         added_count += 1
                             save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                            csv_ing_path = os.path.join("csv", "ingressos.csv")
+                            if os.path.exists(csv_ing_path):
+                                try:
+                                    df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore').to_csv(csv_ing_path, sep=';', index=False)
+                                except Exception:
+                                    pass
                             st.session_state["df_ing"] = df_ing
                             st.success(f"Previsions d'ingrés desades: {added_count} creades i {updated_count} actualitzades!")
                         else:
@@ -3238,11 +3271,17 @@ def render(view_mode="economic"):
                                 'Categoria': canon_cat_ing,
                                 'Concepte': concept_val_ing,
                                 'Import': import_ing_val,
-                                'comentari': '',
+                                'comentari': comentari_val_ing.strip() if comentari_val_ing else '',
                                 'cobrat': cobrat_val_ing
                             }
                             df_ing = pd.concat([df_ing, pd.DataFrame([new_row])], ignore_index=True)
                             save_to_csv(df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), 'ingressos.csv')
+                            csv_ing_path = os.path.join("csv", "ingressos.csv")
+                            if os.path.exists(csv_ing_path):
+                                try:
+                                    df_ing.drop(columns=['parsed_date', 'clean_mes'], errors='ignore').to_csv(csv_ing_path, sep=';', index=False)
+                                except Exception:
+                                    pass
                             st.session_state["df_ing"] = df_ing
                             st.success("Previsió d'ingrés desada correctament!")
                         for k in list(st.session_state.keys()):
@@ -3415,7 +3454,7 @@ def render(view_mode="economic"):
                 if f_banc_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['Banc'].astype(str) == f_banc_ing]
                 if f_estat_ing != "Tots": df_ing_filtered = df_ing_filtered[df_ing_filtered['cobrat'].astype(str) == f_estat_ing]
 
-                cols_i = [c for c in ['Data', 'Concepte', 'Categoria', 'Banc', 'Import', 'cobrat'] if c in df_ing_filtered.columns]
+                cols_i = [c for c in ['Data', 'Concepte', 'Categoria', 'Banc', 'Import', 'comentari', 'cobrat'] if c in df_ing_filtered.columns]
                 sort_cols_i = [c for c in ['any', 'Concepte', 'Categoria', 'Banc', 'cobrat'] if c in df_ing_filtered.columns]
                 if ordenar_recent_ing and 'parsed_date' in df_ing_filtered.columns:
                     df_ing_filtered = df_ing_filtered.sort_values(by=['parsed_date'], ascending=False)
@@ -3425,7 +3464,10 @@ def render(view_mode="economic"):
                     df_ing_filtered[cols_i],
                     use_container_width=True,
                     hide_index=True,
-                    column_config={"Import": st.column_config.NumberColumn(format="%.2f €")}
+                    column_config={
+                        "Import": st.column_config.NumberColumn(format="%.2f €"),
+                        "comentari": st.column_config.TextColumn("Comentari")
+                    }
                 )
             else:
                 st.info("No hi ha previsions d'ingrés.")
