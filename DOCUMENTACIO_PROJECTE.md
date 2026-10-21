@@ -391,6 +391,9 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - **Camp configurable "Dies d'avís" (`diesAvis`)**: S'ha afegit un nou camp numèric que permet establir amb quants dies d'antelació a la data prevista ha de començar a mostrar-se l'alerta a la campaneta de notificacions (`🔔`).
     - **Integració de `diesAvis` a les alertes globals (`core/alerts.py`)**: El motor d'alertes calcula `delta <= diesAvis` (en comptes d'un valor rígid de 2 dies), activant l'avís de manteniment pendent exactament en el període configurat per a cada tasca i indicant els membres assignats.
     - **Actualització del CSV i vistes de taula/targetes**: El fitxer `csv/manteniment.csv` i la taula de dades incorporen la columna `diesAvis` i el format multiselecció per a `alertaA`, mentre que a la vista de targetes interactives es mostra l'etiqueta d'avís `🔔 Avís: Xd abans` juntament amb el llistat complet de persones alertades.
+  - **21/10/2026: Desacoblament de l'Enter als diàlegs modals d'edició (`modules/manteniment.py`)**:
+    - S'ha eliminat l'embolcall `st.form` dels diàlegs modals (`edit_task_dialog`, `edit_manual_dialog`, `edit_garantia_dialog`), utilitzant la gestió d'estat aïllada nativa de `@st.dialog`.
+    - D'aquesta manera, prémer la tecla `Intro` / `Enter` en qualsevol camp numèric (com `diesAvis`) o de text ja no desencadena l'enviament ni el tancament involuntari del formulari HTML. Els canvis només es desen quan l'usuari fa clic explícitament al botó "💾 Desar canvis". S'ha afegit també un botó explícit de "Cancel·lar".
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**

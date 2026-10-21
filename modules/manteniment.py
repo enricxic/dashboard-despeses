@@ -414,141 +414,153 @@ def add_garantia_dialog():
 @st.dialog("✏️ Editar Manual", width="large")
 def edit_manual_dialog(doc: dict):
     """Diàleg per editar les dades d'un manual existent."""
+    doc_id = doc.get('id', '')
     st.markdown(f"<h3 style='margin-top:0; color:#f39c12;'>✏️ Editar: {doc.get('titol')}</h3>", unsafe_allow_html=True)
     
-    with st.form("form_edit_manual"):
-        c1, c2 = st.columns([2, 1])
-        with c1:
-            titol = st.text_input("Títol del manual", value=doc.get("titol", ""))
-            dispositiu = st.text_input("Dispositiu / Aparell", value=doc.get("dispositiu", ""))
-        with c2:
-            marca = st.text_input("Marca", value=doc.get("marca", ""))
-            model = st.text_input("Model", value=doc.get("model", ""))
-            
-        c3, c4 = st.columns(2)
-        locations = [
-            "General", "Menjador", "Cuina", "Bany", "Dormitori",
-            "Calefacció / Climatització", "Garatge", "Terrassa / Exterior", "Quadre Elèctric"
-        ]
-        cur_loc = doc.get("ubicacio", "General")
-        loc_idx = locations.index(cur_loc) if cur_loc in locations else 0
-        with c3:
-            ubicacio = st.selectbox("Ubicació", locations, index=loc_idx)
-            
-        subcats = [
-            "Climatització i Calefacció", "Electrodomèstics", "Electricitat i Domòtica",
-            "Il·luminació", "Fontaneria", "Mobiliari", "Eines", "General"
-        ]
-        cur_sub = doc.get("subcategoria", "General")
-        sub_idx = subcats.index(cur_sub) if cur_sub in subcats else 0
-        with c4:
-            subcat = st.selectbox("Àmbit / Subcategoria", subcats, index=sub_idx)
-            
-        descripcio = st.text_area("Descripció o observacions", value=doc.get("descripcio", ""), height=100)
-        tags_str = ", ".join(doc.get("etiquetes", []))
-        etiquetes_str = st.text_input("Etiquetes (separades per comes)", value=tags_str)
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        titol = st.text_input("Títol del manual", value=doc.get("titol", ""))
+        dispositiu = st.text_input("Dispositiu / Aparell", value=doc.get("dispositiu", ""))
+    with c2:
+        marca = st.text_input("Marca", value=doc.get("marca", ""))
+        model = st.text_input("Model", value=doc.get("model", ""))
         
-        st.caption(f"📁 Fitxer associat: <code>PDF/Manuals/{doc.get('fitxer')}</code> ({doc.get('pagines', 0)} pàgines)")
+    c3, c4 = st.columns(2)
+    locations = [
+        "General", "Menjador", "Cuina", "Bany", "Dormitori",
+        "Calefacció / Climatització", "Garatge", "Terrassa / Exterior", "Quadre Elèctric"
+    ]
+    cur_loc = doc.get("ubicacio", "General")
+    loc_idx = locations.index(cur_loc) if cur_loc in locations else 0
+    with c3:
+        ubicacio = st.selectbox("Ubicació", locations, index=loc_idx)
         
-        submitted = st.form_submit_button("💾 Desar canvis", use_container_width=True)
-        if submitted:
-            docs = load_manteniment_docs()
-            for idx, item in enumerate(docs.get("manuals", [])):
-                if item.get("id") == doc.get("id"):
-                    docs["manuals"][idx].update({
-                        "titol": titol.strip(),
-                        "dispositiu": dispositiu.strip(),
-                        "marca": marca.strip(),
-                        "model": model.strip(),
-                        "ubicacio": ubicacio,
-                        "subcategoria": subcat,
-                        "descripcio": descripcio.strip(),
-                        "etiquetes": [t.strip().lower() for t in etiquetes_str.split(",") if t.strip()]
-                    })
-                    break
-            save_manteniment_docs(docs)
-            st.success("Manual actualitzat correctament!")
+    subcats = [
+        "Climatització i Calefacció", "Electrodomèstics", "Electricitat i Domòtica",
+        "Il·luminació", "Fontaneria", "Mobiliari", "Eines", "General"
+    ]
+    cur_sub = doc.get("subcategoria", "General")
+    sub_idx = subcats.index(cur_sub) if cur_sub in subcats else 0
+    with c4:
+        subcat = st.selectbox("Àmbit / Subcategoria", subcats, index=sub_idx)
+        
+    descripcio = st.text_area("Descripció o observacions", value=doc.get("descripcio", ""), height=100)
+    tags_str = ", ".join(doc.get("etiquetes", []))
+    etiquetes_str = st.text_input("Etiquetes (separades per comes)", value=tags_str)
+    
+    st.caption(f"📁 Fitxer associat: <code>PDF/Manuals/{doc.get('fitxer')}</code> ({doc.get('pagines', 0)} pàgines)")
+    
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    c_can, c_sub = st.columns([1, 2])
+    with c_can:
+        if st.button("Cancel·lar", key=f"btn_cancel_man_{doc_id}", use_container_width=True):
             st.rerun()
+    with c_sub:
+        submitted = st.button("💾 Desar canvis", key=f"btn_save_man_{doc_id}", type="primary", use_container_width=True)
+    if submitted:
+        docs = load_manteniment_docs()
+        for idx, item in enumerate(docs.get("manuals", [])):
+            if item.get("id") == doc.get("id"):
+                docs["manuals"][idx].update({
+                    "titol": titol.strip(),
+                    "dispositiu": dispositiu.strip(),
+                    "marca": marca.strip(),
+                    "model": model.strip(),
+                    "ubicacio": ubicacio,
+                    "subcategoria": subcat,
+                    "descripcio": descripcio.strip(),
+                    "etiquetes": [t.strip().lower() for t in etiquetes_str.split(",") if t.strip()]
+                })
+                break
+        save_manteniment_docs(docs)
+        st.success("Manual actualitzat correctament!")
+        st.rerun()
 
 @st.dialog("✏️ Editar Garantia", width="large")
 def edit_garantia_dialog(doc: dict):
     """Diàleg per editar les dades d'una garantia existent."""
+    doc_id = doc.get('id', '')
     st.markdown(f"<h3 style='margin-top:0; color:#10b981;'>✏️ Editar: {doc.get('titol')}</h3>", unsafe_allow_html=True)
     
-    with st.form("form_edit_garantia"):
-        c1, c2 = st.columns([2, 1])
-        with c1:
-            titol = st.text_input("Títol de la garantia", value=doc.get("titol", ""))
-            dispositiu = st.text_input("Dispositiu / Article", value=doc.get("dispositiu", ""))
-        with c2:
-            marca = st.text_input("Marca", value=doc.get("marca", ""))
-            model = st.text_input("Model / Nº Sèrie", value=doc.get("model", ""))
-            
-        c3, c4, c5 = st.columns(3)
-        with c3:
-            establiment = st.text_input("Establiment / Botiga", value=doc.get("establiment", ""))
-        with c4:
-            num_factura = st.text_input("Nº Factura / Tiquet", value=doc.get("num_factura", ""))
-        with c5:
-            import_compra = st.number_input("Preu (€)", min_value=0.0, value=float(doc.get("import_compra", 0.0)), step=1.0, format="%.2f")
-            
-        c6, c7, c8 = st.columns(3)
-        d_compra_raw = doc.get("data_compra", "")
-        compra_date_val = datetime.today().date()
-        if d_compra_raw:
-            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
-                try:
-                    compra_date_val = datetime.strptime(d_compra_raw, fmt).date()
-                    break
-                except Exception:
-                    pass
-        with c6:
-            data_compra = st.date_input("Data de compra", value=compra_date_val, max_value=datetime.today().date(), format="DD/MM/YYYY")
-        with c7:
-            anys_garantia = st.number_input("Anys de cobertura", min_value=1, max_value=20, value=int(doc.get("anys_garantia", 3)), step=1)
-        with c8:
-            locations = ["Cuina", "Menjador", "Bany", "Dormitori", "Garatge", "General", "Terrassa / Exterior"]
-            cur_loc = doc.get("ubicacio", "General")
-            loc_idx = locations.index(cur_loc) if cur_loc in locations else 0
-            ubicacio = st.selectbox("Ubicació", locations, index=loc_idx)
-            
-        descripcio = st.text_area("Notes de garantia o cobertura", value=doc.get("descripcio", ""), height=80)
-        tags_str = ", ".join(doc.get("etiquetes", []))
-        etiquetes_str = st.text_input("Etiquetes (separades per comes)", value=tags_str)
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        titol = st.text_input("Títol de la garantia", value=doc.get("titol", ""))
+        dispositiu = st.text_input("Dispositiu / Article", value=doc.get("dispositiu", ""))
+    with c2:
+        marca = st.text_input("Marca", value=doc.get("marca", ""))
+        model = st.text_input("Model / Nº Sèrie", value=doc.get("model", ""))
         
-        st.caption(f"📁 Fitxer associat: <code>PDF/Garanties/{doc.get('fitxer')}</code>")
+    c3, c4, c5 = st.columns(3)
+    with c3:
+        establiment = st.text_input("Establiment / Botiga", value=doc.get("establiment", ""))
+    with c4:
+        num_factura = st.text_input("Nº Factura / Tiquet", value=doc.get("num_factura", ""))
+    with c5:
+        import_compra = st.number_input("Preu (€)", min_value=0.0, value=float(doc.get("import_compra", 0.0)), step=1.0, format="%.2f")
         
-        submitted = st.form_submit_button("💾 Desar canvis", use_container_width=True)
-        if submitted:
-            docs = load_manteniment_docs()
-            d_compra_str = data_compra.strftime("%d/%m/%Y")
+    c6, c7, c8 = st.columns(3)
+    d_compra_raw = doc.get("data_compra", "")
+    compra_date_val = datetime.today().date()
+    if d_compra_raw:
+        for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
             try:
-                venc_date = data_compra.replace(year=data_compra.year + int(anys_garantia))
-            except ValueError:
-                venc_date = data_compra.replace(year=data_compra.year + int(anys_garantia), day=28)
-            d_venc_str = venc_date.strftime("%d/%m/%Y")
-            
-            for idx, item in enumerate(docs.get("garanties", [])):
-                if item.get("id") == doc.get("id"):
-                    docs["garanties"][idx].update({
-                        "titol": titol.strip(),
-                        "dispositiu": dispositiu.strip(),
-                        "marca": marca.strip(),
-                        "model": model.strip(),
-                        "establiment": establiment.strip(),
-                        "num_factura": num_factura.strip(),
-                        "ubicacio": ubicacio,
-                        "data_compra": d_compra_str,
-                        "anys_garantia": int(anys_garantia),
-                        "data_venciment": d_venc_str,
-                        "import_compra": float(import_compra),
-                        "descripcio": descripcio.strip(),
-                        "etiquetes": [t.strip().lower() for t in etiquetes_str.split(",") if t.strip()]
-                    })
-                    break
-            save_manteniment_docs(docs)
-            st.success("Garantia actualitzada correctament!")
+                compra_date_val = datetime.strptime(d_compra_raw, fmt).date()
+                break
+            except Exception:
+                pass
+    with c6:
+        data_compra = st.date_input("Data de compra", value=compra_date_val, max_value=datetime.today().date(), format="DD/MM/YYYY")
+    with c7:
+        anys_garantia = st.number_input("Anys de cobertura", min_value=1, max_value=20, value=int(doc.get("anys_garantia", 3)), step=1)
+    with c8:
+        locations = ["Cuina", "Menjador", "Bany", "Dormitori", "Garatge", "General", "Terrassa / Exterior"]
+        cur_loc = doc.get("ubicacio", "General")
+        loc_idx = locations.index(cur_loc) if cur_loc in locations else 0
+        ubicacio = st.selectbox("Ubicació", locations, index=loc_idx)
+        
+    descripcio = st.text_area("Notes de garantia o cobertura", value=doc.get("descripcio", ""), height=80)
+    tags_str = ", ".join(doc.get("etiquetes", []))
+    etiquetes_str = st.text_input("Etiquetes (separades per comes)", value=tags_str)
+    
+    st.caption(f"📁 Fitxer associat: <code>PDF/Garanties/{doc.get('fitxer')}</code>")
+    
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    c_can, c_sub = st.columns([1, 2])
+    with c_can:
+        if st.button("Cancel·lar", key=f"btn_cancel_gar_{doc_id}", use_container_width=True):
             st.rerun()
+    with c_sub:
+        submitted = st.button("💾 Desar canvis", key=f"btn_save_gar_{doc_id}", type="primary", use_container_width=True)
+    if submitted:
+        docs = load_manteniment_docs()
+        d_compra_str = data_compra.strftime("%d/%m/%Y")
+        try:
+            venc_date = data_compra.replace(year=data_compra.year + int(anys_garantia))
+        except ValueError:
+            venc_date = data_compra.replace(year=data_compra.year + int(anys_garantia), day=28)
+        d_venc_str = venc_date.strftime("%d/%m/%Y")
+        
+        for idx, item in enumerate(docs.get("garanties", [])):
+            if item.get("id") == doc.get("id"):
+                docs["garanties"][idx].update({
+                    "titol": titol.strip(),
+                    "dispositiu": dispositiu.strip(),
+                    "marca": marca.strip(),
+                    "model": model.strip(),
+                    "establiment": establiment.strip(),
+                    "num_factura": num_factura.strip(),
+                    "ubicacio": ubicacio,
+                    "data_compra": d_compra_str,
+                    "anys_garantia": int(anys_garantia),
+                    "data_venciment": d_venc_str,
+                    "import_compra": float(import_compra),
+                    "descripcio": descripcio.strip(),
+                    "etiquetes": [t.strip().lower() for t in etiquetes_str.split(",") if t.strip()]
+                })
+                break
+        save_manteniment_docs(docs)
+        st.success("Garantia actualitzada correctament!")
+        st.rerun()
 
 @st.dialog("🗑️ Eliminar Document", width="small")
 def delete_document_dialog(category: str, doc_id: str, doc_title: str, filename: str):
@@ -613,117 +625,123 @@ def edit_task_dialog(task: dict, family_names: list):
     task_id = task.get("idManteniment", "")
     st.markdown(f"<h3 style='margin-top:0; color:#f39c12;'>✏️ Editar Tasca #{task_id}</h3>", unsafe_allow_html=True)
     
-    with st.form(f"form_edit_task_{task_id}"):
-        c1, c2, c_avis = st.columns([1.5, 1.5, 1])
-        with c1:
-            d_raw = str(task.get("dataManteniment", "")).strip()
-            d_val = datetime.today().date()
-            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
-                try:
-                    d_val = datetime.strptime(d_raw, fmt).date()
-                    break
-                except Exception:
-                    pass
-            d_manteniment = st.date_input("Data Prevista (Manteniment) *", value=d_val, format="DD/MM/YYYY")
-        with c2:
-            tipus_opts = ["Feina casa", "Manteniment", "Reparació", "Neteja a fons", "Revisió periòdica", "Instal·lació / Millora", "Altres"]
-            cur_tip = task.get("tipus", "Feina casa")
-            tip_idx = tipus_opts.index(cur_tip) if cur_tip in tipus_opts else 0
-            tipus = st.selectbox("Tipus Feina *", tipus_opts, index=tip_idx)
-        with c_avis:
-            cur_avis = task.get("diesAvis", 2)
+    c1, c2, c_avis = st.columns([1.5, 1.5, 1])
+    with c1:
+        d_raw = str(task.get("dataManteniment", "")).strip()
+        d_val = datetime.today().date()
+        for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
             try:
-                cur_avis = int(cur_avis)
-            except (ValueError, TypeError):
-                cur_avis = 2
-            dies_avis = st.number_input("Dies d'avís", min_value=0, max_value=60, value=cur_avis, step=1, help="Dies abans de la tasca en què sortirà l'alerta")
-            
-        cur_feina = str(task.get("feina", "")).strip()
-        c_feina1, c_feina2 = st.columns([1.5, 1.5])
-        with c_feina1:
-            feina_idx = OPCIONS_FEINA.index(cur_feina) if cur_feina in OPCIONS_FEINA else (len(OPCIONS_FEINA) - 1)
-            feina_sel = st.selectbox("Feina concreta *", OPCIONS_FEINA, index=feina_idx)
-        with c_feina2:
-            default_custom = cur_feina if cur_feina not in OPCIONS_FEINA else ""
-            feina_custom = st.text_input("O una altra feina concreta:", value=default_custom, placeholder="Escriu si vols canviar-la...")
-
-        c3, c4 = st.columns([2, 1])
-        with c3:
-            raw_alerta = task.get("alertaA", ["Tothom"])
-            if isinstance(raw_alerta, str):
-                default_alerta = [x.strip() for x in raw_alerta.split(",") if x.strip()]
-            elif isinstance(raw_alerta, list):
-                default_alerta = raw_alerta
-            else:
-                default_alerta = ["Tothom"]
-            default_alerta = [x for x in default_alerta if x in family_names]
-            if not default_alerta:
-                default_alerta = ["Tothom"]
-            alertaA = st.multiselect("Alerta a *", options=family_names, default=default_alerta, help="Membre(s) de la família que rebran l'alerta")
-        with c4:
-            cur_acomp = str(task.get("acompliment", "No")).strip().lower()
-            ac_idx = 1 if cur_acomp in ["sí", "si", "true"] else 0
-            acompliment = st.selectbox("Acompliment", ["No", "Sí"], index=ac_idx)
-
-        sync_cal = st.checkbox("Actualitzar / Enviar a l'Agenda (Calendari)", value=bool(task.get("calendar_event_id")))
-        observacions = st.text_area("Observacions / Detalls addicionals", value=task.get("observacions", ""), height=75)
+                d_val = datetime.strptime(d_raw, fmt).date()
+                break
+            except Exception:
+                pass
+        d_manteniment = st.date_input("Data Prevista (Manteniment) *", value=d_val, format="DD/MM/YYYY")
+    with c2:
+        tipus_opts = ["Feina casa", "Manteniment", "Reparació", "Neteja a fons", "Revisió periòdica", "Instal·lació / Millora", "Altres"]
+        cur_tip = task.get("tipus", "Feina casa")
+        tip_idx = tipus_opts.index(cur_tip) if cur_tip in tipus_opts else 0
+        tipus = st.selectbox("Tipus Feina *", tipus_opts, index=tip_idx)
+    with c_avis:
+        cur_avis = task.get("diesAvis", 2)
+        try:
+            cur_avis = int(cur_avis)
+        except (ValueError, TypeError):
+            cur_avis = 2
+        dies_avis = st.number_input("Dies d'avís", min_value=0, max_value=60, value=cur_avis, step=1, help="Dies abans de la tasca en què sortirà l'alerta")
         
-        submitted = st.form_submit_button("💾 Desar canvis", type="primary", use_container_width=True)
-        if submitted:
-            feina_final = feina_custom.strip() if feina_custom.strip() else (feina_sel if feina_sel != "Altres (especificar al costat)..." else "")
-            if not feina_final.strip():
-                st.error("Cal indicar la feina concreta a realitzar.")
-                return
-            d_str = d_manteniment.strftime("%d/%m/%Y")
-            alerta_final = alertaA if alertaA else ["Tothom"]
-            upd = {
-                "dataManteniment": d_str,
-                "diesAvis": int(dies_avis),
-                "feina": feina_final.strip(),
-                "tipus": tipus,
-                "alertaA": alerta_final,
-                "acompliment": acompliment,
-                "observacions": observacions.strip()
-            }
-            if sync_cal:
-                try:
-                    from core.calendar_manager import add_event, update_event
-                    ev_id = task.get("calendar_event_id")
-                    desc_curta = feina_final.strip() if feina_final.strip() else observacions.strip()
-                    tit = f"[{tipus}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tipus}] {desc_curta}"
-                    iso_date = d_manteniment.strftime("%Y-%m-%d")
-                    alerta_str = ", ".join(alerta_final)
-                    cal_desc = f"Tasca de Manteniment #{task_id}\nFeina: {feina_final.strip()}\nTipus: {tipus}\nAlerta a: {alerta_str}\nAvís amb {dies_avis} dies d'antelació"
-                    if observacions.strip():
-                        cal_desc += f"\n\nObservacions:\n{observacions.strip()}"
-                    if ev_id:
-                        update_event(ev_id, {
-                            "title": tit,
-                            "date": iso_date,
-                            "time": "09:00",
-                            "category": "Llar",
-                            "description": cal_desc,
-                            "assigned_to": alerta_str,
-                            "notify": True
-                        })
-                    else:
-                        ev = add_event({
-                            "title": tit,
-                            "date": iso_date,
-                            "time": "09:00",
-                            "category": "Llar",
-                            "description": cal_desc,
-                            "assigned_to": alerta_str,
-                            "notify": True
-                        })
-                        if ev and isinstance(ev, dict) and "id" in ev:
-                            upd["calendar_event_id"] = ev["id"]
-                except Exception as e_cal:
-                    print("Error actualitzant esdeveniment a calendari:", e_cal)
+    cur_feina = str(task.get("feina", "")).strip()
+    c_feina1, c_feina2 = st.columns([1.5, 1.5])
+    with c_feina1:
+        feina_idx = OPCIONS_FEINA.index(cur_feina) if cur_feina in OPCIONS_FEINA else (len(OPCIONS_FEINA) - 1)
+        feina_sel = st.selectbox("Feina concreta *", OPCIONS_FEINA, index=feina_idx)
+    with c_feina2:
+        default_custom = cur_feina if cur_feina not in OPCIONS_FEINA else ""
+        feina_custom = st.text_input("O una altra feina concreta:", value=default_custom, placeholder="Escriu si vols canviar-la...")
 
-            update_manteniment_task(task_id, upd)
-            st.success("Tasca actualitzada correctament!")
+    c3, c4 = st.columns([2, 1])
+    with c3:
+        raw_alerta = task.get("alertaA", ["Tothom"])
+        if isinstance(raw_alerta, str):
+            default_alerta = [x.strip() for x in raw_alerta.split(",") if x.strip()]
+        elif isinstance(raw_alerta, list):
+            default_alerta = raw_alerta
+        else:
+            default_alerta = ["Tothom"]
+        default_alerta = [x for x in default_alerta if x in family_names]
+        if not default_alerta:
+            default_alerta = ["Tothom"]
+        alertaA = st.multiselect("Alerta a *", options=family_names, default=default_alerta, help="Membre(s) de la família que rebran l'alerta")
+    with c4:
+        cur_acomp = str(task.get("acompliment", "No")).strip().lower()
+        ac_idx = 1 if cur_acomp in ["sí", "si", "true"] else 0
+        acompliment = st.selectbox("Acompliment", ["No", "Sí"], index=ac_idx)
+
+    sync_cal = st.checkbox("Actualitzar / Enviar a l'Agenda (Calendari)", value=bool(task.get("calendar_event_id")))
+    observacions = st.text_area("Observacions / Detalls addicionals", value=task.get("observacions", ""), height=75)
+    
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    c_can, c_sub = st.columns([1, 2])
+    with c_can:
+        if st.button("Cancel·lar", key=f"btn_cancel_edit_{task_id}", use_container_width=True):
             st.rerun()
+    with c_sub:
+        submitted = st.button("💾 Desar canvis", key=f"btn_save_edit_{task_id}", type="primary", use_container_width=True)
+
+    if submitted:
+        feina_final = feina_custom.strip() if feina_custom.strip() else (feina_sel if feina_sel != "Altres (especificar al costat)..." else "")
+        if not feina_final.strip():
+            st.error("Cal indicar la feina concreta a realitzar.")
+            return
+        d_str = d_manteniment.strftime("%d/%m/%Y")
+        alerta_final = alertaA if alertaA else ["Tothom"]
+        upd = {
+            "dataManteniment": d_str,
+            "diesAvis": int(dies_avis),
+            "feina": feina_final.strip(),
+            "tipus": tipus,
+            "alertaA": alerta_final,
+            "acompliment": acompliment,
+            "observacions": observacions.strip()
+        }
+        if sync_cal:
+            try:
+                from core.calendar_manager import add_event, update_event
+                ev_id = task.get("calendar_event_id")
+                desc_curta = feina_final.strip() if feina_final.strip() else observacions.strip()
+                tit = f"[{tipus}] {desc_curta[:35]}..." if len(desc_curta) > 35 else f"[{tipus}] {desc_curta}"
+                iso_date = d_manteniment.strftime("%Y-%m-%d")
+                alerta_str = ", ".join(alerta_final)
+                cal_desc = f"Tasca de Manteniment #{task_id}\nFeina: {feina_final.strip()}\nTipus: {tipus}\nAlerta a: {alerta_str}\nAvís amb {dies_avis} dies d'antelació"
+                if observacions.strip():
+                    cal_desc += f"\n\nObservacions:\n{observacions.strip()}"
+                if ev_id:
+                    update_event(ev_id, {
+                        "title": tit,
+                        "date": iso_date,
+                        "time": "09:00",
+                        "category": "Llar",
+                        "description": cal_desc,
+                        "assigned_to": alerta_str,
+                        "notify": True
+                    })
+                else:
+                    ev = add_event({
+                        "title": tit,
+                        "date": iso_date,
+                        "time": "09:00",
+                        "category": "Llar",
+                        "description": cal_desc,
+                        "assigned_to": alerta_str,
+                        "notify": True
+                    })
+                    if ev and isinstance(ev, dict) and "id" in ev:
+                        upd["calendar_event_id"] = ev["id"]
+            except Exception as e_cal:
+                print("Error actualitzant esdeveniment a calendari:", e_cal)
+
+        update_manteniment_task(task_id, upd)
+        st.success("Tasca actualitzada correctament!")
+        st.rerun()
 
 @st.dialog("🗑️ Eliminar Tasca de Manteniment", width="small")
 def delete_task_dialog(task_id: int, task_title: str):
