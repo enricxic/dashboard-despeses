@@ -1,6 +1,6 @@
 # Dashboard XiquiHouse - Bridge Forwarder per a Streamlit Cloud
 # Redirigeix transparentment l'execució al punt d'entrada canònic app.py
-# Versió actualitzada: 21/10/2026 17:16 - Eliminat botó proper any del cos, deixant exclusivament el menú superior
+# Versió actualitzada: 21/10/2026 18:15 - Forçar reinici Streamlit Cloud per eliminar botó en cache
 import runpy
 import os
 

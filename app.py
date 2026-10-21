@@ -1,4 +1,4 @@
-# Dashboard XiquiHouse - Punt d'Entrada Canònic (Consolidat)
+# Dashboard XiquiHouse - Punt d'Entrada Canònic (Consolidat) - Versió: 21/10/2026 18:15
 import streamlit as st
 import importlib
 import sys
