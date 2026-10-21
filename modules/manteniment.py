@@ -728,14 +728,6 @@ def edit_task_dialog(task: dict, family_names: list):
     regenerate_future = False
 
     if edit_is_recurring:
-        with c_rec2:
-            edit_mode_end = st.radio(
-                "Com vols limitar la repetició?",
-                ["Per nombre de vegades", "Fins a una data límit"],
-                horizontal=True,
-                key=f"edit_modeend_{task_id}"
-            )
-
         if edit_freq_sel == "Personalitzat...":
             c_p1, c_p2 = st.columns(2)
             with c_p1:
@@ -752,28 +744,61 @@ def edit_task_dialog(task: dict, family_names: list):
                 u_idx = units.index(cur_unit_guess) if cur_unit_guess in units else 1
                 edit_custom_unit = st.selectbox("Unitat de temps:", units, index=u_idx, key=f"edit_cunit_{task_id}")
 
-        if edit_mode_end == "Per nombre de vegades":
-            c_n1, c_n2 = st.columns([1.5, 1.5])
+        year_end_edit = date(d_manteniment.year, 12, 31)
+        dates_until_end_year_edit = compute_recurring_dates(
+            d_manteniment,
+            edit_freq_sel,
+            custom_interval=edit_custom_interval,
+            custom_unit=edit_custom_unit,
+            end_mode="data",
+            until_date=year_end_edit,
+            max_limit=370
+        )
+        max_fins_any_edit = len(dates_until_end_year_edit)
+
+        with c_rec2:
+            edit_mode_end = st.radio(
+                "Com vols limitar la repetició?",
+                ["Fins a final d'any (31/12)", "Per nombre de vegades", "Fins a una data límit"],
+                index=0,
+                horizontal=True,
+                key=f"edit_modeend_{task_id}"
+            )
+
+        if edit_mode_end == "Fins a final d'any (31/12)":
+            edit_end_mode_code = "data"
+            edit_until_date = year_end_edit
+            edit_rep_count = max_fins_any_edit
+            st.caption(f"🗓️ Se seleccionen automàticament totes les ocurrències fins a final d'any (**{max_fins_any_edit} vegades** fins al 31/12/{d_manteniment.year}).")
+        elif edit_mode_end == "Per nombre de vegades":
+            c_n1, c_n2 = st.columns([1.5, 1.5], vertical_alignment="bottom")
             with c_n1:
+                max_allowed_edit = max(1, max_fins_any_edit)
+                cur_val_edit = int(cur_count_guess) if cur_count_guess >= 1 else max_allowed_edit
+                cur_val_edit = min(cur_val_edit, max_allowed_edit)
                 edit_rep_count = st.number_input(
-                    "Nombre total de vegades a generar:",
-                    min_value=2,
-                    max_value=60,
-                    value=max(2, int(cur_count_guess)),
+                    f"Nombre total de vegades a generar (màx {max_allowed_edit}):",
+                    min_value=1,
+                    max_value=max_allowed_edit,
+                    value=cur_val_edit,
                     step=1,
-                    help="Quantes tasques es programaran en total a partir d'aquesta data",
+                    help=f"El màxim és {max_allowed_edit} perquè les tasques es generen any per any (fins al 31/12/{d_manteniment.year})",
                     key=f"edit_repcount_{task_id}"
                 )
+            with c_n2:
+                st.caption(f"🏁 Fins a final d'any ({d_manteniment.year}) hi caben com a màxim **{max_fins_any_edit} vegades**.")
             edit_end_mode_code = "vegades"
         else:
             c_n1, c_n2 = st.columns([1.5, 1.5])
             with c_n1:
-                default_until = d_manteniment + timedelta(days=90)
+                default_until = min(year_end_edit, d_manteniment + timedelta(days=90))
                 edit_until_date = st.date_input(
                     "Fins a la data límit:",
                     value=default_until,
                     min_value=d_manteniment,
+                    max_value=year_end_edit,
                     format="DD/MM/YYYY",
+                    help=f"Data límit màxima: 31/12/{d_manteniment.year}",
                     key=f"edit_until_{task_id}"
                 )
             edit_end_mode_code = "data"
@@ -1269,14 +1294,6 @@ def render():
             until_date = None
 
             if is_recurring:
-                with c_rec2:
-                    mode_end = st.radio(
-                        "Com vols limitar la repetició?",
-                        ["Per nombre de vegades", "Fins a una data límit"],
-                        horizontal=True,
-                        key=f"new_modeend_{form_counter}"
-                    )
-
                 if freq_sel == "Personalitzat...":
                     c_p1, c_p2 = st.columns(2)
                     with c_p1:
@@ -1297,29 +1314,59 @@ def render():
                             key=f"new_cunit_{form_counter}"
                         )
 
-                if mode_end == "Per nombre de vegades":
-                    c_n1, c_n2 = st.columns([1.5, 1.5])
+                year_end_new = date(data_manteniment_input.year, 12, 31)
+                dates_until_end_year_new = compute_recurring_dates(
+                    data_manteniment_input,
+                    freq_sel,
+                    custom_interval=custom_interval,
+                    custom_unit=custom_unit,
+                    end_mode="data",
+                    until_date=year_end_new,
+                    max_limit=370
+                )
+                max_fins_any_new = len(dates_until_end_year_new)
+
+                with c_rec2:
+                    mode_end = st.radio(
+                        "Com vols limitar la repetició?",
+                        ["Fins a final d'any (31/12)", "Per nombre de vegades", "Fins a una data límit"],
+                        index=0,
+                        horizontal=True,
+                        key=f"new_modeend_{form_counter}"
+                    )
+
+                if mode_end == "Fins a final d'any (31/12)":
+                    end_mode_code = "data"
+                    until_date = year_end_new
+                    rep_count = max_fins_any_new
+                    st.caption(f"🗓️ Se seleccionen automàticament totes les ocurrències fins a final d'any (**{max_fins_any_new} vegades** fins al 31/12/{data_manteniment_input.year}).")
+                elif mode_end == "Per nombre de vegades":
+                    c_n1, c_n2 = st.columns([1.5, 1.5], vertical_alignment="bottom")
                     with c_n1:
+                        max_allowed_new = max(1, max_fins_any_new)
                         rep_count = st.number_input(
-                            "Nombre de vegades a generar:",
-                            min_value=2,
-                            max_value=60,
-                            value=4,
+                            f"Nombre total de vegades a generar (màx {max_allowed_new}):",
+                            min_value=1,
+                            max_value=max_allowed_new,
+                            value=max_allowed_new,
                             step=1,
-                            help="Quantes tasques es generaran en total a partir de la data prevista",
+                            help=f"El màxim és {max_allowed_new} perquè les tasques es generen any per any (fins al 31/12/{data_manteniment_input.year})",
                             key=f"new_repcount_{form_counter}"
                         )
+                    with c_n2:
+                        st.caption(f"🏁 Fins a final d'any ({data_manteniment_input.year}) hi caben com a màxim **{max_fins_any_new} vegades**.")
                     end_mode_code = "vegades"
                 else:
                     c_n1, c_n2 = st.columns([1.5, 1.5])
                     with c_n1:
-                        default_until = data_manteniment_input + timedelta(days=90)
+                        default_until = min(year_end_new, data_manteniment_input + timedelta(days=90))
                         until_date = st.date_input(
                             "Fins a la data límit:",
                             value=default_until,
                             min_value=data_manteniment_input,
+                            max_value=year_end_new,
                             format="DD/MM/YYYY",
-                            help="Es generaran tasques periòdiques fins a arribar a aquesta data",
+                            help=f"Data límit màxima: 31/12/{data_manteniment_input.year}",
                             key=f"new_until_{form_counter}"
                         )
                     end_mode_code = "data"
