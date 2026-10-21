@@ -1,6 +1,6 @@
 # Dashboard XiquiHouse - Bridge Forwarder per a Streamlit Cloud
 # Redirigeix transparentment l'execució al punt d'entrada canònic app.py
-# Versió actualitzada: 21/10/2026 13:30 - Modificació de repeticions a l'edició de tasques de manteniment
+# Versió actualitzada: 21/10/2026 13:45 - Subtasques amb cadència pròpia i rutina anual de manteniment
 import runpy
 import os
 

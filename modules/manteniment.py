@@ -1,6 +1,9 @@
 import streamlit as st
 import os
 import base64
+import json
+import re
+import copy
 import pandas as pd
 from datetime import datetime, date, timedelta
 from modules.avatar_widget import render_header_with_avatar
@@ -18,11 +21,15 @@ from core.manteniment_manager import (
     add_manteniment_task,
     add_manteniment_tasks_batch,
     compute_recurring_dates,
+    compute_recurring_dates_for_year,
+    filter_subtasks_for_occurrence,
     parse_task_recurrence,
     update_manteniment_task_with_recurrence,
     update_manteniment_task,
     delete_manteniment_task,
-    toggle_manteniment_acompliment
+    toggle_manteniment_acompliment,
+    toggle_subtask_acompliment,
+    get_recurring_task_templates
 )
 
 @st.dialog("📄 Visor de Document", width="large")
@@ -801,6 +808,75 @@ def edit_task_dialog(task: dict, family_names: list):
             regenerate_future = st.checkbox("🗑️ Desvincular i eliminar les properes tasques pendents d'aquesta sèrie", value=True, help="Converteix aquesta tasca en puntual i suprimeix les ocurrències futures pendents de la sèrie", key=f"chk_unlink_{task_id}")
 
     sync_cal = st.checkbox("Actualitzar / Enviar a l'Agenda (Calendari)", value=bool(task.get("calendar_event_id")), key=f"edit_cal_{task_id}")
+    
+    # SECCIÓ DE SUBTASQUES
+    st.markdown("<hr style='margin: 12px 0;'>", unsafe_allow_html=True)
+    st.markdown("<h5 style='color:#38bdf8; margin-top:0; margin-bottom:6px;'>📎 Subtasques associades (opcional)</h5>", unsafe_allow_html=True)
+    st.caption("Pots afegir subtasques amb cadència pròpia (ex: rentar el protector de llençols cada 6 mesos).")
+    
+    edit_subs_key = f"edit_subtasks_{task_id}"
+    if edit_subs_key not in st.session_state:
+        raw_subs = task.get("subtasques_template", [])
+        if not raw_subs and task.get("subtasques"):
+            raw_subs = task.get("subtasques")
+        st.session_state[edit_subs_key] = copy.deepcopy(raw_subs) if raw_subs else []
+
+    current_edit_subs = st.session_state[edit_subs_key]
+    for s_idx, s_item in enumerate(current_edit_subs):
+        c_sub_info, c_sub_del = st.columns([0.88, 0.12], vertical_alignment="center")
+        with c_sub_info:
+            cad_label = s_item.get("cadencia") or ("A cada repetició" if s_item.get("cadencia_tipus") == "sempre" else f"Cada {s_item.get('cadencia_valor', 1)} {s_item.get('cadencia_tipus', '')}")
+            st.markdown(f"• **{s_item.get('titol', '')}** &nbsp; <span style='background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🔁 {cad_label}</span>", unsafe_allow_html=True)
+        with c_sub_del:
+            if st.button("🗑️", key=f"del_edit_sub_{task_id}_{s_idx}", help="Eliminar subtasca"):
+                current_edit_subs.pop(s_idx)
+                st.session_state[edit_subs_key] = current_edit_subs
+                st.rerun()
+
+    c_add_es1, c_add_es2, c_add_es3 = st.columns([1.5, 1.2, 0.6], vertical_alignment="bottom")
+    with c_add_es1:
+        edit_new_sub_title = st.text_input("Nova subtasca:", placeholder="Ex: Rentar protector de llençols...", key=f"inp_edit_subtitle_{task_id}")
+    with c_add_es2:
+        sub_cad_options = [
+            "A cada repetició",
+            "Cada 6 mesos",
+            "Cada 3 mesos (trimestral)",
+            "Cada 2 mesos",
+            "Cada any",
+            "Cada 2 repeticions",
+            "Cada 3 repeticions",
+            "Cada 4 repeticions",
+            "Cada 12 repeticions (ex: 6 mesos si és quinzenal)"
+        ]
+        edit_new_sub_cad = st.selectbox("Cadència subtasca:", sub_cad_options, key=f"sel_edit_subcad_{task_id}")
+    with c_add_es3:
+        if st.button("➕ Afegir", key=f"btn_edit_addsub_{task_id}", use_container_width=True):
+            if edit_new_sub_title.strip():
+                cad_tipus = "sempre"
+                cad_valor = 1
+                if "mesos" in edit_new_sub_cad.lower():
+                    cad_tipus = "mesos"
+                    if "6" in edit_new_sub_cad: cad_valor = 6
+                    elif "3" in edit_new_sub_cad: cad_valor = 3
+                    elif "2" in edit_new_sub_cad: cad_valor = 2
+                elif "any" in edit_new_sub_cad.lower():
+                    cad_tipus = "mesos"
+                    cad_valor = 12
+                elif "repeticions" in edit_new_sub_cad.lower():
+                    cad_tipus = "repeticions"
+                    m_rep = re.search(r'cada\s+(\d+)', edit_new_sub_cad.lower())
+                    cad_valor = int(m_rep.group(1)) if m_rep else 2
+                    
+                current_edit_subs.append({
+                    "id": f"sub_{int(datetime.now().timestamp() * 1000)}_{len(current_edit_subs) + 1}",
+                    "titol": edit_new_sub_title.strip(),
+                    "cadencia": edit_new_sub_cad,
+                    "cadencia_tipus": cad_tipus,
+                    "cadencia_valor": cad_valor
+                })
+                st.session_state[edit_subs_key] = current_edit_subs
+                st.rerun()
+
     observacions = st.text_area("Observacions / Detalls addicionals", value=task.get("observacions", ""), height=75, key=f"edit_obs_{task_id}")
     
     st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
@@ -825,7 +901,9 @@ def edit_task_dialog(task: dict, family_names: list):
             "tipus": tipus,
             "alertaA": alerta_final,
             "acompliment": acompliment,
-            "observacions": observacions.strip()
+            "observacions": observacions.strip(),
+            "subtasques_template": current_edit_subs,
+            "subtasques": filter_subtasks_for_occurrence(current_edit_subs, 0, d_manteniment, {})
         }
         update_manteniment_task_with_recurrence(
             task_id=task_id,
@@ -855,6 +933,185 @@ def delete_task_dialog(task_id: int, task_title: str):
             delete_manteniment_task(task_id)
             st.success("Tasca eliminada correctament!")
             st.rerun()
+
+@st.dialog("📅 Programar Tasques de Manteniment per al Proper Any", width="large")
+def show_generar_any_manteniment_dialog(existing_tasks: list, family_names: list):
+    """
+    Diàleg interactiu (similar a Afegir Nou Any Comptable) per projectar i afegir
+    totes les tasques de manteniment del proper any amb comprovació i camps editables.
+    """
+    st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin-bottom:12px;'>Aquesta rutina projecta i prepara el calendari de manteniment i feines de la llar per a tot el proper any. Pots revisar cadascuna de les tasques periòdiques proposades, activar o desactivar-les amb el check i modificar qualsevol paràmetre abans de desar-les.</p>", unsafe_allow_html=True)
+    
+    # 1. Determinar l'any a proposar
+    existing_years = set()
+    for t in existing_tasks:
+        d_raw = str(t.get("dataManteniment", "")).strip()
+        for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+            try:
+                existing_years.add(datetime.strptime(d_raw, fmt).year)
+                break
+            except Exception:
+                pass
+    curr_yr = datetime.today().year
+    proposat_any = (max(existing_years) + 1) if existing_years else (curr_yr + 1)
+    if proposat_any <= curr_yr:
+        proposat_any = curr_yr + 1
+        
+    col_y1, col_y2 = st.columns([3, 5], vertical_alignment="center")
+    with col_y1:
+        target_year = st.number_input("📅 Any a programar:", min_value=2025, max_value=2050, value=proposat_any, step=1, key="target_mant_year_input")
+    with col_y2:
+        tasks_in_year = [t for t in existing_tasks if any(f"/{target_year}" in str(t.get("dataManteniment", "")) or f"-{target_year}" in str(t.get("dataManteniment", "")) for _ in [1])]
+        if tasks_in_year:
+            st.warning(f"⚠️ Ja hi ha {len(tasks_in_year)} tasques programades per al {target_year}. Les tasques seleccionades s'afegiran com a noves sèries.")
+        else:
+            st.success(f"✨ L'any {target_year} és nou al registre. Revisa les tasques recomanades a continuació:")
+
+    # 2. Obtenir plantilles
+    templates = get_recurring_task_templates(existing_tasks)
+    
+    st.markdown("<hr style='margin: 12px 0;'>", unsafe_allow_html=True)
+    st.markdown("<h5 style='color:#38bdf8; margin-top:0; margin-bottom:10px;'>📋 Tasques de Manteniment proposades per a l'Any:</h5>", unsafe_allow_html=True)
+
+    freq_opts = [
+        "Cada 2 setmanes (quinzenal)",
+        "Cada setmana",
+        "Cada mes",
+        "Cada 2 mesos",
+        "Cada 3 mesos (trimestral)",
+        "Cada 6 mesos (semestral)",
+        "Cada any",
+        "Personalitzat...",
+        "Cada dia"
+    ]
+    tipus_opts = ["Feina casa", "Manteniment", "Reparació", "Neteja a fons", "Revisió periòdica", "Instal·lació / Millora", "Altres"]
+
+    selected_plans = []
+    total_projected_events = 0
+
+    for idx, tpl in enumerate(templates):
+        feina_nom = tpl["feina"]
+        f_type = tpl["freq_type"]
+        if f_type not in freq_opts:
+            f_type = "Personalitzat..." if "personalitzat" in str(f_type).lower() else "Cada 2 setmanes (quinzenal)"
+            
+        with st.container(border=True):
+            col_chk, col_tit = st.columns([0.08, 0.92], vertical_alignment="center")
+            is_active = col_chk.checkbox("", value=True, key=f"plan_chk_{idx}")
+            with col_tit:
+                st.markdown(f"<span style='font-weight:700; font-size:1.05rem; color:#f8fafc;'>{feina_nom}</span> &nbsp;<span style='background:#1e293b; color:#c084fc; border:1px solid #9333ea; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🔁 {tpl['freq_type']}</span>", unsafe_allow_html=True)
+            
+            if is_active:
+                c1, c2, c3, c4 = st.columns([1.5, 1.2, 1.3, 1.1])
+                with c1:
+                    feina_val = st.text_input("Feina concreta", value=feina_nom, key=f"plan_feina_{idx}")
+                with c2:
+                    t_idx = tipus_opts.index(tpl["tipus"]) if tpl["tipus"] in tipus_opts else 0
+                    tip_val = st.selectbox("Tipus Feina", tipus_opts, index=t_idx, key=f"plan_tip_{idx}")
+                with c3:
+                    fr_idx = freq_opts.index(f_type) if f_type in freq_opts else 0
+                    freq_val = st.selectbox("Freqüència", freq_opts, index=fr_idx, key=f"plan_freq_{idx}")
+                with c4:
+                    def_m = tpl.get("def_month", 1)
+                    def_d = tpl.get("def_day", 5)
+                    try:
+                        init_d = date(int(target_year), def_m, min(def_d, 28))
+                    except Exception:
+                        init_d = date(int(target_year), 1, 5)
+                    start_d_val = st.date_input("Data inicial", value=init_d, format="DD/MM/YYYY", key=f"plan_date_{idx}")
+
+                c_cust1, c_cust2 = st.columns([1.5, 2.5])
+                c_int_val = tpl.get("custom_interval", 15)
+                c_unit_val = tpl.get("custom_unit", "Dies")
+                if freq_val == "Personalitzat...":
+                    with c_cust1:
+                        c_int_val = st.number_input("Repetir cada:", min_value=1, max_value=365, value=int(c_int_val), step=1, key=f"plan_cint_{idx}")
+                    with c_cust2:
+                        units = ["Dies", "Setmanes", "Mesos", "Anys"]
+                        u_idx = units.index(c_unit_val) if c_unit_val in units else 0
+                        c_unit_val = st.selectbox("Unitat:", units, index=u_idx, key=f"plan_cunit_{idx}")
+
+                c_al1, c_al2 = st.columns([2, 1])
+                with c_al1:
+                    raw_alerta = tpl.get("alertaA", ["Tothom"])
+                    if isinstance(raw_alerta, str):
+                        raw_alerta = [x.strip() for x in raw_alerta.split(",") if x.strip()]
+                    def_alerta = [x for x in raw_alerta if x in family_names] or ["Tothom"]
+                    alerta_val = st.multiselect("Alerta a", family_names, default=def_alerta, key=f"plan_alerta_{idx}")
+                with c_al2:
+                    avis_val = st.number_input("Dies d'avís", min_value=0, max_value=60, value=int(tpl.get("diesAvis", 2)), step=1, key=f"plan_avis_{idx}")
+
+                # Subtasques de la plantilla
+                sub_list = tpl.get("subtasques_template", [])
+                if sub_list:
+                    subs_str = " | ".join([f"• {s.get('titol', '')} ({s.get('cadencia', 'Periòdic')})" for s in sub_list])
+                    st.markdown(f"<div style='font-size:0.85rem; color:#93c5fd; background:#172554; padding:4px 8px; border-radius:6px; margin-top:4px;'>📎 <b>Subtasques:</b> {subs_str}</div>", unsafe_allow_html=True)
+
+                # Calcular dates projectades per a l'any
+                calc_dates = compute_recurring_dates_for_year(
+                    start_date=start_d_val,
+                    freq_type=freq_val,
+                    custom_interval=c_int_val,
+                    custom_unit=c_unit_val,
+                    target_year=int(target_year)
+                )
+                total_projected_events += len(calc_dates)
+                
+                prev_text = ", ".join([d.strftime("%d/%m") for d in calc_dates[:5]])
+                if len(calc_dates) > 5:
+                    prev_text += f"... (+{len(calc_dates)-5} més)"
+                st.caption(f"🗓️ Se'n generaran **{len(calc_dates)} tasques** al llarg de l'any {target_year} ({prev_text})")
+
+                selected_plans.append({
+                    "feina": feina_val.strip(),
+                    "tipus": tip_val,
+                    "diesAvis": int(avis_val),
+                    "alertaA": alerta_val or ["Tothom"],
+                    "acompliment": "No",
+                    "observacions": tpl.get("observacions", ""),
+                    "subtasques_template": sub_list,
+                    "dates": calc_dates,
+                    "freq_label": f"Cada {c_int_val} {c_unit_val.lower()}" if freq_val == "Personalitzat..." else freq_val
+                })
+
+    st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
+    c_bot1, c_bot2 = st.columns([2, 1], vertical_alignment="center")
+    with c_bot1:
+        sync_calendar_all = st.checkbox("📅 Sincronitzar totes les tasques generades amb l'Agenda (Calendari familiar)", value=True, key="chk_plan_synccal")
+        st.markdown(f"<b>Total tasques a generar per al {target_year}: <span style='color:#f39c12; font-size:1.1rem;'>{total_projected_events} esdeveniments</span></b> ({len(selected_plans)} sèries)", unsafe_allow_html=True)
+    with c_bot2:
+        btn_generate = st.button(f"💾 Generar tasques per al {target_year}", type="primary", use_container_width=True, key="btn_submit_year_plans")
+
+    if btn_generate:
+        if not selected_plans or total_projected_events == 0:
+            st.error("No s'ha seleccionat cap tasca per generar.")
+            return
+
+        with st.spinner(f"Generant {total_projected_events} tasques de manteniment per al {target_year}..."):
+            created_count = 0
+            for plan in selected_plans:
+                plan_dates = plan["dates"]
+                if not plan_dates:
+                    continue
+                task_base = {
+                    "feina": plan["feina"],
+                    "tipus": plan["tipus"],
+                    "diesAvis": plan["diesAvis"],
+                    "alertaA": plan["alertaA"],
+                    "acompliment": "No",
+                    "observacions": plan["observacions"],
+                    "subtasques_template": plan["subtasques_template"]
+                }
+                res = add_manteniment_tasks_batch(
+                    task_data=task_base,
+                    dates=plan_dates,
+                    send_to_calendar=sync_calendar_all,
+                    freq_label=plan["freq_label"]
+                )
+                created_count += len(res)
+
+        st.success(f"🎉 S'han generat i programat correctament {created_count} tasques de manteniment per a l'any {target_year}!")
+        st.rerun()
 
 def render():
     render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>🛠️ Manteniment de la Llar</h2>", "manteniment")
@@ -901,6 +1158,16 @@ def render():
     # PESTANYA 1: REGISTRE DE MANTENIMENT
     # =========================================================================
     with tab_registre:
+        # Capçalera i botó d'acció ràpida per al proper any
+        c_top_h1, c_top_h2 = st.columns([3, 1.8], vertical_alignment="center")
+        with c_top_h1:
+            st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0;'>Gestió i planificació de manteniment periòdic i tasques de la llar.</p>", unsafe_allow_html=True)
+        with c_top_h2:
+            if st.button("📅 Generar Tasques Proper Any", type="primary", use_container_width=True, key="btn_open_gen_proper_any"):
+                show_generar_any_manteniment_dialog(tasks, family_names)
+
+        st.markdown("<div style='margin-bottom: 12px;'></div>", unsafe_allow_html=True)
+
         # 1. FORMULARI D'ENTRADA
         with st.container(border=True):
             st.markdown("<h4 style='color:#f39c12; margin-top:0; margin-bottom:12px;'>➕ Nova Tasca de Manteniment</h4>", unsafe_allow_html=True)
@@ -1080,6 +1347,71 @@ def render():
                 preview_dates = [data_manteniment_input]
                 freq_label_text = ""
 
+            # SECCIÓ DE SUBTASQUES ASSOCIADES
+            st.markdown("<hr style='margin: 12px 0;'>", unsafe_allow_html=True)
+            st.markdown("<h5 style='color:#38bdf8; margin-top:0; margin-bottom:6px;'>📎 Subtasques associades (opcional)</h5>", unsafe_allow_html=True)
+            st.caption("Pots afegir subtasques amb la seva pròpia cadència (ex: Canvi de llençols cada 15 dies, però rentar el protector de llençols cada 6 mesos).")
+
+            new_subs_key = f"new_subtasks_{form_counter}"
+            if new_subs_key not in st.session_state:
+                st.session_state[new_subs_key] = []
+
+            current_new_subs = st.session_state[new_subs_key]
+            for s_idx, s_item in enumerate(current_new_subs):
+                c_sub_info, c_sub_del = st.columns([0.88, 0.12], vertical_alignment="center")
+                with c_sub_info:
+                    cad_label = s_item.get("cadencia") or ("A cada repetició" if s_item.get("cadencia_tipus") == "sempre" else f"Cada {s_item.get('cadencia_valor', 1)} {s_item.get('cadencia_tipus', '')}")
+                    st.markdown(f"• **{s_item.get('titol', '')}** &nbsp; <span style='background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:10px; font-size:0.75rem;'>🔁 {cad_label}</span>", unsafe_allow_html=True)
+                with c_sub_del:
+                    if st.button("🗑️", key=f"del_newsub_{form_counter}_{s_idx}", help="Eliminar subtasca"):
+                        current_new_subs.pop(s_idx)
+                        st.session_state[new_subs_key] = current_new_subs
+                        st.rerun()
+
+            c_add_ns1, c_add_ns2, c_add_ns3 = st.columns([1.5, 1.2, 0.6], vertical_alignment="bottom")
+            with c_add_ns1:
+                new_sub_title = st.text_input("Nom de la subtasca:", placeholder="Ex: Rentar protector de llençols...", key=f"inp_newsub_title_{form_counter}")
+            with c_add_ns2:
+                sub_cad_options = [
+                    "A cada repetició",
+                    "Cada 6 mesos",
+                    "Cada 3 mesos (trimestral)",
+                    "Cada 2 mesos",
+                    "Cada any",
+                    "Cada 2 repeticions",
+                    "Cada 3 repeticions",
+                    "Cada 4 repeticions",
+                    "Cada 12 repeticions (ex: 6 mesos si és quinzenal)"
+                ]
+                new_sub_cad = st.selectbox("Cadència subtasca:", sub_cad_options, key=f"sel_newsub_cad_{form_counter}")
+            with c_add_ns3:
+                if st.button("➕ Afegir", key=f"btn_add_newsub_{form_counter}", use_container_width=True):
+                    if new_sub_title.strip():
+                        cad_tipus = "sempre"
+                        cad_valor = 1
+                        if "mesos" in new_sub_cad.lower():
+                            cad_tipus = "mesos"
+                            if "6" in new_sub_cad: cad_valor = 6
+                            elif "3" in new_sub_cad: cad_valor = 3
+                            elif "2" in new_sub_cad: cad_valor = 2
+                        elif "any" in new_sub_cad.lower():
+                            cad_tipus = "mesos"
+                            cad_valor = 12
+                        elif "repeticions" in new_sub_cad.lower():
+                            cad_tipus = "repeticions"
+                            m_rep = re.search(r'cada\s+(\d+)', new_sub_cad.lower())
+                            cad_valor = int(m_rep.group(1)) if m_rep else 2
+
+                        current_new_subs.append({
+                            "id": f"sub_{int(datetime.now().timestamp() * 1000)}_{len(current_new_subs) + 1}",
+                            "titol": new_sub_title.strip(),
+                            "cadencia": new_sub_cad,
+                            "cadencia_tipus": cad_tipus,
+                            "cadencia_valor": cad_valor
+                        })
+                        st.session_state[new_subs_key] = current_new_subs
+                        st.rerun()
+
             st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
             observacions_input = st.text_area(
                 "Observacions / Detalls addicionals",
@@ -1107,7 +1439,8 @@ def render():
                         "diesAvis": int(dies_avis_input),
                         "alertaA": alerta_members,
                         "acompliment": acompliment_input,
-                        "observacions": observacions_input.strip()
+                        "observacions": observacions_input.strip(),
+                        "subtasques_template": current_new_subs
                     }
                     res_tasks = add_manteniment_tasks_batch(
                         task_base,
@@ -1116,6 +1449,7 @@ def render():
                         freq_label=freq_label_text
                     )
                     st.session_state["mant_form_count"] = form_counter + 1
+                    st.session_state.pop(new_subs_key, None)
                     if len(res_tasks) > 1:
                         st.success(f"S'han creat correctament {len(res_tasks)} tasques periòdiques de manteniment (#{res_tasks[0].get('idManteniment')} a #{res_tasks[-1].get('idManteniment')})!")
                     else:
@@ -1215,10 +1549,13 @@ def render():
         with c_mode2:
             if filtered_tasks:
                 df_export = pd.DataFrame(filtered_tasks)
-                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "recurrencia", "acompliment", "observacions"]
+                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "recurrencia", "acompliment", "subtasques", "observacions"]
                 for c in cols_order:
                     if c not in df_export.columns: df_export[c] = ""
                 df_export["alertaA"] = df_export["alertaA"].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
+                df_export["subtasques"] = df_export["subtasques"].apply(
+                    lambda subs: ", ".join([f"{s.get('titol')} ({'Fet' if s.get('fet') else 'Pendent'})" for s in subs]) if isinstance(subs, list) else str(subs)
+                )
                 df_export = df_export[cols_order]
                 csv_data = df_export.to_csv(sep=';', index=False).encode('utf-8')
                 st.download_button(
@@ -1240,10 +1577,13 @@ def render():
         else:
             if view_mode == "📊 Taula de dades (Dataframe / CSV)":
                 df_display = pd.DataFrame(filtered_tasks)
-                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "recurrencia", "acompliment", "observacions"]
+                cols_order = ["idManteniment", "dataAlta", "dataManteniment", "diesAvis", "feina", "tipus", "alertaA", "recurrencia", "acompliment", "subtasques", "observacions"]
                 for c in cols_order:
                     if c not in df_display.columns: df_display[c] = ""
                 df_display["alertaA"] = df_display["alertaA"].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
+                df_display["subtasques"] = df_display["subtasques"].apply(
+                    lambda subs: ", ".join([f"{s.get('titol')} ({'Fet' if s.get('fet') else 'Pendent'})" for s in subs]) if isinstance(subs, list) else ""
+                )
                 df_display = df_display[cols_order]
                 st.dataframe(
                     df_display,
@@ -1259,6 +1599,7 @@ def render():
                         "alertaA": st.column_config.TextColumn("Alerta a", width="medium"),
                         "recurrencia": st.column_config.TextColumn("Periodicitat", width="medium"),
                         "acompliment": st.column_config.TextColumn("Acomplert", width="small"),
+                        "subtasques": st.column_config.TextColumn("Subtasques", width="medium"),
                         "observacions": st.column_config.TextColumn("Observacions")
                     }
                 )
@@ -1321,6 +1662,30 @@ def render():
                                 f"{obs_html}"
                             )
                             st.markdown(card_html, unsafe_allow_html=True)
+
+                            # Subtasques de la targeta
+                            card_subs = task.get("subtasques", [])
+                            if card_subs and isinstance(card_subs, list):
+                                done_s = sum(1 for s in card_subs if s.get("fet", False))
+                                tot_s = len(card_subs)
+                                prog_color = "#22c55e" if done_s == tot_s else "#38bdf8"
+                                st.markdown(f"<div style='font-size:0.82rem; font-weight:600; color:{prog_color}; margin-top:8px; margin-bottom:4px;'>📋 Subtasques ({done_s}/{tot_s} completades):</div>", unsafe_allow_html=True)
+                                for s_idx, s_item in enumerate(card_subs):
+                                    s_id = s_item.get("id", f"sub_{s_idx+1}")
+                                    s_title = s_item.get("titol", "")
+                                    s_fet = bool(s_item.get("fet", False))
+                                    s_cad = s_item.get("cadencia", "")
+                                    badge_c = f" <span style='font-size:0.75rem; color:#94a3b8;'>({s_cad})</span>" if s_cad else ""
+                                    
+                                    chk_val = st.checkbox(
+                                        f"{s_title}{badge_c}",
+                                        value=s_fet,
+                                        key=f"card_subchk_{task_id}_{s_id}"
+                                    )
+                                    if chk_val != s_fet:
+                                        toggle_subtask_acompliment(task_id, s_id)
+                                        st.rerun()
+
                             if task.get("calendar_event_id"):
                                 st.caption("📅 Tasca sincronitzada amb l'Agenda")
                         with c_card_right:

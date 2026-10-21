@@ -402,6 +402,21 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - **Sincronització amb l'Agenda Familiar**: Si la casella de calendari està activada, cada ocurrència genera el seu propi esdeveniment a l'agenda a la data corresponent, amb notificació i assignació personalitzada.
     - **Visualització i exportació**: La columna `recurrencia` s'ha afegit a la base de dades, a `csv/manteniment.csv` i a la taula interactiva, mentre que a les targetes es mostra la insígnia lila `🔁 Periodicitat (X/N)` i al modal d'edició s'informa de la sèrie a la qual pertany.
     - **Modificació de la configuració de repeticions a l'edició (`edit_task_dialog`)**: El diàleg modal d'edició permet ara canviar la periodicitat d'una tasca existent (convertir una tasca puntual en periòdica, canviar la freqüència d'una sèrie existent o desvincular-la a puntual). Amb l'opció `🔄 Actualitzar i regenerar les properes tasques d'aquesta sèrie`, el sistema reajusta i regenera automàticament les futures tasques pendents de la sèrie i els seus esdeveniments de calendari, preservant sempre l'històric de tasques ja acomplertes.
+  - **21/10/2026: Subtasques amb Cadència Pròpia i Rutina de Generació per al Proper Any (`modules/manteniment.py`, `core/manteniment_manager.py`, `csv/manteniment.csv`)**:
+    - **Subtasques amb cadència pròpia dins d'una tasca (`subtasques_template` / `subtasques`)**:
+      - Permet afegir una o múltiples subtasques dins de qualsevol tasca de manteniment, cadascuna amb la seva periodicitat específica (`A cada repetició`, `Cada 6 mesos`, `Cada 3 mesos`, `Cada 2 mesos`, `Cada any`, `Cada 2, 3, 4 repeticions` o `Cada N repeticions personalitzat`).
+      - *Exemple resolt*: Es crea la tasca principal "Canvi de llençols" amb repetició cada 15 dies, i s'hi afegeix la subtasca "Rentar protector de llençols" cada 6 mesos (o cada 12 cicles). El motor distribueix la subtasca únicament en les ocurrències que compleixen el cicle semestral, evitant crear tasques principals duplicades.
+      - **Checklist interactiu a les targetes**: A la vista de targetes de manteniment, cada subtasca activa disposa d'un checkbox propi per marcar-la com a completada (`fet: True`) amb recompte visual de progrés (`📋 Subtasques (1/2 completades)`).
+      - **Sincronització intel·ligent**: Si es marca com a feta la tasca principal, totes les subtasques es marquen com a fetes automàticament; i si es completen totes les subtasques, es commuta la tasca principal a feta.
+      - **Suport complet a l'alta, edició i persistència**: Els formularis d'alta i d'edició modal inclouen el gestor visual de subtasques (amb opcions d'afegir i esborrar amb paperera `🗑️`), persistint a Supabase, JSON i al fitxer `csv/manteniment.csv`.
+    - **Rutina interactiva per afegir tasques del proper any (`show_generar_any_manteniment_dialog`)**:
+      - Botó destacat `📅 Generar Tasques Proper Any` a la part superior del Registre de Manteniment.
+      - Segueix el mateix patró UX que "Afegir nou any comptable" de Mòdul Econòmic (`modules/economic.py`):
+        - Selector interactiu de l'any objectiu (proposa automàticament el proper any no registrat).
+        - Extracció intel·ligent de les plantilles periòdiques actives del registre (`get_recurring_task_templates`), combinades amb les recomanacions habituals de la llar (canvi llençols amb subtasques, neteja general, filtres d'aire condicionat, purga de radiadors, pressió de caldera, descalcificacions, neteja de vidres).
+        - Proposta interactiva amb casella de verificació (`[x] Activa per generar l'any XXXX`), camps editables per a cadascuna (feina concreta, tipus, periodicitat, data d'inici dins de l'any, alerta a membres i dies d'avís) i resum de les subtasques associades.
+        - Càlcul i previsualització de dates al llarg de tot l'any de gener a desembre (`compute_recurring_dates_for_year`).
+        - Recompte total d'esdeveniments que es crearan, sincronització automàtica amb l'Agenda de la Llar i creació en bloc amb un sol clic.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**
