@@ -439,7 +439,7 @@ def render():
         
     with c_nav3:
         # Filtre per Membre
-        filter_member_opts = ["Tots"] + ["Tota la família"] + membres_noms
+        filter_member_opts = ["Tots"] + membres_noms
         sel_mem = st.selectbox("Filtrar per membre", filter_member_opts, index=filter_member_opts.index(st.session_state.cal_filter_member) if st.session_state.cal_filter_member in filter_member_opts else 0, label_visibility="collapsed", key="sel_cal_mem_filter")
         if sel_mem != st.session_state.cal_filter_member:
             st.session_state.cal_filter_member = sel_mem
