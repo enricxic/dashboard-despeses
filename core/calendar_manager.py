@@ -101,30 +101,46 @@ def get_event_status_map():
     status_map = {}
     for e in raw:
         if e.get("is_status_override") and not e.get("is_deleted"):
-            status_map[e.get("status_key")] = e.get("status")
+            if e.get("status_key"):
+                status_map[e.get("status_key")] = e.get("status")
+            if e.get("uid_key"):
+                status_map[e.get("uid_key")] = e.get("status")
+            if e.get("title_key"):
+                status_map[e.get("title_key")] = e.get("status")
         elif e.get("status") and not e.get("is_deleted"):
             status_map[f"{e.get('id')}_{e.get('start_date')}"] = e.get("status")
+            if e.get("uid"):
+                status_map[f"{e.get('uid')}_{e.get('start_date')}"] = e.get("status")
     return status_map
 
-def set_event_status(event_id, start_date, status):
+def set_event_status(event_id, start_date, status, uid=None, title=None):
     """Sets status ('done', 'cancelled', or 'pending') for an event on a specific date."""
     key = f"{event_id}_{start_date}"
+    uid_key = f"{uid}_{start_date}" if uid else None
+    title_clean = clean_title_for_dedup(title) if title else ""
+    title_key = f"{title_clean}_{start_date}" if title_clean else None
     raw = load_raw_local_events()
     
     for e in raw:
         if not e.get("is_deleted") and not e.get("is_status_override"):
-            if str(e.get("id")) == str(event_id) and e.get("start_date") == start_date:
+            if (str(e.get("id")) == str(event_id) or (uid and e.get("uid") == uid)) and e.get("start_date") == start_date:
                 e["status"] = status
                 
     override_found = False
     for e in raw:
-        if e.get("is_status_override") and e.get("status_key") == key:
+        if e.get("is_status_override") and (e.get("status_key") == key or (uid_key and e.get("uid_key") == uid_key) or (title_key and e.get("title_key") == title_key)):
             override_found = True
             if status == "pending":
                 e["is_deleted"] = True
             else:
                 e["status"] = status
                 e["is_deleted"] = False
+                e["status_key"] = key
+                if uid_key:
+                    e["uid_key"] = uid_key
+                if title_key:
+                    e["title_key"] = title_key
+                e["updated_at"] = datetime.now().isoformat()
             break
             
     if not override_found and status != "pending":
@@ -132,6 +148,8 @@ def set_event_status(event_id, start_date, status):
             "id": f"status_{key}",
             "is_status_override": True,
             "status_key": key,
+            "uid_key": uid_key,
+            "title_key": title_key,
             "status": status,
             "updated_at": datetime.now().isoformat()
         })
@@ -614,15 +632,29 @@ def get_all_events(app_cfg=None, target_year=None, target_month=None):
         filtered_feed.append(f)
         
     all_raw = local_events + filtered_feed
-    status_map = get_event_status_map()
-    for ev in all_raw:
-        s_k = f"{ev.get('id')}_{ev.get('start_date')}"
-        if s_k in status_map:
-            ev["status"] = status_map[s_k]
     
     if target_year:
-        return expand_recurring_events(all_raw, target_year, target_month)
-    return deduplicate_events(all_raw)
+        events = expand_recurring_events(all_raw, target_year, target_month)
+    else:
+        events = deduplicate_events(all_raw)
+        
+    status_map = get_event_status_map()
+    for ev in events:
+        s_k = f"{ev.get('id')}_{ev.get('start_date')}"
+        uid_k = f"{ev.get('uid')}_{ev.get('start_date')}" if ev.get("uid") else None
+        title_clean = clean_title_for_dedup(ev.get("title")) if ev.get("title") else ""
+        title_k = f"{title_clean}_{ev.get('start_date')}" if title_clean else None
+        
+        if s_k in status_map:
+            ev["status"] = status_map[s_k]
+        elif uid_k and uid_k in status_map:
+            ev["status"] = status_map[uid_k]
+        elif title_k and title_k in status_map:
+            ev["status"] = status_map[title_k]
+        elif not ev.get("status"):
+            ev["status"] = "pending"
+            
+    return events
 
 def generate_google_calendar_url(event):
     """Generates direct Google Calendar Web template URL to add event in 1 click."""

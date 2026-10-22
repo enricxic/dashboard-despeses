@@ -254,6 +254,94 @@ def render():
         color: {text_secondary};
     }}
 
+    /* Badge d'estat a la llista i detall del dia */
+    .cal-status-badge {{
+        padding: 2px 7px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        margin-left: 6px;
+        display: inline-block;
+        vertical-align: middle;
+        letter-spacing: 0.5px;
+    }}
+    .cal-status-badge.badge-done {{
+        background: rgba(16, 185, 129, 0.22);
+        color: #10b981;
+        border: 1px solid #10b981;
+    }}
+    .cal-status-badge.badge-cancelled {{
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+    }}
+
+    /* Colorejar els botons actius de Fet (verd) i No Fet (vermell) */
+    div[data-testid="column"]:has(.cal-btn-done) button {{
+        background-color: #10b981 !important;
+        border-color: #10b981 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.45) !important;
+    }}
+    div[data-testid="column"]:has(.cal-btn-done) button:hover {{
+        background-color: #059669 !important;
+        border-color: #059669 !important;
+    }}
+
+    div[data-testid="column"]:has(.cal-btn-cancelled) button {{
+        background-color: #ef4444 !important;
+        border-color: #ef4444 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.45) !important;
+    }}
+    div[data-testid="column"]:has(.cal-btn-cancelled) button:hover {{
+        background-color: #dc2626 !important;
+        border-color: #dc2626 !important;
+    }}
+
+    div[data-testid="column"]:has(.cal-btn-pending-chk) button:hover {{
+        border-color: #10b981 !important;
+        color: #10b981 !important;
+    }}
+
+    div[data-testid="column"]:has(.cal-btn-pending-cross) button:hover {{
+        border-color: #ef4444 !important;
+        color: #ef4444 !important;
+    }}
+
+    /* Assegurar que els botons d'acció es mantinguin SEMPRE en 1 sola línia horitzontal a totes les mides (inclòs mòbils) */
+    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) {{
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) > div[data-testid="column"] {{
+        min-width: 0 !important;
+        flex: 1 1 0px !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) button {{
+        padding: 2px 2px !important;
+        font-size: 0.85rem !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        line-height: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 8px !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }}
+
     @media (max-width: 768px) {{
         .cal-grid-header {{
             gap: 2px !important;
@@ -663,21 +751,24 @@ def render():
                 ev_id = ev.get("id", f"ev_{sel_day_str}_{ev.get('title')}")
                 ev_status = ev.get("status", "pending")
                 
+                title_prefix = ""
                 status_badge = ""
-                title_style = f"color:{text_primary};"
+                title_style = f"color:{text_primary}; font-weight:700;"
                 if ev_status == "done":
-                    status_badge = " <span style='background:rgba(16,185,129,0.2); color:#10b981; border:1px solid #10b981; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:800; margin-left:8px;'>✅ FET</span>"
-                    title_style = "color:#10b981;"
+                    title_prefix = "✅ "
+                    status_badge = " <span class='cal-status-badge badge-done'>FET</span>"
+                    title_style = "color:#10b981; font-weight:800;"
                 elif ev_status == "cancelled":
-                    status_badge = " <span style='background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:800; margin-left:8px;'>❌ NO FET</span>"
-                    title_style = "text-decoration:line-through; opacity:0.65; color:#ef4444;"
+                    title_prefix = "❌ "
+                    status_badge = " <span class='cal-status-badge badge-cancelled'>NO FET</span>"
+                    title_style = "text-decoration:line-through; opacity:0.75; color:#ef4444; font-weight:800;"
                 
                 with st.container():
                     c1, c2 = st.columns([5.8, 4.2], vertical_alignment="center")
                     with c1:
                         st.markdown(f"""
-                        <div style="font-size:1.05rem; font-weight:700; {title_style}">
-                            {cat_info['icon']} {ev.get('title')}{status_badge}
+                        <div style="font-size:1.05rem; {title_style}">
+                            {title_prefix}{cat_info['icon']} {ev.get('title')}{status_badge}
                         </div>
                         <div style="font-size:0.85rem; color:{text_secondary};">
                             ⏰ <b>{time_disp}</b> · 👤 {ev.get('member', 'Família')}{loc_disp}
@@ -689,35 +780,42 @@ def render():
                         b_chk, b_cross, b_edit, b_del, b_gcal = st.columns([1, 1, 1, 1, 1.4])
                         with b_chk:
                             if ev_status == "done":
+                                st.markdown('<div class="cal-action-btn cal-btn-done"></div>', unsafe_allow_html=True)
                                 if st.button("✅", key=f"btn_chk_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "pending")
+                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                             else:
+                                st.markdown('<div class="cal-action-btn cal-btn-pending-chk"></div>', unsafe_allow_html=True)
                                 if st.button("✔️", key=f"btn_chk_{ev_id}", help="Marcar com a fet / completat (verd)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "done")
+                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "done", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                         with b_cross:
                             if ev_status == "cancelled":
+                                st.markdown('<div class="cal-action-btn cal-btn-cancelled"></div>', unsafe_allow_html=True)
                                 if st.button("❌", key=f"btn_cross_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "pending")
+                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                             else:
+                                st.markdown('<div class="cal-action-btn cal-btn-pending-cross"></div>', unsafe_allow_html=True)
                                 if st.button("✖️", key=f"btn_cross_{ev_id}", help="Marcar com a no fet / cancel·lat (vermell)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "cancelled")
+                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "cancelled", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                         with b_edit:
+                            st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             if st.button("✏️", key=f"edit_sel_day_{ev_id}", help="Modificar esdeveniment", use_container_width=True):
                                 st.session_state.edit_event_data = ev
                                 st.session_state.show_event_modal = True
                                 st.rerun()
                         with b_del:
+                            st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             if st.button("🗑️", key=f"del_sel_day_{ev_id}", help="Esborrar esdeveniment", use_container_width=True):
                                 cm.delete_event(ev.get("id"), uid=ev.get("uid"), start_date=ev.get("start_date"))
                                 st.success("Esdeveniment eliminat correctament!")
                                 st.rerun()
                         with b_gcal:
+                            st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             g_url = cm.generate_google_calendar_url(ev)
-                            st.markdown(f'<a href="{g_url}" target="_blank"><button style="width:100%; border-radius:6px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.75rem; padding:4px 0; cursor:pointer;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
+                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none;"><button style="width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; display:flex; align-items:center; justify-content:center; white-space:nowrap;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:6px 0;'></div>", unsafe_allow_html=True)
 
     # =========================================================================
@@ -789,19 +887,22 @@ def render():
                         </div>
                         """, unsafe_allow_html=True)
                     ev_status = ev.get("status", "pending")
+                    ev_title_prefix = ""
                     ev_status_badge = ""
-                    ev_title_style = f"color:{text_primary};"
+                    ev_title_style = f"color:{text_primary}; font-weight:800;"
                     if ev_status == "done":
-                        ev_status_badge = " <span style='background:rgba(16,185,129,0.2); color:#10b981; border:1px solid #10b981; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:800; margin-left:8px;'>✅ FET</span>"
-                        ev_title_style = "color:#10b981;"
+                        ev_title_prefix = "✅ "
+                        ev_status_badge = " <span class='cal-status-badge badge-done'>FET</span>"
+                        ev_title_style = "color:#10b981; font-weight:800;"
                     elif ev_status == "cancelled":
-                        ev_status_badge = " <span style='background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:800; margin-left:8px;'>❌ NO FET</span>"
-                        ev_title_style = "text-decoration:line-through; opacity:0.65; color:#ef4444;"
+                        ev_title_prefix = "❌ "
+                        ev_status_badge = " <span class='cal-status-badge badge-cancelled'>NO FET</span>"
+                        ev_title_style = "text-decoration:line-through; opacity:0.75; color:#ef4444; font-weight:800;"
 
                     with c_ag_info:
                         st.markdown(f"""
-                        <div style="font-size:1.1rem; font-weight:800; {ev_title_style}">
-                            {cat_info['icon']} {ev.get('title')}{status_badge}{ev_status_badge}
+                        <div style="font-size:1.1rem; {ev_title_style}">
+                            {ev_title_prefix}{cat_info['icon']} {ev.get('title')}{status_badge}{ev_status_badge}
                         </div>
                         <div style="font-size:0.85rem; color:{text_secondary}; margin-top:2px;">
                             <span style="color:#38bdf8; font-weight:600;">{weekday_name}</span> · ⏰ <b>{time_disp}</b> · 👤 {ev.get('member', 'Família')}{loc_disp}
@@ -814,35 +915,42 @@ def render():
                         ev_id = ev.get("id", f"ev_{d_str}_{ev.get('title')}")
                         with b_chk:
                             if ev_status == "done":
+                                st.markdown('<div class="cal-action-btn cal-btn-done"></div>', unsafe_allow_html=True)
                                 if st.button("✅", key=f"btn_chk_list_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "pending")
+                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                             else:
+                                st.markdown('<div class="cal-action-btn cal-btn-pending-chk"></div>', unsafe_allow_html=True)
                                 if st.button("✔️", key=f"btn_chk_list_{ev_id}", help="Marcar com a fet / completat (verd)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "done")
+                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "done", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                         with b_cross:
                             if ev_status == "cancelled":
+                                st.markdown('<div class="cal-action-btn cal-btn-cancelled"></div>', unsafe_allow_html=True)
                                 if st.button("❌", key=f"btn_cross_list_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "pending")
+                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                             else:
+                                st.markdown('<div class="cal-action-btn cal-btn-pending-cross"></div>', unsafe_allow_html=True)
                                 if st.button("✖️", key=f"btn_cross_list_{ev_id}", help="Marcar com a no fet / cancel·lat (vermell)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "cancelled")
+                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "cancelled", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                         with b_edit:
+                            st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             if st.button("✏️", key=f"edit_ev_list_{ev_id}", help="Modificar esdeveniment", use_container_width=True):
                                 st.session_state.edit_event_data = ev
                                 st.session_state.show_event_modal = True
                                 st.rerun()
                         with b_del:
+                            st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             if st.button("🗑️", key=f"del_ev_list_{ev_id}", help="Esborrar esdeveniment", use_container_width=True):
                                 cm.delete_event(ev.get("id"), uid=ev.get("uid"), start_date=ev.get("start_date"))
                                 st.success("Esdeveniment eliminat!")
                                 st.rerun()
                         with b_gcal:
+                            st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             g_url = cm.generate_google_calendar_url(ev)
-                            st.markdown(f'<a href="{g_url}" target="_blank"><button style="width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:600; padding:6px 0; cursor:pointer;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
+                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none;"><button style="width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; display:flex; align-items:center; justify-content:center; white-space:nowrap;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:10px 0;'></div>", unsafe_allow_html=True)
                     
     # =========================================================================
