@@ -74,31 +74,39 @@ def get_global_alerts():
                     alerts.append({"type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": "Pneumàtics (Tivoli)",
                                    "message": f"Revisar/canviar rodes: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants)."})
 
-                # Inflat de rodes (per data)
+                # Inflat de rodes (per dates planificades o propera data)
                 inflat = mant.get("inflat_rodes", {})
-                propera_data_inflat = inflat.get("propera_data")
-                if propera_data_inflat:
-                    try:
-                        d_inflat = datetime.strptime(str(propera_data_inflat).strip(), "%d/%m/%Y").date()
-                        avui_inflat = datetime.today().date()
-                        dies_inflat = (d_inflat - avui_inflat).days
-                        avis_dies = int(inflat.get("avis_dies_abans", 15))
-                        if dies_inflat <= 0:
+                planificacions = inflat.get("planificacions")
+                if not planificacions or not isinstance(planificacions, list):
+                    from core.config_manager import DEFAULT_PLANIFICACIONS_INFLAT
+                    planificacions = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+                
+                try:
+                    from core.config_manager import get_inflat_occurrences
+                    occurrences = get_inflat_occurrences(planificacions, inflat.get("data_ultim_inflat", ""))
+                    for occ in occurrences:
+                        d_target = occ["next_date"]
+                        dies = occ["dies_left"]
+                        avis_dies = occ["avis_dies"]
+                        titol = occ["titol"]
+                        status = occ["status"]
+                        
+                        if status == "superat" or (dies < 0 and status not in ("fet_enguany", "fet", "proper_any")):
                             alerts.append({
                                 "type": "error",
                                 "icon": "🛞",
-                                "title": "Inflat de Rodes (Tivoli)",
-                                "message": f"Inflat de rodes pendent des del {d_inflat.strftime('%d/%m/%Y')} (superat per {abs(dies_inflat)} dies)."
+                                "title": f"Inflat de Rodes ({titol})",
+                                "message": f"Inflat de rodes pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies)."
                             })
-                        elif dies_inflat <= avis_dies:
+                        elif dies <= avis_dies and status == "pendent":
                             alerts.append({
                                 "type": "warning",
                                 "icon": "🛞",
-                                "title": "Inflat de Rodes (Tivoli)",
-                                "message": f"Toca revisar pressió/inflar rodes el {d_inflat.strftime('%d/%m/%Y')} (queden {dies_inflat} dies)."
+                                "title": f"Inflat de Rodes ({titol})",
+                                "message": f"Toca revisar pressió/inflar rodes el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies)."
                             })
-                    except Exception:
-                        pass
+                except Exception as e_inf_alert:
+                    print(f"Error alerta inflat: {e_inf_alert}")
                     
         # 2. Alerta de Loteria
         loteria_cfg = config.get("regles_alertes", {}).get("loteria", {})

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from datetime import datetime
+from datetime import datetime, timedelta
 from core.db import (
     get_supabase_client, fetch_all_supabase, parse_excel_date, clean_numeric,
     get_config_routes, add_route_to_config, init_routes_config, append_to_db,
@@ -266,10 +266,19 @@ def render():
             car_kms_actuals = pd.to_numeric(df_km_oli['contador'], errors='coerce').max()
             if pd.isna(car_kms_actuals): car_kms_actuals = 0.0
 
+        from core.config_manager import DEFAULT_PLANIFICACIONS_INFLAT, get_inflat_occurrences
         _DEF_MANT = {
             "oli": {"ultim_canvi_km": 30000, "interval_km": 16000, "data_ultim_canvi": ""},
             "rodes": {"ultim_canvi_km": None, "interval_km": 40000, "previst": {"km": 39600, "quantes": 2, "posicio": "Davanteres", "data": "Nadal 2026"}},
-            "inflat_rodes": {"propera_data": "", "repeticions_any": 2, "avis_dies_abans": 15, "data_ultim_inflat": "", "pressio": "2.3 bar"},
+            "inflat_rodes": {
+                "propera_data": "22/12/2026",
+                "repeticions_any": 2,
+                "avis_dies_abans": 15,
+                "data_ultim_inflat": "",
+                "km_ultim_inflat": None,
+                "pressio": "2.4 bar",
+                "planificacions": copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+            },
             "historic": []
         }
         app_cfg = load_app_config()
@@ -277,6 +286,10 @@ def render():
         mant.setdefault("oli", copy.deepcopy(_DEF_MANT["oli"]))
         mant.setdefault("rodes", copy.deepcopy(_DEF_MANT["rodes"]))
         mant.setdefault("inflat_rodes", copy.deepcopy(_DEF_MANT["inflat_rodes"]))
+        if "planificacions" not in mant["inflat_rodes"] or not isinstance(mant["inflat_rodes"]["planificacions"], list) or len(mant["inflat_rodes"]["planificacions"]) == 0:
+            mant["inflat_rodes"]["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+        if "pressio" not in mant["inflat_rodes"] or not mant["inflat_rodes"]["pressio"]:
+            mant["inflat_rodes"]["pressio"] = "2.4 bar"
         mant.setdefault("historic", [])
         avis_km = float(mant.get("avis_km", 20000))
 
@@ -424,103 +437,178 @@ def render():
 
         # ---------- INFLAT DE RODES ----------
         inflat = mant.get("inflat_rodes") or {}
-        inf_proper_str = inflat.get("propera_data", "")
         inf_last_str = inflat.get("data_ultim_inflat", "")
-        inf_rep_any = int(inflat.get("repeticions_any", 2))
-        inf_avis_dies = int(inflat.get("avis_dies_abans", 15))
-        inf_pressio = inflat.get("pressio", "")
-
-        inf_proper_date = None
-        if inf_proper_str:
-            try:
-                inf_proper_date = datetime.strptime(str(inf_proper_str).strip(), "%d/%m/%Y").date()
-            except Exception:
-                pass
+        inf_last_km = inflat.get("km_ultim_inflat")
+        inf_pressio = inflat.get("pressio") or "2.4 bar"
+        planificacions = inflat.get("planificacions") or []
 
         avui = datetime.today().date()
-        inf_dies_left = (inf_proper_date - avui).days if inf_proper_date else None
+        occurrences = get_inflat_occurrences(planificacions, inf_last_str, avui)
+
+        # Proxim inflat
+        upcoming = [occ for occ in occurrences if occ["dies_left"] >= 0]
+        upcoming.sort(key=lambda x: x["dies_left"])
+        proxim_occ = upcoming[0] if upcoming else None
+
+        inf_proper_str = proxim_occ["next_date"].strftime("%d/%m/%Y") if proxim_occ else ""
+        proxim_titol = proxim_occ["titol"] if proxim_occ else "Sense planificar"
+        proxim_dies = proxim_occ["dies_left"] if proxim_occ else None
+        proxim_avis = proxim_occ["avis_dies"] if proxim_occ else 15
+
+        if inf_proper_str and mant["inflat_rodes"].get("propera_data") != inf_proper_str:
+            mant["inflat_rodes"]["propera_data"] = inf_proper_str
 
         st.markdown("<h4 style='color:#f39c12;'>💨 Inflat de Rodes (Pressió)</h4>", unsafe_allow_html=True)
         e1, e2, e3, e4 = st.columns(4)
         e1.metric("Últim inflat", inf_last_str if inf_last_str else "Sense registre",
                   help=(f"Pressió: {inf_pressio}" if inf_pressio else None))
         
-        mesos_rep = round(12 / inf_rep_any, 1) if inf_rep_any else 6
-        mesos_rep_str = f"{int(mesos_rep)}" if mesos_rep == int(mesos_rep) else f"{mesos_rep}"
-        e2.metric("Freqüència", f"{inf_rep_any} cops/any", help=f"Aproximadament cada {mesos_rep_str} mesos")
-        e3.metric("Proper inflat", inf_proper_str if inf_proper_str else "Sense planificar", help=f"Avisar {inf_avis_dies} dies abans")
-        e4.metric("Dies restants", f"{inf_dies_left} dies" if inf_dies_left is not None else "-")
+        active_plans = [p for p in planificacions if p.get("actiu", True)]
+        e2.metric("Planificació", f"{len(active_plans)} viatges/any", help="Viatges anuals i dates fixes programades")
+        e3.metric("Proper inflat", f"{inf_proper_str}" if inf_proper_str else "Sense planificar", help=f"{proxim_titol} (Avisar {proxim_avis} dies abans)")
+        e4.metric("Dies restants", f"{proxim_dies} dies" if proxim_dies is not None else "-")
 
-        if inf_dies_left is not None:
-            if inf_dies_left < 0:
-                st.error(f"🚨 Inflat de rodes superat per {abs(inf_dies_left)} dies! (data prevista: {inf_proper_str})")
-            elif inf_dies_left <= inf_avis_dies:
-                st.warning(f"⚠️ Toca revisar la pressió / inflar les rodes! Queden només {inf_dies_left} dies (data prevista: {inf_proper_str}).")
+        # Avisos d'inflat
+        has_banner = False
+        for occ in occurrences:
+            dies = occ["dies_left"]
+            titol = occ["titol"]
+            d_str = occ["next_date"].strftime("%d/%m/%Y")
+            avis = occ["avis_dies"]
+            status = occ["status"]
+            if status == "superat" or (dies < 0 and status not in ("fet_enguany", "fet", "proper_any")):
+                st.error(f"🚨 Inflat de rodes superat per {abs(dies)} dies per al **{titol}**! (data prevista: {d_str})")
+                has_banner = True
+            elif dies <= avis and status == "pendent":
+                st.warning(f"⚠️ Toca revisar la pressió / inflar les rodes per al **{titol}**! Queden només {dies} dies (data prevista: {d_str}).")
+                has_banner = True
+
+        if not has_banner:
+            if proxim_occ:
+                st.success(f"✅ Tot correcte. Queden {proxim_dies} dies per al proper inflat planificat: **{proxim_titol}** ({inf_proper_str}).")
             else:
-                st.success(f"✅ Tot correcte. Queden {inf_dies_left} dies per al proper inflat ({inf_proper_str}).")
-        else:
-            st.info("ℹ️ Encara no s'ha planificat cap data per al proper inflat de rodes.")
+                st.info("ℹ️ Encara no s'ha planificat cap data per al proper inflat de rodes.")
 
-        with st.expander("📅 Planificar proper inflat i freqüència d'avisos"):
-            with st.form("form_planificar_inflat"):
-                i1, i2, i3 = st.columns(3)
-                default_data_plan = inf_proper_date if inf_proper_date else (avui + pd.DateOffset(months=6)).date()
-                p_data = i1.date_input("Data del proper inflat", value=default_data_plan, format="DD/MM/YYYY", key="inf_plan_data")
-                p_rep = i2.number_input("Repeticions per any", min_value=1, max_value=12, value=inf_rep_any, step=1,
-                                       help="Per defecte 2 cops a l'any (cada 6 mesos).", key="inf_plan_rep")
-                p_avis = i3.number_input("Avisar amb antelació (dies)", min_value=1, max_value=60, value=inf_avis_dies, step=1,
-                                        help="Dies abans de la data en què es mostrarà l'avís a les alertes del Dashboard.", key="inf_plan_avis")
-                
-                b_plan1, b_plan2 = st.columns(2)
-                if b_plan1.form_submit_button("💾 Desar planificació", type="primary"):
-                    d_str = p_data.strftime("%d/%m/%Y")
-                    mant["inflat_rodes"]["propera_data"] = d_str
-                    mant["inflat_rodes"]["repeticions_any"] = int(p_rep)
-                    mant["inflat_rodes"]["avis_dies_abans"] = int(p_avis)
-                    _save_mant(mant)
-                    st.success(f"Planificació desada! Proper inflat el {d_str} (avisant {int(p_avis)} dies abans).")
-                    st.rerun()
-                if b_plan2.form_submit_button("🗑️ Esborrar planificació"):
-                    mant["inflat_rodes"]["propera_data"] = ""
-                    _save_mant(mant)
-                    st.rerun()
-
-        with st.expander("✏️ Registrar inflat de rodes fet"):
-            with st.form("form_inflat_fet"):
-                j1, j2, j3 = st.columns(3)
-                r_data = j1.date_input("Data de l'inflat", value=avui, format="DD/MM/YYYY", key="inf_fet_data")
-                r_km = j2.number_input("Km del cotxe (opcional)", min_value=0, value=int(car_kms_actuals), step=100, key="inf_fet_km")
-                r_pressio = j3.text_input("Pressió aplicada", value=inf_pressio or "2.3 bar", placeholder="Ex: 2.3 bar / 2.5 davant", key="inf_fet_pressio")
-                
-                r_nota = st.text_input("Observacions", value="Revisió i inflat de pressió de les rodes", key="inf_fet_nota")
-                
-                chk1, chk2 = st.columns(2)
-                auto_proper = chk1.checkbox("Programar automàticament el proper inflat", value=True,
-                                            help=f"Sumarà l'interval segons les {inf_rep_any} repeticions a l'any a partir d'aquesta data.")
-                afegir_hist = chk2.checkbox("Afegir a l'històric de manteniment", value=True)
-                
-                if st.form_submit_button("💾 Desar inflat fet", type="primary"):
-                    d_fet_str = r_data.strftime("%d/%m/%Y")
-                    mant["inflat_rodes"]["data_ultim_inflat"] = d_fet_str
-                    mant["inflat_rodes"]["km_ultim_inflat"] = int(r_km) if r_km > 0 else None
-                    mant["inflat_rodes"]["pressio"] = r_pressio.strip()
-                    
-                    if auto_proper:
-                        mesos_afegir = max(1, round(12 / inf_rep_any))
-                        nova_propera_dt = pd.to_datetime(r_data) + pd.DateOffset(months=mesos_afegir)
-                        mant["inflat_rodes"]["propera_data"] = nova_propera_dt.strftime("%d/%m/%Y")
+        # 1. Expandible de planificació de viatges i alertes (SENSE st.form per evitar submissions involuntàries amb Enter)
+        with st.expander("📅 Planificació de dates d'inflat (Viatges fixes i alertes)"):
+            st.markdown("##### 📋 Viatges i manteniments programats")
+            if not planificacions:
+                st.info("No hi ha cap viatge o data planificada.")
+            else:
+                to_delete = None
+                for idx, p in enumerate(planificacions):
+                    col_p1, col_p2, col_p3, col_p4 = st.columns([3.5, 2.5, 2.5, 1])
+                    p_tit = p.get("titol", "Inflat")
+                    p_rec = p.get("recurrent", True)
+                    p_avis = p.get("avis_dies_abans", 15)
+                    if p_rec:
+                        d_info = f"Cada any el {p.get('dia', 1):02d}/{p.get('mes', 1):02d}"
+                    else:
+                        d_info = f"Data puntual: {p.get('data_puntual', '-')}"
                         
-                    if afegir_hist:
-                        mant["historic"].append({
-                            "data": d_fet_str,
-                            "tipus": "Inflat Rodes",
-                            "km": int(r_km),
-                            "rodes": "Totes 4",
-                            "detall": f"{r_nota.strip()} ({r_pressio.strip()})" if r_pressio.strip() else r_nota.strip()
-                        })
+                    occ_p = next((o for o in occurrences if o.get("id") == p.get("id")), None)
+                    rest_info = f"({occ_p['dies_left']} dies)" if occ_p else ""
+                    
+                    col_p1.markdown(f"**{p_tit}**")
+                    col_p2.write(f"📅 {d_info}")
+                    col_p3.caption(f"🔔 Avís {p_avis}d abans {rest_info}")
+                    if col_p4.button("🗑️", key=f"del_plan_{idx}", help=f"Eliminar {p_tit}"):
+                        to_delete = idx
+                        
+                if to_delete is not None:
+                    planificacions.pop(to_delete)
+                    mant["inflat_rodes"]["planificacions"] = planificacions
                     _save_mant(mant)
-                    st.success(f"Inflat desat! Proxim inflat programat per al {mant['inflat_rodes'].get('propera_data', '')}.")
                     st.rerun()
+
+            st.write("---")
+            st.markdown("##### ➕ Afegir nova data de planificació")
+            np_c1, np_c2 = st.columns([2, 1])
+            nou_titol = np_c1.text_input("Motiu o viatge", placeholder="Ex: Viatge d'estiu, Viatge de Nadal, Setmana Santa...", key="nou_plan_titol")
+            nou_tipus = np_c2.radio("Tipus", ["Recurrent cada any", "Data única puntual"], key="nou_plan_tipus", horizontal=True)
+
+            np_c3, np_c4, np_c5 = st.columns(3)
+            mesos_noms = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"]
+
+            if nou_tipus == "Recurrent cada any":
+                nou_dia = np_c3.number_input("Dia del mes", min_value=1, max_value=31, value=20, step=1, key="nou_plan_dia")
+                nou_mes_idx = np_c4.selectbox("Mes de l'any", range(1, 13), format_func=lambda m: f"{m:02d} - {mesos_noms[m-1]}", index=6, key="nou_plan_mes")
+                data_punt_val = ""
+            else:
+                data_punt_dt = np_c3.date_input("Data de l'inflat", value=avui + timedelta(days=30), format="DD/MM/YYYY", key="nou_plan_dt")
+                data_punt_val = data_punt_dt.strftime("%d/%m/%Y")
+                nou_dia = data_punt_dt.day
+                nou_mes_idx = data_punt_dt.month
+
+            nou_avis_dies = np_c5.number_input("Avisar amb antelació (dies)", min_value=1, max_value=60, value=15, step=1, key="nou_plan_avis")
+
+            if st.button("➕ Afegir a la planificació", type="primary", key="btn_afegir_plan"):
+                if not nou_titol.strip():
+                    st.error("Si us plau, introdueix un motiu o nom per al viatge / manteniment.")
+                else:
+                    nou_item = {
+                        "id": str(int(datetime.now().timestamp())),
+                        "titol": nou_titol.strip(),
+                        "dia": int(nou_dia),
+                        "mes": int(nou_mes_idx),
+                        "recurrent": (nou_tipus == "Recurrent cada any"),
+                        "data_puntual": data_punt_val,
+                        "avis_dies_abans": int(nou_avis_dies),
+                        "actiu": True
+                    }
+                    planificacions.append(nou_item)
+                    mant["inflat_rodes"]["planificacions"] = planificacions
+                    _save_mant(mant)
+                    st.success(f"S'ha afegit '{nou_titol.strip()}' a la planificació!")
+                    st.rerun()
+
+        # 2. Expandible de registre d'inflat fet (SENSE st.form per evitar enviaments involuntaris amb la tecla Enter)
+        with st.expander("✏️ Registrar inflat de rodes fet"):
+            j1, j2, j3 = st.columns(3)
+            r_data = j1.date_input("Data de l'inflat", value=avui, format="DD/MM/YYYY", key="inf_fet_data")
+            r_km = j2.number_input("Km del cotxe (opcional)", min_value=0, value=int(car_kms_actuals), step=100, key="inf_fet_km")
+            r_pressio = j3.text_input("Pressió aplicada", value=inf_pressio or "2.4 bar", placeholder="Ex: 2.4 bar", key="inf_fet_pressio")
+
+            r_nota = st.text_input("Observacions", value="Revisió i inflat de pressió de les rodes", key="inf_fet_nota")
+
+            opcions_plans = ["Revisió / inflat puntual entre mig (manté intactes els viatges planificats)"]
+            for p in planificacions:
+                opcions_plans.append(f"Compleix planificació: {p.get('titol', 'Inflat')}")
+
+            correspon = st.selectbox("Aquest inflat correspon a:", opcions_plans, key="inf_fet_correspon",
+                                     help="Si fas una revisió puntual entre viatges, selecciona l'opció puntual per no cancel·lar els viatges anuals programats.")
+
+            afegir_hist = st.checkbox("Afegir a l'històric de manteniment", value=True, key="inf_fet_hist")
+
+            if st.button("💾 Desar inflat fet", type="primary", key="btn_desar_inflat"):
+                d_fet_str = r_data.strftime("%d/%m/%Y")
+                mant["inflat_rodes"]["data_ultim_inflat"] = d_fet_str
+                mant["inflat_rodes"]["km_ultim_inflat"] = int(r_km) if r_km > 0 else None
+                mant["inflat_rodes"]["pressio"] = r_pressio.strip() or "2.4 bar"
+
+                # Si correspon a un viatge o planificació concreta, marcar-lo com a complert
+                if correspon != opcions_plans[0]:
+                    nom_sel = correspon.replace("Compleix planificació: ", "").strip()
+                    for p in planificacions:
+                        if p.get("titol", "").strip() == nom_sel:
+                            if p.get("recurrent", True):
+                                p["ultim_fet_any"] = r_data.year
+                            else:
+                                p["fet"] = True
+                    mant["inflat_rodes"]["planificacions"] = planificacions
+
+                if afegir_hist:
+                    mant["historic"].append({
+                        "data": d_fet_str,
+                        "tipus": "Inflat Rodes",
+                        "km": int(r_km),
+                        "rodes": "Totes 4",
+                        "detall": f"{r_nota.strip()} ({r_pressio.strip() or '2.4 bar'})"
+                    })
+
+                _save_mant(mant)
+                st.success(f"Inflat desat correctament! Pressió registrada: {r_pressio.strip() or '2.4 bar'}.")
+                st.rerun()
 
         st.write("---")
 

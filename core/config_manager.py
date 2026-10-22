@@ -83,7 +83,18 @@ DEFAULT_CONFIG = {
     "manteniment_cotxe": {
         "oli": {"ultim_canvi_km": 30000, "interval_km": 16000, "data_ultim_canvi": ""},
         "rodes": {"ultim_canvi_km": None, "interval_km": 40000, "previst": {"km": 39600, "quantes": 2, "posicio": "Davanteres", "data": "Nadal 2026"}},
-        "inflat_rodes": {"propera_data": "", "repeticions_any": 2, "avis_dies_abans": 15, "data_ultim_inflat": "", "pressio": "2.3 bar"},
+        "inflat_rodes": {
+        "propera_data": "22/12/2026",
+        "repeticions_any": 2,
+        "avis_dies_abans": 15,
+        "data_ultim_inflat": "",
+        "km_ultim_inflat": None,
+        "pressio": "2.4 bar",
+        "planificacions": [
+            {"id": "estiu", "titol": "Viatge d'estiu (~1800 km)", "dia": 20, "mes": 7, "recurrent": True, "avis_dies_abans": 15, "actiu": True},
+            {"id": "nadal", "titol": "Viatge de Nadal (~1800 km)", "dia": 22, "mes": 12, "recurrent": True, "avis_dies_abans": 15, "actiu": True}
+        ]
+    },
         "historic": []
     }
 }
@@ -174,6 +185,13 @@ def load_app_config():
                     merged[k] = {**merged[k], **v}
                 else:
                     merged[k] = v
+            # Assegurar estructura inflat_rodes
+            mant_c = merged.setdefault("manteniment_cotxe", {})
+            inf_c = mant_c.setdefault("inflat_rodes", {})
+            if "pressio" not in inf_c or not inf_c["pressio"]:
+                inf_c["pressio"] = "2.4 bar"
+            if "planificacions" not in inf_c or not isinstance(inf_c["planificacions"], list) or len(inf_c["planificacions"]) == 0:
+                inf_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             return merged
     except Exception as e:
         print("Supabase config_manager load failed:", e)
@@ -193,6 +211,13 @@ def load_app_config():
                     merged[k] = {**merged[k], **v}
                 else:
                     merged[k] = v
+            # Assegurar estructura inflat_rodes
+            mant_c = merged.setdefault("manteniment_cotxe", {})
+            inf_c = mant_c.setdefault("inflat_rodes", {})
+            if "pressio" not in inf_c or not inf_c["pressio"]:
+                inf_c["pressio"] = "2.4 bar"
+            if "planificacions" not in inf_c or not isinstance(inf_c["planificacions"], list) or len(inf_c["planificacions"]) == 0:
+                inf_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             return merged
     except Exception as e:
         print("Error reading config file:", e)
@@ -260,6 +285,94 @@ def get_cataleg_eines(cfg=None):
         if isinstance(e, dict) and e.get("id") and e["id"] not in default_ids:
             result.append(e)
     return result
+
+
+DEFAULT_PLANIFICACIONS_INFLAT = [
+    {"id": "estiu", "titol": "Viatge d'estiu (~1800 km)", "dia": 20, "mes": 7, "recurrent": True, "avis_dies_abans": 15, "actiu": True},
+    {"id": "nadal", "titol": "Viatge de Nadal (~1800 km)", "dia": 22, "mes": 12, "recurrent": True, "avis_dies_abans": 15, "actiu": True}
+]
+
+def get_inflat_occurrences(planificacions, data_ultim_inflat_str=None, avui=None):
+    from datetime import date as d_date, datetime as dt_datetime, timedelta
+    if avui is None:
+        avui = dt_datetime.today().date()
+    elif isinstance(avui, dt_datetime):
+        avui = avui.date()
+        
+    d_ultim = None
+    if data_ultim_inflat_str:
+        try:
+            d_ultim = dt_datetime.strptime(str(data_ultim_inflat_str).strip(), "%d/%m/%Y").date()
+        except Exception:
+            pass
+
+    results = []
+    if not planificacions or not isinstance(planificacions, list):
+        return results
+
+    for p in planificacions:
+        if not isinstance(p, dict) or not p.get("actiu", True):
+            continue
+        titol = p.get("titol", "Inflat de rodes")
+        avis_dies = int(p.get("avis_dies_abans", 15))
+        is_recurrent = p.get("recurrent", True)
+        ultim_fet_any = p.get("ultim_fet_any")
+        
+        if is_recurrent:
+            dia = int(p.get("dia", 1))
+            mes = int(p.get("mes", 1))
+            
+            try:
+                date_this_year = d_date(avui.year, mes, dia)
+            except ValueError:
+                date_this_year = d_date(avui.year, mes, 28)
+                
+            if ultim_fet_any == avui.year:
+                next_date = d_date(avui.year + 1, mes, dia)
+                status = "fet_enguany"
+            elif avui <= date_this_year:
+                next_date = date_this_year
+                status = "pendent"
+            else:
+                # avui > date_this_year
+                if d_ultim and abs((d_ultim - date_this_year).days) <= 25 and d_ultim >= (date_this_year - timedelta(days=15)):
+                    next_date = d_date(avui.year + 1, mes, dia)
+                    status = "fet_enguany"
+                elif (avui - date_this_year).days <= 30:
+                    next_date = date_this_year
+                    status = "superat"
+                else:
+                    next_date = d_date(avui.year + 1, mes, dia)
+                    status = "proper_any"
+        else:
+            d_str = p.get("data_puntual", "")
+            try:
+                next_date = dt_datetime.strptime(str(d_str).strip(), "%d/%m/%Y").date()
+            except Exception:
+                continue
+            if p.get("fet", False) or (d_ultim and d_ultim >= next_date):
+                status = "fet"
+            elif avui <= next_date:
+                status = "pendent"
+            else:
+                status = "superat"
+
+        dies_left = (next_date - avui).days
+        results.append({
+            "id": p.get("id", titol),
+            "titol": titol,
+            "next_date": next_date,
+            "dies_left": dies_left,
+            "avis_dies": avis_dies,
+            "status": status,
+            "recurrent": is_recurrent,
+            "dia": p.get("dia"),
+            "mes": p.get("mes"),
+            "data_puntual": p.get("data_puntual")
+        })
+        
+    return results
+
 
 # Àlies per compatibilitat
 load_config = load_app_config

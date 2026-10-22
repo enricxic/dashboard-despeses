@@ -256,6 +256,34 @@
             "interval_km": 40000,
             "ultim_canvi_km": null
         },
+        "inflat_rodes": {
+            "pressio": "2.4 bar",
+            "propera_data": "22/12/2026",
+            "avis_dies_abans": 15,
+            "km_ultim_inflat": 35684,
+            "repeticions_any": 2,
+            "data_ultim_inflat": "22/10/2026",
+            "planificacions": [
+                {
+                    "id": "estiu",
+                    "titol": "Viatge d'estiu (~1800 km)",
+                    "dia": 20,
+                    "mes": 7,
+                    "recurrent": true,
+                    "avis_dies_abans": 15,
+                    "actiu": true
+                },
+                {
+                    "id": "nadal",
+                    "titol": "Viatge de Nadal (~1800 km)",
+                    "dia": 22,
+                    "mes": 12,
+                    "recurrent": true,
+                    "avis_dies_abans": 15,
+                    "actiu": true
+                }
+            ]
+        },
         "historic": [
             {
                 "km": 35684,
@@ -267,7 +295,8 @@
                 "detall": "Revisió i canvi de oli i filtres. Segellat llibre oficial",
                 "taller": "Aurgi"
             }
-        ]
+        ],
+        "avis_km": 2000
     },
     "harness_overrides": {
         "regles_menjar": {
