@@ -543,6 +543,15 @@ def render():
             html_grid.append(f'<div class="cal-grid-th" style="color:{th_color};">{d_nom}</div>')
         html_grid.append('</div>')
         
+        # Preparar paràmetres de la URL conservant sessió i autenticació (auth, device, offline, mod, etc.)
+        qp_base = dict(st.query_params)
+        auth_tok = qp_base.get("auth", "") or st.session_state.get("auth_token", "")
+        if auth_tok:
+            qp_base["auth"] = auth_tok
+        if "mod" not in qp_base:
+            mod_val = st.session_state.get("current_module") or "modules.calendari"
+            qp_base["mod"] = str(mod_val)
+
         # Cos de les setmanes
         html_grid.append('<div class="cal-grid-body">')
         for week in month_days:
@@ -563,8 +572,9 @@ def render():
                 day_evs = sort_events_by_time(events_by_date.get(d_str, []))
                 num_class = "cal-day-num today-num" if is_today else "cal-day-num"
                 
-                mod_val = st.query_params.get("mod") or st.session_state.get("current_module") or "modules.calendari"
-                cell_href = f"?mod={urllib.parse.quote(str(mod_val))}&cal_day={d_str}#gestio-dia"
+                qp = dict(qp_base)
+                qp["cal_day"] = d_str
+                cell_href = f"?{urllib.parse.urlencode(qp)}#gestio-dia"
                 
                 html_grid.append(f'<a href="{cell_href}" target="_self" class="{" ".join(cell_classes)}" title="Veure gestió del dia {d_obj.day}/{d_obj.month}/{d_obj.year}">')
                 html_grid.append('<div class="cal-cell-head">')
