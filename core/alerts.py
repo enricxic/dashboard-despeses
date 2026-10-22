@@ -73,6 +73,32 @@ def get_global_alerts():
                 if rodes_left is not None and rodes_left <= avis_km:
                     alerts.append({"type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": "Pneumàtics (Tivoli)",
                                    "message": f"Revisar/canviar rodes: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants)."})
+
+                # Inflat de rodes (per data)
+                inflat = mant.get("inflat_rodes", {})
+                propera_data_inflat = inflat.get("propera_data")
+                if propera_data_inflat:
+                    try:
+                        d_inflat = datetime.strptime(str(propera_data_inflat).strip(), "%d/%m/%Y").date()
+                        avui_inflat = datetime.today().date()
+                        dies_inflat = (d_inflat - avui_inflat).days
+                        avis_dies = int(inflat.get("avis_dies_abans", 15))
+                        if dies_inflat <= 0:
+                            alerts.append({
+                                "type": "error",
+                                "icon": "🛞",
+                                "title": "Inflat de Rodes (Tivoli)",
+                                "message": f"Inflat de rodes pendent des del {d_inflat.strftime('%d/%m/%Y')} (superat per {abs(dies_inflat)} dies)."
+                            })
+                        elif dies_inflat <= avis_dies:
+                            alerts.append({
+                                "type": "warning",
+                                "icon": "🛞",
+                                "title": "Inflat de Rodes (Tivoli)",
+                                "message": f"Toca revisar pressió/inflar rodes el {d_inflat.strftime('%d/%m/%Y')} (queden {dies_inflat} dies)."
+                            })
+                    except Exception:
+                        pass
                     
         # 2. Alerta de Loteria
         loteria_cfg = config.get("regles_alertes", {}).get("loteria", {})

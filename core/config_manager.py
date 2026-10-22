@@ -83,6 +83,7 @@ DEFAULT_CONFIG = {
     "manteniment_cotxe": {
         "oli": {"ultim_canvi_km": 30000, "interval_km": 16000, "data_ultim_canvi": ""},
         "rodes": {"ultim_canvi_km": None, "interval_km": 40000, "previst": {"km": 39600, "quantes": 2, "posicio": "Davanteres", "data": "Nadal 2026"}},
+        "inflat_rodes": {"propera_data": "", "repeticions_any": 2, "avis_dies_abans": 15, "data_ultim_inflat": "", "pressio": "2.3 bar"},
         "historic": []
     }
 }
