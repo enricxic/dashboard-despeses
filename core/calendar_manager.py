@@ -238,6 +238,9 @@ def parse_ics_content(ics_text, source_name="Google Calendar", default_member="T
                         cur["end_time"] = dt_val.strftime("%H:%M") if not is_allday else ""
                 elif prop == "RRULE":
                     cur["rrule"] = val
+                elif prop == "RECURRENCE-ID":
+                    cur["recurrence_id"] = val
+                    cur["has_recurrence_id"] = True
                     
     return events
 
@@ -320,6 +323,58 @@ def fetch_feed_cached(feed_url, member_name="Enric", member_color="#407faf", max
         
     return cache_entry.get("events", [])
 
+def clean_title_for_dedup(title: str) -> str:
+    if not title:
+        return ""
+    t = re.sub(r'[✅✔✓⭐️]+', '', title)
+    t = re.sub(r'\s+', ' ', t).strip().lower()
+    return t
+
+def deduplicate_events(events: list) -> list:
+    """Deduplicates calendar events based on date, time, title, member, and UID."""
+    seen_keys = {}
+    deduped = []
+    
+    for ev in events:
+        uid = ev.get("uid", "")
+        d_str = ev.get("start_date", "")
+        t_str = ev.get("start_time", "") if not ev.get("all_day", False) else ""
+        title_c = clean_title_for_dedup(ev.get("title", ""))
+        mem = (ev.get("member") or "").strip().lower()
+        
+        # Primary key: date, time, normalized title, member
+        key = (d_str, t_str, title_c, mem)
+        # Secondary key for Google Calendar UID per date
+        uid_key = (uid, d_str) if uid else None
+        
+        match_idx = None
+        if uid_key and uid_key in seen_keys:
+            match_idx = seen_keys[uid_key]
+        elif key in seen_keys:
+            match_idx = seen_keys[key]
+            
+        if match_idx is not None:
+            existing = deduped[match_idx]
+            # If current is an exception instance (recurrence override), it takes precedence over recurring instance
+            if ev.get("has_recurrence_id") or ev.get("recurrence_id"):
+                deduped[match_idx] = ev
+            # Otherwise keep the version with checkmark or richer description
+            elif ("✅" in ev.get("title", "") or "✔" in ev.get("title", "")) and not ("✅" in existing.get("title", "") or "✔" in existing.get("title", "")):
+                deduped[match_idx] = ev
+            elif len(ev.get("description", "") or "") > len(existing.get("description", "") or ""):
+                if existing.get("description") and existing.get("description") not in (ev.get("description") or ""):
+                    ev["description"] = f"{existing.get('description')}\n{ev.get('description')}".strip()
+                deduped[match_idx] = ev
+            continue
+            
+        idx = len(deduped)
+        deduped.append(ev)
+        seen_keys[key] = idx
+        if uid_key:
+            seen_keys[uid_key] = idx
+            
+    return deduped
+
 def expand_recurring_events(events, target_year, target_month=None):
     """Expands annual or recurring events into target year/month, and filters non-recurring events."""
     expanded = []
@@ -354,7 +409,10 @@ def expand_recurring_events(events, target_year, target_month=None):
             except Exception:
                 pass
 
-        if recurrence == "Anual" or ev.get("category") == "Aniversari":
+        is_anniversary_local = (ev.get("category") == "Aniversari" and not ev.get("is_external", False))
+        is_override = bool(ev.get("has_recurrence_id") or ev.get("recurrence_id"))
+
+        if (recurrence == "Anual" or is_anniversary_local) and not is_override:
             try:
                 new_date = date(target_year, ev_date.month, ev_date.day)
             except ValueError:
@@ -421,7 +479,7 @@ def expand_recurring_events(events, target_year, target_month=None):
                         continue
             expanded.append(ev)
             
-    return expanded
+    return deduplicate_events(expanded)
 
 def get_all_events(app_cfg=None, target_year=None, target_month=None):
     """Retrieves merged list of local events and configured Google Calendar feeds."""
@@ -447,7 +505,7 @@ def get_all_events(app_cfg=None, target_year=None, target_month=None):
     
     if target_year:
         return expand_recurring_events(all_raw, target_year, target_month)
-    return all_raw
+    return deduplicate_events(all_raw)
 
 def generate_google_calendar_url(event):
     """Generates direct Google Calendar Web template URL to add event in 1 click."""
