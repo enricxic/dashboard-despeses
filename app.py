@@ -1488,6 +1488,12 @@ def render_module_view(module_name):
             try:
                 cur_mtime = os.path.getmtime(mod.__file__)
                 if cur_mtime > _MODULE_MTIMES.get(module_name, 0):
+                    for k in list(sys.modules.keys()):
+                        if k.startswith("core."):
+                            try:
+                                importlib.reload(sys.modules[k])
+                            except Exception:
+                                pass
                     mod = importlib.reload(mod)
                     _MODULE_MTIMES[module_name] = cur_mtime
             except Exception:

@@ -2,8 +2,28 @@ import streamlit as st
 import os
 import calendar
 from datetime import datetime, date, timedelta
+import importlib
 import core.calendar_manager as cm
+try:
+    importlib.reload(cm)
+except Exception:
+    pass
 from core.config_manager import load_app_config
+
+def sort_events_by_time(events_list):
+    if hasattr(cm, "sort_events_by_time"):
+        return cm.sort_events_by_time(events_list)
+    def _time_key(e):
+        is_timed = bool(not e.get("all_day", False) and e.get("start_time"))
+        t_str = e.get("start_time", "") or ""
+        if ":" in t_str:
+            parts = t_str.split(":")
+            try:
+                t_str = f"{int(parts[0]):02d}:{parts[1]}"
+            except Exception:
+                pass
+        return (1 if is_timed else 0, t_str)
+    return sorted(events_list, key=_time_key)
 
 def render():
     app_cfg = load_app_config()
@@ -539,7 +559,7 @@ def render():
                 if is_selected:
                     cell_classes.append("selected-day")
                     
-                day_evs = cm.sort_events_by_time(events_by_date.get(d_str, []))
+                day_evs = sort_events_by_time(events_by_date.get(d_str, []))
                 num_class = "cal-day-num today-num" if is_today else "cal-day-num"
                 
                 mod_val = st.query_params.get("mod") or st.session_state.get("current_module") or "modules.calendari"
@@ -598,7 +618,7 @@ def render():
                 st.rerun()
                 
         sel_day_str = sel_day.strftime("%Y-%m-%d")
-        sel_day_evs = cm.sort_events_by_time(events_by_date.get(sel_day_str, []))
+        sel_day_evs = sort_events_by_time(events_by_date.get(sel_day_str, []))
         
         weekday_names_full = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
         w_name = weekday_names_full[sel_day.weekday()]
