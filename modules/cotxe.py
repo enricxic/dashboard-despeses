@@ -279,6 +279,15 @@ def render():
                 "pressio": "2.4 bar",
                 "planificacions": copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             },
+            "control_nivells": {
+                "propera_data": "22/12/2026",
+                "repeticions_any": 2,
+                "avis_dies_abans": 15,
+                "data_ultim_control": "",
+                "km_ultim_control": None,
+                "estat_nivells": "Tots correctes (Oli, refrigerant, parabrises, frens)",
+                "planificacions": copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+            },
             "historic": []
         }
         app_cfg = load_app_config()
@@ -290,6 +299,11 @@ def render():
             mant["inflat_rodes"]["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
         if "pressio" not in mant["inflat_rodes"] or not mant["inflat_rodes"]["pressio"]:
             mant["inflat_rodes"]["pressio"] = "2.4 bar"
+        mant.setdefault("control_nivells", copy.deepcopy(_DEF_MANT["control_nivells"]))
+        if "planificacions" not in mant["control_nivells"] or not isinstance(mant["control_nivells"]["planificacions"], list) or len(mant["control_nivells"]["planificacions"]) == 0:
+            mant["control_nivells"]["planificacions"] = copy.deepcopy(_DEF_MANT["control_nivells"]["planificacions"])
+        if "estat_nivells" not in mant["control_nivells"] or not mant["control_nivells"]["estat_nivells"]:
+            mant["control_nivells"]["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
         mant.setdefault("historic", [])
         avis_km = float(mant.get("avis_km", 20000))
 
@@ -675,6 +689,257 @@ def render():
                 _save_mant(mant)
                 st.session_state["inflat_fet_ver"] = inflat_fet_ver + 1
                 st.success(f"Inflat desat correctament! Pressió registrada: {r_pressio.strip() or '2.4 bar'}.")
+                st.rerun()
+
+        st.write("---")
+
+        # ---------- CONTROL DE NIVELLS ----------
+        nivells = mant.get("control_nivells") or {}
+        niv_last_str = nivells.get("data_ultim_control", "")
+        niv_last_km = nivells.get("km_ultim_control")
+        niv_estat = nivells.get("estat_nivells") or "Tots correctes (Oli, refrigerant, parabrises, frens)"
+        plan_nivells = nivells.get("planificacions") or []
+
+        occ_nivells = get_inflat_occurrences(plan_nivells, niv_last_str, avui)
+
+        # Proxim control
+        upcoming_niv = [occ for occ in occ_nivells if occ["dies_left"] >= 0]
+        upcoming_niv.sort(key=lambda x: x["dies_left"])
+        proxim_occ_niv = upcoming_niv[0] if upcoming_niv else None
+
+        niv_proper_str = proxim_occ_niv["next_date"].strftime("%d/%m/%Y") if proxim_occ_niv else ""
+        proxim_titol_niv = proxim_occ_niv["titol"] if proxim_occ_niv else "Sense planificar"
+        proxim_dies_niv = proxim_occ_niv["dies_left"] if proxim_occ_niv else None
+        proxim_avis_niv = proxim_occ_niv["avis_dies"] if proxim_occ_niv else 15
+
+        if niv_proper_str and mant["control_nivells"].get("propera_data") != niv_proper_str:
+            mant["control_nivells"]["propera_data"] = niv_proper_str
+
+        st.markdown("<h4 style='color:#f39c12;'>🧪 Control de Nivells</h4>", unsafe_allow_html=True)
+        n1, n2, n3, n4 = st.columns(4)
+        n1.metric("Últim control", niv_last_str if niv_last_str else "Sense registre",
+                  help=(f"Estat: {niv_estat}" if niv_estat else None))
+        
+        active_plans_niv = [p for p in plan_nivells if p.get("actiu", True)]
+        n2.metric("Planificació", f"{len(active_plans_niv)} controls/any", help="Viatges anuals i dates fixes programades")
+        n3.metric("Proper control", f"{niv_proper_str}" if niv_proper_str else "Sense planificar", help=f"{proxim_titol_niv} (Avisar {proxim_avis_niv} dies abans)")
+        n4.metric("Dies restants", f"{proxim_dies_niv} dies" if proxim_dies_niv is not None else "-")
+
+        # Avisos de nivells
+        has_banner_niv = False
+        for occ in occ_nivells:
+            dies = occ["dies_left"]
+            titol = occ["titol"]
+            d_str = occ["next_date"].strftime("%d/%m/%Y")
+            avis = occ["avis_dies"]
+            status = occ["status"]
+            if status == "superat" or (dies < 0 and status not in ("fet_enguany", "fet", "proper_any")):
+                st.error(f"🚨 Control de nivells superat per {abs(dies)} dies per al **{titol}**! (data prevista: {d_str})")
+                has_banner_niv = True
+            elif dies <= avis and status == "pendent":
+                st.warning(f"⚠️ Toca revisar els nivells del cotxe per al **{titol}**! Queden només {dies} dies (data prevista: {d_str}).")
+                has_banner_niv = True
+
+        if not has_banner_niv:
+            if proxim_occ_niv:
+                st.success(f"✅ Tot correcte. Queden {proxim_dies_niv} dies per al proper control planificat: **{proxim_titol_niv}** ({niv_proper_str}).")
+            else:
+                st.info("ℹ️ Encara no s'ha planificat cap data per al proper control de nivells.")
+
+        # 1. Expandible de planificació de controls de nivells
+        with st.expander("📅 Planificació de dates de control de nivells (Viatges fixes i alertes)"):
+            st.markdown("##### 📋 Viatges i controls de nivells programats")
+            if not plan_nivells:
+                st.info("No hi ha cap viatge o control planificat.")
+            else:
+                to_delete_niv = None
+                for idx, p in enumerate(plan_nivells):
+                    col_n1, col_n2, col_n3, col_n4, col_n5 = st.columns([3.5, 2.5, 2.2, 0.9, 0.9])
+                    p_tit = p.get("titol", "Control de nivells")
+                    p_rec = p.get("recurrent", True)
+                    p_avis = p.get("avis_dies_abans", 15)
+                    if p_rec:
+                        d_info = f"Cada any el {p.get('dia', 1):02d}/{p.get('mes', 1):02d}"
+                    else:
+                        d_info = f"Data puntual: {p.get('data_puntual', '-')}"
+
+                    occ_p = next((o for o in occ_nivells if o.get("id") == p.get("id")), None)
+                    rest_info = f"({occ_p['dies_left']} dies)" if occ_p else ""
+
+                    col_n1.markdown(f"**{p_tit}**")
+                    col_n2.write(f"📅 {d_info}")
+                    col_n3.caption(f"🔔 Avís {p_avis}d abans {rest_info}")
+
+                    is_editing_niv = (st.session_state.get("editing_niv_idx") == idx)
+                    if col_n4.button("✏️" if not is_editing_niv else "🔼", key=f"edit_niv_{idx}", help=f"Modificar {p_tit}"):
+                        if is_editing_niv:
+                            del st.session_state["editing_niv_idx"]
+                        else:
+                            st.session_state["editing_niv_idx"] = idx
+                        st.rerun()
+
+                    if col_n5.button("🗑️", key=f"del_niv_{idx}", help=f"Eliminar {p_tit}"):
+                        to_delete_niv = idx
+
+                    # Editor en línia
+                    if is_editing_niv:
+                        with st.container(border=True):
+                            st.markdown(f"###### ✏️ Modificar planificació: **{p_tit}**")
+                            mn_c1, mn_c2 = st.columns([2, 1])
+                            ed_niv_tit = mn_c1.text_input("Motiu o viatge", value=p.get("titol", ""), key=f"ed_niv_tit_{idx}")
+                            ed_niv_tip = mn_c2.radio("Tipus", ["Recurrent cada any", "Data única puntual"],
+                                                     index=0 if p_rec else 1, key=f"ed_niv_tip_{idx}", horizontal=True)
+
+                            mn_c3, mn_c4, mn_c5 = st.columns(3)
+                            if ed_niv_tip == "Recurrent cada any":
+                                cur_dia = int(p.get("dia", 20))
+                                cur_mes = int(p.get("mes", 7))
+                                ed_niv_dia = mn_c3.number_input("Dia del mes", min_value=1, max_value=31, value=cur_dia, step=1, key=f"ed_niv_dia_{idx}")
+                                ed_niv_mes = mn_c4.selectbox("Mes de l'any", range(1, 13), format_func=lambda m: f"{m:02d} - {mesos_noms[m-1]}", index=cur_mes-1, key=f"ed_niv_mes_{idx}")
+                                ed_niv_dt_val = ""
+                            else:
+                                init_d = avui + timedelta(days=30)
+                                if p.get("data_puntual"):
+                                    try:
+                                        init_d = datetime.strptime(str(p.get("data_puntual")).strip(), "%d/%m/%Y").date()
+                                    except Exception:
+                                        pass
+                                ed_niv_dt = mn_c3.date_input("Data del control", value=init_d, format="DD/MM/YYYY", key=f"ed_niv_dt_{idx}")
+                                ed_niv_dt_val = ed_niv_dt.strftime("%d/%m/%Y")
+                                ed_niv_dia = ed_niv_dt.day
+                                ed_niv_mes = ed_niv_dt.month
+
+                            ed_niv_avis = mn_c5.number_input("Avisar amb antelació (dies)", min_value=1, max_value=60, value=int(p.get("avis_dies_abans", 15)), step=1, key=f"ed_niv_avis_{idx}")
+
+                            b_edn1, b_edn2 = st.columns([1.5, 4])
+                            if b_edn1.button("💾 Desar canvis", type="primary", key=f"btn_save_ed_niv_{idx}"):
+                                if not ed_niv_tit.strip():
+                                    st.error("El motiu o viatge no pot estar buit.")
+                                else:
+                                    p["titol"] = ed_niv_tit.strip()
+                                    p["recurrent"] = (ed_niv_tip == "Recurrent cada any")
+                                    p["dia"] = int(ed_niv_dia)
+                                    p["mes"] = int(ed_niv_mes)
+                                    p["data_puntual"] = ed_niv_dt_val
+                                    p["avis_dies_abans"] = int(ed_niv_avis)
+                                    mant["control_nivells"]["planificacions"] = plan_nivells
+                                    _save_mant(mant)
+                                    del st.session_state["editing_niv_idx"]
+                                    st.success(f"S'han desat els canvis per a '{ed_niv_tit.strip()}'!")
+                                    st.rerun()
+
+                            if b_edn2.button("❌ Cancel·lar", key=f"btn_cancel_ed_niv_{idx}"):
+                                del st.session_state["editing_niv_idx"]
+                                st.rerun()
+
+                if to_delete_niv is not None:
+                    if st.session_state.get("editing_niv_idx") == to_delete_niv:
+                        del st.session_state["editing_niv_idx"]
+                    plan_nivells.pop(to_delete_niv)
+                    mant["control_nivells"]["planificacions"] = plan_nivells
+                    _save_mant(mant)
+                    st.rerun()
+
+            st.write("---")
+            st.markdown("##### ➕ Afegir nova data de control de nivells")
+            niv_form_ver = st.session_state.get("niv_form_ver", 0)
+            nn_c1, nn_c2 = st.columns([2, 1])
+            nou_titol_niv = nn_c1.text_input("Motiu o viatge", placeholder="Ex: Viatge d'estiu, Viatge de Nadal, Control abans d'ITV...", key=f"nou_niv_titol_{niv_form_ver}")
+            nou_tipus_niv = nn_c2.radio("Tipus", ["Recurrent cada any", "Data única puntual"], key=f"nou_niv_tipus_{niv_form_ver}", horizontal=True)
+
+            nn_c3, nn_c4, nn_c5 = st.columns(3)
+            if nou_tipus_niv == "Recurrent cada any":
+                nou_dia_niv = nn_c3.number_input("Dia del mes", min_value=1, max_value=31, value=20, step=1, key=f"nou_niv_dia_{niv_form_ver}")
+                nou_mes_niv = nn_c4.selectbox("Mes de l'any", range(1, 13), format_func=lambda m: f"{m:02d} - {mesos_noms[m-1]}", index=6, key=f"nou_niv_mes_{niv_form_ver}")
+                data_punt_val_niv = ""
+            else:
+                data_punt_dt_niv = nn_c3.date_input("Data del control", value=avui + timedelta(days=30), format="DD/MM/YYYY", key=f"nou_niv_dt_{niv_form_ver}")
+                data_punt_val_niv = data_punt_dt_niv.strftime("%d/%m/%Y")
+                nou_dia_niv = data_punt_dt_niv.day
+                nou_mes_niv = data_punt_dt_niv.month
+
+            nou_avis_niv = nn_c5.number_input("Avisar amb antelació (dies)", min_value=1, max_value=60, value=15, step=1, key=f"nou_niv_avis_{niv_form_ver}")
+
+            if st.button("➕ Afegir a la planificació", type="primary", key="btn_afegir_plan_niv"):
+                if not nou_titol_niv.strip():
+                    st.error("Si us plau, introdueix un motiu o nom per al viatge / control.")
+                else:
+                    nou_item_niv = {
+                        "id": str(int(datetime.now().timestamp())),
+                        "titol": nou_titol_niv.strip(),
+                        "dia": int(nou_dia_niv),
+                        "mes": int(nou_mes_niv),
+                        "recurrent": (nou_tipus_niv == "Recurrent cada any"),
+                        "data_puntual": data_punt_val_niv,
+                        "avis_dies_abans": int(nou_avis_niv),
+                        "actiu": True
+                    }
+                    plan_nivells.append(nou_item_niv)
+                    mant["control_nivells"]["planificacions"] = plan_nivells
+                    _save_mant(mant)
+                    st.session_state["niv_form_ver"] = niv_form_ver + 1
+                    st.success(f"S'ha afegit '{nou_titol_niv.strip()}' a la planificació de nivells!")
+                    st.rerun()
+
+        # 2. Expandible de registre de control de nivells fet
+        niv_fet_ver = st.session_state.get("niv_fet_ver", 0)
+        with st.expander("✏️ Registrar control de nivells fet"):
+            kn1, kn2, kn3 = st.columns(3)
+            rn_data = kn1.date_input("Data del control", value=avui, format="DD/MM/YYYY", key=f"niv_fet_data_{niv_fet_ver}")
+            rn_km = kn2.number_input("Km del cotxe (opcional)", min_value=0, value=int(car_kms_actuals), step=100, key=f"niv_fet_km_{niv_fet_ver}")
+            
+            opcions_estat = [
+                "Tots correctes (Oli, refrigerant, parabrises, frens)",
+                "Rellenat líquid parabrises",
+                "Rellenat refrigerant",
+                "Rellenat oli",
+                "Revisat / altres (veure notes)"
+            ]
+            idx_estat = 0
+            if niv_estat in opcions_estat:
+                idx_estat = opcions_estat.index(niv_estat)
+            rn_estat = kn3.selectbox("Estat dels nivells", opcions_estat, index=idx_estat, key=f"niv_fet_estat_{niv_fet_ver}")
+
+            rn_nota = st.text_input("Observacions", value="Revisió de nivells d'oli, refrigerant, eixugaparabrises i líquid de frens", key=f"niv_fet_nota_{niv_fet_ver}")
+
+            opcions_plans_niv = ["Control / revisió puntual entre mig (manté intactes els viatges planificats)"]
+            for p in plan_nivells:
+                opcions_plans_niv.append(f"Compleix planificació: {p.get('titol', 'Control de nivells')}")
+
+            correspon_niv = st.selectbox("Aquest control correspon a:", opcions_plans_niv, key=f"niv_fet_correspon_{niv_fet_ver}",
+                                         help="Si fas una revisió puntual entre viatges, selecciona l'opció puntual per no cancel·lar els viatges anuals programats.")
+
+            afegir_hist_niv = st.checkbox("Afegir a l'històric de manteniment", value=True, key=f"niv_fet_hist_{niv_fet_ver}")
+
+            if st.button("💾 Desar control fet", type="primary", key="btn_desar_niv"):
+                dn_fet_str = rn_data.strftime("%d/%m/%Y")
+                mant["control_nivells"]["data_ultim_control"] = dn_fet_str
+                mant["control_nivells"]["km_ultim_control"] = int(rn_km) if rn_km > 0 else None
+                mant["control_nivells"]["estat_nivells"] = rn_estat
+
+                # Marcar compliment de viatge si escau
+                if correspon_niv != opcions_plans_niv[0]:
+                    nom_sel_n = correspon_niv.replace("Compleix planificació: ", "").strip()
+                    for p in plan_nivells:
+                        if p.get("titol", "").strip() == nom_sel_n:
+                            if p.get("recurrent", True):
+                                p["ultim_fet_any"] = rn_data.year
+                            else:
+                                p["fet"] = True
+                    mant["control_nivells"]["planificacions"] = plan_nivells
+
+                if afegir_hist_niv:
+                    mant["historic"].append({
+                        "data": dn_fet_str,
+                        "tipus": "Control Nivells",
+                        "km": int(rn_km),
+                        "rodes": "",
+                        "detall": f"{rn_nota.strip()} [{rn_estat}]"
+                    })
+
+                _save_mant(mant)
+                st.session_state["niv_fet_ver"] = niv_fet_ver + 1
+                st.success(f"Control de nivells desat correctament! Estat: {rn_estat}.")
                 st.rerun()
 
         st.write("---")

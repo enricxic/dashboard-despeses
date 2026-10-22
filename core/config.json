@@ -258,11 +258,51 @@
         },
         "inflat_rodes": {
             "pressio": "2.4 bar",
-            "propera_data": "22/12/2026",
+            "propera_data": "23/10/2026",
+            "planificacions": [
+                {
+                    "id": "estiu",
+                    "dia": 20,
+                    "mes": 7,
+                    "actiu": true,
+                    "titol": "Viatge d'estiu (~1800 km)",
+                    "recurrent": true,
+                    "data_puntual": "",
+                    "avis_dies_abans": 5
+                },
+                {
+                    "id": "nadal",
+                    "dia": 15,
+                    "mes": 12,
+                    "actiu": true,
+                    "titol": "Viatge de Nadal (~1800 km)",
+                    "recurrent": true,
+                    "data_puntual": "",
+                    "avis_dies_abans": 5
+                },
+                {
+                    "id": "1792669518",
+                    "dia": 23,
+                    "mes": 10,
+                    "actiu": true,
+                    "titol": "Control",
+                    "recurrent": false,
+                    "data_puntual": "23/10/2026",
+                    "avis_dies_abans": 1
+                }
+            ],
             "avis_dies_abans": 15,
             "km_ultim_inflat": 35684,
             "repeticions_any": 2,
-            "data_ultim_inflat": "22/10/2026",
+            "data_ultim_inflat": "22/10/2026"
+        },
+        "control_nivells": {
+            "propera_data": "22/12/2026",
+            "repeticions_any": 2,
+            "avis_dies_abans": 15,
+            "data_ultim_control": "",
+            "km_ultim_control": null,
+            "estat_nivells": "Tots correctes (Oli, refrigerant, parabrises, frens)",
             "planificacions": [
                 {
                     "id": "estiu",

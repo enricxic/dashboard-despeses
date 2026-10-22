@@ -107,6 +107,40 @@ def get_global_alerts():
                             })
                 except Exception as e_inf_alert:
                     print(f"Error alerta inflat: {e_inf_alert}")
+
+                # Control de nivells (per dates planificades o propera data)
+                nivells = mant.get("control_nivells", {})
+                plan_niv = nivells.get("planificacions")
+                if not plan_niv or not isinstance(plan_niv, list):
+                    from core.config_manager import DEFAULT_PLANIFICACIONS_INFLAT
+                    plan_niv = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+
+                try:
+                    from core.config_manager import get_inflat_occurrences
+                    occ_niv = get_inflat_occurrences(plan_niv, nivells.get("data_ultim_control", ""))
+                    for occ in occ_niv:
+                        d_target = occ["next_date"]
+                        dies = occ["dies_left"]
+                        avis_dies = occ["avis_dies"]
+                        titol = occ["titol"]
+                        status = occ["status"]
+
+                        if status == "superat" or (dies < 0 and status not in ("fet_enguany", "fet", "proper_any")):
+                            alerts.append({
+                                "type": "error",
+                                "icon": "🧪",
+                                "title": f"Control de Nivells ({titol})",
+                                "message": f"Control de nivells pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies)."
+                            })
+                        elif dies <= avis_dies and status == "pendent":
+                            alerts.append({
+                                "type": "warning",
+                                "icon": "🧪",
+                                "title": f"Control de Nivells ({titol})",
+                                "message": f"Toca revisar els nivells del cotxe el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies)."
+                            })
+                except Exception as e_niv_alert:
+                    print(f"Error alerta nivells: {e_niv_alert}")
                     
         # 2. Alerta de Loteria
         loteria_cfg = config.get("regles_alertes", {}).get("loteria", {})

@@ -84,17 +84,29 @@ DEFAULT_CONFIG = {
         "oli": {"ultim_canvi_km": 30000, "interval_km": 16000, "data_ultim_canvi": ""},
         "rodes": {"ultim_canvi_km": None, "interval_km": 40000, "previst": {"km": 39600, "quantes": 2, "posicio": "Davanteres", "data": "Nadal 2026"}},
         "inflat_rodes": {
-        "propera_data": "22/12/2026",
-        "repeticions_any": 2,
-        "avis_dies_abans": 15,
-        "data_ultim_inflat": "",
-        "km_ultim_inflat": None,
-        "pressio": "2.4 bar",
-        "planificacions": [
-            {"id": "estiu", "titol": "Viatge d'estiu (~1800 km)", "dia": 20, "mes": 7, "recurrent": True, "avis_dies_abans": 15, "actiu": True},
-            {"id": "nadal", "titol": "Viatge de Nadal (~1800 km)", "dia": 22, "mes": 12, "recurrent": True, "avis_dies_abans": 15, "actiu": True}
-        ]
-    },
+            "propera_data": "22/12/2026",
+            "repeticions_any": 2,
+            "avis_dies_abans": 15,
+            "data_ultim_inflat": "",
+            "km_ultim_inflat": None,
+            "pressio": "2.4 bar",
+            "planificacions": [
+                {"id": "estiu", "titol": "Viatge d'estiu (~1800 km)", "dia": 20, "mes": 7, "recurrent": True, "avis_dies_abans": 15, "actiu": True},
+                {"id": "nadal", "titol": "Viatge de Nadal (~1800 km)", "dia": 22, "mes": 12, "recurrent": True, "avis_dies_abans": 15, "actiu": True}
+            ]
+        },
+        "control_nivells": {
+            "propera_data": "22/12/2026",
+            "repeticions_any": 2,
+            "avis_dies_abans": 15,
+            "data_ultim_control": "",
+            "km_ultim_control": None,
+            "estat_nivells": "Tots correctes (Oli, refrigerant, parabrises, frens)",
+            "planificacions": [
+                {"id": "estiu", "titol": "Viatge d'estiu (~1800 km)", "dia": 20, "mes": 7, "recurrent": True, "avis_dies_abans": 15, "actiu": True},
+                {"id": "nadal", "titol": "Viatge de Nadal (~1800 km)", "dia": 22, "mes": 12, "recurrent": True, "avis_dies_abans": 15, "actiu": True}
+            ]
+        },
         "historic": []
     }
 }
@@ -185,13 +197,19 @@ def load_app_config():
                     merged[k] = {**merged[k], **v}
                 else:
                     merged[k] = v
-            # Assegurar estructura inflat_rodes
+            # Assegurar estructura inflat_rodes i control_nivells
             mant_c = merged.setdefault("manteniment_cotxe", {})
             inf_c = mant_c.setdefault("inflat_rodes", {})
             if "pressio" not in inf_c or not inf_c["pressio"]:
                 inf_c["pressio"] = "2.4 bar"
             if "planificacions" not in inf_c or not isinstance(inf_c["planificacions"], list) or len(inf_c["planificacions"]) == 0:
                 inf_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+            
+            niv_c = mant_c.setdefault("control_nivells", {})
+            if "estat_nivells" not in niv_c or not niv_c["estat_nivells"]:
+                niv_c["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
+            if "planificacions" not in niv_c or not isinstance(niv_c["planificacions"], list) or len(niv_c["planificacions"]) == 0:
+                niv_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             return merged
     except Exception as e:
         print("Supabase config_manager load failed:", e)
@@ -211,13 +229,19 @@ def load_app_config():
                     merged[k] = {**merged[k], **v}
                 else:
                     merged[k] = v
-            # Assegurar estructura inflat_rodes
+            # Assegurar estructura inflat_rodes i control_nivells
             mant_c = merged.setdefault("manteniment_cotxe", {})
             inf_c = mant_c.setdefault("inflat_rodes", {})
             if "pressio" not in inf_c or not inf_c["pressio"]:
                 inf_c["pressio"] = "2.4 bar"
             if "planificacions" not in inf_c or not isinstance(inf_c["planificacions"], list) or len(inf_c["planificacions"]) == 0:
                 inf_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+            
+            niv_c = mant_c.setdefault("control_nivells", {})
+            if "estat_nivells" not in niv_c or not niv_c["estat_nivells"]:
+                niv_c["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
+            if "planificacions" not in niv_c or not isinstance(niv_c["planificacions"], list) or len(niv_c["planificacions"]) == 0:
+                niv_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             return merged
     except Exception as e:
         print("Error reading config file:", e)
