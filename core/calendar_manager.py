@@ -321,7 +321,7 @@ def fetch_feed_cached(feed_url, member_name="Enric", member_color="#407faf", max
     return cache_entry.get("events", [])
 
 def expand_recurring_events(events, target_year, target_month=None):
-    """Expands annual or recurring events into target year/month."""
+    """Expands annual or recurring events into target year/month, and filters non-recurring events."""
     expanded = []
     
     for ev in events:
@@ -335,32 +335,60 @@ def expand_recurring_events(events, target_year, target_month=None):
         except Exception:
             continue
             
+        rrule_str = ev.get("rrule", "").upper()
+        if recurrence == "Cap" and rrule_str:
+            if "FREQ=YEARLY" in rrule_str:
+                recurrence = "Anual"
+            elif "FREQ=MONTHLY" in rrule_str:
+                recurrence = "Mensual"
+            elif "FREQ=WEEKLY" in rrule_str:
+                recurrence = "Setmanal"
+            elif "FREQ=DAILY" in rrule_str:
+                recurrence = "Diari"
+                
+        until_date = None
+        if "UNTIL=" in rrule_str:
+            try:
+                until_part = rrule_str.split("UNTIL=")[1].split(";")[0][:8]
+                until_date = datetime.strptime(until_part, "%Y%m%d").date()
+            except Exception:
+                pass
+
         if recurrence == "Anual" or ev.get("category") == "Aniversari":
-            if target_month:
-                if ev_date.month == target_month:
-                    ev_copy = dict(ev)
-                    new_date = date(target_year, ev_date.month, ev_date.day)
-                    ev_copy["start_date"] = new_date.strftime("%Y-%m-%d")
-                    ev_copy["is_recurrence_instance"] = True
-                    expanded.append(ev_copy)
-            else:
-                ev_copy = dict(ev)
+            try:
                 new_date = date(target_year, ev_date.month, ev_date.day)
-                ev_copy["start_date"] = new_date.strftime("%Y-%m-%d")
-                ev_copy["is_recurrence_instance"] = True
-                expanded.append(ev_copy)
+            except ValueError:
+                new_date = date(target_year, ev_date.month, 28)
+                
+            if until_date and new_date > until_date:
+                continue
+            if ev_date > new_date:
+                continue
+            if target_month and new_date.month != target_month:
+                continue
+                
+            ev_copy = dict(ev)
+            ev_copy["start_date"] = new_date.strftime("%Y-%m-%d")
+            ev_copy["is_recurrence_instance"] = True
+            expanded.append(ev_copy)
+            
         elif recurrence == "Mensual":
             m_start = target_month if target_month else 1
             m_end = target_month if target_month else 12
             for m in range(m_start, m_end + 1):
                 try:
                     new_date = date(target_year, m, ev_date.day)
+                    if until_date and new_date > until_date:
+                        continue
+                    if new_date < ev_date:
+                        continue
                     ev_copy = dict(ev)
                     ev_copy["start_date"] = new_date.strftime("%Y-%m-%d")
                     ev_copy["is_recurrence_instance"] = True
                     expanded.append(ev_copy)
                 except ValueError:
                     pass
+                    
         elif recurrence == "Setmanal":
             if target_month:
                 first_d = date(target_year, target_month, 1)
@@ -370,14 +398,27 @@ def expand_recurring_events(events, target_year, target_month=None):
                 curr = first_d
                 while curr <= last_d:
                     if curr.weekday() == ev_date.weekday() and curr >= ev_date:
-                        ev_copy = dict(ev)
-                        ev_copy["start_date"] = curr.strftime("%Y-%m-%d")
-                        ev_copy["is_recurrence_instance"] = True
-                        expanded.append(ev_copy)
+                        if not (until_date and curr > until_date):
+                            ev_copy = dict(ev)
+                            ev_copy["start_date"] = curr.strftime("%Y-%m-%d")
+                            ev_copy["is_recurrence_instance"] = True
+                            expanded.append(ev_copy)
                     curr += timedelta(days=1)
             else:
                 expanded.append(ev)
+                
         else:
+            # Non-recurring event: strictly filter by target_year and target_month
+            if target_year:
+                if target_month:
+                    # Allow 7 days buffer around the month for the calendar grid border weeks
+                    first_d = date(target_year, target_month, 1) - timedelta(days=7)
+                    last_d = date(target_year, target_month, 28) + timedelta(days=11)
+                    if not (first_d <= ev_date <= last_d):
+                        continue
+                else:
+                    if ev_date.year != target_year:
+                        continue
             expanded.append(ev)
             
     return expanded

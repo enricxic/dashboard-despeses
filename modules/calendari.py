@@ -602,8 +602,19 @@ def render():
     else:
         st.markdown(f"### 📋 Llista d'Esdeveniments de {month_name} {cur_year}")
         
+        # Filtrar estrictament els esdeveniments que pertanyen al mes i any seleccionat
+        month_events = []
+        for ev in filtered_events:
+            d_str = ev.get("start_date", "")
+            try:
+                ev_d = datetime.strptime(d_str, "%Y-%m-%d").date()
+                if ev_d.year == cur_year and ev_d.month == cur_month:
+                    month_events.append(ev)
+            except Exception:
+                pass
+                
         # Ordenar esdeveniments per data i hora
-        sorted_events = sorted(filtered_events, key=lambda x: (x.get("start_date", ""), x.get("start_time", "")))
+        sorted_events = sorted(month_events, key=lambda x: (x.get("start_date", ""), x.get("start_time", "")))
         
         if not sorted_events:
             st.info(f"No hi ha cap esdeveniment registrat per a {month_name} de {cur_year} amb el filtre seleccionat.")
