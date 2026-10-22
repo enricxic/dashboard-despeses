@@ -6621,6 +6621,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5148;BBVA;VISA;20/06/2025;junio;2025;0.0;11.65;Càrrec;menjar;Pa i pastisseria;Sopar ve├»ns.  5 rodó;False
 5122;BBVA;Compte;12/06/2025;junio;2025;0.0;39.4;Càrrec;despesa_general;Lowi;Aplicat Abonament;False
 5174;Efectiu;;26/06/2025;junio;2025;0.0;47.4;Càrrec;restaurant;Restaurant;Arròs Jubilats 5p.(Manolo);False
+8189;TradeRep.;Dèbit;20/10/2026;octubre;2026;0.0;14.57;Càrrec;menjar;Dia;;False
 5129;BBVA;VISA;14/06/2025;junio;2025;0.0;35.62;Càrrec;menjar;Dia;;False
 5130;BBVA;VISA;14/06/2025;junio;2025;0.0;3.88;Càrrec;neteja;Dia;;False
 5131;Efectiu;;13/06/2025;junio;2025;0.0;3.99;Càrrec;menjar;Fruiteria Deepak;;False
@@ -6705,9 +6706,12 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5244;BBVA;Dèbit;14/07/2025;julio;2025;0.0;21.43;Càrrec;menjar;Dia;;False
 5245;BBVA;Dèbit;16/07/2025;julio;2025;0.0;41.94;Càrrec;roba;Decatlon;Piscina Jordi;False
 5194;Efectiu;;03/07/2025;julio;2025;0.0;13.9;Càrrec;farmàcia;Farmàcia;;False
+8190;TradeRep.;Dèbit;21/10/2026;octubre;2026;0.0;17.0;Càrrec;varis;Perruqueria;Enric;False
+8191;TradeRep.;Dèbit;21/10/2026;octubre;2026;0.0;10.83;Càrrec;proveidor;Clarel Fotos;Olga Coris 57 fotos;False
 5283;Efectiu;;24/07/2025;julio;2025;0.0;52.0;Càrrec;proveidor;Prolab;Àlbum Lidia Cerrillo;False
 5293;Efectiu;;24/07/2025;julio;2025;0.0;69.0;Càrrec;restaurant;Restaurant;Mala Uva. Palamós;False
 5306;Efectiu;;29/07/2025;julio;2025;0.0;3.0;Càrrec;varis;Papereria;fotocòpies testament;False
+8192;BBVA;Compte;22/10/2026;octubre;2026;50.0;0.0;Ingrés;ingres_general;Hisenda 50 2;;False
 5255;BBVA;VISA;14/07/2025;julio;2025;0.0;40.59;Càrrec;Parallar;Temu;Potes ferro taula;False
 5257;Efectiu;;17/07/2025;julio;2025;0.0;5.0;Càrrec;personal;Jordi;;False
 5258;Efectiu;;17/07/2025;julio;2025;0.0;4.8;Càrrec;menjar;Pa i pastisseria;;False
@@ -6736,6 +6740,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5356;BBVA;Compte;06/08/2025;agosto;2025;0.0;21.62;Càrrec;assegurança;DP MP Mireia;;False
 5325;BBVA;Compte;01/08/2025;agosto;2025;0.0;90.28;Càrrec;despesa_general;Piscina;;False
 5364;Efectiu;;08/08/2025;agosto;2025;0.0;-10.0;Càrrec;menjar;Vents i Marees;Pago Joan Vehí;False
+8193;BBVA;Compte;22/10/2026;octubre;2026;100.0;0.0;Ingrés;ingres_general;Hisenda 100;;False
 5329;BBVA;Compte;02/08/2025;agosto;2025;0.0;200.0;Càrrec;varis;Regal;Cumple Mireia;False
 5330;Efectiu;;01/08/2025;agosto;2025;0.0;3.3;Càrrec;menjar;Fruiteria Deepak;;False
 5332;Efectiu;;30/07/2025;julio;2025;0.0;3.23;Càrrec;menjar;Fruiteria Deepak;;False
@@ -6759,6 +6764,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5439;Efectiu;;25/08/2025;agosto;2025;0.0;51.0;Càrrec;restaurant;Restaurant;Dinar. El Trànsit. Figueres;False
 5440;Efectiu;;27/08/2025;agosto;2025;0.0;14.0;Càrrec;restaurant;Restaurant;Gelats Palamós;False
 5441;Efectiu;;26/08/2025;agosto;2025;0.0;20.0;Càrrec;roba;Altre roba;Mercat Palamós;False
+8194;BBVA;Compte;22/10/2026;octubre;2026;50.0;0.0;Ingrés;ingres_general;Hisenda 50 1;;False
 5419;BBVA;VISA;22/08/2025;agosto;2025;0.0;60.75;Càrrec;restaurant;Restaurant;Xino. Asia Pilar;False
 5420;BBVA;VISA;23/08/2025;agosto;2025;0.0;33.17;Càrrec;gasolina;Gasolina altres;Torre de la Horadada;False
 5421;BBVA;VISA;23/08/2025;agosto;2025;0.0;100.55;Càrrec;restaurant;Restaurant;Ca Marta. Vila Joiosa;False

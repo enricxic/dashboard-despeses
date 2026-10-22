@@ -1121,22 +1121,8 @@ def render(view_mode="economic"):
         df_pag['clean_mes'] = df_pag['mes'].astype(str).str.strip().str.lower()
     
     def get_limits_for(year, month_name):
-        month_idx = MONTHS_MAP.get(month_name.lower(), 12)
-        target_date = datetime(year, month_idx, 1)
-        
-        # Find matching row
-        applicable = df_limits[df_limits['parsed_date'] <= target_date]
-        if not applicable.empty:
-            best_row = applicable.sort_values(by='parsed_date').iloc[-1]
-            return {
-                'menjar': float(best_row['menjar']),
-                'gasolina': float(best_row['gasolina']),
-                'restaurant': float(best_row['restaurant']),
-                'farmacia': float(best_row['farmacia']),
-                'neteja': float(best_row['neteja']),
-                'varis': float(best_row['varis'])
-            }
-        return {'menjar': 500.0, 'gasolina': 140.0, 'restaurant': 220.0, 'farmacia': 25.0, 'neteja': 125.0, 'varis': 120.0}
+        from core.db import get_limits_for as _core_get_limits_for
+        return _core_get_limits_for(year, month_name)
     
     
     # ----------------- HEADER AREA -----------------

@@ -1374,7 +1374,8 @@ def ensure_session_dfs():
     
     table_requirements = {
         'modules.compres': ['despeses', 'ingressos', 'compresSuper', 'gasolina', 'hipoteca', 'estalviDP', 'limitsDespeses', 'pagaments'],
-        'modules.dashboard': ['despeses', 'ingressos', 'tr_cartera'],
+        'modules.dashboard': ['despeses', 'ingressos', 'tr_cartera', 'limitsDespeses', 'pagaments'],
+        'modules.economic': ['despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'],
         'modules.cotxe': ['gasolina', 'kmCotxe']
     }
     
@@ -1437,21 +1438,40 @@ df_pag = st.session_state.get("df_pag", pd.DataFrame())
 df_cartera = st.session_state.get("df_cartera", pd.DataFrame())
 
 def get_limits_for(year, month_name):
-    month_idx = MONTHS_MAP.get(month_name.lower(), 12)
+    month_idx = MONTHS_MAP.get(str(month_name).lower(), 12)
     target_date = datetime(year, month_idx, 1)
     
-    # Find matching row
-    applicable = df_limits[df_limits['parsed_date'] <= target_date]
-    if not applicable.empty:
-        best_row = applicable.sort_values(by='parsed_date').iloc[-1]
-        return {
-            'menjar': float(best_row['menjar']),
-            'gasolina': float(best_row['gasolina']),
-            'restaurant': float(best_row['restaurant']),
-            'farmacia': float(best_row['farmacia']),
-            'neteja': float(best_row['neteja']),
-            'varis': float(best_row['varis'])
-        }
+    current_df_limits = st.session_state.get("df_limits", None)
+    if current_df_limits is None or not isinstance(current_df_limits, pd.DataFrame) or current_df_limits.empty or 'data_inici' not in current_df_limits.columns:
+        csv_path = os.path.join("csv", "limitsDespeses.csv")
+        if os.path.exists(csv_path):
+            try:
+                current_df_limits = pd.read_csv(csv_path, sep=';')
+            except Exception:
+                try:
+                    current_df_limits = pd.read_csv(csv_path)
+                except Exception:
+                    current_df_limits = pd.DataFrame()
+        else:
+            current_df_limits = pd.DataFrame()
+            
+    if isinstance(current_df_limits, pd.DataFrame) and not current_df_limits.empty and 'data_inici' in current_df_limits.columns:
+        if 'parsed_date' not in current_df_limits.columns:
+            current_df_limits = current_df_limits.copy()
+            current_df_limits['parsed_date'] = current_df_limits['data_inici'].apply(parse_excel_date)
+            
+        applicable = current_df_limits[current_df_limits['parsed_date'] <= target_date]
+        if not applicable.empty:
+            best_row = applicable.sort_values(by='parsed_date').iloc[-1]
+            return {
+                'menjar': float(best_row.get('menjar', 500.0)),
+                'gasolina': float(best_row.get('gasolina', 140.0)),
+                'restaurant': float(best_row.get('restaurant', 220.0)),
+                'farmacia': float(best_row.get('farmacia', 25.0)),
+                'neteja': float(best_row.get('neteja', 125.0)),
+                'varis': float(best_row.get('varis', 120.0))
+            }
+            
     return {'menjar': 500.0, 'gasolina': 140.0, 'restaurant': 220.0, 'farmacia': 25.0, 'neteja': 125.0, 'varis': 120.0}
 
 

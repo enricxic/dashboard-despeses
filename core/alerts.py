@@ -30,7 +30,7 @@ def get_global_alerts():
             
         data = load_dashboard_data(tables_to_load=['despeses', 'kmCotxe', 'limitsDespeses'])
         if data and len(data) >= 10:
-            d_desp, df_ing, df_super, df_gas, df_km, df_hip, df_cartera, df_est, df_limits, df_pag = data
+            d_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag, df_cartera = data
             if df_desp is None or df_desp.empty:
                 df_desp = d_desp
         else:
@@ -155,12 +155,13 @@ def get_global_alerts():
             if df_desp is not None and not df_desp.empty:
                 avui = datetime.today()
                 curr_year = str(avui.year)
-                from core.db import CATALAN_MONTHS, get_limits_for
+                from core.db import CATALAN_MONTHS, get_limits_for, month_translations
                 curr_month_str = CATALAN_MONTHS[avui.month - 1]
+                mes_es = month_translations.get(curr_month_str, curr_month_str)
                 
                 # Filter df_desp for current year and month
                 if 'any' in df_desp.columns and 'mes' in df_desp.columns:
-                    df_curr = df_desp[(df_desp['any'].astype(str) == curr_year) & (df_desp['mes'].str.lower() == curr_month_str)].copy()
+                    df_curr = df_desp[(df_desp['any'].astype(str) == curr_year) & (df_desp['mes'].str.lower().isin([curr_month_str, mes_es]))].copy()
                     
                     if not df_curr.empty:
                         cat_col = 'Idcategoria' if 'Idcategoria' in df_curr.columns else ('Categoria' if 'Categoria' in df_curr.columns else None)
@@ -168,10 +169,11 @@ def get_global_alerts():
                         
                         if cat_col and imp_col:
                             df_curr[cat_col] = df_curr[cat_col].astype(str).str.strip().str.lower()
+                            df_curr[imp_col] = pd.to_numeric(df_curr[imp_col], errors='coerce').fillna(0.0)
                             sum_menjar = df_curr[df_curr[cat_col] == 'menjar'][imp_col].sum()
                             sum_gasolina = df_curr[df_curr[cat_col] == 'gasolina'][imp_col].sum()
                             sum_restaurant = df_curr[df_curr[cat_col] == 'restaurant'][imp_col].sum()
-                            sum_farmacia = df_curr[df_curr[cat_col] == 'farmàcia'][imp_col].sum()
+                            sum_farmacia = df_curr[df_curr[cat_col].isin(['farmàcia', 'farmacia'])][imp_col].sum()
                             sum_neteja = df_curr[df_curr[cat_col] == 'neteja'][imp_col].sum()
                             sum_varis = df_curr[df_curr[cat_col] == 'varis'][imp_col].sum()
                             
