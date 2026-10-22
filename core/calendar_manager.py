@@ -43,7 +43,7 @@ def _normalize_event(ev: dict) -> dict:
         ev["assigned_to"] = ev["member"]
     return ev
 
-def load_local_events():
+def load_raw_local_events():
     events_raw = []
     # Supabase (id=3)
     try:
@@ -68,18 +68,16 @@ def load_local_events():
                         events_raw = data
             except Exception as e:
                 print(f"Error loading {EVENTS_FILE}: {e}")
+    return events_raw
 
-    return [_normalize_event(e) for e in events_raw]
-
-def save_local_events(events):
-    normalized = [_normalize_event(e) for e in events]
+def save_raw_local_events(events):
     # Supabase (id=3)
     try:
         from core.db import get_supabase_client
         supabase = get_supabase_client("admin")
         supabase.table("app_config").upsert({
             "id": 3,
-            "config_json": normalized
+            "config_json": events
         }).execute()
     except Exception as e:
         print("Error saving events to Supabase:", e)
@@ -88,11 +86,21 @@ def save_local_events(events):
     ensure_data_dir()
     try:
         with open(EVENTS_FILE, "w", encoding="utf-8") as f:
-            json.dump(normalized, f, indent=4, ensure_ascii=False)
+            json.dump(events, f, indent=4, ensure_ascii=False)
         return True
     except Exception as e:
         print(f"Error saving {EVENTS_FILE}: {e}")
         return False
+
+def load_local_events():
+    raw = load_raw_local_events()
+    return [_normalize_event(e) for e in raw if not e.get("is_deleted")]
+
+def save_local_events(events):
+    raw = load_raw_local_events()
+    tombstones = [e for e in raw if e.get("is_deleted")]
+    normalized = [_normalize_event(e) for e in events if not e.get("is_deleted")]
+    return save_raw_local_events(normalized + tombstones)
 
 def add_event(event_data):
     events = load_local_events()
@@ -108,23 +116,54 @@ def add_event(event_data):
 
 def update_event(event_id, updated_data):
     events = load_local_events()
+    found = False
     for i, e in enumerate(events):
-        if e.get("id") == event_id:
+        if str(e.get("id")) == str(event_id):
             updated_data["id"] = event_id
             updated_data["updated_at"] = datetime.now().isoformat()
             updated_data = _normalize_event(updated_data)
             events[i] = updated_data
             save_local_events(events)
             return True
-    return False
+            
+    # If not found in local events, it is an external event (e.g. from Google Calendar)
+    # We exclude the original external event and save the modified version locally!
+    delete_event(event_id, uid=updated_data.get("uid"), start_date=updated_data.get("start_date"))
+    next_id = max([e.get("id", 0) for e in events if isinstance(e.get("id"), int)] + [0]) + 1
+    updated_data["id"] = next_id
+    updated_data["is_external"] = False
+    updated_data["created_at"] = datetime.now().isoformat()
+    updated_data = _normalize_event(updated_data)
+    events.append(updated_data)
+    save_local_events(events)
+    return True
 
-def delete_event(event_id):
-    events = load_local_events()
-    new_events = [e for e in events if e.get("id") != event_id]
-    if len(new_events) != len(events):
-        save_local_events(new_events)
+def delete_event(event_id, uid=None, start_date=None):
+    raw = load_raw_local_events()
+    new_raw = []
+    found_local = False
+    for e in raw:
+        if str(e.get("id")) == str(event_id) and not e.get("is_deleted"):
+            found_local = True
+        else:
+            new_raw.append(e)
+            
+    if found_local:
+        save_raw_local_events(new_raw)
         return True
-    return False
+        
+    # If it is an external event (or recurrence instance), register a tombstone
+    tombstone = {
+        "id": f"deleted_{event_id}",
+        "excluded_id": str(event_id),
+        "excluded_uid": uid,
+        "excluded_date": start_date,
+        "is_deleted": True,
+        "created_at": datetime.now().isoformat()
+    }
+    new_raw.append(tombstone)
+    save_raw_local_events(new_raw)
+    return True
 
 def unfold_ics_lines(raw_text):
     """Unfolds lines in iCalendar format where folded lines start with space or tab."""
@@ -323,6 +362,19 @@ def fetch_feed_cached(feed_url, member_name="Enric", member_color="#407faf", max
         
     return cache_entry.get("events", [])
 
+def sort_events_by_time(events_list):
+    def _time_key(e):
+        is_timed = bool(not e.get("all_day", False) and e.get("start_time"))
+        t_str = e.get("start_time", "") or ""
+        if ":" in t_str:
+            parts = t_str.split(":")
+            try:
+                t_str = f"{int(parts[0]):02d}:{parts[1]}"
+            except Exception:
+                pass
+        return (1 if is_timed else 0, t_str)
+    return sorted(events_list, key=_time_key)
+
 def clean_title_for_dedup(title: str) -> str:
     if not title:
         return ""
@@ -484,6 +536,9 @@ def expand_recurring_events(events, target_year, target_month=None):
 def get_all_events(app_cfg=None, target_year=None, target_month=None):
     """Retrieves merged list of local events and configured Google Calendar feeds."""
     local_events = load_local_events()
+    raw_local = load_raw_local_events()
+    excluded_ids = {str(e.get("excluded_id")) for e in raw_local if e.get("is_deleted") and e.get("excluded_id")}
+    excluded_uids = {(e.get("excluded_uid"), e.get("excluded_date")) for e in raw_local if e.get("is_deleted") and e.get("excluded_uid")}
     
     feed_events = []
     if app_cfg:
@@ -501,7 +556,15 @@ def get_all_events(app_cfg=None, target_year=None, target_month=None):
         local_ics_evs = fetch_feed_cached("enricxicars@gmail.com.ics", member_name="Enric", member_color="#407faf")
         feed_events.extend(local_ics_evs)
         
-    all_raw = local_events + feed_events
+    filtered_feed = []
+    for f in feed_events:
+        if str(f.get("id")) in excluded_ids:
+            continue
+        if f.get("uid") and (f.get("uid"), f.get("start_date")) in excluded_uids:
+            continue
+        filtered_feed.append(f)
+        
+    all_raw = local_events + filtered_feed
     
     if target_year:
         return expand_recurring_events(all_raw, target_year, target_month)

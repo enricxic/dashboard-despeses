@@ -35,6 +35,18 @@ def render():
     if "selected_day_for_new" not in st.session_state:
         st.session_state.selected_day_for_new = today
 
+    # Si l'usuari ha clicat un dia des de la graella del calendari
+    if "cal_day" in st.query_params:
+        try:
+            clicked_date = datetime.strptime(st.query_params["cal_day"], "%Y-%m-%d").date()
+            st.session_state.selected_day_for_new = clicked_date
+            st.session_state.picker_sel_day = clicked_date
+            if clicked_date.month != st.session_state.cal_month or clicked_date.year != st.session_state.cal_year:
+                st.session_state.cal_month = clicked_date.month
+                st.session_state.cal_year = clicked_date.year
+        except Exception:
+            pass
+
     # Mesos en català
     mesos_cat = [
         "", "Gener", "Febrer", "Març", "Abril", "Maig", "Juny",
@@ -95,14 +107,28 @@ def render():
         flex-direction: column;
         transition: all 0.2s ease;
         overflow: hidden;
+        cursor: pointer;
+        text-decoration: none !important;
+        color: inherit !important;
     }}
     .cal-grid-cell:hover {{
-        border-color: #38bdf8;
-        background: {bg_card_sub};
+        border-color: #38bdf8 !important;
+        background: {bg_card_sub} !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+    }}
+    .cal-grid-cell.selected-day {{
+        border: 2px solid #38bdf8 !important;
+        background: rgba(56, 189, 248, 0.15) !important;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
     }}
     .cal-grid-cell.today {{
+        border: 2px solid #f59e0b !important;
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+    }}
+    .cal-grid-cell.today.selected-day {{
         border: 2px solid #38bdf8 !important;
-        box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+        box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
     }}
     .cal-grid-cell.other-month {{
         opacity: 0.35;
@@ -503,17 +529,23 @@ def render():
                 d_str = d_obj.strftime("%Y-%m-%d")
                 is_current_month = (d_obj.month == cur_month)
                 is_today = (d_obj == today)
+                is_selected = (d_obj == st.session_state.selected_day_for_new)
                 
                 cell_classes = ["cal-grid-cell"]
                 if not is_current_month:
                     cell_classes.append("other-month")
                 if is_today:
                     cell_classes.append("today")
+                if is_selected:
+                    cell_classes.append("selected-day")
                     
-                day_evs = events_by_date.get(d_str, [])
+                day_evs = cm.sort_events_by_time(events_by_date.get(d_str, []))
                 num_class = "cal-day-num today-num" if is_today else "cal-day-num"
                 
-                html_grid.append(f'<div class="{" ".join(cell_classes)}">')
+                mod_val = st.query_params.get("mod") or st.session_state.get("current_module") or "modules.calendari"
+                cell_href = f"?mod={urllib.parse.quote(str(mod_val))}&cal_day={d_str}#gestio-dia"
+                
+                html_grid.append(f'<a href="{cell_href}" target="_self" class="{" ".join(cell_classes)}" title="Veure gestió del dia {d_obj.day}/{d_obj.month}/{d_obj.year}">')
                 html_grid.append('<div class="cal-cell-head">')
                 html_grid.append(f'<span class="{num_class}">{d_obj.day}</span>')
                 if is_today:
@@ -540,7 +572,7 @@ def render():
                     html_grid.append(f'<div class="cal-ev-more">+{len(day_evs) - 3} més</div>')
                 html_grid.append('</div>') # end cal-cell-events
                 
-                html_grid.append('</div>') # end cal-grid-cell
+                html_grid.append('</a>') # end cal-grid-cell link
                 
         html_grid.append('</div>') # end cal-grid-body
         html_grid.append('</div>') # end cal-grid-container
@@ -549,11 +581,16 @@ def render():
         st.markdown("".join(html_grid), unsafe_allow_html=True)
         
         # Secció interactiva de Detalls del Dia i Creació Ràpida
-        st.markdown(f"#### 🔍 Consulta i Gestió del Dia")
+        st.markdown('<div id="gestio-dia" style="margin-top:20px;"></div>', unsafe_allow_html=True)
         c_sel_d1, c_sel_d2 = st.columns([6, 4], vertical_alignment="center")
         with c_sel_d1:
             sel_day = st.date_input("Tria un dia per veure/afegir esdeveniments", value=st.session_state.selected_day_for_new or today, format="DD/MM/YYYY", key="picker_sel_day")
-            st.session_state.selected_day_for_new = sel_day
+            if sel_day != st.session_state.selected_day_for_new:
+                st.session_state.selected_day_for_new = sel_day
+                if sel_day.month != cur_month or sel_day.year != cur_year:
+                    st.session_state.cal_month = sel_day.month
+                    st.session_state.cal_year = sel_day.year
+                    st.rerun()
         with c_sel_d2:
             if st.button("➕ Nou Esdeveniment per a aquest dia", type="primary", use_container_width=True, key="btn_add_for_sel_day"):
                 st.session_state.show_event_modal = True
@@ -561,18 +598,24 @@ def render():
                 st.rerun()
                 
         sel_day_str = sel_day.strftime("%Y-%m-%d")
-        sel_day_evs = events_by_date.get(sel_day_str, [])
+        sel_day_evs = cm.sort_events_by_time(events_by_date.get(sel_day_str, []))
+        
+        weekday_names_full = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
+        w_name = weekday_names_full[sel_day.weekday()]
+        
+        st.markdown(f"#### 🔍 Consulta i Gestió del Dia: <span style='color:#38bdf8;'>{w_name}, {sel_day.strftime('%d/%m/%Y')}</span>", unsafe_allow_html=True)
         
         if not sel_day_evs:
-            st.info(f"No hi ha cap esdeveniment agendat per al dia **{sel_day.strftime('%d/%m/%Y')}**.")
+            st.info(f"No hi ha cap esdeveniment agendat per a {w_name}, **{sel_day.strftime('%d/%m/%Y')}**.")
         else:
             for ev in sel_day_evs:
                 cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
                 time_disp = "Tot el dia" if ev.get("all_day", False) else (ev.get("start_time", "") or "Sense hora")
                 loc_disp = f" · 📍 {ev.get('location')}" if ev.get("location") else ""
+                ev_id = ev.get("id", f"ev_{sel_day_str}_{ev.get('title')}")
                 
                 with st.container():
-                    c1, c2 = st.columns([7.5, 2.5], vertical_alignment="center")
+                    c1, c2 = st.columns([6.8, 3.2], vertical_alignment="center")
                     with c1:
                         st.markdown(f"""
                         <div style="font-size:1.05rem; font-weight:700; color:{text_primary};">
@@ -585,15 +628,20 @@ def render():
                         if ev.get("description"):
                             st.caption(ev.get("description"))
                     with c2:
-                        c_act1, c_act2 = st.columns(2)
+                        c_act1, c_act2, c_act3 = st.columns([1, 1, 1.4])
                         with c_act1:
+                            if st.button("✏️", key=f"edit_sel_day_{ev_id}", help="Modificar esdeveniment", use_container_width=True):
+                                st.session_state.edit_event_data = ev
+                                st.session_state.show_event_modal = True
+                                st.rerun()
+                        with c_act2:
+                            if st.button("🗑️", key=f"del_sel_day_{ev_id}", help="Esborrar esdeveniment", use_container_width=True):
+                                cm.delete_event(ev.get("id"), uid=ev.get("uid"), start_date=ev.get("start_date"))
+                                st.success("Esdeveniment eliminat correctament!")
+                                st.rerun()
+                        with c_act3:
                             g_url = cm.generate_google_calendar_url(ev)
                             st.markdown(f'<a href="{g_url}" target="_blank"><button style="width:100%; border-radius:6px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.75rem; padding:4px 0; cursor:pointer;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
-                        with c_act2:
-                            if not ev.get("is_external", False):
-                                if st.button("🗑️", key=f"del_sel_day_{ev.get('id')}", use_container_width=True, help="Esborrar esdeveniment"):
-                                    cm.delete_event(ev.get("id"))
-                                    st.rerun()
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:6px 0;'></div>", unsafe_allow_html=True)
 
     # =========================================================================
@@ -614,7 +662,17 @@ def render():
                 pass
                 
         # Ordenar esdeveniments per data i hora
-        sorted_events = sorted(month_events, key=lambda x: (x.get("start_date", ""), x.get("start_time", "")))
+        def _ev_sort_key(x):
+            is_timed = bool(not x.get("all_day", False) and x.get("start_time"))
+            t_str = x.get("start_time", "") or ""
+            if ":" in t_str:
+                parts = t_str.split(":")
+                try:
+                    t_str = f"{int(parts[0]):02d}:{parts[1]}"
+                except Exception:
+                    pass
+            return (x.get("start_date", ""), 1 if is_timed else 0, t_str)
+        sorted_events = sorted(month_events, key=_ev_sort_key)
         
         if not sorted_events:
             st.info(f"No hi ha cap esdeveniment registrat per a {month_name} de {cur_year} amb el filtre seleccionat.")
@@ -666,15 +724,21 @@ def render():
                         if ev.get("description"):
                             st.markdown(f"<div style='font-size:0.8rem; color:{text_secondary}; margin-top:4px;'>{ev.get('description')}</div>", unsafe_allow_html=True)
                     with c_ag_btns:
-                        c_b1, c_b2 = st.columns(2)
+                        c_b1, c_b2, c_b3 = st.columns([1, 1, 1.4])
+                        ev_id = ev.get("id", f"ev_{d_str}_{ev.get('title')}")
                         with c_b1:
+                            if st.button("✏️", key=f"edit_ev_list_{ev_id}", help="Modificar esdeveniment", use_container_width=True):
+                                st.session_state.edit_event_data = ev
+                                st.session_state.show_event_modal = True
+                                st.rerun()
+                        with c_b2:
+                            if st.button("🗑️", key=f"del_ev_list_{ev_id}", help="Esborrar esdeveniment", use_container_width=True):
+                                cm.delete_event(ev.get("id"), uid=ev.get("uid"), start_date=ev.get("start_date"))
+                                st.success("Esdeveniment eliminat!")
+                                st.rerun()
+                        with c_b3:
                             g_url = cm.generate_google_calendar_url(ev)
                             st.markdown(f'<a href="{g_url}" target="_blank"><button style="width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:600; padding:6px 0; cursor:pointer;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
-                        with c_b2:
-                            if not ev.get("is_external", False):
-                                if st.button("🗑️", key=f"del_ev_list_{ev.get('id')}", help="Esborrar esdeveniment", use_container_width=True):
-                                    cm.delete_event(ev.get("id"))
-                                    st.rerun()
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:10px 0;'></div>", unsafe_allow_html=True)
                     
     # =========================================================================
