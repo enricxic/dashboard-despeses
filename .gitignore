@@ -20,3 +20,5 @@ tickets/
 data/harness_status.json
 data/feeds_cache.json
 
+
+data/events.json

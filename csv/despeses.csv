@@ -6789,6 +6789,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5472;BBVA;Compte;03/09/2025;septiembre;2025;0.0;21.62;Càrrec;assegurança;DP MP Mireia;;False
 5483;BBVA;Compte;04/09/2025;septiembre;2025;0.0;40.52;Càrrec;assegurança;BBVA Asseg. Casa;;False
 5484;BBVA;Compte;04/09/2025;septiembre;2025;0.0;16.0;Càrrec;assegurança;DP Morts Enric;;False
+8195;TradeRep.;Dèbit;22/10/2026;octubre;2026;0.0;6.34;Càrrec;menjar;Fleca Arnau;;False
 5456;Efectiu;;23/08/2025;agosto;2025;0.0;0.0;Càrrec;menjar;Altres menjar;anulat;False
 5460;BBVA;Compte;01/09/2025;septiembre;2025;0.0;90.28;Càrrec;despesa_general;Piscina;;False
 5467;Efectiu;;02/09/2025;septiembre;2025;0.0;2.58;Càrrec;menjar;Fruiteria Deepak;;False
