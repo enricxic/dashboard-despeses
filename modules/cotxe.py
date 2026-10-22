@@ -492,12 +492,14 @@ def render():
         # 1. Expandible de planificació de viatges i alertes (SENSE st.form per evitar submissions involuntàries amb Enter)
         with st.expander("📅 Planificació de dates d'inflat (Viatges fixes i alertes)"):
             st.markdown("##### 📋 Viatges i manteniments programats")
+            mesos_noms = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"]
+            
             if not planificacions:
                 st.info("No hi ha cap viatge o data planificada.")
             else:
                 to_delete = None
                 for idx, p in enumerate(planificacions):
-                    col_p1, col_p2, col_p3, col_p4 = st.columns([3.5, 2.5, 2.5, 1])
+                    col_p1, col_p2, col_p3, col_p4, col_p5 = st.columns([3.5, 2.5, 2.2, 0.9, 0.9])
                     p_tit = p.get("titol", "Inflat")
                     p_rec = p.get("recurrent", True)
                     p_avis = p.get("avis_dies_abans", 15)
@@ -512,10 +514,72 @@ def render():
                     col_p1.markdown(f"**{p_tit}**")
                     col_p2.write(f"📅 {d_info}")
                     col_p3.caption(f"🔔 Avís {p_avis}d abans {rest_info}")
-                    if col_p4.button("🗑️", key=f"del_plan_{idx}", help=f"Eliminar {p_tit}"):
+                    
+                    is_editing = (st.session_state.get("editing_plan_idx") == idx)
+                    if col_p4.button("✏️" if not is_editing else "🔼", key=f"edit_plan_{idx}", help=f"Modificar {p_tit}"):
+                        if is_editing:
+                            del st.session_state["editing_plan_idx"]
+                        else:
+                            st.session_state["editing_plan_idx"] = idx
+                        st.rerun()
+
+                    if col_p5.button("🗑️", key=f"del_plan_{idx}", help=f"Eliminar {p_tit}"):
                         to_delete = idx
+
+                    # Editor en línia si aquest viatge està en mode edició
+                    if is_editing:
+                        with st.container(border=True):
+                            st.markdown(f"###### ✏️ Modificar planificació: **{p_tit}**")
+                            m_c1, m_c2 = st.columns([2, 1])
+                            edit_titol = m_c1.text_input("Motiu o viatge", value=p.get("titol", ""), key=f"ed_tit_{idx}")
+                            edit_tipus = m_c2.radio("Tipus", ["Recurrent cada any", "Data única puntual"],
+                                                     index=0 if p_rec else 1, key=f"ed_tip_{idx}", horizontal=True)
+
+                            m_c3, m_c4, m_c5 = st.columns(3)
+                            if edit_tipus == "Recurrent cada any":
+                                cur_dia = int(p.get("dia", 20))
+                                cur_mes = int(p.get("mes", 7))
+                                edit_dia = m_c3.number_input("Dia del mes", min_value=1, max_value=31, value=cur_dia, step=1, key=f"ed_dia_{idx}")
+                                edit_mes = m_c4.selectbox("Mes de l'any", range(1, 13), format_func=lambda m: f"{m:02d} - {mesos_noms[m-1]}", index=cur_mes-1, key=f"ed_mes_{idx}")
+                                edit_data_punt_val = ""
+                            else:
+                                init_d = avui + timedelta(days=30)
+                                if p.get("data_puntual"):
+                                    try:
+                                        init_d = datetime.strptime(str(p.get("data_puntual")).strip(), "%d/%m/%Y").date()
+                                    except Exception:
+                                        pass
+                                edit_dt = m_c3.date_input("Data de l'inflat", value=init_d, format="DD/MM/YYYY", key=f"ed_dt_{idx}")
+                                edit_data_punt_val = edit_dt.strftime("%d/%m/%Y")
+                                edit_dia = edit_dt.day
+                                edit_mes = edit_dt.month
+
+                            edit_avis = m_c5.number_input("Avisar amb antelació (dies)", min_value=1, max_value=60, value=int(p.get("avis_dies_abans", 15)), step=1, key=f"ed_avis_{idx}")
+
+                            b_ed1, b_ed2 = st.columns([1.5, 4])
+                            if b_ed1.button("💾 Desar canvis", type="primary", key=f"btn_save_ed_{idx}"):
+                                if not edit_titol.strip():
+                                    st.error("El motiu o viatge no pot estar buit.")
+                                else:
+                                    p["titol"] = edit_titol.strip()
+                                    p["recurrent"] = (edit_tipus == "Recurrent cada any")
+                                    p["dia"] = int(edit_dia)
+                                    p["mes"] = int(edit_mes)
+                                    p["data_puntual"] = edit_data_punt_val
+                                    p["avis_dies_abans"] = int(edit_avis)
+                                    mant["inflat_rodes"]["planificacions"] = planificacions
+                                    _save_mant(mant)
+                                    del st.session_state["editing_plan_idx"]
+                                    st.success(f"S'han desat els canvis per a '{edit_titol.strip()}'!")
+                                    st.rerun()
+
+                            if b_ed2.button("❌ Cancel·lar", key=f"btn_cancel_ed_{idx}"):
+                                del st.session_state["editing_plan_idx"]
+                                st.rerun()
                         
                 if to_delete is not None:
+                    if st.session_state.get("editing_plan_idx") == to_delete:
+                        del st.session_state["editing_plan_idx"]
                     planificacions.pop(to_delete)
                     mant["inflat_rodes"]["planificacions"] = planificacions
                     _save_mant(mant)
@@ -523,24 +587,24 @@ def render():
 
             st.write("---")
             st.markdown("##### ➕ Afegir nova data de planificació")
+            plan_form_ver = st.session_state.get("plan_form_ver", 0)
             np_c1, np_c2 = st.columns([2, 1])
-            nou_titol = np_c1.text_input("Motiu o viatge", placeholder="Ex: Viatge d'estiu, Viatge de Nadal, Setmana Santa...", key="nou_plan_titol")
-            nou_tipus = np_c2.radio("Tipus", ["Recurrent cada any", "Data única puntual"], key="nou_plan_tipus", horizontal=True)
+            nou_titol = np_c1.text_input("Motiu o viatge", placeholder="Ex: Viatge d'estiu, Viatge de Nadal, Setmana Santa...", key=f"nou_plan_titol_{plan_form_ver}")
+            nou_tipus = np_c2.radio("Tipus", ["Recurrent cada any", "Data única puntual"], key=f"nou_plan_tipus_{plan_form_ver}", horizontal=True)
 
             np_c3, np_c4, np_c5 = st.columns(3)
-            mesos_noms = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"]
 
             if nou_tipus == "Recurrent cada any":
-                nou_dia = np_c3.number_input("Dia del mes", min_value=1, max_value=31, value=20, step=1, key="nou_plan_dia")
-                nou_mes_idx = np_c4.selectbox("Mes de l'any", range(1, 13), format_func=lambda m: f"{m:02d} - {mesos_noms[m-1]}", index=6, key="nou_plan_mes")
+                nou_dia = np_c3.number_input("Dia del mes", min_value=1, max_value=31, value=20, step=1, key=f"nou_plan_dia_{plan_form_ver}")
+                nou_mes_idx = np_c4.selectbox("Mes de l'any", range(1, 13), format_func=lambda m: f"{m:02d} - {mesos_noms[m-1]}", index=6, key=f"nou_plan_mes_{plan_form_ver}")
                 data_punt_val = ""
             else:
-                data_punt_dt = np_c3.date_input("Data de l'inflat", value=avui + timedelta(days=30), format="DD/MM/YYYY", key="nou_plan_dt")
+                data_punt_dt = np_c3.date_input("Data de l'inflat", value=avui + timedelta(days=30), format="DD/MM/YYYY", key=f"nou_plan_dt_{plan_form_ver}")
                 data_punt_val = data_punt_dt.strftime("%d/%m/%Y")
                 nou_dia = data_punt_dt.day
                 nou_mes_idx = data_punt_dt.month
 
-            nou_avis_dies = np_c5.number_input("Avisar amb antelació (dies)", min_value=1, max_value=60, value=15, step=1, key="nou_plan_avis")
+            nou_avis_dies = np_c5.number_input("Avisar amb antelació (dies)", min_value=1, max_value=60, value=15, step=1, key=f"nou_plan_avis_{plan_form_ver}")
 
             if st.button("➕ Afegir a la planificació", type="primary", key="btn_afegir_plan"):
                 if not nou_titol.strip():
@@ -559,26 +623,28 @@ def render():
                     planificacions.append(nou_item)
                     mant["inflat_rodes"]["planificacions"] = planificacions
                     _save_mant(mant)
+                    st.session_state["plan_form_ver"] = plan_form_ver + 1
                     st.success(f"S'ha afegit '{nou_titol.strip()}' a la planificació!")
                     st.rerun()
 
         # 2. Expandible de registre d'inflat fet (SENSE st.form per evitar enviaments involuntaris amb la tecla Enter)
+        inflat_fet_ver = st.session_state.get("inflat_fet_ver", 0)
         with st.expander("✏️ Registrar inflat de rodes fet"):
             j1, j2, j3 = st.columns(3)
-            r_data = j1.date_input("Data de l'inflat", value=avui, format="DD/MM/YYYY", key="inf_fet_data")
-            r_km = j2.number_input("Km del cotxe (opcional)", min_value=0, value=int(car_kms_actuals), step=100, key="inf_fet_km")
-            r_pressio = j3.text_input("Pressió aplicada", value=inf_pressio or "2.4 bar", placeholder="Ex: 2.4 bar", key="inf_fet_pressio")
+            r_data = j1.date_input("Data de l'inflat", value=avui, format="DD/MM/YYYY", key=f"inf_fet_data_{inflat_fet_ver}")
+            r_km = j2.number_input("Km del cotxe (opcional)", min_value=0, value=int(car_kms_actuals), step=100, key=f"inf_fet_km_{inflat_fet_ver}")
+            r_pressio = j3.text_input("Pressió aplicada", value=inf_pressio or "2.4 bar", placeholder="Ex: 2.4 bar", key=f"inf_fet_pressio_{inflat_fet_ver}")
 
-            r_nota = st.text_input("Observacions", value="Revisió i inflat de pressió de les rodes", key="inf_fet_nota")
+            r_nota = st.text_input("Observacions", value="Revisió i inflat de pressió de les rodes", key=f"inf_fet_nota_{inflat_fet_ver}")
 
             opcions_plans = ["Revisió / inflat puntual entre mig (manté intactes els viatges planificats)"]
             for p in planificacions:
                 opcions_plans.append(f"Compleix planificació: {p.get('titol', 'Inflat')}")
 
-            correspon = st.selectbox("Aquest inflat correspon a:", opcions_plans, key="inf_fet_correspon",
+            correspon = st.selectbox("Aquest inflat correspon a:", opcions_plans, key=f"inf_fet_correspon_{inflat_fet_ver}",
                                      help="Si fas una revisió puntual entre viatges, selecciona l'opció puntual per no cancel·lar els viatges anuals programats.")
 
-            afegir_hist = st.checkbox("Afegir a l'històric de manteniment", value=True, key="inf_fet_hist")
+            afegir_hist = st.checkbox("Afegir a l'històric de manteniment", value=True, key=f"inf_fet_hist_{inflat_fet_ver}")
 
             if st.button("💾 Desar inflat fet", type="primary", key="btn_desar_inflat"):
                 d_fet_str = r_data.strftime("%d/%m/%Y")
@@ -607,6 +673,7 @@ def render():
                     })
 
                 _save_mant(mant)
+                st.session_state["inflat_fet_ver"] = inflat_fet_ver + 1
                 st.success(f"Inflat desat correctament! Pressió registrada: {r_pressio.strip() or '2.4 bar'}.")
                 st.rerun()
 
