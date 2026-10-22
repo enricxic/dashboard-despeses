@@ -590,13 +590,30 @@ def render():
                 for ev in day_evs[:3]:
                     cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
                     ev_color = ev.get("color", cat_info["color"])
+                    ev_status = ev.get("status", "pending")
                     ev_time = ev.get("start_time", "")
                     time_pfx = f"<b>{ev_time}</b> " if ev_time else ""
                     ev_icon = cat_info["icon"]
                     ev_title = ev.get("title", "Esdeveniment")
+                    
+                    chip_border = f"border:1px solid {ev_color}55;"
+                    chip_bg = f"background:{ev_color}22;"
+                    chip_text_color = ev_color
+                    status_prefix = ""
+                    if ev_status == "done":
+                        chip_border = "border:1px solid #10b981;"
+                        chip_bg = "background:rgba(16,185,129,0.25);"
+                        chip_text_color = "#10b981"
+                        status_prefix = "✅ "
+                    elif ev_status == "cancelled":
+                        chip_border = "border:1px dashed #ef4444;"
+                        chip_bg = "background:rgba(239,68,68,0.2);"
+                        chip_text_color = "#ef4444"
+                        status_prefix = "❌ "
+
                     html_grid.append(
-                        f'<div class="cal-ev-chip" style="background:{ev_color}22; color:{ev_color}; border:1px solid {ev_color}55;" title="{ev_title} ({ev.get("member", "Família")})">'
-                        f'<span>{ev_icon}</span> <span class="ev-chip-txt">{time_pfx}{ev_title}</span>'
+                        f'<div class="cal-ev-chip" style="{chip_bg} color:{chip_text_color}; {chip_border}" title="{ev_title} ({ev.get("member", "Família")})">'
+                        f'<span>{ev_icon}</span> <span class="ev-chip-txt">{status_prefix}{time_pfx}{ev_title}</span>'
                         f'</div>'
                     )
                 if len(day_evs) > 3:
@@ -644,13 +661,23 @@ def render():
                 time_disp = "Tot el dia" if ev.get("all_day", False) else (ev.get("start_time", "") or "Sense hora")
                 loc_disp = f" · 📍 {ev.get('location')}" if ev.get("location") else ""
                 ev_id = ev.get("id", f"ev_{sel_day_str}_{ev.get('title')}")
+                ev_status = ev.get("status", "pending")
+                
+                status_badge = ""
+                title_style = f"color:{text_primary};"
+                if ev_status == "done":
+                    status_badge = " <span style='background:rgba(16,185,129,0.2); color:#10b981; border:1px solid #10b981; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:800; margin-left:8px;'>✅ FET</span>"
+                    title_style = "color:#10b981;"
+                elif ev_status == "cancelled":
+                    status_badge = " <span style='background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:800; margin-left:8px;'>❌ NO FET</span>"
+                    title_style = "text-decoration:line-through; opacity:0.65; color:#ef4444;"
                 
                 with st.container():
-                    c1, c2 = st.columns([6.8, 3.2], vertical_alignment="center")
+                    c1, c2 = st.columns([5.8, 4.2], vertical_alignment="center")
                     with c1:
                         st.markdown(f"""
-                        <div style="font-size:1.05rem; font-weight:700; color:{text_primary};">
-                            {cat_info['icon']} {ev.get('title')}
+                        <div style="font-size:1.05rem; font-weight:700; {title_style}">
+                            {cat_info['icon']} {ev.get('title')}{status_badge}
                         </div>
                         <div style="font-size:0.85rem; color:{text_secondary};">
                             ⏰ <b>{time_disp}</b> · 👤 {ev.get('member', 'Família')}{loc_disp}
@@ -659,18 +686,36 @@ def render():
                         if ev.get("description"):
                             st.caption(ev.get("description"))
                     with c2:
-                        c_act1, c_act2, c_act3 = st.columns([1, 1, 1.4])
-                        with c_act1:
+                        b_chk, b_cross, b_edit, b_del, b_gcal = st.columns([1, 1, 1, 1, 1.4])
+                        with b_chk:
+                            if ev_status == "done":
+                                if st.button("✅", key=f"btn_chk_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
+                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "pending")
+                                    st.rerun()
+                            else:
+                                if st.button("✔️", key=f"btn_chk_{ev_id}", help="Marcar com a fet / completat (verd)", use_container_width=True):
+                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "done")
+                                    st.rerun()
+                        with b_cross:
+                            if ev_status == "cancelled":
+                                if st.button("❌", key=f"btn_cross_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
+                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "pending")
+                                    st.rerun()
+                            else:
+                                if st.button("✖️", key=f"btn_cross_{ev_id}", help="Marcar com a no fet / cancel·lat (vermell)", use_container_width=True):
+                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "cancelled")
+                                    st.rerun()
+                        with b_edit:
                             if st.button("✏️", key=f"edit_sel_day_{ev_id}", help="Modificar esdeveniment", use_container_width=True):
                                 st.session_state.edit_event_data = ev
                                 st.session_state.show_event_modal = True
                                 st.rerun()
-                        with c_act2:
+                        with b_del:
                             if st.button("🗑️", key=f"del_sel_day_{ev_id}", help="Esborrar esdeveniment", use_container_width=True):
                                 cm.delete_event(ev.get("id"), uid=ev.get("uid"), start_date=ev.get("start_date"))
                                 st.success("Esdeveniment eliminat correctament!")
                                 st.rerun()
-                        with c_act3:
+                        with b_gcal:
                             g_url = cm.generate_google_calendar_url(ev)
                             st.markdown(f'<a href="{g_url}" target="_blank"><button style="width:100%; border-radius:6px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.75rem; padding:4px 0; cursor:pointer;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:6px 0;'></div>", unsafe_allow_html=True)
@@ -743,10 +788,20 @@ def render():
                             <div class="agenda-date-sub">{month_abbr}</div>
                         </div>
                         """, unsafe_allow_html=True)
+                    ev_status = ev.get("status", "pending")
+                    ev_status_badge = ""
+                    ev_title_style = f"color:{text_primary};"
+                    if ev_status == "done":
+                        ev_status_badge = " <span style='background:rgba(16,185,129,0.2); color:#10b981; border:1px solid #10b981; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:800; margin-left:8px;'>✅ FET</span>"
+                        ev_title_style = "color:#10b981;"
+                    elif ev_status == "cancelled":
+                        ev_status_badge = " <span style='background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:800; margin-left:8px;'>❌ NO FET</span>"
+                        ev_title_style = "text-decoration:line-through; opacity:0.65; color:#ef4444;"
+
                     with c_ag_info:
                         st.markdown(f"""
-                        <div style="font-size:1.1rem; font-weight:800; color:{text_primary};">
-                            {cat_info['icon']} {ev.get('title')}{status_badge}
+                        <div style="font-size:1.1rem; font-weight:800; {ev_title_style}">
+                            {cat_info['icon']} {ev.get('title')}{status_badge}{ev_status_badge}
                         </div>
                         <div style="font-size:0.85rem; color:{text_secondary}; margin-top:2px;">
                             <span style="color:#38bdf8; font-weight:600;">{weekday_name}</span> · ⏰ <b>{time_disp}</b> · 👤 {ev.get('member', 'Família')}{loc_disp}
@@ -755,19 +810,37 @@ def render():
                         if ev.get("description"):
                             st.markdown(f"<div style='font-size:0.8rem; color:{text_secondary}; margin-top:4px;'>{ev.get('description')}</div>", unsafe_allow_html=True)
                     with c_ag_btns:
-                        c_b1, c_b2, c_b3 = st.columns([1, 1, 1.4])
+                        b_chk, b_cross, b_edit, b_del, b_gcal = st.columns([1, 1, 1, 1, 1.4])
                         ev_id = ev.get("id", f"ev_{d_str}_{ev.get('title')}")
-                        with c_b1:
+                        with b_chk:
+                            if ev_status == "done":
+                                if st.button("✅", key=f"btn_chk_list_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
+                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "pending")
+                                    st.rerun()
+                            else:
+                                if st.button("✔️", key=f"btn_chk_list_{ev_id}", help="Marcar com a fet / completat (verd)", use_container_width=True):
+                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "done")
+                                    st.rerun()
+                        with b_cross:
+                            if ev_status == "cancelled":
+                                if st.button("❌", key=f"btn_cross_list_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
+                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "pending")
+                                    st.rerun()
+                            else:
+                                if st.button("✖️", key=f"btn_cross_list_{ev_id}", help="Marcar com a no fet / cancel·lat (vermell)", use_container_width=True):
+                                    cm.set_event_status(ev.get("id"), ev.get("start_date"), "cancelled")
+                                    st.rerun()
+                        with b_edit:
                             if st.button("✏️", key=f"edit_ev_list_{ev_id}", help="Modificar esdeveniment", use_container_width=True):
                                 st.session_state.edit_event_data = ev
                                 st.session_state.show_event_modal = True
                                 st.rerun()
-                        with c_b2:
+                        with b_del:
                             if st.button("🗑️", key=f"del_ev_list_{ev_id}", help="Esborrar esdeveniment", use_container_width=True):
                                 cm.delete_event(ev.get("id"), uid=ev.get("uid"), start_date=ev.get("start_date"))
                                 st.success("Esdeveniment eliminat!")
                                 st.rerun()
-                        with c_b3:
+                        with b_gcal:
                             g_url = cm.generate_google_calendar_url(ev)
                             st.markdown(f'<a href="{g_url}" target="_blank"><button style="width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:600; padding:6px 0; cursor:pointer;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:10px 0;'></div>", unsafe_allow_html=True)

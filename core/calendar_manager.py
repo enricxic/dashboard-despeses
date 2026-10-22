@@ -94,7 +94,50 @@ def save_raw_local_events(events):
 
 def load_local_events():
     raw = load_raw_local_events()
-    return [_normalize_event(e) for e in raw if not e.get("is_deleted")]
+    return [_normalize_event(e) for e in raw if not e.get("is_deleted") and not e.get("is_status_override")]
+
+def get_event_status_map():
+    raw = load_raw_local_events()
+    status_map = {}
+    for e in raw:
+        if e.get("is_status_override") and not e.get("is_deleted"):
+            status_map[e.get("status_key")] = e.get("status")
+        elif e.get("status") and not e.get("is_deleted"):
+            status_map[f"{e.get('id')}_{e.get('start_date')}"] = e.get("status")
+    return status_map
+
+def set_event_status(event_id, start_date, status):
+    """Sets status ('done', 'cancelled', or 'pending') for an event on a specific date."""
+    key = f"{event_id}_{start_date}"
+    raw = load_raw_local_events()
+    
+    for e in raw:
+        if not e.get("is_deleted") and not e.get("is_status_override"):
+            if str(e.get("id")) == str(event_id) and e.get("start_date") == start_date:
+                e["status"] = status
+                
+    override_found = False
+    for e in raw:
+        if e.get("is_status_override") and e.get("status_key") == key:
+            override_found = True
+            if status == "pending":
+                e["is_deleted"] = True
+            else:
+                e["status"] = status
+                e["is_deleted"] = False
+            break
+            
+    if not override_found and status != "pending":
+        raw.append({
+            "id": f"status_{key}",
+            "is_status_override": True,
+            "status_key": key,
+            "status": status,
+            "updated_at": datetime.now().isoformat()
+        })
+        
+    save_raw_local_events(raw)
+    return True
 
 def save_local_events(events):
     raw = load_raw_local_events()
@@ -408,8 +451,13 @@ def deduplicate_events(events: list) -> list:
         if match_idx is not None:
             existing = deduped[match_idx]
             # If current is an exception instance (recurrence override), it takes precedence over recurring instance
+            # Preserve status if existing had it or current has it
+            final_status = ev.get("status") or existing.get("status") or "pending"
             if ev.get("has_recurrence_id") or ev.get("recurrence_id"):
+                ev["status"] = final_status
                 deduped[match_idx] = ev
+            elif final_status != "pending":
+                existing["status"] = final_status
             # Otherwise keep the version with checkmark or richer description
             elif ("✅" in ev.get("title", "") or "✔" in ev.get("title", "")) and not ("✅" in existing.get("title", "") or "✔" in existing.get("title", "")):
                 deduped[match_idx] = ev
@@ -430,6 +478,7 @@ def deduplicate_events(events: list) -> list:
 def expand_recurring_events(events, target_year, target_month=None):
     """Expands annual or recurring events into target year/month, and filters non-recurring events."""
     expanded = []
+    status_map = get_event_status_map()
     
     for ev in events:
         recurrence = ev.get("repeat", "Cap")
@@ -565,6 +614,11 @@ def get_all_events(app_cfg=None, target_year=None, target_month=None):
         filtered_feed.append(f)
         
     all_raw = local_events + filtered_feed
+    status_map = get_event_status_map()
+    for ev in all_raw:
+        s_k = f"{ev.get('id')}_{ev.get('start_date')}"
+        if s_k in status_map:
+            ev["status"] = status_map[s_k]
     
     if target_year:
         return expand_recurring_events(all_raw, target_year, target_month)
