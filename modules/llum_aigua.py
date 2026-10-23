@@ -641,6 +641,13 @@ def render_consum_llum_tab():
             st.plotly_chart(fig, use_container_width=True)
 
             # LLEGENDA EXPLICATIVA DELS COLORS
+            vora_notes_html = """
+                <div style='margin-top:8px; padding-top:6px; border-top:1px dashed #334155; display:flex; gap:20px; flex-wrap:wrap; font-size:0.8rem; color:#94a3b8;'>
+                    <div><span style='border:2px solid #fbbf24; border-radius:3px; padding:0 4px; font-weight:700; color:#fbbf24;'>🔲 Vora groga</span>: <b>Finestra recomanada d'acumuladors</b> (les hores òptimes de càrrega).</div>
+                    <div><span style='border:2px solid #ffffff; border-radius:3px; padding:0 4px; font-weight:700; color:#ffffff;'>🔲 Vora blanca</span>: <b>Hora actual</b> ({slot_act}).</div>
+                </div>
+            """
+
             if "Preu Real" in mode_color:
                 st.markdown(f"""
                 <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
@@ -650,10 +657,11 @@ def render_consum_llum_tab():
                         <div><span style='color:#f59e0b; font-weight:700;'>🟡 Mitjana ({th_low:.4f} - {th_high:.4f} €)</span>: Cost moderat al voltant de la mitjana.</div>
                         <div><span style='color:#ef4444; font-weight:700;'>🔴 Cara (> {th_high:.4f} €/kWh)</span>: Hores de màxim preu (evitar grans electrodomèstics).</div>
                     </div>
+                    {vora_notes_html}
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                st.markdown("""
+                st.markdown(f"""
                 <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
                     <div style='font-size:0.8rem; font-weight:700; color:#cbd5e1; margin-bottom:4px;'>📖 Llegenda de Colors (Trams Oficials 2.0TD de Peatges i Potència):</div>
                     <div style='display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:0.82rem;'>
@@ -661,6 +669,7 @@ def render_consum_llum_tab():
                         <div><span style='color:#f59e0b; font-weight:700;'>🟡 Tram Pla (08-10h, 14-18h, 22-24h)</span>: Peatge mig i <b>4,4 kW</b>. <i>(Nota: 14h-17h sol ser molt barat per l'energia solar!)</i></div>
                         <div><span style='color:#ef4444; font-weight:700;'>🔴 Tram Punta (10-14h i 18-22h)</span>: Peatge màxim i <b>4,4 kW</b>.</div>
                     </div>
+                    {vora_notes_html}
                 </div>
                 """, unsafe_allow_html=True)
 
