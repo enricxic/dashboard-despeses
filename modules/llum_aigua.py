@@ -533,12 +533,49 @@ def render_consum_llum_tab():
                         </div>
                         """, unsafe_allow_html=True)
 
-            # GRÀFIC HORARI 24H (PLOTLY)
-            st.markdown("<p style='font-size:0.9rem; font-weight:600; color:#cbd5e1; margin:14px 0 6px 0;'>📊 Corba Horària de Preus del Dia (24h)</p>", unsafe_allow_html=True)
-            
+            # -----------------------------------------------------------------
+            # GRÀFIC HORARI 24H (PLOTLY) AMB SELECTOR DE COLOR I LLEGENDA
+            # -----------------------------------------------------------------
+            c_gh1, c_gh2 = st.columns([1.5, 2.5], vertical_alignment="center")
+            with c_gh1:
+                st.markdown("<p style='font-size:0.95rem; font-weight:700; color:#cbd5e1; margin:0;'>📊 Corba Horària de Preus del Dia (24h)</p>", unsafe_allow_html=True)
+            with c_gh2:
+                mode_color = st.radio(
+                    "Colors de les barres:",
+                    ["🕒 Trams Regulats (Vall / Pla / Punta)", "💶 Preu Real (Barata 🟢 / Mitjana 🟡 / Cara 🔴)"],
+                    horizontal=True,
+                    index=0,
+                    key="rad_color_mode_llum",
+                    help="Tria si vols veure les barres segons els trams oficials de potència/peatges 2.0TD o segons el preu real de l'energia."
+                )
+
+            # Càlcul de llindars per a la coloració per preu real
+            all_prices = sorted([h["preu"] for h in hores])
+            th_low = all_prices[7] if len(all_prices) >= 8 else 0.10
+            th_high = all_prices[15] if len(all_prices) >= 16 else 0.20
+
             x_slots = [h["slot"] for h in hores]
             y_prices = [h["preu"] for h in hores]
-            colors = [h["tram_color"] for h in hores]
+            
+            # Tria de colors segons el mode
+            if "Preu Real" in mode_color:
+                colors = []
+                hover_texts = []
+                for h in hores:
+                    p = h["preu"]
+                    if p <= th_low:
+                        colors.append("#10b981") # Verd
+                        nivell_txt = "🟢 Molt Barata" if p == min(all_prices) else "🟢 Barata"
+                    elif p > th_high:
+                        colors.append("#ef4444") # Vermell
+                        nivell_txt = "🔴 Molt Cara" if p == max(all_prices) else "🔴 Cara"
+                    else:
+                        colors.append("#f59e0b") # Groc/Ambre
+                        nivell_txt = "🟡 Mitjana / Normal"
+                    hover_texts.append(f"<b>Hora: {h['slot']}</b><br>Preu: <b>{p:.4f} €/kWh</b><br>Nivell: {nivell_txt}<br>Tram 2.0TD: {h['tram_label']}")
+            else:
+                colors = [h["tram_color"] for h in hores]
+                hover_texts = [f"<b>Hora: {h['slot']}</b><br>Preu: <b>{h['preu']:.4f} €/kWh</b><br>Tram 2.0TD: {h['tram_label']}" for h in hores]
             
             opt_win_hours = []
             if opt_res and opt_res.get("millor_finestra"):
@@ -561,11 +598,16 @@ def render_consum_llum_tab():
             fig.add_trace(go.Bar(
                 x=x_slots,
                 y=y_prices,
+                text=[f"{p:.3f}€" for p in y_prices],
+                textposition="outside",
+                textfont=dict(size=9, color="#cbd5e1"),
+                cliponaxis=False,
                 marker=dict(
                     color=colors,
                     line=dict(color=border_colors, width=border_widths)
                 ),
-                hovertemplate="<b>Hora: %{x}</b><br>Preu: %{y:.4f} €/kWh<extra></extra>",
+                hovertext=hover_texts,
+                hoverinfo="text",
                 name="Preu €/kWh"
             ))
 
@@ -578,16 +620,49 @@ def render_consum_llum_tab():
                 annotation_font=dict(color="#38bdf8", size=10)
             )
 
+            max_y_val = max(y_prices) if y_prices else 0.4
             fig.update_layout(
-                margin=dict(l=10, r=10, t=25, b=30),
-                height=280,
+                margin=dict(l=10, r=10, t=30, b=25),
+                height=310,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(15, 23, 42, 0.4)",
                 xaxis=dict(showgrid=False, color="#94a3b8", tickfont=dict(size=10)),
-                yaxis=dict(showgrid=True, gridcolor="#334155", color="#94a3b8", tickformat=".3f", title="€/kWh", title_font=dict(size=11, color="#94a3b8")),
+                yaxis=dict(
+                    showgrid=True,
+                    gridcolor="#334155",
+                    color="#94a3b8",
+                    tickformat=".3f",
+                    title="€/kWh",
+                    title_font=dict(size=11, color="#94a3b8"),
+                    range=[0, max_y_val * 1.18]
+                ),
                 showlegend=False
             )
             st.plotly_chart(fig, use_container_width=True)
+
+            # LLEGENDA EXPLICATIVA DELS COLORS
+            if "Preu Real" in mode_color:
+                st.markdown(f"""
+                <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
+                    <div style='font-size:0.8rem; font-weight:700; color:#cbd5e1; margin-bottom:4px;'>📖 Llegenda de Colors (Segons el Preu Real de l'Energia):</div>
+                    <div style='display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:0.82rem;'>
+                        <div><span style='color:#10b981; font-weight:700;'>🟢 Barata (≤ {th_low:.4f} €/kWh)</span>: Hores amb el cost mínim (ideal per a rentadores i consums).</div>
+                        <div><span style='color:#f59e0b; font-weight:700;'>🟡 Mitjana ({th_low:.4f} - {th_high:.4f} €)</span>: Cost moderat al voltant de la mitjana.</div>
+                        <div><span style='color:#ef4444; font-weight:700;'>🔴 Cara (> {th_high:.4f} €/kWh)</span>: Hores de màxim preu (evitar grans electrodomèstics).</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("""
+                <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
+                    <div style='font-size:0.8rem; font-weight:700; color:#cbd5e1; margin-bottom:4px;'>📖 Llegenda de Colors (Trams Oficials 2.0TD de Peatges i Potència):</div>
+                    <div style='display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:0.82rem;'>
+                        <div><span style='color:#10b981; font-weight:700;'>🟢 Tram Vall (00h-08h i caps de setmana)</span>: Peatge mínim i <b>potència de 5,5 kW</b> (acumuladors).</div>
+                        <div><span style='color:#f59e0b; font-weight:700;'>🟡 Tram Pla (08-10h, 14-18h, 22-24h)</span>: Peatge mig i <b>4,4 kW</b>. <i>(Nota: 14h-17h sol ser molt barat per l'energia solar!)</i></div>
+                        <div><span style='color:#ef4444; font-weight:700;'>🔴 Tram Punta (10-14h i 18-22h)</span>: Peatge màxim i <b>4,4 kW</b>.</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
             with st.expander("ℹ️ Informació sobre Trams Horaris i Potències (Bo Social / 2.0TD)"):
                 st.markdown("""
