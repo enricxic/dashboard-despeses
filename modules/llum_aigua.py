@@ -533,6 +533,52 @@ def render_consum_llum_tab():
                         </div>
                         """, unsafe_allow_html=True)
 
+                # Desplegable amb la guia detallada i reflexions de la teva instal·lació
+                with st.expander("💡 Guia Estratègica i Consells d'Ús: Els teus 2 Acumuladors (Menjador i Pasadís)", expanded=False):
+                    st.markdown("""
+                    ### 🎯 Estratègia Òptima d'Ús per a Casa Teva (3 Plantes)
+                    
+                    Tens una configuració amb **dos acumuladors** i **doble potència contractada** (5,5 kW nit / 4,4 kW dia):
+                    - **Acumulador Gran (4.000 W):** Menjador / Planta Baixa.
+                    - **Acumulador Mitjà (2.000 W):** Pasadís de la 2a Planta (clau per evitar l'efecte xemeneia).
+                    
+                    ---
+                    
+                    #### 📊 Taula Comparativa: Càrrega a la Nit vs. Càrrega al Migdia Solar
+                    
+                    | Concepte / Paràmetre | 🌙 Càrrega Nocturna (00:00 - 08:00h) | ☀️ Càrrega Migdia Solar (14:00 - 17:00h) |
+                    | :--- | :--- | :--- |
+                    | **Aparell Recomanat** | **Acumulador 4000 W (Menjador)** | **Acumulador 2000 W (Pasadís 2a Planta)** |
+                    | **Potència Contractada** | **5,5 kW** (Horari Vall oficial) | **4,4 kW** (Horari Pla) |
+                    | **Consum de l'Aparell** | **4,0 kW** | **2,0 kW** |
+                    | **Marge lliure al comptador (ICP)**| **1,5 kW lliures** (per nevera, llums, stand-by) | **2,4 kW lliures** (molt segur, no salta l'ICP) |
+                    | **Preu mitjà habitual de l'energia** | ~0,13 - 0,18 €/kWh | **~0,04 - 0,07 €/kWh** (gràcies a la fotovoltaica) |
+                    | **Cost cicle diari (3h càrrega)** | ~1,68 € (per al de 4000 W) | **~0,30 €** (per al de 2000 W) |
+                    | **Cost mensual aprox. (2000 W)** | ~25,20 €/mes | **~9,18 €/mes** (*estalvi de ~16 €/mes = -63%*) |
+                    | **Aportació tèrmica a la casa** | Confort a la planta baixa des de primera hora del matí | L'escalfor puja a la tarda/vespre (18h-23h) quan s'habiten els dormitoris |
+
+                    ---
+
+                    #### 🧠 Reflexions i Claus Tècniques
+                    
+                    1. **Evitem la sobrecàrrega del diferencial / comptador (ICP):**
+                       - Si engegassis els dos acumuladors alhora a la nit: $4.000\\text{ W} + 2.000\\text{ W} = 6.000\\text{ W}$ (6,0 kW).
+                       - Com que a la nit tens **5,5 kW contractats**, **el comptador saltaria**.
+                       - Separar el de 2.000 W al migdia resol completament el problema de potència sense haver de pagar una quota fixa més alta a la companyia.
+                    
+                    2. **Aprofitament de la "Vall Solar" (14:00 a 17:00 h):**
+                       - Tot i que oficialment les 14h-17h pertanyen al tram regulat *Pla*, a Espanya la gran producció de parcs solars fotovoltaics enfonsa el preu real de l'energia (sovint a **0,03 € - 0,06 €/kWh**), sent **fins i tot més barat que a les 3 de la matinada**.
+                       - Carregar el radiador de 2 kW en aquestes 3 hores costa només uns **0,30 € al dia**.
+                    
+                    3. **Termodinàmica i "Efecte Xemeneia" en 3 plantes:**
+                       - L'aire calent puja per l'escala de forma natural. Si la segona planta està freda, actua com a "tap fred" i xucla ràpidament l'aire calent del menjador.
+                       - Carregar l'acumulador del pasadís de 14h a 17h fa que comenci a irradiar calor a partir de les 17h-18h, just quan arriba el vespre, temperant la segona i tercera planta. Això crea un matalàs tèrmic que reté l'escalfor del menjador a baix.
+                    
+                    4. **⚠️ Precaució domèstica important:**
+                       - De 14:00 a 17:00 h tens 4,4 kW contractats. Amb l'acumulador de 2.000 W encès, **et queden 2,4 kW lliures**.
+                       - *Consell:* Durant aquesta franja, vigila de no engegar simultàniament electrodomèstics d'alta potència com el **forn elèctric (2.500 W)** o la rentadora en cicle calent (2.000 W).
+                    """, unsafe_allow_html=True)
+
             # -----------------------------------------------------------------
             # GRÀFIC HORARI 24H (PLOTLY) AMB SELECTOR DE COLOR I LLEGENDA
             # -----------------------------------------------------------------
