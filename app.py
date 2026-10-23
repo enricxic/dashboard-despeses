@@ -140,7 +140,7 @@ function attachMenuTabInterceptors() {
 
                     const curHref = window.parent.location.href;
                     let belongsToCurrentMod = false;
-                    const mods = ['modules.compres', 'modules.economic', 'modules.cotxe', 'modules.menjar', 'modules.medicacio', 'modules.manteniment'];
+                    const mods = ['modules.compres', 'modules.economic', 'modules.cotxe', 'modules.menjar', 'modules.medicacio', 'modules.manteniment', 'modules.llum_aigua'];
                     for (const m of mods) {
                         if (href.includes('mod=' + m) && curHref.includes('mod=' + m)) {
                             belongsToCurrentMod = true;
@@ -186,7 +186,9 @@ function attachMenuTabInterceptors() {
                             if (href.includes('tab=registre')) { targetIdx = 0; targetText = 'registre'; }
                             else if (href.includes('tab=manuals')) { targetIdx = 1; targetText = 'manuals'; }
                             else if (href.includes('tab=garanties')) { targetIdx = 2; targetText = 'garanties'; }
-                            else if (href.includes('tab=consum_llum') || href.includes('tab=llum')) { targetIdx = 3; targetText = 'llum'; }
+                        } else if (href.includes('mod=modules.llum_aigua')) {
+                            if (href.includes('tab=llum') || href.includes('tab=electricitat') || href.includes('tab=consum_llum')) { targetIdx = 0; targetText = 'llum'; }
+                            else if (href.includes('tab=aigua') || href.includes('tab=consum_aigua')) { targetIdx = 1; targetText = 'aigua'; }
                         }
 
                         if (targetIdx >= 0) {
@@ -1086,7 +1088,6 @@ div.block-container {{
 <a href="?mod=modules.manteniment&tab=registre{url_suffix}" target="_self">📋 Registre Manteniment</a>
 <a href="?mod=modules.manteniment&tab=manuals{url_suffix}" target="_self">📖 Manuals</a>
 <a href="?mod=modules.manteniment&tab=garanties{url_suffix}" target="_self">🛡️ Garanties</a>
-<a href="?mod=modules.manteniment&tab=consum_llum{url_suffix}" target="_self">⚡ Consum Llum</a>
 <div class="menu-separator"></div>
 <a href="?mod=modules.manteniment&action=generar_any_manteniment{url_suffix}" target="_self">📅 Generar tasques proper any</a>
 </div>
@@ -1103,7 +1104,13 @@ div.block-container {{
 <a href="?mod=modules.medicacio&tab=google_calendar{url_suffix}" target="_self">⚙️ Connexió Google Calendar API</a>
 </div>
 </div>''' if icones_actives.get('medicacio', True) else ''}
-{f'<a href="?mod=modules.jocs{url_suffix}" target="_self">🎲 Jocs i oci</a>' if icones_actives.get('jocs', True) else ''}
+{f'''<div class="submenu-item">
+<a href="?mod=modules.llum_aigua{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>💡 Llum i Aigua</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
+<div class="submenu-dropdown">
+<a href="?mod=modules.llum_aigua&tab=llum{url_suffix}" target="_self">⚡ Consum Llum</a>
+<a href="?mod=modules.llum_aigua&tab=aigua{url_suffix}" target="_self">💧 Consum Aigua</a>
+</div>
+</div>''' if icones_actives.get('llum_aigua', True) and icones_actives.get('jocs', True) else ''}
 </div>
 </div>
 <div class="menu-item">
@@ -1455,7 +1462,7 @@ if st.session_state.current_module is None:
 {render_hotspot('seguretat', '📹 Seguretat i Càmeres')}
 {render_hotspot('manteniment', '🛠️ Manteniment de la Llar')}
 {render_hotspot('domotica', '📶 Domòtica (Home Assistant)')}
-{render_hotspot('jocs', '🎲 Jocs i Oci Familiar')}
+{render_hotspot('llum_aigua', '💡 Llum i Aigua')}
 
 <!-- ================= AMB RODONA PART DRETA (5 NODES) ================= -->
 {render_hotspot('calendari', '📅 Agenda i Calendari')}

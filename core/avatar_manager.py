@@ -63,6 +63,7 @@ MODULE_TO_ROLE = {
     "seguretat": "manetes",
     "calendari": "base",
     "jocs": "base",
+    "llum_aigua": "manetes",
     "cotxe": "manetes",
     "dashboard": "base"
 }

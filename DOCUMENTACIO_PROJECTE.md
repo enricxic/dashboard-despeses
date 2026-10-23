@@ -51,9 +51,9 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
    - `💰 Estalvis`: Fons d'estalvi `estalviDP`, quotes, aportacions, rescats i gràfic interactiu d'evolució del capital acumulat.
    - `🤖 Xat IA`: Assistent financer intel·ligent Gemini.
 4. **📹 Seguretat**: `modules/seguretat.py` *(Icona càmera)* - Estat de càmeres, accessos i alarmes.
-5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Gestió i organització de les actuacions, consums i documentació tècnica de la llar en quatre pestanyes especialitzades: `📋 Registre Manteniment` (tasques, reparacions i feines de casa amb formulari d'alta ràpid, assignació d'alertes personals, control d'acompliment i sincronització automàtica a l'agenda), `📖 Manuals` (instruccions d'aparells, ubicació, especificacions), `🛡️ Garanties` (dates de compra, terminis de vigència, factures i alertes de caducitat), i `⚡ Consum Llum` (preu de la llum horari en directe PVPC / Bo Social via webscraping de tarifaluzhora.es & REE, optimitzador de finestres de càrrega d'acumuladors elèctrics amb potència nocturna de 5,5 kW, registre de factures per trams Punta/Pla/Vall i visor PDF integrat), connectades a registres centralitzats (Supabase app_config ID 7, 8 i 9).
+5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Gestió i organització de les actuacions i documentació tècnica de la llar en tres pestanyes especialitzades: `📋 Registre Manteniment` (tasques, reparacions i feines de casa amb formulari d'alta ràpid, assignació d'alertes personals, control d'acompliment i sincronització automàtica a l'agenda), `📖 Manuals` (instruccions d'aparells, ubicació, especificacions) i `🛡️ Garanties` (dates de compra, terminis de vigència, factures i alertes de caducitat), connectades a registres centralitzats (Supabase app_config ID 7 i ID 8) i amb visor interactiu de fitxers PDF integrat.
 6. **📶 Domòtica**: `modules/domotica.py` *(Icona WiFi)* - Integració amb Home Assistant, llums i sensors.
-7. **🎲 Jocs**: `modules/jocs.py` *(Icona daus)* - Oci familiar, inventari de jocs i marcadors.
+7. **💡 Llum i Aigua**: `modules/llum_aigua.py` *(Icona bombeta)* - Gestió integral dels subministraments energètics i hídrics de la llar en dues pestanyes especialitzades: `⚡ Consum Llum` (preu de la llum horari en directe PVPC / Bo Social via webscraping de tarifaluzhora.es & REE, optimitzador de càrrega d'acumuladors elèctrics amb potència nocturna de 5,5 kW, registre de factures per trams Punta/Pla/Vall i visor PDF integrat) i `💧 Consum Aigua` (control de factures d'aigua, lectures de comptador, seguiment de metres cúbics consumits i visor PDF integrat), connectades a registres centralitzats (Supabase app_config ID 9 i ID 10).
 
 ### 🟢 Part Dreta (5 nodes amb rodona):
 8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari i agenda familiar interactiva:
@@ -254,6 +254,7 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
 - **ID 7**: `data/manteniment_docs.json` (Registre de Documents, Manuals d'Instruccions i Garanties de la llar)
 - **ID 8**: `data/registre_manteniment.json` / `csv/manteniment.csv` (Registre de tasques de manteniment, reparacions i feina de casa)
 - **ID 9**: `data/consum_llum.json` / `csv/consum_llum.csv` (Registre de factures elèctriques, potències i consums per tram)
+- **ID 10**: `data/consum_aigua.json` / `csv/consum_aigua.csv` (Registre de factures d'aigua, lectures de comptador i consums en m³)
 
 *Nota: Els fitxers locals es mantenen com a còpia de seguretat (fallback local), però la font de la veritat prioritària és sempre Supabase. Així mateix, per desig exprés de l'usuari, s'ha suprimit la renderització dels Avatars (Xiqui) i els seus botons a les capçaleres de tots els mòduls per simplificar la interfície.*
 
@@ -460,8 +461,18 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - Resolució del cicle de càrrega a `core/calendar_manager.py` aplicant el mapa d'estats (`status_map`) després de l'expansió de recurrències i de la desduplicació.
     - Suport de persistència per clau triple: ID de l'esdeveniment, UID d'iCal i títol normalitzat (`clean_title_for_dedup`), garantint que tant els esdeveniments locals com els de Google Calendar mantenen el seu estat entre sessions i dispositius.
 
-- **23/10/2026: Mòdul Manteniment - Nova pestanya '⚡ Consum Llum', Optimitzador d'Acumuladors i Webscraping (`modules/manteniment.py`, `core/llum_manager.py`)**:
-  - **Nova pestanya integrada '⚡ Consum Llum'**: Quarta pestanya accessible tant des de la navegació del mòdul com mitjançant drecera directa a la barra superior desplegable (`?mod=modules.manteniment&tab=consum_llum`).
+- **23/10/2026: Creació del nou Mòdul '💡 Llum i Aigua' i integració a la Pantalla d'Inici (`modules/llum_aigua.py`, `core/llum_manager.py`, `core/aigua_manager.py`, `app.py`)**:
+  - **Substitució de la icona a la pantalla d'inici**: S'ha eliminat la icona de jocs de la pantalla d'inici i s'ha integrat la nova icona de la **bombeta** a les imatges del logotip horitzontal i vertical (`logo xiquiHouse ampliat.png` i `logo xiquiHouse vertical.png`), creant el nou node d'accés interactiu per al mòdul **Llum i Aigua** (`modules.llum_aigua`).
+  - **Mòdul '💡 Llum i Aigua' amb dues pestanyes especialitzades**:
+    1. **⚡ Consum Llum**:
+       - *Preu PVPC / Bo Social en directe*: Webscraping automatitzat a `tarifaluzhora.es` amb fallback a l'API oficial de Red Eléctrica (`apidatos.ree.es`). Mètriques KPI d'hora actual, preu mig, hora més barata i hora més cara.
+       - *Optimitzador d'Acumuladors de Calor*: Càlcul de la millor finestra contínua per a la càrrega nocturna d'acumuladors, aprofitant la potència contractada de **5,5 kW a la nit (00:00 - 08:00 h, tram Vall)** i **4,4 kW de dia (Pla/Punta)**.
+       - *Gràfic horari de 24 hores (Plotly)* acolorint cada hora segons el seu tram i ressaltant la finestra de càrrega.
+       - *Registre de Factures Elèctriques*: Càrrega de consums per tram (Punta, Pla, Vall), imports, potències i arxivament de PDFs a `PDF/Factures_Llum/` amb visor natiu PDF.js, KPIs i gràfics apilats.
+    2. **💧 Consum Aigua**:
+       - *Registre de Factures d'Aigua*: Períodes de facturació, lectures anteriors i actuals de comptador, consum en m³, imports i arxivament de factures a `PDF/Factures_Aigua/` amb visor PDF.js.
+       - *KPIs i Gràfics Històrics*: Evolució del consum d'aigua en m³ i cost per factura.
+  - **Persistència Híbrida Cloud / Local**: Sincronització automàtica a Supabase `app_config` (ID 9 per a llum i ID 10 per a aigua) amb còpies de seguretat locals a `data/` i `csv/`.
   - **Preus de la llum en directe (PVPC / Tarifa Regulada - Bo Social)**:
     - Motor d'extracció automatitzat a `core/llum_manager.py` que obté els preus per hores mitjançant *web scraping* a `tarifaluzhora.es` amb canal de contingència (*fallback*) a l'API oficial de Red Eléctrica de España (`apidatos.ree.es`).
     - 4 Targetes KPI en temps real: preu hora actual amb badge de tram horari (🟢 Vall, 🟡 Pla, 🔴 Punta), preu mitjà del dia, hora més barata i hora més cara.

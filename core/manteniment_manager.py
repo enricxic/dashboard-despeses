@@ -22,6 +22,8 @@ def get_pdf_path(category: str, filename: str) -> str:
         subfolder = "Manuals"
     elif cat in ["factures_llum", "llum", "factura_llum", "factures"]:
         subfolder = "Factures_Llum"
+    elif cat in ["factures_aigua", "aigua", "factura_aigua"]:
+        subfolder = "Factures_Aigua"
     else:
         subfolder = "Garanties"
     return os.path.join(PDF_DIR, subfolder, filename)
@@ -33,6 +35,8 @@ def get_pdf_dir(category: str) -> str:
         subfolder = "Manuals"
     elif cat in ["factures_llum", "llum", "factura_llum", "factures"]:
         subfolder = "Factures_Llum"
+    elif cat in ["factures_aigua", "aigua", "factura_aigua"]:
+        subfolder = "Factures_Aigua"
     else:
         subfolder = "Garanties"
     d = os.path.join(PDF_DIR, subfolder)
