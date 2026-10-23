@@ -1901,7 +1901,7 @@ def render():
                 ("seguretat", "📹 Seguretat i Càmeres", icones_cfg.get("seguretat", True), False, "Control de càmeres de vigilància i seguretat"),
                 ("manteniment", "🛠️ Manteniment de la Llar", icones_cfg.get("manteniment", True), False, "Tasques de manteniment, reparacions i manuals"),
                 ("domotica", "📶 Domòtica (Home Assistant)", icones_cfg.get("domotica", True), False, "Integració de llums, sensors i automatitzacions"),
-                ("jocs", "🎲 Jocs i Oci Familiar", icones_cfg.get("jocs", True), False, "Partides, puntuacions i jocs familiars"),
+                ("llum_aigua", "💡 Llum i Aigua", icones_cfg.get("llum_aigua", icones_cfg.get("jocs", True)), False, "Factures de llum i aigua, preu horari en directe i consums"),
                 ("agenda", "📅 Agenda i Calendari", icones_cfg.get("agenda", True), False, "Esdeveniments familiars i calendari compartit"),
                 ("medicacio", "💊 Control de Medicació", icones_cfg.get("medicacio", True), False, "Pautes de medicació i avisos de preses"),
                 ("menjar", "🍽️ Menjar, Menús i Rebost", icones_cfg.get("menjar", True), False, "Planificació de menús setmanals i stock del rebost"),

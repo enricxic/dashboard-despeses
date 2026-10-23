@@ -1110,7 +1110,7 @@ div.block-container {{
 <a href="?mod=modules.llum_aigua&tab=llum{url_suffix}" target="_self">⚡ Consum Llum</a>
 <a href="?mod=modules.llum_aigua&tab=aigua{url_suffix}" target="_self">💧 Consum Aigua</a>
 </div>
-</div>''' if icones_actives.get('llum_aigua', True) and icones_actives.get('jocs', True) else ''}
+</div>''' if icones_actives.get('llum_aigua', icones_actives.get('jocs', True)) else ''}
 </div>
 </div>
 <div class="menu-item">
@@ -1220,7 +1220,7 @@ if st.session_state.current_module is None:
     icones_actives = app_cfg.get("icones_actives", {})
 
     def render_hotspot(mod_key, title_str, always_active=False):
-        is_active = always_active or icones_actives.get(mod_key, True) or (mod_key == "calendari" and icones_actives.get("agenda", True))
+        is_active = always_active or icones_actives.get(mod_key, True) or (mod_key == "calendari" and icones_actives.get("agenda", True)) or (mod_key == "llum_aigua" and icones_actives.get("jocs", True))
         cls = "hotspot" if is_active else "hotspot-disabled"
         href = f'href="?mod=modules.{mod_key}{url_suffix}" target="_self"' if is_active else ""
         if is_active:
@@ -1373,7 +1373,7 @@ if st.session_state.current_module is None:
 .hs-seguretat {{ left: 10.90%; top: 31.82%; width: 8.2%; }}
 .hs-manteniment {{ left: 23.51%; top: 40.44%; width: 8.2%; }}
 .hs-domotica {{ left: 10.72%; top: 52.48%; width: 8.2%; }}
-.hs-jocs {{ left: 23.51%; top: 60.28%; width: 8.2%; }}
+.hs-llum_aigua, .hs-jocs {{ left: 23.51%; top: 60.28%; width: 8.2%; }}
 .hs-calendari {{ left: 78.17%; top: 21.49%; width: 8.2%; }}
 .hs-medicacio {{ left: 89.05%; top: 31.54%; width: 8.2%; }}
 .hs-menjar {{ left: 77.82%; top: 40.62%; width: 8.2%; }}
@@ -1413,7 +1413,7 @@ if st.session_state.current_module is None:
     .hs-seguretat {{ left: 10.5%; top: 30.81%; width: 12.3%; }}
     .hs-manteniment {{ left: 10.3%; top: 40.46%; width: 12.3%; }}
     .hs-domotica {{ left: 10.3%; top: 50.56%; width: 12.3%; }}
-    .hs-jocs {{ left: 10.3%; top: 60.67%; width: 12.3%; }}
+    .hs-llum_aigua, .hs-jocs {{ left: 10.3%; top: 60.67%; width: 12.3%; }}
     .hs-calendari {{ left: 89.5%; top: 20.09%; width: 12.3%; }}
     .hs-medicacio {{ left: 88.8%; top: 30.76%; width: 12.3%; }}
     .hs-menjar {{ left: 89.0%; top: 40.74%; width: 12.3%; }}
