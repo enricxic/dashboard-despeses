@@ -570,3 +570,157 @@ def delete_factura_llum(factura_id: int) -> bool:
     if len(records) < initial_len:
         return save_factures_llum(records)
     return False
+
+
+# =========================================================================
+# MODEL SOLAR FOTOVOLTAIC PER A ARBÚCIES (GIRONA)
+# =========================================================================
+
+# Radiació solar mitjana diària mensual (HSP - Hores de Sol Pic a Arbúcies / La Selva)
+# Font: PVGIS / Meteocat per a latitud ~41.8°N
+HSP_ARBUCIES = {
+    1: 2.5,   # Gener
+    2: 3.2,   # Febrer
+    3: 4.4,   # Març
+    4: 5.1,   # Abril
+    5: 5.8,   # Maig
+    6: 6.4,   # Juny
+    7: 6.6,   # Juliol
+    8: 5.9,   # Agost
+    9: 4.7,   # Setembre
+    10: 3.4,  # Octubre
+    11: 2.6,  # Novembre
+    12: 2.2   # Desembre
+}
+
+DIES_MES = {
+    1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30,
+    7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
+}
+
+NOM_MESOS_CA = [
+    "Gen", "Feb", "Mar", "Abr", "Mai", "Jun",
+    "Jul", "Ago", "Set", "Oct", "Nov", "Des"
+]
+
+def simular_estudi_solar(
+    num_panells: int = 12,
+    potencia_panell_w: int = 450,
+    orientacio: str = "ne_pur",
+    bateria_kwh: float = 0.0,
+    carregar_acumuladors_sol: bool = True
+) -> dict:
+    """
+    Simula la producció, autoconsum, excedents i balanç econòmic
+    basant-se en les factures reals i la radiació d'Arbúcies.
+    """
+    kwp = (num_panells * potencia_panell_w) / 1000.0
+    pr = 0.80  # Performance ratio estàndard residencial
+
+    factors_orientacio = {
+        "ne_pur": [0.68, 0.75, 0.85, 0.92, 0.95, 0.96, 0.96, 0.94, 0.88, 0.78, 0.70, 0.65],
+        "est_oest": [0.88, 0.90, 0.92, 0.93, 0.94, 0.95, 0.95, 0.94, 0.93, 0.90, 0.88, 0.87],
+        "sud_optim": [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00]
+    }
+    factors = factors_orientacio.get(orientacio, factors_orientacio["ne_pur"])
+
+    records = load_factures_llum()
+    months_kwh = {}
+    for r in records:
+        try:
+            m = int(r["mesAny"].split("-")[1])
+            months_kwh.setdefault(m, []).append(float(r.get("kwhTotal", 0.0)))
+        except Exception:
+            pass
+
+    mensual_dades = []
+    tot_consum_anual = 0.0
+    tot_generacio_anual = 0.0
+    tot_autoconsum_anual = 0.0
+    tot_excedents_anual = 0.0
+
+    for m in range(1, 13):
+        dies = DIES_MES[m]
+        hsp = HSP_ARBUCIES[m]
+        f_ori = factors[m - 1]
+        prod_kwh = round(kwp * hsp * dies * pr * f_ori, 1)
+
+        c_vals = months_kwh.get(m, [450.0])
+        consum_kwh = round(sum(c_vals) / len(c_vals), 1)
+
+        # Autoconsum diürn de base (~35% del consum ordinari té lloc en hores de sol)
+        autoconsum_base_dia = consum_kwh * 0.35
+
+        # Acumulador desviat al sol (a l'hivern podem carregar fins a 6 kWh/dia de l'acumulador de 2000W)
+        autoconsum_acumuladors = 0.0
+        if carregar_acumuladors_sol and m in [1, 2, 3, 4, 10, 11, 12]:
+            autoconsum_acumuladors = min(6.0 * dies, prod_kwh * 0.5)
+
+        # Bateria física (descàrrega nocturna)
+        autoconsum_bateria = 0.0
+        if bateria_kwh > 0:
+            consum_nocturn_disponible = max(0.0, consum_kwh - autoconsum_base_dia - autoconsum_acumuladors)
+            capacitat_mensual_bateria = bateria_kwh * 0.90 * 0.90 * dies
+            autoconsum_bateria = min(capacitat_mensual_bateria, consum_nocturn_disponible, max(0.0, prod_kwh - autoconsum_base_dia - autoconsum_acumuladors))
+
+        autoconsum_mes = round(min(consum_kwh, autoconsum_base_dia + autoconsum_acumuladors + autoconsum_bateria, prod_kwh), 1)
+        excedents_mes = round(max(0.0, prod_kwh - autoconsum_mes), 1)
+        importat_xarxa = round(max(0.0, consum_kwh - autoconsum_mes), 1)
+
+        tot_consum_anual += consum_kwh
+        tot_generacio_anual += prod_kwh
+        tot_autoconsum_anual += autoconsum_mes
+        tot_excedents_anual += excedents_mes
+
+        mensual_dades.append({
+            "mes_num": m,
+            "mes_nom": NOM_MESOS_CA[m - 1],
+            "consum_kwh": consum_kwh,
+            "produccio_kwh": prod_kwh,
+            "autoconsum_kwh": autoconsum_mes,
+            "excedents_kwh": excedents_mes,
+            "xarxa_kwh": importat_xarxa
+        })
+
+    autosuficiencia_pct = round((tot_autoconsum_anual / tot_consum_anual * 100), 1) if tot_consum_anual > 0 else 0.0
+    autoconsum_ratio_pct = round((tot_autoconsum_anual / tot_generacio_anual * 100), 1) if tot_generacio_anual > 0 else 0.0
+
+    # Estimació econòmica de mercat actual (2025/2026)
+    cost_base_panells = kwp * 850.0  # Panells Tier 1 + estructures de teula
+    cost_inversor_hibrid = 1400.0   # Inversor híbrid preparat per bateries
+    cost_legalitzacio_cie = 650.0   # Butlletí CIE + legalització RAC / RITSIC
+    cost_bateria = bateria_kwh * 450.0 if bateria_kwh > 0 else 0.0
+
+    cost_total_empresa = round((cost_base_panells + cost_inversor_hibrid + cost_legalitzacio_cie + cost_bateria) * 1.21, 2)
+    # Autoinstal·lació mixta: estalvi d'uns 1.400 € de mà d'obra de teulada
+    cost_total_bricolatge = round(max(2000.0, cost_total_empresa - 1400.0), 2)
+
+    deduccio_irpf_40 = round(cost_total_empresa * 0.40, 2)
+    deduccio_irpf_60 = round(cost_total_empresa * 0.60, 2)
+    bonificacio_ibi_estimada = 250.0 * 3 # ~250 €/any durant 3 anys a Arbúcies
+
+    cost_net_empresa_amb_ajudes = round(max(500.0, cost_total_empresa - deduccio_irpf_40 - bonificacio_ibi_estimada), 2)
+    cost_net_bricolatge_amb_ajudes = round(max(500.0, cost_total_bricolatge - (cost_total_bricolatge * 0.40) - bonificacio_ibi_estimada), 2)
+
+    return {
+        "kwp": round(kwp, 2),
+        "num_panells": num_panells,
+        "potencia_panell_w": potencia_panell_w,
+        "orientacio": orientacio,
+        "bateria_kwh": bateria_kwh,
+        "superficie_m2": round(num_panells * 2.1, 1),
+        "tot_consum_anual": round(tot_consum_anual, 1),
+        "tot_generacio_anual": round(tot_generacio_anual, 1),
+        "tot_autoconsum_anual": round(tot_autoconsum_anual, 1),
+        "tot_excedents_anual": round(tot_excedents_anual, 1),
+        "autosuficiencia_pct": autosuficiencia_pct,
+        "autoconsum_ratio_pct": autoconsum_ratio_pct,
+        "cost_total_empresa": cost_total_empresa,
+        "cost_total_bricolatge": cost_total_bricolatge,
+        "deduccio_irpf_40": deduccio_irpf_40,
+        "deduccio_irpf_60": deduccio_irpf_60,
+        "bonificacio_ibi_estimada": bonificacio_ibi_estimada,
+        "cost_net_empresa_amb_ajudes": cost_net_empresa_amb_ajudes,
+        "cost_net_bricolatge_amb_ajudes": cost_net_bricolatge_amb_ajudes,
+        "mensual_dades": mensual_dades
+    }

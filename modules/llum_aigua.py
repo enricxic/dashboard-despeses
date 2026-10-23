@@ -23,7 +23,8 @@ from core.llum_manager import (
     save_factures_llum,
     add_factura_llum,
     update_factura_llum,
-    delete_factura_llum
+    delete_factura_llum,
+    simular_estudi_solar
 )
 from core.aigua_manager import (
     load_factures_aigua,
@@ -1387,6 +1388,278 @@ def render_consum_aigua_tab():
 
 
 # =========================================================================
+# PESTANYA 3: ESTUDI SOLAR FOTOVOLTAIC I IDONEÏTAT
+# =========================================================================
+
+def render_estudi_solar_tab():
+    st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0 0 16px 0;'>Estudi tècnic i econòmic per a la instal·lació de plaques solars fotovoltaiques a Arbúcies, amb dades de les teves 44 factures reals i integració amb els acumuladors de calor.</p>", unsafe_allow_html=True)
+
+    # Badges resum de la propietat
+    st.markdown("""
+    <div style='display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;'>
+        <div style='background:#1e293b; border:1px solid #334155; border-radius:8px; padding:6px 14px; font-size:0.83rem; color:#cbd5e1;'>
+            📍 <b>Ubicació:</b> Arbúcies (La Selva, Girona)
+        </div>
+        <div style='background:#1e293b; border:1px solid #334155; border-radius:8px; padding:6px 14px; font-size:0.83rem; color:#cbd5e1;'>
+            📐 <b>Teulada:</b> 40 - 50 m² de teula (29° Nord-Est)
+        </div>
+        <div style='background:#1e293b; border:1px solid #334155; border-radius:8px; padding:6px 14px; font-size:0.83rem; color:#cbd5e1;'>
+            ⚡ <b>Consum Històric:</b> 5.661 kWh / any (mitjana 44 mesos)
+        </div>
+        <div style='background:#065f46; border:1px solid #059669; border-radius:8px; padding:6px 14px; font-size:0.83rem; color:#a7f3d0;'>
+            🏷️ <b>Tarifa:</b> PVPC Bo Social (80% descompte)
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # CONFIGURADOR INTERACTIU
+    with st.container(border=True):
+        st.markdown("<h4 style='color:#f39c12; margin:0 0 12px 0;'>⚙️ Configurador del Sistema Solar Fotovoltaic</h4>", unsafe_allow_html=True)
+
+        c_s1, c_s2, c_s3 = st.columns(3)
+        with c_s1:
+            num_panells = st.slider(
+                "Nombre de Panells (450W cadascun):",
+                min_value=6,
+                max_value=20,
+                value=12,
+                step=1,
+                help="Cada panell de 450W ocupa ~2,1 m² de teulada. Amb 12 panells ocupes ~25 m² dels 40-50 m² disponibles."
+            )
+        with c_s2:
+            opt_orientacio = st.selectbox(
+                "Orientació de les plaques a la teulada:",
+                [
+                    "📐 Vessant única a 29° NE (Teulada actual)",
+                    "🔄 Dues aigües: 29° NE + 209° SO (Repartiment Est/Oest)",
+                    "☀️ Correcció d'estructura cap al Sud (100% òptim)"
+                ],
+                index=0,
+                help="29° NE produeix fort de matí i estiu. A dues aigües (Est/Oest) equilibra la producció durant tot el dia."
+            )
+            key_orientacio = "ne_pur"
+            if "Dues aigües" in opt_orientacio:
+                key_orientacio = "est_oest"
+            elif "Sud" in opt_orientacio:
+                key_orientacio = "sud_optim"
+
+        with c_s3:
+            opt_bateria = st.selectbox(
+                "Sistema d'Emmagatzematge (Bateria Física):",
+                [
+                    "❌ Sense bateria física (Només acumuladors)",
+                    "🔋 Bateria de Liti 5 kWh",
+                    "🔋 Bateria de Liti 10 kWh (Recomanada)",
+                    "🔋 Bateria de Liti 15 kWh (Màxima autonomia)"
+                ],
+                index=0,
+                help="La bateria de liti emmagatzema l'energia solar que sobra de dia per utilitzar-la de nit a tota la casa."
+            )
+            val_bateria = 0.0
+            if "5 kWh" in opt_bateria:
+                val_bateria = 5.0
+            elif "10 kWh" in opt_bateria:
+                val_bateria = 10.0
+            elif "15 kWh" in opt_bateria:
+                val_bateria = 15.0
+
+        c_ac_check1, c_ac_check2 = st.columns([1.8, 1.2], vertical_alignment="center")
+        with c_ac_check1:
+            chk_desviar_acum = st.checkbox(
+                "🔥 Desviar excedents solars a l'acumulador de calor (Bateria Tèrmica)",
+                value=True,
+                help="Aprofita els teus acumuladors (2000W / 4000W) com a gran acumulador tèrmic gratuït durant les hores centrals de sol (11h a 16h)."
+            )
+        with c_ac_check2:
+            st.caption("ℹ️ A l'hivern, carregar els acumuladors amb el sol augmenta l'autoconsum directe més d'un 35% a cost zero.")
+
+    # Executar simulació
+    res_solar = simular_estudi_solar(
+        num_panells=num_panells,
+        potencia_panell_w=450,
+        orientacio=key_orientacio,
+        bateria_kwh=val_bateria,
+        carregar_acumuladors_sol=chk_desviar_acum
+    )
+
+    # 4 TARGETES MÈTRIQUES
+    st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
+        st.metric(
+            "Potència del Camp Solar",
+            f"{res_solar['kwp']} kWp",
+            f"{res_solar['num_panells']} panells ({res_solar['superficie_m2']} m² ocupats)"
+        )
+    with m2:
+        st.metric(
+            "Generació Anual Estimada",
+            f"{res_solar['tot_generacio_anual']:,.0f} kWh",
+            f"Consum anual: {res_solar['tot_consum_anual']:,.0f} kWh"
+        )
+    with m3:
+        st.metric(
+            "Grau d'Autosuficiència",
+            f"{res_solar['autosuficiencia_pct']}%",
+            f"{res_solar['tot_autoconsum_anual']:,.0f} kWh aprofitats directament"
+        )
+    with m4:
+        st.metric(
+            "Excedents Anuals a Xarxa",
+            f"{res_solar['tot_excedents_anual']:,.0f} kWh",
+            f"{res_solar['autoconsum_ratio_pct']}% d'autoconsum directe"
+        )
+
+    # GRÀFIC BALANÇ MENSUAL
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color:#38bdf8; margin:0 0 4px 0;'>📊 Balanç Mensual: Producció Solar vs. El teu Consum Real</h4>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:0.82rem; color:#94a3b8; margin-bottom:12px;'>Simulació mes a mes segons les teves 44 factures reals i la radiació d'Arbúcies.</div>", unsafe_allow_html=True)
+
+    df_solar = pd.DataFrame(res_solar["mensual_dades"])
+    fig_solar = go.Figure()
+
+    fig_solar.add_trace(go.Bar(
+        name="⚡ Autoconsum Directe + Bateria",
+        x=df_solar["mes_nom"],
+        y=df_solar["autoconsum_kwh"],
+        marker_color="#10b981",
+        hovertemplate="Autoconsum: %{y:.1f} kWh<extra></extra>"
+    ))
+
+    fig_solar.add_trace(go.Bar(
+        name="🔌 Importat de la Xarxa",
+        x=df_solar["mes_nom"],
+        y=df_solar["xarxa_kwh"],
+        marker_color="#ef4444",
+        hovertemplate="De xarxa: %{y:.1f} kWh<extra></extra>"
+    ))
+
+    fig_solar.add_trace(go.Scatter(
+        name="☀️ Generació Solar Total",
+        x=df_solar["mes_nom"],
+        y=df_solar["produccio_kwh"],
+        mode="lines+markers",
+        line=dict(color="#f59e0b", width=3),
+        marker=dict(size=8, color="#f59e0b"),
+        hovertemplate="Generació Solar: %{y:.1f} kWh<extra></extra>"
+    ))
+
+    fig_solar.update_layout(
+        barmode="stack",
+        margin=dict(l=10, r=10, t=30, b=30),
+        height=330,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 23, 42, 0.4)",
+        xaxis=dict(showgrid=False, color="#94a3b8"),
+        yaxis=dict(
+            title="Energia (kWh/mes)",
+            title_font=dict(color="#94a3b8", size=11),
+            showgrid=True,
+            gridcolor="#334155",
+            color="#94a3b8"
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            font=dict(color="#cbd5e1", size=11)
+        )
+    )
+    st.plotly_chart(fig_solar, use_container_width=True)
+
+    # ANÀLISI DEL BO SOCIAL
+    st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown("""
+        <h4 style='color:#f39c12; margin-top:0;'>🏷️ La Particularitat Econòmica del Bo Social (80% Descompte)</h4>
+        <div style='font-size:0.87rem; color:#cbd5e1; line-height:1.6;'>
+            Actualment gaudeixes de la tarifa <b>PVPC amb Bo Social de Vulnerable Sever (80% de bonificació)</b> a Energía XXI:
+            <ul>
+                <li><b>Cost elèctric actual mínim:</b> Pagant entre 0,02 € i 0,04 € pel kWh de la xarxa, el cost anual total de la teva factura se situa en només <b>350 € - 450 € / any</b> malgrat consumir 5.660 kWh.</li>
+                <li><b>Com funciona la compensació d'excedents (RD 244/2019):</b> La llei estipula que els excedents solars abocats a la xarxa només poden compensar el terme variable de l'energia de la factura del mes (mai el terme fix de potència ni els impostos, i la factura mai pot sortir negativa). Amb un 80% de descompte que ja tens, el valor monetari que rebràs per abocar a xarxa serà reduït.</li>
+                <li><b>La clau d'or: La "Bateria Tèrmica":</b> Com que vendre energia no aporta grans beneficis amb el Bo Social, <b>desviar l'excedent als acumuladors de calor (2.000W i 4.000W) durant el migdia</b> és l'estratègia més rendible: escalfes la casa de 3 plantes al 100% de confort sense gastar res de xarxa a la nit.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # COMPARATIVA D'EXECUCIÓ: EMPRESA VS BRICOLATGE
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color:#f39c12; margin:0 0 12px 0;'>🛠️ Comparativa d'Execució: Empresa Especialitzada vs. Què pots fer tu mateix</h4>", unsafe_allow_html=True)
+
+    col_emp, col_diy = st.columns(2, gap="medium")
+    with col_emp:
+        st.markdown(f"""
+        <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:10px; padding:16px;'>
+            <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;'>
+                <b style='color:#38bdf8; font-size:1.05rem;'>🏢 Opció A: Claus en Mà (Empresa Certificada)</b>
+                <span style='background:#075985; color:#bae6fd; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>100% Garantit</span>
+            </div>
+            <div style='font-size:0.83rem; color:#cbd5e1; line-height:1.5;'>
+                L'empresa subministra materials de 1a marca (panells Tier 1, inversor híbrid), realitza el muntatge a la teulada de teules amb assegurança de responsabilitat civil i goteres, cablejat, quadre de proteccions AC/DC, emissió del <b>Butlletí CIE</b> i <b>legalització al RAC (Generalitat)</b>.
+            </div>
+            <hr style='border-color:#334155; margin:12px 0;'>
+            <div style='font-size:0.9rem;'>
+                <div>Pressupost estimat complet (amb IVA): <b style='color:#f39c12; font-size:1.15rem;'>{res_solar['cost_total_empresa']:,.2f} €</b></div>
+                <div style='color:#10b981; margin-top:4px;'>- Deducció IRPF (40%): <b>-{res_solar['deduccio_irpf_40']:,.2f} €</b></div>
+                <div style='color:#10b981;'>- Bonificació IBI Arbúcies (~3 anys): <b>-{res_solar['bonificacio_ibi_estimada']:,.2f} €</b></div>
+                <hr style='border-color:#334155; margin:8px 0;'>
+                <div style='font-size:1rem; color:#e2e8f0;'>Cost net real aproximat: <b style='color:#10b981; font-size:1.25rem;'>{res_solar['cost_net_empresa_amb_ajudes']:,.2f} €</b></div>
+            </div>
+            <div style='font-size:0.78rem; color:#94a3b8; margin-top:10px;'>
+                ✅ <b>Avantatges:</b> Seguretat total en alçada, garantia d'estanquitat a les teules i certificació energètica oficial per aplicar la deducció a la Renda sense problemes.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_diy:
+        st.markdown(f"""
+        <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:10px; padding:16px;'>
+            <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;'>
+                <b style='color:#f59e0b; font-size:1.05rem;'>🔧 Opció B: Fórmula Mixta (Bricolatge + Professional)</b>
+                <span style='background:#78350f; color:#fde68a; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>Estalvi Mà d'Obra</span>
+            </div>
+            <div style='font-size:0.83rem; color:#cbd5e1; line-height:1.5;'>
+                <b>Què fas tu:</b> Fixar els ganxos salvateules d'acer inoxidable a les bigues, muntar els perfils d'alumini, carregar i fixar els panells a la teulada, i passar els tubs corrugats amb cable solar DC de 6 mm² fins a l'inversor.<br>
+                <b>Què fa el professional:</b> Connexió del quadre AC/DC, connexió a xarxa, posada en marxa, butlletí CIE i legalització administrativa.
+            </div>
+            <hr style='border-color:#334155; margin:12px 0;'>
+            <div style='font-size:0.9rem;'>
+                <div>Cost estimat materials + instal·lador: <b style='color:#f59e0b; font-size:1.15rem;'>{res_solar['cost_total_bricolatge']:,.2f} €</b></div>
+                <div style='color:#10b981; margin-top:4px;'>- Deducció IRPF (40%): <b>-{(res_solar['cost_total_bricolatge'] * 0.40):,.2f} €</b></div>
+                <div style='color:#10b981;'>- Bonificació IBI Arbúcies: <b>-{res_solar['bonificacio_ibi_estimada']:,.2f} €</b></div>
+                <hr style='border-color:#334155; margin:8px 0;'>
+                <div style='font-size:1rem; color:#e2e8f0;'>Cost net real aproximat: <b style='color:#10b981; font-size:1.25rem;'>{res_solar['cost_net_bricolatge_amb_ajudes']:,.2f} €</b></div>
+            </div>
+            <div style='font-size:0.78rem; color:#94a3b8; margin-top:10px;'>
+                💡 <b>Estalvi directe:</b> T'estalvies entre <b>1.200 € i 1.800 € de mà d'obra</b> de teulada, assumint tu el temps i la feina mecànica.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # GUIA DE SEGURETAT I TEULADA
+    st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+    with st.expander("🦺 Guia Pràctica de Seguretat i Consells per Treballar a la Teulada de Teules (Arbúcies)", expanded=False):
+        st.markdown("""
+        Si optes per fer el muntatge mecànic tu mateix a la teulada de teules (29° NE):
+        
+        1. **Ganxos Salvateules (Salvatejas d'acer inoxidable):**
+           - *Regla d'or:* **No foradis mai la teula per la part superior** (amb el temps és font segura de filtracions i goteres).
+           - S'aixeca la teula superior, es cargola el ganxo salvateula directament al cabiró o bigueta de formigó amb cargols d'alta resistència, i es torna a encaixar la teula. Si cal, es desgasta lleugerament la vora de la teula amb disc de diamant per evitar que balli.
+        2. **Trepitjar sobre teules sense trencar-les:**
+           - No trepitgis mai el centre d'una teula corba. Trepitja sempre a la part davantera inferior (on recolza sobre la filera següent) o utilitza taulons de fusta amb base d'escuma/goma per repartir el teu pes sobre 4 o 5 teules alhora.
+        3. **Seguretat vital (Casa de 3 plantes):**
+           - Una caiguda des d'una teulada de 3 plantes és fatal. És indispensable instal·lar un punt d'ancoratge provisional o línia de vida certificada i utilitzar arnès de seguretat integral amb línia absorbent d'impacte.
+        4. **Cablejat Solar (DC):**
+           - Fes servir cable solar homologat H1Z2Z2-K de doble aïllament resistent a la radiació ultraviolada de 6 mm² (vermell i negre) i connectors MC4 originals crimpats amb alicates especials.
+           - Passa el cablejat per tub corrugat negre lliure d'halògens resistent a l'exterior.
+        5. **Legalització administrativa:**
+           - Encara que facis el muntatge físic tu mateix, és legalment necessari que un instal·lador de Baixa Tensió firmi el **CIE (Certificat d'Instal·lació Elèctrica)** i tramiti la inscripció al RAC (Registre d'Autoconsum de Catalunya). Sense aquest tràmit no tindràs compensació d'excedents ni podràs aplicar la deducció del 40% a la declaració de la Renda.
+        """)
+
+
+# =========================================================================
 # FUNCIÓ PRINCIPAL DEL MÒDUL LLUM I AIGUA
 # =========================================================================
 
@@ -1394,13 +1667,16 @@ def render():
     render_header_with_avatar("<h2 style='margin:0; color:#f39c12;'>💡 Llum i Aigua</h2>", "llum_aigua")
     st.write("---")
 
-    tabs_list = ["⚡ Consum Llum", "💧 Consum Aigua"]
+    tabs_list = ["⚡ Consum Llum", "💧 Consum Aigua", "☀️ Estudi Solar"]
     tab_mapping = {
         "llum": "⚡ Consum Llum",
         "consum_llum": "⚡ Consum Llum",
         "electricitat": "⚡ Consum Llum",
         "aigua": "💧 Consum Aigua",
-        "consum_aigua": "💧 Consum Aigua"
+        "consum_aigua": "💧 Consum Aigua",
+        "solar": "☀️ Estudi Solar",
+        "plaques": "☀️ Estudi Solar",
+        "estudi_solar": "☀️ Estudi Solar"
     }
 
     tab_param = st.query_params.get("tab")
@@ -1408,10 +1684,13 @@ def render():
     if default_tab not in tabs_list:
         default_tab = "⚡ Consum Llum"
 
-    tab_llum, tab_aigua = st.tabs(tabs_list, default=default_tab, key=f"tabs_llum_aigua_{tab_param or 'main'}")
+    tab_llum, tab_aigua, tab_solar = st.tabs(tabs_list, default=default_tab, key=f"tabs_llum_aigua_{tab_param or 'main'}")
 
     with tab_llum:
         render_consum_llum_tab()
 
     with tab_aigua:
         render_consum_aigua_tab()
+
+    with tab_solar:
+        render_estudi_solar_tab()
