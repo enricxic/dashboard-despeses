@@ -6831,6 +6831,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5529;Efectiu;;14/09/2025;septiembre;2025;0.0;2.0;Càrrec;menjar;Emili Walking;;False
 5556;Efectiu;;23/09/2025;septiembre;2025;0.0;10.0;Càrrec;personal;Jordi;Drissa + Besalú;False
 5531;BBVA;VISA;17/09/2025;septiembre;2025;0.0;279.0;Càrrec;Parallar;PCComponents;TV Hab. Mireia;False
+8196;Efectiu;;23/10/2026;octubre;2026;0.0;3.5;Càrrec;menjar;Carn. Arimany;;False
 5533;Efectiu;;08/09/2025;septiembre;2025;0.0;5.8;Càrrec;menjar;Pa i pastisseria;;False
 5534;Efectiu;;15/09/2025;septiembre;2025;0.0;2.75;Càrrec;menjar;Fruiteria Deepak;;False
 5536;BBVA;VISA;18/09/2025;septiembre;2025;0.0;7.06;Càrrec;menjar;Mercadona;;False
@@ -6862,6 +6863,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5596;Efectiu;;06/10/2025;octubre;2025;0.0;30.0;Càrrec;menjar;Ous casolans;;False
 5602;BBVA;Compte;06/10/2025;octubre;2025;0.0;220.5;Càrrec;despesa_general;PJ Isabel;;False
 5639;BBVA;VISA;17/10/2025;octubre;2025;0.0;10.57;Càrrec;manteniment;Aliexpress;RAM 8GB+cinturó;False
+8197;Efectiu;;23/10/2026;octubre;2026;0.0;5.0;Càrrec;personal;Jordi;;False
 5608;Efectiu;;05/10/2025;octubre;2025;0.0;10.0;Càrrec;menjar;Dia;;False
 5610;BBVA;VISA;09/10/2025;octubre;2025;0.0;6.52;Càrrec;manteniment;Aliexpress;suport tv Mireia;False
 5612;Efectiu;;08/10/2025;octubre;2025;0.0;5.12;Càrrec;menjar;Pa i pastisseria;;False

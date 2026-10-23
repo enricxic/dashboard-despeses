@@ -186,6 +186,7 @@ function attachMenuTabInterceptors() {
                             if (href.includes('tab=registre')) { targetIdx = 0; targetText = 'registre'; }
                             else if (href.includes('tab=manuals')) { targetIdx = 1; targetText = 'manuals'; }
                             else if (href.includes('tab=garanties')) { targetIdx = 2; targetText = 'garanties'; }
+                            else if (href.includes('tab=consum_llum') || href.includes('tab=llum')) { targetIdx = 3; targetText = 'llum'; }
                         }
 
                         if (targetIdx >= 0) {
@@ -1085,6 +1086,7 @@ div.block-container {{
 <a href="?mod=modules.manteniment&tab=registre{url_suffix}" target="_self">📋 Registre Manteniment</a>
 <a href="?mod=modules.manteniment&tab=manuals{url_suffix}" target="_self">📖 Manuals</a>
 <a href="?mod=modules.manteniment&tab=garanties{url_suffix}" target="_self">🛡️ Garanties</a>
+<a href="?mod=modules.manteniment&tab=consum_llum{url_suffix}" target="_self">⚡ Consum Llum</a>
 <div class="menu-separator"></div>
 <a href="?mod=modules.manteniment&action=generar_any_manteniment{url_suffix}" target="_self">📅 Generar tasques proper any</a>
 </div>

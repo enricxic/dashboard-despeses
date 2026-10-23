@@ -17,12 +17,24 @@ DEFAULT_DOCS = {
 
 def get_pdf_path(category: str, filename: str) -> str:
     """Retorna la ruta absoluta d'un fitxer PDF segons la categoria."""
-    subfolder = "Manuals" if category.lower() in ["manuals", "manual"] else "Garanties"
+    cat = category.lower()
+    if cat in ["manuals", "manual"]:
+        subfolder = "Manuals"
+    elif cat in ["factures_llum", "llum", "factura_llum", "factures"]:
+        subfolder = "Factures_Llum"
+    else:
+        subfolder = "Garanties"
     return os.path.join(PDF_DIR, subfolder, filename)
 
 def get_pdf_dir(category: str) -> str:
     """Retorna el directori d'una categoria de PDF."""
-    subfolder = "Manuals" if category.lower() in ["manuals", "manual"] else "Garanties"
+    cat = category.lower()
+    if cat in ["manuals", "manual"]:
+        subfolder = "Manuals"
+    elif cat in ["factures_llum", "llum", "factura_llum", "factures"]:
+        subfolder = "Factures_Llum"
+    else:
+        subfolder = "Garanties"
     d = os.path.join(PDF_DIR, subfolder)
     os.makedirs(d, exist_ok=True)
     return d
