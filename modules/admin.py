@@ -416,6 +416,8 @@ def _on_icona_change(key_m):
     if "icones_actives" not in cur_cfg:
         cur_cfg["icones_actives"] = {}
     cur_cfg["icones_actives"][key_m] = bool(val)
+    if key_m == "llum_aigua":
+        cur_cfg["icones_actives"]["jocs"] = bool(val)
     if save_app_config(cur_cfg):
         status_txt = "activada" if val else "desactivada"
         st.session_state["flash_success"] = f"✅ Icona d'inici {status_txt} i desada correctament!"
@@ -1930,6 +1932,8 @@ def render():
             _render_flash_message()
             if st.button("💾 Desar Configuració d'Icones", type="primary", use_container_width=True, key="save_icones"):
                 cur_cfg = load_app_config()
+                if "llum_aigua" in new_icones_state:
+                    new_icones_state["jocs"] = new_icones_state["llum_aigua"]
                 cur_cfg["icones_actives"] = new_icones_state
                 if save_app_config(cur_cfg):
                     st.session_state["flash_success"] = "✅ Configuració d'icones de la pantalla d'inici desada correctament!"
