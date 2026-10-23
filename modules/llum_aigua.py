@@ -981,6 +981,8 @@ def render_consum_llum_tab():
         df_f = pd.DataFrame(factures)
         if "mesAny" in df_f.columns and len(df_f) > 0:
             max_imp = float(df_f["importTotal"].max()) if len(df_f) > 0 else 100.0
+            max_kwh = float(df_f["kwhTotal"].max()) if len(df_f) > 0 else 1000.0
+
             fig_hist = go.Figure()
             fig_hist.add_trace(go.Bar(
                 name="🟢 Vall (P3)",
@@ -1004,18 +1006,29 @@ def render_consum_llum_tab():
                 hovertemplate="Punta: %{y:.1f} kWh<extra></extra>"
             ))
 
+            # Etiquetes de preu total per sobre de les barres (per sobre de tots els colors)
+            fig_hist.add_trace(go.Scatter(
+                name="Preu Factura (€)",
+                x=df_f["mesAny"],
+                y=df_f["kwhTotal"],
+                mode="text",
+                text=[f"<b>{float(v):.1f}€</b>" for v in df_f["importTotal"]],
+                textposition="top center",
+                textfont=dict(size=9.5, color="#38bdf8"),
+                showlegend=False,
+                cliponaxis=False,
+                hoverinfo="skip"
+            ))
+
+            # Línia de tendència d'import (sense text a dins per evitar solapaments)
             fig_hist.add_trace(go.Scatter(
                 name="Import Factura (€)",
                 x=df_f["mesAny"],
                 y=df_f["importTotal"],
                 yaxis="y2",
-                mode="lines+markers+text",
-                text=[f"{float(v):.1f}€" for v in df_f["importTotal"]],
-                textposition="top center",
-                textfont=dict(size=9, color="#38bdf8"),
-                cliponaxis=False,
-                line=dict(color="#38bdf8", width=3),
-                marker=dict(size=7, color="#38bdf8"),
+                mode="lines+markers",
+                line=dict(color="rgba(56, 189, 248, 0.55)", width=2),
+                marker=dict(size=5, color="#38bdf8"),
                 hovertemplate="Cost: %{y:.2f} €<extra></extra>"
             ))
 
@@ -1031,7 +1044,8 @@ def render_consum_llum_tab():
                     title_font=dict(color="#94a3b8", size=11),
                     showgrid=True,
                     gridcolor="#334155",
-                    color="#94a3b8"
+                    color="#94a3b8",
+                    range=[0, max_kwh * 1.18]
                 ),
                 yaxis2=dict(
                     title="Import (€)",
