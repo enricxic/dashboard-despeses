@@ -56,7 +56,13 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 7. **🎲 Jocs**: `modules/jocs.py` *(Icona daus)* - Oci familiar, inventari de jocs i marcadors.
 
 ### 🟢 Part Dreta (5 nodes amb rodona):
-8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari familiar, esdeveniments i sincronització.
+8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari i agenda familiar interactiva:
+   - `📅 Vista Graella (Estil Google Calendar)`: Visualització mensual responsive amb xips d'esdeveniments per colors de membre i categoria, comptadors diaris i navegació fluida.
+   - `📋 Vista Agenda / Llista`: Llistat cronològic del mes seleccionat amb caixa de data, hora, membre i lloc.
+   - `🔍 Consulta i Gestió del Dia`: En fer clic a qualsevol dia de la graella, es mostren tots els esdeveniments d'aquell dia amb accions completes: marcar com a fet/no fet (`✅`/`❌`), editar (`✏️`), esborrar (`🗑️`) i afegir a Google Calendar en 1 clic (`📅 GCal`), a més d'un botó directe per afegir nous esdeveniments per a aquell dia seleccionat.
+   - `🟢 / 🔴 Control d'Acompliment (Fet / No Fet)`: Botons dedicats per marcar esdeveniments com a fets (`✅`, il·luminat en verd maragda sòlid) o cancel·lats (`❌`, il·luminat en vermell viu), actualitzant el títol (prefix `✅`/`❌`, color i ratllat) i persistint a Supabase `app_config` ID 3.
+   - `📱 Disseny Compacte per a Mòbils`: Tots els botons d'acció es mantenen en una sola línia horitzontal a qualsevol pantalla sense apilar-se verticalment.
+   - `🔄 Sincronització de Feeds iCal`: Connexió bidireccional amb els calendaris de Google de cada membre familiar amb desduplicació automàtica i gestió d'excepcions de recurrències (`RECURRENCE-ID`).
 9. **💊 Control Medicació**: `modules/medicacio.py` *(Icona pastilles / flascó)* - Pautes mèdiques, dosis, horaris i farmaciola.
 10. **🍽️ Menús i Cuina**: `modules/menjar.py` *(Icona coberts)* - Gestió gastronòmica i nutricional intel·ligent:
     - `🧠 Recomanador de Menús`: Generació setmanal amb IA (`gemini-2.5-flash`) seguint al·lèrgies mèdiques strictly, desdoblament de vetos personals, regles de freqüència nutricional (carn vermella, peix, llegums), eines de cuina i membres actius.
@@ -69,7 +75,10 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Gestió del vehicle organitzada en pestanyes:
     - `🛣️ Registre Km i Rutes`: Formulari per registrar lectures d'odòmetre, càlcul automàtic de km del trajecte, selector/plantilles de rutes i taula d'històric.
     - `⛽ Repostatge`: Taula històrica de proveïments de la BBDD `gasolina` (alimentada des d'Ingressos/Despeses) amb mètriques de preu últim repostatge, preu més alt i més baix.
-    - `🔧 Canvi d'Oli`: Seguiment de km actuals, límit de canvi d'oli i km restants.
+    - `🔧 Manteniment (Canvi d'Oli, Inflat de Rodes i Control de Nivells)`:
+      * *Canvi d'Oli*: Seguiment de km actuals, límit de canvi d'oli i km restants.
+      * *Inflat de Rodes*: Planificacions periòdiques (pressió pneumàtics), km/dies restants i alertes.
+      * *Control de Nivells*: Secció independent per a la revisió periòdica dels líquids del vehicle (oli de motor, líquid refrigerant, líquid de frens, líquid eixugaparabrises) amb les seves pròpies planificacions configurables, històric d'intervencions, càlcul de venciment i neteja automàtica del formulari en desar.
     - `📊 Consum`: Gràfic de consum anual L/100km.
 12. **🛒 Ingressos i Despeses**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral d'ingressos, despeses i compres:
     - `📄 Compres Super`: Escàner OCR intel·ligent amb suport total de Gemini Vision. Incorpora un sistema de **Regles de Súper Editables (`core/ocr_rules.md`)** des del menú superior, permetent ensenyar a la IA com llegir ofertes o estructures de tiquets específiques de cada cadena (Mercadona, Bonpreu, Dia, etc.) sense programar codi. Inclou mecanismes estrictes per forçar quantitats enteres.
@@ -425,6 +434,30 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
       - Resolució del mapeig de camps de l'Agenda: Ara les tasques de manteniment sincronitzades guarden canònicament `start_date`, `date`, `start_time`, `time`, `member` i `assigned_to`, normalitzant automàticament qualsevol esdeveniment anterior perquè aparegui a la graella mensual i a la consulta del dia.
       - Navegació interactiva "📅 Veure a l'Agenda": Si una tasca està sincronitzada, el botó de la targeta permet obrir directament el mòdul Agenda posicionat al mes i dia exacte de la tasca.
       - Neteja visual del formulari: S'ha eliminat el botó duplicat de la capçalera de la pestanya per evitar sobrecàrrega visual (especialment a dispositius mòbils), centralitzant l'accés a `📅 Generar tasques proper any` exclusivament des del menú superior desplegable `Mòduls > Manteniment de la llar`.
+- **22/10/2026: Mòdul Cotxe - Neteja de formularis i Nova Secció "Control de Nivells" (`modules/cotxe.py`)**:
+  - **Neteja de formulari en desar**: S'ha afegit la reinicialització automàtica del formulari de planificacions mitjançant un comptador de versió d'estat de sessió (`plan_form_counter`), evitant que quedin valors residuals després de desar satisfactòriament una nova planificació.
+  - **Nova Secció independent "Control de Nivells"**:
+    - Dins de la pestanya de manteniment del vehicle, s'ha creat una secció pròpia i separada de l'inflat de rodes per gestionar la revisió periòdica dels líquids de l'automòbil (oli motor, líquid refrigerant, líquid de frens i líquid eixugaparabrises).
+    - Permet establir planificacions per km i per dies/mesos amb càlcul automàtic de venciment restant, alertes a la campaneta de notificacions (`🔔`), formulari d'alta d'intervencions amb neteja automàtica, taula històrica de revisions i gestió d'eliminació i edició.
+- **22/10/2026: Mòdul Agenda / Calendari Familiar - Desduplicació, filtres i gestió d'estats (`modules/calendari.py`, `core/calendar_manager.py`)**:
+  - **Filtre estricte per període a la vista llista/agenda**: Resolució de l'error on en consultar un mes concret (ex. octubre 2026) es llistaven esdeveniments d'anys anteriors. S'ha blindat el filtratge a `expand_recurring_events` i a la vista Agenda per comparar estrictament l'any i mes seleccionats (`cur_year`, `cur_month`).
+  - **Desduplicació intel·ligent d'esdeveniments i excepcions iCal**: Implementació de `deduplicate_events` a `core/calendar_manager.py` per suprimir esdeveniments repetits generats per sincronitzacions concurrents de múltiples feeds de Google Calendar o recurrències creuades. Gestiona canònicament els camps `RECURRENCE-ID`, preservant les modificacions d'instàncies particulars sobre la sèrie general.
+  - **Neteja del filtre de membres**: Eliminació de l'opció redundant "Tota la família" al desplegable de filtres per deixar únicament "Tots" i els noms individuals de cada membre de la llar.
+  - **Ordenació cronològica per hora**: Funció `sort_events_by_time` que organitza els esdeveniments de cada dia prioritzant els esdeveniments amb hora concreta (ordenats de 00:00 a 23:59) i situant els esdeveniments de tot el dia al final.
+  - **Selecció interactiva i consulta de qualsevol dia des de la graella**: En fer clic sobre qualsevol casella de la graella mensual del calendari, la secció inferior "Consulta i Gestió del Dia" s'actualitza a l'instant mostrant el dia triat, els seus esdeveniments i el formulari per afegir noves tasques per a aquella data.
+  - **Preservació de sessió i autenticació (`auth=<token>`)**: S'ha assegurat que els enllaços interns dels dies a la graella conserven tots els paràmetres de consulta (com `auth`, `device`, `mod`, etc.), eliminant la caiguda a la pantalla de contrasenya en fer clic a un dia diferent d'avui.
+- **22/10/2026: Mòdul Agenda - Control d'Acompliment (Fet / No Fet), Coloració i Disseny Mòbil en 1 Línia (`modules/calendari.py`, `core/calendar_manager.py`)**:
+  - **Icones d'estat de les activitats (Fet / No Fet)**:
+    - Cada esdeveniment disposa de dos botons interactius: **Check verd (`✅` / `✔️`)** per marcar com a completada la tasca, i **Creu vermella (`❌` / `✖️`)** per marcar com a no feta o cancel·lada (amb possibilitat de desmarcar per retornar a pendent).
+  - **Visualització i feedback immediat d'estat**:
+    - **Títol de l'esdeveniment**: Afegeix automàticament el prefix `✅ ` (i es pinta en verd maragda `#10b981` amb la insígnia `FET`) o el prefix `❌ ` (i es ratlla en vermell `#ef4444` amb la insígnia `NO FET`).
+    - **Xips de la graella mensual**: Incorporen el prefix `✅`/`❌` i la vora/fons verd o vermell corresponent.
+    - **Coloració vibrant dels botons**: Els botons actius s'omplen d'un fons sòlid amb relleu lluminós: verd maragda (`#10b981`) per al check i vermell viu (`#ef4444`) per a la creu.
+  - **Disseny mòbil compacte en 1 sola línia horitzontal**:
+    - S'han implementat regles CSS flexbox amb `:has(.cal-action-btn)` (`flex-wrap: nowrap !important; min-width: 0 !important;`) perquè els 5 botons d'acció (`✔️`/`✅`, `✖️`/`❌`, `✏️`, `🗑️`, `📅 GCal`) es mantinguin **sempre en una sola fila horitzontal**, eliminant l'apilament vertical en 5 files gegants que patia la versió mòbil de Streamlit.
+  - **Persistència centralitzada a Supabase (`app_config` ID 3)**:
+    - Resolució del cicle de càrrega a `core/calendar_manager.py` aplicant el mapa d'estats (`status_map`) després de l'expansió de recurrències i de la desduplicació.
+    - Suport de persistència per clau triple: ID de l'esdeveniment, UID d'iCal i títol normalitzat (`clean_title_for_dedup`), garantint que tant els esdeveniments locals com els de Google Calendar mantenen el seu estat entre sessions i dispositius.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**
