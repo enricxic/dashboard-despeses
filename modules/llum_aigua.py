@@ -3,9 +3,15 @@ import os
 import base64
 import json
 import re
+import io
 import pandas as pd
 from datetime import datetime, date, timedelta
 import plotly.graph_objects as go
+
+try:
+    import pypdf
+except ImportError:
+    pypdf = None
 
 from modules.avatar_widget import render_header_with_avatar
 from core.llum_manager import (
@@ -416,6 +422,97 @@ def delete_factura_aigua_dialog(factura_id: int, mes_any: str, fname: str = ""):
 
 
 # =========================================================================
+# FUNCIONS AUXILIARS D'EXTRACCIÓ DE PDF
+# =========================================================================
+
+MESOS_CA_ES = {
+    'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+    'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+    'septiembre': '09', 'setiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12',
+    'gener': '01', 'febrer': '02', 'març': '03', 'marc': '03', 'maig': '05', 'juny': '06', 'juliol': '07',
+    'agost': '08', 'setembre': '09', 'desembre': '12'
+}
+
+def parse_spanish_date(text: str) -> str:
+    m = re.search(r'(\d{1,2})\s+de\s+([a-zA-Zç]+)\s+de\s+(\d{4})', text, re.I)
+    if m:
+        day = int(m.group(1))
+        mes_str = m.group(2).lower()
+        year = int(m.group(3))
+        month = MESOS_CA_ES.get(mes_str)
+        if month:
+            return f"{year:04d}-{month}-{day:02d}"
+    return ""
+
+def extract_data_from_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> dict:
+    """Extreu automàticament les dades d'una factura d'Energía XXI / PVPC."""
+    try:
+        import pypdf
+        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+        txt = '\n'.join([p.extract_text() for p in reader.pages if p.extract_text()])
+        
+        m_imp = re.search(r'TOTAL\s+IMPORTE\s+FACTURA\s*[\n:]*\s*([\d,.]+)\s*€', txt, re.I)
+        if not m_imp:
+            m_imp = re.search(r'IMPORTE\s+FACTURA:?\s*[\n:]*\s*([\d,.]+)\s*€', txt, re.I)
+        imp = float(m_imp.group(1).replace('.', '').replace(',', '.')) if m_imp else 0.0
+        
+        m_df = re.search(r'emitida\s+el\s*[\n:]*\s*([^\n]+)', txt, re.I)
+        data_factura = parse_spanish_date(m_df.group(1)) if m_df else ""
+        
+        m_per = re.search(r'Periodo\s+de\s+consumo:?\s*[\n:]*\s*([^\n(]+)', txt, re.I)
+        p_inici, p_fi = "", ""
+        if m_per:
+            parts = m_per.group(1).split(' a ')
+            if len(parts) == 2:
+                p_inici = parse_spanish_date(parts[0])
+                p_fi = parse_spanish_date(parts[1])
+                
+        m_fn = re.match(r'(\d{2})_(\d{2})', filename)
+        if m_fn:
+            mes_any = f"20{m_fn.group(2)}-{m_fn.group(1)}"
+        elif p_fi:
+            mes_any = p_fi[:7]
+        elif data_factura:
+            mes_any = data_factura[:7]
+        else:
+            mes_any = datetime.today().strftime("%Y-%m")
+            
+        pot_dia = 4.4
+        pot_nit = 4.4
+        m_pot_p = re.search(r'Potencia\s+contratada\s+en\s+(?:punta|punta-llano):?\s*([\d,.]+)\s*kW', txt, re.I)
+        if m_pot_p:
+            pot_dia = float(m_pot_p.group(1).replace(',', '.'))
+        m_pot_v = re.search(r'Potencia\s+contratada\s+en\s+valle:?\s*([\d,.]+)\s*kW', txt, re.I)
+        if m_pot_v:
+            pot_nit = float(m_pot_v.group(1).replace(',', '.'))
+            
+        m_c1 = re.search(r'Consumo\s+en\s+P1:?\s*[\n:]*\s*([\d,.]+)\s*kWh', txt, re.I)
+        m_c2 = re.search(r'Consumo\s+en\s+P2:?\s*[\n:]*\s*([\d,.]+)\s*kWh', txt, re.I)
+        m_c3 = re.search(r'Consumo\s+en\s+P3:?\s*[\n:]*\s*([\d,.]+)\s*kWh', txt, re.I)
+        
+        c1 = float(m_c1.group(1).replace('.', '').replace(',', '.')) if m_c1 else 0.0
+        c2 = float(m_c2.group(1).replace('.', '').replace(',', '.')) if m_c2 else 0.0
+        c3 = float(m_c3.group(1).replace('.', '').replace(',', '.')) if m_c3 else 0.0
+        
+        return {
+            "data_factura": data_factura,
+            "periode_inici": p_inici,
+            "periode_fi": p_fi,
+            "mes_any": mes_any,
+            "import_total": imp,
+            "kwh_punta": round(c1, 1),
+            "kwh_llano": round(c2, 1),
+            "kwh_valle": round(c3, 1),
+            "potencia_dia": pot_dia,
+            "potencia_nit": pot_nit,
+            "comercialitzadora": "Energía XXI (Bono Social)",
+            "observacions": "PVPC Bono Social 80%"
+        }
+    except Exception:
+        return {}
+
+
+# =========================================================================
 # PESTANYA 1: CONSUM LLUM I OPTIMITZADOR D'ACUMULADORS
 # =========================================================================
 
@@ -735,114 +832,155 @@ def render_consum_llum_tab():
     st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
     factures = load_factures_llum()
 
+    if "show_add_factura_llum" not in st.session_state:
+        st.session_state.show_add_factura_llum = False
+
     c_fac_h, c_fac_btn = st.columns([3, 1], vertical_alignment="center")
     with c_fac_h:
         st.markdown("<h4 style='color:#f39c12; margin:0;'>📄 Registre de Factures i Consum per Tram</h4>", unsafe_allow_html=True)
         st.markdown("<div style='font-size:0.8rem; color:#94a3b8;'>Evolució mensual dels kWh consumits per tram (Punta, Pla, Vall) i cost total.</div>", unsafe_allow_html=True)
     with c_fac_btn:
-        show_add = st.checkbox("➕ Nova Factura Llum", key="chk_show_add_factura_llum")
+        if not st.session_state.show_add_factura_llum:
+            if st.button("➕ Nova Factura Llum", type="primary", use_container_width=True, key="btn_open_add_factura_llum"):
+                st.session_state.show_add_factura_llum = True
+                st.rerun()
+        else:
+            if st.button("✖️ Tancar formulari", type="secondary", use_container_width=True, key="btn_close_add_factura_llum"):
+                st.session_state.show_add_factura_llum = False
+                st.rerun()
 
     # FORMULARI D'ALTA LLUM
-    if show_add:
+    if st.session_state.show_add_factura_llum:
         with st.container(border=True):
             st.markdown("<h5 style='color:#38bdf8; margin-top:0;'>➕ Introduir Nova Factura Elèctrica</h5>", unsafe_allow_html=True)
             
+            # File uploader en primer lloc per permetre l'autoextracció
+            pdf_file = st.file_uploader(
+                "📄 Selecciona o arrossega la factura en PDF:",
+                type=["pdf"],
+                key="uploader_nova_factura_llum",
+                help="Si adjuntes el PDF d'Energía XXI, el sistema n'extraurà automàticament totes les dades i arxivarà el fitxer."
+            )
+
+            if "last_processed_llum_pdf" not in st.session_state:
+                st.session_state.last_processed_llum_pdf = None
+
+            if pdf_file is not None and pdf_file.name != st.session_state.last_processed_llum_pdf:
+                st.session_state.last_processed_llum_pdf = pdf_file.name
+                ext = extract_data_from_pdf_bytes(pdf_file.getvalue(), pdf_file.name)
+                if ext:
+                    st.session_state.in_fact_mes = ext.get("mes_any", "")
+                    st.session_state.in_fact_imp = float(ext.get("import_total", 0.0))
+                    st.session_state.in_fact_p1 = float(ext.get("kwh_punta", 0.0))
+                    st.session_state.in_fact_p2 = float(ext.get("kwh_llano", 0.0))
+                    st.session_state.in_fact_p3 = float(ext.get("kwh_valle", 0.0))
+                    st.session_state.in_fact_pot_dia = float(ext.get("potencia_dia", 4.4))
+                    st.session_state.in_fact_pot_nit = float(ext.get("potencia_nit", 5.5))
+                    st.session_state.in_fact_com = ext.get("comercialitzadora", "Energía XXI (Bono Social)")
+                    st.session_state.in_fact_obs = ext.get("observacions", "PVPC Bono Social 80%")
+                    if ext.get("data_factura"):
+                        try:
+                            st.session_state.in_fact_df = datetime.strptime(ext["data_factura"], "%Y-%m-%d").date()
+                        except Exception:
+                            pass
+                    if ext.get("periode_inici"):
+                        try:
+                            st.session_state.in_fact_pi = datetime.strptime(ext["periode_inici"], "%Y-%m-%d").date()
+                        except Exception:
+                            pass
+                    if ext.get("periode_fi"):
+                        try:
+                            st.session_state.in_fact_pf = datetime.strptime(ext["periode_fi"], "%Y-%m-%d").date()
+                        except Exception:
+                            pass
+
+            if pdf_file is not None and st.session_state.get("in_fact_imp", 0.0) > 0:
+                st.success("✨ S'han detectat i extret automàticament les dades del PDF! Revisa-les a continuació.")
+
             f_col1, f_col2, f_col3 = st.columns(3)
             with f_col1:
-                in_data_fact = st.date_input("Data Emissió Factura *", value=datetime.today().date(), format="DD/MM/YYYY", key="in_fact_df")
+                in_data_fact = st.date_input("Data Emissió Factura *", value=st.session_state.get("in_fact_df", datetime.today().date()), format="DD/MM/YYYY", key="in_fact_df")
             with f_col2:
-                in_mes_any = st.text_input("Mes / Any de Referència *", value=datetime.today().strftime("%m/%Y"), help="Ex: 10/2026", key="in_fact_mes")
+                in_mes_any = st.text_input("Mes / Any de Referència *", value=st.session_state.get("in_fact_mes", datetime.today().strftime("%Y-%m")), help="Ex: 2026-09", key="in_fact_mes")
             with f_col3:
-                in_import = st.number_input("Import Total Factura (€) *", min_value=0.0, step=0.01, format="%.2f", key="in_fact_imp")
+                in_import = st.number_input("Import Total Factura (€) *", min_value=0.0, value=float(st.session_state.get("in_fact_imp", 0.0)), step=0.01, format="%.2f", key="in_fact_imp")
 
             p_col1, p_col2 = st.columns(2)
             with p_col1:
-                in_p_inici = st.date_input("Període de Facturació: Des de", value=(datetime.today().date() - timedelta(days=30)), format="DD/MM/YYYY", key="in_fact_pi")
+                in_p_inici = st.date_input("Període de Facturació: Des de", value=st.session_state.get("in_fact_pi", datetime.today().date() - timedelta(days=30)), format="DD/MM/YYYY", key="in_fact_pi")
             with p_col2:
-                in_p_fi = st.date_input("Fins a", value=datetime.today().date(), format="DD/MM/YYYY", key="in_fact_pf")
+                in_p_fi = st.date_input("Fins a", value=st.session_state.get("in_fact_pf", datetime.today().date()), format="DD/MM/YYYY", key="in_fact_pf")
 
             st.markdown("<p style='font-weight:600; color:#cbd5e1; margin:8px 0 2px 0;'>⚡ Consum d'Energia per Tram (kWh)</p>", unsafe_allow_html=True)
             c_k1, c_k2, c_k3, c_k4 = st.columns(4)
             with c_k1:
-                in_kwh_punta = st.number_input("🔴 Punta (P1) kWh", min_value=0.0, step=1.0, format="%.1f", key="in_fact_p1")
+                in_kwh_punta = st.number_input("🔴 Punta (P1) kWh", min_value=0.0, value=float(st.session_state.get("in_fact_p1", 0.0)), step=0.1, format="%.1f", key="in_fact_p1")
             with c_k2:
-                in_kwh_llano = st.number_input("🟡 Pla (P2) kWh", min_value=0.0, step=1.0, format="%.1f", key="in_fact_p2")
+                in_kwh_llano = st.number_input("🟡 Pla (P2) kWh", min_value=0.0, value=float(st.session_state.get("in_fact_p2", 0.0)), step=0.1, format="%.1f", key="in_fact_p2")
             with c_k3:
-                in_kwh_valle = st.number_input("🟢 Vall (P3) kWh", min_value=0.0, step=1.0, format="%.1f", key="in_fact_p3")
+                in_kwh_valle = st.number_input("🟢 Vall (P3) kWh", min_value=0.0, value=float(st.session_state.get("in_fact_p3", 0.0)), step=0.1, format="%.1f", key="in_fact_p3")
             with c_k4:
                 sum_kwh = round(in_kwh_punta + in_kwh_llano + in_kwh_valle, 1)
                 st.metric("Total kWh", f"{sum_kwh} kWh")
 
             pot_col1, pot_col2 = st.columns(2)
             with pot_col1:
-                in_pot_dia = st.number_input("Potència Dia (kW)", min_value=0.0, value=4.4, step=0.1, key="in_fact_pot_dia")
+                in_pot_dia = st.number_input("Potència Dia (kW)", min_value=0.0, value=float(st.session_state.get("in_fact_pot_dia", 4.4)), step=0.1, key="in_fact_pot_dia")
             with pot_col2:
-                in_pot_nit = st.number_input("Potència Nit / Acumuladors (kW)", min_value=0.0, value=5.5, step=0.1, key="in_fact_pot_nit")
+                in_pot_nit = st.number_input("Potència Nit / Acumuladors (kW)", min_value=0.0, value=float(st.session_state.get("in_fact_pot_nit", 5.5)), step=0.1, key="in_fact_pot_nit")
 
             c_extra1, c_extra2 = st.columns(2)
             with c_extra1:
-                in_com = st.text_input("Comercialitzadora", value="Energía XXI (Bono Social)", key="in_fact_com")
+                in_com = st.text_input("Comercialitzadora", value=st.session_state.get("in_fact_com", "Energía XXI (Bono Social)"), key="in_fact_com")
             with c_extra2:
-                in_obs = st.text_input("Observacions", placeholder="Ex: Descompte Bo Social aplicat", key="in_fact_obs")
+                in_obs = st.text_input("Observacions", value=st.session_state.get("in_fact_obs", "PVPC Bono Social 80%"), key="in_fact_obs")
 
-            pdf_file = st.file_uploader("Adjuntar Factura en PDF (opcional)", type=["pdf"], key="in_fact_pdf")
+            c_save, c_cancel = st.columns([2, 1])
+            with c_save:
+                if st.button("💾 Desar Factura a la Base de Dades", type="primary", use_container_width=True, key="btn_save_new_fact"):
+                    pdf_fname = ""
+                    if pdf_file is not None:
+                        try:
+                            dest_dir = get_pdf_dir("Factures_Llum")
+                            os.makedirs(dest_dir, exist_ok=True)
+                            pdf_fname = pdf_file.name
+                            dest_path = os.path.join(dest_dir, pdf_fname)
+                            with open(dest_path, "wb") as f_out:
+                                f_out.write(pdf_file.getbuffer())
+                        except Exception as err:
+                            st.warning(f"No s'ha pogut desar el fitxer PDF: {err}")
+                            pdf_fname = ""
 
-            if st.button("💾 Desar Factura a la Base de Dades", type="primary", use_container_width=True, key="btn_save_new_fact"):
-                pdf_fname = ""
-                if pdf_file is not None:
-                    try:
-                        clean_mes = in_mes_any.replace("/", "_").replace(" ", "_")
-                        pdf_fname = f"factura_llum_{clean_mes}_{int(datetime.now().timestamp())}.pdf"
-                        dest_dir = get_pdf_dir("Factures_Llum")
-                        dest_path = os.path.join(dest_dir, pdf_fname)
-                        with open(dest_path, "wb") as f_out:
-                            f_out.write(pdf_file.getbuffer())
-                    except Exception as err:
-                        st.warning(f"No s'ha pogut desar el fitxer PDF: {err}")
-                        pdf_fname = ""
-
-                add_factura_llum(
-                    data_factura=in_data_fact.strftime("%d/%m/%Y"),
-                    periode_inici=in_p_inici.strftime("%d/%m/%Y"),
-                    periode_fi=in_p_fi.strftime("%d/%m/%Y"),
-                    mes_any=in_mes_any.strip(),
-                    import_total=in_import,
-                    kwh_punta=in_kwh_punta,
-                    kwh_llano=in_kwh_llano,
-                    kwh_valle=in_kwh_valle,
-                    potencia_dia=in_pot_dia,
-                    potencia_nit=in_pot_nit,
-                    comercialitzadora=in_com.strip(),
-                    pdf_fitxer=pdf_fname,
-                    observacions=in_obs.strip()
-                )
-                st.success("✅ Factura desada correctament a Supabase i a la còpia local!")
-                st.rerun()
+                    add_factura_llum(
+                        data_factura=in_data_fact.strftime("%Y-%m-%d"),
+                        periode_inici=in_p_inici.strftime("%Y-%m-%d"),
+                        periode_fi=in_p_fi.strftime("%Y-%m-%d"),
+                        mes_any=in_mes_any.strip(),
+                        import_total=in_import,
+                        kwh_punta=in_kwh_punta,
+                        kwh_llano=in_kwh_llano,
+                        kwh_valle=in_kwh_valle,
+                        potencia_dia=in_pot_dia,
+                        potencia_nit=in_pot_nit,
+                        comercialitzadora=in_com.strip(),
+                        pdf_fitxer=pdf_fname,
+                        observacions=in_obs.strip()
+                    )
+                    st.session_state.show_add_factura_llum = False
+                    st.session_state.last_processed_llum_pdf = None
+                    st.success("✅ Factura desada correctament a Supabase i a la còpia local!")
+                    st.rerun()
+            with c_cancel:
+                if st.button("❌ Cancel·lar", use_container_width=True, key="btn_cancel_add_llum"):
+                    st.session_state.show_add_factura_llum = False
+                    st.session_state.last_processed_llum_pdf = None
+                    st.rerun()
 
     # KPIS HISTÒRICS I GRÀFIC LLUM
     if factures:
-        tot_despesa = sum(float(f.get("importTotal", 0.0)) for f in factures)
-        tot_kwh_all = sum(float(f.get("kwhTotal", 0.0)) for f in factures)
-        tot_valle = sum(float(f.get("kwhValle", 0.0)) for f in factures)
-        tot_llano = sum(float(f.get("kwhLlano", 0.0)) for f in factures)
-        tot_punta = sum(float(f.get("kwhPunta", 0.0)) for f in factures)
-
-        pct_valle = round((tot_valle / tot_kwh_all * 100), 1) if tot_kwh_all > 0 else 0.0
-        pct_llano = round((tot_llano / tot_kwh_all * 100), 1) if tot_kwh_all > 0 else 0.0
-        pct_punta = round((tot_punta / tot_kwh_all * 100), 1) if tot_kwh_all > 0 else 0.0
-
-        m1, m2, m3, m4 = st.columns(4)
-        with m1:
-            st.metric("Total Facturat", f"{tot_despesa:.2f} €", help="Suma d'imports de totes les factures registrades")
-        with m2:
-            st.metric("Total Energia", f"{tot_kwh_all:.1f} kWh", help="Consum acumulat d'energia")
-        with m3:
-            st.metric("🟢 Vall / Acumuladors", f"{pct_valle}%", help=f"{tot_valle:.1f} kWh consumits en hores vall")
-        with m4:
-            st.metric("🟡 Pla / 🔴 Punta", f"{pct_llano}% / {pct_punta}%", help=f"Pla: {tot_llano:.1f} kWh | Punta: {tot_punta:.1f} kWh")
-
         df_f = pd.DataFrame(factures)
         if "mesAny" in df_f.columns and len(df_f) > 0:
+            max_imp = float(df_f["importTotal"].max()) if len(df_f) > 0 else 100.0
             fig_hist = go.Figure()
             fig_hist.add_trace(go.Bar(
                 name="🟢 Vall (P3)",
@@ -871,16 +1009,20 @@ def render_consum_llum_tab():
                 x=df_f["mesAny"],
                 y=df_f["importTotal"],
                 yaxis="y2",
-                mode="lines+markers",
+                mode="lines+markers+text",
+                text=[f"{float(v):.1f}€" for v in df_f["importTotal"]],
+                textposition="top center",
+                textfont=dict(size=9, color="#38bdf8"),
+                cliponaxis=False,
                 line=dict(color="#38bdf8", width=3),
-                marker=dict(size=8, color="#38bdf8"),
+                marker=dict(size=7, color="#38bdf8"),
                 hovertemplate="Cost: %{y:.2f} €<extra></extra>"
             ))
 
             fig_hist.update_layout(
                 barmode="stack",
-                margin=dict(l=10, r=10, t=30, b=30),
-                height=300,
+                margin=dict(l=10, r=10, t=35, b=30),
+                height=320,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(15, 23, 42, 0.4)",
                 xaxis=dict(showgrid=False, color="#94a3b8"),
@@ -897,7 +1039,8 @@ def render_consum_llum_tab():
                     overlaying="y",
                     side="right",
                     showgrid=False,
-                    color="#38bdf8"
+                    color="#38bdf8",
+                    range=[0, max_imp * 1.25]
                 ),
                 legend=dict(
                     orientation="h",
@@ -918,7 +1061,7 @@ def render_consum_llum_tab():
             file_exists = bool(fname and os.path.exists(fpath))
 
             with st.container(border=True):
-                col_d, col_act = st.columns([3.5, 1.5], vertical_alignment="center")
+                col_d, col_act = st.columns([4.2, 0.8], vertical_alignment="center")
                 with col_d:
                     st.markdown(f"""
                     <div style='display:flex; align-items:center; gap:10px; flex-wrap:wrap;'>
@@ -933,47 +1076,20 @@ def render_consum_llum_tab():
                     kv = float(fac.get("kwhValle", 0.0))
                     kt = float(fac.get("kwhTotal", 0.0))
                     st.markdown(f"""
-                    <div style='display:flex; gap:12px; font-size:0.85rem; color:#94a3b8; margin:6px 0;'>
+                    <div style='display:flex; gap:12px; font-size:0.85rem; color:#94a3b8; margin:6px 0 0 0;'>
                         <span>🔴 Punta: <b style='color:#f87171;'>{kp:.1f} kWh</b></span>
                         <span>🟡 Pla: <b style='color:#fbbf24;'>{kl:.1f} kWh</b></span>
                         <span>🟢 Vall (Acum.): <b style='color:#34d399;'>{kv:.1f} kWh</b></span>
                         <span>⚡ Total: <b style='color:#e2e8f0;'>{kt:.1f} kWh</b></span>
                     </div>
-                    <div style='font-size:0.8rem; color:#64748b;'>
-                        🏢 {fac.get('comercialitzadora', '')} • Potència: <b>{fac.get('potenciaDia', 4.4)} kW (dia)</b> / <b>{fac.get('potenciaNit', 5.5)} kW (nit)</b>
-                        {f" • <i>{fac.get('observacions')}</i>" if fac.get('observacions') else ""}
-                    </div>
                     """, unsafe_allow_html=True)
 
                 with col_act:
-                    c_a1, c_a2 = st.columns(2)
-                    with c_a1:
-                        if file_exists:
-                            if st.button("👁️ Veure", use_container_width=True, key=f"btn_vw_fac_{fid}", help="Veure PDF al visor integrat"):
-                                view_pdf_dialog(f"Factura {fac.get('mesAny')}", "Factures_Llum", fname)
-                        else:
-                            st.button("👁️ Veure", disabled=True, use_container_width=True, key=f"btn_vw_fac_dis_{fid}")
-                    with c_a2:
-                        if file_exists:
-                            with open(fpath, "rb") as f_b:
-                                st.download_button(
-                                    label="📥 Baixar",
-                                    data=f_b.read(),
-                                    file_name=fname,
-                                    mime="application/pdf",
-                                    use_container_width=True,
-                                    key=f"btn_dl_fac_{fid}"
-                                )
-                        else:
-                            st.button("📥 Baixar", disabled=True, use_container_width=True, key=f"btn_dl_fac_dis_{fid}")
-
-                    c_a3, c_a4 = st.columns(2)
-                    with c_a3:
-                        if st.button("✏️ Editar", use_container_width=True, key=f"btn_ed_fac_{fid}"):
-                            edit_factura_dialog(fac)
-                    with c_a4:
-                        if st.button("🗑️ Esborrar", use_container_width=True, key=f"btn_del_fac_{fid}"):
-                            delete_factura_dialog(fid, fac.get("mesAny", ""), fname)
+                    if file_exists:
+                        if st.button("👁️ Veure", use_container_width=True, key=f"btn_vw_fac_{fid}", help="Veure PDF al visor integrat"):
+                            view_pdf_dialog(f"Factura {fac.get('mesAny')}", "Factures_Llum", fname)
+                    else:
+                        st.button("👁️ Veure", disabled=True, use_container_width=True, key=f"btn_vw_fac_dis_{fid}", help="Fitxer PDF no disponible")
     else:
         st.info("💡 Encara no hi ha cap factura elèctrica registrada. Fes clic a **➕ Nova Factura Llum** per començar a registrar els consums per tram.")
 
