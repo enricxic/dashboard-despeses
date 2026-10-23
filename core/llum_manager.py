@@ -262,58 +262,98 @@ def fetch_preu_llum_ree_fallback() -> dict:
         return None
 
 
-def calcular_finestra_acumuladors(hores_list: list, durada_hores: int = 5, nomes_nit: bool = True) -> dict:
+CONFIG_ACUM_FILE = os.path.join(PROJECT_ROOT, "data", "acumuladors_config.json")
+
+def load_acumuladors_config() -> dict:
+    """Carrega la configuració d'hores i franges dels acumuladors."""
+    defaults = {
+        "hores_4000w": 5,
+        "hores_2000w": 3,
+        "franja_2000w": "migdia"
+    }
+    if os.path.exists(CONFIG_ACUM_FILE):
+        try:
+            with open(CONFIG_ACUM_FILE, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+                if isinstance(saved, dict):
+                    defaults.update(saved)
+        except Exception as e:
+            print(f"Error llegint configuració acumuladors: {e}")
+    return defaults
+
+def save_acumuladors_config(cfg: dict) -> bool:
+    """Desa la configuració dels acumuladors per mantenir-la en memòria persistent."""
+    try:
+        os.makedirs(os.path.dirname(CONFIG_ACUM_FILE), exist_ok=True)
+        with open(CONFIG_ACUM_FILE, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"Error desant configuració acumuladors: {e}")
+        return False
+
+def calcular_finestra_acumuladors(hores_list: list, durada_hores: int = 5, franja: str = "nit", nomes_nit: bool = None) -> dict:
     """
     Calcula la finestra òptima per a la càrrega d'acumuladors de calor elèctrics.
-    Per defecte avalua la franja nocturna (00:00 a 08:00 h) que és quan s'aplica el tram Vall
-    i l'usuari disposa de la potència contractada ampliada de 5,5 kW.
-    
-    Retorna un diccionari amb:
-      - millor_finestra: dict amb slot_inici, slot_fi, hores_llista, preu_mitja, cost_estimat_per_kwh
-      - hores_individuals: les N hores més barates
-      - estalvi_vs_mitjana_percent: percentatge d'estalvi aconseguit respecte a la mitjana del dia
+    Franges disponibles:
+      - 'nit': 00:00 a 08:00 h (Vall, potència de 5,5 kW, per a acumulador 4000W)
+      - 'migdia': 11:00 a 19:00 h (Pla / Solar dip, 4,4 kW, per a acumulador 2000W)
+      - 'dia': 08:00 a 24:00 h
+      - 'tot': 00:00 a 24:00 h
     """
     if not hores_list:
         return {}
-        
-    candidats = hores_list
-    if nomes_nit:
-        # Filtrar hores nocturnes de 00:00 a 08:00 (hora 0 a 7)
+
+    if nomes_nit is not None:
+        franja = "nit" if nomes_nit else "tot"
+
+    if franja == "nit":
         candidats = [h for h in hores_list if 0 <= h.get("hora", 0) <= 7]
-        
+        pot_disp = 5.5
+    elif franja == "migdia":
+        candidats = [h for h in hores_list if 11 <= h.get("hora", 0) <= 18]
+        pot_disp = 4.4
+    elif franja == "dia":
+        candidats = [h for h in hores_list if 8 <= h.get("hora", 0) <= 23]
+        pot_disp = 4.4
+    else:
+        candidats = hores_list
+        pot_disp = 4.4
+
     durada = min(durada_hores, len(candidats))
     if durada <= 0:
         return {}
-        
+
     # 1. Finestra contínua més econòmica
     millor_sublist = None
     millor_avg = 9999.0
-    
+
     for i in range(len(candidats) - durada + 1):
         finestra = candidats[i:i + durada]
         avg = sum(h["preu"] for h in finestra) / durada
         if avg < millor_avg:
             millor_avg = avg
             millor_sublist = finestra
-            
-    # 2. Hores individuals més barates (per a acumuladors amb temporitzadors independents)
+
+    # 2. Hores individuals més barates
     hores_indiv = sorted(candidats, key=lambda x: x["preu"])[:durada]
     avg_indiv = sum(h["preu"] for h in hores_indiv) / durada if hores_indiv else 0.0
-    
+
     # 3. Mitjana general de referència (de tot el dia)
     global_avg = sum(h["preu"] for h in hores_list) / len(hores_list) if hores_list else 0.0
     estalvi_pct = 0.0
     if global_avg > 0 and millor_avg < 9999.0:
         estalvi_pct = round(((global_avg - millor_avg) / global_avg) * 100, 1)
-        
+
     res = {
         "durada_hores": durada,
-        "nomes_nit": nomes_nit,
-        "potencia_disponible_kw": 5.5 if nomes_nit else 4.4,
+        "franja": franja,
+        "nomes_nit": (franja == "nit"),
+        "potencia_disponible_kw": pot_disp,
         "global_avg": round(global_avg, 4),
         "estalvi_percent": estalvi_pct
     }
-    
+
     if millor_sublist:
         h_inici = millor_sublist[0]["hora"]
         h_fi = millor_sublist[-1]["hora"] + 1
@@ -326,12 +366,12 @@ def calcular_finestra_acumuladors(hores_list: list, durada_hores: int = 5, nomes
         }
     else:
         res["millor_finestra"] = None
-        
+
     res["hores_individuals"] = {
         "preu_mitja": round(avg_indiv, 4),
         "hores": hores_indiv
     }
-    
+
     return res
 
 
