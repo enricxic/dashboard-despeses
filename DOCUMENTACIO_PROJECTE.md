@@ -219,9 +219,25 @@ Dashboard/
 - L'extracció de tiquets del súper a `compres.py` utilitza **Google Gemini Vision** (`gemini-2.5-flash`), cridant directament l'API mitjançant `requests` amb gestió automàtica de reintents i *exponential backoff*.
 - La clau d'API de Gemini es troba a `st.secrets["GEMINI_API_KEY"]`.
 
-### 6.1 Descomptes i Enginyeria Inversa de Preus
-- Quan l'usuari introdueix manualment un article amb descompte al tiquet a `modules/compres.py`, s'assumeix que s'està registrant el **preu final pagat**.
-- Si s'indica un `%` de descompte (p. ex. 30%), el sistema calcula automàticament la base original i l'estalvi en promoció sense alterar l'import real pagat.
+### 6.1 Descomptes i Enginyeria Inversa de Preus (Fórmula $PF = B \times (1 - d)$)
+- **Principi de Preu Final Fix**: Quan l'usuari introdueix manualment un article amb descompte al tiquet a `modules/compres.py`, el camp `TOTAL LÍNIA` representa el **Preu Final realment pagat ($PF$)** que figura al tiquet de caixa del supermercat.
+- **Fórmula de Recàlcul de Base i Promoció**:
+  $$PF = B \times (1 - d) \implies B = \frac{PF}{1 - d}$$
+  on:
+  - **$PF$**: Preu final de la línia que es manté invariable (p. ex. $2,29\text{ €}$).
+  - **$d$**: Descompte en tant per u ($d = \frac{\%}{100}$, p. ex. $40\% \rightarrow 0,40$).
+  - **$B$**: Base original sense descompte ($B = \text{Quantitat} \times \text{Preu Unitari Original}$).
+- **Flux d'Execució en Temps Real**:
+  1. En introduir un article (p. ex. $1\text{ u.}$ a $2,29\text{ €}$), el total de la línia inicial és $2,29\text{ €}$ ($PF$).
+  2. Si s'indica un descompte del $40\%$ al camp `%`:
+     - La Base es calcula com $B = \frac{2,29}{1 - 0,40} = 3,82\text{ €}$.
+     - El camp `PREU UNIT.` augmenta automàticament a $3,82\text{ €}$.
+     - El camp `PROMOCIÓ` s'assigna com a $3,82 - 2,29 = 1,53\text{ €}$.
+     - El camp `TOTAL LÍNIA` roman exactament a $(1 \times 3,82) - 1,53 = 2,29\text{ €}$ (invariable).
+- **Sincronització Bidireccional i Persistència**:
+  - Modificar `QUANTITAT` o `PREU UNIT.` recalcula automàticament la promoció i la base en temps real mitjançant callbacks dedicats (`on_change`), evitant desajustos si l'usuari canvia la quantitat posteriorment.
+  - Escriure directament l'import de la promoció en euros a `PROMOCIÓ` calcula automàticament el percentatge equivalent: $\% = \frac{\text{Promoció}}{B} \times 100$.
+  - En editar una línia existent (botó ✏️), el percentatge original es recupera i es mostra calculat en lloc de reiniciar-se a zero.
 
 ---
 
@@ -496,6 +512,11 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - Taula històrica de factures amb accions d'edició (`✏️`), eliminació (`🗑️`), descàrrega (`📥`) i visualització completa en PDF integrat (`👁️`) reutilitzant el visor basat en PDF.js.
     - Mètriques globals i gràfic d'evolució històrica mensual de consums per tram (barres apilades) i evolució del cost total (€).
   - **Persistència Híbrida Cloud / Local**: Sincronització automàtica a Supabase (`app_config` ID 9) amb rèplica local a `data/consum_llum.json` i exportació a `csv/consum_llum.csv`.
+
+- **24/10/2026: Correcció i Recàlcul Bidireccional de Descomptes a Compres Super (`modules/compres.py`)**:
+  - **Model Matemàtic de Preu Final Fix ($PF = B \times (1 - d)$)**: Implementada l'enginyeria inversa de descomptes a la introducció manual de línies de tiquet. En introduir un percentatge (`%`), el sistema augmenta automàticament el `PREU UNIT.` a la base abans de descompte ($B = \frac{PF}{1 - d}$) i assigna l'estalvi a `PROMOCIÓ`, mantenint sempre el `TOTAL LÍNIA` invariable i fidel al tiquet de caixa.
+  - **Reactivitat en Temps Real i Càlcul Invers**: Afegits gestors `on_change` a `QUANTITAT` i `PREU UNIT.` per mantenir les promocions al dia en modificar quantitats, i càlcul invers automàtic del `%` quan s'introdueix la promoció directament en euros.
+  - **Recuperació en Edició**: En prémer el botó ✏️ d'una línia existent, el percentatge es calcula i es presenta al formulari sense reiniciar-se a zero.
 
 - **24/10/2026: Millores, Optimització d'Acumuladors i Nova Pestanya "☀️ Estudi Solar" al Mòdul Llum i Aigua (`modules/llum_aigua.py`, `core/llum_manager.py`, `data/acumuladors_config.json`)**:
   - **Simplificació i Neteja d'Accions a les Factures**:
