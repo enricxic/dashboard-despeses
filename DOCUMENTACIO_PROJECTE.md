@@ -53,7 +53,10 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 4. **📹 Seguretat**: `modules/seguretat.py` *(Icona càmera)* - Estat de càmeres, accessos i alarmes.
 5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Gestió i organització de les actuacions i documentació tècnica de la llar en tres pestanyes especialitzades: `📋 Registre Manteniment` (tasques, reparacions i feines de casa amb formulari d'alta ràpid, assignació d'alertes personals, control d'acompliment i sincronització automàtica a l'agenda), `📖 Manuals` (instruccions d'aparells, ubicació, especificacions) i `🛡️ Garanties` (dates de compra, terminis de vigència, factures i alertes de caducitat), connectades a registres centralitzats (Supabase app_config ID 7 i ID 8) i amb visor interactiu de fitxers PDF integrat.
 6. **📶 Domòtica**: `modules/domotica.py` *(Icona WiFi)* - Integració amb Home Assistant, llums i sensors.
-7. **💡 Llum i Aigua**: `modules/llum_aigua.py` *(Icona bombeta)* - Gestió integral dels subministraments energètics i hídrics de la llar en dues pestanyes especialitzades: `⚡ Consum Llum` (preu de la llum horari en directe PVPC / Bo Social via webscraping de tarifaluzhora.es & REE, optimitzador de càrrega d'acumuladors elèctrics amb potència nocturna de 5,5 kW, registre de factures per trams Punta/Pla/Vall i visor PDF integrat) i `💧 Consum Aigua` (control de factures d'aigua, lectures de comptador, seguiment de metres cúbics consumits i visor PDF integrat), connectades a registres centralitzats (Supabase app_config ID 9 i ID 10).
+7. **💡 Llum i Aigua**: `modules/llum_aigua.py` *(Icona bombeta)* - Gestió integral dels subministraments energètics i hídrics de la llar en tres pestanyes especialitzades:
+   - `⚡ Consum Llum`: Preu de la llum horari en directe PVPC / Bo Social (via *webscraping* a `tarifaluzhora.es` amb contingència a l'API de Red Eléctrica REE), doble optimitzador independent d'acumuladors de calor elèctrics (Menjador 4.000 W a la nit 00:00 - 08:00 h amb potència contractada de 5,5 kW, i Passadís de la 2a planta 2.000 W a la vall solar 11:00 - 19:00 h amb 4,4 kW) amb ajust d'hores persistent en memòria (`data/acumuladors_config.json`), guia estratègica desplegada a l'ample complet, ingesta automàtica de factures PDF amb extracció OCR/regex, històric de 44 factures (2023-2026), visor PDF integrat en diàleg i gràfic mensual de barres apilades amb preus sobreposats de forma neta damunt les barres (sense xocar amb els colors dels trams).
+   - `💧 Consum Aigua`: Control de factures d'aigua, lectures de comptador, seguiment de metres cúbics consumits i visor PDF integrat, connectat a Supabase `app_config` ID 10.
+   - `☀️ Estudi Solar`: Simulador fotovoltaic i d'autoconsum personalitzat per a la llar a Arbúcies (La Selva, Girona) basat en radiació solar PVGIS (HSP locals). Permet simular de 6 a 20 plaques solars (450W), orientació de coberta (29° NE, Est-Oest a doble vessant o Sud), capacitat de bateries de liti (0 a 15 kWh) i derivació a acumuladors elèctrics de calor. Inclou contrast en temps real contra els 5.661 kWh/any de consum real de les factures, anàlisi de la realitat del Bo Social (descompte del 80% per a vulnerables severs enfront del límit de compensació d'excedents del RD 244/2019), comparador d'inversió "Clau en mà" vs modalitat "Mixta / Fes-ho tu mateix" i guia de seguretat per a teulada de teules corbes.
 
 ### 🟢 Part Dreta (5 nodes amb rodona):
 8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari i agenda familiar interactiva:
@@ -98,14 +101,19 @@ Dashboard/
 ├── app.py                    # Router principal canònic i Landing Page interactiva (amb hot-reload)
 ├── app_v2.py                 # Forwarder bridge transparent per a Streamlit Cloud
 ├── core/
+│   ├── aigua_manager.py      # Gestor de factures d'aigua i registres de lectures de comptador (Supabase ID 10)
 │   ├── auth.py               # Autenticació amb contrasenya i token hash
-│   ├── db.py                 # Connexió i operacions CRUD a Supabase
 │   ├── config_manager.py     # Gestor de configuració JSON i perfil familiar (Ruta absoluta garanteix focalització a core/config.json)
 │   ├── config.json           # Configuració de categories, comptes, família, eines i paràmetres
+│   ├── db.py                 # Connexió i operacions CRUD a Supabase
+│   ├── harness.py            # Motor d'avaluació IA, execució asíncrona en segon pla i generador d'informes .txt
+│   ├── llum_manager.py       # Scraper PVPC en temps real, gestor de factures elèctriques, extracció PDF, acumuladors i motor solar PVGIS (Supabase ID 9)
 │   ├── manteniment_manager.py # Gestor documental (Manuals i Garanties) i Registre de Tasques (Supabase ID 7 i ID 8)
-│   ├── ocr_rules.md          # Regles personalitzades per supermercat enviades al prompt de Gemini
-│   └── harness.py            # Motor d'avaluació IA, execució asíncrona en segon pla i generador d'informes .txt
+│   └── ocr_rules.md          # Regles personalitzades per supermercat enviades al prompt de Gemini
 ├── data/
+│   ├── acumuladors_config.json # Configuració persistent de les hores de càrrega dels acumuladors (4000W i 2000W)
+│   ├── consum_aigua.json     # Rèplica local de factures d'aigua i lectures
+│   ├── consum_llum.json      # Rèplica local de factures elèctriques (44 factures històriques)
 │   ├── harness_menu_cases.json # Banc d'11 casos de prova exhaustius per al test de menús
 │   ├── harness_status.json     # Estat de progrés en temps real per a l'execució de proves en segon pla
 │   ├── manteniment_docs.json   # Registre JSON canònic de documents tècnics (Manuals i Garanties)
@@ -126,12 +134,15 @@ Dashboard/
 │   ├── domotica.py           # 📶 Domòtica (Home Assistant)
 │   ├── economic.py           # 📈 Detalls mes, Prev. Despeses, Prev. Ingressos, Inversions, Estalvis i Xat IA
 │   ├── jocs.py               # 🎲 Jocs i oci
+│   ├── llum_aigua.py         # 💡 Llum i Aigua (Preus PVPC, Acumuladors, Històric Factures, Visor PDF, Estudi Solar)
 │   ├── manteniment.py        # 🛠️ Manteniment de la Llar (Pestanyes Registre Manteniment, Manuals i Garanties, visors PDF, filtres)
 │   ├── medicacio.py          # 💊 Control de medicació i tutelats (Pla de dosificació & sync)
 │   ├── menjar.py             # 🍽️ Receptari (Escalat base 3), Planificador IA i Batch Cooking
 │   ├── ofertes.py            # 🔍 Comparador d'Ofertes i Visor de Fulletons (Mercadona, Aldi, etc.)
 │   └── seguretat.py          # 📹 Seguretat i càmeres
 ├── PDF/
+│   ├── Factures_Aigua/       # Dipòsit de factures d'aigua en PDF
+│   ├── Factures_Llum/        # Dipòsit de factures elèctriques en PDF (44 factures històriques)
 │   ├── Manuals/              # Dipòsit de manuals d'instruccions en PDF
 │   └── Garanties/            # Dipòsit de factures i documents de garantia en PDF
 └── DOCUMENTACIO_PROJECTE.md  # Aquest document
@@ -485,6 +496,39 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - Taula històrica de factures amb accions d'edició (`✏️`), eliminació (`🗑️`), descàrrega (`📥`) i visualització completa en PDF integrat (`👁️`) reutilitzant el visor basat en PDF.js.
     - Mètriques globals i gràfic d'evolució històrica mensual de consums per tram (barres apilades) i evolució del cost total (€).
   - **Persistència Híbrida Cloud / Local**: Sincronització automàtica a Supabase (`app_config` ID 9) amb rèplica local a `data/consum_llum.json` i exportació a `csv/consum_llum.csv`.
+
+- **24/10/2026: Millores, Optimització d'Acumuladors i Nova Pestanya "☀️ Estudi Solar" al Mòdul Llum i Aigua (`modules/llum_aigua.py`, `core/llum_manager.py`, `data/acumuladors_config.json`)**:
+  - **Simplificació i Neteja d'Accions a les Factures**:
+    - Suprimits els botons redundants de `Baixar`, `Editar` i `Esborrar` a les targetes de factures.
+    - Mantingut exclusivament el botó principal `👁️ Veure`, que obre el diàleg interactiu amb visor basat en PDF.js (el qual ja incorpora la descàrrega nativa del document PDF).
+    - Eliminada la línia secundària repetitiva de la comercialitzadora ("Energia XXI...") per oferir una interfície més neta i compacta.
+  - **Botó Directe de "Nova factura llum" amb Ingestor PDF**:
+    - Substitució del formulari desplegat per un botó d'alta ràpida amb selector de fitxers PDF (`st.file_uploader`).
+    - Motor d'extracció automàtica per OCR/Regex que recupera directament el número de factura, període de facturació, imports i consums per tram (P1, P2, P3), arxivant el PDF automàticament a `PDF/Factures_Llum/` i registrant les dades a Supabase (ID 9).
+  - **Refinament del Gràfic Històric Mensual de Barres**:
+    - Suprimits els marcadors i targetes globals de consum que sobrecarregaven la visualització.
+    - Inclusió del preu total (€) en format negreta a cada barra mensual, posicionat de forma neta estrictament per sobre de les barres apilades (a la cota `y = kwhTotal`), eliminant completament el solapament visual del text sobre els colors dels trams.
+  - **Doble Optimitzador Independent d'Acumuladors de Calor amb Persistència (`data/acumuladors_config.json`)**:
+    - Desdoblament dels dos acumuladors en targetes i controls individuals de planificació:
+      * **Acumulador Menjador (4.000 W)**: Finestra recomanada nocturna (00:00 - 08:00 h, tram Vall) per aprofitar la potència contractada de 5,5 kW.
+      * **Acumulador Passadís 2a Planta (2.000 W)**: Finestra recomanada a la vall solar / migdia (11:00 - 19:00 h) per aprofitar la potència de 4,4 kW sense sobrepassar el límit d'ICP.
+    - Selector numèric d'hores necessàries independent per a cadascun, amb persistència automàtica en memòria i a disc a `data/acumuladors_config.json`.
+    - Duplicació de les targetes de finestra recomanada (una per cada acumulador) i ressaltat diferenciat al gràfic horari de 24 hores (vora daurada per al de 4000W i vora blava per al de 2000W).
+    - Desplegament de la Guia Estratègica i reflexions a l'ample complet sense quedar tapada ni comprimida per les targetes de recomanació.
+  - **Ingesta Massiva de l'Històric de Factures (44 factures reals)**:
+    - Processament, extracció i arxivament de 44 factures elèctriques en PDF (`PDF/Factures_Llum/`) cobrint els anys 2023, 2024, 2025 i 2026.
+    - Consolidació de 5.661 kWh de consum anual real i 1.676,94 € registrats a Supabase ID 9, `data/consum_llum.json` i `csv/consum_llum.csv`.
+  - **Nova Pestanya "☀️ Estudi Solar"**:
+    - Integració d'un model de radiació solar basat en dades oficials de PVGIS per a la localització geogràfica d'Arbúcies (La Selva, Girona), aplicant les HSP (Hores de Sol Pic) mensuals reals.
+    - Simulador interactiu d'autoconsum fotovoltaic amb controls dinàmics:
+      * De 6 a 20 plaques solars (mòduls monocristal·lins de 450W).
+      * Orientació de la coberta: 29° Nord-Est (teulada actual), Est-Oest a doble vessant o Sud òptim.
+      * Emmagatzematge en bateries de liti: 0, 5, 10 o 15 kWh.
+      * Commutació de derivació d'excedents a acumuladors tèrmics existents (6.000 W totals).
+    - Contrast matemàtic en temps real de la producció solar mensual generada enfront del consum elèctric real històric de les factures (5.661 kWh/any).
+    - Anàlisi econòmica i jurídica detallada sobre la realitat del Bo Social: descompte vigent del 80% (consumidor vulnerable sever) enfront dels límits de compensació d'excedents de l'article 14 del RD 244/2019 (on els excedents només compensen fins al valor de l'energia de la factura, sense reduir el terme fix de potència ni el Bo Social).
+    - Comparador exhaustiu de pressupost "Clau en mà" (instal·lació integral homologada amb deducció del 40% d'IRPF i bonificació d'IBI) vs modalitat "Mixta / DIY" (compra directa de materials i connexió per instal·lador certificat).
+    - Guia de seguretat i muntatge per a cobertes de teula corba: ancoratge estructural a bigues / corretges i ganxos salva-teules sense perforació directa.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**
