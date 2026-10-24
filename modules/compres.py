@@ -942,10 +942,19 @@ def cb_edit_ticket_item(idx):
     st.session_state["manual_fam_selectbox"] = item['familia'] if item['familia'] != 'Pendent' else ""
     st.session_state["manual_art_selectbox"] = item['article'] if item['article'] != 'pendent' else ""
     st.session_state["manual_pes_num"] = str(item['pes'])
-    st.session_state["manual_qty_num"] = int(float(item['quantitat']))
-    st.session_state["manual_preu_num"] = float(item['preuUnit'])
-    st.session_state["manual_prom_num"] = float(item['prom'])
-    st.session_state["manual_pct_num"] = 0.0
+    qty = int(float(item['quantitat']))
+    preu = float(item['preuUnit'])
+    prom = float(item['prom'])
+    tot = float(item.get('totLinea', (qty * preu) - prom))
+    
+    st.session_state["manual_qty_num"] = qty
+    st.session_state["manual_preu_num"] = preu
+    st.session_state["manual_prom_num"] = prom
+    st.session_state["manual_target_tot"] = tot
+    if prom > 0.0 and (preu * qty) > 0:
+        st.session_state["manual_pct_num"] = round((prom / (preu * qty)) * 100.0, 2)
+    else:
+        st.session_state["manual_pct_num"] = 0.0
     st.session_state["manual_reb_chk"] = (item['rebost'] == 'rebost')
     st.session_state["editing_ticket_item_idx"] = idx
 
@@ -1054,6 +1063,7 @@ def cb_add_ticket_line():
     st.session_state["manual_pct_num"] = 0.0
     st.session_state["manual_preu_num"] = None
     st.session_state["manual_prom_num"] = 0.0
+    st.session_state["manual_target_tot"] = None
     st.session_state["manual_reb_chk"] = False
     st.session_state["manual_fam_selectbox"] = ""
     st.session_state["manual_art_selectbox"] = ""
@@ -1066,16 +1076,67 @@ def cb_recalculate_manual_pct():
     qty = st.session_state.get("manual_qty_num", 1)
     qty = int(qty) if qty is not None and int(qty) > 0 else 1
     
-    if pct > 0.0 and pct <= 100.0:
-        if preu > 0.0:
-            st.session_state["manual_prom_num"] = round(preu * qty * (pct / 100.0), 2)
+    # Preu final línia (PF) que es manté fix: PF = B * (1 - d)
+    # on B = quantitat * preu_original, d = pct / 100.
+    prom_actual = st.session_state.get("manual_prom_num", 0.0) or 0.0
+    pf = st.session_state.get("manual_target_tot", None)
+    if pf is None or pf <= 0.0:
+        pf = round(max(0.0, (qty * preu) - prom_actual), 2)
+        if pf == 0.0 and preu > 0.0:
+            pf = round(qty * preu, 2)
+        st.session_state["manual_target_tot"] = pf
+        
+    if 0.0 < pct < 100.0:
+        d = pct / 100.0
+        base = pf / (1.0 - d)
+        nou_preu = round(base / qty, 2)
+        nova_prom = round((nou_preu * qty) - pf, 2)
+        st.session_state["manual_preu_num"] = nou_preu
+        st.session_state["manual_prom_num"] = nova_prom
     elif pct == 0.0:
+        if pf is not None and pf > 0.0:
+            st.session_state["manual_preu_num"] = round(pf / qty, 2)
         st.session_state["manual_prom_num"] = 0.0
+        st.session_state["manual_target_tot"] = None
+
+def cb_manual_preu_changed():
+    pct = st.session_state.get("manual_pct_num", 0.0) or 0.0
+    preu = st.session_state.get("manual_preu_num", 0.0) or 0.0
+    qty = st.session_state.get("manual_qty_num", 1)
+    qty = int(qty) if qty is not None and int(qty) > 0 else 1
+    
+    if pct == 0.0:
+        st.session_state["manual_target_tot"] = round(preu * qty, 2)
+        st.session_state["manual_prom_num"] = 0.0
+    else:
+        st.session_state["manual_target_tot"] = round(preu * qty, 2)
+        cb_recalculate_manual_pct()
+
+def cb_manual_qty_changed():
+    pct = st.session_state.get("manual_pct_num", 0.0) or 0.0
+    preu = st.session_state.get("manual_preu_num", 0.0) or 0.0
+    qty = st.session_state.get("manual_qty_num", 1)
+    qty = int(qty) if qty is not None and int(qty) > 0 else 1
+    
+    if pct == 0.0:
+        st.session_state["manual_target_tot"] = round(preu * qty, 2)
+    else:
+        cb_recalculate_manual_pct()
 
 def cb_manual_prom_changed():
-    # Quan l'usuari introdueix o canvia directament la promoció en euros:
-    # Resetejar el % a 0.0 per no crear bucles ni conflictes d'estat
-    st.session_state["manual_pct_num"] = 0.0
+    prom = st.session_state.get("manual_prom_num", 0.0) or 0.0
+    preu = st.session_state.get("manual_preu_num", 0.0) or 0.0
+    qty = st.session_state.get("manual_qty_num", 1)
+    qty = int(qty) if qty is not None and int(qty) > 0 else 1
+    
+    if prom > 0.0 and preu > 0.0 and qty > 0:
+        base = preu * qty
+        pct = round((prom / base) * 100.0, 2)
+        st.session_state["manual_pct_num"] = pct
+        st.session_state["manual_target_tot"] = round(base - prom, 2)
+    elif prom == 0.0:
+        st.session_state["manual_pct_num"] = 0.0
+        st.session_state["manual_target_tot"] = round(preu * qty, 2)
 
 
 def cb_set_date_today():
@@ -1086,6 +1147,7 @@ def cb_clear_ticket():
     st.session_state["ticket_items"] = []
     st.session_state["ticket_discount"] = 0.0
     st.session_state["manual_pct_num"] = 0.0
+    st.session_state["manual_target_tot"] = None
     st.session_state["editing_ticket_item_idx"] = None
     st.session_state["ticket_date"] = datetime.today().date()
     st.session_state["ticket_date_widget"] = datetime.today().date()
@@ -2315,9 +2377,9 @@ Retorna ÚNICAMENT l'objecte JSON.
     with col_pes:
         pes_val = st.text_input("PES", key="manual_pes_num")
     with col_qty:
-        qty_val = st.number_input("QUANTITAT", min_value=0, step=1, key="manual_qty_num", value=None, placeholder="1")
+        qty_val = st.number_input("QUANTITAT", min_value=0, step=1, key="manual_qty_num", value=None, placeholder="1", on_change=cb_manual_qty_changed)
     with col_preu:
-        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", value=None, placeholder="0.0")
+        preu_val = st.number_input("PREU UNIT.", min_value=0.0, step=0.01, key="manual_preu_num", value=None, placeholder="0.0", on_change=cb_manual_preu_changed)
     with col_pct:
         pct_val = st.number_input("%", min_value=0.0, max_value=100.0, step=1.0, key="manual_pct_num", on_change=cb_recalculate_manual_pct)
     with col_prom:
