@@ -23,19 +23,21 @@ def get_global_alerts():
     config = load_alerts_config()
     
     try:
-        # Prioritzar df_desp carregat a la sessió activa
-        df_desp = None
-        if "df_desp" in st.session_state and isinstance(st.session_state["df_desp"], pd.DataFrame) and not st.session_state["df_desp"].empty:
-            df_desp = st.session_state["df_desp"]
-            
-        data = load_dashboard_data(tables_to_load=['despeses', 'kmCotxe', 'limitsDespeses'])
-        if data and len(data) >= 10:
-            d_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag, df_cartera = data
-            if df_desp is None or df_desp.empty:
-                df_desp = d_desp
-        else:
-            if df_desp is None:
-                return alerts
+        # Prioritzar DataFrames ja carregats a la sessió activa per evitar consultes innecessàries
+        df_desp = st.session_state.get("df_desp")
+        df_km = st.session_state.get("df_km")
+        df_limits = st.session_state.get("df_limits")
+        
+        if df_desp is None or df_km is None or df_limits is None or df_desp.empty:
+            data = load_dashboard_data(tables_to_load=['despeses', 'kmCotxe', 'limitsDespeses'])
+            if data and len(data) >= 10:
+                d_desp, df_ing, df_super, df_gas, d_km, df_hip, df_est, d_limits, df_pag, df_cartera = data
+                if df_desp is None or df_desp.empty: df_desp = d_desp
+                if df_km is None or df_km.empty: df_km = d_km
+                if df_limits is None or df_limits.empty: df_limits = d_limits
+        
+        if df_desp is None:
+            return alerts
             
         # 1. Alerta de canvi d'oli (Cotxe)
         if df_km is not None and not df_km.empty:

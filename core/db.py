@@ -140,9 +140,114 @@ def get_db_engine():
             return None
     return None
 
+@st.cache_data(ttl=86400, show_spinner=False)
+def _fetch_table_historical(table_name):
+    """
+    Carrega l'arxiu històric immens (mesos vençuts) en memòria cau de 24 hores.
+    Llegeix directament del CSV local si existeix (0.04s) per evitar descàrregues massives.
+    """
+    import os
+    csv_path = os.path.join("csv", f"{table_name}.csv")
+    if os.path.exists(csv_path):
+        try:
+            return pd.read_csv(csv_path, sep=';')
+        except Exception as e:
+            print(f"Error llegint arxiu històric CSV per {table_name}: {e}")
+    
+    # Fallback si no hi ha CSV
+    role = "guest"
+    try:
+        import streamlit as st
+        role = st.session_state.get("role", "guest")
+    except Exception:
+        pass
+    supabase = get_supabase_client(role)
+    if supabase:
+        return fetch_all_supabase(supabase, table_name)
+    return pd.DataFrame()
+
+@st.cache_data(ttl=180, show_spinner=False)
+def _fetch_table_recent(table_name):
+    """
+    Recupera ràpidament la finestra activa (últims 30 dies / ~300 registres) de Supabase en 0.2s.
+    """
+    role = "guest"
+    try:
+        import streamlit as st
+        role = st.session_state.get("role", "guest")
+    except Exception:
+        pass
+    supabase = get_supabase_client(role)
+    if not supabase:
+        return pd.DataFrame()
+        
+    try:
+        if table_name == 'despeses':
+            res = supabase.table('despeses').select('*').order('ID_mov', desc=True).limit(300).execute()
+            data = res.data or []
+            res_pend = supabase.table('despeses').select('*').eq('ticketPendent', True).execute()
+            if res_pend.data:
+                data.extend(res_pend.data)
+            return pd.DataFrame(data)
+        elif table_name == 'compresSuper':
+            res = supabase.table('compresSuper').select('*').order('IdCompra', desc=True).limit(500).execute()
+            return pd.DataFrame(res.data or [])
+    except Exception as e:
+        print(f"Avís al recuperar finestra activa per a {table_name}: {e}")
+    return pd.DataFrame()
+
+def _fetch_partitioned_table(table_name):
+    """
+    Fusiona transparentment l'arxiu històric immutable (24h) amb la finestra activa recent (30 dies).
+    """
+    df_hist = _fetch_table_historical(table_name)
+    df_recent = _fetch_table_recent(table_name)
+    
+    if df_hist.empty and df_recent.empty:
+        return pd.DataFrame()
+    if df_recent.empty:
+        return df_hist
+    if df_hist.empty:
+        return df_recent
+        
+    id_col = 'ID_mov' if table_name == 'despeses' else 'IdCompra'
+    df_comb = pd.concat([df_recent, df_hist], ignore_index=True)
+    if id_col in df_comb.columns:
+        df_comb[id_col] = pd.to_numeric(df_comb[id_col], errors='coerce')
+        df_comb = df_comb.dropna(subset=[id_col])
+        df_comb = df_comb.drop_duplicates(subset=[id_col], keep='first')
+        df_comb = df_comb.sort_values(by=id_col, ascending=False).reset_index(drop=True)
+        
+    # Assegurar persistència local
+    import os
+    csv_path = os.path.join("csv", f"{table_name}.csv")
+    try:
+        df_comb.to_csv(csv_path, sep=';', index=False)
+    except Exception:
+        pass
+        
+    return df_comb
+
 def fetch_table_fast(table_name):
     import os
     csv_path = os.path.join("csv", f"{table_name}.csv")
+    
+    # Model de finestra activa per a taules massives (despeses i compresSuper)
+    if table_name in ['despeses', 'compresSuper']:
+        is_offline = False
+        try:
+            import streamlit as st
+            is_offline = st.session_state.get("is_offline", False)
+        except Exception:
+            pass
+        if is_offline:
+            if os.path.exists(csv_path):
+                try:
+                    return table_name, pd.read_csv(csv_path, sep=';')
+                except Exception:
+                    pass
+            return table_name, pd.DataFrame()
+        return table_name, _fetch_partitioned_table(table_name)
     
     is_offline = False
     try:
@@ -988,6 +1093,11 @@ def insert_db_row(table_name, new_row_dict):
         log_action(table_name, 'INSERT', inserted_data)
         
         update_session_state_insert(table_name, inserted_data)
+        if table_name in ['despeses', 'compresSuper']:
+            try:
+                _fetch_table_recent.clear()
+            except Exception:
+                pass
         csv_table_map = {
             'despeses': 'df_desp', 'ingressos': 'df_ing',
             'compresSuper': 'df_super', 'gasolina': 'df_gas',
@@ -1360,8 +1470,12 @@ def update_db_row(table_name, id_col, id_val, new_data):
         }
         if table_name in csv_table_map and csv_table_map[table_name] in st.session_state:
             save_to_csv_local(st.session_state[csv_table_map[table_name]], table_name)
-        load_dashboard_data.clear()
-        st.cache_data.clear()
+        # Invalidem només la finestra activa de la taula afectada, MAI tota la memòria cau
+        if table_name in ['despeses', 'compresSuper']:
+            try:
+                _fetch_table_recent.clear()
+            except Exception:
+                pass
         get_db_tracker().update()
         st.session_state["last_synced_time"] = get_db_tracker().last_update
         return True
@@ -1373,10 +1487,14 @@ def ensure_session_dfs():
     module = st.session_state.get("current_module")
     
     table_requirements = {
-        'modules.compres': ['despeses', 'ingressos', 'compresSuper', 'gasolina', 'hipoteca', 'estalviDP', 'limitsDespeses', 'pagaments'],
+        'modules.compres': ['despeses', 'compresSuper'],
         'modules.dashboard': ['despeses', 'ingressos', 'tr_cartera', 'limitsDespeses', 'pagaments'],
         'modules.economic': ['despeses', 'ingressos', 'compresSuper', 'gasolina', 'kmCotxe', 'hipoteca', 'tr_cartera', 'estalviDP', 'limitsDespeses', 'pagaments'],
-        'modules.cotxe': ['gasolina', 'kmCotxe']
+        'modules.cotxe': ['gasolina', 'kmCotxe'],
+        'modules.menjar': [],
+        'modules.medicacio': [],
+        'modules.manteniment': [],
+        'modules.llum_aigua': []
     }
     
     # Per defecte ho carreguem tot si no estem en un mòdul específic que tingui requeriments

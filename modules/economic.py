@@ -861,7 +861,12 @@ def render(view_mode="economic"):
             log_action(table_name, 'INSERT', new_row_dict)
             
             update_session_state_insert(table_name, new_row_dict)
-            st.cache_data.clear()
+            try:
+                from core.db import _fetch_table_recent
+                if table_name in ['despeses', 'compresSuper']:
+                    _fetch_table_recent.clear()
+            except Exception:
+                pass
             get_db_tracker().update()
             st.session_state["last_synced_time"] = get_db_tracker().last_update
             return True
@@ -886,7 +891,12 @@ def render(view_mode="economic"):
                 
             log_action(table_name, 'INSERT_BULK', details)
             
-            st.cache_data.clear()
+            try:
+                from core.db import _fetch_table_recent
+                if table_name in ['despeses', 'compresSuper']:
+                    _fetch_table_recent.clear()
+            except Exception:
+                pass
             if state_key and state_key in st.session_state:
                 del st.session_state[state_key]
                 
@@ -1016,7 +1026,12 @@ def render(view_mode="economic"):
             log_action(table_name, 'DELETE', detalls)
             
             update_session_state_delete(table_name, id_col, id_val)
-            st.cache_data.clear()
+            try:
+                from core.db import _fetch_table_recent
+                if table_name in ['despeses', 'compresSuper']:
+                    _fetch_table_recent.clear()
+            except Exception:
+                pass
             get_db_tracker().update()
             st.session_state["last_synced_time"] = get_db_tracker().last_update
             return True
@@ -1064,7 +1079,12 @@ def render(view_mode="economic"):
             log_action(table_name, 'UPDATE', detalls)
             
             update_session_state_update(table_name, id_col, id_val, update_payload)
-            st.cache_data.clear()
+            try:
+                from core.db import _fetch_table_recent
+                if table_name in ['despeses', 'compresSuper']:
+                    _fetch_table_recent.clear()
+            except Exception:
+                pass
             get_db_tracker().update()
             st.session_state["last_synced_time"] = get_db_tracker().last_update
             return True

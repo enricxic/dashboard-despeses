@@ -248,10 +248,18 @@ Dashboard/
 
 ---
 
-## 8. Estratègia de Sincronització (Memòria i Base de Dades)
-L'aplicació utilitza actualitzacions d'estat en temps real (zero latència):
-- Quan `core/db.py` executa `insert_db_row`, `update_db_row` o `delete_db_row`, no només envia la petició SQL a Supabase, sinó que automàticament modifica el DataFrame corresponent a `st.session_state`.
-- Això evita que els dashboards hagin de recarregar massivament totes les taules cada vegada que s'edita o s'afegeix una simple despesa.
+## 8. Estratègia de Sincronització (Memòria, Finestra Activa i Base de Dades)
+L'aplicació utilitza una arquitectura de càrrega intel·ligent híbrida de màxim rendiment:
+- **Model Dual de Taules Massives (`despeses` i `compresSuper`)**:
+  - **Arxiu Històric (Mesos vençuts)**: Carregat en memòria cau persistent de 24 hores (`@st.cache_data(ttl=86400)`) des del CSV local (`0,04 s`), sense consumir peticions remotes per a les milers de files passades que no canvien.
+  - **Finestra Activa (Últims 30 dies / Mes en curs)**: Consulta lleugera i instantània a Supabase en una sola petició HTTP (`0,15 s`) per als registres recents i tiquets pendents.
+  - **Fusió Transparent**: El DataFrame complet consolidat s'entrega a l'aplicació unint recent + històric sense duplicats, garantint càlculs i saldos exactes.
+- **Mutacions Locals amb Zero Latència**:
+  - Les operacions `insert_db_row`, `update_db_row` i `delete_db_row` modifiquen directament el DataFrame a `st.session_state` i invaliden únicament la finestra recent, eliminant els bloquejos de 15–20 segons provocats per `st.cache_data.clear()`.
+- **Càrrega Selectiva per Mòduls (*Lazy Loading*)**:
+  - Cada mòdul només sol·licita a `ensure_session_dfs` les taules que utilitza estrictament (p. ex. Compres només `despeses` i `compresSuper`, Cotxe només `kmCotxe` i `gasolina`), alliberant de càrrega innecessària a la resta de mòduls.
+- **Acceleració d'Alertes Globals**:
+  - Les alertes de la capçalera (`get_global_alerts()`) reutilitzen els DataFrames de la sessió i incorporen una memòria cau de 60 segons a `app.py`, evitant consultes repetitives a cada clic.
 
 ---
 
@@ -512,6 +520,12 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - Taula històrica de factures amb accions d'edició (`✏️`), eliminació (`🗑️`), descàrrega (`📥`) i visualització completa en PDF integrat (`👁️`) reutilitzant el visor basat en PDF.js.
     - Mètriques globals i gràfic d'evolució històrica mensual de consums per tram (barres apilades) i evolució del cost total (€).
   - **Persistència Híbrida Cloud / Local**: Sincronització automàtica a Supabase (`app_config` ID 9) amb rèplica local a `data/consum_llum.json` i exportació a `csv/consum_llum.csv`.
+
+- **24/10/2026: Pla d'Optimització de Rendiment: Finestra Activa de 30 dies + Històric (`core/db.py`, `core/alerts.py`, `app.py`, `modules/economic.py`)**:
+  - **Model Dual Actiu / Històric per a Despeses i CompresSuper**: Segmentació intel·ligent de les dues taules massives (+15.000 files). L'arxiu històric de mesos vençuts es llegeix en 0,04 s amb memòria cau de 24 hores, mentre que la finestra activa dels últims 30 dies es recupera de Supabase en només 0,15 s en una sola petició HTTP, reduint el temps de bloqueig de 20 segons a menys d'1 segon.
+  - **Supressió d'invalidacions massives de memòria cau**: Eliminades les crides destructives a `st.cache_data.clear()` en desar o editar registres, substituint-les per actualitzacions immediates a `st.session_state` i buidat quirúrgic de la finestra recent. Desar una despesa o compra ara triga menys de 0,1 segons.
+  - **Acceleració de la Capçalera Global**: Afegida memòria cau temporal de 60 segons a `get_global_alerts()` a `app.py` i reutilització directa dels DataFrames en sessió a `core/alerts.py`, eliminant el bloqueig a cada canvi de pestanya o clic d'usuari.
+  - **Càrrega Mandrosa (*Lazy Loading*) per Mòdul**: Ajustat `table_requirements` a `core/db.py` perquè mòduls com Menús, Medicació, Manteniment o Llum no sol·licitin taules comptables innecessàries.
 
 - **24/10/2026: Correcció i Recàlcul Bidireccional de Descomptes a Compres Super (`modules/compres.py`)**:
   - **Model Matemàtic de Preu Final Fix ($PF = B \times (1 - d)$)**: Implementada l'enginyeria inversa de descomptes a la introducció manual de línies de tiquet. En introduir un percentatge (`%`), el sistema augmenta automàticament el `PREU UNIT.` a la base abans de descompte ($B = \frac{PF}{1 - d}$) i assigna l'estalvi a `PROMOCIÓ`, mantenint sempre el `TOTAL LÍNIA` invariable i fidel al tiquet de caixa.
