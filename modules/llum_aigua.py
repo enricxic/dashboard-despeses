@@ -18,6 +18,7 @@ from core.llum_manager import (
     get_energia_llar_config,
     save_energia_llar_config,
     get_preu_llum_avui,
+    get_preu_llum_dema,
     calcular_finestra_acumuladors,
     load_acumuladors_config,
     save_acumuladors_config,
@@ -521,183 +522,524 @@ def extract_data_from_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> dict:
 # PESTANYA 1: CONSUM LLUM I OPTIMITZADOR D'ACUMULADORS
 # =========================================================================
 
+def render_dia_kpis_i_grafica(p_data: dict, energia_cfg: dict, cfg_acum: dict, key_suffix: str = "avui", p_avui_ref: dict = None):
+    hores = p_data.get("hores", [])
+    if not hores:
+        st.warning("No hi ha dades horàries disponibles per a aquest dia.")
+        return
+
+    pot_punta = float(energia_cfg.get("potencia_punta_kw", 4.4))
+    pot_vall = float(energia_cfg.get("potencia_vall_kw", 5.5))
+    acumuladors_llista = energia_cfg.get("acumuladors", [])
+    if not acumuladors_llista:
+        acumuladors_llista = [
+            {"id": "acum_1", "nom": "Menjador", "zona": "Menjador / Planta Baixa", "watts": 4000, "franja": "nit", "hores_defecte": 5, "color": "#fbbf24", "icona": "🛋️"},
+            {"id": "acum_2", "nom": "Passadís 2a Planta", "zona": "Passadís 2a Planta", "watts": 2000, "franja": "migdia", "hores_defecte": 3, "color": "#38bdf8", "icona": "🪜"}
+        ]
+
+    es_dema = p_data.get("es_dema", False)
+    avg_pr = p_data.get("preu_mitja", 0.0)
+    h_barata = p_data.get("hora_barata", {})
+    h_cara = p_data.get("hora_cara", {})
+    dia_txt = p_data.get("dia_complet", p_data.get("data", ""))
+
+    # BANNER IDENTIFICADOR DEL DIA AMB DATA CLARA
+    color_b = "#10b981" if es_dema else "#38bdf8"
+    icona_b = "🔮 Preus de Demà" if es_dema else "📅 Preus d'Avui"
+    sub_font = f"Font: {p_data.get('font', '')} • Mercat regulat 2.0TD"
+    if not es_dema:
+        sub_font += f" • Actualitzat a les {p_data.get('actualitzat_a', '')}"
+    else:
+        sub_font += " • Planificació de consum per a demà"
+
+    st.markdown(f"""
+    <div style='background:rgba(255,255,255,0.03); border-left:4px solid {color_b}; padding:10px 16px; border-radius:6px; margin:10px 0 16px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;'>
+        <div>
+            <div style='font-size:0.75rem; color:{color_b}; font-weight:700; text-transform:uppercase;'>{icona_b}:</div>
+            <div style='font-size:1.2rem; font-weight:700; color:#f8fafc; margin-top:1px;'>{dia_txt}</div>
+        </div>
+        <div style='font-size:0.8rem; color:#94a3b8; text-align:right;'>
+            {sub_font}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 4 KPIS
+    k1, k2, k3, k4 = st.columns(4)
+    with k1:
+        if not es_dema:
+            preu_act = p_data.get("preu_actual", 0.0)
+            slot_act = p_data.get("slot_actual", "")
+            tram_act_lbl = p_data.get("tram_actual_label", "")
+            tram_act_col = p_data.get("tram_actual_color", "#10b981")
+            st.markdown(f"""
+            <div style='background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:10px 14px;'>
+                <div style='font-size:0.75rem; color:#94a3b8; text-transform:uppercase;'>Hora Actual ({slot_act})</div>
+                <div style='font-size:1.4rem; font-weight:700; color:{tram_act_col}; margin:2px 0;'>{preu_act:.4f} <span style='font-size:0.85rem;'>€/kWh</span></div>
+                <div style='font-size:0.8rem; font-weight:600; color:{tram_act_col};'>{tram_act_lbl}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            if p_avui_ref and p_avui_ref.get("preu_mitja"):
+                diff = avg_pr - p_avui_ref["preu_mitja"]
+                pct = (diff / p_avui_ref["preu_mitja"]) * 100
+                col_d = "#10b981" if diff <= 0 else "#ef4444"
+                lbl_d = f"📉 {abs(pct):.1f}% vs Avui" if diff <= 0 else f"📈 +{pct:.1f}% vs Avui"
+                val_txt = f"{diff:+.4f} €/kWh"
+            else:
+                col_d = "#38bdf8"
+                lbl_d = "Previsió de Demà"
+                val_txt = f"{avg_pr:.4f} €/kWh"
+            st.markdown(f"""
+            <div style='background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:10px 14px;'>
+                <div style='font-size:0.75rem; color:#94a3b8; text-transform:uppercase;'>Variació vs Avui</div>
+                <div style='font-size:1.35rem; font-weight:700; color:{col_d}; margin:2px 0;'>{lbl_d}</div>
+                <div style='font-size:0.8rem; color:#94a3b8;'>Diferència: <b>{val_txt}</b></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with k2:
+        tag_dia = "Demà" if es_dema else "Avui"
+        st.markdown(f"""
+        <div style='background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:10px 14px;'>
+            <div style='font-size:0.75rem; color:#94a3b8; text-transform:uppercase;'>Mitjana del Dia ({tag_dia})</div>
+            <div style='font-size:1.4rem; font-weight:700; color:#38bdf8; margin:2px 0;'>{avg_pr:.4f} <span style='font-size:0.85rem;'>€/kWh</span></div>
+            <div style='font-size:0.8rem; color:#94a3b8;'>📅 {p_data.get('data', '')}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with k3:
+        st.markdown(f"""
+        <div style='background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:10px 14px;'>
+            <div style='font-size:0.75rem; color:#10b981; text-transform:uppercase;'>🟢 Hora Més Barata</div>
+            <div style='font-size:1.4rem; font-weight:700; color:#10b981; margin:2px 0;'>{h_barata.get('preu', 0.0):.4f} <span style='font-size:0.85rem;'>€/kWh</span></div>
+            <div style='font-size:0.8rem; font-weight:600; color:#cbd5e1;'>⏰ {h_barata.get('slot', '')}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with k4:
+        st.markdown(f"""
+        <div style='background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:10px 14px;'>
+            <div style='font-size:0.75rem; color:#ef4444; text-transform:uppercase;'>🔴 Hora Més Cara</div>
+            <div style='font-size:1.4rem; font-weight:700; color:#ef4444; margin:2px 0;'>{h_cara.get('preu', 0.0):.4f} <span style='font-size:0.85rem;'>€/kWh</span></div>
+            <div style='font-size:0.8rem; font-weight:600; color:#cbd5e1;'>⏰ {h_cara.get('slot', '')}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # OPTIMITZADOR D'ACUMULADORS PER A AQUEST DIA
+    st.markdown("<div style='margin-top:28px; margin-bottom:8px;'></div>", unsafe_allow_html=True)
+    titol_opt = f"Optimitzador de Càrrega d'Acumuladors ({dia_txt})"
+    with st.container(border=True):
+        st.markdown(f"""
+        <div style='display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px; gap:8px;'>
+            <div style='display:flex; align-items:center; gap:8px;'>
+                <span style='font-size:1.25rem;'>🔥</span>
+                <span style='font-size:1.05rem; font-weight:700; color:#f39c12;'>{titol_opt}</span>
+            </div>
+            <div style='font-size:0.8rem; color:#94a3b8;'>Finestres òptimes calculades per a la data <b>{p_data.get('data', '')}</b></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        cols_ac = st.columns(len(acumuladors_llista), gap="large")
+        opt_finestres_acum = {}
+
+        for idx_ac, (col_ac, acum) in enumerate(zip(cols_ac, acumuladors_llista)):
+            with col_ac:
+                ac_id = acum.get("id", f"acum_{idx_ac+1}")
+                ac_nom = acum.get("nom", f"Acumulador {idx_ac+1}")
+                ac_watts = int(acum.get("watts", 2000))
+                ac_franja = acum.get("franja", "nit")
+                ac_color = acum.get("color", "#fbbf24" if idx_ac == 0 else "#38bdf8")
+                ac_icona = acum.get("icona", "🔥")
+                ac_def_h = int(acum.get("hores_defecte", 4))
+
+                if ac_franja == "nit":
+                    p_contractada = pot_vall
+                    franja_tag = f"{p_contractada:,.1f} kW Nit (Vall)"
+                    desc_franja = "Franja nocturna (00:00 - 08:00h)"
+                    badge_bg = "#065f46"
+                    badge_fg = "#a7f3d0"
+                else:
+                    p_contractada = pot_punta
+                    franja_tag = f"{p_contractada:,.1f} kW Migdia Solar"
+                    desc_franja = "Franja solar (11:00 - 19:00h)"
+                    badge_bg = "#075985"
+                    badge_fg = "#bae6fd"
+
+                marge_lliure = max(0.0, p_contractada - (ac_watts / 1000.0))
+
+                st.markdown(f"""
+                <div style='background:rgba(255,255,255,0.03); border:1px solid {ac_color}55; border-radius:8px; padding:10px 12px; margin-bottom:10px;'>
+                    <div style='display:flex; justify-content:space-between; align-items:center;'>
+                        <b style='color:{ac_color}; font-size:0.95rem;'>{ac_icona} {ac_nom} ({ac_watts:,} W)</b>
+                        <span style='background:{badge_bg}; color:{badge_fg}; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>{franja_tag}</span>
+                    </div>
+                    <div style='font-size:0.75rem; color:#94a3b8; margin-top:4px;'>{desc_franja} • Resten {marge_lliure:,.1f} kW lliures per a la casa.</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                key_cfg = f"hores_{ac_id}"
+                if key_cfg not in cfg_acum and f"hores_{ac_watts}w" in cfg_acum:
+                    key_cfg = f"hores_{ac_watts}w"
+
+                cur_h = int(cfg_acum.get(key_cfg, ac_def_h))
+                new_h = st.slider(
+                    f"Hores de càrrega ({ac_nom}):",
+                    min_value=1,
+                    max_value=8,
+                    value=min(max(cur_h, 1), 8),
+                    step=1,
+                    key=f"slider_h_{ac_id}_{key_suffix}_{idx_ac}",
+                    help=f"Tria quantes hores necessita carregar l'aparell {ac_nom} ({ac_watts} W)."
+                )
+                if new_h != cur_h and not es_dema:
+                    cfg_acum[key_cfg] = new_h
+                    save_acumuladors_config(cfg_acum)
+
+                opt_res = calcular_finestra_acumuladors(hores, durada_hores=new_h, franja=ac_franja)
+                if opt_res.get("millor_finestra"):
+                    w = opt_res["millor_finestra"]
+                    cost_cicle = w['preu_mitja'] * (ac_watts / 1000.0) * new_h
+                    icona_franja = "✨" if ac_franja == "nit" else "☀️"
+                    st.markdown(f"""
+                    <div style='background:rgba(255,255,255,0.04); border:1px solid {ac_color}66; border-radius:8px; padding:12px 14px; margin-top:8px;'>
+                        <div style='font-size:0.75rem; color:{ac_color}; font-weight:700; text-transform:uppercase;'>{icona_franja} Finestra Òptima ({new_h}h):</div>
+                        <div style='font-size:1.3rem; font-weight:700; color:{ac_color}; margin:4px 0;'>⏰ {w['rang_text']}</div>
+                        <div style='font-size:0.83rem; color:#e2e8f0; line-height:1.4;'>
+                            Preu mitjà finestra: <b style='color:#10b981;'>{w['preu_mitja']:.4f} €/kWh</b><br>
+                            Estalvi vs mitjana: <b style='color:#38bdf8;'>-{opt_res.get('estalvi_percent', 0.0)}%</b> • Potència: <b style='color:{ac_color};'>{p_contractada:,.1f} kW</b><br>
+                            Cost estimat cicle ({new_h}h a {ac_watts/1000.0:,.1f}kW): <b style='color:{ac_color};'>{cost_cicle:.2f} €</b>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    opt_finestres_acum[ac_id] = {
+                        "nom": ac_nom,
+                        "watts": ac_watts,
+                        "color": ac_color,
+                        "franja_label": franja_tag,
+                        "hores": [h_item["slot"] for h_item in w.get("hores", [])]
+                    }
+
+    # GRÀFICA HORÀRIA 24H ESPECÍFICA D'AQUEST DIA
+    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+    c_gh1, c_gh2 = st.columns([2.5, 1.5], vertical_alignment="center")
+    with c_gh1:
+        st.markdown(f"<p style='font-size:1.05rem; font-weight:700; color:#f8fafc; margin:0;'>📊 Corba Horària de Preus: <span style='color:{color_b};'>{dia_txt}</span></p>", unsafe_allow_html=True)
+    with c_gh2:
+        mode_color = st.radio(
+            "Colors de les barres:",
+            ["🕒 Trams Regulats", "💶 Preu Real"],
+            horizontal=True,
+            index=1,
+            key=f"rad_color_mode_{key_suffix}",
+            help="Tria si vols veure les barres segons els trams oficials o segons el preu real de l'energia."
+        )
+
+    all_prices = sorted([h["preu"] for h in hores])
+    th_low = all_prices[7] if len(all_prices) >= 8 else 0.10
+    th_high = all_prices[15] if len(all_prices) >= 16 else 0.20
+
+    x_slots = [h["slot"] for h in hores]
+    y_prices = [h["preu"] for h in hores]
+
+    if "Preu Real" in mode_color:
+        colors = []
+        hover_texts = []
+        for h in hores:
+            p = h["preu"]
+            if p <= th_low:
+                colors.append("#10b981")
+                nivell_txt = "🟢 Molt Barata" if p == min(all_prices) else "🟢 Barata"
+            elif p > th_high:
+                colors.append("#ef4444")
+                nivell_txt = "🔴 Molt Cara" if p == max(all_prices) else "🔴 Cara"
+            else:
+                colors.append("#f59e0b")
+                nivell_txt = "🟡 Mitjana / Normal"
+            hover_texts.append(f"<b>Data: {p_data.get('data', '')}</b><br><b>Hora: {h['slot']}</b><br>Preu: <b>{p:.4f} €/kWh</b><br>Nivell: {nivell_txt}<br>Tram: {h['tram_label']}")
+    else:
+        colors = [h["tram_color"] for h in hores]
+        hover_texts = [f"<b>Data: {p_data.get('data', '')}</b><br><b>Hora: {h['slot']}</b><br>Preu: <b>{h['preu']:.4f} €/kWh</b><br>Tram: {h['tram_label']}" for h in hores]
+
+    border_colors = []
+    border_widths = []
+    for h in hores:
+        slot = h["slot"]
+        matched_color = None
+        for ac_info in opt_finestres_acum.values():
+            if slot in ac_info.get("hores", []):
+                matched_color = ac_info["color"]
+                break
+        if matched_color:
+            border_colors.append(matched_color)
+            border_widths.append(3)
+        elif not es_dema and h.get("actual"):
+            border_colors.append("#ffffff")
+            border_widths.append(2)
+        else:
+            border_colors.append("rgba(0,0,0,0)")
+            border_widths.append(0)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=x_slots,
+        y=y_prices,
+        text=[f"{p:.3f}€" for p in y_prices],
+        textposition="outside",
+        textfont=dict(size=9, color="#cbd5e1"),
+        cliponaxis=False,
+        marker=dict(
+            color=colors,
+            line=dict(color=border_colors, width=border_widths)
+        ),
+        hovertext=hover_texts,
+        hoverinfo="text",
+        name=f"Preu €/kWh ({p_data.get('data', '')})"
+    ))
+
+    fig.add_hline(
+        y=avg_pr,
+        line_dash="dash",
+        line_color="#38bdf8",
+        annotation_text=f"Mitjana: {avg_pr:.4f} €/kWh",
+        annotation_position="top left",
+        annotation_font=dict(color="#38bdf8", size=10)
+    )
+
+    max_y_val = max(y_prices) if y_prices else 0.4
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=30, b=25),
+        height=320,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 23, 42, 0.4)",
+        xaxis=dict(showgrid=False, color="#94a3b8", tickfont=dict(size=10)),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="#334155",
+            color="#94a3b8",
+            tickformat=".3f",
+            title="€/kWh",
+            title_font=dict(size=11, color="#94a3b8"),
+            range=[0, max_y_val * 1.18]
+        ),
+        showlegend=False
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # LLEGENDA DEL DIA
+    badge_items = []
+    for ac_id, ac_info in opt_finestres_acum.items():
+        badge_items.append(
+            f"<div><span style='border:2px solid {ac_info['color']}; border-radius:3px; padding:0 4px; font-weight:700; color:{ac_info['color']};'>🔲 Vora {ac_info['nom']}</span>: <b>Finestra {ac_info['watts']:,}W {ac_info['nom']}</b> ({ac_info['franja_label']}).</div>"
+        )
+    if not es_dema:
+        slot_act = p_data.get("slot_actual", "")
+        badge_items.append(f"<div><span style='border:2px solid #ffffff; border-radius:3px; padding:0 4px; font-weight:700; color:#ffffff;'>🔲 Vora blanca</span>: <b>Hora actual en viu</b> ({slot_act}).</div>")
+
+    vora_notes_html = f"""
+        <div style='margin-top:8px; padding-top:6px; border-top:1px dashed #334155; display:flex; gap:20px; flex-wrap:wrap; font-size:0.8rem; color:#94a3b8;'>
+            {''.join(badge_items)}
+        </div>
+    """
+
+    if "Preu Real" in mode_color:
+        st.markdown(f"""
+        <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
+            <div style='font-size:0.8rem; font-weight:700; color:#cbd5e1; margin-bottom:4px;'>📖 Llegenda de Colors ({dia_txt}):</div>
+            <div style='display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:0.82rem;'>
+                <div><span style='color:#10b981; font-weight:700;'>🟢 Barata (≤ {th_low:.4f} €/kWh)</span>: Mínim cost.</div>
+                <div><span style='color:#f59e0b; font-weight:700;'>🟡 Mitjana ({th_low:.4f} - {th_high:.4f} €)</span>: Cost moderat.</div>
+                <div><span style='color:#ef4444; font-weight:700;'>🔴 Cara (> {th_high:.4f} €/kWh)</span>: Màxim preu.</div>
+            </div>
+            {vora_notes_html}
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
+            <div style='font-size:0.8rem; font-weight:700; color:#cbd5e1; margin-bottom:4px;'>📖 Llegenda de Colors (Trams Oficials 2.0TD):</div>
+            <div style='display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:0.82rem;'>
+                <div><span style='color:#10b981; font-weight:700;'>🟢 Tram Vall</span>: Peatge mínim ({pot_vall:,.1f} kW).</div>
+                <div><span style='color:#f59e0b; font-weight:700;'>🟡 Tram Pla</span>: Peatge mig ({pot_punta:,.1f} kW).</div>
+                <div><span style='color:#ef4444; font-weight:700;'>🔴 Tram Punta</span>: Peatge màxim ({pot_punta:,.1f} kW).</div>
+            </div>
+            {vora_notes_html}
+        </div>
+        """, unsafe_allow_html=True)
+
+
+def render_comparativa_avui_dema(preu_avui: dict, preu_dema: dict):
+    if not preu_dema or not preu_dema.get("disponible") or not preu_dema.get("hores"):
+        dia_dema_nom = preu_dema.get("dia_complet", "demà") if preu_dema else "demà"
+        st.markdown(f"""
+        <div style='background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:24px; margin:16px 0; text-align:center;'>
+            <div style='font-size:2.2rem; margin-bottom:10px;'>⏰</div>
+            <div style='font-size:1.2rem; font-weight:700; color:#fbbf24; margin-bottom:8px;'>Comparativa de Preus pendent de publicació</div>
+            <div style='font-size:0.92rem; color:#cbd5e1; max-width:650px; margin:0 auto; line-height:1.6;'>
+                Red Eléctrica de España (REE) publica oficialment la corba de preus de demà ({dia_dema_nom}) cada dia <b>cap a les 20:15 h</b>.<br>
+                Tan bon punt es publiquin, aquí veuràs una <b>gràfica superposada hora a hora d'avui contra demà</b> per saber quins consums val la pena posposar o avançar.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    hores_avui = preu_avui.get("hores", [])
+    hores_dema = preu_dema.get("hores", [])
+
+    st.markdown(f"""
+    <div style='background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:12px 16px; margin-bottom:14px;'>
+        <div style='font-size:0.8rem; color:#94a3b8; text-transform:uppercase;'>📊 Comparativa Hora a Hora:</div>
+        <div style='font-size:1.15rem; font-weight:700; color:#f8fafc;'>
+            <span style='color:#38bdf8;'>Avui ({preu_avui.get('data', '')})</span> vs. <span style='color:#f59e0b;'>Demà ({preu_dema.get('data', '')})</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    x_slots = [h["slot"] for h in hores_avui]
+    y_avui = [h["preu"] for h in hores_avui]
+    y_dema = [h["preu"] for h in hores_dema]
+
+    hover_comp = []
+    for ha, hd in zip(hores_avui, hores_dema):
+        pa = ha["preu"]
+        pd = hd["preu"]
+        diff = pd - pa
+        diff_str = f"📉 Demà és {abs(diff):.4f} € més barata" if diff < 0 else (f"📈 Demà és +{diff:.4f} € més cara" if diff > 0 else "Preu idèntic")
+        hover_comp.append(f"<b>Hora: {ha['slot']}</b><br>Avui: {pa:.4f} €/kWh<br>Demà: {pd:.4f} €/kWh<br>{diff_str}")
+
+    fig_comp = go.Figure()
+    fig_comp.add_trace(go.Scatter(
+        x=x_slots,
+        y=y_avui,
+        mode="lines+markers",
+        name=f"Avui ({preu_avui.get('dia_curt', 'Avui')})",
+        line=dict(color="#38bdf8", width=3),
+        marker=dict(size=7, color="#38bdf8"),
+        hovertext=hover_comp,
+        hoverinfo="text"
+    ))
+    fig_comp.add_trace(go.Scatter(
+        x=x_slots,
+        y=y_dema,
+        mode="lines+markers",
+        name=f"Demà ({preu_dema.get('dia_curt', 'Demà')})",
+        line=dict(color="#f59e0b", width=3),
+        marker=dict(size=7, color="#f59e0b"),
+        hovertext=hover_comp,
+        hoverinfo="text"
+    ))
+
+    fig_comp.update_layout(
+        margin=dict(l=10, r=10, t=30, b=25),
+        height=340,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 23, 42, 0.4)",
+        xaxis=dict(showgrid=False, color="#94a3b8", tickfont=dict(size=10)),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="#334155",
+            color="#94a3b8",
+            tickformat=".3f",
+            title="€/kWh",
+            title_font=dict(size=11, color="#94a3b8")
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            font=dict(color="#cbd5e1", size=11)
+        )
+    )
+    st.plotly_chart(fig_comp, use_container_width=True)
+
+    diff_avg = preu_dema['preu_mitja'] - preu_avui['preu_mitja']
+    pct_avg = (diff_avg / preu_avui['preu_mitja']) * 100
+    if diff_avg < 0:
+        consell_txt = f"💡 <b>Consell d'estalvi:</b> Demà el preu mitjà serà un <b>{abs(pct_avg):.1f}% més barat</b> que avui. Si pots programar els consums més alts (acumuladors, rentadores) a les hores vall de demà ({preu_dema['hora_barata']['slot']} a {preu_dema['hora_barata']['preu']:.4f} €/kWh), reduiràs la despesa elèctrica."
+    else:
+        consell_txt = f"⚠️ <b>Consell de consum:</b> Demà el preu mitjà serà un <b>+{pct_avg:.1f}% més car</b> que avui ({diff_avg:+.4f} €/kWh). Val la pena avançar els consums intensius a les hores econòmiques d'avui."
+
+    st.markdown(f"""
+    <div style='background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:12px 16px; font-size:0.87rem; color:#cbd5e1; line-height:1.5;'>
+        {consell_txt}
+    </div>
+    """, unsafe_allow_html=True)
+
+
 def render_consum_llum_tab():
     st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0 0 16px 0;'>Preu de la llum horari en directe (PVPC / Bo Social), optimitzador de càrrega d'acumuladors i gestió de factures per trams.</p>", unsafe_allow_html=True)
 
-    # 1. PREU DE LA LLUM D'AVUI
+    # 1. PREU DE LA LLUM (AVUI I DEMÀ)
     with st.container(border=True):
         c_t1, c_t2 = st.columns([3, 1], vertical_alignment="center")
         with c_t1:
-            st.markdown("<h4 style='color:#f39c12; margin:0;'>⚡ Preu de la Llum en Directe (PVPC / Bo Social)</h4>", unsafe_allow_html=True)
-            st.markdown("<div style='font-size:0.82rem; color:#94a3b8; margin-top:4px;'>Dades oficials del mercat regulat (REE) extretes de <code>tarifaluzhora.es</code> • Tarifa 2.0TD.</div>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#f39c12; margin:0;'>⚡ Preu de la Llum Oficial per Hores (PVPC / Mercat Regulat)</h4>", unsafe_allow_html=True)
+            st.markdown("<div style='font-size:0.82rem; color:#94a3b8; margin-top:4px;'>Dades oficials de Red Eléctrica de España (REE) i <code>tarifaluzhora.es</code> • Tarifa 2.0TD.</div>", unsafe_allow_html=True)
         with c_t2:
             if st.button("🔄 Actualitzar Preus", use_container_width=True, key="btn_refresh_llum"):
+                st.session_state.pop("cache_preu_llum_avui", None)
+                st.session_state.pop("cache_preu_llum_dema", None)
                 st.session_state.pop("cache_preu_llum", None)
                 st.rerun()
 
-        preu_data = st.session_state.get("cache_preu_llum")
-        if not preu_data:
-            with st.spinner("Obtenint tarifes de la llum en directe..."):
-                preu_data = get_preu_llum_avui()
-                st.session_state["cache_preu_llum"] = preu_data
+        preu_avui = st.session_state.get("cache_preu_llum_avui")
+        if not preu_avui:
+            with st.spinner("Obtenint tarifes de la llum d'avui en directe..."):
+                preu_avui = get_preu_llum_avui()
+                st.session_state["cache_preu_llum_avui"] = preu_avui
 
-        if preu_data and preu_data.get("hores"):
-            hores = preu_data["hores"]
-            preu_act = preu_data.get("preu_actual", 0.0)
-            slot_act = preu_data.get("slot_actual", "")
-            tram_act_lbl = preu_data.get("tram_actual_label", "")
-            tram_act_col = preu_data.get("tram_actual_color", "#10b981")
-            avg_pr = preu_data.get("preu_mitja", 0.0)
-            h_barata = preu_data.get("hora_barata", {})
-            h_cara = preu_data.get("hora_cara", {})
+        preu_dema = st.session_state.get("cache_preu_llum_dema")
+        if not preu_dema:
+            with st.spinner("Consultant disponibilitat dels preus de demà..."):
+                preu_dema = get_preu_llum_dema()
+                st.session_state["cache_preu_llum_dema"] = preu_dema
 
-            # Separació clara perquè el text de dades oficials mai quedi tapat pels KPIs
-            st.markdown("<div style='margin-top:14px; margin-bottom:12px;'></div>", unsafe_allow_html=True)
-
-            # 4 KPIs
-            k1, k2, k3, k4 = st.columns(4)
-            with k1:
-                st.markdown(f"""
-                <div style='background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:10px 14px;'>
-                    <div style='font-size:0.75rem; color:#94a3b8; text-transform:uppercase;'>Hora Actual ({slot_act})</div>
-                    <div style='font-size:1.4rem; font-weight:700; color:{tram_act_col}; margin:2px 0;'>{preu_act:.4f} <span style='font-size:0.85rem;'>€/kWh</span></div>
-                    <div style='font-size:0.8rem; font-weight:600; color:{tram_act_col};'>{tram_act_lbl}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with k2:
-                st.markdown(f"""
-                <div style='background:rgba(255,255,255,0.03); border:1px solid #334155; border-radius:8px; padding:10px 14px;'>
-                    <div style='font-size:0.75rem; color:#94a3b8; text-transform:uppercase;'>Mitjana del Dia</div>
-                    <div style='font-size:1.4rem; font-weight:700; color:#38bdf8; margin:2px 0;'>{avg_pr:.4f} <span style='font-size:0.85rem;'>€/kWh</span></div>
-                    <div style='font-size:0.8rem; color:#94a3b8;'>📅 {preu_data.get('data', '')}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with k3:
-                st.markdown(f"""
-                <div style='background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:10px 14px;'>
-                    <div style='font-size:0.75rem; color:#10b981; text-transform:uppercase;'>🟢 Hora Més Barata</div>
-                    <div style='font-size:1.4rem; font-weight:700; color:#10b981; margin:2px 0;'>{h_barata.get('preu', 0.0):.4f} <span style='font-size:0.85rem;'>€/kWh</span></div>
-                    <div style='font-size:0.8rem; font-weight:600; color:#cbd5e1;'>⏰ {h_barata.get('slot', '')}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with k4:
-                st.markdown(f"""
-                <div style='background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:10px 14px;'>
-                    <div style='font-size:0.75rem; color:#ef4444; text-transform:uppercase;'>🔴 Hora Més Cara</div>
-                    <div style='font-size:1.4rem; font-weight:700; color:#ef4444; margin:2px 0;'>{h_cara.get('preu', 0.0):.4f} <span style='font-size:0.85rem;'>€/kWh</span></div>
-                    <div style='font-size:0.8rem; font-weight:600; color:#cbd5e1;'>⏰ {h_cara.get('slot', '')}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            # OPTIMITZADOR D'ACUMULADORS (DINÀMIC I MODULAR)
-            st.markdown("<div style='margin-top:32px; margin-bottom:8px;'></div>", unsafe_allow_html=True)
+        if preu_avui and preu_avui.get("hores"):
             cfg_acum = load_acumuladors_config()
             energia_cfg = get_energia_llar_config()
             pot_punta = float(energia_cfg.get("potencia_punta_kw", 4.4))
             pot_vall = float(energia_cfg.get("potencia_vall_kw", 5.5))
             acumuladors_llista = energia_cfg.get("acumuladors", [])
-            if not acumuladors_llista:
-                acumuladors_llista = [
-                    {"id": "acum_1", "nom": "Menjador", "zona": "Menjador / Planta Baixa", "watts": 4000, "franja": "nit", "hores_defecte": 5, "color": "#fbbf24", "icona": "🛋️"},
-                    {"id": "acum_2", "nom": "Passadís 2a Planta", "zona": "Passadís 2a Planta", "watts": 2000, "franja": "migdia", "hores_defecte": 3, "color": "#38bdf8", "icona": "🪜"}
-                ]
 
-            with st.container(border=True):
-                st.markdown(f"""
-                <div style='display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px; gap:8px;'>
-                    <div style='display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.25rem;'>🔥</span>
-                        <span style='font-size:1.1rem; font-weight:700; color:#f39c12;'>Optimitzador de Càrrega d'Acumuladors de Calor</span>
-                    </div>
-                    <div style='font-size:0.8rem; color:#94a3b8;'>Càlcul independent i emmagatzematge d'hores per a cadascun dels teus {len(acumuladors_llista)} acumuladors</div>
-                </div>
-                """, unsafe_allow_html=True)
+            data_avui_curt = preu_avui.get("dia_curt", "Avui")
+            data_dema_curt = preu_dema.get("dia_curt", "Demà") if preu_dema else "Demà"
+            dema_badge = " ✅" if (preu_dema and preu_dema.get("disponible")) else " (20:15h)"
 
-                cols_ac = st.columns(len(acumuladors_llista), gap="large")
-                opt_finestres_acum = {}
-
-                for idx_ac, (col_ac, acum) in enumerate(zip(cols_ac, acumuladors_llista)):
-                    with col_ac:
-                        ac_id = acum.get("id", f"acum_{idx_ac+1}")
-                        ac_nom = acum.get("nom", f"Acumulador {idx_ac+1}")
-                        ac_watts = int(acum.get("watts", 2000))
-                        ac_franja = acum.get("franja", "nit")
-                        ac_color = acum.get("color", "#fbbf24" if idx_ac == 0 else "#38bdf8")
-                        ac_icona = acum.get("icona", "🔥")
-                        ac_def_h = int(acum.get("hores_defecte", 4))
-
-                        if ac_franja == "nit":
-                            p_contractada = pot_vall
-                            franja_tag = f"{p_contractada:,.1f} kW Nit (Vall)"
-                            desc_franja = "Franja nocturna (00:00 - 08:00h)"
-                            badge_bg = "#065f46"
-                            badge_fg = "#a7f3d0"
-                        else:
-                            p_contractada = pot_punta
-                            franja_tag = f"{p_contractada:,.1f} kW Migdia Solar"
-                            desc_franja = "Franja solar (11:00 - 19:00h)"
-                            badge_bg = "#075985"
-                            badge_fg = "#bae6fd"
-
-                        marge_lliure = max(0.0, p_contractada - (ac_watts / 1000.0))
-
-                        st.markdown(f"""
-                        <div style='background:rgba(255,255,255,0.03); border:1px solid {ac_color}55; border-radius:8px; padding:10px 12px; margin-bottom:10px;'>
-                            <div style='display:flex; justify-content:space-between; align-items:center;'>
-                                <b style='color:{ac_color}; font-size:0.95rem;'>{ac_icona} {ac_nom} ({ac_watts:,} W)</b>
-                                <span style='background:{badge_bg}; color:{badge_fg}; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>{franja_tag}</span>
-                            </div>
-                            <div style='font-size:0.75rem; color:#94a3b8; margin-top:4px;'>{desc_franja} • Resten {marge_lliure:,.1f} kW lliures per a la casa.</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-
-                        key_cfg = f"hores_{ac_id}"
-                        if key_cfg not in cfg_acum and f"hores_{ac_watts}w" in cfg_acum:
-                            key_cfg = f"hores_{ac_watts}w"
-
-                        cur_h = int(cfg_acum.get(key_cfg, ac_def_h))
-                        new_h = st.slider(
-                            f"Hores de càrrega ({ac_nom}):",
-                            min_value=1,
-                            max_value=8,
-                            value=min(max(cur_h, 1), 8),
-                            step=1,
-                            key=f"slider_h_{ac_id}_{idx_ac}",
-                            help=f"Tria quantes hores necessita carregar l'aparell {ac_nom} ({ac_watts} W)."
-                        )
-                        if new_h != cur_h:
-                            cfg_acum[key_cfg] = new_h
-                            save_acumuladors_config(cfg_acum)
-
-                        opt_res = calcular_finestra_acumuladors(hores, durada_hores=new_h, franja=ac_franja)
-                        if opt_res.get("millor_finestra"):
-                            w = opt_res["millor_finestra"]
-                            cost_cicle = w['preu_mitja'] * (ac_watts / 1000.0) * new_h
-                            icona_franja = "✨" if ac_franja == "nit" else "☀️"
-                            st.markdown(f"""
-                            <div style='background:rgba(255,255,255,0.04); border:1px solid {ac_color}66; border-radius:8px; padding:12px 14px; margin-top:8px;'>
-                                <div style='font-size:0.75rem; color:{ac_color}; font-weight:700; text-transform:uppercase;'>{icona_franja} Finestra Òptima ({new_h}h):</div>
-                                <div style='font-size:1.3rem; font-weight:700; color:{ac_color}; margin:4px 0;'>⏰ {w['rang_text']}</div>
-                                <div style='font-size:0.83rem; color:#e2e8f0; line-height:1.4;'>
-                                    Preu mitjà finestra: <b style='color:#10b981;'>{w['preu_mitja']:.4f} €/kWh</b><br>
-                                    Estalvi vs mitjana: <b style='color:#38bdf8;'>-{opt_res.get('estalvi_percent', 0.0)}%</b> • Potència: <b style='color:{ac_color};'>{p_contractada:,.1f} kW</b><br>
-                                    Cost estimat cicle ({new_h}h a {ac_watts/1000.0:,.1f}kW): <b style='color:{ac_color};'>{cost_cicle:.2f} €</b>
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            opt_finestres_acum[ac_id] = {
-                                "nom": ac_nom,
-                                "watts": ac_watts,
-                                "color": ac_color,
-                                "franja_label": franja_tag,
-                                "hores": [h_item["slot"] for h_item in w.get("hores", [])]
-                            }
-
-            # CONFIGURADOR MODULAR DE POTÈNCIES I ACUMULADORS
             st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+            tab_avui, tab_dema, tab_comp = st.tabs([
+                f"📅 Preus d'Avui ({data_avui_curt})",
+                f"🔮 Preus de Demà ({data_dema_curt}){dema_badge}",
+                "📊 Comparativa (Avui vs Demà)"
+            ])
+
+            with tab_avui:
+                render_dia_kpis_i_grafica(preu_avui, energia_cfg, cfg_acum, key_suffix="avui")
+
+            with tab_dema:
+                if preu_dema and preu_dema.get("disponible"):
+                    render_dia_kpis_i_grafica(preu_dema, energia_cfg, cfg_acum, key_suffix="dema", p_avui_ref=preu_avui)
+                else:
+                    dia_dema_nom = preu_dema.get("dia_complet", "demà") if preu_dema else "demà"
+                    st.markdown(f"""
+                    <div style='background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:24px; margin:16px 0; text-align:center;'>
+                        <div style='font-size:2.2rem; margin-bottom:10px;'>⏰</div>
+                        <div style='font-size:1.15rem; font-weight:700; color:#fbbf24; margin-bottom:6px;'>Els preus de la llum per a {dia_dema_nom} encara no s'han publicat</div>
+                        <div style='font-size:0.92rem; color:#cbd5e1; max-width:620px; margin:0 auto; line-height:1.6;'>
+                            Red Eléctrica de España (REE) publica oficialment la corba de preus del dia següent cada tarda <b>a partir de les 20:15 h</b> (un cop finalitzada la subhasta diària del mercat OMIE).
+                        </div>
+                        <div style='margin-top:16px; font-size:0.84rem; color:#94a3b8;'>
+                            Tan bon punt arribin les 20:15h, prem el botó superior d'<b>Actualitzar Preus</b> per veure la corba completa de demà i calcular les millors finestres de càrrega.
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            with tab_comp:
+                render_comparativa_avui_dema(preu_avui, preu_dema)
+
+            # CONFIGURADOR MODULAR DE POTÈNCIES I ACUMULADORS (Accessible a sota)
+            st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
             with st.expander("⚙️ Configurar Potències Contractades i Aparells Acumuladors", expanded=False):
                 st.markdown("<p style='font-size:0.85rem; color:#94a3b8; margin-bottom:10px;'>Ajusta les potències contractades de la teva instal·lació i personalitza els acumuladors/radiadors de càrrega.</p>", unsafe_allow_html=True)
                 c_p1, c_p2 = st.columns(2)
@@ -738,7 +1080,7 @@ def render_consum_llum_tab():
                     else:
                         st.error("❌ Error en desar la configuració d'energia.")
 
-            # GUIA ESTRATÈGICA I CONSELLS (DESPLEGABLE MODULAR)
+            # GUIA ESTRATÈGICA I CONSELLS
             st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
             with st.expander("💡 Guia Estratègica i Consells d'Ús dels Acumuladors", expanded=False):
                 st.markdown(f"""
@@ -749,164 +1091,6 @@ def render_consum_llum_tab():
                 - **Càrrega Migdia Solar (Vall solar):** Aprofita la gran aportació de parcs fotovoltaics (14:00 - 17:00h), on el cost real del mercat elèctric s'enfonsa a valors mínims.
                 - **Prevenció de sobrecàrrega (ICP):** Distribuir la càrrega entre la nit i el migdia evita encendre tots els equips simultàniament i garanteix no superar la potència màxima del comptador.
                 """, unsafe_allow_html=True)
-
-            # -----------------------------------------------------------------
-            # GRÀFIC HORARI 24H (PLOTLY) AMB SELECTOR DE COLOR I LLEGENDA
-            # -----------------------------------------------------------------
-            c_gh1, c_gh2 = st.columns([1.5, 2.5], vertical_alignment="center")
-            with c_gh1:
-                st.markdown("<p style='font-size:0.95rem; font-weight:700; color:#cbd5e1; margin:0;'>📊 Corba Horària de Preus del Dia (24h)</p>", unsafe_allow_html=True)
-            with c_gh2:
-                mode_color = st.radio(
-                    "Colors de les barres:",
-                    ["🕒 Trams Regulats (Vall / Pla / Punta)", "💶 Preu Real (Barata 🟢 / Mitjana 🟡 / Cara 🔴)"],
-                    horizontal=True,
-                    index=0,
-                    key="rad_color_mode_llum",
-                    help="Tria si vols veure les barres segons els trams oficials de potència/peatges 2.0TD o segons el preu real de l'energia."
-                )
-
-            # Càlcul de llindars per a la coloració per preu real
-            all_prices = sorted([h["preu"] for h in hores])
-            th_low = all_prices[7] if len(all_prices) >= 8 else 0.10
-            th_high = all_prices[15] if len(all_prices) >= 16 else 0.20
-
-            x_slots = [h["slot"] for h in hores]
-            y_prices = [h["preu"] for h in hores]
-            
-            # Tria de colors segons el mode
-            if "Preu Real" in mode_color:
-                colors = []
-                hover_texts = []
-                for h in hores:
-                    p = h["preu"]
-                    if p <= th_low:
-                        colors.append("#10b981") # Verd
-                        nivell_txt = "🟢 Molt Barata" if p == min(all_prices) else "🟢 Barata"
-                    elif p > th_high:
-                        colors.append("#ef4444") # Vermell
-                        nivell_txt = "🔴 Molt Cara" if p == max(all_prices) else "🔴 Cara"
-                    else:
-                        colors.append("#f59e0b") # Groc/Ambre
-                        nivell_txt = "🟡 Mitjana / Normal"
-                    hover_texts.append(f"<b>Hora: {h['slot']}</b><br>Preu: <b>{p:.4f} €/kWh</b><br>Nivell: {nivell_txt}<br>Tram 2.0TD: {h['tram_label']}")
-            else:
-                colors = [h["tram_color"] for h in hores]
-                hover_texts = [f"<b>Hora: {h['slot']}</b><br>Preu: <b>{h['preu']:.4f} €/kWh</b><br>Tram 2.0TD: {h['tram_label']}" for h in hores]
-            
-            border_colors = []
-            border_widths = []
-            for h in hores:
-                slot = h["slot"]
-                matched_color = None
-                for ac_info in opt_finestres_acum.values():
-                    if slot in ac_info.get("hores", []):
-                        matched_color = ac_info["color"]
-                        break
-                if matched_color:
-                    border_colors.append(matched_color)
-                    border_widths.append(3)
-                elif h.get("actual"):
-                    border_colors.append("#ffffff")
-                    border_widths.append(2)
-                else:
-                    border_colors.append("rgba(0,0,0,0)")
-                    border_widths.append(0)
-
-            fig = go.Figure()
-            fig.add_trace(go.Bar(
-                x=x_slots,
-                y=y_prices,
-                text=[f"{p:.3f}€" for p in y_prices],
-                textposition="outside",
-                textfont=dict(size=9, color="#cbd5e1"),
-                cliponaxis=False,
-                marker=dict(
-                    color=colors,
-                    line=dict(color=border_colors, width=border_widths)
-                ),
-                hovertext=hover_texts,
-                hoverinfo="text",
-                name="Preu €/kWh"
-            ))
-
-            fig.add_hline(
-                y=avg_pr,
-                line_dash="dash",
-                line_color="#38bdf8",
-                annotation_text=f"Mitjana: {avg_pr:.4f} €/kWh",
-                annotation_position="top left",
-                annotation_font=dict(color="#38bdf8", size=10)
-            )
-
-            max_y_val = max(y_prices) if y_prices else 0.4
-            fig.update_layout(
-                margin=dict(l=10, r=10, t=30, b=25),
-                height=310,
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(15, 23, 42, 0.4)",
-                xaxis=dict(showgrid=False, color="#94a3b8", tickfont=dict(size=10)),
-                yaxis=dict(
-                    showgrid=True,
-                    gridcolor="#334155",
-                    color="#94a3b8",
-                    tickformat=".3f",
-                    title="€/kWh",
-                    title_font=dict(size=11, color="#94a3b8"),
-                    range=[0, max_y_val * 1.18]
-                ),
-                showlegend=False
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-            # LLEGENDA EXPLICATIVA DELS COLORS
-            badge_items = []
-            for ac_id, ac_info in opt_finestres_acum.items():
-                badge_items.append(
-                    f"<div><span style='border:2px solid {ac_info['color']}; border-radius:3px; padding:0 4px; font-weight:700; color:{ac_info['color']};'>🔲 Vora {ac_info['nom']}</span>: <b>Finestra {ac_info['watts']:,}W {ac_info['nom']}</b> ({ac_info['franja_label']}).</div>"
-                )
-            badge_items.append(f"<div><span style='border:2px solid #ffffff; border-radius:3px; padding:0 4px; font-weight:700; color:#ffffff;'>🔲 Vora blanca</span>: <b>Hora actual</b> ({slot_act}).</div>")
-
-            vora_notes_html = f"""
-                <div style='margin-top:8px; padding-top:6px; border-top:1px dashed #334155; display:flex; gap:20px; flex-wrap:wrap; font-size:0.8rem; color:#94a3b8;'>
-                    {''.join(badge_items)}
-                </div>
-            """
-
-            if "Preu Real" in mode_color:
-                st.markdown(f"""
-                <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
-                    <div style='font-size:0.8rem; font-weight:700; color:#cbd5e1; margin-bottom:4px;'>📖 Llegenda de Colors (Segons el Preu Real de l'Energia):</div>
-                    <div style='display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:0.82rem;'>
-                        <div><span style='color:#10b981; font-weight:700;'>🟢 Barata (≤ {th_low:.4f} €/kWh)</span>: Hores amb el cost mínim (ideal per a rentadores i consums).</div>
-                        <div><span style='color:#f59e0b; font-weight:700;'>🟡 Mitjana ({th_low:.4f} - {th_high:.4f} €)</span>: Cost moderat al voltant de la mitjana.</div>
-                        <div><span style='color:#ef4444; font-weight:700;'>🔴 Cara (> {th_high:.4f} €/kWh)</span>: Hores de màxim preu (evitar grans electrodomèstics).</div>
-                    </div>
-                    {vora_notes_html}
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
-                    <div style='font-size:0.8rem; font-weight:700; color:#cbd5e1; margin-bottom:4px;'>📖 Llegenda de Colors (Trams Oficials 2.0TD de Peatges i Potència):</div>
-                    <div style='display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:0.82rem;'>
-                        <div><span style='color:#10b981; font-weight:700;'>🟢 Tram Vall (00h-08h i caps de setmana)</span>: Peatge mínim i <b>potència de {pot_vall:,.1f} kW</b> (acumuladors).</div>
-                        <div><span style='color:#f59e0b; font-weight:700;'>🟡 Tram Pla (08-10h, 14-18h, 22-24h)</span>: Peatge mig i <b>{pot_punta:,.1f} kW</b>. <i>(Nota: 14h-17h sol ser molt barat per l'energia solar!)</i></div>
-                        <div><span style='color:#ef4444; font-weight:700;'>🔴 Tram Punta (10-14h i 18-22h)</span>: Peatge màxim i <b>{pot_punta:,.1f} kW</b>.</div>
-                    </div>
-                    {vora_notes_html}
-                </div>
-                """, unsafe_allow_html=True)
-
-            with st.expander("ℹ️ Informació sobre Trams Horaris i Potències (Bo Social / 2.0TD)"):
-                st.markdown(f"""
-                - **🟢 Tram Vall (P3)**: De dilluns a divendres de **00:00 a 08:00 h**, i **les 24 hores dels caps de setmana i festius nacionals**.
-                  - *Potència contractada*: **{pot_vall:,.1f} kW** (ideal per a la càrrega dels acumuladors de calor).
-                - **🟡 Tram Pla (P2)**: De dilluns a divendres de **08:00 a 10:00 h**, de **14:00 a 18:00 h** i de **22:00 a 24:00 h**.
-                  - *Potència contractada*: **{pot_punta:,.1f} kW**.
-                - **🔴 Tram Punta (P1)**: De dilluns a divendres de **10:00 a 14:00 h** i de **18:00 a 22:00 h**.
-                  - *Potència contractada*: **{pot_punta:,.1f} kW**.
-                """)
         else:
             st.warning("⚠️ No s'han pogut carregar les dades de preus en directe en aquest moment. Pots tornar-ho a provar amb el botó d'actualitzar.")
 

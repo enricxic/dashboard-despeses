@@ -3,7 +3,7 @@ import json
 import re
 import urllib.request
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 # Rutes del projecte
 CORE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +26,16 @@ FESTIUS_FIXOS = {
     (12, 8),  # Immaculada
     (12, 25), # Nadal
 }
+
+DIES_SETMANA_CA = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
+MESOS_ANY_CA = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost", "setembre", "octubre", "novembre", "desembre"]
+
+def formatar_data_completa_ca(dt: datetime) -> str:
+    dia_set = DIES_SETMANA_CA[dt.weekday()]
+    mes_nom = MESOS_ANY_CA[dt.month - 1]
+    prep = "d'" if mes_nom[0] in "aeiouàèéíòóú" else "de "
+    return f"{dia_set}, {dt.day} {prep}{mes_nom} de {dt.year}"
+
 
 def get_tram_horari(dt: datetime = None) -> tuple:
     """
@@ -91,8 +101,19 @@ def fetch_preu_llum_tarifaluzhora() -> dict:
         return None
         
     now = datetime.now()
-    cur_weekday = now.weekday()
-    cur_hour = now.hour
+    # Detectar data oficial informada al codi HTML
+    m_day = re.search(r'data-pvpc-day="(\d{4}-\d{2}-\d{2})"', html)
+    if m_day:
+        try:
+            scraped_dt = datetime.strptime(m_day.group(1), "%Y-%m-%d")
+        except Exception:
+            scraped_dt = now
+    else:
+        scraped_dt = now
+
+    is_today = (scraped_dt.date() == now.date())
+    cur_weekday = scraped_dt.weekday()
+    cur_hour = now.hour if is_today else 12
     
     # Preu mitjà
     preu_mitja = None
@@ -161,17 +182,22 @@ def fetch_preu_llum_tarifaluzhora() -> dict:
     if preu_mitja is None and hores_list:
         preu_mitja = round(sum(x["preu"] for x in hores_list) / len(hores_list), 4)
         
-    tram_act, tram_act_lbl, tram_act_col = get_tram_horari(now)
+    tram_act, tram_act_lbl, tram_act_col = get_tram_horari(now) if is_today else ("", "", "")
     
     return {
-        "data": now.strftime("%d/%m/%Y"),
+        "disponible": True,
+        "data": scraped_dt.strftime("%d/%m/%Y"),
+        "data_iso": scraped_dt.strftime("%Y-%m-%d"),
+        "dia_complet": formatar_data_completa_ca(scraped_dt),
+        "dia_curt": f"{DIES_SETMANA_CA[scraped_dt.weekday()]} {scraped_dt.strftime('%d/%m')}",
+        "es_dema": False,
         "font": "tarifaluzhora.es (PVPC)",
         "preu_mitja": preu_mitja,
         "hora_barata": hora_barata,
         "hora_cara": hora_cara,
         "hores": hores_list,
-        "slot_actual": slot_actual,
-        "preu_actual": preu_actual,
+        "slot_actual": slot_actual if is_today else "",
+        "preu_actual": preu_actual if is_today else None,
         "tram_actual": tram_act,
         "tram_actual_label": tram_act_lbl,
         "tram_actual_color": tram_act_col,
@@ -179,14 +205,16 @@ def fetch_preu_llum_tarifaluzhora() -> dict:
     }
 
 
-def fetch_preu_llum_ree_fallback() -> dict:
+def fetch_preu_llum_ree(target_dt: datetime = None) -> dict:
     """
-    Fallback a l'API pública de Red Eléctrica de España (REE) apidatos.ree.es.
+    Consulta l'API pública de Red Eléctrica de España (REE) apidatos.ree.es per a una data específica (avui o demà).
     Tarifa PVPC (Preu Voluntari Petit Consumidor).
     """
-    now = datetime.now()
-    today_str = now.strftime("%Y-%m-%d")
-    url = f"https://apidatos.ree.es/es/datos/mercados/precios-mercados-tiempo-real?start_date={today_str}T00:00&end_date={today_str}T23:59&time_trunc=hour"
+    if target_dt is None:
+        target_dt = datetime.now()
+        
+    date_str = target_dt.strftime("%Y-%m-%d")
+    url = f"https://apidatos.ree.es/es/datos/mercados/precios-mercados-tiempo-real?start_date={date_str}T00:00&end_date={date_str}T23:59&time_trunc=hour"
     
     req = urllib.request.Request(
         url,
@@ -207,21 +235,22 @@ def fetch_preu_llum_ree_fallback() -> dict:
         if not pvpc_values and included:
             pvpc_values = included[0].get("attributes", {}).get("values", [])
             
-        if not pvpc_values:
+        if not pvpc_values or len(pvpc_values) < 20:
             return None
             
-        cur_hour = now.hour
-        cur_weekday = now.weekday()
+        now = datetime.now()
+        is_today = (target_dt.date() == now.date())
+        cur_hour = now.hour if is_today else -1
+        target_weekday = target_dt.weekday()
         hores_list = []
         preu_actual = None
         
         for idx, val in enumerate(pvpc_values[:24]):
             h = idx
-            # L'API de REE sol donar el preu en €/MWh -> dividir per 1000 per tenir €/kWh
             raw_val = float(val.get("value", 0.0))
             pr_kwh = round(raw_val / 1000.0 if raw_val > 5.0 else raw_val, 4)
             slot = f"{h:02d}-{(h+1):02d}h"
-            tram_codi, tram_label, tram_color = get_tram_for_hour(h, cur_weekday)
+            tram_codi, tram_label, tram_color = get_tram_for_hour(h, target_weekday)
             is_cur = (h == cur_hour)
             if is_cur:
                 preu_actual = pr_kwh
@@ -241,16 +270,21 @@ def fetch_preu_llum_ree_fallback() -> dict:
         min_item = min(hores_list, key=lambda x: x["preu"])
         max_item = max(hores_list, key=lambda x: x["preu"])
         avg_pr = round(sum(x["preu"] for x in hores_list) / len(hores_list), 4)
-        tram_act, tram_act_lbl, tram_act_col = get_tram_horari(now)
+        tram_act, tram_act_lbl, tram_act_col = get_tram_horari(now) if is_today else ("", "", "")
         
         return {
-            "data": now.strftime("%d/%m/%Y"),
+            "disponible": True,
+            "data": target_dt.strftime("%d/%m/%Y"),
+            "data_iso": date_str,
+            "dia_complet": formatar_data_completa_ca(target_dt),
+            "dia_curt": f"{DIES_SETMANA_CA[target_dt.weekday()]} {target_dt.strftime('%d/%m')}",
+            "es_dema": not is_today,
             "font": "Red Eléctrica de España (REE)",
             "preu_mitja": avg_pr,
             "hora_barata": {"slot": min_item["slot"], "preu": min_item["preu"]},
             "hora_cara": {"slot": max_item["slot"], "preu": max_item["preu"]},
             "hores": hores_list,
-            "slot_actual": f"{cur_hour:02d}-{(cur_hour+1):02d}h",
+            "slot_actual": f"{cur_hour:02d}-{(cur_hour+1):02d}h" if is_today else "",
             "preu_actual": preu_actual,
             "tram_actual": tram_act,
             "tram_actual_label": tram_act_lbl,
@@ -258,73 +292,124 @@ def fetch_preu_llum_ree_fallback() -> dict:
             "actualitzat_a": now.strftime("%H:%M:%S")
         }
     except Exception as e:
-        print(f"Error fallback REE: {e}")
         return None
 
+def fetch_preu_llum_ree_fallback() -> dict:
+    """Fallback a REE per a avui (manteniment de retrocompatibilitat)."""
+    return fetch_preu_llum_ree(datetime.now())
 
-
-def get_energia_llar_config() -> dict:
-    """Retorna la configuració d'energia, acumuladors i estudi solar de la llar."""
-    defaults = {
-        "potencia_punta_kw": 4.4,
-        "potencia_vall_kw": 5.5,
-        "acumuladors": [
-            {
-                "id": "acum_1",
-                "nom": "Menjador",
-                "zona": "Menjador / Planta Baixa",
-                "watts": 4000,
-                "franja": "nit",
-                "hores_defecte": 5,
-                "color": "#fbbf24",
-                "icona": "🛋️"
-            },
-            {
-                "id": "acum_2",
-                "nom": "Passadís 2a Planta",
-                "zona": "Passadís 2a Planta",
-                "watts": 2000,
-                "franja": "migdia",
-                "hores_defecte": 3,
-                "color": "#38bdf8",
-                "icona": "🪜"
-            }
-        ],
-        "estudi_solar": {
-            "municipi": "Arbúcies",
-            "comarca": "La Selva, Girona",
-            "lat": 41.8167,
-            "lon": 2.5167,
-            "orientacio_defecte": "ne_pur",
-            "orientacio_label": "29° Nord-Est (Teulada actual)",
-            "superficie_teulada_m2": 45,
-            "watts_panell": 450,
-            "descompte_tarifa_pct": 80
+def fetch_preu_llum_dema_tarifaluzhora() -> dict:
+    """
+    Extreu el preu de la llum horari de demà fent web scraping a tarifaluzhora.es/info/precio-kwh-manana.
+    Retorna un diccionari amb les 24h si ja s'han publicat (habitualment a partir de les 20:15h), o None si encara no.
+    """
+    url = "https://tarifaluzhora.es/info/precio-kwh-manana"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ca,es,en;q=0.9"
         }
-    }
+    )
     try:
-        from core.config_manager import load_app_config
-        cfg = load_app_config().get("energia_llar", {})
-        if cfg and isinstance(cfg, dict):
-            defaults.update(cfg)
-    except Exception:
-        pass
-    return defaults
-
-def save_energia_llar_config(new_cfg: dict) -> bool:
-    """Desa la configuració d'energia a config_manager i Supabase."""
-    try:
-        from core.config_manager import load_app_config, save_app_config
-        full_cfg = load_app_config()
-        if "energia_llar" not in full_cfg:
-            full_cfg["energia_llar"] = {}
-        full_cfg["energia_llar"].update(new_cfg)
-        return save_app_config(full_cfg)
+        with urllib.request.urlopen(req, timeout=7) as res:
+            html = res.read().decode("utf-8", errors="ignore")
     except Exception as e:
-        print(f"Error desant energia_llar: {e}")
-        return False
+        print(f"Error scraping tarifaluzhora.es (demà): {e}")
+        return None
 
-CONFIG_ACUM_FILE = os.path.join(PROJECT_ROOT, "data", "acumuladors_config.json")
+    raw_slots = re.findall(r'(\d{1,2}-\d{1,2}h)[^€\d]*([\d,]+)\s*€/kWh', html)
+    hours_map = {}
+    for slot, val in raw_slots:
+        parts = slot.replace("h", "").split("-")
+        if len(parts) == 2:
+            formatted_slot = f"{int(parts[0]):02d}-{int(parts[1]):02d}h"
+        else:
+            formatted_slot = slot
+        if formatted_slot not in hours_map:
+            hours_map[formatted_slot] = float(val.replace(",", "."))
+
+    if len(hours_map) < 20:
+        return None
+
+    tomorrow = datetime.now() + timedelta(days=1)
+    m_day = re.search(r'data-pvpc-day="(\d{4}-\d{2}-\d{2})"', html)
+    if m_day:
+        try:
+            dema_dt = datetime.strptime(m_day.group(1), "%Y-%m-%d")
+        except Exception:
+            dema_dt = tomorrow
+    else:
+        dema_dt = tomorrow
+
+    dema_weekday = dema_dt.weekday()
+    hores_list = []
+    for h in range(24):
+        slot = f"{h:02d}-{(h+1):02d}h"
+        pr = hours_map.get(slot, 0.0)
+        tram_codi, tram_label, tram_color = get_tram_for_hour(h, dema_weekday)
+        hores_list.append({
+            "hora": h,
+            "slot": slot,
+            "preu": pr,
+            "tram": tram_codi,
+            "tram_label": tram_label,
+            "tram_color": tram_color,
+            "actual": False
+        })
+
+    min_item = min(hores_list, key=lambda x: x["preu"])
+    max_item = max(hores_list, key=lambda x: x["preu"])
+    avg_pr = round(sum(x["preu"] for x in hores_list) / len(hores_list), 4)
+
+    return {
+        "disponible": True,
+        "data": dema_dt.strftime("%d/%m/%Y"),
+        "data_iso": dema_dt.strftime("%Y-%m-%d"),
+        "dia_complet": formatar_data_completa_ca(dema_dt),
+        "dia_curt": f"{DIES_SETMANA_CA[dema_dt.weekday()]} {dema_dt.strftime('%d/%m')}",
+        "es_dema": True,
+        "font": "tarifaluzhora.es (PVPC)",
+        "preu_mitja": avg_pr,
+        "hora_barata": {"slot": min_item["slot"], "preu": min_item["preu"]},
+        "hora_cara": {"slot": max_item["slot"], "preu": max_item["preu"]},
+        "hores": hores_list,
+        "slot_actual": "",
+        "preu_actual": None,
+        "tram_actual": "",
+        "tram_actual_label": "",
+        "tram_actual_color": "",
+        "actualitzat_a": datetime.now().strftime("%H:%M:%S")
+    }
+
+def get_preu_llum_dema() -> dict:
+    """
+    Retorna les dades del preu de la llum per a demà.
+    Si encara no s'han publicat (habitualment abans de les 20:15h), retorna disponible=False.
+    """
+    dema_dt = datetime.now() + timedelta(days=1)
+    
+    # 1. Provar tarifaluzhora.es demà
+    res = fetch_preu_llum_dema_tarifaluzhora()
+    if res and res.get("hores"):
+        return res
+        
+    # 2. Fallback REE demà
+    res_ree = fetch_preu_llum_ree(dema_dt)
+    if res_ree and res_ree.get("hores"):
+        return res_ree
+        
+    # 3. Pendent de publicació
+    return {
+        "disponible": False,
+        "data": dema_dt.strftime("%d/%m/%Y"),
+        "data_iso": dema_dt.strftime("%Y-%m-%d"),
+        "dia_complet": formatar_data_completa_ca(dema_dt),
+        "dia_curt": f"{DIES_SETMANA_CA[dema_dt.weekday()]} {dema_dt.strftime('%d/%m')}",
+        "hora_publicacio_estimada": "20:15 h",
+        "motiu": "pendent_publicacio"
+    }
 
 def load_acumuladors_config() -> dict:
     """Carrega la configuració d'hores i franges dels acumuladors."""
@@ -439,16 +524,16 @@ def calcular_finestra_acumuladors(hores_list: list, durada_hores: int = 5, franj
 
 def get_preu_llum_avui() -> dict:
     """
-    Funció principal que obté les dades de preu de la llum.
+    Funció principal que obté les dades de preu de la llum d'avui.
     Prioritat:
       1. tarifaluzhora.es
       2. REE apidatos.ree.es (Fallback)
     """
     res = fetch_preu_llum_tarifaluzhora()
-    if res:
+    if res and res.get("hores"):
         return res
-    res_ree = fetch_preu_llum_ree_fallback()
-    if res_ree:
+    res_ree = fetch_preu_llum_ree(datetime.now())
+    if res_ree and res_ree.get("hores"):
         return res_ree
     return None
 
