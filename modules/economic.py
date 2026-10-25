@@ -1208,8 +1208,14 @@ def render(view_mode="economic"):
             else:
                 st.success(f"✨ L'any {nou_any} és completament nou. Revisa les partides i les pagues extraordinàries a continuació abans de generar-lo.")
                 
-        # 2. Llistes de conceptes oficials
-        ING_CONFIG = [
+        # 2. Llistes de conceptes oficials (carregats dinàmicament des de la configuració)
+        try:
+            from core.config_manager import load_app_config
+            prev_cfg = load_app_config().get("previsions_any", {})
+        except Exception:
+            prev_cfg = {}
+
+        ING_CONFIG = [dict(x) for x in prev_cfg.get("ingressos_recurrents", [
             {"concepte": "Complement Generalitat", "banc": "LaCaixa", "cat": "ingres_general", "dia": 25, "default_imp": 68.25},
             {"concepte": "Pensió Enric", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 940.74},
             {"concepte": "Pensió Isabel", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 962.50},
@@ -1219,9 +1225,9 @@ def render(view_mode="economic"):
             {"concepte": "Hisenda 50 2", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 50.00},
             {"concepte": "Hisenda 100", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 100.00},
             {"concepte": "Hisenda 50 1", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 50.00},
-        ]
+        ])]
         
-        DESP_CONFIG = [
+        DESP_CONFIG = [dict(x) for x in prev_cfg.get("despeses_recurrents", [
             {"concepte": "Hipoteca", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 30, "default_imp": 489.43},
             {"concepte": "Lowi", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 19, "default_imp": 35.90},
             {"concepte": "DP Morts Enric", "banc": "BBVA", "forma": "Compte", "cat": "assegurança", "dia": 7, "default_imp": 14.04},
@@ -1234,13 +1240,13 @@ def render(view_mode="economic"):
             {"concepte": "Ocaso", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 2, "default_imp": 12.90},
             {"concepte": "Endesa", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 1, "default_imp": 25.00},
             {"concepte": "Lloguer Parking", "banc": "Efectiu", "forma": "Compte", "cat": "despesa_general", "dia": 1, "default_imp": 55.00},
-        ]
+        ])]
 
-        EXTRA_CONFIG = [
+        EXTRA_CONFIG = [dict(x) for x in prev_cfg.get("pagues_extres", [
             {"concepte": "Paga extra Enric", "origen": "Pensió Enric", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 940.74, "mesos": [6, 11]},
             {"concepte": "Paga extra Isa", "origen": "Pensió Isabel", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 962.50, "mesos": [6, 11]},
             {"concepte": "Paga extra Pensió no contributiva", "origen": "Pensió no contributiva", "banc": "LaCaixa", "cat": "ingres_general", "dia": 25, "default_imp": 628.80, "mesos": [6, 11]},
-        ]
+        ])]
         
         # Recuperar últim import real de la BD si existeix per actualitzar la referència
         for item in ING_CONFIG:
@@ -2573,13 +2579,13 @@ def render(view_mode="economic"):
                             icon = "🚗"
                         elif "piscina" in concept_lower:
                             icon = "🏊‍♂️"
-                        elif "pj isabel" in concept_lower:
+                        elif any(k in concept_lower for k in ["pj", "estalvi", "guardiola", "hucha", "jubilacio", "jubilació"]):
                             icon = "🐷"
-                        elif any(k in concept_lower for k in ["lowi", "telefon", "mòbil"]):
+                        elif any(k in concept_lower for k in ["lowi", "telefon", "mòbil", "telefonia", "internet", "fibra"]):
                             icon = "📱"
-                        elif "accions" in concept_lower:
+                        elif any(k in concept_lower for k in ["accions", "inversio", "inversió", "etf", "fons", "traderep"]):
                             icon = "💸"
-                        elif any(k in concept_lower for k in ["morts", "ocaso"]):
+                        elif any(k in concept_lower for k in ["morts", "ocaso", "decessos", "decesos", "defuncio", "defunció"]):
                             icon = "✝️"
                         else:
                             icon = "💸"

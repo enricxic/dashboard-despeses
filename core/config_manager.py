@@ -163,6 +163,38 @@ DEFAULT_CONFIG = {
             "watts_panell": 450,
             "descompte_tarifa_pct": 80
         }
+    },
+    "previsions_any": {
+        "ingressos_recurrents": [
+            {"concepte": "Complement Generalitat", "banc": "LaCaixa", "cat": "ingres_general", "dia": 25, "default_imp": 68.25},
+            {"concepte": "Pensió Enric", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 940.74},
+            {"concepte": "Pensió Isabel", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 962.50},
+            {"concepte": "Cartera DP Gran", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 47.14},
+            {"concepte": "Cartera DP Petit", "banc": "BBVA", "cat": "ingres_general", "dia": 29, "default_imp": 13.99},
+            {"concepte": "Pensió no contributiva", "banc": "LaCaixa", "cat": "ingres_general", "dia": 25, "default_imp": 628.80},
+            {"concepte": "Hisenda 50 2", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 50.00},
+            {"concepte": "Hisenda 100", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 100.00},
+            {"concepte": "Hisenda 50 1", "banc": "BBVA", "cat": "ingres_general", "dia": 21, "default_imp": 50.00}
+        ],
+        "despeses_recurrents": [
+            {"concepte": "Hipoteca", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 30, "default_imp": 489.43},
+            {"concepte": "Lowi", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 19, "default_imp": 35.90},
+            {"concepte": "DP Morts Enric", "banc": "BBVA", "forma": "Compte", "cat": "assegurança", "dia": 7, "default_imp": 14.04},
+            {"concepte": "BBVA Asseg. Casa", "banc": "BBVA", "forma": "Compte", "cat": "assegurança", "dia": 7, "default_imp": 42.34},
+            {"concepte": "PJ Isabel", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 5, "default_imp": 231.53},
+            {"concepte": "Ajunt. Arbúcies", "banc": "LaCaixa", "forma": "Compte", "cat": "despesa_general", "dia": 5, "default_imp": 68.46},
+            {"concepte": "Piscina", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 4, "default_imp": 90.28},
+            {"concepte": "Accions NVIDIA", "banc": "TradeRep.", "forma": "Compte", "cat": "despesa_general", "dia": 2, "default_imp": 25.00},
+            {"concepte": "Accions S&P500", "banc": "TradeRep.", "forma": "Compte", "cat": "despesa_general", "dia": 2, "default_imp": 25.00},
+            {"concepte": "Ocaso", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 2, "default_imp": 12.90},
+            {"concepte": "Endesa", "banc": "BBVA", "forma": "Compte", "cat": "despesa_general", "dia": 1, "default_imp": 25.00},
+            {"concepte": "Lloguer Parking", "banc": "Efectiu", "forma": "Compte", "cat": "despesa_general", "dia": 1, "default_imp": 55.00}
+        ],
+        "pagues_extres": [
+            {"concepte": "Paga extra Enric", "origen": "Pensió Enric", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 940.74, "mesos": [6, 11]},
+            {"concepte": "Paga extra Isa", "origen": "Pensió Isabel", "banc": "BBVA", "cat": "ingres_general", "dia": 25, "default_imp": 962.50, "mesos": [6, 11]},
+            {"concepte": "Paga extra Pensió no contributiva", "origen": "Pensió no contributiva", "banc": "LaCaixa", "cat": "ingres_general", "dia": 25, "default_imp": 628.80, "mesos": [6, 11]}
+        ]
     }
 }
 

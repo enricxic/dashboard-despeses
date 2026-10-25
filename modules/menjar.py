@@ -83,7 +83,15 @@ def scale_single_ingredient(line: str, base: float = 3.0, target: float = 3.0) -
 
     return line
 
-def scale_ingredients(raw_ingredients: str, base: float = 3.0, target: float = 3.0) -> str:
+def scale_ingredients(raw_ingredients: str, base: float = None, target: float = None) -> str:
+    if base is None:
+        try:
+            from core.config_manager import load_app_config
+            base = float(load_app_config().get("regles_menjar", {}).get("comensals_defecte", 3.0))
+        except Exception:
+            base = 3.0
+    if target is None:
+        target = base
     if not raw_ingredients or str(raw_ingredients).strip().lower() == 'nan':
         return "Sense ingredients"
     
@@ -451,7 +459,13 @@ def sanitize_segon(p_seg: str) -> str:
         return '-'
     return p_seg
 
-def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame, key_btn: str, n_comensals: int = 3, canvi_args: tuple = None, is_saved_menu=False):
+def render_plat_card(tipus_label: str, nom_plat: str, df_receptes: pd.DataFrame, key_btn: str, n_comensals: int = None, canvi_args: tuple = None, is_saved_menu=False):
+    if n_comensals is None:
+        try:
+            from core.config_manager import load_app_config
+            n_comensals = int(load_app_config().get("regles_menjar", {}).get("comensals_defecte", 3))
+        except Exception:
+            n_comensals = 3
     """Renderitza una targeta visual amb miniatura i botó per obrir la recepta."""
     if not nom_plat or str(nom_plat).strip() in ['-', '', 'null', 'None']:
         return
@@ -918,7 +932,13 @@ def render():
                                 
                                 if st.button("📖 Llegir Recepta", key=f"btn_rec_{row.get('id', idx_row)}", use_container_width=True):
                                     st.session_state[f"editing_{row['id']}"] = False
-                                    st.session_state[f"rec_comensals_{row['id']}"] = 3
+                                    comensals_def = 3
+                                    try:
+                                        from core.config_manager import load_app_config
+                                        comensals_def = int(load_app_config().get("regles_menjar", {}).get("comensals_defecte", 3))
+                                    except Exception:
+                                        pass
+                                    st.session_state[f"rec_comensals_{row['id']}"] = comensals_def
                                     modal_recepta(row)
             
             with subtab_add:
