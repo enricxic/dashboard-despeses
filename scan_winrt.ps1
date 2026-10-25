@@ -1,6 +1,9 @@
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$OutputDir
+    [string]$OutputDir = "",
+    [string]$DeviceName = "",
+    [int]$Dpi = 300,
+    [string]$ColorMode = "Color",
+    [switch]$ListDevices
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,27 +37,69 @@ try {
     [Windows.Devices.Scanners.ImageScannerScanResult, Windows.Devices.Scanners, ContentType = WindowsRuntime] | Out-Null
     [Windows.Storage.StorageFolder, Windows.Storage, ContentType = WindowsRuntime] | Out-Null
 
-    if (-not (Test-Path $OutputDir)) {
-        New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
-    }
-
-    $storageFolder = AwaitOp ([Windows.Storage.StorageFolder]::GetFolderFromPathAsync($OutputDir)) ([Windows.Storage.StorageFolder])
-
     $selector = [Windows.Devices.Scanners.ImageScanner]::GetDeviceSelector()
     $devices = AwaitOp ([Windows.Devices.Enumeration.DeviceInformation]::FindAllAsync($selector)) ([Windows.Devices.Enumeration.DeviceInformationCollection])
+
+    if ($ListDevices) {
+        if ($devices.Count -eq 0) {
+            Write-Output "NO_DEVICES"
+        } else {
+            foreach ($d in $devices) {
+                Write-Output "DEVICE:$($d.Name)|$($d.Id)"
+            }
+        }
+        exit 0
+    }
 
     if ($devices.Count -eq 0) {
         Write-Output "ERROR:No s'ha trobat cap escàner connectat."
         exit 1
     }
 
-    $scanner = AwaitOp ([Windows.Devices.Scanners.ImageScanner]::FromIdAsync($devices[0].Id)) ([Windows.Devices.Scanners.ImageScanner])
+    # Seleccionar escàner per nom si s'ha especificat, o el primer disponible
+    $selectedDevice = $devices[0]
+    if ($DeviceName -and $DeviceName -ne "default" -and $DeviceName -ne "") {
+        foreach ($d in $devices) {
+            if ($d.Name -like "*$DeviceName*" -or $d.Id -like "*$DeviceName*") {
+                $selectedDevice = $d
+                break
+            }
+        }
+    }
+
+    if (-not $OutputDir) {
+        Write-Output "ERROR:Cal indicar el paràmetre -OutputDir per desar la imatge."
+        exit 1
+    }
+
+    if (-not (Test-Path $OutputDir)) {
+        New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+    }
+
+    $storageFolder = AwaitOp ([Windows.Storage.StorageFolder]::GetFolderFromPathAsync($OutputDir)) ([Windows.Storage.StorageFolder])
+    $scanner = AwaitOp ([Windows.Devices.Scanners.ImageScanner]::FromIdAsync($selectedDevice.Id)) ([Windows.Devices.Scanners.ImageScanner])
 
     # Scan from Flatbed if supported, else Default
     $source = if ($scanner.IsScanSourceSupported([Windows.Devices.Scanners.ImageScannerScanSource]::Flatbed)) {
         [Windows.Devices.Scanners.ImageScannerScanSource]::Flatbed
     } else {
         [Windows.Devices.Scanners.ImageScannerScanSource]::Default
+    }
+
+    # Configuració opcional de color/mode si s'utilitza Flatbed
+    if ($source -eq [Windows.Devices.Scanners.ImageScannerScanSource]::Flatbed) {
+        try {
+            $flatbed = $scanner.FlatbedConfiguration
+            if ($ColorMode -eq "Grayscale" -or $ColorMode -eq "Grisos") {
+                $flatbed.ColorMode = [Windows.Devices.Scanners.ImageScannerColorMode]::Grayscale
+            } elseif ($ColorMode -eq "Monochrome" -or $ColorMode -eq "BN") {
+                $flatbed.ColorMode = [Windows.Devices.Scanners.ImageScannerColorMode]::Monochrome
+            } else {
+                $flatbed.ColorMode = [Windows.Devices.Scanners.ImageScannerColorMode]::Color
+            }
+        } catch {
+            # Ignorar si el controlador de l'escàner no admet canvi de mode per programari
+        }
     }
 
     $scanOp = $scanner.ScanFilesToFolderAsync($source, $storageFolder)

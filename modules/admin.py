@@ -584,6 +584,7 @@ def render():
             ("familia", "👨‍👩‍👧‍👦 Família"),
             ("menjar", "🍽️ Menús i Nutrició"),
             ("alertes", "🔔 Alertes Globals"),
+            ("periferics", "🔌 Perifèrics"),
             ("harness", "🧪 Laboratori IA (Harness)"),
             ("tutelats", "🤝 Tutelats"),
             ("bancs", "🏦 Bancs"),
@@ -1377,6 +1378,169 @@ def render():
                     pass
                 st.rerun()
                 
+            st.markdown("</div>", unsafe_allow_html=True)
+
+
+        # =========================================================================
+        # SECCIÓ: PERIFÈRICS (IMPRESSORA I ESCÀNER)
+        # =========================================================================
+        elif active == "periferics":
+            perif_cfg = cfg.get("periferics", {})
+            prn_cfg = perif_cfg.get("impressora", {})
+            scn_cfg = perif_cfg.get("escaner", {})
+            
+            st.markdown("""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🔌 Perifèrics de la Llar</div>
+                <div class="chrome-card-desc">Configura la impressora de tiquets de compra i l'escàner físic de sobretaula connectat al sistema.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # --- BLOC 1: IMPRESSORA DE TIQUETS ---
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            st.markdown("#### 🖨️ Impressora de Tiquets de Compra")
+            st.caption("Configuració per a impressores de rotlle tèrmic o matriu d'agulles (76mm / 80mm).")
+            
+            p_activa = st.toggle("Activar impressora de tiquets", value=prn_cfg.get("activa", True), key="p_activa")
+            
+            metode_options = [
+                ("raw_usb", "⚡ Directe per USB / Controlador Windows (ESC/POS en local)"),
+                ("web", "🌐 Navegador Web (window.print() compatible amb Streamlit Cloud)")
+            ]
+            cur_metode = prn_cfg.get("metode", "raw_usb")
+            cur_metode_idx = 0 if cur_metode == "raw_usb" else 1
+            metode_sel = st.radio(
+                "Mètode d'impressió preferit",
+                options=[o[0] for o in metode_options],
+                format_func=lambda x: dict(metode_options).get(x, x),
+                index=cur_metode_idx,
+                key="p_metode"
+            )
+            
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                from modules.impressora import get_installed_printers, imprimir_tiquet_prova
+                installed_printers = get_installed_printers()
+                cur_drv = prn_cfg.get("nom_controlador", "BIXOLON_SRP275")
+                if installed_printers:
+                    idx_prn = installed_printers.index(cur_drv) if cur_drv in installed_printers else 0
+                    p_drv = st.selectbox("Controlador de la impressora (Windows)", options=installed_printers, index=idx_prn, key="p_drv")
+                else:
+                    p_drv = st.text_input("Nom del controlador de la impressora", value=cur_drv, key="p_drv")
+                    
+            with col_p2:
+                p_port = st.text_input("Port de connexió local", value=prn_cfg.get("port", "USB001"), key="p_port", help="Port de Windows com USB001, LPT1 o COM1")
+                
+            col_p3, col_p4 = st.columns(2)
+            with col_p3:
+                ample_opts = [76, 80, 58]
+                cur_ample = prn_cfg.get("ample_mm", 76)
+                idx_ample = ample_opts.index(cur_ample) if cur_ample in ample_opts else 0
+                p_ample = st.selectbox("Amplada del paper (mm)", options=ample_opts, index=idx_ample, format_func=lambda x: f"{x} mm", key="p_ample")
+                
+            with col_p4:
+                p_tall = st.checkbox("Tall automàtic de paper (guillotina ESC/POS)", value=prn_cfg.get("tall_automatic", True), key="p_tall")
+                p_salts = st.slider("Salts de línia abans de tallar", min_value=1, max_value=10, value=int(prn_cfg.get("salts_linia_tall", 6)), key="p_salts", help="Marge de seguretat entre el capçal d'impressió i la guillotina física")
+                
+            col_p_test, _ = st.columns([1, 2])
+            with col_p_test:
+                if st.button("📄 Imprimir tiquet de prova", key="btn_test_print"):
+                    with st.spinner("Enviant prova d'impressió..."):
+                        ok_p, msg_p = imprimir_tiquet_prova(printer_name=p_drv)
+                        if ok_p:
+                            st.success(f"✅ {msg_p}")
+                        else:
+                            st.error(f"❌ {msg_p}")
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            # --- BLOC 2: ESCÀNER DE SOBREMESA ---
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            st.markdown("#### 📠 Escàner de Sobremesa")
+            st.caption("Configuració de l'escàner directe mitjançant la nova infraestructura WinRT / Windows.Devices.Scanners.")
+            
+            s_actiu = st.toggle("Activar escaneig directe", value=scn_cfg.get("actiu", True), key="s_actiu")
+            
+            from scanner import get_connected_scanners
+            col_s1, col_s2 = st.columns(2)
+            with col_s1:
+                scanners_detectats = get_connected_scanners()
+                scanner_choices = [("default", "Primer escàner detectat (per defecte)")]
+                for sc in scanners_detectats:
+                    scanner_choices.append((sc["nom"], f"🖨️ {sc['nom']}"))
+                    
+                cur_dev = scn_cfg.get("dispositiu", "default")
+                choice_keys = [c[0] for c in scanner_choices]
+                idx_dev = choice_keys.index(cur_dev) if cur_dev in choice_keys else 0
+                
+                s_dev = st.selectbox(
+                    "Dispositiu d'escaneig",
+                    options=choice_keys,
+                    format_func=lambda x: dict(scanner_choices).get(x, x),
+                    index=idx_dev,
+                    key="s_dev"
+                )
+                if scanners_detectats:
+                    st.caption(f"🟢 S'ha detectat: **{', '.join([s['nom'] for s in scanners_detectats])}**")
+                else:
+                    st.caption("⚠️ No s'ha detectat cap escàner USB actiu en aquest moment.")
+                    
+            with col_s2:
+                dpi_opts = [150, 200, 300, 600]
+                cur_dpi = int(scn_cfg.get("dpi", 300))
+                idx_dpi = dpi_opts.index(cur_dpi) if cur_dpi in dpi_opts else 2
+                s_dpi = st.selectbox(
+                    "Resolució per defecte (DPI)",
+                    options=dpi_opts,
+                    index=idx_dpi,
+                    format_func=lambda x: f"{x} DPI {'(Recomanat OCR)' if x==300 else ''}",
+                    key="s_dpi"
+                )
+                
+            col_s3, col_s4 = st.columns(2)
+            with col_s3:
+                mode_opts = ["Color", "Grayscale", "Monochrome"]
+                cur_mode = scn_cfg.get("mode_color", "Color")
+                idx_mode = mode_opts.index(cur_mode) if cur_mode in mode_opts else 0
+                s_mode = st.selectbox(
+                    "Mode de color",
+                    options=mode_opts,
+                    index=idx_mode,
+                    format_func=lambda x: "Color (RGB)" if x=="Color" else ("Escala de grisos" if x=="Grayscale" else "Blanc i negre (BN)"),
+                    key="s_mode"
+                )
+                
+            with col_s4:
+                st.write("")
+                st.write("")
+                if st.button("🔍 Detectar escàners ara", key="btn_detect_scanners"):
+                    st.session_state["flash_success"] = f"Recerca completada: {len(scanners_detectats)} dispositius trobats."
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Botó Desar canvis
+            st.markdown("<div style='margin-top: 15px;'>", unsafe_allow_html=True)
+            if st.button("💾 Desar configuració de perifèrics", type="primary", key="btn_save_periferics"):
+                cur_cfg = load_app_config()
+                if "periferics" not in cur_cfg:
+                    cur_cfg["periferics"] = {}
+                cur_cfg["periferics"]["impressora"] = {
+                    "activa": p_activa,
+                    "metode": metode_sel,
+                    "nom_controlador": p_drv,
+                    "port": p_port,
+                    "ample_mm": p_ample,
+                    "tall_automatic": p_tall,
+                    "salts_linia_tall": p_salts
+                }
+                cur_cfg["periferics"]["escaner"] = {
+                    "actiu": s_actiu,
+                    "dispositiu": s_dev,
+                    "dpi": s_dpi,
+                    "mode_color": s_mode
+                }
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = "✅ Configuració de perifèrics (impressora i escàner) desada correctament!"
+                    st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
         elif active == "harness":

@@ -12,6 +12,26 @@ import pandas as pd
 
 DEFAULT_PRINTER_NAME = "BIXOLON_SRP275"
 
+
+def get_installed_printers():
+    """Retorna la llista de noms d'impressores instal·lades a Windows."""
+    if os.name != "nt":
+        return []
+    try:
+        import win32print
+        return [p[2] for p in win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)]
+    except Exception:
+        return []
+
+def get_printer_config():
+    """Recupera la configuració de la impressora des de config_manager o valors per defecte."""
+    try:
+        from core.config_manager import load_app_config
+        cfg = load_app_config().get("periferics", {}).get("impressora", {})
+        return cfg if cfg else {}
+    except Exception:
+        return {}
+
 def is_local_printer_available(printer_name=DEFAULT_PRINTER_NAME):
     """Comprova si win32print està disponible i la impressora està instal·lada."""
     if os.name != "nt":
@@ -154,11 +174,14 @@ def generar_text_tiquet(supermercat, items, total_super=0.0):
     return "\n".join(linies)
 
 
-def imprimir_directe_bixolon(supermercat, items, total_super=0.0, printer_name=DEFAULT_PRINTER_NAME):
+def imprimir_directe_bixolon(supermercat, items, total_super=0.0, printer_name=None):
     """
     Envia el tiquet directament per USB utilitzant comandes raw ESC/POS amb tall de paper.
     Només funciona en entorns locals amb accés al controlador de Windows.
     """
+    cfg = get_printer_config()
+    if not printer_name:
+        printer_name = cfg.get("nom_controlador", DEFAULT_PRINTER_NAME)
     try:
         import win32print
     except ImportError:
@@ -205,9 +228,11 @@ def imprimir_directe_bixolon(supermercat, items, total_super=0.0, printer_name=D
             
         raw.extend(b"================================\n")
         
-        # Avenç de 7 línies perquè el paper superi la línia de tall abans de tallar
-        raw.extend(b"\n\n\n\n\n\n\n")
-        raw.extend(b"\x1dV\x00") # GS V 0 (Auto cut)
+        # Avenç de línies i tall segons configuració
+        salts = int(cfg.get("salts_linia_tall", 6))
+        raw.extend(b"\n" * (salts + 1))
+        if cfg.get("tall_automatic", True):
+            raw.extend(b"\x1dV\x00") # GS V 0 (Auto cut)
         
         hPrinter = win32print.OpenPrinter(printer_name)
         try:
@@ -336,6 +361,17 @@ def generar_html_imprimir_tiquet(supermercat, items, total_super=0.0):
     """
     return html
 
+
+
+def imprimir_tiquet_prova(printer_name=None):
+    """
+    Imprimeix un tiquet curt de prova per verificar el funcionament de la impressora i el tall de paper.
+    """
+    items_prova = [
+        {"nom_estandard": "Comprovacio USB", "falta": 1, "total_linia": 1.25},
+        {"nom_estandard": "Test Guillotina", "falta": 1, "total_linia": 2.50}
+    ]
+    return imprimir_directe_bixolon("TEST_PERIFERIC", items_prova, total_super=3.75, printer_name=printer_name)
 
 def render_printer_widget(supermercat, items, total_super=0.0, key_prefix="shop"):
     """

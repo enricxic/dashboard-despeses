@@ -3,10 +3,42 @@ import subprocess
 import threading
 from PIL import Image
 
-def scan_winrt(output_path):
+def get_connected_scanners():
+    """
+    Retorna la llista d'escàners connectats detectats per la nova API WinRT de Windows:
+    [{'nom': 'hp scanjet', 'id': '...'}]
+    """
+    ps_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scan_winrt.ps1")
+    if not os.path.exists(ps_script):
+        return []
+    cmd = [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", ps_script,
+        "-ListDevices"
+    ]
+    creationflags = 0x08000000 if os.name == 'nt' else 0
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, creationflags=creationflags, timeout=12)
+        devices = []
+        for line in proc.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("DEVICE:"):
+                raw = line[len("DEVICE:"):].strip()
+                if "|" in raw:
+                    nom, dev_id = raw.split("|", 1)
+                else:
+                    nom, dev_id = raw, raw
+                devices.append({"nom": nom, "id": dev_id})
+        return devices
+    except Exception:
+        return []
+
+def scan_winrt(output_path, device_name=None, dpi=None, color_mode=None):
     """
     Escaneig directe utilitzant la infraestructura moderna de Windows (WinRT / Windows.Devices.Scanners).
-    100% compatible amb HP Scanjet G3110 i Windows 10/11 sense problemes de permisos ni bloquejos de fitxers temporals.
+    Permet seleccionar el dispositiu per defecte o un concret configurat a l'aplicació.
     """
     result = {"success": False, "error": None}
     
@@ -17,13 +49,32 @@ def scan_winrt(output_path):
         
     temp_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_scans"))
     os.makedirs(temp_dir, exist_ok=True)
+
+    # Llegir configuració si no s'especifica
+    if device_name is None or dpi is None or color_mode is None:
+        try:
+            from core.config_manager import load_app_config
+            cfg = load_app_config().get("periferics", {}).get("escaner", {})
+            if device_name is None:
+                device_name = cfg.get("dispositiu", "default")
+            if dpi is None:
+                dpi = int(cfg.get("dpi", 300))
+            if color_mode is None:
+                color_mode = cfg.get("mode_color", "Color")
+        except Exception:
+            device_name = device_name or "default"
+            dpi = dpi or 300
+            color_mode = color_mode or "Color"
     
     cmd = [
         "powershell.exe",
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
         "-File", ps_script,
-        "-OutputDir", temp_dir
+        "-OutputDir", temp_dir,
+        "-DeviceName", str(device_name if device_name != "default" else ""),
+        "-Dpi", str(dpi),
+        "-ColorMode", str(color_mode)
     ]
     
     # Hide PowerShell console window
@@ -175,7 +226,7 @@ def scan_silent(output_path):
     """
     Intenta escanejar directament mitjançant WinRT; si falla, prova fallback WIA.
     """
-    # 1. Provar WinRT modern (nadiu, ràpid i fiable)
+    # 1. Provar WinRT modern (nadiu, ràpid i configurable)
     res = scan_winrt(output_path)
     if res["success"]:
         return res

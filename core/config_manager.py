@@ -107,7 +107,25 @@ DEFAULT_CONFIG = {
                 {"id": "nadal", "titol": "Viatge de Nadal (~1800 km)", "dia": 22, "mes": 12, "recurrent": True, "avis_dies_abans": 15, "actiu": True}
             ]
         },
-        "historic": []
+                "historic": []
+    },
+    "periferics": {
+        "escaner": {
+            "dispositiu": "default",
+            "nom_mostrar": "Primer escàner detectat (per defecte)",
+            "dpi": 300,
+            "mode_color": "Color",
+            "actiu": True
+        },
+        "impressora": {
+            "activa": True,
+            "metode": "raw_usb",
+            "nom_controlador": "BIXOLON_SRP275",
+            "port": "USB001",
+            "ample_mm": 76,
+            "tall_automatic": True,
+            "salts_linia_tall": 6
+        }
     }
 }
 
@@ -126,6 +144,7 @@ TRANSLATIONS = {
         "tema_title": "Aspecte i Tema",
         "icones_title": "Icones d'inici",
         "idioma_title": "Idiomes",
+        "periferics_title": "Perifèrics (Impressora i Escàner)",
         "back_home": "Tornar a l'inici",
         "slogan": "TOTA LA TEVA LLAR, CONTROLADA"
     },
