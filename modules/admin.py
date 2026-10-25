@@ -1419,8 +1419,17 @@ def render():
             
             col_p1, col_p2 = st.columns(2)
             with col_p1:
-                from modules.impressora import get_installed_printers, imprimir_tiquet_prova
-                installed_printers = get_installed_printers()
+                try:
+                    import importlib
+                    import modules.impressora as mod_imp
+                    if not hasattr(mod_imp, "get_installed_printers"):
+                        importlib.reload(mod_imp)
+                    get_installed_printers = getattr(mod_imp, "get_installed_printers", lambda: [])
+                    imprimir_tiquet_prova = getattr(mod_imp, "imprimir_tiquet_prova", None)
+                    installed_printers = get_installed_printers()
+                except Exception:
+                    installed_printers = []
+                    imprimir_tiquet_prova = None
                 cur_drv = prn_cfg.get("nom_controlador", "BIXOLON_SRP275")
                 if installed_printers:
                     idx_prn = installed_printers.index(cur_drv) if cur_drv in installed_printers else 0
@@ -1446,11 +1455,14 @@ def render():
             with col_p_test:
                 if st.button("📄 Imprimir tiquet de prova", key="btn_test_print"):
                     with st.spinner("Enviant prova d'impressió..."):
-                        ok_p, msg_p = imprimir_tiquet_prova(printer_name=p_drv)
-                        if ok_p:
-                            st.success(f"✅ {msg_p}")
+                        if callable(imprimir_tiquet_prova):
+                            ok_p, msg_p = imprimir_tiquet_prova(printer_name=p_drv)
+                            if ok_p:
+                                st.success(f"✅ {msg_p}")
+                            else:
+                                st.error(f"❌ {msg_p}")
                         else:
-                            st.error(f"❌ {msg_p}")
+                            st.warning("⚠️ La impressió directa USB només està disponible en entorns Windows locals.")
             st.markdown("</div>", unsafe_allow_html=True)
             
             # --- BLOC 2: ESCÀNER DE SOBREMESA ---
@@ -1460,10 +1472,18 @@ def render():
             
             s_actiu = st.toggle("Activar escaneig directe", value=scn_cfg.get("actiu", True), key="s_actiu")
             
-            from scanner import get_connected_scanners
+            try:
+                import importlib
+                import scanner as mod_scn
+                if not hasattr(mod_scn, "get_connected_scanners"):
+                    importlib.reload(mod_scn)
+                get_connected_scanners = getattr(mod_scn, "get_connected_scanners", lambda: [])
+                scanners_detectats = get_connected_scanners()
+            except Exception:
+                scanners_detectats = []
+
             col_s1, col_s2 = st.columns(2)
             with col_s1:
-                scanners_detectats = get_connected_scanners()
                 scanner_choices = [("default", "Primer escàner detectat (per defecte)")]
                 for sc in scanners_detectats:
                     scanner_choices.append((sc["nom"], f"🖨️ {sc['nom']}"))

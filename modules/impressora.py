@@ -12,6 +12,19 @@ import pandas as pd
 
 DEFAULT_PRINTER_NAME = "BIXOLON_SRP275"
 
+__all__ = [
+    "get_installed_printers",
+    "get_printer_config",
+    "is_local_printer_available",
+    "normalitzar_per_a_matriu",
+    "formatar_linies_tiquet",
+    "formatar_tots_els_supermercats",
+    "imprimir_directe_bixolon",
+    "generar_html_imprimir_tiquet",
+    "imprimir_tiquet_prova",
+    "render_printer_widget"
+]
+
 
 def get_installed_printers():
     """Retorna la llista de noms d'impressores instal·lades a Windows."""
