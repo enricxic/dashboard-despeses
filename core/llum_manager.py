@@ -411,6 +411,69 @@ def get_preu_llum_dema() -> dict:
         "motiu": "pendent_publicacio"
     }
 
+def get_energia_llar_config() -> dict:
+    """Retorna la configuració d'energia, acumuladors i estudi solar de la llar."""
+    defaults = {
+        "potencia_punta_kw": 4.4,
+        "potencia_vall_kw": 5.5,
+        "acumuladors": [
+            {
+                "id": "acum_1",
+                "nom": "Menjador",
+                "zona": "Menjador / Planta Baixa",
+                "watts": 4000,
+                "franja": "nit",
+                "hores_defecte": 5,
+                "color": "#fbbf24",
+                "icona": "🛋️"
+            },
+            {
+                "id": "acum_2",
+                "nom": "Passadís 2a Planta",
+                "zona": "Passadís 2a Planta",
+                "watts": 2000,
+                "franja": "migdia",
+                "hores_defecte": 3,
+                "color": "#38bdf8",
+                "icona": "🪜"
+            }
+        ],
+        "estudi_solar": {
+            "municipi": "Arbúcies",
+            "comarca": "La Selva, Girona",
+            "lat": 41.8167,
+            "lon": 2.5167,
+            "orientacio_defecte": "ne_pur",
+            "orientacio_label": "29° Nord-Est (Teulada actual)",
+            "superficie_teulada_m2": 45,
+            "watts_panell": 450,
+            "descompte_tarifa_pct": 80
+        }
+    }
+    try:
+        from core.config_manager import load_app_config
+        cfg = load_app_config().get("energia_llar", {})
+        if cfg and isinstance(cfg, dict):
+            defaults.update(cfg)
+    except Exception:
+        pass
+    return defaults
+
+def save_energia_llar_config(new_cfg: dict) -> bool:
+    """Desa la configuració d'energia a config_manager i Supabase."""
+    try:
+        from core.config_manager import load_app_config, save_app_config
+        full_cfg = load_app_config()
+        if "energia_llar" not in full_cfg:
+            full_cfg["energia_llar"] = {}
+        full_cfg["energia_llar"].update(new_cfg)
+        return save_app_config(full_cfg)
+    except Exception as e:
+        print(f"Error desant energia_llar: {e}")
+        return False
+
+CONFIG_ACUM_FILE = os.path.join(PROJECT_ROOT, "data", "acumuladors_config.json")
+
 def load_acumuladors_config() -> dict:
     """Carrega la configuració d'hores i franges dels acumuladors."""
     defaults = {
