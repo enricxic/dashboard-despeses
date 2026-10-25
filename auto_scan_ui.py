@@ -1,11 +1,9 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox
 import os
-import glob
 import datetime
 import threading
 import sys
-import shutil
 from PIL import Image
 
 # Ensure we can import scanner
@@ -83,33 +81,6 @@ def get_target_path(super_val, date_val):
         os.makedirs(tickets_dir)
     return os.path.join(tickets_dir, f"ticket_{super_clean}_{date_str}.jpg")
 
-def save_image_as_target(source_img_path, target_path):
-    try:
-        with Image.open(source_img_path) as img:
-            rgb_img = img.convert('RGB')
-            rgb_img.save(target_path, 'JPEG', quality=90)
-        return True
-    except Exception as e:
-        messagebox.showerror("Error al convertir la imatge", str(e))
-        return False
-
-def on_choose_file():
-    super_val = combo_super.get().strip()
-    date_val = entry_date.get().strip()
-    if not super_val or not date_val:
-        messagebox.showwarning("Atenció", "Si us plau, omple el Súper i la Data abans de seleccionar el fitxer.")
-        return
-    fpath = filedialog.askopenfilename(
-        title="Selecciona la imatge del tiquet",
-        filetypes=[("Imatges", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff"), ("Tots els fitxers", "*.*")]
-    )
-    if fpath:
-        target = get_target_path(super_val, date_val)
-        if save_image_as_target(fpath, target):
-            lbl_status.config(text=f"Guardat a: {target}", fg="green")
-            messagebox.showinfo("Èxit", f"Tiquet guardat correctament a:\n{target}")
-            root.destroy()
-
 def on_scan_click():
     super_val = combo_super.get().strip()
     date_val = entry_date.get().strip()
@@ -119,7 +90,6 @@ def on_scan_click():
         return
         
     btn_scan.config(state="disabled", text="⏳ Escanejant...")
-    btn_choose.config(state="disabled")
     lbl_status.config(text="Escanejant document directament de l'escàner...", fg="#0284c7")
     root.update()
     
@@ -142,7 +112,6 @@ def on_scan_click():
         finally:
             try:
                 btn_scan.config(state="normal", text="🖨️ Escanejar Tiquet")
-                btn_choose.config(state="normal")
             except Exception:
                 pass
             
@@ -151,7 +120,7 @@ def on_scan_click():
 
 root = tk.Tk()
 root.title("Escaneig Ràpid de Tiquets")
-root.geometry("420x240")
+root.geometry("420x205")
 root.resizable(False, False)
 root.attributes("-topmost", True)
 
@@ -206,24 +175,13 @@ btn_scan = tk.Button(
     bg="#16a34a",
     fg="white",
     command=on_scan_click,
-    pady=6,
+    pady=7,
     cursor="hand2"
 )
-btn_scan.grid(row=3, column=0, columnspan=3, pady=4, sticky="ew")
+btn_scan.grid(row=3, column=0, columnspan=3, pady=6, sticky="ew")
 
-# Row 4: Botó secundari (Triar arxiu ja existent)
-btn_choose = tk.Button(
-    frame,
-    text="📁 Triar fitxer existent...",
-    font=("Arial", 9),
-    bg="#f1f5f9",
-    command=on_choose_file,
-    pady=2
-)
-btn_choose.grid(row=4, column=0, columnspan=3, pady=2, sticky="ew")
-
-# Row 5: Status
+# Row 4: Status
 lbl_status = tk.Label(frame, text="Col·loca el tiquet a l'escàner i prem 'Escanejar Tiquet'.", font=("Arial", 8), fg="#64748b")
-lbl_status.grid(row=5, column=0, columnspan=3, pady=4)
+lbl_status.grid(row=4, column=0, columnspan=3, pady=4)
 
 root.mainloop()
