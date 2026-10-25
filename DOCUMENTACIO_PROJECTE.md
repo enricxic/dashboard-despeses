@@ -78,10 +78,14 @@ La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse
 11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Gestió del vehicle organitzada en pestanyes:
     - `🛣️ Registre Km i Rutes`: Formulari per registrar lectures d'odòmetre, càlcul automàtic de km del trajecte, selector/plantilles de rutes i taula d'històric.
     - `⛽ Repostatge`: Taula històrica de proveïments de la BBDD `gasolina` (alimentada des d'Ingressos/Despeses) amb mètriques de preu últim repostatge, preu més alt i més baix.
-    - `🔧 Manteniment (Canvi d'Oli, Inflat de Rodes i Control de Nivells)`:
-      * *Canvi d'Oli*: Seguiment de km actuals, límit de canvi d'oli i km restants.
-      * *Inflat de Rodes*: Planificacions periòdiques (pressió pneumàtics), km/dies restants i alertes.
-      * *Control de Nivells*: Secció independent per a la revisió periòdica dels líquids del vehicle (oli de motor, líquid refrigerant, líquid de frens, líquid eixugaparabrises) amb les seves pròpies planificacions configurables, històric d'intervencions, càlcul de venciment i neteja automàtica del formulari en desar.
+    - `🔧 Manteniment (Oli, Rodes, Nivells, Taller i Històric)`:
+      * *Arquitectura Col·lapsable*: Totes les seccions estan organitzades en blocs plegables independents (`st.expander`) per mantenir la interfície neta i compacta, permetent veure només la secció desitjada o activar el desplegament global ("Desplegar totes les seccions").
+      * *Canvi d'Oli*: Seguiment de km actuals, límit de canvi d'oli, km restants i barra de desgast amb mètriques al títol.
+      * *Canvi de Rodes*: Planificació i registre de substitucions de cobertes (davanteres, posteriors o totals) amb alertes per quilometratge.
+      * *Inflat de Rodes*: Planificacions periòdiques i puntuals (pressió en bar), alertes anticipades i vinculació a viatges programats.
+      * *Control de Nivells*: Secció independent per a la revisió periòdica de líquids (oli, refrigerant, frens, eixugaparabrises) amb calendari d'alertes i registre d'intervencions.
+      * *Taller i Avaries*: Registre d'entrades a taller per manteniment, ITV, avaries o reparacions amb seguiment d'estat (Resolt, Pendent, En taller).
+      * *Històric de Manteniment*: Taula interactiva d'intervencions amb filtratge per tipus, càlcul de despesa total acumulada (€) i eines d'edició o esborrat.
     - `📊 Consum`: Gràfic de consum anual L/100km.
 12. **🛒 Ingressos i Despeses**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral d'ingressos, despeses i compres:
     - `📄 Compres Super`: Escàner OCR intel·ligent amb suport total de Gemini Vision. Incorpora un sistema de **Regles de Súper Editables (`core/ocr_rules.md`)** des del menú superior, permetent ensenyar a la IA com llegir ofertes o estructures de tiquets específiques de cada cadena (Mercadona, Bonpreu, Dia, etc.) sense programar codi. Inclou mecanismes estrictes per forçar quantitats enteres.
@@ -564,6 +568,12 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
     - Anàlisi econòmica i jurídica detallada sobre la realitat del Bo Social: descompte vigent del 80% (consumidor vulnerable sever) enfront dels límits de compensació d'excedents de l'article 14 del RD 244/2019 (on els excedents només compensen fins al valor de l'energia de la factura, sense reduir el terme fix de potència ni el Bo Social).
     - Comparador exhaustiu de pressupost "Clau en mà" (instal·lació integral homologada amb deducció del 40% d'IRPF i bonificació d'IBI) vs modalitat "Mixta / DIY" (compra directa de materials i connexió per instal·lador certificat).
     - Guia de seguretat i muntatge per a cobertes de teula corba: ancoratge estructural a bigues / corretges i ganxos salva-teules sense perforació directa.
+
+- **25/10/2026: Seccions Col·lapsables al Mòdul Cotxe/Manteniment (`modules/cotxe.py`)**:
+  - **Interfície Modular i Compacta**: S'han transformat totes les seccions de la pestanya *Manteniment* (`🛢️ Canvi d'Oli`, `🛞 Canvi de Rodes`, `💨 Inflat de Rodes (Pressió)`, `🧪 Control de Nivells`, `🛠️ Taller i Avaries`, i `📋 Històric de Manteniment i Taller`) en blocs col·lapsables independents (`st.expander`) plegats per defecte. Això evita l'excés de scroll vertical i permet a l'usuari visualitzar i interactuar exclusivament amb la secció que necessiti.
+  - **Badges Informatius als Títols**: Cadascun dels encapçalaments col·lapsables incorpora les mètriques i dades clau en temps real (km restants per a oli i rodes, propera data d'inflat i revisió de líquids, avisos de reparacions en taller o recompte de registres a l'històric), oferint una diagnosi immediata de l'estat del vehicle d'un sol cop d'ull sense haver d'obrir els blocs.
+  - **Control Global de Desplegament**: Incorporat un selector superior (*"Desplegar totes les seccions"*) per obrir o tancar simultàniament tots els blocs amb un sol clic.
+  - **Auto-obertura en Mode Edició**: Quan l'usuari interactua o modifica una planificació en línia (per exemple un viatge d'inflat o un control de líquids), la secció corresponent es manté automàticament expandida per no interrompre el flux de treball.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**
