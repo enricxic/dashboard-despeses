@@ -126,6 +126,43 @@ DEFAULT_CONFIG = {
             "tall_automatic": True,
             "salts_linia_tall": 6
         }
+    },
+    "energia_llar": {
+        "potencia_punta_kw": 4.4,
+        "potencia_vall_kw": 5.5,
+        "acumuladors": [
+            {
+                "id": "acum_1",
+                "nom": "Menjador",
+                "zona": "Menjador / Planta Baixa",
+                "watts": 4000,
+                "franja": "nit",
+                "hores_defecte": 5,
+                "color": "#fbbf24",
+                "icona": "🛋️"
+            },
+            {
+                "id": "acum_2",
+                "nom": "Passadís 2a Planta",
+                "zona": "Passadís 2a Planta",
+                "watts": 2000,
+                "franja": "migdia",
+                "hores_defecte": 3,
+                "color": "#38bdf8",
+                "icona": "🪜"
+            }
+        ],
+        "estudi_solar": {
+            "municipi": "Arbúcies",
+            "comarca": "La Selva, Girona",
+            "lat": 41.8167,
+            "lon": 2.5167,
+            "orientacio_defecte": "ne_pur",
+            "orientacio_label": "29° Nord-Est (Teulada actual)",
+            "superficie_teulada_m2": 45,
+            "watts_panell": 450,
+            "descompte_tarifa_pct": 80
+        }
     }
 }
 

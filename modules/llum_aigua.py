@@ -15,6 +15,8 @@ except ImportError:
 
 from modules.avatar_widget import render_header_with_avatar
 from core.llum_manager import (
+    get_energia_llar_config,
+    save_energia_llar_config,
     get_preu_llum_avui,
     calcular_finestra_acumuladors,
     load_acumuladors_config,
@@ -590,150 +592,162 @@ def render_consum_llum_tab():
                 </div>
                 """, unsafe_allow_html=True)
 
-            # OPTIMITZADOR D'ACUMULADORS (AMB ESPAIAT GENERÓS QUE NO TOQUI AMB ELS KPIS)
+            # OPTIMITZADOR D'ACUMULADORS (DINÀMIC I MODULAR)
             st.markdown("<div style='margin-top:32px; margin-bottom:8px;'></div>", unsafe_allow_html=True)
             cfg_acum = load_acumuladors_config()
+            energia_cfg = get_energia_llar_config()
+            pot_punta = float(energia_cfg.get("potencia_punta_kw", 4.4))
+            pot_vall = float(energia_cfg.get("potencia_vall_kw", 5.5))
+            acumuladors_llista = energia_cfg.get("acumuladors", [])
+            if not acumuladors_llista:
+                acumuladors_llista = [
+                    {"id": "acum_1", "nom": "Menjador", "zona": "Menjador / Planta Baixa", "watts": 4000, "franja": "nit", "hores_defecte": 5, "color": "#fbbf24", "icona": "🛋️"},
+                    {"id": "acum_2", "nom": "Passadís 2a Planta", "zona": "Passadís 2a Planta", "watts": 2000, "franja": "migdia", "hores_defecte": 3, "color": "#38bdf8", "icona": "🪜"}
+                ]
 
             with st.container(border=True):
-                st.markdown("""
+                st.markdown(f"""
                 <div style='display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px; gap:8px;'>
                     <div style='display:flex; align-items:center; gap:8px;'>
                         <span style='font-size:1.25rem;'>🔥</span>
                         <span style='font-size:1.1rem; font-weight:700; color:#f39c12;'>Optimitzador de Càrrega d'Acumuladors de Calor</span>
                     </div>
-                    <div style='font-size:0.8rem; color:#94a3b8;'>Càlcul independent i emmagatzematge d'hores per a cadascun dels teus 2 acumuladors</div>
+                    <div style='font-size:0.8rem; color:#94a3b8;'>Càlcul independent i emmagatzematge d'hores per a cadascun dels teus {len(acumuladors_llista)} acumuladors</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                col_ac1, col_ac2 = st.columns(2, gap="large")
+                cols_ac = st.columns(len(acumuladors_llista), gap="large")
+                opt_finestres_acum = {}
 
-                # --- 1. ACUMULADOR 4000W (MENJADOR) ---
-                with col_ac1:
-                    st.markdown("""
-                    <div style='background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:10px 12px; margin-bottom:10px;'>
-                        <div style='display:flex; justify-content:space-between; align-items:center;'>
-                            <b style='color:#fbbf24; font-size:0.95rem;'>🛋️ Menjador (4.000 W)</b>
-                            <span style='background:#065f46; color:#a7f3d0; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>5,5 kW Nit (Vall)</span>
-                        </div>
-                        <div style='font-size:0.75rem; color:#94a3b8; margin-top:4px;'>Franja nocturna (00:00 - 08:00h) • Resten 1,5 kW lliures (no salta l'ICP).</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                for idx_ac, (col_ac, acum) in enumerate(zip(cols_ac, acumuladors_llista)):
+                    with col_ac:
+                        ac_id = acum.get("id", f"acum_{idx_ac+1}")
+                        ac_nom = acum.get("nom", f"Acumulador {idx_ac+1}")
+                        ac_watts = int(acum.get("watts", 2000))
+                        ac_franja = acum.get("franja", "nit")
+                        ac_color = acum.get("color", "#fbbf24" if idx_ac == 0 else "#38bdf8")
+                        ac_icona = acum.get("icona", "🔥")
+                        ac_def_h = int(acum.get("hores_defecte", 4))
 
-                    cur_h_4000 = int(cfg_acum.get("hores_4000w", 5))
-                    new_h_4000 = st.slider(
-                        "Hores de càrrega nocturnes (Menjador):",
-                        min_value=2,
-                        max_value=8,
-                        value=cur_h_4000,
-                        step=1,
-                        key="slider_h_4000w",
-                        help="Tria quantes hores nocturnes necessita carregar l'acumulador gran del menjador segons el fred."
-                    )
-                    if new_h_4000 != cur_h_4000:
-                        cfg_acum["hores_4000w"] = new_h_4000
-                        save_acumuladors_config(cfg_acum)
+                        if ac_franja == "nit":
+                            p_contractada = pot_vall
+                            franja_tag = f"{p_contractada:,.1f} kW Nit (Vall)"
+                            desc_franja = "Franja nocturna (00:00 - 08:00h)"
+                            badge_bg = "#065f46"
+                            badge_fg = "#a7f3d0"
+                        else:
+                            p_contractada = pot_punta
+                            franja_tag = f"{p_contractada:,.1f} kW Migdia Solar"
+                            desc_franja = "Franja solar (11:00 - 19:00h)"
+                            badge_bg = "#075985"
+                            badge_fg = "#bae6fd"
 
-                    opt_4000 = calcular_finestra_acumuladors(hores, durada_hores=new_h_4000, franja="nit")
-                    if opt_4000.get("millor_finestra"):
-                        w1 = opt_4000["millor_finestra"]
+                        marge_lliure = max(0.0, p_contractada - (ac_watts / 1000.0))
+
                         st.markdown(f"""
-                        <div style='background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35); border-radius:8px; padding:12px 14px; margin-top:8px;'>
-                            <div style='font-size:0.75rem; color:#f59e0b; font-weight:700; text-transform:uppercase;'>✨ Finestra Òptima ({new_h_4000}h nocturnes):</div>
-                            <div style='font-size:1.3rem; font-weight:700; color:#fbbf24; margin:4px 0;'>⏰ {w1['rang_text']}</div>
-                            <div style='font-size:0.83rem; color:#e2e8f0; line-height:1.4;'>
-                                Preu mitjà finestra: <b style='color:#10b981;'>{w1['preu_mitja']:.4f} €/kWh</b><br>
-                                Estalvi vs mitjana: <b style='color:#38bdf8;'>-{opt_4000.get('estalvi_percent', 0.0)}%</b> • Potència: <b style='color:#f39c12;'>5,5 kW</b><br>
-                                Cost estimat cicle ({new_h_4000}h a 4kW): <b style='color:#fbbf24;'>{(w1['preu_mitja'] * 4.0 * new_h_4000):.2f} €</b>
+                        <div style='background:rgba(255,255,255,0.03); border:1px solid {ac_color}55; border-radius:8px; padding:10px 12px; margin-bottom:10px;'>
+                            <div style='display:flex; justify-content:space-between; align-items:center;'>
+                                <b style='color:{ac_color}; font-size:0.95rem;'>{ac_icona} {ac_nom} ({ac_watts:,} W)</b>
+                                <span style='background:{badge_bg}; color:{badge_fg}; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>{franja_tag}</span>
                             </div>
+                            <div style='font-size:0.75rem; color:#94a3b8; margin-top:4px;'>{desc_franja} • Resten {marge_lliure:,.1f} kW lliures per a la casa.</div>
                         </div>
                         """, unsafe_allow_html=True)
 
-                # --- 2. ACUMULADOR 2000W (PASSADÍS 2A PLANTA) ---
-                with col_ac2:
-                    st.markdown("""
-                    <div style='background:rgba(2,132,199,0.05); border:1px solid rgba(2,132,199,0.25); border-radius:8px; padding:10px 12px; margin-bottom:10px;'>
-                        <div style='display:flex; justify-content:space-between; align-items:center;'>
-                            <b style='color:#38bdf8; font-size:0.95rem;'>🪜 Passadís 2a Planta (2.000 W)</b>
-                            <span style='background:#075985; color:#bae6fd; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>4,4 kW Migdia Solar</span>
-                        </div>
-                        <div style='font-size:0.75rem; color:#94a3b8; margin-top:4px;'>Franja solar (11:00 - 19:00h) • Resten 2,4 kW lliures per a la casa.</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                        key_cfg = f"hores_{ac_id}"
+                        if key_cfg not in cfg_acum and f"hores_{ac_watts}w" in cfg_acum:
+                            key_cfg = f"hores_{ac_watts}w"
 
-                    cur_h_2000 = int(cfg_acum.get("hores_2000w", 3))
-                    new_h_2000 = st.slider(
-                        "Hores de càrrega migdia solar (Passadís):",
-                        min_value=1,
-                        max_value=6,
-                        value=cur_h_2000,
-                        step=1,
-                        key="slider_h_2000w",
-                        help="Tria quantes hores de càrrega necessita l'acumulador del passadís durant la vall solar."
-                    )
-                    if new_h_2000 != cur_h_2000:
-                        cfg_acum["hores_2000w"] = new_h_2000
-                        save_acumuladors_config(cfg_acum)
+                        cur_h = int(cfg_acum.get(key_cfg, ac_def_h))
+                        new_h = st.slider(
+                            f"Hores de càrrega ({ac_nom}):",
+                            min_value=1,
+                            max_value=8,
+                            value=min(max(cur_h, 1), 8),
+                            step=1,
+                            key=f"slider_h_{ac_id}_{idx_ac}",
+                            help=f"Tria quantes hores necessita carregar l'aparell {ac_nom} ({ac_watts} W)."
+                        )
+                        if new_h != cur_h:
+                            cfg_acum[key_cfg] = new_h
+                            save_acumuladors_config(cfg_acum)
 
-                    opt_2000 = calcular_finestra_acumuladors(hores, durada_hores=new_h_2000, franja="migdia")
-                    if opt_2000.get("millor_finestra"):
-                        w2 = opt_2000["millor_finestra"]
-                        st.markdown(f"""
-                        <div style='background:rgba(2,132,199,0.09); border:1px solid rgba(2,132,199,0.35); border-radius:8px; padding:12px 14px; margin-top:8px;'>
-                            <div style='font-size:0.75rem; color:#38bdf8; font-weight:700; text-transform:uppercase;'>☀️ Finestra Òptima ({new_h_2000}h solars):</div>
-                            <div style='font-size:1.3rem; font-weight:700; color:#38bdf8; margin:4px 0;'>⏰ {w2['rang_text']}</div>
-                            <div style='font-size:0.83rem; color:#e2e8f0; line-height:1.4;'>
-                                Preu mitjà finestra: <b style='color:#10b981;'>{w2['preu_mitja']:.4f} €/kWh</b><br>
-                                Estalvi vs mitjana: <b style='color:#38bdf8;'>-{opt_2000.get('estalvi_percent', 0.0)}%</b> • Potència: <b style='color:#38bdf8;'>4,4 kW</b><br>
-                                Cost estimat cicle ({new_h_2000}h a 2kW): <b style='color:#38bdf8;'>{(w2['preu_mitja'] * 2.0 * new_h_2000):.2f} €</b>
+                        opt_res = calcular_finestra_acumuladors(hores, durada_hores=new_h, franja=ac_franja)
+                        if opt_res.get("millor_finestra"):
+                            w = opt_res["millor_finestra"]
+                            cost_cicle = w['preu_mitja'] * (ac_watts / 1000.0) * new_h
+                            icona_franja = "✨" if ac_franja == "nit" else "☀️"
+                            st.markdown(f"""
+                            <div style='background:rgba(255,255,255,0.04); border:1px solid {ac_color}66; border-radius:8px; padding:12px 14px; margin-top:8px;'>
+                                <div style='font-size:0.75rem; color:{ac_color}; font-weight:700; text-transform:uppercase;'>{icona_franja} Finestra Òptima ({new_h}h):</div>
+                                <div style='font-size:1.3rem; font-weight:700; color:{ac_color}; margin:4px 0;'>⏰ {w['rang_text']}</div>
+                                <div style='font-size:0.83rem; color:#e2e8f0; line-height:1.4;'>
+                                    Preu mitjà finestra: <b style='color:#10b981;'>{w['preu_mitja']:.4f} €/kWh</b><br>
+                                    Estalvi vs mitjana: <b style='color:#38bdf8;'>-{opt_res.get('estalvi_percent', 0.0)}%</b> • Potència: <b style='color:{ac_color};'>{p_contractada:,.1f} kW</b><br>
+                                    Cost estimat cicle ({new_h}h a {ac_watts/1000.0:,.1f}kW): <b style='color:{ac_color};'>{cost_cicle:.2f} €</b>
+                                </div>
                             </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                            """, unsafe_allow_html=True)
+                            opt_finestres_acum[ac_id] = {
+                                "nom": ac_nom,
+                                "watts": ac_watts,
+                                "color": ac_color,
+                                "franja_label": franja_tag,
+                                "hores": [h_item["slot"] for h_item in w.get("hores", [])]
+                            }
 
-            # GUIA ESTRATÈGICA I CONSELLS (DESPLEGABLE INDEPENDENT A AMPLE COMPLET, MAI AMAGAT)
-            st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
-            with st.expander("💡 Guia Estratègica i Consells d'Ús: Els teus 2 Acumuladors (Menjador i Pasadís)", expanded=False):
-                st.markdown("""
-                ### 🎯 Estratègia Òptima d'Ús per a Casa Teva (3 Plantes)
-                
-                Tens una configuració amb **dos acumuladors** i **doble potència contractada** (5,5 kW nit / 4,4 kW dia):
-                - **Acumulador Gran (4.000 W):** Menjador / Planta Baixa.
-                - **Acumulador Mitjà (2.000 W):** Pasadís de la 2a Planta (clau per evitar l'efecte xemeneia).
-                
-                ---
-                
-                #### 📊 Taula Comparativa: Càrrega a la Nit vs. Càrrega al Migdia Solar
-                
-                | Concepte / Paràmetre | 🌙 Càrrega Nocturna (00:00 - 08:00h) | ☀️ Càrrega Migdia Solar (14:00 - 17:00h) |
-                | :--- | :--- | :--- |
-                | **Aparell Recomanat** | **Acumulador 4000 W (Menjador)** | **Acumulador 2000 W (Pasadís 2a Planta)** |
-                | **Potència Contractada** | **5,5 kW** (Horari Vall oficial) | **4,4 kW** (Horari Pla) |
-                | **Consum de l'Aparell** | **4,0 kW** | **2,0 kW** |
-                | **Marge lliure al comptador (ICP)**| **1,5 kW lliures** (per nevera, llums, stand-by) | **2,4 kW lliures** (molt segur, no salta l'ICP) |
-                | **Preu mitjà habitual de l'energia** | ~0,13 - 0,18 €/kWh | **~0,04 - 0,07 €/kWh** (gràcies a la fotovoltaica) |
-                | **Cost cicle diari (3h càrrega)** | ~1,68 € (per al de 4000 W) | **~0,30 €** (per al de 2000 W) |
-                | **Cost mensual aprox. (2000 W)** | ~25,20 €/mes | **~9,18 €/mes** (*estalvi de ~16 €/mes = -63%*) |
-                | **Aportació tèrmica a la casa** | Confort a la planta baixa des de primera hora del matí | L'escalfor puja a la tarda/vespre (18h-23h) quan s'habiten els dormitoris |
+            # CONFIGURADOR MODULAR DE POTÈNCIES I ACUMULADORS
+            st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+            with st.expander("⚙️ Configurar Potències Contractades i Aparells Acumuladors", expanded=False):
+                st.markdown("<p style='font-size:0.85rem; color:#94a3b8; margin-bottom:10px;'>Ajusta les potències contractades de la teva instal·lació i personalitza els acumuladors/radiadors de càrrega.</p>", unsafe_allow_html=True)
+                c_p1, c_p2 = st.columns(2)
+                with c_p1:
+                    edit_p_punta = st.number_input("Potència Punta / Dia (kW):", min_value=1.0, max_value=15.0, value=float(pot_punta), step=0.1, key="num_pot_punta")
+                with c_p2:
+                    edit_p_vall = st.number_input("Potència Vall / Nit (kW):", min_value=1.0, max_value=15.0, value=float(pot_vall), step=0.1, key="num_pot_vall")
 
-                ---
+                st.markdown("<b style='color:#cbd5e1; font-size:0.9rem;'>Llista d'Aparells Acumuladors:</b>", unsafe_allow_html=True)
+                acum_actualitzats = []
+                for j_ac, ac_item in enumerate(acumuladors_llista):
+                    c_e1, c_e2, c_e3, c_e4 = st.columns([2.2, 1.2, 1.3, 0.8])
+                    e_nom = c_e1.text_input(f"Nom #{j_ac+1}", value=ac_item.get("nom", f"Acumulador {j_ac+1}"), key=f"ac_nom_edit_{j_ac}")
+                    e_watts = c_e2.number_input(f"Watts #{j_ac+1}", min_value=200, max_value=10000, value=int(ac_item.get("watts", 2000)), step=100, key=f"ac_watts_edit_{j_ac}")
+                    f_idx = 0 if ac_item.get("franja", "nit") == "nit" else 1
+                    e_franja = c_e3.selectbox(f"Franja #{j_ac+1}", ["nit", "migdia"], index=f_idx, key=f"ac_franja_edit_{j_ac}")
+                    e_col = c_e4.color_picker(f"Color #{j_ac+1}", value=ac_item.get("color", "#fbbf24" if j_ac == 0 else "#38bdf8"), key=f"ac_col_edit_{j_ac}")
+                    acum_actualitzats.append({
+                        "id": ac_item.get("id", f"acum_{j_ac+1}"),
+                        "nom": e_nom.strip(),
+                        "zona": ac_item.get("zona", e_nom.strip()),
+                        "watts": int(e_watts),
+                        "franja": e_franja,
+                        "hores_defecte": ac_item.get("hores_defecte", 4),
+                        "color": e_col,
+                        "icona": ac_item.get("icona", "🔥")
+                    })
 
-                #### 🧠 Reflexions i Claus Tècniques
+                if st.button("💾 Desar Paràmetres d'Energia i Acumuladors", key="btn_save_energia_llar_cfg"):
+                    nova_cfg_e = {
+                        "potencia_punta_kw": round(float(edit_p_punta), 2),
+                        "potencia_vall_kw": round(float(edit_p_vall), 2),
+                        "acumuladors": acum_actualitzats
+                    }
+                    if save_energia_llar_config(nova_cfg_e):
+                        st.success("✅ Configuració d'energia desada correctament!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Error en desar la configuració d'energia.")
+
+            # GUIA ESTRATÈGICA I CONSELLS (DESPLEGABLE MODULAR)
+            st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+            with st.expander("💡 Guia Estratègica i Consells d'Ús dels Acumuladors", expanded=False):
+                st.markdown(f"""
+                ### 🎯 Estratègia Òptima d'Ús de la Potència i Acumuladors
                 
-                1. **Evitem la sobrecàrrega del diferencial / comptador (ICP):**
-                   - Si engegassis els dos acumuladors alhora a la nit: $4.000\\text{ W} + 2.000\\text{ W} = 6.000\\text{ W}$ (6,0 kW).
-                   - Com que a la nit tens **5,5 kW contractats**, **el comptador saltaria**.
-                   - Separar el de 2.000 W al migdia resol completament el problema de potència sense haver de pagar una quota fixa més alta a la companyia.
-                
-                2. **Aprofitament de la "Vall Solar" (14:00 a 17:00 h):**
-                   - Tot i que oficialment les 14h-17h pertanyen al tram regulat *Pla*, a Espanya la gran producció de parcs solars fotovoltaics enfonsa el preu real de l'energia (sovint a **0,03 € - 0,06 €/kWh**), sent **fins i tot més barat que a les 3 de la matinada**.
-                   - Carregar el radiador de 2 kW en aquestes 3 hores costa només uns **0,30 € al dia**.
-                
-                3. **Termodinàmica i "Efecte Xemeneia" en 3 plantes:**
-                   - L'aire calent puja per l'escala de forma natural. Si la segona planta està freda, actua com a "tap fred" i xucla ràpidament l'aire calent del menjador.
-                   - Carregar l'acumulador del pasadís de 14h a 17h fa que comenci a irradiar calor a partir de les 17h-18h, just quan arriba el vespre, temperant la segona i tercera planta. Això crea un matalàs tèrmic que reté l'escalfor del menjador a baix.
-                
-                4. **⚠️ Precaució domèstica important:**
-                   - De 14:00 a 17:00 h tens 4,4 kW contractats. Amb l'acumulador de 2.000 W encès, **et queden 2,4 kW lliures**.
-                   - *Consell:* Durant aquesta franja, vigila de no engegar simultàniament electrodomèstics d'alta potència com el **forn elèctric (2.500 W)** o la rentadora en cicle calent (2.000 W).
+                Tens una configuració amb **doble potència contractada** ({pot_vall:,.1f} kW nit / {pot_punta:,.1f} kW dia) i acumuladors tèrmics:
+                - **Càrrega Nocturna (Vall):** Aprofita les hores de menor peatge (00:00 - 08:00h) i la major potència contractada ({pot_vall:,.1f} kW) per carregar els aparells de major potència.
+                - **Càrrega Migdia Solar (Vall solar):** Aprofita la gran aportació de parcs fotovoltaics (14:00 - 17:00h), on el cost real del mercat elèctric s'enfonsa a valors mínims.
+                - **Prevenció de sobrecàrrega (ICP):** Distribuir la càrrega entre la nit i el migdia evita encendre tots els equips simultàniament i garanteix no superar la potència màxima del comptador.
                 """, unsafe_allow_html=True)
 
             # -----------------------------------------------------------------
@@ -780,17 +794,17 @@ def render_consum_llum_tab():
                 colors = [h["tram_color"] for h in hores]
                 hover_texts = [f"<b>Hora: {h['slot']}</b><br>Preu: <b>{h['preu']:.4f} €/kWh</b><br>Tram 2.0TD: {h['tram_label']}" for h in hores]
             
-            opt_win_hours_4000 = [h["slot"] for h in opt_4000.get("millor_finestra", {}).get("hores", [])] if opt_4000 and opt_4000.get("millor_finestra") else []
-            opt_win_hours_2000 = [h["slot"] for h in opt_2000.get("millor_finestra", {}).get("hores", [])] if opt_2000 and opt_2000.get("millor_finestra") else []
-
             border_colors = []
             border_widths = []
             for h in hores:
-                if h["slot"] in opt_win_hours_4000:
-                    border_colors.append("#fbbf24") # Daurat per a 4000W
-                    border_widths.append(3)
-                elif h["slot"] in opt_win_hours_2000:
-                    border_colors.append("#38bdf8") # Blau per a 2000W
+                slot = h["slot"]
+                matched_color = None
+                for ac_info in opt_finestres_acum.values():
+                    if slot in ac_info.get("hores", []):
+                        matched_color = ac_info["color"]
+                        break
+                if matched_color:
+                    border_colors.append(matched_color)
                     border_widths.append(3)
                 elif h.get("actual"):
                     border_colors.append("#ffffff")
@@ -846,11 +860,16 @@ def render_consum_llum_tab():
             st.plotly_chart(fig, use_container_width=True)
 
             # LLEGENDA EXPLICATIVA DELS COLORS
+            badge_items = []
+            for ac_id, ac_info in opt_finestres_acum.items():
+                badge_items.append(
+                    f"<div><span style='border:2px solid {ac_info['color']}; border-radius:3px; padding:0 4px; font-weight:700; color:{ac_info['color']};'>🔲 Vora {ac_info['nom']}</span>: <b>Finestra {ac_info['watts']:,}W {ac_info['nom']}</b> ({ac_info['franja_label']}).</div>"
+                )
+            badge_items.append(f"<div><span style='border:2px solid #ffffff; border-radius:3px; padding:0 4px; font-weight:700; color:#ffffff;'>🔲 Vora blanca</span>: <b>Hora actual</b> ({slot_act}).</div>")
+
             vora_notes_html = f"""
                 <div style='margin-top:8px; padding-top:6px; border-top:1px dashed #334155; display:flex; gap:20px; flex-wrap:wrap; font-size:0.8rem; color:#94a3b8;'>
-                    <div><span style='border:2px solid #fbbf24; border-radius:3px; padding:0 4px; font-weight:700; color:#fbbf24;'>🔲 Vora groga</span>: <b>Finestra 4000W Menjador</b> (nit, 5,5 kW).</div>
-                    <div><span style='border:2px solid #38bdf8; border-radius:3px; padding:0 4px; font-weight:700; color:#38bdf8;'>🔲 Vora blava</span>: <b>Finestra 2000W Passadís</b> (migdia solar, 4,4 kW).</div>
-                    <div><span style='border:2px solid #ffffff; border-radius:3px; padding:0 4px; font-weight:700; color:#ffffff;'>🔲 Vora blanca</span>: <b>Hora actual</b> ({slot_act}).</div>
+                    {''.join(badge_items)}
                 </div>
             """
 
@@ -871,22 +890,22 @@ def render_consum_llum_tab():
                 <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:8px; padding:8px 14px; margin-top:2px;'>
                     <div style='font-size:0.8rem; font-weight:700; color:#cbd5e1; margin-bottom:4px;'>📖 Llegenda de Colors (Trams Oficials 2.0TD de Peatges i Potència):</div>
                     <div style='display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:0.82rem;'>
-                        <div><span style='color:#10b981; font-weight:700;'>🟢 Tram Vall (00h-08h i caps de setmana)</span>: Peatge mínim i <b>potència de 5,5 kW</b> (acumuladors).</div>
-                        <div><span style='color:#f59e0b; font-weight:700;'>🟡 Tram Pla (08-10h, 14-18h, 22-24h)</span>: Peatge mig i <b>4,4 kW</b>. <i>(Nota: 14h-17h sol ser molt barat per l'energia solar!)</i></div>
-                        <div><span style='color:#ef4444; font-weight:700;'>🔴 Tram Punta (10-14h i 18-22h)</span>: Peatge màxim i <b>4,4 kW</b>.</div>
+                        <div><span style='color:#10b981; font-weight:700;'>🟢 Tram Vall (00h-08h i caps de setmana)</span>: Peatge mínim i <b>potència de {pot_vall:,.1f} kW</b> (acumuladors).</div>
+                        <div><span style='color:#f59e0b; font-weight:700;'>🟡 Tram Pla (08-10h, 14-18h, 22-24h)</span>: Peatge mig i <b>{pot_punta:,.1f} kW</b>. <i>(Nota: 14h-17h sol ser molt barat per l'energia solar!)</i></div>
+                        <div><span style='color:#ef4444; font-weight:700;'>🔴 Tram Punta (10-14h i 18-22h)</span>: Peatge màxim i <b>{pot_punta:,.1f} kW</b>.</div>
                     </div>
                     {vora_notes_html}
                 </div>
                 """, unsafe_allow_html=True)
 
             with st.expander("ℹ️ Informació sobre Trams Horaris i Potències (Bo Social / 2.0TD)"):
-                st.markdown("""
+                st.markdown(f"""
                 - **🟢 Tram Vall (P3)**: De dilluns a divendres de **00:00 a 08:00 h**, i **les 24 hores dels caps de setmana i festius nacionals**.
-                  - *Potència contractada*: **5,5 kW** (ideal per a la càrrega dels acumuladors de calor).
+                  - *Potència contractada*: **{pot_vall:,.1f} kW** (ideal per a la càrrega dels acumuladors de calor).
                 - **🟡 Tram Pla (P2)**: De dilluns a divendres de **08:00 a 10:00 h**, de **14:00 a 18:00 h** i de **22:00 a 24:00 h**.
-                  - *Potència contractada*: **4,4 kW**.
+                  - *Potència contractada*: **{pot_punta:,.1f} kW**.
                 - **🔴 Tram Punta (P1)**: De dilluns a divendres de **10:00 a 14:00 h** i de **18:00 a 22:00 h**.
-                  - *Potència contractada*: **4,4 kW**.
+                  - *Potència contractada*: **{pot_punta:,.1f} kW**.
                 """)
         else:
             st.warning("⚠️ No s'han pogut carregar les dades de preus en directe en aquest moment. Pots tornar-ho a provar amb el botó d'actualitzar.")
@@ -1392,22 +1411,43 @@ def render_consum_aigua_tab():
 # =========================================================================
 
 def render_estudi_solar_tab():
-    st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0 0 16px 0;'>Estudi tècnic i econòmic per a la instal·lació de plaques solars fotovoltaiques a Arbúcies, amb dades de les teves 44 factures reals i integració amb els acumuladors de calor.</p>", unsafe_allow_html=True)
+    energia_cfg = get_energia_llar_config()
+    estudi_cfg = energia_cfg.get("estudi_solar", {})
+    municipi = estudi_cfg.get("municipi", "Arbúcies")
+    comarca = estudi_cfg.get("comarca", "La Selva, Girona")
+    sup_teulada = int(estudi_cfg.get("superficie_teulada_m2", 45))
+    ori_label = estudi_cfg.get("orientacio_label", "29° Nord-Est (Teulada actual)")
+    watts_panell_cfg = int(estudi_cfg.get("watts_panell", 450))
+    descompte_tarifa_pct = int(estudi_cfg.get("descompte_tarifa_pct", 80))
+
+    # Càlcul del consum històric a partir de les factures registrades
+    factures_llum = load_factures_llum()
+    n_factures = len(factures_llum)
+    if factures_llum:
+        try:
+            total_kwh_registrat = sum(float(f.get("kwhTotal", 0.0)) for f in factures_llum)
+            consum_anual_calc = round((total_kwh_registrat / max(1, n_factures)) * 12)
+        except Exception:
+            consum_anual_calc = 5661
+    else:
+        consum_anual_calc = 5661
+
+    st.markdown(f"<p style='color:#94a3b8; font-size:0.95rem; margin:0 0 16px 0;'>Estudi tècnic i econòmic per a la instal·lació de plaques solars fotovoltaiques a {municipi}, amb dades reals de consum ({n_factures} factures) i integració amb els acumuladors de calor.</p>", unsafe_allow_html=True)
 
     # Badges resum de la propietat
-    st.markdown("""
+    st.markdown(f"""
     <div style='display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;'>
         <div style='background:#1e293b; border:1px solid #334155; border-radius:8px; padding:6px 14px; font-size:0.83rem; color:#cbd5e1;'>
-            📍 <b>Ubicació:</b> Arbúcies (La Selva, Girona)
+            📍 <b>Ubicació:</b> {municipi} ({comarca})
         </div>
         <div style='background:#1e293b; border:1px solid #334155; border-radius:8px; padding:6px 14px; font-size:0.83rem; color:#cbd5e1;'>
-            📐 <b>Teulada:</b> 40 - 50 m² de teula (29° Nord-Est)
+            📐 <b>Teulada:</b> {sup_teulada} m² de teula ({ori_label})
         </div>
         <div style='background:#1e293b; border:1px solid #334155; border-radius:8px; padding:6px 14px; font-size:0.83rem; color:#cbd5e1;'>
-            ⚡ <b>Consum Històric:</b> 5.661 kWh / any (mitjana 44 mesos)
+            ⚡ <b>Consum Històric:</b> {consum_anual_calc:,.0f} kWh / any ({n_factures} factures)
         </div>
         <div style='background:#065f46; border:1px solid #059669; border-radius:8px; padding:6px 14px; font-size:0.83rem; color:#a7f3d0;'>
-            🏷️ <b>Tarifa:</b> PVPC Bo Social (80% descompte)
+            🏷️ <b>Tarifa:</b> PVPC Bo Social ({descompte_tarifa_pct}% descompte)
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1416,26 +1456,35 @@ def render_estudi_solar_tab():
     with st.container(border=True):
         st.markdown("<h4 style='color:#f39c12; margin:0 0 12px 0;'>⚙️ Configurador del Sistema Solar Fotovoltaic</h4>", unsafe_allow_html=True)
 
-        c_s1, c_s2, c_s3 = st.columns(3)
+        c_s1, c_s2, c_s3, c_s4 = st.columns([1.2, 1.1, 1.4, 1.3])
         with c_s1:
             num_panells = st.slider(
-                "Nombre de Panells (450W cadascun):",
-                min_value=6,
-                max_value=20,
+                "Nombre de Panells:",
+                min_value=4,
+                max_value=24,
                 value=12,
                 step=1,
-                help="Cada panell de 450W ocupa ~2,1 m² de teulada. Amb 12 panells ocupes ~25 m² dels 40-50 m² disponibles."
+                help=f"Cada panell ocupa ~2,1 m² de teulada. Amb {12} panells ocupes ~25 m² dels {sup_teulada} m² disponibles."
             )
         with c_s2:
+            opcions_watts = [400, 450, 500, 550]
+            idx_w = opcions_watts.index(watts_panell_cfg) if watts_panell_cfg in opcions_watts else 1
+            potencia_panell = st.selectbox(
+                "Potència Panell (W):",
+                opcions_watts,
+                index=idx_w,
+                help="Potència pic de cada panell solar monocristal·lí."
+            )
+        with c_s3:
             opt_orientacio = st.selectbox(
-                "Orientació de les plaques a la teulada:",
+                "Orientació a la teulada:",
                 [
-                    "📐 Vessant única a 29° NE (Teulada actual)",
-                    "🔄 Dues aigües: 29° NE + 209° SO (Repartiment Est/Oest)",
+                    f"📐 Vessant única ({ori_label})",
+                    "🔄 Dues aigües (Repartiment Est/Oest)",
                     "☀️ Correcció d'estructura cap al Sud (100% òptim)"
                 ],
                 index=0,
-                help="29° NE produeix fort de matí i estiu. A dues aigües (Est/Oest) equilibra la producció durant tot el dia."
+                help="Orientació dels panells a la teulada."
             )
             key_orientacio = "ne_pur"
             if "Dues aigües" in opt_orientacio:
@@ -1443,17 +1492,17 @@ def render_estudi_solar_tab():
             elif "Sud" in opt_orientacio:
                 key_orientacio = "sud_optim"
 
-        with c_s3:
+        with c_s4:
             opt_bateria = st.selectbox(
-                "Sistema d'Emmagatzematge (Bateria Física):",
+                "Bateria Física (Liti):",
                 [
-                    "❌ Sense bateria física (Només acumuladors)",
-                    "🔋 Bateria de Liti 5 kWh",
-                    "🔋 Bateria de Liti 10 kWh (Recomanada)",
-                    "🔋 Bateria de Liti 15 kWh (Màxima autonomia)"
+                    "❌ Sense bateria (Només acumuladors)",
+                    "🔋 Bateria Liti 5 kWh",
+                    "🔋 Bateria Liti 10 kWh (Recomanada)",
+                    "🔋 Bateria Liti 15 kWh (Autonomia màxima)"
                 ],
                 index=0,
-                help="La bateria de liti emmagatzema l'energia solar que sobra de dia per utilitzar-la de nit a tota la casa."
+                help="La bateria de liti emmagatzema l'energia solar excedentària de dia per a la nit."
             )
             val_bateria = 0.0
             if "5 kWh" in opt_bateria:
@@ -1466,17 +1515,49 @@ def render_estudi_solar_tab():
         c_ac_check1, c_ac_check2 = st.columns([1.8, 1.2], vertical_alignment="center")
         with c_ac_check1:
             chk_desviar_acum = st.checkbox(
-                "🔥 Desviar excedents solars a l'acumulador de calor (Bateria Tèrmica)",
+                "🔥 Desviar excedents solars als acumuladors de calor (Bateria Tèrmica)",
                 value=True,
-                help="Aprofita els teus acumuladors (2000W / 4000W) com a gran acumulador tèrmic gratuït durant les hores centrals de sol (11h a 16h)."
+                help="Aprofita els acumuladors de calor com a gran dipòsit tèrmic gratuït durant les hores centrals de sol (11h a 16h)."
             )
         with c_ac_check2:
             st.caption("ℹ️ A l'hivern, carregar els acumuladors amb el sol augmenta l'autoconsum directe més d'un 35% a cost zero.")
 
+    # PERSONALITZACIÓ DE DADES GEOGRÀFIQUES I DE TEULADA
+    st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+    with st.expander("⚙️ Personalitzar Ubicació, Teulada i Paràmetres del Model Solar", expanded=False):
+        c_u1, c_u2, c_u3 = st.columns(3)
+        with c_u1:
+            e_mun = st.text_input("Municipi:", value=municipi, key="sol_mun_input")
+            e_com = st.text_input("Comarca / Província:", value=comarca, key="sol_com_input")
+        with c_u2:
+            e_sup = st.number_input("Superfície teulada disponible (m²):", min_value=10, max_value=500, value=sup_teulada, step=5, key="sol_sup_input")
+            e_watts_def = st.selectbox("Potència panell per defecte (W):", [400, 450, 500, 550], index=idx_w, key="sol_w_def_input")
+        with c_u3:
+            e_desc = st.number_input("Descompte Tarifa / Bo Social (%):", min_value=0, max_value=100, value=descompte_tarifa_pct, step=5, key="sol_desc_input")
+            e_ori_desc = st.text_input("Descripció de la teulada:", value=ori_label, key="sol_ori_desc_input")
+
+        if st.button("💾 Desar Dades de l'Estudi Solar", key="btn_save_solar_model_cfg"):
+            nova_cfg_solar = dict(estudi_cfg)
+            nova_cfg_solar.update({
+                "municipi": e_mun.strip(),
+                "comarca": e_com.strip(),
+                "superficie_teulada_m2": int(e_sup),
+                "watts_panell": int(e_watts_def),
+                "descompte_tarifa_pct": int(e_desc),
+                "orientacio_label": e_ori_desc.strip()
+            })
+            cfg_global = get_energia_llar_config()
+            cfg_global["estudi_solar"] = nova_cfg_solar
+            if save_energia_llar_config(cfg_global):
+                st.success("✅ Dades de l'estudi solar desades correctament!")
+                st.rerun()
+            else:
+                st.error("❌ Error en desar les dades de l'estudi solar.")
+
     # Executar simulació
     res_solar = simular_estudi_solar(
         num_panells=num_panells,
-        potencia_panell_w=450,
+        potencia_panell_w=potencia_panell,
         orientacio=key_orientacio,
         bateria_kwh=val_bateria,
         carregar_acumuladors_sol=chk_desviar_acum
@@ -1513,7 +1594,7 @@ def render_estudi_solar_tab():
     # GRÀFIC BALANÇ MENSUAL
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
     st.markdown("<h4 style='color:#38bdf8; margin:0 0 4px 0;'>📊 Balanç Mensual: Producció Solar vs. El teu Consum Real</h4>", unsafe_allow_html=True)
-    st.markdown("<div style='font-size:0.82rem; color:#94a3b8; margin-bottom:12px;'>Simulació mes a mes segons les teves 44 factures reals i la radiació d'Arbúcies.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size:0.82rem; color:#94a3b8; margin-bottom:12px;'>Simulació mes a mes segons les teves factures reals ({n_factures} registrades) i la radiació solar a {municipi}.</div>", unsafe_allow_html=True)
 
     df_solar = pd.DataFrame(res_solar["mensual_dades"])
     fig_solar = go.Figure()
@@ -1572,14 +1653,14 @@ def render_estudi_solar_tab():
     # ANÀLISI DEL BO SOCIAL
     st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown("""
-        <h4 style='color:#f39c12; margin-top:0;'>🏷️ La Particularitat Econòmica del Bo Social (80% Descompte)</h4>
+        st.markdown(f"""
+        <h4 style='color:#f39c12; margin-top:0;'>🏷️ La Particularitat Econòmica del Bo Social ({descompte_tarifa_pct}% Descompte)</h4>
         <div style='font-size:0.87rem; color:#cbd5e1; line-height:1.6;'>
-            Actualment gaudeixes de la tarifa <b>PVPC amb Bo Social de Vulnerable Sever (80% de bonificació)</b> a Energía XXI:
+            Actualment gaudeixes d'una tarifa bonificada (<b>{descompte_tarifa_pct}% de descompte</b>):
             <ul>
-                <li><b>Cost elèctric actual mínim:</b> Pagant entre 0,02 € i 0,04 € pel kWh de la xarxa, el cost anual total de la teva factura se situa en només <b>350 € - 450 € / any</b> malgrat consumir 5.660 kWh.</li>
-                <li><b>Com funciona la compensació d'excedents (RD 244/2019):</b> La llei estipula que els excedents solars abocats a la xarxa només poden compensar el terme variable de l'energia de la factura del mes (mai el terme fix de potència ni els impostos, i la factura mai pot sortir negativa). Amb un 80% de descompte que ja tens, el valor monetari que rebràs per abocar a xarxa serà reduït.</li>
-                <li><b>La clau d'or: La "Bateria Tèrmica":</b> Com que vendre energia no aporta grans beneficis amb el Bo Social, <b>desviar l'excedent als acumuladors de calor (2.000W i 4.000W) durant el migdia</b> és l'estratègia més rendible: escalfes la casa de 3 plantes al 100% de confort sense gastar res de xarxa a la nit.</li>
+                <li><b>Cost elèctric actual mínim:</b> Pagant entre 0,02 € i 0,04 € pel kWh de la xarxa, el cost anual total de la factura se situa en xifres reduïdes malgrat un consum elevat.</li>
+                <li><b>Com funciona la compensació d'excedents (RD 244/2019):</b> La llei estipula que els excedents solars abocats a la xarxa només poden compensar el terme variable de l'energia de la factura del mes (mai el terme fix de potència ni els impostos, i la factura mai pot sortir negativa). Amb el gran descompte aplicat a la teva tarifa, el valor monetari que rebràs per abocar a la xarxa és moderat.</li>
+                <li><b>La clau d'or: La "Bateria Tèrmica":</b> Com que abocar energia a la xarxa té un retorn econòmic limitat amb el Bo Social, <b>desviar l'excedent als acumuladors de calor durant el migdia</b> és l'estratègia més rendible: escalfes la llar gratuïtament sense haver de consumir energia de la xarxa durant les nits.</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -1603,7 +1684,7 @@ def render_estudi_solar_tab():
             <div style='font-size:0.9rem;'>
                 <div>Pressupost estimat complet (amb IVA): <b style='color:#f39c12; font-size:1.15rem;'>{res_solar['cost_total_empresa']:,.2f} €</b></div>
                 <div style='color:#10b981; margin-top:4px;'>- Deducció IRPF (40%): <b>-{res_solar['deduccio_irpf_40']:,.2f} €</b></div>
-                <div style='color:#10b981;'>- Bonificació IBI Arbúcies (~3 anys): <b>-{res_solar['bonificacio_ibi_estimada']:,.2f} €</b></div>
+                <div style='color:#10b981;'>- Bonificació IBI {municipi} (~3 anys): <b>-{res_solar['bonificacio_ibi_estimada']:,.2f} €</b></div>
                 <hr style='border-color:#334155; margin:8px 0;'>
                 <div style='font-size:1rem; color:#e2e8f0;'>Cost net real aproximat: <b style='color:#10b981; font-size:1.25rem;'>{res_solar['cost_net_empresa_amb_ajudes']:,.2f} €</b></div>
             </div>
@@ -1628,7 +1709,7 @@ def render_estudi_solar_tab():
             <div style='font-size:0.9rem;'>
                 <div>Cost estimat materials + instal·lador: <b style='color:#f59e0b; font-size:1.15rem;'>{res_solar['cost_total_bricolatge']:,.2f} €</b></div>
                 <div style='color:#10b981; margin-top:4px;'>- Deducció IRPF (40%): <b>-{(res_solar['cost_total_bricolatge'] * 0.40):,.2f} €</b></div>
-                <div style='color:#10b981;'>- Bonificació IBI Arbúcies: <b>-{res_solar['bonificacio_ibi_estimada']:,.2f} €</b></div>
+                <div style='color:#10b981;'>- Bonificació IBI {municipi}: <b>-{res_solar['bonificacio_ibi_estimada']:,.2f} €</b></div>
                 <hr style='border-color:#334155; margin:8px 0;'>
                 <div style='font-size:1rem; color:#e2e8f0;'>Cost net real aproximat: <b style='color:#10b981; font-size:1.25rem;'>{res_solar['cost_net_bricolatge_amb_ajudes']:,.2f} €</b></div>
             </div>
@@ -1640,24 +1721,27 @@ def render_estudi_solar_tab():
 
     # GUIA DE SEGURETAT I TEULADA
     st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
-    with st.expander("🦺 Guia Pràctica de Seguretat i Consells per Treballar a la Teulada de Teules (Arbúcies)", expanded=False):
-        st.markdown("""
-        Si optes per fer el muntatge mecànic tu mateix a la teulada de teules (29° NE):
+    with st.expander(f"🦺 Guia Pràctica de Seguretat i Consells per Treballar a la Teulada de Teules ({municipi})", expanded=False):
+        st.markdown(f"""
+        Si optes per fer el muntatge mecànic tu mateix a la teulada de teules ({ori_label}):
         
         1. **Ganxos Salvateules (Salvatejas d'acer inoxidable):**
            - *Regla d'or:* **No foradis mai la teula per la part superior** (amb el temps és font segura de filtracions i goteres).
-           - S'aixeca la teula superior, es cargola el ganxo salvateula directament al cabiró o bigueta de formigó amb cargols d'alta resistència, i es torna a encaixar la teula. Si cal, es desgasta lleugerament la vora de la teula amb disc de diamant per evitar que balli.
-        2. **Trepitjar sobre teules sense trencar-les:**
-           - No trepitgis mai el centre d'una teula corba. Trepitja sempre a la part davantera inferior (on recolza sobre la filera següent) o utilitza taulons de fusta amb base d'escuma/goma per repartir el teu pes sobre 4 o 5 teules alhora.
-        3. **Seguretat vital (Casa de 3 plantes):**
-           - Una caiguda des d'una teulada de 3 plantes és fatal. És indispensable instal·lar un punt d'ancoratge provisional o línia de vida certificada i utilitzar arnès de seguretat integral amb línia absorbent d'impacte.
-        4. **Cablejat Solar (DC):**
-           - Fes servir cable solar homologat H1Z2Z2-K de doble aïllament resistent a la radiació ultraviolada de 6 mm² (vermell i negre) i connectors MC4 originals crimpats amb alicates especials.
-           - Passa el cablejat per tub corrugat negre lliure d'halògens resistent a l'exterior.
-        5. **Legalització administrativa:**
-           - Encara que facis el muntatge físic tu mateix, és legalment necessari que un instal·lador de Baixa Tensió firmi el **CIE (Certificat d'Instal·lació Elèctrica)** i tramiti la inscripció al RAC (Registre d'Autoconsum de Catalunya). Sense aquest tràmit no tindràs compensació d'excedents ni podràs aplicar la deducció del 40% a la declaració de la Renda.
-        """)
-
+           - S'aixeca la teula superior, es caragola la platina d'acer inoxidable directament al forjat o biga de suport amb tac químic o caragol barraquero, i es rebaixa lleugerament amb disc de diamant la panxa inferior de la teula per no picar-la en tornar-la a encaixar.
+        
+        2. **Estructura i Perfileria d'Alumini:**
+           - Utilitza perfils d'alumini anoditzat estructural (mínim 40x40 mm) i cargols d'acer inoxidable A2.
+           - Assegura't de respectar la distància de seguretat de **mínim 30-40 cm respecte a la carena i als ràfecs** per minimitzar l'efecte vela del vent.
+        
+        3. **Connexions elèctriques a la teulada (DC):**
+           - Fes totes les unions amb connectors originals **MC4 crimpats amb alicates especials** (evita fer-ho amb alicates planes normals).
+           - Fixa tot el cablejat solar resistent a raigs UV (6 mm²) amb brides inoxidables a l'estructura, mai descansant directament a les teules o zones d'evacuació d'aigua.
+        
+        4. **Mesures de Seguretat Personal (EPIs):**
+           - Arnés de seguretat homologat fixat a línia de vida o punt d'ancoratge segur a l'obra.
+           - Treballa sempre acompanyat d'una segona persona que supervise des de baix o doni suport amb materials.
+           - **No pugis mai a la teulada amb pluja, humitat matinal (rosada) o ratxes de vent.**
+        """, unsafe_allow_html=True)
 
 # =========================================================================
 # FUNCIÓ PRINCIPAL DEL MÒDUL LLUM I AIGUA
