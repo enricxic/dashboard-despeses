@@ -17,7 +17,7 @@ L'aplicació utilitza una **arquitectura modular consolidada**, neta, extensible
 - **Barra Superior de Menús (Estil Tradicional d'Escriptori)**: Barra de navegació global permanent a la part superior de l'aplicació amb 4 menús clàssics desplegables i controls d'estat:
   - `Arxiu`: Tornar a la pantalla d'inici, reiniciar app / memòria cau, commutar mode Online/Offline i tancar sessió.
   - `Editar`: Accés directe a la configuració general (amb submenús per a Tauler, Administrador, Títol, Família, Tutelats, Bancs, Tema, Icones, Idiomes), editor interactiu d'arxius JSON, regles súper OCR i neteja d'orfes.
-  - `Mòduls`: Selector complet dels mòduls de la llar (Dashboard, Econòmic, Compres, Cotxe, Menús i Cuina, Manteniment, Domòtica, Seguretat, Agenda, Medicació, Jocs) amb submenús d'accions ràpides i FAQs.
+  - `Mòduls`: Selector complet dels mòduls de la llar (Dashboard, Econòmic, Compres, Cotxe, Menús i Cuina, Manteniment, Domòtica, Seguretat, Agenda, Medicació, Llum i Aigua) amb submenús d'accions ràpides i FAQs.
   - `Bases de dades`: Gestor de taules Supabase (Despeses, Ingressos, Compres Super, Catàleg de Productes), sincronització, consolidació de dades offline i còpies de seguretat en fitxer ZIP.
   - *Controls d'estat (dreta)*: Indicador de connectivitat Online/Offline, campaneta de notificacions i alertes globals amb comptador en temps real, i insígnia del rol d'usuari (👑 Administrador / 👤 Visualitzador).
 - **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/Disseny/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/Disseny/fons xiquiHouse.jpg`), amb 12 punts d'accés interactius mapejats.
@@ -574,6 +574,10 @@ Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense per
   - **Badges Informatius als Títols**: Cadascun dels encapçalaments col·lapsables incorpora les mètriques i dades clau en temps real (km restants per a oli i rodes, propera data d'inflat i revisió de líquids, avisos de reparacions en taller o recompte de registres a l'històric), oferint una diagnosi immediata de l'estat del vehicle d'un sol cop d'ull sense haver d'obrir els blocs.
   - **Control Global de Desplegament**: Incorporat un selector superior (*"Desplegar totes les seccions"*) per obrir o tancar simultàniament tots els blocs amb un sol clic.
   - **Auto-obertura en Mode Edició**: Quan l'usuari interactua o modifica una planificació en línia (per exemple un viatge d'inflat o un control de líquids), la secció corresponent es manté automàticament expandida per no interrompre el flux de treball.
+
+- **25/10/2026: Modernització i Restauració de l'Escaneig Directe 1-Clic (`scanner.py`, `scan_winrt.ps1`, `auto_scan_ui.py`)**:
+  - **Nou Motor Modern WinRT (`Windows.Devices.Scanners`)**: Superada la fallada de la llibreria clàssica WIA COM (que provocava un bloqueig d'arxiu temporal `ERROR_SHARING_VIOLATION` / `0x80030070` a `wiaservc.dll`). S'ha implementat el pont natiu `scan_winrt.ps1` que es comunica amb la mateixa API moderna UWP/WinRT que utilitza l'aplicació oficial d'Escàner de Windows.
+  - **Flux Directe 1-Clic Restablert**: S'ha retornat a la interfície d'un sol clic amb el botó principal `🖨️ Escanejar Tiquet`. L'usuari simplement prem el botó, l'escàner físic HP Scanjet G3110 digitalitza el document i el programa el desa automàticament a `tickets/ticket_<super>_<date>.jpg` convertit en JPEG d'alta resolució, sense haver d'obrir programes externs ni fer cap pas manual.
 
 > [!IMPORTANT]
 > **Estructura de Desat (Local i Núvol)**

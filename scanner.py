@@ -1,5 +1,142 @@
 import os
+import subprocess
 import threading
+from PIL import Image
+
+def scan_winrt(output_path):
+    """
+    Escaneig directe utilitzant la infraestructura moderna de Windows (WinRT / Windows.Devices.Scanners).
+    100% compatible amb HP Scanjet G3110 i Windows 10/11 sense problemes de permisos ni bloquejos de fitxers temporals.
+    """
+    result = {"success": False, "error": None}
+    
+    ps_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scan_winrt.ps1")
+    if not os.path.exists(ps_script):
+        result["error"] = f"Script d'escaneig no trobat: {ps_script}"
+        return result
+        
+    temp_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_scans"))
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    cmd = [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", ps_script,
+        "-OutputDir", temp_dir
+    ]
+    
+    # Hide PowerShell console window
+    creationflags = 0x08000000 if os.name == 'nt' else 0 # CREATE_NO_WINDOW
+    
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            creationflags=creationflags,
+            timeout=120
+        )
+        
+        output = proc.stdout.strip()
+        scanned_file = None
+        
+        for line in output.splitlines():
+            line = line.strip()
+            if line.startswith("SUCCESS:"):
+                scanned_file = line[len("SUCCESS:"):].strip()
+            elif line.startswith("ERROR:"):
+                result["error"] = line[len("ERROR:"):].strip()
+                
+        if not scanned_file or not os.path.exists(scanned_file):
+            if not result["error"]:
+                result["error"] = proc.stderr.strip() or "No s'ha obtingut cap imatge de l'escàner."
+            return result
+            
+        # Convert scanned file (BMP/PNG) to JPG with Pillow
+        with Image.open(scanned_file) as img:
+            rgb_img = img.convert('RGB')
+            target_dir = os.path.dirname(os.path.abspath(output_path))
+            if target_dir:
+                os.makedirs(target_dir, exist_ok=True)
+            if os.path.exists(output_path):
+                os.remove(output_path)
+            rgb_img.save(output_path, 'JPEG', quality=90)
+            
+        # Clean up temporary scanned BMP/PNG
+        try:
+            if os.path.exists(scanned_file):
+                os.remove(scanned_file)
+        except Exception:
+            pass
+            
+        result["success"] = True
+        return result
+        
+    except subprocess.TimeoutExpired:
+        result["error"] = "Temps d'espera esgotat durant l'escaneig (l'escàner no ha respost en 120s)."
+        return result
+    except Exception as e:
+        result["error"] = str(e)
+        return result
+
+def scan_wia_silent(output_path):
+    result = {"success": False, "error": None}
+    
+    try:
+        import win32com.client
+        import pythoncom
+    except ImportError:
+        result["error"] = "Escaneig no disponible (requereix win32com i Windows)."
+        return result
+        
+    def worker():
+        try:
+            pythoncom.CoInitialize()
+            dev_manager = win32com.client.Dispatch("WIA.DeviceManager")
+            if dev_manager.DeviceInfos.Count == 0:
+                result["error"] = "No s'ha trobat cap escàner connectat."
+                return
+                
+            device = dev_manager.DeviceInfos(1).Connect()
+            item = device.Items(1)
+            
+            # Configure 300 DPI
+            try:
+                for prop in item.Properties:
+                    if prop.PropertyID == 6147: # Horizontal Resolution
+                        prop.Value = 300
+                    elif prop.PropertyID == 6148: # Vertical Resolution
+                        prop.Value = 300
+                    elif prop.PropertyID == 6146: # Current Intent
+                        prop.Value = 2 # Grayscale
+                    elif prop.PropertyID == 6151: # Horizontal Extent
+                        prop.Value = 2550
+                    elif prop.PropertyID == 6152: # Vertical Extent
+                        prop.Value = 3510
+            except Exception:
+                pass
+
+            image = item.Transfer("{B96B3CAA-0728-11D3-9D7B-0000F81EF32E}") # wiaFormatBMP
+            
+            target_dir = os.path.dirname(os.path.abspath(output_path))
+            if target_dir:
+                os.makedirs(target_dir, exist_ok=True)
+            if os.path.exists(output_path):
+                os.remove(output_path)
+            image.SaveFile(output_path)
+            result["success"] = True
+            
+        except Exception as e:
+            result["error"] = str(e)
+        finally:
+            pythoncom.CoUninitialize()
+
+    t = threading.Thread(target=worker)
+    t.start()
+    t.join()
+    
+    return result
 
 def scan_with_dialog(output_path):
     result = {"success": False, "error": None}
@@ -8,7 +145,7 @@ def scan_with_dialog(output_path):
         import win32com.client
         import pythoncom
     except ImportError:
-        result["error"] = "Escaneig no disponible al núvol (requereix Windows i execució local)."
+        result["error"] = "Escaneig no disponible (requereix Windows)."
         return result
         
     def worker():
@@ -35,59 +172,20 @@ def scan_with_dialog(output_path):
     return result
 
 def scan_silent(output_path):
-    result = {"success": False, "error": None}
-    
-    try:
-        import win32com.client
-        import pythoncom
-    except ImportError:
-        result["error"] = "Escaneig no disponible al núvol (requereix Windows i execució local)."
-        return result
+    """
+    Intenta escanejar directament mitjançant WinRT; si falla, prova fallback WIA.
+    """
+    # 1. Provar WinRT modern (nadiu, ràpid i fiable)
+    res = scan_winrt(output_path)
+    if res["success"]:
+        return res
         
-    def worker():
-        try:
-            pythoncom.CoInitialize()
-            dev_manager = win32com.client.Dispatch("WIA.DeviceManager")
-            if dev_manager.DeviceInfos.Count == 0:
-                result["error"] = "No s'ha trobat cap escàner connectat."
-                return
-                
-            device = dev_manager.DeviceInfos(1).Connect()
-            item = device.Items(1)
-            
-            # Configure 300 DPI
-            try:
-                for prop in item.Properties:
-                    if prop.PropertyID == 6147: # Horizontal Resolution
-                        prop.Value = 300
-                    elif prop.PropertyID == 6148: # Vertical Resolution
-                        prop.Value = 300
-                    elif prop.PropertyID == 6146: # Current Intent
-                        prop.Value = 2 # Grayscale
-                    elif prop.PropertyID == 6151: # Horizontal Extent
-                        prop.Value = 2550 # 8.5 inches * 300 dpi
-                    elif prop.PropertyID == 6152: # Vertical Extent
-                        prop.Value = 3510 # 11.7 inches * 300 dpi
-            except Exception as prop_err:
-                pass # ignore property setting errors if scanner doesn't support it
-
-            image = item.Transfer("{B96B3CAE-0728-11D3-9D7B-0000F81EF32E}")
-            
-            if os.path.exists(output_path):
-                os.remove(output_path)
-            image.SaveFile(output_path)
-            result["success"] = True
-            
-        except Exception as e:
-            result["error"] = str(e)
-        finally:
-            pythoncom.CoUninitialize()
-
-    t = threading.Thread(target=worker)
-    t.start()
-    t.join()
-    
-    return result
+    # 2. Fallback a WIA antic si cal
+    wia_res = scan_wia_silent(output_path)
+    if wia_res["success"]:
+        return wia_res
+        
+    return res if res.get("error") else wia_res
 
 def scan_ticket(output_path=None):
     if not output_path:
