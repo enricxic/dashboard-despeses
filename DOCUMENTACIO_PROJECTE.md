@@ -1,585 +1,429 @@
-# Documentació del Projecte: Dashboard Despeses - XiquiHouse
-
-Aquest document descriu l'arquitectura, funcionalitats, estructura de fitxers i regles de l'aplicació per assegurar que qualsevol nova sessió o agent d'IA entengui el context immediatament sense dependre de la memòria de converses anteriors.
-
----
-
-## 1. Visió General i Arquitectura Modular
-L'aplicació utilitza una **arquitectura modular consolidada**, neta, extensible i optimitzada per a mòbils i escriptori.
-- **Frontend / Backend**: Construïda en **Streamlit** (Python).
-- **Arquitectura de Xarxa Dual**: 
-  - **Cloud-First**: Per defecte, l'arrencador de l'escriptori (`StartDashboard.py`) obre la versió del núvol de forma instantània si hi ha internet.
-  - **Sincronització de Fons**: Mentre s'obre el núvol, un procés silenciós (`scripts/update_csvs_background.py`) actualitza totes les dades al disc dur local (CSV) mitjançant una connexió directa i ultra-ràpida a PostgreSQL (buidant i descarregant tot sense els límits de paginació de l'API REST) per tenir una Font de Veritat íntegra i actualitzada localment.
-  - **Emergency Offline Mode**: Si no hi ha internet s'engega l'entorn local Streamlit automàticament (i de forma instantània) llegint exclusivament dels CSVs locals, amb càrrega de taules a la carta (Lazy Loading) per maximitzar la velocitat. (Per forçar-ho tot i tenir connexió, simplement desconnecta el Wi-Fi abans de fer doble clic).
-- **Entrada Principal (Router Canònic)**: L'arxiu **[`app.py`](file:///e:/Dashboard/app.py)** actua com a menú principal (Landing Screen interactiva) i gestor de navegació global.
-- **Bridge de Compatibilitat**: L'arxiu **[`app_v2.py`](file:///e:/Dashboard/app_v2.py)** actua com a *forwarder* transparent per garantir compatibilitat amb desplegaments de Streamlit Cloud.
-- **Arxiu Històric**: L'antic fitxer monolític de 6.700 línies es conserva a [`legacy/app_monolithic_legacy.py`](file:///e:/Dashboard/legacy/app_monolithic_legacy.py).
-- **Barra Superior de Menús (Estil Tradicional d'Escriptori)**: Barra de navegació global permanent a la part superior de l'aplicació amb 4 menús clàssics desplegables i controls d'estat:
-  - `Arxiu`: Tornar a la pantalla d'inici, reiniciar app / memòria cau, commutar mode Online/Offline i tancar sessió.
-  - `Editar`: Accés directe a la configuració general (amb submenús per a Tauler, Administrador, Títol, Família, Tutelats, Bancs, Tema, Icones, Idiomes), editor interactiu d'arxius JSON, regles súper OCR i neteja d'orfes.
-  - `Mòduls`: Selector complet dels mòduls de la llar (Dashboard, Econòmic, Compres, Cotxe, Menús i Cuina, Manteniment, Domòtica, Seguretat, Agenda, Medicació, Llum i Aigua) amb submenús d'accions ràpides i FAQs.
-  - `Bases de dades`: Gestor de taules Supabase (Despeses, Ingressos, Compres Super, Catàleg de Productes), sincronització, consolidació de dades offline i còpies de seguretat en fitxer ZIP.
-  - *Controls d'estat (dreta)*: Indicador de connectivitat Online/Offline, campaneta de notificacions i alertes globals amb comptador en temps real, i insígnia del rol d'usuari (👑 Administrador / 👤 Visualitzador).
-- **Interfície Gràfica d'Inici**: Mostra un logotip interactiu transparent (`imatges/Disseny/logo xiquiHouse.png`) sobre un fons complet de pantalla (`imatges/Disseny/fons xiquiHouse.jpg`), amb 12 punts d'accés interactius mapejats.
-- **Base de Dades**: **Supabase** (PostgreSQL) com a mestre i **CSV** com a font local d'emergència. Tota la comunicació CRUD està centralitzada a `core/db.py`. L'arrencada local integra un tallacorrents de 3 segons si PostgreSQL està bloquejat pel proveïdor d'internet, passant automàticament a l'API REST.
-- **Autenticació**: Gestionada a `core/auth.py`. Incorpora persistència de sessió mitjançant paràmetre de consulta (`?auth=<token>`).
-- **Estat de Navegació**: Es controla mitjançant `st.session_state.current_module`. Per tornar enrere, cada mòdul disposa del botó `🏡 Inici` a la barra superior i `🔙 Tornar a l'inici` a la capçalera que restableix l'estat a `None`.
+# Documentació del Projecte: Dashboard Despeses i Gestió de la Llar - XiquiHouse
+> **Versió Generalitzada i Modular**  
+> *Data d'actualització: 25 d'octubre de 2026*  
+> *Fitxer mestre de referència per a desenvolupament, noves sessions d'IA i desplegament del sistema.*
 
 ---
 
-## 2. Mapa de Navegació i Mòduls de la Pantalla d'Inici
-
-La pantalla d'inici mapeja 12 icones interactives sobre el logotip de XiquiHouse:
-
-### 🌟 Part Superior (Sense rodona):
-1. **⚙️ Configuracions**: `modules/admin.py` *(Icona engranatge)* - Panell de control i configuració global:
-   - `👤 Administrador`: Dades de contacte, avatar i PIN mestre.
-   - `🏷️ Títol de la casa`: Paraules, colors i tamany del títol d'inici.
-   - `👨‍👩‍👧‍👦 Família`: Membres de la llar amb data de naixement europea (`DD/MM/AAAA`), recàlcul automàtic d'edat en anys, telèfon mòbil, al·lèrgies mèdiques (bloqueig estricte), vetos/aversions personals (desdoblament), plats comodí favorits i interruptor d'activació (`🟢 Present a la llar` vs `⚪ Fora de la llar`).
-   - `🍽️ Menús i Nutrició`: 
-     * Regles de salut (màxim carns vermelles, mínim peix i llegums, màxim sopars d'embotits), control d'hidrats consecutius, disponibilitat del forn i format de planificació.
-     * **🍳 Aparells i Eines Disponibles**: Selector visual amb 14 eines de cuina clau (`forn`, `microones`, `airfryer`, `bascula`, `minipimer`, `batedora_vas`, `motlles_silicona`, `olla_pressio`, `liquadora`, `tallafiambres`, `robot_cuina`, `picadora`, `sifo_n2o`, `mandolina`) amb miniatures d'estudi homogènies i ampliació modal interactiva   - `🧪 Laboratori IA (Harness)`: Banc de proves integrat per avaluar la precisió, seguretat d'al·lèrgies mèdiques, gestió de vetos i adaptació a l'equipament dels models Gemini, amb **execució en segon pla (asíncrona)** i **descàrrega d'informes en format Text (.txt)**.
-   - `🤝 Tutelats`, `🏦 Bancs`, `🎨 Aspecte i Tema`, `🔘 Icones d'inici`, `🌐 Idiomes`.
-2. **📊 Dashboard General**: `modules/dashboard.py` *(Icona pantalla + gràfic)* - Vista de panell principal amb targetes de saldos bancaris (BBVA, La Caixa, etc.), resum mensual d'ingressos i despeses de l'any i gràfics comparatius.
-
-### 🔵 Part Esquerra (5 nodes amb rodona):
-3. **📈 Mòdul Econòmic**: `modules/economic.py` *(Icona gràfic ascens)* - Gestió econòmica i financera organitzada en pestanyes especialitzades:
-   - `📈 Detalls del Mes`: Saldos bancaris, rebuts, pagaments, hipoteca, taula anual i gràfic comparatiu de barres amb previsions vs real.
-   - `🔴 Prev. Despeses`: Formulari d'alta, secció de modificació d'imports en bloc per a pagaments pendents futurs i llistat de pagaments programats.
-   - `🟢 Prev. Ingressos`: Formulari d'alta, secció de modificació d'imports en bloc per a ingressos pendents futurs i llistat d'ingressos previstos.
-   - `📈 Inversions`: Formulari de moviments de TR Cartera (S&P500, NVIDIA), KPIs i taula d'inversions.
-   - `💰 Estalvis`: Fons d'estalvi `estalviDP`, quotes, aportacions, rescats i gràfic interactiu d'evolució del capital acumulat.
-   - `🤖 Xat IA`: Assistent financer intel·ligent Gemini.
-4. **📹 Seguretat**: `modules/seguretat.py` *(Icona càmera)* - Estat de càmeres, accessos i alarmes.
-5. **🛠️ Manteniment**: `modules/manteniment.py` *(Icona casa amb eina)* - Gestió i organització de les actuacions i documentació tècnica de la llar en tres pestanyes especialitzades: `📋 Registre Manteniment` (tasques, reparacions i feines de casa amb formulari d'alta ràpid, assignació d'alertes personals, control d'acompliment i sincronització automàtica a l'agenda), `📖 Manuals` (instruccions d'aparells, ubicació, especificacions) i `🛡️ Garanties` (dates de compra, terminis de vigència, factures i alertes de caducitat), connectades a registres centralitzats (Supabase app_config ID 7 i ID 8) i amb visor interactiu de fitxers PDF integrat.
-6. **📶 Domòtica**: `modules/domotica.py` *(Icona WiFi)* - Integració amb Home Assistant, llums i sensors.
-7. **💡 Llum i Aigua**: `modules/llum_aigua.py` *(Icona bombeta)* - Gestió integral dels subministraments energètics i hídrics de la llar en tres pestanyes especialitzades:
-   - `⚡ Consum Llum`: Preu de la llum horari en directe PVPC / Bo Social (via *webscraping* a `tarifaluzhora.es` amb contingència a l'API de Red Eléctrica REE), doble optimitzador independent d'acumuladors de calor elèctrics (Menjador 4.000 W a la nit 00:00 - 08:00 h amb potència contractada de 5,5 kW, i Passadís de la 2a planta 2.000 W a la vall solar 11:00 - 19:00 h amb 4,4 kW) amb ajust d'hores persistent en memòria (`data/acumuladors_config.json`), guia estratègica desplegada a l'ample complet, ingesta automàtica de factures PDF amb extracció OCR/regex, històric de 44 factures (2023-2026), visor PDF integrat en diàleg i gràfic mensual de barres apilades amb preus sobreposats de forma neta damunt les barres (sense xocar amb els colors dels trams).
-   - `💧 Consum Aigua`: Control de factures d'aigua, lectures de comptador, seguiment de metres cúbics consumits i visor PDF integrat, connectat a Supabase `app_config` ID 10.
-   - `☀️ Estudi Solar`: Simulador fotovoltaic i d'autoconsum personalitzat per a la llar a Arbúcies (La Selva, Girona) basat en radiació solar PVGIS (HSP locals). Permet simular de 6 a 20 plaques solars (450W), orientació de coberta (29° NE, Est-Oest a doble vessant o Sud), capacitat de bateries de liti (0 a 15 kWh) i derivació a acumuladors elèctrics de calor. Inclou contrast en temps real contra els 5.661 kWh/any de consum real de les factures, anàlisi de la realitat del Bo Social (descompte del 80% per a vulnerables severs enfront del límit de compensació d'excedents del RD 244/2019), comparador d'inversió "Clau en mà" vs modalitat "Mixta / Fes-ho tu mateix" i guia de seguretat per a teulada de teules corbes.
-
-### 🟢 Part Dreta (5 nodes amb rodona):
-8. **📅 Agenda**: `modules/calendari.py` *(Icona calendari)* - Calendari i agenda familiar interactiva:
-   - `📅 Vista Graella (Estil Google Calendar)`: Visualització mensual responsive amb xips d'esdeveniments per colors de membre i categoria, comptadors diaris i navegació fluida.
-   - `📋 Vista Agenda / Llista`: Llistat cronològic del mes seleccionat amb caixa de data, hora, membre i lloc.
-   - `🔍 Consulta i Gestió del Dia`: En fer clic a qualsevol dia de la graella, es mostren tots els esdeveniments d'aquell dia amb accions completes: marcar com a fet/no fet (`✅`/`❌`), editar (`✏️`), esborrar (`🗑️`) i afegir a Google Calendar en 1 clic (`📅 GCal`), a més d'un botó directe per afegir nous esdeveniments per a aquell dia seleccionat.
-   - `🟢 / 🔴 Control d'Acompliment (Fet / No Fet)`: Botons dedicats per marcar esdeveniments com a fets (`✅`, il·luminat en verd maragda sòlid) o cancel·lats (`❌`, il·luminat en vermell viu), actualitzant el títol (prefix `✅`/`❌`, color i ratllat) i persistint a Supabase `app_config` ID 3.
-   - `📱 Disseny Compacte per a Mòbils`: Tots els botons d'acció es mantenen en una sola línia horitzontal a qualsevol pantalla sense apilar-se verticalment.
-   - `🔄 Sincronització de Feeds iCal`: Connexió bidireccional amb els calendaris de Google de cada membre familiar amb desduplicació automàtica i gestió d'excepcions de recurrències (`RECURRENCE-ID`).
-9. **💊 Control Medicació**: `modules/medicacio.py` *(Icona pastilles / flascó)* - Pautes mèdiques, dosis, horaris i farmaciola.
-10. **🍽️ Menús i Cuina**: `modules/menjar.py` *(Icona coberts)* - Gestió gastronòmica i nutricional intel·ligent:
-    - `🧠 Recomanador de Menús`: Generació setmanal amb IA (`gemini-2.5-flash`) seguint al·lèrgies mèdiques strictly, desdoblament de vetos personals, regles de freqüència nutricional (carn vermella, peix, llegums), eines de cuina i membres actius.
-    - `🟢 Control Dietètic`: Sistema híbrid avançat de dietètica que permet fixar un límit de calories separat per a dinars i sopars. El recomanador prioritza receptes amb `puntuacio_salut` alta i s'assegura de retornar els menús amb una estimació real sota el límit estipulat utilitzant els `tags_nutricionals` per a balancejar macronutrients.
-    - `📲 Consens Familiar per WhatsApp`: Botó d'un sol clic per compartir el resum del menú.
-    - `⏱️ Batch Cooking & Mise en Place`: Guia de preparacions base de diumenge i llista de compra associada.
-    - `📖 Llibre de Receptes`: Base de dades de receptes. Visualització directa de la fitxa nutricional amb 💚 Puntuació de Salut i 🔥 Calories estimades per ració.
-    - `➕ Afegir Recepta`: Formulari amb càrrega d'imatges a Supabase Storage.
-    - **Scripts d'enriquiment en segon pla**: `populate_calories.py` (càlcul exacte de kcal amb IA via OpenRouter/Google), `heuristic_calories.py` (càlcul d'emergència en base a ingredients) i `populate_tags.py` (etiquetatge nutricional avançat de receptes).
-11. **🚗 Cotxe**: `modules/cotxe.py` *(Icona cotxe)* - Gestió del vehicle organitzada en pestanyes:
-    - `🛣️ Registre Km i Rutes`: Formulari per registrar lectures d'odòmetre, càlcul automàtic de km del trajecte, selector/plantilles de rutes i taula d'històric.
-    - `⛽ Repostatge`: Taula històrica de proveïments de la BBDD `gasolina` (alimentada des d'Ingressos/Despeses) amb mètriques de preu últim repostatge, preu més alt i més baix.
-    - `🔧 Manteniment (Oli, Rodes, Nivells, Taller i Històric)`:
-      * *Arquitectura Col·lapsable*: Totes les seccions estan organitzades en blocs plegables independents (`st.expander`) per mantenir la interfície neta i compacta, permetent veure només la secció desitjada o activar el desplegament global ("Desplegar totes les seccions").
-      * *Canvi d'Oli*: Seguiment de km actuals, límit de canvi d'oli, km restants i barra de desgast amb mètriques al títol.
-      * *Canvi de Rodes*: Planificació i registre de substitucions de cobertes (davanteres, posteriors o totals) amb alertes per quilometratge.
-      * *Inflat de Rodes*: Planificacions periòdiques i puntuals (pressió en bar), alertes anticipades i vinculació a viatges programats.
-      * *Control de Nivells*: Secció independent per a la revisió periòdica de líquids (oli, refrigerant, frens, eixugaparabrises) amb calendari d'alertes i registre d'intervencions.
-      * *Taller i Avaries*: Registre d'entrades a taller per manteniment, ITV, avaries o reparacions amb seguiment d'estat (Resolt, Pendent, En taller).
-      * *Històric de Manteniment*: Taula interactiva d'intervencions amb filtratge per tipus, càlcul de despesa total acumulada (€) i eines d'edició o esborrat.
-    - `📊 Consum`: Gràfic de consum anual L/100km.
-12. **🛒 Ingressos i Despeses**: `modules/compres.py` *(Icona carro de compra)* - Gestió integral d'ingressos, despeses i compres:
-    - `📄 Compres Super`: Escàner OCR intel·ligent amb suport total de Gemini Vision. Incorpora un sistema de **Regles de Súper Editables (`core/ocr_rules.md`)** des del menú superior, permetent ensenyar a la IA com llegir ofertes o estructures de tiquets específiques de cada cadena (Mercadona, Bonpreu, Dia, etc.) sense programar codi. Inclou mecanismes estrictes per forçar quantitats enteres.
-    - `🛡️ Auditoria d'Entrada Estricta`: Prevenció d'entrada de dades brutes a la base de dades. Els articles desconeguts de l'OCR ('Pendent') no s'insereixen automàticament; el sistema bloqueja el desat del tiquet fins que l'usuari hagi categoritzat cada producte nou o l'hagi esborrat, evitant la creació d'orfes a `tb_noms_producte`.
-    - `🧹 Neteja d'Orfes (OCR)`: Eina avançada (disponible al menú "Editar") per depurar productes històrics orfes. Permet esborrar massivament text brossa de l'OCR, o bé enllaçar i crear nous articles al catàleg sobre la marxa de manera molt eficient.
-    - `📝 Ingrés / Despesa General`: Formulari directe de **Moviments Reals** (Despesa, Ingrés, Traspàs), proveïment de gasolina amb calculadora, tiquets pendents i taula d'últims moviments. Incorpora un **formulari d'inserció múltiple simplificat** (només text) que exigeix que el Banc i la Forma de Pagament s'hagin auditat prèviament a les previsions.
-    - `📋 Llista de la Compra`: Llista de productes sota stock mínim i peticions puntuals.
-    - `📦 Rebost / Stock`: Inventari de productes del rebost i control d'existències.
-    - `📊 Estadístiques`: Gràfics i mètriques de despesa en supermercats.
+## Taula de Continguts
+1. [Instruccions per a IA i Directrius Crítiques (Prioritat 1)](#1-instruccions-per-a-ia-i-directrius-crítiques-prioritat-1)
+2. [Arquitectura del Sistema, Sincronització i Rendiment (Prioritat 1)](#2-arquitectura-del-sistema-sincronització-i-rendiment-prioritat-1)
+3. [Estructura del Projecte i Mapa de Fitxers](#3-estructura-del-projecte-i-mapa-de-fitxers)
+4. [Mòduls de Prioritat 2: Gestió Econòmica i Compres](#4-mòduls-de-prioritat-2-gestió-econòmica-i-compres)
+   - [4.1 Compres Super i Stock (`modules/compres.py`)](#41-compres-super-i-stock-modulescomprespy)
+   - [4.2 Mòdul Econòmic i Dashboard (`modules/economic.py`, `modules/dashboard.py`)](#42-mòdul-econòmic-i-dashboard-moduleseconomicpy-modulesdashboardpy)
+5. [Mòduls de Prioritat 3: Subministraments i Manteniment de la Llar](#5-mòduls-de-prioritat-3-subministraments-i-manteniment-de-la-llar)
+   - [5.1 Llum i Aigua (`modules/llum_aigua.py`)](#51-llum-i-aigua-modulesllum_aiguapy)
+   - [5.2 Manteniment de la Llar (`modules/manteniment.py`)](#52-manteniment-de-la-llar-modulesmantenimentpy)
+   - [5.3 Cotxe i Mobilitat (`modules/cotxe.py`)](#53-cotxe-i-mobilitat-modulescotxepy)
+6. [Mòduls de Prioritat 4: Família, Nutrició i Benestar](#6-mòduls-de-prioritat-4-família-nutrició-i-benestar)
+   - [6.1 Menús i Cuina (`modules/menjar.py`)](#61-menús-i-cuina-modulesmenjarpy)
+   - [6.2 Agenda i Calendari Familiar (`modules/calendari.py`)](#62-agenda-i-calendari-familiar-modulescalendaripy)
+   - [6.3 Control de Medicació (`modules/medicacio.py`)](#63-control-de-medicació-modulesmedicaciopy)
+   - [6.4 Seguretat i Domòtica (`modules/seguretat.py`, `modules/domotica.py`)](#64-seguretat-i-domòtica-modulesseguretatpy-modulesdomoticapy)
+7. [Mòduls de Prioritat 5: Administració, Nucli i Serveis Transversals](#7-mòduls-de-prioritat-5-administració-nucli-i-serveis-transversals)
+   - [7.1 Configuració Global (`modules/admin.py`, `core/config_manager.py`)](#71-configuració-global-modulesadminpy-coreconfig_managerpy)
+   - [7.2 Laboratori IA - Harness (`core/harness.py`)](#72-laboratori-ia---harness-coreharnesspy)
+   - [7.3 Gestió de Bases de Dades i Sincronització Offline (`modules/bases_dades.py`, `modules/sincronitzacio.py`)](#73-gestió-de-bases-de-dades-i-sincronització-offline-modulesbases_dadespy-modulessincronitzaciopy)
+   - [7.4 Sistema Global d'Alertes (`core/alerts.py`)](#74-sistema-global-dalertes-corealertspy)
+   - [7.5 Impressora de Tiquets (`modules/impressora.py`)](#75-impressora-de-tiquets-modulesimpressorapy)
+8. [Annex: Historial de Canvis Recents Consolidat](#8-annex-historial-de-canvis-recents-consolidat)
 
 ---
 
-## 3. Estructura del Projecte
+## 1. Instruccions per a IA i Directrius Crítiques (Prioritat 1)
+
+> [!IMPORTANT]
+> **Instrucció d'Arrencada per a Noves Sessions d'IA**  
+> Si inicies una conversa nova amb un assistent d'IA, cal indicar-li:  
+> **"Llegeix `DOCUMENTACIO_GENERALITZADA.md` per entendre l'arquitectura modular, les prioritats i el funcionament de l'aplicació abans de tocar cap codi."**
+
+### 1.1 Directriu Obligatòria de Desplegament a GitHub (`git push`)
+- L'aplicació s'executa tant en entorn local com des del núvol (**Streamlit Community Cloud** sincronitzat amb el repositori GitHub del projecte).
+- **REGLE INVIOLABLE**: Un cop realitzat i provat qualsevol canvi en local, l'assistent d'IA **TÉ L'OBLIGACIÓ STRICTA DE DESAR I PUJAR SEMPRE ELS CANVIS A GITHUB** (`git add`, `git commit -m "..."`, `git push origin main`).
+- Mai es dóna una tasca per finalitzada sense haver sincronitzat els canvis al repositori remot, garantint que la versió web estigui sempre actualitzada.
+
+### 1.2 Llengua de Comunicació
+- La llengua vehicular del projecte i de totes les comunicacions amb l'usuari és el **Català** per defecte, però es pot triar altres idiomes.
+
+---
+
+## 2. Arquitectura del Sistema, Sincronització i Rendiment (Prioritat 1)
+
+### 2.1 Model Dual Híbrid (Cloud-First + Fallback Offline)
+1. **Entorn Núvol (Streamlit Cloud)**: Accés multi-dispositiu permanent per a mòbils, tauletes i ordinadors.
+2. **Arrencador d'Escriptori (`StartDashboard.py`)**:
+   - En sistemes d'escriptori, obre automàticament la versió del núvol al navegador predeterminat (Google Chrome) en arrencar l'equip si hi ha connexió a Internet.
+   - Paral·lelament, un procés silenciós en segon pla (`scripts/update_csvs_background.py`) sincronitza les dades remotes de PostgreSQL directament amb els fitxers CSV locals, assegurant una font de veritat íntegra a disc sense límits de paginació.
+3. **Emergency Offline Mode**: Si no hi ha internet (o si es desconnecta manualment la xarxa abans d'iniciar l'aplicació), s'arrenca l'entorn local Streamlit de forma instantània llegint exclusivament dels CSV locals mitjançant *Lazy Loading*. Totes les mutacions locals (altes, edicions, esborrats) es retenen en una cua local (`sync_queue.json`) i es consoliden a la base de dades remota en recuperar la connexió.
+
+### 2.2 Estratègia d'Optimització de Rendiment (Finestra Activa de 30 Dies)
+Per mantenir la màxima fluïdesa fins i tot amb taules històriques massives de milers de registres (`despeses` i `compresSuper`):
+- **Finestra Activa de 30 dies**: Es consulta a Supabase mitjançant una sola petició HTTP ultra-ràpida (`~0,15 s`) per obtenir els registres del mes en curs i els tiquets pendents de desglossar.
+- **Arxiu Històric (Mesos vençuts)**: Carregat en memòria cau persistent de 24 hores (`@st.cache_data(ttl=86400)`) des del CSV local (`~0,04 s`).
+- **Fusió Transparent**: L'aplicació unifica els registres recents amb l'històric sense duplicats, garantint càlculs i saldos exactes.
+- **Mutacions Locals amb Zero Latència**: Les operacions `insert_db_row`, `update_db_row` i `delete_db_row` actualitzen directament el DataFrame a `st.session_state` i buiden quirúrgicament la finestra recent, **sense invalidar mai la memòria cau completa** (evitant bloquejos de 15 a 20 segons).
+- **Càrrega Selectiva (*Lazy Loading*) per Mòdul**: Cada mòdul només demana les taules que utilitza estrictament.
+- **Interfícies Adaptades amb Navegació Dinàmica**: L'ús de selectors de navegació horitzontal o menús redueix la càrrega del DOM del navegador, renderitzant únicament el contingut de la vista activa.
+
+### 2.3 Centralització de Configuracions a Supabase (`app_config`)
+Per assegurar la persistència completa de les dades al núvol i evitar pèrdues en reiniciar les màquines virtuals de Streamlit Cloud, totes les configuracions del sistema s'emmagatzemen a Supabase:
+| ID | Fitxer Equivalent Local | Descripció |
+|:---|:---|:---|
+| **1** | `categories_conceptes.json` | Categories i conceptes de despeses i ingressos |
+| **2** | `core/config.json` | Perfil familiar, al·lèrgies, vetos, eines de cuina i admin |
+| **3** | `data/events.json` | Esdeveniments del calendari familiar i estats fet/no fet |
+| **4** | `data/feeds_cache.json` | Memòria cau dels feeds de calendaris personals |
+| **5** | `data/medication_plans.json` | Plans i horaris de medicació familiar |
+| **6** | `data/ofertes.json` | Registre d'ofertes setmanals i fulletons |
+| **7** | `data/manteniment_docs.json` | Registre documental de Manuals i Garanties de la llar |
+| **8** | `data/registre_manteniment.json` / `csv/manteniment.csv` | Registre de tasques, reparacions i periodicitats de la llar |
+| **9** | `data/consum_llum.json` / `csv/consum_llum.csv` | Factures elèctriques, potències i consums per tram (històric) |
+| **10** | `data/consum_aigua.json` / `csv/consum_aigua.csv` | Factures d'aigua, lectures de comptador i consums en m³ |
+
+---
+
+## 3. Estructura del Projecte i Mapa de Fitxers
 
 ```
 Dashboard/
-├── app.py                    # Router principal canònic i Landing Page interactiva (amb hot-reload)
-├── app_v2.py                 # Forwarder bridge transparent per a Streamlit Cloud
+├── app.py                         # Router principal canònic, barra superior i Landing interactiva
+├── app_v2.py                      # Bridge de compatibilitat transparent per a Streamlit Cloud
+├── StartDashboard.py              # Llançador d'escriptori de Windows (Chrome + background sync)
+├── auto_scan_ui.py                # Interfície ràpida d'escaneig de tiquets en 1 clic
+├── scan_winrt.ps1                 # Pont natiu WinRT (Windows.Devices.Scanners) per a escàners USB
+├── scanner.py                     # Controlador d'escaneig (WinRT prioritari + WIA fallback)
 ├── core/
-│   ├── aigua_manager.py      # Gestor de factures d'aigua i registres de lectures de comptador (Supabase ID 10)
-│   ├── auth.py               # Autenticació amb contrasenya i token hash
-│   ├── config_manager.py     # Gestor de configuració JSON i perfil familiar (Ruta absoluta garanteix focalització a core/config.json)
-│   ├── config.json           # Configuració de categories, comptes, família, eines i paràmetres
-│   ├── db.py                 # Connexió i operacions CRUD a Supabase
-│   ├── harness.py            # Motor d'avaluació IA, execució asíncrona en segon pla i generador d'informes .txt
-│   ├── llum_manager.py       # Scraper PVPC en temps real, gestor de factures elèctriques, extracció PDF, acumuladors i motor solar PVGIS (Supabase ID 9)
-│   ├── manteniment_manager.py # Gestor documental (Manuals i Garanties) i Registre de Tasques (Supabase ID 7 i ID 8)
-│   └── ocr_rules.md          # Regles personalitzades per supermercat enviades al prompt de Gemini
-├── data/
-│   ├── acumuladors_config.json # Configuració persistent de les hores de càrrega dels acumuladors (4000W i 2000W)
-│   ├── consum_aigua.json     # Rèplica local de factures d'aigua i lectures
-│   ├── consum_llum.json      # Rèplica local de factures elèctriques (44 factures històriques)
-│   ├── harness_menu_cases.json # Banc d'11 casos de prova exhaustius per al test de menús
-│   ├── harness_status.json     # Estat de progrés en temps real per a l'execució de proves en segon pla
-│   ├── manteniment_docs.json   # Registre JSON canònic de documents tècnics (Manuals i Garanties)
-│   └── registre_manteniment.json # Registre JSON de tasques de manteniment, reparacions i feines de casa
-├── imatges/
-│   ├── Disseny/              # Logotips, icones i fons de pantalla de la interfície
-│   ├── Eines/                # Miniatures dels 14 aparells i eines de cuina
-│   ├── Productes/            # Fotografies dels articles de la compra i rebost
-│   └── Receptes/             # Imatges generades dels plats i receptes per ID
-├── legacy/
-│   └── app_monolithic_legacy.py # Arxiu històric del fitxer monolític original (6.700 línies)
+│   ├── aigua_manager.py           # Gestor de factures i lectures d'aigua (Supabase ID 10)
+│   ├── alerts.py                  # Motor centralitzat d'alertes i campaneta de notificacions
+│   ├── auth.py                    # Autenticació, sessions i tokens
+│   ├── calendar_manager.py        # Gestor de calendari, sincronització iCal i desduplicació
+│   ├── config_manager.py          # Gestor de configuració JSON i perfil familiar
+│   ├── db.py                      # Connexions CRUD a Supabase, gestió híbrida i offline
+│   ├── harness.py                 # Motor de tests IA asíncron en segon pla i informes .txt
+│   ├── llm.py / llm_ui.py         # Connectors d'intel·ligència artificial (Gemini, DeepSeek, etc.)
+│   ├── llum_manager.py            # Preus PVPC directe, optimitzador d'acumuladors i estudi solar PVGIS
+│   ├── manteniment_manager.py     # Gestor de manuals, garanties i tasques de manteniment periòdiques
+│   └── ocr_rules.md               # Regles d'extracció de tiquets per supermercat
 ├── modules/
-│   ├── admin.py              # ⚙️ Configuració global i 🧪 Laboratori IA (Harness)
-│   ├── calendari.py          # 📅 Agenda familiar (Google Calendar sync & events)
-│   ├── compres.py            # 🛒 Compres Super (OCR), Ingressos/Despeses reals, Llista compra, Rebost i Stats
-│   ├── cotxe.py              # 🚗 Registre km/rutes, Repostatge, Canvi d'oli i Consum
-│   ├── dashboard.py          # 📊 Dashboard general
-│   ├── domotica.py           # 📶 Domòtica (Home Assistant)
-│   ├── economic.py           # 📈 Detalls mes, Prev. Despeses, Prev. Ingressos, Inversions, Estalvis i Xat IA
-│   ├── jocs.py               # 🎲 Jocs i oci
-│   ├── llum_aigua.py         # 💡 Llum i Aigua (Preus PVPC, Acumuladors, Històric Factures, Visor PDF, Estudi Solar)
-│   ├── manteniment.py        # 🛠️ Manteniment de la Llar (Pestanyes Registre Manteniment, Manuals i Garanties, visors PDF, filtres)
-│   ├── medicacio.py          # 💊 Control de medicació i tutelats (Pla de dosificació & sync)
-│   ├── menjar.py             # 🍽️ Receptari (Escalat base 3), Planificador IA i Batch Cooking
-│   ├── ofertes.py            # 🔍 Comparador d'Ofertes i Visor de Fulletons (Mercadona, Aldi, etc.)
-│   └── seguretat.py          # 📹 Seguretat i càmeres
-├── PDF/
-│   ├── Factures_Aigua/       # Dipòsit de factures d'aigua en PDF
-│   ├── Factures_Llum/        # Dipòsit de factures elèctriques en PDF (44 factures històriques)
-│   ├── Manuals/              # Dipòsit de manuals d'instruccions en PDF
-│   └── Garanties/            # Dipòsit de factures i documents de garantia en PDF
-└── DOCUMENTACIO_PROJECTE.md  # Aquest document
+│   ├── admin.py                   # ⚙️ Configuració global i laboratori IA (Harness)
+│   ├── bases_dades.py             # 🗄️ Gestor de taules Supabase en temps real
+│   ├── calendari.py               # 📅 Agenda familiar (Graella, Dia, Fet/No fet, mòbil 1 línia)
+│   ├── compres.py                 # 🛒 Compres Super (OCR, tiquets, desglossament, rebost, estalvi)
+│   ├── cotxe.py                   # 🚗 Km, repostatge, consum i manteniment col·lapsable
+│   ├── dashboard.py               # 📊 Dashboard general i KPIs financers
+│   ├── domotica.py                # 📶 Integració amb Home Assistant
+│   ├── economic.py                # 📈 Previsió despeses/ingressos, nou any, pagues extres, inversions
+│   ├── impressora.py              # 🖨️ Controlador d'impressora de tiquets de compra
+│   ├── llum_aigua.py              # 💡 Preus PVPC, acumuladors, factures PDF i simulador solar
+│   ├── manteniment.py             # 🛠️ Tasques periòdiques, subtasques, manuals i garanties PDF
+│   ├── medicacio.py               # 💊 Control de medicació, pautes i tutelats
+│   ├── menjar.py                  # 🍽️ Receptari, recomanador IA, calories i mise en place
+│   ├── seguretat.py               # 📹 Estat de càmeres, accessos i alarmes
+│   └── sincronitzacio.py          # 🔄 Consolidació de dades offline retingudes
+├── PDF/                           # Magatzem centralitzat de documents en PDF
+│   ├── Factures_Aigua/	           # Dipòsit de factures d'aigua en PDF
+│   ├── Factures_Llum/             # Dipòsit de factures elèctriques en PDF
+│   ├── Factures_Gas/              # Dipòsit de factures de gas en PDF
+│   ├── Garanties/                 # Factures i pòlisses de garantia de la llar
+│   └── Manuals/                   # Manuals d'instruccions d'aparells de la llar
+├── imatges/
+│   ├── Disseny/                   # Logotips de la llar, fons i elements de disseny
+│   ├── Eines/                     # Miniatures dels aparells i eines de cuina
+│   ├── Productes/                 # Imatges d'articles de compra i rebost
+│   └── Receptes/                  # Imatges gastronòmiques oficials 4:3
+└── DOCUMENTACIO_GENERALITZADA.md  # Aquest document
 ```
 
 ---
 
-## 4. Receptari, Escalat de Comensals i Menús (`modules/menjar.py`)
+## 4. Mòduls de Prioritat 2: Gestió Econòmica i Compres
 
-### 4.1 Base de dades del Receptari (`tb_receptes_pro`)
-- **Estat complet (194/194 receptes):** Totes les receptes registrades a Supabase disposen de títol, categoria, ingredients, instruccions pas a pas i *mise en place*.
-- **Racions de referència (Base 3):** Totes les quantitats emmagatzemades a la base de dades estan estrictament calculades per a **3 persones** (nucli familiar estàndard).
+### 4.1 Compres Super i Stock (`modules/compres.py`)
+Mòdul central per a la ingesta de tiquets de compra, control pressupostari d'alimentació, gestió d'estoc del rebost i generació de llistes de compra.
 
-### 4.2 Motor d'Escalat Dinàmic (`scale_ingredients`)
-- Algoritme intel·ligent amb Regex capaç de parsejar quantitats numèriques, unitats i fraccions (`250g`, `4 ous`, `1/2 cullerada`, `3-4 carxofes`, `1.5 kg`) i aplicar el factor:
-  $$\text{Quantitat Recalculada} = \text{Quantitat Base} \times \frac{\text{Comensals Seleccionats}}{3}$$
-- Els elements no quantificables linealment (*Sal i pebre al gust*, *1 raig d'oli d'oliva*, *branquetes d'herbes*, *fulles de llorer*) es conserven intactes sense alterar.
-- **Selector Interactiu a la Fitxa:** Cada vegada que s'obre una recepta a `modal_recepta`, el selector de comensals es reinicia a **3 per defecte** i permet simular a temps real quantitats per a qualsevol nombre de comensals (1 a 30).
-- **Format visual:** Els ingredients es presenten estilitzats separats per asteriscs ` * `.
+#### A. Escaneig Directe 1-Clic per a Escàners de Sobremesa (`scanner.py`, `scan_winrt.ps1`, `auto_scan_ui.py`)
+- **Arquitectura Natiu WinRT**: Utilitza l'API moderna UWP/WinRT de Windows (`Windows.Devices.Scanners.ImageScanner`) a través de [`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1), compatible amb qualsevol escàner USB reconegut pel sistema operatiu (incloent models com l'HP Scanjet G3110) i eliminant bloquejos de concurrència de fitxers temporals.
+- **Accés directe d'escriptori (`Escanejar Tiquet.lnk` / `auto_scan_ui.py`)**:
+  - Selecció del Supermercat i Data del tiquet.
+  - Botó verd destacat **`🖨️ Escanejar Tiquet`**.
+  - Adquireix la imatge del vidre de l'escàner, la converteix automàticament a JPEG d'alta resolució mitjançant Pillow i la desa directament a `tickets/ticket_<super>_<date>.jpg` sense requerir cap intervenció manual ni obrir aplicacions externes.
 
-### 4.3 Pautes de Fotografia Gastronòmica
-- **Perspectiva:** Angle elevat a 45° en primer pla (Close-up) on la paella/plat ocupa pràcticament tota l'amplada de l'enquadrament.
-- **Aspect Ratio:** Proporció **4:3** per adaptar-se perfectament a les targetes horitzontals del llibre de receptes sense retalls estranys.
-- **Fidelitat als ingredients:** La imatge ha de reflectir exclusivament els ingredients reals de la recepta.
-- **Ambientació:** Taula rústica de fusta, llum natural càlida lateral i estris tradicionals de cuina.
+#### B. Motor OCR Intel·ligent amb Visió Multimodal
+- **Formats admesos**: Imatges (`png`, `jpg`, `jpeg`, `webp`, `bmp`), documents digitals de supermercat (`pdf` amb extracció de text per `pypdf`) i fitxers de text (`txt`).
+- **Models suportats**: Models multimodals d'alta velocitat (`gemini-2.5-flash`, `gemini-3.8-flash`). Si l'usuari tria modalitat de visió pura, el selector es filtra dinàmicament per models que admeten imatge directa.
+- **Regles de súper editables (`core/ocr_rules.md`)**: Accessible des del menú superior "Editar", permet instruir el model d'IA sobre estructures específiques de tiquets per cadena comercial sense modificar el codi font.
+- **Quantitats enteres**: Els productes venuts a pes (fruita, verdura, carnisseria) es normalitzen sempre a quantitat entera = 1 amb l'import final com a preu unitari, evitant fraccions estranyes.
 
-### 4.4 Perfils Familiars, Vetos Personals i Desdoblament d'Àpats
-- **Diferenciació d'Al·lèrgia vs Veto Personal:**
-  - *Al·lèrgia mèdica:* Bloqueig estricte de la recepta completa per a tothom.
-  - *Veto personal:* Quan un membre no menja un aliment (ex. fetge o casqueria) però la família sí, el planificador no bloqueja el plat familiar i assigna automàticament un **plat alternatiu ràpid parellat** (*comodí*, ex. pit de pollastre o truita) per a aquell membre, compartint la mateixa guarnició per no duplicar temps de cuina.
-- **Membres Actius vs Fora de la Llar:** Permet activar o desactivar la participació de membres als menús.
-- **Persistència i Neteja d'Estat a Admin (`modules/admin.py`):**
-  - Per evitar que Streamlit restableixi valors erronis residuals o caducats en editar membres de la família (noms, naixement, al·lèrgies o vetos), el formulari de família neteja les claus de sessió (`f_`) de `st.session_state` en desar, afegir o esborrar, forçant una lectura neta des de `core/config.json`.
-  - Utilitza IDs únics i estables (`mem_id`) i conversió bidireccional entre cadenes de text i llistes estructurades Python.
+#### C. Fórmula d'Enginyeria Inversa de Descomptes ($PF = B \times (1 - d)$)
+Quan s'introdueix manualment un article amb descompte, el camp `TOTAL LÍNIA` representa el **Preu Final realment pagat ($PF$)** que figura al tiquet de caixa:
+$$PF = B \times (1 - d) \implies B = \frac{PF}{1 - d}$$
+- En indicar el `%`, el sistema calcula la Base ($B$) incrementant el `PREU UNIT.` i assigna l'estalvi a `PROMOCIÓ`.
+- El `TOTAL LÍNIA` roman constant i fidel al tiquet.
+- Reactivitat en temps real amb gestors `on_change` i càlcul invers quan s'escriu la promoció directament en euros.
 
-### 4.5 Mise en Place Setmanal de Bases i Connexió amb l'Stock (`modules/compres.py`)
-- **Derivació Top-Down:** A partir del menú setmanal aprovat, el sistema genera la guia de *Batch Prep* de diumenge (patates probiòtiques amb midó resistent, caldos casolans concentrats, sofregit mare, verdures rostides).
-- **Sincronització amb l'Stock:**
-  - Si hi ha bases o caldos al congelador/nevera, es descompten de la guia de preparació de diumenge i de la llista de la compra.
-  - Les quantitats de compra es calculen restant l'stock real existent: $\text{Compra} = \max(0, \text{Necessari} - \text{Stock})$.
-- **Consens Familiar via WhatsApp:** Generació automàtica d'enllaços de petició i consens per a desitjos de comensals (ex. sardines).
+#### D. Validació i Sanejament Estricte de Dates (`sanitize_ticket_date`)
+- **Blindatge contra errors d'OCR**: Valida i corregeix confusions freqüents en impressores de tiquets matricials.
+- **Data mai superior a la data actual**: El selector de data i el motor de desat bloquegen qualsevol data futura (`> date.today()`).
+- **Confirmació automàtica si fa més d'una setmana (> 7 dies)**: Si la data detectada té una antiguitat superior a 7 dies, es mostra un indicador clar i un diàleg modal (`@st.dialog`) per confirmar la data abans de registrar el tiquet a la base de dades.
 
-### 4.6 Control de Repeticions i Priorització de Receptes
-- **Historial de Plats:** Cada vegada que es desa un menú o es genera la Mise en place, les receptes planificades s'apunten automàticament a `tb_historial_menjars`.
-- **Regla Anti-Repetició:** El recomanador de menús llegeix la taula de l'historial i prohibeix terminantment a la IA proposar un plat que s'hagi consumit en els últims `X` dies (configurable per l'usuari, per defecte 15 dies).
-- **Estrelles i Qualificació:** El catàleg lliurat a la IA adjunta les puntuacions actuals de cada plat. La IA té instruccions per prioritzar plats de 4 i 5 estrelles, discriminant les opcions pitjor valorades a l'hora de tancar la quadricula.
+#### E. Gestió de Tiquets Pendents de Desglossar i Alertes Globals
+- Capçalera compacta en una sola fila horitzontal: Informació del tiquet pendent *(Exemple: `• Nº Tiquet — Supermercat — Import €`)* al costat del botó de càrrega `[ ⭡ Upload ]`.
+- Notificació automàtica a la campaneta d'alertes superior (`🔔`).
+- En finalitzar el desglossament, el moviment existent s'actualitza via `UPDATE` (`ticketPendent = False`), enllaçant els articles a `compresSuper` sense duplicar registres.
 
-### 4.7 Bústia de Peticions i Demandes Familiars
-- **Pestanya de Peticions:** S'habilita un formulari (pestanya "📥 Bústia Peticions") on els membres poden demanar plats concrets per menjar durant la setmana.
-- **Circuit d'Aprovació:** Les peticions es desen a `tb_peticions_menjar` en estat *Pendent*. El planificador del menú pot *Acceptar* o *Rebutjar* cada petició des del tauler de control.
-- **Assimilació Automàtica:** Si hi ha peticions *Acceptades*, aquestes s'injecten imperativament a la llista d'exigències del *prompt* perquè la IA les col·loqui al proper menú generat de forma automàtica.
+#### F. Auditoria d'Entrada Estricta i Neteja d'Orfes
+- Els articles desconeguts ('Pendent') no s'insereixen automàticament a la base de dades; el sistema bloqueja el tiquet fins que l'usuari els hagi categoritzat o esborrat, protegint el catàleg de productes.
+- Eina **Neteja d'Orfes (OCR)** al menú "Editar" per netejar o enllaçar articles antics.
 
----
-
-## 5. Laboratori IA (Harness) i Benchmarking (`core/harness.py`)
-- **Dataset mestre:** 11 casos de prova a `data/harness_menu_cases.json` que cobreixen al·lèrgies creuades, desdoblament de vetos, stock disponible, peticions per consens, puntuacions històriques baixes, disponibilitat del forn i restriccions d'equipament de cuina.
-- **Execució Asíncrona en Segon Pla (Background Execution):**
-  - Permet llançar la bateria de proves en un fil secundari (`threading.Thread`) i continuar utilitzant l'aplicació lliurement sense bloquejar la interfície.
-  - Registra l'estat de progrés en temps real, l'hora d'inici i la durada transcorreguda (`_format_duration_s`) a `data/harness_status.json`.
-- **Avaluadors deterministes i Correccions de Regex:**
-  - *Seguretat Mèdica:* Tolerància 0 a al·lèrgens. S'ha millorat `netejar_termes_segurs()` a `core/harness.py` per desestimar compostos aptes (com `formatge sense lactosa`, `mozzarella sense lactosa`, `llet sense lactosa`, `formatge vega`) ABANS de processar expressions prohibides generics, evitant falsos positius en la qualificació de seguretat.
-  - *Desdoblament:* Comprovació de creació obligatòria de plat alternatiu quan hi ha un veto.
-  - *Calendari d'Hidrats:* Prohibició de dies consecutius de pasta o arròs (fins i tot en fideus de sopa).
-  - *Equipament:* Verificació que no es proposin tècniques d'aparells absents (`sifo_n2o`, `robot_cuina`, `airfryer`, `liquadora`, `tallafiambres`, `olla_pressio`).
-- **Exportació d'Informes en Text (.txt):** Funció `generate_harness_txt_report` per descarregar informes complets i tests individuals en format `.txt` pla, aptes per compartir fàcilment.
-- **Optimització de Models i Latències:**
-  - Suport per a models actius: `gemini-2.5-flash` (recomanat), `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-flash-latest`.
-  - Eliminació de models obsolets que donaven error HTTP 404 (`gemini-2.0-flash`, `gemini-1.5-flash`).
-  - Retirada del paràmetre `thinkingBudget` per eliminar la latència innecessària i accelerar les respostes.
+#### G. Anàlisi d'Estalvi i Gràfics a Estadístiques
+- Còmput de promocions d'article (`prom`) i descomptes de tiquet (`descompte`) davant l'import net pagat (`totLinea`).
+- Mètriques KPI d'estalvi generat, % global de descompte i comerç amb major estalvi.
+- Gràfic de Donut interactiu (Plotly) de Compra Pagada vs Promoció/Estalvi.
 
 ---
 
-## 6. Lògica Avançada i OCR (Gemini Vision)
-- L'extracció de tiquets del súper a `compres.py` utilitza **Google Gemini Vision** (`gemini-2.5-flash`), cridant directament l'API mitjançant `requests` amb gestió automàtica de reintents i *exponential backoff*.
-- La clau d'API de Gemini es troba a `st.secrets["GEMINI_API_KEY"]`.
+### 4.2 Mòdul Econòmic i Dashboard (`modules/economic.py`, `modules/dashboard.py`)
 
-### 6.1 Descomptes i Enginyeria Inversa de Preus (Fórmula $PF = B \times (1 - d)$)
-- **Principi de Preu Final Fix**: Quan l'usuari introdueix manualment un article amb descompte al tiquet a `modules/compres.py`, el camp `TOTAL LÍNIA` representa el **Preu Final realment pagat ($PF$)** que figura al tiquet de caixa del supermercat.
-- **Fórmula de Recàlcul de Base i Promoció**:
-  $$PF = B \times (1 - d) \implies B = \frac{PF}{1 - d}$$
-  on:
-  - **$PF$**: Preu final de la línia que es manté invariable (p. ex. $2,29\text{ €}$).
-  - **$d$**: Descompte en tant per u ($d = \frac{\%}{100}$, p. ex. $40\% \rightarrow 0,40$).
-  - **$B$**: Base original sense descompte ($B = \text{Quantitat} \times \text{Preu Unitari Original}$).
-- **Flux d'Execució en Temps Real**:
-  1. En introduir un article (p. ex. $1\text{ u.}$ a $2,29\text{ €}$), el total de la línia inicial és $2,29\text{ €}$ ($PF$).
-  2. Si s'indica un descompte del $40\%$ al camp `%`:
-     - La Base es calcula com $B = \frac{2,29}{1 - 0,40} = 3,82\text{ €}$.
-     - El camp `PREU UNIT.` augmenta automàticament a $3,82\text{ €}$.
-     - El camp `PROMOCIÓ` s'assigna com a $3,82 - 2,29 = 1,53\text{ €}$.
-     - El camp `TOTAL LÍNIA` roman exactament a $(1 \times 3,82) - 1,53 = 2,29\text{ €}$ (invariable).
-- **Sincronització Bidireccional i Persistència**:
-  - Modificar `QUANTITAT` o `PREU UNIT.` recalcula automàticament la promoció i la base en temps real mitjançant callbacks dedicats (`on_change`), evitant desajustos si l'usuari canvia la quantitat posteriorment.
-  - Escriure directament l'import de la promoció en euros a `PROMOCIÓ` calcula automàticament el percentatge equivalent: $\% = \frac{\text{Promoció}}{B} \times 100$.
-  - En editar una línia existent (botó ✏️), el percentatge original es recupera i es mostra calculat en lloc de reiniciar-se a zero.
+#### A. Dashboard General
+- Targetes KPI dels saldos actualitzats dels comptes bancaris i caixes d'efectiu configurats al sistema.
+- Gràfic comparatiu d'ingressos i despeses amb finestra temporal de 3 anys (`any-1`, `any`, `any+1`) i projeccions visuals per als mesos futurs.
+- Taula de detalls del mes amb selecció interactiva de categories (`st.dataframe` amb `on_select="rerun"` i claus d'estat estables).
 
----
+#### B. Previsió de Despeses i Ingressos
+- Taules amb filtratge dinàmic per Any, Mes, Banc i Estat (Pagat/Pendent), amb configuració nativa de columnes (`st.column_config`).
+- Modificació d'imports en bloc per a pagaments pendents futurs.
 
-## 7. UI/UX i Adaptabilitat Mòbil
-- **Fons i Pantalla Completa**: A `app.py` s'aplica estil CSS per a pantalla completa (`background-size: cover; background-attachment: fixed;`).
-- **Responsive Scaling**: A dispositius mòbils (`max-width: 768px`), el logotip s'escala automàticament (`transform: scale(1.48)`) aprofitant tot l'ample de pantalla per a facilitar la pulsació dels botons tàctils.
-- **Transicions i Efectes**: Els hotspots disposen d'animacions de pulsació (`pulse`) i efecte lluminós en passar el cursor o tocar.
+#### C. Generador de Nou Any Comptable i Pagues Extres (Modal Interactiu)
+- Accessible des del menú superior: `Mòduls > Mòdul Econòmic > 📅 Afegir nou any comptable`.
+- Permet revisar i editar els imports estimats de cada partida abans de generar els 12 mesos de l'any següent.
+- **Pestanya Pagues Extres**: Permet programar pagues extres o ingressos extraordinaris recurrents (ex. juny i novembre) associats a les pensions o nòmines de la família, integrant-se a la xifra anual d'ingressos.
+
+#### D. Ingrés / Despesa General i Traspassos entre Comptes
+- Formulari ràpid de moviments reals (despeses, ingressos, gasolina i traspassos).
+- **Traspassos entre comptes (`op_banc`)**: Incorpora el camp "Quantitat al banc de destí (€)" configurable amb càlcul visual de la diferència, per reflectir situacions on una part del traspàs es reté o es destina a una altra partida.
+- Neteja del desglòs mitjançant el filtre `grup != op_banc` per no duplicar operacions tècniques a la cartera.
+
+#### E. Inversions i Fons d'Estalvi
+- Seguiment de posicions en carteres d'inversió (accions, fons indexats, etc.) amb filtres per Any, Mes i Concepte.
+- Evolució dels fons d'estalvi programats amb gràfics interactius d'aportacions i rescats.
 
 ---
 
-## 8. Estratègia de Sincronització (Memòria, Finestra Activa i Base de Dades)
-L'aplicació utilitza una arquitectura de càrrega intel·ligent híbrida de màxim rendiment:
-- **Model Dual de Taules Massives (`despeses` i `compresSuper`)**:
-  - **Arxiu Històric (Mesos vençuts)**: Carregat en memòria cau persistent de 24 hores (`@st.cache_data(ttl=86400)`) des del CSV local (`0,04 s`), sense consumir peticions remotes per a les milers de files passades que no canvien.
-  - **Finestra Activa (Últims 30 dies / Mes en curs)**: Consulta lleugera i instantània a Supabase en una sola petició HTTP (`0,15 s`) per als registres recents i tiquets pendents.
-  - **Fusió Transparent**: El DataFrame complet consolidat s'entrega a l'aplicació unint recent + històric sense duplicats, garantint càlculs i saldos exactes.
-- **Mutacions Locals amb Zero Latència**:
-  - Les operacions `insert_db_row`, `update_db_row` i `delete_db_row` modifiquen directament el DataFrame a `st.session_state` i invaliden únicament la finestra recent, eliminant els bloquejos de 15–20 segons provocats per `st.cache_data.clear()`.
-- **Càrrega Selectiva per Mòduls (*Lazy Loading*)**:
-  - Cada mòdul només sol·licita a `ensure_session_dfs` les taules que utilitza estrictament (p. ex. Compres només `despeses` i `compresSuper`, Cotxe només `kmCotxe` i `gasolina`), alliberant de càrrega innecessària a la resta de mòduls.
-- **Acceleració d'Alertes Globals**:
-  - Les alertes de la capçalera (`get_global_alerts()`) reutilitzen els DataFrames de la sessió i incorporen una memòria cau de 60 segons a `app.py`, evitant consultes repetitives a cada clic.
+## 5. Mòduls de Prioritat 3: Subministraments i Manteniment de la Llar
+
+### 5.1 Llum i Aigua (`modules/llum_aigua.py`)
+
+#### A. Subministrament Elèctric (⚡ Consum Llum)
+- **Preus PVPC / Tarifa Regulada en Directe**: *Scraper* automatitzat a proveïdors oficials amb canal de contingència (*fallback*) a l'API de Red Eléctrica de España (`apidatos.ree.es`). Mètriques de preu actual per tram tarifari (🟢 Vall, 🟡 Pla, 🔴 Punta), preu mitjà del dia, hora més barata i hora més cara.
+- **Gràfic Horari de 24 Hores (Plotly)**: Visualització interactiva de la corba de preus amb barres acolorides per tram horari 2.0TD.
+- **Optimitzador de Càrrega d'Acumuladors de Calor**:
+  - Algoritme que calcula la millor finestra contínua de càrrega per a cada acumulador de la llar, aprofitant les potències contractades per a cada tram horari (Vall nocturn o vall solar diürn).
+  - Selector d'hores necessàries independent per a cada zona, amb persistència a `data/acumuladors_config.json`.
+- **Registre de Factures Elèctriques i Ingesta PDF Automàtica**:
+  - Botó ràpid `📄 Nova factura llum` amb càrrega de PDF i extracció OCR/Regex automàtica de número, període, import i consum per tram (P1, P2, P3).
+  - Dipòsit de factures elèctriques en PDF a `PDF/Factures_Llum/` amb consolidació de consums i imports a Supabase ID 9.
+  - Visor interactiu de PDF basat en PDF.js (HTML5 Canvas).
+  - Gràfic mensual de barres apilades amb els preus totals situats netament sobre les barres.
+
+#### B. Subministrament Hídric (💧 Consum Aigua)
+- Registre de factures d'aigua, lectures de comptador i consums en m³.
+- Dipòsit de factures a `PDF/Factures_Aigua/` amb visor integrat PDF.js i sincronització a Supabase ID 10.
+- Gràfics d'evolució de consum en m³ i cost per factura.
+
+#### C. Simulador Estudi Solar PVGIS (☀️ Estudi Solar)
+- Model de radiació solar personalitzat amb dades oficials de PVGIS segons la ubicació geogràfica de l'habitatge (aplicant les Hores de Sol Pic mensuals reals).
+- Simulador interactiu amb paràmetres dinàmics:
+  - Nombre de plaques solars (mòduls fotovoltaics de potència configurable).
+  - Orientació de la coberta segons la teulada de l'habitatge (Est-Oest, Sud òptim, etc.).
+  - Emmagatzematge en bateries de liti (0 a 15 kWh).
+  - Derivació d'excedents als acumuladors tèrmics de la llar.
+- Contrast en temps real contra el consum elèctric anual real extret de l'històric de factures registrades.
+- **Anàlisi jurídica i econòmica de compensació d'excedents**: Contrast de la factura elèctrica amb la normativa vigent (RD 244/2019, on els excedents només compensen fins al valor del terme d'energia, sense reduir el terme de potència).
+- Comparativa d'inversió "Clau en mà" vs modalitat "Mixta / DIY" i guia de seguretat per a teulada de teules (fixació sense perforació directa).
 
 ---
 
-## 9. Com instruir a noves sessions d'IA
-Si inicies una conversa nova amb un assistent d'IA, indica-li:
-**"Abans de res, llegeix l'arxiu `DOCUMENTACIO_PROJECTE.md` per entendre l'arquitectura modular de la meva app."**
-Això assegurarà que treballi directament sobre `app.py`, el nucli a `core/` i els fitxers de `modules/`.
+### 5.2 Manteniment de la Llar (`modules/manteniment.py`)
+
+#### A. Registre de Manteniment i Tasques Periòdiques
+- **Camps normalitzats**: `idManteniment`, `dataManteniment`, `feina` (feina concreta), `tipus` (`Reparació`, `Manteniment`, `Feina casa`, `Altres`), `alertaA` (multiselecció de membres o "Tothom"), `diesAvis` (antelació configurable per a l'avís a la campaneta), `acompliment` (`Sí`/`No`) i `observacions`.
+- **Selector de Periodicitat**:
+  - Opcions: Puntual, Diària, Setmanal, Quinzenal, Mensual, Bimestral, Trimestral, Semestral, Anual o Personalitzada.
+  - Límit de generació configurable: Per nombre de vegades o `"Fins a final d'any (31/12)"`.
+  - Generació en sèrie (`serie_id`) amb etiqueta descriptiva `🔁 Periodicitat (X/N)`.
+  - En editar una tasca, opció per actualitzar i regenerar les properes tasques pendents de la sèrie respectant les ja realitzades.
+- **Subtasques amb Cadència Pròpia (`subtasques_template`)**:
+  - Permet afegir subtasques amb ritme propi dins d'una tasca periòdica *(Exemple d'ús: revisar un filtre cada 6 mesos dins d'una tasca de neteja quinzenal)*.
+  - Checklist interactiu a les targetes amb recompte de progrés (`📋 Subtasques (1/2)`).
+  - Sincronització automàtica: en completar la tasca principal es completen les subtasques, i en completar totes les subtasques es marca la tasca principal.
+- **Generador de Tasques del Proper Any (Modal Interactiu)**:
+  - Accessible des del menú superior: `Mòduls > Manteniment de la llar > 📅 Generar tasques proper any`.
+  - Proposa automàticament el proper any i genera en bloc les tasques recurrents de la llar sincronitzant-les amb el calendari familiar.
+- **Neteja del formulari**: Reinicialització automàtica de camps després de desar i desacoblament de la tecla `Enter` als diàlegs modals per evitar tancaments accidentals.
+
+#### B. Gestió Documental de la Llar: Manuals i Garanties
+- Subcarpetes físiques dedicades: `PDF/Manuals/` i `PDF/Garanties/`.
+- Registre JSON centralitzat (`data/manteniment_docs.json`) sincronitzat a Supabase ID 7.
+- **Visor interactiu basat en PDF.js (HTML5 Canvas)**: Renderització neta sense bloquejos d'iframe, amb controls de zoom, pàgines i descàrrega.
+- **Seguiment semafòric de garanties**: Càlcul de dies de cobertura restants (🟢 Vigents, ⚠️ Venciment en menys de 60 dies, 🔴 Caducades).
+- **Auto-detecció de fitxers**: Si s'afegeix un PDF directament a les carpetes del disc, el motor l'adhereix automàticament al registre JSON sense sobreescriure les dades existents.
 
 ---
 
-## 10. Directriu Obligatòria de Desplegament i GitHub (`git push`)
-⚠️ **DIRECTRIU CRÍTICA D'EXECUCIÓ PER A L'ASSISTENT D'IA**:
-- L'aplicació es carrega i s'executa directament des del núvol (desplegament automatitzat a **Streamlit Community Cloud** sincroitzat amb el repositori GitHub `enricxicars/dashboard-despeses`).
-- En qualsevol tasca o modificació de codi completada, l'assistent d'IA **TÉ L'OBLIGACIÓ STRICTA DE DESAR I PUJAR SEMPRE ELS CANVIS A GITHUB** (`git add`, `git commit`, `git push origin main`).
-- Mai s'ha de declarar una tasca com a finalitzada només modificant els fitxers locals: **SEMPRE CAL PUJAR ELS CANVIS A GITHUB** perquè la versió del núvol actualitzi la interfície de l'usuari immediatament.
+### 5.3 Cotxe i Mobilitat (`modules/cotxe.py`)
+
+#### A. Registre de Km, Repostatge i Consum
+- `🛣️ Registre Km i Rutes`: Càlcul automàtic de quilometratge per lectura d'odòmetre amb plantilles de rutes habituals.
+- `⛽ Repostatge`: Taula de proveïments de combustible amb seguiment de preus i estacions.
+- `📊 Consum`: Gràfic de consum mitjà (L/100km).
+
+#### B. Manteniment Integral Col·lapsable
+Totes les seccions estan organitzades en blocs desplegables independents (`st.expander`) per mantenir la interfície compacta, amb interruptor superior *"Desplegar totes les seccions"* i badges informatius en temps real als encapçalaments:
+1. **`🛢️ Canvi d'Oli`**: Km actuals, límit de canvi, km restants i barra de desgast.
+2. **`🛞 Canvi de Rodes`**: Substitució de cobertes davanteres, posteriors o completes amb alertes per quilometratge.
+3. **`💨 Inflat de Rodes`**: Pressió en bar, dates de revisió periòdica i vinculació a viatges llargs.
+4. **`🧪 Control de Nivells`**: Secció independent per al seguiment dels líquids del vehicle (oli de motor, refrigerant, frens, eixugaparabrises) amb planificacions per km i per dies.
+5. **`🛠️ Taller i Avaries`**: Entrades per manteniment, ITV, avaries o reparacions amb control d'estat (Resolt, Pendent, En taller).
+6. **`📋 Històric de Manteniment i Taller`**: Taula interactiva amb filtratge per tipus, càlcul de despesa total acumulada (€) i eines d'edició.
 
 ---
 
-## 11. Arquitectura "Cloud Native" i Supabase Centralitzat
-Per tal de permetre l'execució total des del núvol (Streamlit Cloud) sense perdre dades en els reinicis de la màquina virtual, l'aplicació ha transicionat l'emmagatzematge de configuracions des de fitxers JSON locals cap a **Supabase (taula `app_config`)**:
-- **ID 1**: `categories_conceptes.json`
-- **ID 2**: `core/config.json` (Perfil familiar, eines de cuina, paràmetres globals)
-- **ID 3**: `data/events.json` (Calendari familiar)
-- **ID 4**: `data/feeds_cache.json` (Memòria cau dels Google Calendars)
-- **ID 5**: `data/medication_plans.json` (Plans de medicació)
-- **ID 6**: `data/ofertes.json` (Registre d'Ofertes Setmanals i Volumètriques)
-- **ID 7**: `data/manteniment_docs.json` (Registre de Documents, Manuals d'Instruccions i Garanties de la llar)
-- **ID 8**: `data/registre_manteniment.json` / `csv/manteniment.csv` (Registre de tasques de manteniment, reparacions i feina de casa)
-- **ID 9**: `data/consum_llum.json` / `csv/consum_llum.csv` (Registre de factures elèctriques, potències i consums per tram)
-- **ID 10**: `data/consum_aigua.json` / `csv/consum_aigua.csv` (Registre de factures d'aigua, lectures de comptador i consums en m³)
+## 6. Mòduls de Prioritat 4: Família, Nutrició i Benestar
 
-*Nota: Els fitxers locals es mantenen com a còpia de seguretat (fallback local), però la font de la veritat prioritària és sempre Supabase. Així mateix, per desig exprés de l'usuari, s'ha suprimit la renderització dels Avatars (Xiqui) i els seus botons a les capçaleres de tots els mòduls per simplificar la interfície.*
+### 6.1 Menús i Cuina (`modules/menjar.py`)
+
+#### A. Base de Dades del Receptari (`tb_receptes_pro`)
+- Catàleg de receptes estructurades amb ingredients, instruccions pas a pas i *mise en place*.
+- **Racions de referència**: Totes les quantitats de la base de dades es defineixen per a un nombre de comensals base per defecte (configurable segons el nucli familiar).
+
+#### B. Motor d'Escalat Dinàmic de Comensals (`scale_ingredients`)
+- Algoritme Regex que processa quantitats, unitats i fraccions (`250g`, `4 ous`, `1/2 cullerada`, `1.5 kg`) aplicant el recàlcul proporcional:
+  $$\text{Quantitat Recalculada} = \text{Quantitat Base} \times \frac{\text{Comensals}}{\text{Racions Base}}$$
+- Els ingredients no quantificables linealment (*sal i pebre al gust*, *herbes*) es mantenen invariables.
+- Selector interactiu a la fitxa de la recepta que permet simular quantitats a temps real d'1 a 30 persones.
+
+#### C. Pautes Estètiques de Fotografia Gastronòmica
+- Angle elevat a 45° en primer pla (Close-up) en proporció **4:3**. Ambientació neta amb llum natural càlida i fidelitat absoluta als ingredients reals de la recepta.
+
+#### D. Perfils Familiars, Al·lèrgies Mèdiques vs Vetos Personals
+- **Al·lèrgia mèdica**: Bloqueig estricte de la recepta per a tota la família.
+- **Veto personal**: Quan un membre no consumeix un aliment determinat *(Exemple: bledes o casqueria)* però la resta de la família sí, el planificador no bloqueja el plat i assigna automàticament un **plat alternatiu ràpid comodí** *(Exemple: truita o carn a la planxa)* per a aquell membre, compartint la mateixa guarnició.
+
+#### E. Recomanador de Menús Intel·ligent amb IA
+- Generació setmanal considerant membres actius, eines disponibles a la cuina, regles de salut (carns vermelles, freqüència de peix i llegums) i no-repetició d'hidrats consecutius.
+- **Control dietètic de calories**: Fixació de límit calòric separat per a dinars i sopars, prioritzant receptes saludables i balancejant macronutrients amb etiquetes nutricionals.
+- **Anti-repetició estricta**: Llegeix `tb_historial_menjars` i prohibeix repetir plats consumits en els darrers X dies (configurable per l'usuari).
+- **Priorització per valoració**: Afavoreix les receptes amb 4 i 5 estrelles.
+- **Bústia de Peticions (`tb_peticions_menjar`)**: Permet als membres demanar plats desitjats que, un cop aprovats, s'incorporen automàticament al proper menú.
+
+#### F. Mise en Place de Diumenge (Batch Cooking) i Connexió amb l'Stock
+- Derivació automàtica de preparacions base (caldos, sofregits, verdures rostides).
+- Si hi ha brous o sofregit congelats a l'estoc, es descompten de la preparació de diumenge i de la llista de la compra:
+  $$\text{Compra} = \max(0, \text{Necessari} - \text{Stock})$$
 
 ---
 
-## 12. Historial de Canvis Recents (Changelog Menor)
-- **13/09/2026**: Renomenament de mòdul de "Compres" a "Ingressos i Despeses", pestanyes a "Ingrés / Despesa General", i aplicació de color corporatiu taronja (`#f39c12`) a les capçaleres d'introducció de moviments i "Compres Super". Correcció del botó "Inici" duplicat a la pestanya de Compres Super.
-- **13/09/2026**: Modificació de l'esquema de la base de dades: afegida la columna `preuUnit` a `tb_productes` i executada la migració retrospectiva per importar l'últim preu de compra des de `compresSuper`.
-- **13/09/2026**: Solució del problema de pèrdua de sessió (petició de contrasenya) en navegar mitjançant el menú superior entre mòduls gràcies a l'emmagatzematge del token a l'estat de la sessió.
-- **13/09/2026**: Creació d'un nou mòdul `modules/bases_dades.py` que fa de **Gestor de Bases de Dades**. Accessible des del menú superior, permet visualitzar i editar en temps real (inserir, modificar i esborrar) totes les taules de Supabase de manera centralitzada i senzilla mitjançant `st.data_editor`.
-- **13/09/2026**: Afegit botó "Inici" al capdamunt a la dreta del Gestor de Bases de Dades i eliminat text informatiu de la ID segons l'usuari.
-- **13/09/2026**: Estandardització del tamany del botó "Inici" per a totes les pàgines de l'aplicació. El valor de proporció obligatori i fix per al disseny de la capçalera (quan només hi ha un botó) és de `st.columns([9.2, 0.8])`. S'ha actualitzat `modules/avatar_widget.py` per complir amb aquest requisit de disseny.
-- **13/09/2026**: Ajustos visuals addicionals en les capçaleres: (1) S'ha eliminat la capçalera repetida amb el botó Inici a `modules/economic.py`; (2) S'ha fet més gran l'espai per a elements extra a la capçalera (`avatar_widget.py`), de manera que els botons llargs com el de Medicació i la capsa de cerca de Configuració (amb nova icona de lupa) es vegin correctament sense deformar el botó Inici.
-- **13/09/2026**: Millores a la **Llista de la Compra** (`modules/compres.py`): Afegit un títol clar en taronja. Aprofitant el camp `preuUnit`, es calcula i es mostra de forma automàtica l'import estimat per línia i per supermercat. S'han afegit avisos explícits `(Sense valoració)` pels productes que no tenen preu registrat per tal que no hi hagi confusions en el total, i s'ha afegit un **Gran Total** a sota de tot per saber el cost total de tota la compra pendent.
-- **13/09/2026**: Solucionat un problema d'interfície on el menú superior (`app.py`) es tancava accidentalment en moure el ratolí (pèrdua del *hover*) abans d'arribar als submenús. S'ha implementat un "pont invisible" amb pseudo-elements CSS per assegurar que el menú roman obert durant el desplaçament del cursor.
-- **14/09/2026**: Creació del nou mòdul `modules/ofertes.py` ("Consulta d'Ofertes i Preus") accessible des del menú "Finances". Inclou un Comparador de Preus intel·ligent que creua l'stock (Llista de la Compra o Rebost Sencer) amb ofertes manuals (desades a `app_config` ID 6), i una segona pestanya amb un Visor de Fulletons oficials integrat.
-- **14/09/2026**: Extensió del mòdul d'Ofertes (`modules/ofertes.py`) afegint "Novavenda", "El Corte Inglés" i "Clarel" al registre manual i als fulletons, arreglant errors de duplicitat de botons i millorant-ne l'espaiat i disseny. També s'ha afegit una nova funció d'"Històric de Preus per Producte" que creua la selecció amb `compresSuper` per veure on s'havia comprat abans al millor preu.
-- **15/09/2026**: Solució d'un bug visual a nivell global on els calendaris (`st.date_input`) perdien els botons de navegació (mes i any) perquè una regla CSS genèrica en `app.py` amagava totes les etiquetes `<header>`. S'ha restringit l'ocultació específicament a `header[data-testid="stHeader"]`.
-- **15/09/2026**: Substitució del cercador automàtic per *Scraping* per una **Taula de Comparativa Manual** a la pestanya de Fulletons. Ara l'usuari pot seleccionar un producte i omplir manualment els preus i les ofertes de cadascun dels 10 supermercats (les dades s'associen al producte i es mantenen en la sessió activa `st.session_state`). Això evita els bloquejos per protecció anti-bot que imposen plataformes com Mercadona i Dia.
-- **18/09/2026**: Implementació completa d'un **Mode Offline (Desconnectat)** per garantir l'operativitat en caigudes d'internet. El mode es pot activar a voluntat des del menú "Ajustos" (`app.py`), mostrant un avís permanent. S'ha modificat l'arquitectura de la base de dades (`core/db.py`) perquè, en mode desconnectat, llegeixi les dades d'una memòria cau local en CSV i desi les noves accions (insercions, edicions i esborrats) a una cua local (`sync_queue.json`), evitant temps d'espera penjats amb Supabase.
-- **18/09/2026**: Creació d'un nou mòdul al menú "Bases de dades" anomenat **Consolidar Dades Offline** (`modules/sincronitzacio.py`) per permetre la visualització de totes les tasques retingudes a la cua i pujar-les a Supabase en bloc un cop recuperada la connexió a internet.
-- **18/09/2026**: Reconfiguració de l'entorn de l'escriptori de Windows ("ControlHouse.lnk") eliminant antics accessos, i modificació profunda del `StartDashboard.py` perquè l'aplicació s'obri exclusivament al **Google Chrome** (`webbrowser.get('chrome')`) de manera automatitzada i cega, tancant la dependència sobre el Microsoft Edge.
-- **24/09/2026**: Resolució de l'error crític `Crashpad_NotConnectedToHandler` (penjades d'Streamlit frontend) movent les imatges base64 pesades d'etiquetes `<img>` en línia a propietats globals de `background-image` en CSS pur a `app.py`.
-- **24/09/2026**: Modificació de les instruccions del model d'IA d'OCR (Gemini Vision) a `compres.py` per establir que els productes venuts a pes (carn, fruita) retornin sempre quantitat entera = 1, assignant l'import final com a preu unitari, evitant errors decimals visuals a la taula.
-- **24/09/2026**: Redisseny matemàtic del formulari d'entrada manual a `compres.py`. Ara, al posar un % de descompte, s'entén que el "Preu Unitari" inserit és el preu rebaixat (el del tiquet), calculant el preu base original cap amunt i ajustant la promoció perquè el "Total Línia" sigui inamovible i exacte (evitant desquadraments de cèntims en arrodoniments per múltiples unitats).
-- **24/09/2026**: Connexió de la funció d'agrupació de duplicats (`group_duplicate_ticket_items`) a la sortida de la IA OCR per refondre automàticament productes idèntics. Forçat general del format enter per a la columna de Quantitats a totes les taules d'edició.
-- **25/09/2026**: Correcció del càlcul de la memòria cau i dels tipus de dades (`any` com a enter i verificació del `date_score`) al `modules/economic.py` per garantir que el Dashboard i l'Extracte mostren immediatament els moviments recents si s'esborra la memòria, evitant desquadraments fantasma de saldos per culpa d'entrades manuals mal formades.
-- **25/09/2026**: Centralització del sistema d'alertes en un nou arxiu `core/alerts.py`. S'ha integrat una **Campana de Notificacions Global** a la barra superior (menú `app.py`) i a la pantalla d'inici, que mostra dinàmicament el número d'avisos pendents (Loteria, Canvi d'oli del cotxe, etc.) obrint un diàleg emergent interactiu a qualsevol pantalla.
-- **25/09/2026**: Ampliació d'un 30% en el radi de les icones centrals d'accés (Dashboard i Mòdul Econòmic) per facilitar la usabilitat en tauletes i entorns tàctils a la pantalla principal. A més, s'ha solucionat un error que obria `app_config` per defecte a causa d'una neteja de paràmetres a l'adreça web en prémer "Despeses".
-- **27/09/2026**: Solució d'un error de falsa confirmació visual (`silent failure`) al formulari d'entrada manual a `compres.py`. Anteriorment, si la inserció a Supabase fallava per culpa d'un `ID_mov` duplicat (provocat perquè la memòria cau de la sessió amagava entrades recents), el sistema netejava el formulari igualment fent creure a l'usuari que s'havia guardat la despesa. S'ha obligat a validar la confirmació del servidor abans d'esborrar res.
-- **27/09/2026**: Integració d'un sistema de generació automàtica de compensacions en despeses compartides al mòdul `compres.py`. En introduir una factura íntegra de Restaurant i indicar la part que li corresponia pagar a l'usuari, el sistema crea un apunt simultani en negatiu (Efectiu) per cuadrar el volum de despesa sense perdre la correspondència bancària original del ticket.
-- **27/09/2026**: Reforma crítica de l'arquitectura de memòria cau (Streamlit Cache). S'ha establert un doble sistema de refresc directe: `Despeses` i `CompresSuper` s'actualitzen cada 5 segons per millorar l'experiència d'entrada de dades manuals, mentre que la resta de bases de dades mantenen una retenció de 10 minuts per minimitzar trucades a l'API. S'ha refactoritzat l'extracció de dades a `core/db.py` per resoldre problemes de penjaments (pantalla negra) amb `ThreadPoolExecutor`.
-- **27/09/2026**: Ajustament visual geomètric a la pantalla d'inici (`app.py`). S'ha reduït un 13% l'amplada de l'escut central interactiu (XiquiHouse) a petició de l'usuari, suprimint també el marge forçat horitzontal (`translateY`) perquè el navegador centri automàticament tot l'escut segons la finestra. S'ha arrodonit i apropat a la dreta la insígnia de recompte d'alertes (Campana) per evitar superposicions amb els rols.
-- **27/09/2026**: **Cirurgia Major de Rendiment (Part 1)**. Solució a la lentitud del processament de dades amb Pandas traslladant la càrrega de `load_dashboard_data` cap a l'interior de les funcions cacheades (`_fetch_fast_tables` i `_fetch_slow_tables`). S'ha apujat el TTL de totes les memòries cau a 10 minuts i s'ha creat una funció `get_next_id` de micro-peticions per evitar col·lisions d'índexs en guardar dades manualment.
-- **27/09/2026**: **Cirurgia Major de Rendiment (Part 2 - Solució Pantalla Blanca)**. S'ha detectat i solucionat el vertader causant dels penjament de 60 segons de durada al navegador (DOM freeze). L'ús de `st.tabs` a "Ingressos i Despeses" forçava el servidor a dibuixar, processar i enviar de forma invisible els milers de components visuals de la pestanya "Rebost" (fotos i botons de tots els productes) cada cop que es feia un clic. S'ha substituït l'arquitectura de pestanyes per un `st.radio` horitzontal, el qual actua com a menú de navegació i permet la càrrega "lazy" (només es processa i s'envia al navegador allò que l'usuari està mirant actualment). S'ha aplicat també un "debounce" al `MutationObserver` de `app.py` per protegir el fil principal de renderitzat del navegador.
-- **27/09/2026**: **Cirurgia Major de Rendiment (Part 3 - Solució Pèrdua de Memòria Cau)**. S'ha eliminat un bucle de recàrrega forçada de mòduls (`importlib.reload`) a `app.py` que destruïa sistemàticament la memòria cau d'Streamlit cada cop que l'usuari navegava per les pantalles. Aquesta mala praxi obligava al servidor a descarregar-ho tot des de Supabase a cada clic, provocant els bloquejos de pantalla blanca d'alguns segons. Ara la memòria cau de 10 minuts sí que s'activa correctament.
-- **29/09/2026**: Reubicació de la secció 'Detalls del mes' al Dashboard general i optimització del Mòdul Econòmic. S'ha eliminat codi duplicat i inactiu (més de 1800 línies de l'OCR de Compres Super) que generava conflictes de navegació entre pestanyes. A més, s'han redissenyat les taules de Previsió de Despeses i Ingressos: ara inclouen columna d'Any, l'ordenació interactiva de columnes està habilitada gràcies a l'ús de `st.column_config`, i s'ha integrat un sistema complet de filtres desplegables (Any, Mes, Banc, Estat) junt amb un botó per restablir-los ràpidament.
-- **29/09/2026**: Reestructuració integral dels mòduls d'economia i la llar. S'ha centralitzat la gestió al nou mòdul "Compres Super i Stock" (antic Ingressos i Despeses), movent-hi la pestanya Compres Super i absorbint tota la funcionalitat de l'arxiu `ofertes.py` (Comparador i Fulletons), el qual s'ha eliminat. La pestanya "Ingrés/Despesa General" s'ha quedat exclusivament al Mòdul Econòmic. Finalment, s'ha estandarditzat gràficament l'encapçalament de TOTS els mòduls de l'aplicació, substituint els antics emojis per incorporar el logotip central (XiquiHouse) al costat dels títols principals.
-- **30/09/2026**: Millora d'UX a la navegació del mòdul econòmic. S'han eliminat els botons superiors "Compres Super" i "Ingrés/Despesa" del menú principal per netejar la interfície, i en el seu lloc s'han implementat uns botons directes amb la icona "🔄" (Túnel) integrats just a la dreta dels subtítols inferiors, creant dreceres in-situ.
-- **30/09/2026**: Correcció i potenciació del diàleg de Confirmació d'Operacions ("Confirmar i Desar a BBDD") a `economic.py`. Ara no bloqueja l'usuari si falta el "Banc" a una de les operacions (com la Hipoteca), sinó que mostra allà mateix un `selectbox` desplegable per assignar el banc "al vol" i finalitzar l'operació sense haver de tancar i tornar a la taula. També s'ha resolt l'omissió per la qual la línia fixa de la Hipoteca ignorava el Banc guardat a la seva base de dades.
-- **30/09/2026**: Arranjament d'un `KeyError` relacionat amb traspassos programats que feia caure l'app a l'intentar verificar els destins de transaccions predefinides sense ID numèric com "hipoteca". A més, s'ha corregit la categoria base d'aquesta despesa de `manteniment` a `despesa_general`.
-- **30/09/2026**: Càlcul global i format de dates: (1) S'ha actualitzat la funció de càlcul de "Saldo Comptes" global al Dashboard perquè utilitzi sempre l'històric complet fins al "desembre" del l'any seleccionat, de manera que els pagaments entrats a final de mes no s'excloguin erròniament del saldo si el seu mes teòric recau en l'esdevenidor. (2) S'ha arranjat el parseig de dates intern a `bases_dades.py` perquè l'editor enviï a Supabase l'string `DD/MM/YYYY` original i no el format ISO defectuós de `datetime.date`.
-- **30/10/2026**: Neteja visual del Desglòs de despeses: s'ha implementat un filtre directe `grup != op_banc` per ocultar completament les operacions bancàries tècniques compensatòries amagades darrere la compra d'Accions (que abans sortien duplicades i marcant `0.00 €`).
-- **02/10/2026**: Creació d'un sistema avançat de Preguntes i Respostes (Guia/FAQ) amb lectura d'arxius Markdown (`docs/faq_economic.md`) integrat al menú superior desplegable principal de cada mòdul.
-- **02/10/2026**: Inserció de **Filtres dinàmics** (Any, Mes, Cartera, Concepte) i checkbox d'ordenació temporal a la vista històrica de TR Cartera (Pestanya Inversions).
-- **02/10/2026**: Construcció d'un **Motor de Validació i Autocorrecció de menús d'IA** (`core/validator.py`). El sistema avalua en temps real el JSON generat per l'LLM, detecta al·lucinacions de vetos, desquadraments d'hidrats festius i excessos en els còmputs nutricionals. Si detecta falles, llança un *retry loop* per obligar a la IA a refer el menú abans de mostrar-lo a l'usuari.
-- **02/10/2026**: Refinament del prompt nutricional i transició de les regles de "Mínim de peix" cap a una freqüència exacta ("Cops exactes per setmana") per millorar la precisió de la llista de la compra.
-- **06/10/2026**: Integració de funcionalitats "Slow Thinking" al generador de menús (`core/validator.py`, `core/harness.py`, `modules/menjar.py`), permetent a la IA reflexionar i auto-corregir-se davant al·lucinacions, millorant el compliment de regles nutricionals, i discriminant entre l'estoc del rebost i el del congelador.
-- **06/10/2026**: Habilitada la categorització per `apat` ("Dinar", "Sopar", "Dinar/Sopar") al *prompt* enviat a la IA per millorar la coherència en la tria de plats segons el moment del dia, llegint el camp directament de `tb_receptes_pro`.
-- **06/10/2026**: Afegit suport per a una nova columna `stockXmenu` (booleana) a la taula `tb_productes`. Aquesta casella d'activació, editable des de la Taula Ràpida de Rebost a `modules/compres.py`, filtra de manera estricta els productes que es passen com a candidats per generar plats al Recomanador de Menús (amagant així articles inútils com sal, llet, paper, etc.).
-- **08/10/2026**: Integració de la **Bústia de Peticions**, permetent als membres demanar plats que seran validats i inclosos automàticament al proper menú de la IA. Implementació del registre de l'**Historial de Menjars**, aplicant una regla estricta que impedeix a la IA repetir plats ja consumits en els últims X dies. Finalment, adició del paràmetre del **telèfon mòbil** al perfil de membres de la família (preparació per l'enviament de menús) i millora del *prompt* per afavorir les receptes amb les millors **estrelles (valoració)**.
-- **15/10/2026**: Integració de la funcionalitat "Afegir nou any comptable" al Mòdul Econòmic (accessible des del menú superior Mòduls > Mòdul Econòmic > 📅 Afegir nou any comptable i botons d'accés ràpid a les pestanyes de Previsions). Permet revisar i editar els imports per defecte dels 9 conceptes d'ingressos i 12 de despeses abans de generar els 12 mesos pendents de l'any següent (ex. 2027). A més, el selector d'anys del Dashboard unifica anys reals i de previsions, i el gràfic de barres s'ha ampliat a una finestra de 3 anys ([any-1, any, any+1]) amb barres grogues de projecció per als mesos futurs.
-- **15/10/2026**: Reorganització i classificació completa de la carpeta `imatges/` en 4 subcarpetes estructurades (`Productes/`, `Eines/`, `Disseny/`, `Receptes/`). Actualitzades totes les rutes del codi font (`app.py`, `modules/admin.py`, `modules/compres.py`, `modules/avatar_widget.py`, `modules/economic.py`, `csv/tb_productes.csv`) amb mecanismes de resolució retrocompatibles.
-- **16/10/2026**: Millores al modal "Afegir nou any comptable" (`modules/economic.py`): incorporació de caselles de selecció (checkboxes activats per defecte) per poder decidir quines partides d'ingressos i despeses s'incorporen a l'any nou. Creació de la nova pestanya **🎁 Pagues Extres** que inclou les tres pagues (Pensió Enric, Pensió Isabel i Pensió no contributiva), programades automàticament per als mesos de juny i novembre (dia 25) heretant l'import mensual de la pensió corresponent. S'han eliminat els botons d'accés ràpid de les pestanyes de Previsions perquè l'accés sigui únicament des del menú superior, s'han compactat els títols de les pestanyes, s'ha integrat la suma de les pagues extres directament a la línia del total anual d'ingressos (`Anual amb extres`) i s'ha suprimit la línia de balanç anual estimat per simplificar la visualització.
-- **16/10/2026**: Correcció de l'ordenació cronològica al Gestor de Bases de Dades (`modules/bases_dades.py`). L'opció "Ordenar pel més recent primer" ara parseja i ordena per la data real (columna `Data`, `data_hora`, `data_inici`, etc.) i com a segona clau per l'ID numèric, en lloc d'ordenar exclusivament per la clau primària (`ID_mov`), garantint que a taules com Despeses o Ingressos els moviments més recents apareguin correctament a dalt de tot.
-- **16/10/2026**: Resolució de l'error `UnboundLocalError: cannot access local variable 'os'` a `modules/compres.py`, `modules/avatar_widget.py` i `modules/calendari.py`. S'ha mogut la importació `import os` al nivell superior dels mòduls per evitar conflictes d'àmbit local a les funcions de renderitzat.
-- **16/10/2026**: Millora integral de la navegació amb la tecla `Enter` a Compres Super (`modules/compres.py`). S'ha reescrit el controlador d'esdeveniments JavaScript en fase de captura (`capture=true`) per avançar-se a Streamlit/React, permetent saltar de forma fluida i seqüencial entre camps (Família > Article > Pes > Quantitat > Preu Unitari > % > Promoció) seleccionant el text existent per reescriure ràpidament. A més, prémer `Enter` al camp de Promoció (o fer `Shift + Enter` des de qualsevol camp) executa automàticament el botó "Intro línia" per afegir l'article al tiquet sense haver d'utilitzar el ratolí.
-- **16/10/2026**: Integració i posada en marxa de la impressora de tiquets **BIXOLON SRP-275APG** (connexió Paral·lel Centronics a USB xip CH340 al port `USB001` de Windows, establerta com a impressora predeterminada). Configuració del controlador de sistema `Generic / Text Only` i creació del mòdul `modules/impressora.py` que admet tant impressió directa via USB/RAW ESC/POS (amb tall automàtic de paper `\x1dV\x00` per a entorns locals) com impressió web neta mitjançant el navegador (`window.print()`, compatible amb Streamlit Cloud i rotlle de 76mm). S'ha afegit un marge de seguretat de 6 salts de línia en blanc (`\n` * 6) i padding inferior de 30mm per superar la distància física entre el capçal d'impressió i la guillotina de tall. La impressió s'ha integrat de manera neta i directa exclusivament dins del desplegable de cada supermercat a la Llista de la Compra, suprimint diàlegs modals de prova genèrics i botons redundants per evitar confusions amb els productes reals. S'ha creat també l'script de diagnòstic `scripts/test_bixolon.py`.
-- **17/10/2026**: Resolució i millora integral del carregador de tiquets a Compres Super (`modules/compres.py`):
-  - **Ampliació de formats admesos**: El carregador (`st.file_uploader`) ara admet imatges (`png`, `jpg`, `jpeg`, `webp`, `jfif`, `bmp`), documents digitals de supermercat (`pdf`) i tiquets de text (`txt`).
-  - **Suport nadiu de tiquets en PDF**: Integració de la llibreria `pypdf` per a l'extracció instantània de text de tiquets PDF digitals (Mercadona, BonÀrea, Lidl, etc.), i derivació automàtica a Gemini Vision (`application/pdf`) en cas de PDFs escanejats o basats en imatges. S'ha afegit `pypdf` a `requirements.txt`.
-  - **Desbloqueig de fitxers repetits / buits**: S'ha corregit la condició d'estat `processed_file_id`, que anteriorment bloquejava silenciosament la càrrega si l'usuari tornava a seleccionar un fitxer previ o si la taula d'articles (`ticket_items`) estava buida. Ara, si el tiquet està buit, el fitxer es processa sempre.
-  - **Neteja de missatges residuals**: S'ha solucionat el problema on avisos o errors previs (`finalize_error`, `manual_input_error`, etc.) no s'esborraven en desar o netejar el tiquet. Ara s'eliminen de la sessió immediatament després de mostrar-se i es netegen en tancar o buidar el formulari per a nous tiquets.
-  - **Incorporació del model Gemini (3.8 Flash)**: S'ha afegit el nou model d'alta velocitat `gemini-3.8-flash` tant al selector [`core/llm_ui.py`](file:///e:/Dashboard/core/llm_ui.py) com a la cadena de redundància de [`core/llm.py`](file:///e:/Dashboard/core/llm.py).
-  - **Filtre intel·ligent segons mètode d'escaneig**: Si l'usuari tria **Híbrid (Tesseract+IA)**, el desplegable de models mostra totes les IAs disponibles (Gemini, DeepSeek, Llama, Qwen); si tria **Visió Pura (Directa)**, el desplegable es filtra dinàmicament per mostrar exclusivament els models que admeten imatges i visió multimodal (Gemini 2.5 Flash, Gemini 3.8 Flash, Gemini 2.5 Pro).
-  - **Gestió compacta de tiquets pendents en una sola línia compartida**: S'ha redissenyat la capçalera de Compres Super (`modules/compres.py`) eliminant la caixa d'avís groga i l'expander per estalviar espai vertical. Ara, just a sota del títol, la informació del tiquet pendent (`• Nº 8179 — Dia (16/10/2026) — 6.48 € (TradeRep.)` amb el botó `[🛒 Desglossar]`) i el carregador `[ ⭡ Upload ]` comparteixen una única fila horitzontal neta. Si no hi ha cap tiquet pendent, la fila només allotja el botó d'Upload sense cap missatge addicional. A la fila inferior s'alineen de forma compacta el selector d'enviament a despeses, banc, forma de pagament, mètode d'escaneig i selector de model d'IA.
-  - **Integració de tiquets pendents de desglossar al sistema global d'Alertes**: S'ha afegit una regla a [`core/alerts.py`](file:///e:/Dashboard/core/alerts.py), [`alerts_config.json`](file:///e:/Dashboard/alerts_config.json) i [`modules/admin.py`](file:///e:/Dashboard/modules/admin.py) perquè, quan hi hagi tiquets de súper pendents de desglossar a `despeses` (`ticketPendent = True`), aparegui automàticament la notificació a la campaneta de la barra superior (`🔔`) amb el recompte en temps real i el detall (`🛒 Tiquets de súper pendents: Nº 8179 (Dia - 6.48 €)`). S'ha eliminat la memòria cau rígida de 10 minuts (`@st.cache_data(ttl=600)`) de `get_global_alerts()` i s'ha integrat el recàlcul en temps real a la barra superior (`render_traditional_menubar`), prioritzant sempre el `df_desp` actiu de la sessió de l'usuari perquè qualsevol canvi aparegui a l'instant. En finalitzar o desvincular el tiquet, les alertes s'actualitzen immediatament.
-  - **Validació i sanejament estricte de dates en l'escaneig de tiquets (OCR / IA)**:
-    - **Funció `sanitize_ticket_date`**: S'ha implementat a [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py) per blindar l'entrada de dates en tiquets de compra. Evita dates impossibles i futures (`> date.today()`), corregeix les confusions habituals d'OCR en tiquets matricials (on l'any `26` sovint és mal llegit com a `76` o `28`, p. ex. `2076` o `2028`), valida límits lògics d'any (entre 2018 i l'any actual 2026), intercanvia dies i mesos si estan invertits i ajusta dies invàlids.
-    - **Regla estricta: Data mai superior a la data actual**:
-      - El selector de calendari (`st.date_input`) tant a Compres Super com a Despeses manuals té definit el límit `max_value=datetime.today().date()`, impossibilitant triar qualsevol data futura.
-      - A `finalize_ticket` i en la inserció manual de despeses, qualsevol intent de desar una data posterior a la d'avui es bloqueja immediatament amb missatge d'error (`La data no pot ser superior a la data actual`).
-    - **Confirmació automàtica si fa més d'una setmana (> 7 dies)**:
-      - Si la data detectada o introduïda és igual o inferior a la data d'avui però té una antiguitat superior a 7 dies, es mostra un indicador clar (`⚠️ Data de fa X dies (> 1 setmana)`) al costat del camp de data.
-      - En prémer "Fi Tiquet", si l'usuari no ha confirmat prèviament la data, s'obre un diàleg modal interactiu (`@st.dialog("📅 Confirmació de Data del Tiquet")`) advertint dels dies transcorreguts i preguntant expressament si la data és correcta abans de desar el tiquet a la base de dades.
-    - **Punts de control integrats**: S'ha aplicat el sanejament tant a l'extracció per Regex de text (`parse_text_ticket`), a l'extracció de resposta JSON dels models d'IA (Híbrid i Visió Pura), com en el moment de desar el tiquet a la base de dades a `finalize_ticket`.
-    - **Instruccions explícites als prompts d'IA**: S'han actualitzat els prompts d'extracció (Híbrid i Visió) instruint de forma estricta que l'any del tiquet mai pot ser futur i que `26` sempre correspon a l'any 2026.
-    - **Neteja de dades històriques**: S'han corregit els registres corruptes existents a `csv/compresSuper.csv` (línies de Mercadona amb any 2076 i bonArea amb any 2028 corregides a 2026) i a la base de dades remota Supabase (incloent-hi l'apunt amb any 2027 a Peixeteria).
-  - **Correcció del flux de tancament de tiquets pendents de desglossar i normalització de supermercats**:
-    - **Solució al bloqueig per clau primària duplicada (`despeses_pkey`)**: En desglossar un tiquet existent (`pending_ticket_id`), el sistema intentava fer un `INSERT` amb el mateix `ID_mov`, fallant silenciosament i impedint que el camp `ticketPendent` passés a `False`. S'ha refactoritzat [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py) perquè el registre existent s'actualitzi directament mitjançant un `UPDATE` (`ticketPendent = False`), desant les dades reals a `despeses`, enllaçant els articles a `compresSuper` i esborrant automàticament les alertes i avisos de pendents.
-    - **Tancament del tiquet Nº 8179 (Dia 6.48 €)**: S'ha actualitzat directament a Supabase i a `csv/despeses.csv` passant `ticketPendent` a `False` i normalitzant el concepte a `Dia`.
-    - **Verificació creuada d'integritat automàtica (`IdDespesa`)**: Tant a [`core/alerts.py`](file:///e:/Dashboard/core/alerts.py) com a la capçalera i llistat de pendents de [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py), el filtre de tiquets pendents ara creua les dades amb `compresSuper` (`IdDespesa`). Si un tiquet ja té articles desglossats a la base de dades, s'exclou immediatament dels pendents i es corregeix al vol a la memòria de la sessió de l'usuari, evitant que romangui bloquejat per culpa de la memòria cau residual.
-    - **Normalització automàtica de noms de supermercat**: Tant a l'entrada manual com a la finalització de tiquets, els noms escrits o rebuts en minúscules (ex. `dia`) es comparen de forma insensible a majúscules/minúscules amb el catàleg oficial de supermercats (`get_config_supers()`) i es guarden canònicament amb majúscula inicial (`Dia`, `Mercadona`, `bonArea`, etc.).
-  - **Anàlisi d'Estalvi i Gràfic de Rodones a Estadístiques de Compres Super (`modules/compres.py`)**:
-    - **Càlcul d'Estalvi i Preu Teòric**: Còmput netejat i automatitzat de les promocions d'article (`prom`) i descomptes de tiquet (`descompte`) davant l'import net pagat (`totLinea`). Es dedueix el Preu Teòric Sense Ofertes ($\text{Compra Pagada} + \text{Estalvi}$) i el % global d'estalvi assolit.
-    - **Filtres Dinàmics**: Totalment integrat amb els filtres interactius d'Any i Mes de la pestanya Estadístiques.
-    - **Targetes KPI**: 4 blocs de mètriques (Total Compra Pagada, Total Estalvi Generat amb indicador de delta %, Preu Sense Ofertes i Nº Línies / Articles).
-    - **Gràfic de Rodones (Donut Chart Plotly)**: Representació circular interactiva de la "Compra Total Pagada" vs "Promoció / Estalvi", amb colors corporatius, percentatges i etiquetes emergents.
-    - **Panell de Desglossament i Supermercat Líder**: Targeta visual amb el desglossament de pagat net, promocions directes, descomptes globals i estalvi total, acompanyat del supermercat on s'ha aconseguit més estalvi.
-  - **Generació de 13 Imatges Gastronòmiques per al Receptari (`tb_receptes_pro` / `imatges/Receptes/`)**:
-    - **Pautes Estètiques**: Imatges creades seguint les pautes de la secció 4.3 (primer pla 45°, format horitzontal 4:3, llum natural càlida, taula rústica de fusta i fidelitat total als ingredients).
-    - **Receptes cobertes**: ID 31 (Conill rostit), ID 106 (Sardines a la planxa), ID 115 (Orada al forn Bon Preu), ID 125 (Espaguetis amb all), ID 135 (Tataki de tonyina amb alvocat), ID 142 (Pollastre al forn amb patates), ID 146 (Carxofes farcides al forn), ID 151 (Empanadilles de tonyina), ID 161 (Maduixes amb nata), ID 170 (Cargols a la llauna), ID 174 (Faves a la catalana), ID 196 (Macarrons amb tomàquet cherry i alfàbrega), ID 209 (Amanida de cigrons).
-  - **Correcció de la persistència de navegació i selecció a "Càrrecs per Categoria" (`modules/economic.py` i `app.py`)**:
-    - **Sincronització de paràmetres de consulta (`mod`)**: S'ha corregit el comportament a [`app.py`](file:///e:/Dashboard/app.py) que eliminava immediatament el paràmetre `mod` de la URL (`st.query_params`) en carregar un mòdul. Això provocava que en produir-se un `rerun` per interacció amb widgets (com la selecció d'una fila d'un `st.dataframe`) o una reconnexió de sessió de Streamlit, l'aplicació perdés l'estat del mòdul actiu (`current_module = None`) i redirigís l'usuari involuntàriament al menú d'inici. Ara el paràmetre `mod` es manté sincronitzat de forma bidireccional amb `st.session_state.current_module` i només s'esborra quan l'usuari prem expressament el botó "🔙 Inici" o l'acció d'inici de la barra superior.
-    - **Blindatge de la taula interactiva de categories (`st.dataframe`)**: A [`modules/economic.py`](file:///e:/Dashboard/modules/economic.py), s'ha assignat una clau única i estable (`key=f"df_cats_desp_{selected_year}_{selected_month_data}"`) al dataframe interactiu amb `on_select="rerun"`, s'ha afegit `.reset_index(drop=True)` després d'ordenar les despeses per evitar desfasaments d'índex, s'ha protegit l'extracció de files seleccionades tant per a diccionaris com per a instàncies de `DataFrameSelectionState` de Streamlit 1.58, i s'ha substituït l'Styler de Pandas a `cat_details` per configuració nativa de columnes (`st.column_config.NumberColumn`).
-    - **Neteja coordinada als botons d'inici**: S'han actualitzat els botons "🔙 Inici" a [`modules/avatar_widget.py`](file:///e:/Dashboard/modules/avatar_widget.py), [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py) i [`modules/economic.py`](file:///e:/Dashboard/modules/economic.py) per assegurar que esborren el paràmetre `mod` de `st.query_params` en tornar al menú principal.
-- **18/10/2026**: Correcció de l'error `NameError: name 'df_super' is not defined` a [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py) (`render_ingres_despesa_general_interface`). En carregar la pestanya "📝 Ingrés / Despesa General" del Mòdul Econòmic, la comprovació dels tiquets pendents de desglossar utilitzava la variable `df_super` sense haver-la carregat prèviament en l'àmbit local de la funció. S'ha recuperat de forma segura des de `st.session_state` amb connexió de reserva a Supabase i protecció contra valors nuls (`df_super is not None`).
-- **18/10/2026**: Revisió i correcció integral dels **botons túnel de navegació ràpida entre Compres Super i Mòdul Econòmic** ([`modules/compres.py`](file:///e:/Dashboard/modules/compres.py)):
-  - **Sincronització de paràmetres URL (`st.query_params`)**: Anteriorment, prémer el botó túnel només canviava `st.session_state.current_module`, però mantenia a la URL el valor antic de `mod`. Això feia que `app.py` revertís la navegació en recarregar, bloquejant el canvi de pantalla en ambdós sentits. S'ha afegit la sincronització explícita de `st.query_params["mod"]` tant a `tunnel_to_compres` com a `tunnel_to_economic`, i també al botó `Desglossar` dels tiquets pendents.
-  - **Adaptabilitat visual a pantalles mòbils i escriptori**: S'ha substituït la proporció rígida de columnes (`[0.94, 0.06]`), que a dispositius mòbils feia que l'icona `⚡` quedés despenjada i orfe en una línia inferior, per una distribució equilibrada `[0.72, 0.28]` amb alineació vertical centrada i etiquetes descriptives clares (`⚡ Compres Super` i `⚡ Mòdul Econòmic` amb `use_container_width=True`), garantint una excel·lent usabilitat tàctil i visual tant en telèfons intel·ligents com en ordinadors.
-- **18/10/2026**: Millora dels traspassos entre comptes a "Ingrés / Despesa General" (`op_banc` / `Traspàs comptes` a [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py)):
-  - **Quantitat editable al banc de destí**: A la secció "🔁 Traspàs entre comptes", al costat del desplegable de "Banc de Destí", s'ha incorporat el camp "Quantitat al banc de destí (€)". S'inicialitza per defecte amb l'import d'origen però és completament editable perquè l'usuari pugui indicar l'import exacte que arriba al compte destí si només se'n traspassa una part.
-  - **Indicador dinàmic de diferència**: Si l'import de destí és inferior o superior al d'origen, es mostra una indicació visual automàtica amb la diferència exacta.
-  - **Integració comptable exacta**: El moviment generat automàticament per al banc de destí a `despeses` (i a `tr_cartera` si el destí és `TR Cartera`) es registra amb la quantitat editada, reflectint amb total precisió els extractes de tots dos comptes.
-- **18/10/2026**: Correcció del rebot immediat en fer clic a `[Desglossar]` a Mòdul Econòmic (`app.py`, [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py), [`modules/economic.py`](file:///e:/Dashboard/modules/economic.py)):
-  - **Diagnòstic de l'efecte rebot**: Quan l'usuari premia el botó `[Desglossar]` d'un tiquet pendent a Mòdul Econòmic (`modules.economic`), es canviava `st.session_state.current_module = "modules.compres"` i es cridava `st.rerun()`. Tanmateix, a [`app.py`](file:///e:/Dashboard/app.py) la comprovació inicial `if "mod" in st.query_params:` comparava el paràmetre de la URL que el client WebSocket transmetia abans que el navegador s'hagués actualitzat (`mod=modules.economic`). Com que no coincidia amb `current_module`, la lògica anterior sobreescrivia immediatament `st.session_state.current_module = selected_mod`, provocant que la pantalla de Compres Super es tanqués instantàniament i retornés a Mòdul Econòmic.
-  - **Sincronització protegida amb `_browser_mod`**: S'ha introduït la variable d'estat `st.session_state["_browser_mod"]` a [`app.py`](file:///e:/Dashboard/app.py) per distingir entre una navegació externa des de la URL (enllaços `<a href>`, favorits o canvis manuals) i una navegació interna realitzada per botons de Streamlit a Python. Ara [`app.py`](file:///e:/Dashboard/app.py) només actualitza `current_module` des de la URL si el paràmetre `mod` ha canviat externament respecte a `_browser_mod`, preservant la transició sol·licitada pel codi i evitant qualsevol rebot.
-  - **Inicialització exhaustiva de l'estat del tiquet**: S'ha actualitzat el botó `[Desglossar]` a [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py) perquè, a més d'establir `_browser_mod = "modules.compres"`, precarregui completament tots els valors de widget necessaris (`ticket_super_val`, `ticket_super_widget`, `ticket_date`, `ticket_date_widget`, `ticket_bank_sel`, `ticket_pay_method_sel`, `ticket_send_expense = True`), deixant la pantalla de Compres Super a punt per desglossar els articles del tiquet sense cap desajust d'estat.
-- **18/10/2026**: Reestructuració i sincronització nativa de pestanyes a tots els mòduls ([`app.py`](file:///e:/Dashboard/app.py), [`modules/economic.py`](file:///e:/Dashboard/modules/economic.py), [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py), [`modules/cotxe.py`](file:///e:/Dashboard/modules/cotxe.py), [`modules/menjar.py`](file:///e:/Dashboard/modules/menjar.py), [`modules/medicacio.py`](file:///e:/Dashboard/modules/medicacio.py)):
-  - **Sincronització directa i 100% nativa de pestanyes**: S'ha eliminat qualsevol script fràgil de JavaScript i manipulacions d'iframe al client. S'utilitza el suport natiu de Streamlit modern mitjançant el paràmetre `default` de `st.tabs(tabs_list, default=default_tab)`. En rebre el paràmetre `tab` a la URL (ex: `tab=prev_despeses` o `tab=llista_compra`), Python resol directament l'etiqueta de la pestanya i indica a Streamlit quina pestanya ha d'obrir per defecte en el primer render, sense retards, sense execució asíncrona i amb fiabilitat absoluta tant en local com a Streamlit Cloud.
-  - **Submenús desplegables amb totes les pestanyes al menú superior**:
-    - **📈 Mòdul Econòmic**: `📝 Ingrés / Despesa General`, `🔴 Prev. Despeses`, `🟢 Prev. Ingressos`, `📈 Inversions`, `💰 Estalvis`, `🤖 Xat IA`, separador, `📅 Afegir nou any comptable`, `❓ Preguntes i Respostes`.
-    - **🛒 Compres Super i Stock**: `📄 Compres Super`, `📋 Llista de la Compra`, `📦 Rebost / Stock`, `📊 Estadístiques`, `🔍 Comparador d'Ofertes`, `📰 Fulletons`.
-    - **🚗 Cotxe**: `🛣️ Km i Rutes`, `⛽ Repostatge`, `🔧 Manteniment (Oli i Rodes)`, `📊 Consum`, separador, `📝 Editar Rutes`.
-    - **🍽️ Menús i cuina**: `📅 Menú Setmanal (Actiu)`, `🔪 Mise en place`, `🧠 Recomanador de Menús`, `📖 Llibre de Receptes`, `➕ Afegir Recepta`, `📥 Bústia Peticions`, separador, `❓ Preguntes i Respostes`.
-    - **💊 Control de medicació**: `🕒 Preses d'Avui & Supervisió`, `➕ Crear Pla de Medicació`, `📋 Plans Actius i Historial`, `⚙️ Connexió Google Calendar API`.
-    - **🛠️ Manteniment de la llar**: `📋 Registre Manteniment`, `📖 Manuals`, `🛡️ Garanties`.
-- **19/10/2026**: Integració de la **Gestió Documental a Manteniment de la Llar** (`modules/manteniment.py`, `core/manteniment_manager.py`, `data/manteniment_docs.json`):
-  - **Estructura física i categories**: Creació i suport complet per a la carpeta de documents `PDF` amb les seves dues subcarpetes especialitzades `PDF/Manuals/` i `PDF/Garanties/`. S'han incorporat inicialment els documents `programador hbt_100.pdf` i `termostatMenjador.pdf`.
-  - **Pestanyes especialitzades ("📖 Manuals" i "🛡️ Garanties")**: Navegació nativa per pestanyes amb suport d'enllaços directes des de la barra de navegació superior (`?mod=modules.manteniment&tab=manuals` i `tab=garanties`).
-  - **Registre canònic en JSON (`data/manteniment_docs.json`)**: Base de dades centralitzada en format JSON que emmagatzema les metadades dels documents (títol, dispositiu, marca, model, ubicació, subcategoria, establiment, import, número de factura, dades de compra/venciment, nombre de pàgines i etiquetes).
-  - **Arquitectura dual Cloud / Local (Supabase ID 7)**: Sincronització automàtica del registre documental amb Supabase (`app_config` ID 7) amb còpia de seguretat i fallback en fitxer local, garantint persistència tant en execució local com a Streamlit Cloud.
-  - **Visor interactiu de PDF basat en PDF.js (HTML5 Canvas)**: Integració del motor PDF.js de Mozilla per visualitzar els documents directament sobre canvas HTML5 amb controls de pàgina (anterior/següent) i zoom interactiu, eliminant els bloquejos de seguretat de Chrome sobre `data:application/pdf` en iframes. Inclou botons per a descàrrega directa (`st.download_button`) i per obrir amb el lector del sistema operatiu en entorns d'escriptori.
-  - **Càlcul dinàmic de cobertura de garanties**: Càlcul en temps real dels dies restants de cobertura amb alertes visuals semafòriques (🟢 Vigents, ⚠️ A punt de vèncer en menys de 60 dies, 🔴 Caducades).
-  - **Sincronització automàtica de fitxers de disc**: Motor que detecta qualsevol nou fitxer PDF afegit manualment a les carpetes del sistema operatiu i l'afegeix de forma transparent al registre JSON sense sobreescriure les entrades existents.
-  - **Formularis interactius d'alta, edició i eliminació**: Creació de nous documents amb càrrega d'arxius (`st.file_uploader`), edició de metadades i eliminació controlada amb opció d'esborrar el fitxer del disc.
-  - **Correcció del paràmetre `rows` a `st.text_area`**: Substitució de l'atribut HTML invàlid `rows` pel paràmetre natiu de Streamlit `height` als formularis d'alta i edició, resolent l'error `TypeError` detectat a Streamlit Cloud.
-- **19/10/2026**: Creació de la nova pestanya **"📋 Registre Manteniment"** al mòdul de Manteniment de la Llar (`modules/manteniment.py`, `core/manteniment_manager.py`, `core/db.py`, `core/alerts.py`, `app.py`):
-  - **Estructura de dades**: Camps normalitzats `idManteniment`, `dataAlta` (data de generació), `dataManteniment` (data prevista de la tasca en format `DD/MM/YYYY`), `feina` (feina concreta a realitzar), `tipus` (`Reparació`, `Manteniment`, `Feina casa`, `Altres`), `alertaA` (membre familiar destinatari de l'alerta o "Tota la família"), `acompliment` (`Sí` / `No`) i `observacions` (detalls addicionals opcionals).
-  - **Format de data català/europeu (`DD/MM/YYYY`)**: Tots els components `st.date_input` del mòdul incorporen explícitament `format="DD/MM/YYYY"`, presentant visualment les dates com a `DD/MM/YYYY` (ex: `19/10/2026`) en lloc del format anglosaxó `YYYY/MM/DD`.
-  - **Camp específic de Feina Concreta i Tipus Feina**: S'ha reanomenat l'etiqueta a "Tipus Feina *" i s'ha col·locat el camp "Feina concreta *" immediatament a sota. A més, incorpora un catàleg d'opcions ràpides habituals de la llar ("Canvi llençols", "Neteja general", "Netejar banys", "Netejar cuina a fons", "Netejar vidres", "Passar aspirador i fregar", "Purgar radiadors", etc.) combinat amb un camp de text lliure per escriure qualsevol altra feina personalitzada.
-  - **Arquitectura dual Cloud / Local (Supabase ID 8)**: Sincronització automàtica a Supabase (`app_config` ID 8) amb rèplica i fallback en fitxer JSON local (`data/registre_manteniment.json`) i exportació a CSV (`csv/manteniment.csv`).
-  - **Formulari d'entrada ràpida (a dalt)**: Disseny net i intuïtiu al capdamunt per registrar noves actuacions de la llar amb selector de data prevista, tipus, membre familiar a alertar, estat d'acompliment inicial, observacions detallades i casella de verificació per sincronitzar directament amb el Calendari de la Llar.
-  - **Llistat i gestió de la Base de Dades (a sota)**:
-    - **Targetes KPI**: Recompte de total actuacions, pendents d'execució, acomplertes i tasques vençudes / previstes per a avui.
-    - **Filtres interactius**: Cerca per text lliure (cerca tant a feina concreta com a observacions, tipus o persona), filtre per estat (Totes, Pendents, Acomplertes), filtre per tipus i filtre per membre assignat.
-    - **Doble visualització**: Commutador entre vista de targetes interactives (amb botó d'un sol clic per marcar com a feta/pendent, botó d'edició i eliminació) i taula de dades tabular neta.
-    - **Edició i eliminació mitjançant diàlegs modals**: Modals `@st.dialog` per modificar qualsevol dada d'una tasca o confirmar la seva supressió.
-    - **Descàrrega CSV**: Botó directe per exportar l'històric complet de manteniment a format CSV.
-  - **Sincronització automàtica amb el Calendari Familiar**: En activar la casella o crear tasques amb data prevista, s'afegeix automàticament un esdeveniment a l'agenda (`core/calendar_manager.py`) sota la categoria "Llar" amb l'etiqueta `#idManteniment`.
-  - **Integració amb el Sistema Global d'Alertes (`core/alerts.py`)**: Generació dinàmica d'avisos per a la campaneta de notificacions de la barra superior (`🔔`) per a tasques no acomplertes pendents o vençudes, adreçades específicament al membre familiar assignat o a tothom.
-  - **Millores al Registre de Manteniment (Neteja de dades, Multiselecció d'Alerta i Dies d'Avís)** (`modules/manteniment.py`, `core/manteniment_manager.py`, `core/alerts.py`, `csv/manteniment.csv`):
-    - **Neteja automàtica del formulari després de desar**: S'ha implementat un comptador de versió dinàmic (`mant_form_count`) a la clau del formulari (`form_alta_tasca_manteniment_{count}`) que s'incrementa un cop desada la tasca. Això garanteix que Streamlit reinicialitzi de zero tots els camps i controls d'entrada després de desar una tasca satisfactòriament, sense arrossegar seleccions anteriors.
-    - **Multiselecció de membres per rebre l'alerta (`alertaA`)**: S'ha convertit el camp d'alerta d'un selector simple a un desplegable de selecció múltiple (`st.multiselect`), permetent assignar la tasca i dirigir l'avís a un o més membres concrets de la família (ex: Enric i Isabel) o a "Tothom". S'ha adaptat el suport complet tant a l'alta com a l'edició modal, al filtratge intel·ligent per persona, a l'exportació CSV (formatat net separat per comes) i a la descripció del calendari familiar.
-    - **Camp configurable "Dies d'avís" (`diesAvis`)**: S'ha afegit un nou camp numèric que permet establir amb quants dies d'antelació a la data prevista ha de començar a mostrar-se l'alerta a la campaneta de notificacions (`🔔`).
-    - **Integració de `diesAvis` a les alertes globals (`core/alerts.py`)**: El motor d'alertes calcula `delta <= diesAvis` (en comptes d'un valor rígid de 2 dies), activant l'avís de manteniment pendent exactament en el període configurat per a cada tasca i indicant els membres assignats.
-    - **Actualització del CSV i vistes de taula/targetes**: El fitxer `csv/manteniment.csv` i la taula de dades incorporen la columna `diesAvis` i el format multiselecció per a `alertaA`, mentre que a la vista de targetes interactives es mostra l'etiqueta d'avís `🔔 Avís: Xd abans` juntament amb el llistat complet de persones alertades.
-  - **21/10/2026: Desacoblament de l'Enter als diàlegs modals d'edició (`modules/manteniment.py`)**:
-    - S'ha eliminat l'embolcall `st.form` dels diàlegs modals (`edit_task_dialog`, `edit_manual_dialog`, `edit_garantia_dialog`), utilitzant la gestió d'estat aïllada nativa de `@st.dialog`.
-    - D'aquesta manera, prémer la tecla `Intro` / `Enter` en qualsevol camp numèric (com `diesAvis`) o de text ja no desencadena l'enviament ni el tancament involuntari del formulari HTML. Els canvis només es desen quan l'usuari fa clic explícitament al botó "💾 Desar canvis". S'ha afegit també un botó explícit de "Cancel·lar".
-  - **21/10/2026: Generació d'Esdeveniments Periòdics i Repetitius a Manteniment (`modules/manteniment.py`, `core/manteniment_manager.py`, `csv/manteniment.csv`)**:
-    - **Selector de periodicitat**: Al formulari d'alta s'ha incorporat el bloc interactiu "🔄 Repetició / Periodicitat de la Tasca" amb múltiples opcions: `Puntual (una sola vegada)`, `Cada dia`, `Cada setmana`, `Cada 2 setmanes (quinzenal)`, `Cada mes`, `Cada 2 mesos`, `Cada 3 mesos (trimestral)`, `Cada 6 mesos (semestral)`, `Cada any` o `Personalitzat...` (interval numèric configurable en dies, setmanes, mesos o anys).
-    - **Límit configurable**: Opció de limitar la generació per **nombre de vegades** (ex: 4 ocurrències, 12 vegades) o **fins a una data límit** determinada.
-    - **Previsualització dinàmica en temps real**: Mostra immediatament un missatge informatiu amb les dates exactes que es generaran abans de desar.
-    - **Generació en sèrie (`add_manteniment_tasks_batch`)**: Crea totes les tasques individuals programades amb el seu propi ID, data prevista i estat (`Pendent`), vinculades a un identificador de sèrie (`serie_id`) i amb l'etiqueta descriptiva (`🔁 Freqüència (X/N)`).
-    - **Sincronització amb l'Agenda Familiar**: Si la casella de calendari està activada, cada ocurrència genera el seu propi esdeveniment a l'agenda a la data corresponent, amb notificació i assignació personalitzada.
-    - **Visualització i exportació**: La columna `recurrencia` s'ha afegit a la base de dades, a `csv/manteniment.csv` i a la taula interactiva, mentre que a les targetes es mostra la insígnia lila `🔁 Periodicitat (X/N)` i al modal d'edició s'informa de la sèrie a la qual pertany.
-    - **Modificació de la configuració de repeticions a l'edició (`edit_task_dialog`)**: El diàleg modal d'edició permet ara canviar la periodicitat d'una tasca existent (convertir una tasca puntual en periòdica, canviar la freqüència d'una sèrie existent o desvincular-la a puntual). Amb l'opció `🔄 Actualitzar i regenerar les properes tasques d'aquesta sèrie`, el sistema reajusta i regenera automàticament les futures tasques pendents de la sèrie i els seus esdeveniments de calendari, preservant sempre l'històric de tasques ja acomplertes.
-  - **21/10/2026: Subtasques amb Cadència Pròpia i Rutina de Generació per al Proper Any (`modules/manteniment.py`, `core/manteniment_manager.py`, `csv/manteniment.csv`)**:
-    - **Subtasques amb cadència pròpia dins d'una tasca (`subtasques_template` / `subtasques`)**:
-      - Permet afegir una o múltiples subtasques dins de qualsevol tasca de manteniment, cadascuna amb la seva periodicitat específica (`A cada repetició`, `Cada 6 mesos`, `Cada 3 mesos`, `Cada 2 mesos`, `Cada any`, `Cada 2, 3, 4 repeticions` o `Cada N repeticions personalitzat`).
-      - *Exemple resolt*: Es crea la tasca principal "Canvi de llençols" amb repetició cada 15 dies, i s'hi afegeix la subtasca "Rentar protector de llençols" cada 6 mesos (o cada 12 cicles). El motor distribueix la subtasca únicament en les ocurrències que compleixen el cicle semestral, evitant crear tasques principals duplicades.
-      - **Checklist interactiu a les targetes**: A la vista de targetes de manteniment, cada subtasca activa disposa d'un checkbox propi per marcar-la com a completada (`fet: True`) amb recompte visual de progrés (`📋 Subtasques (1/2 completades)`).
-      - **Sincronització intel·ligent**: Si es marca com a feta la tasca principal, totes les subtasques es marquen com a fetes automàticament; i si es completen totes les subtasques, es commuta la tasca principal a feta.
-      - **Suport complet a l'alta, edició i persistència**: Els formularis d'alta i d'edició modal inclouen el gestor visual de subtasques (amb opcions d'afegir i esborrar amb paperera `🗑️`), persistint a Supabase, JSON i al fitxer `csv/manteniment.csv`.
-    - **Rutina interactiva per afegir tasques del proper any (`show_generar_any_manteniment_dialog`)**:
-      - Botó destacat `📅 Generar Tasques Proper Any` a la part superior del Registre de Manteniment.
-      - Segueix el mateix patró UX que "Afegir nou any comptable" de Mòdul Econòmic (`modules/economic.py`):
-        - Selector interactiu de l'any objectiu (proposa automàticament el proper any no registrat).
-        - Extracció intel·ligent de les plantilles periòdiques actives del registre (`get_recurring_task_templates`), combinades amb les recomanacions habituals de la llar (canvi llençols amb subtasques, neteja general, filtres d'aire condicionat, purga de radiadors, pressió de caldera, descalcificacions, neteja de vidres).
-        - Proposta interactiva amb casella de verificació (`[x] Activa per generar l'any XXXX`), camps editables per a cadascuna (feina concreta, tipus, periodicitat, data d'inici dins de l'any, alerta a membres i dies d'avís) i resum de les subtasques associades.
-        - Càlcul i previsualització de dates al llarg de tot l'any de gener a desembre (`compute_recurring_dates_for_year`).
-        - Recompte total d'esdeveniments que es crearan, sincronització automàtica amb l'Agenda de la Llar i creació en bloc amb un sol clic.
-    - **Límit automàtic "Fins a final d'any" per a repeticions (`modules/manteniment.py`)**:
-      - Tant a l'alta com a l'edició de tasques de manteniment, s'afegeix l'opció directa `"Fins a final d'any (31/12)"` que programa exactament totes les ocurrències fins al 31 de desembre de l'any en curs.
-      - Al mode "Per nombre de vegades", el camp "Nombre total de vegades a generar" té com a màxim estricte (`max_value`) el nombre d'ocurrències restants fins a final d'any, acompanyat d'un missatge explicatiu de quantes vegades hi caben com a màxim, garantint la planificació any per any.
-    - **Sincronització amb l'Agenda i opció al menú superior (`app.py`, `modules/manteniment.py`, `core/calendar_manager.py`, `core/manteniment_manager.py`)**:
-      - S'ha afegit al menú superior desplegable `Mòduls > Manteniment de la llar` la línia separadora i l'opció directa `📅 Generar tasques proper any` (exactament igual que a Mòdul Econòmic).
-      - Resolució del mapeig de camps de l'Agenda: Ara les tasques de manteniment sincronitzades guarden canònicament `start_date`, `date`, `start_time`, `time`, `member` i `assigned_to`, normalitzant automàticament qualsevol esdeveniment anterior perquè aparegui a la graella mensual i a la consulta del dia.
-      - Navegació interactiva "📅 Veure a l'Agenda": Si una tasca està sincronitzada, el botó de la targeta permet obrir directament el mòdul Agenda posicionat al mes i dia exacte de la tasca.
-      - Neteja visual del formulari: S'ha eliminat el botó duplicat de la capçalera de la pestanya per evitar sobrecàrrega visual (especialment a dispositius mòbils), centralitzant l'accés a `📅 Generar tasques proper any` exclusivament des del menú superior desplegable `Mòduls > Manteniment de la llar`.
-- **22/10/2026: Mòdul Cotxe - Neteja de formularis i Nova Secció "Control de Nivells" (`modules/cotxe.py`)**:
-  - **Neteja de formulari en desar**: S'ha afegit la reinicialització automàtica del formulari de planificacions mitjançant un comptador de versió d'estat de sessió (`plan_form_counter`), evitant que quedin valors residuals després de desar satisfactòriament una nova planificació.
-  - **Nova Secció independent "Control de Nivells"**:
-    - Dins de la pestanya de manteniment del vehicle, s'ha creat una secció pròpia i separada de l'inflat de rodes per gestionar la revisió periòdica dels líquids de l'automòbil (oli motor, líquid refrigerant, líquid de frens i líquid eixugaparabrises).
-    - Permet establir planificacions per km i per dies/mesos amb càlcul automàtic de venciment restant, alertes a la campaneta de notificacions (`🔔`), formulari d'alta d'intervencions amb neteja automàtica, taula històrica de revisions i gestió d'eliminació i edició.
-- **22/10/2026: Mòdul Agenda / Calendari Familiar - Desduplicació, filtres i gestió d'estats (`modules/calendari.py`, `core/calendar_manager.py`)**:
-  - **Filtre estricte per període a la vista llista/agenda**: Resolució de l'error on en consultar un mes concret (ex. octubre 2026) es llistaven esdeveniments d'anys anteriors. S'ha blindat el filtratge a `expand_recurring_events` i a la vista Agenda per comparar estrictament l'any i mes seleccionats (`cur_year`, `cur_month`).
-  - **Desduplicació intel·ligent d'esdeveniments i excepcions iCal**: Implementació de `deduplicate_events` a `core/calendar_manager.py` per suprimir esdeveniments repetits generats per sincronitzacions concurrents de múltiples feeds de Google Calendar o recurrències creuades. Gestiona canònicament els camps `RECURRENCE-ID`, preservant les modificacions d'instàncies particulars sobre la sèrie general.
-  - **Neteja del filtre de membres**: Eliminació de l'opció redundant "Tota la família" al desplegable de filtres per deixar únicament "Tots" i els noms individuals de cada membre de la llar.
-  - **Ordenació cronològica per hora**: Funció `sort_events_by_time` que organitza els esdeveniments de cada dia prioritzant els esdeveniments amb hora concreta (ordenats de 00:00 a 23:59) i situant els esdeveniments de tot el dia al final.
-  - **Selecció interactiva i consulta de qualsevol dia des de la graella**: En fer clic sobre qualsevol casella de la graella mensual del calendari, la secció inferior "Consulta i Gestió del Dia" s'actualitza a l'instant mostrant el dia triat, els seus esdeveniments i el formulari per afegir noves tasques per a aquella data.
-  - **Preservació de sessió i autenticació (`auth=<token>`)**: S'ha assegurat que els enllaços interns dels dies a la graella conserven tots els paràmetres de consulta (com `auth`, `device`, `mod`, etc.), eliminant la caiguda a la pantalla de contrasenya en fer clic a un dia diferent d'avui.
-- **22/10/2026: Mòdul Agenda - Control d'Acompliment (Fet / No Fet), Coloració i Disseny Mòbil en 1 Línia (`modules/calendari.py`, `core/calendar_manager.py`)**:
-  - **Icones d'estat de les activitats (Fet / No Fet)**:
-    - Cada esdeveniment disposa de dos botons interactius: **Check verd (`✅` / `✔️`)** per marcar com a completada la tasca, i **Creu vermella (`❌` / `✖️`)** per marcar com a no feta o cancel·lada (amb possibilitat de desmarcar per retornar a pendent).
-  - **Visualització i feedback immediat d'estat**:
-    - **Títol de l'esdeveniment**: Afegeix automàticament el prefix `✅ ` (i es pinta en verd maragda `#10b981` amb la insígnia `FET`) o el prefix `❌ ` (i es ratlla en vermell `#ef4444` amb la insígnia `NO FET`).
-    - **Xips de la graella mensual**: Incorporen el prefix `✅`/`❌` i la vora/fons verd o vermell corresponent.
-    - **Coloració vibrant dels botons**: Els botons actius s'omplen d'un fons sòlid amb relleu lluminós: verd maragda (`#10b981`) per al check i vermell viu (`#ef4444`) per a la creu.
-  - **Disseny mòbil compacte en 1 sola línia horitzontal**:
-    - S'han implementat regles CSS flexbox amb `:has(.cal-action-btn)` (`flex-wrap: nowrap !important; min-width: 0 !important;`) perquè els 5 botons d'acció (`✔️`/`✅`, `✖️`/`❌`, `✏️`, `🗑️`, `📅 GCal`) es mantinguin **sempre en una sola fila horitzontal**, eliminant l'apilament vertical en 5 files gegants que patia la versió mòbil de Streamlit.
-  - **Persistència centralitzada a Supabase (`app_config` ID 3)**:
-    - Resolució del cicle de càrrega a `core/calendar_manager.py` aplicant el mapa d'estats (`status_map`) després de l'expansió de recurrències i de la desduplicació.
-    - Suport de persistència per clau triple: ID de l'esdeveniment, UID d'iCal i títol normalitzat (`clean_title_for_dedup`), garantint que tant els esdeveniments locals com els de Google Calendar mantenen el seu estat entre sessions i dispositius.
+### 6.2 Agenda i Calendari Familiar (`modules/calendari.py`, `core/calendar_manager.py`)
 
-- **23/10/2026: Creació del nou Mòdul '💡 Llum i Aigua' i integració a la Pantalla d'Inici (`modules/llum_aigua.py`, `core/llum_manager.py`, `core/aigua_manager.py`, `app.py`)**:
-  - **Substitució de la icona a la pantalla d'inici**: S'ha eliminat la icona de jocs de la pantalla d'inici i s'ha integrat la nova icona de la **bombeta** a les imatges del logotip horitzontal i vertical (`logo xiquiHouse ampliat.png` i `logo xiquiHouse vertical.png`), creant el nou node d'accés interactiu per al mòdul **Llum i Aigua** (`modules.llum_aigua`).
-  - **Mòdul '💡 Llum i Aigua' amb dues pestanyes especialitzades**:
-    1. **⚡ Consum Llum**:
-       - *Preu PVPC / Bo Social en directe*: Webscraping automatitzat a `tarifaluzhora.es` amb fallback a l'API oficial de Red Eléctrica (`apidatos.ree.es`). Mètriques KPI d'hora actual, preu mig, hora més barata i hora més cara.
-       - *Optimitzador d'Acumuladors de Calor*: Càlcul de la millor finestra contínua per a la càrrega nocturna d'acumuladors, aprofitant la potència contractada de **5,5 kW a la nit (00:00 - 08:00 h, tram Vall)** i **4,4 kW de dia (Pla/Punta)**.
-       - *Gràfic horari de 24 hores (Plotly)* acolorint cada hora segons el seu tram i ressaltant la finestra de càrrega.
-       - *Registre de Factures Elèctriques*: Càrrega de consums per tram (Punta, Pla, Vall), imports, potències i arxivament de PDFs a `PDF/Factures_Llum/` amb visor natiu PDF.js, KPIs i gràfics apilats.
-    2. **💧 Consum Aigua**:
-       - *Registre de Factures d'Aigua*: Períodes de facturació, lectures anteriors i actuals de comptador, consum en m³, imports i arxivament de factures a `PDF/Factures_Aigua/` amb visor PDF.js.
-       - *KPIs i Gràfics Històrics*: Evolució del consum d'aigua en m³ i cost per factura.
-  - **Persistència Híbrida Cloud / Local**: Sincronització automàtica a Supabase `app_config` (ID 9 per a llum i ID 10 per a aigua) amb còpies de seguretat locals a `data/` i `csv/`.
-  - **Preus de la llum en directe (PVPC / Tarifa Regulada - Bo Social)**:
-    - Motor d'extracció automatitzat a `core/llum_manager.py` que obté els preus per hores mitjançant *web scraping* a `tarifaluzhora.es` amb canal de contingència (*fallback*) a l'API oficial de Red Eléctrica de España (`apidatos.ree.es`).
-    - 4 Targetes KPI en temps real: preu hora actual amb badge de tram horari (🟢 Vall, 🟡 Pla, 🔴 Punta), preu mitjà del dia, hora més barata i hora més cara.
-    - Gràfic horari complet de 24 hores (Plotly) amb barres acolorides segons el tram de discriminació horària 2.0TD i línia de preu mitjà.
-  - **Optimitzador de Càrrega d'Acumuladors de Calor**:
-    - Algoritme especialitzat que calcula la finestra horària contínua més econòmica del dia/nit per programar la càrrega dels acumuladors.
-    - Adaptat als paràmetres de la llar: potència contractada de **5,5 kW a la nit (00:00 - 08:00 h, tram Vall)** i **4,4 kW de dia (Pla/Punta)**, evitant sobrecàrregues i calculant el percentatge d'estalvi assolit enfront de la mitjana diària.
-  - **Registre de Factures Elèctriques i Consums per Tram**:
-    - Formulari per registrar factures amb dates de període, import total (€), consums en kWh per tram (Punta P1, Pla P2, Vall P3) amb suma automàtica, potències contractades (4,4 kW dia / 5,5 kW nit per defecte) i càrrega de documents en PDF (desats a `PDF/Factures_Llum/`).
-    - Taula històrica de factures amb accions d'edició (`✏️`), eliminació (`🗑️`), descàrrega (`📥`) i visualització completa en PDF integrat (`👁️`) reutilitzant el visor basat en PDF.js.
-    - Mètriques globals i gràfic d'evolució històrica mensual de consums per tram (barres apilades) i evolució del cost total (€).
-  - **Persistència Híbrida Cloud / Local**: Sincronització automàtica a Supabase (`app_config` ID 9) amb rèplica local a `data/consum_llum.json` i exportació a `csv/consum_llum.csv`.
+#### A. Vistes del Calendari
+- **Vista Graella Mensual (Estil Google Calendar)**: Graella interactiva responsive amb colors per membre familiar i categoria, comptadors diaris i navegació fluida.
+- **Vista Llista / Agenda**: Llistat cronològic estricte del període seleccionat.
+- **Consulta i Gestió del Dia**: En fer clic a qualsevol dia de la graella, es mostren a sota tots els esdeveniments d'aquell dia amb accions completes i formulari directe per afegir noves tasques.
 
-- **24/10/2026: Pla d'Optimització de Rendiment: Finestra Activa de 30 dies + Històric (`core/db.py`, `core/alerts.py`, `app.py`, `modules/economic.py`)**:
-  - **Model Dual Actiu / Històric per a Despeses i CompresSuper**: Segmentació intel·ligent de les dues taules massives (+15.000 files). L'arxiu històric de mesos vençuts es llegeix en 0,04 s amb memòria cau de 24 hores, mentre que la finestra activa dels últims 30 dies es recupera de Supabase en només 0,15 s en una sola petició HTTP, reduint el temps de bloqueig de 20 segons a menys d'1 segon.
-  - **Supressió d'invalidacions massives de memòria cau**: Eliminades les crides destructives a `st.cache_data.clear()` en desar o editar registres, substituint-les per actualitzacions immediates a `st.session_state` i buidat quirúrgic de la finestra recent. Desar una despesa o compra ara triga menys de 0,1 segons.
-  - **Acceleració de la Capçalera Global**: Afegida memòria cau temporal de 60 segons a `get_global_alerts()` a `app.py` i reutilització directa dels DataFrames en sessió a `core/alerts.py`, eliminant el bloqueig a cada canvi de pestanya o clic d'usuari.
-  - **Càrrega Mandrosa (*Lazy Loading*) per Mòdul**: Ajustat `table_requirements` a `core/db.py` perquè mòduls com Menús, Medicació, Manteniment o Llum no sol·licitin taules comptables innecessàries.
+#### B. Control d'Acompliment (Fet / No Fet)
+- Cada esdeveniment disposa de dos botons interactius:
+  - **Check verd (`✅`)**: Marca com a feta la tasca (il·luminació verda maragda `#10b981`, prefix `✅ ` al títol i insígnia `FET`).
+  - **Creu vermella (`❌`)**: Marca com a no feta o cancel·lada (il·luminació vermella `#ef4444`, prefix `❌ ` i text ratllat).
+- Persistència a Supabase `app_config` ID 3 amb clau triple (ID esdeveniment, UID iCal i títol normalitzat).
 
-- **24/10/2026: Correcció i Recàlcul Bidireccional de Descomptes a Compres Super (`modules/compres.py`)**:
-  - **Model Matemàtic de Preu Final Fix ($PF = B \times (1 - d)$)**: Implementada l'enginyeria inversa de descomptes a la introducció manual de línies de tiquet. En introduir un percentatge (`%`), el sistema augmenta automàticament el `PREU UNIT.` a la base abans de descompte ($B = \frac{PF}{1 - d}$) i assigna l'estalvi a `PROMOCIÓ`, mantenint sempre el `TOTAL LÍNIA` invariable i fidel al tiquet de caixa.
-  - **Reactivitat en Temps Real i Càlcul Invers**: Afegits gestors `on_change` a `QUANTITAT` i `PREU UNIT.` per mantenir les promocions al dia en modificar quantitats, i càlcul invers automàtic del `%` quan s'introdueix la promoció directament en euros.
-  - **Recuperació en Edició**: En prémer el botó ✏️ d'una línia existent, el percentatge es calcula i es presenta al formulari sense reiniciar-se a zero.
+#### C. Sincronització iCal Bidireccional i Desduplicació
+- Connexió amb feeds de Google Calendar personals.
+- Algoritme `deduplicate_events` per evitar duplicats per concurrència i gestió canònica d'excepcions de recurrències (`RECURRENCE-ID`).
 
-- **24/10/2026: Millores, Optimització d'Acumuladors i Nova Pestanya "☀️ Estudi Solar" al Mòdul Llum i Aigua (`modules/llum_aigua.py`, `core/llum_manager.py`, `data/acumuladors_config.json`)**:
-  - **Simplificació i Neteja d'Accions a les Factures**:
-    - Suprimits els botons redundants de `Baixar`, `Editar` i `Esborrar` a les targetes de factures.
-    - Mantingut exclusivament el botó principal `👁️ Veure`, que obre el diàleg interactiu amb visor basat en PDF.js (el qual ja incorpora la descàrrega nativa del document PDF).
-    - Eliminada la línia secundària repetitiva de la comercialitzadora ("Energia XXI...") per oferir una interfície més neta i compacta.
-  - **Botó Directe de "Nova factura llum" amb Ingestor PDF**:
-    - Substitució del formulari desplegat per un botó d'alta ràpida amb selector de fitxers PDF (`st.file_uploader`).
-    - Motor d'extracció automàtica per OCR/Regex que recupera directament el número de factura, període de facturació, imports i consums per tram (P1, P2, P3), arxivant el PDF automàticament a `PDF/Factures_Llum/` i registrant les dades a Supabase (ID 9).
-  - **Refinament del Gràfic Històric Mensual de Barres**:
-    - Suprimits els marcadors i targetes globals de consum que sobrecarregaven la visualització.
-    - Inclusió del preu total (€) en format negreta a cada barra mensual, posicionat de forma neta estrictament per sobre de les barres apilades (a la cota `y = kwhTotal`), eliminant completament el solapament visual del text sobre els colors dels trams.
-  - **Doble Optimitzador Independent d'Acumuladors de Calor amb Persistència (`data/acumuladors_config.json`)**:
-    - Desdoblament dels dos acumuladors en targetes i controls individuals de planificació:
-      * **Acumulador Menjador (4.000 W)**: Finestra recomanada nocturna (00:00 - 08:00 h, tram Vall) per aprofitar la potència contractada de 5,5 kW.
-      * **Acumulador Passadís 2a Planta (2.000 W)**: Finestra recomanada a la vall solar / migdia (11:00 - 19:00 h) per aprofitar la potència de 4,4 kW sense sobrepassar el límit d'ICP.
-    - Selector numèric d'hores necessàries independent per a cadascun, amb persistència automàtica en memòria i a disc a `data/acumuladors_config.json`.
-    - Duplicació de les targetes de finestra recomanada (una per cada acumulador) i ressaltat diferenciat al gràfic horari de 24 hores (vora daurada per al de 4000W i vora blava per al de 2000W).
-    - Desplegament de la Guia Estratègica i reflexions a l'ample complet sense quedar tapada ni comprimida per les targetes de recomanació.
-  - **Ingesta Massiva de l'Històric de Factures (44 factures reals)**:
-    - Processament, extracció i arxivament de 44 factures elèctriques en PDF (`PDF/Factures_Llum/`) cobrint els anys 2023, 2024, 2025 i 2026.
-    - Consolidació de 5.661 kWh de consum anual real i 1.676,94 € registrats a Supabase ID 9, `data/consum_llum.json` i `csv/consum_llum.csv`.
-  - **Nova Pestanya "☀️ Estudi Solar"**:
-    - Integració d'un model de radiació solar basat en dades oficials de PVGIS per a la localització geogràfica d'Arbúcies (La Selva, Girona), aplicant les HSP (Hores de Sol Pic) mensuals reals.
-    - Simulador interactiu d'autoconsum fotovoltaic amb controls dinàmics:
-      * De 6 a 20 plaques solars (mòduls monocristal·lins de 450W).
-      * Orientació de la coberta: 29° Nord-Est (teulada actual), Est-Oest a doble vessant o Sud òptim.
-      * Emmagatzematge en bateries de liti: 0, 5, 10 o 15 kWh.
-      * Commutació de derivació d'excedents a acumuladors tèrmics existents (6.000 W totals).
-    - Contrast matemàtic en temps real de la producció solar mensual generada enfront del consum elèctric real històric de les factures (5.661 kWh/any).
-    - Anàlisi econòmica i jurídica detallada sobre la realitat del Bo Social: descompte vigent del 80% (consumidor vulnerable sever) enfront dels límits de compensació d'excedents de l'article 14 del RD 244/2019 (on els excedents només compensen fins al valor de l'energia de la factura, sense reduir el terme fix de potència ni el Bo Social).
-    - Comparador exhaustiu de pressupost "Clau en mà" (instal·lació integral homologada amb deducció del 40% d'IRPF i bonificació d'IBI) vs modalitat "Mixta / DIY" (compra directa de materials i connexió per instal·lador certificat).
-    - Guia de seguretat i muntatge per a cobertes de teula corba: ancoratge estructural a bigues / corretges i ganxos salva-teules sense perforació directa.
+#### D. Disseny Compacte en 1 Sola Línia Horitzontal per a Mòbils
+- Regles CSS flexbox amb `:has(.cal-action-btn)` que mantenen els 5 botons d'acció (`✔️`/`✅`, `✖️`/`❌`, `✏️`, `🗑️`, `📅 GCal`) en una sola fila horitzontal, eliminant l'apilament vertical en telèfons intel·ligents.
 
-- **25/10/2026: Seccions Col·lapsables al Mòdul Cotxe/Manteniment (`modules/cotxe.py`)**:
-  - **Interfície Modular i Compacta**: S'han transformat totes les seccions de la pestanya *Manteniment* (`🛢️ Canvi d'Oli`, `🛞 Canvi de Rodes`, `💨 Inflat de Rodes (Pressió)`, `🧪 Control de Nivells`, `🛠️ Taller i Avaries`, i `📋 Històric de Manteniment i Taller`) en blocs col·lapsables independents (`st.expander`) plegats per defecte. Això evita l'excés de scroll vertical i permet a l'usuari visualitzar i interactuar exclusivament amb la secció que necessiti.
-  - **Badges Informatius als Títols**: Cadascun dels encapçalaments col·lapsables incorpora les mètriques i dades clau en temps real (km restants per a oli i rodes, propera data d'inflat i revisió de líquids, avisos de reparacions en taller o recompte de registres a l'històric), oferint una diagnosi immediata de l'estat del vehicle d'un sol cop d'ull sense haver d'obrir els blocs.
-  - **Control Global de Desplegament**: Incorporat un selector superior (*"Desplegar totes les seccions"*) per obrir o tancar simultàniament tots els blocs amb un sol clic.
-  - **Auto-obertura en Mode Edició**: Quan l'usuari interactua o modifica una planificació en línia (per exemple un viatge d'inflat o un control de líquids), la secció corresponent es manté automàticament expandida per no interrompre el flux de treball.
+---
 
-- **25/10/2026: Modernització i Restauració de l'Escaneig Directe 1-Clic (`scanner.py`, `scan_winrt.ps1`, `auto_scan_ui.py`)**:
-  - **Nou Motor Modern WinRT (`Windows.Devices.Scanners`)**: Superada la fallada de la llibreria clàssica WIA COM (que provocava un bloqueig d'arxiu temporal `ERROR_SHARING_VIOLATION` / `0x80030070` a `wiaservc.dll`). S'ha implementat el pont natiu `scan_winrt.ps1` que es comunica amb la mateixa API moderna UWP/WinRT que utilitza l'aplicació oficial d'Escàner de Windows.
-  - **Flux Directe 1-Clic Restablert**: S'ha retornat a la interfície d'un sol clic amb el botó principal `🖨️ Escanejar Tiquet`. L'usuari simplement prem el botó, l'escàner físic HP Scanjet G3110 digitalitza el document i el programa el desa automàticament a `tickets/ticket_<super>_<date>.jpg` convertit en JPEG d'alta resolució, sense haver d'obrir programes externs ni fer cap pas manual.
+### 6.3 Control de Medicació (`modules/medicacio.py`)
+- Pautes mèdiques de cada membre familiar i tutelats.
+- Vista de preses d'avui i supervisió d'horaris.
+- Gestió de la farmaciola de la llar amb sincronització a Supabase `app_config` ID 5.
 
-> [!IMPORTANT]
-> **Estructura de Desat (Local i Núvol)**
-> Tot el codi i disseny que genera el sistema es desen primer de tot en **local** (al PC físic del client), i l'assistent s'encarrega d'enviar-ho seguidament i de manera obligatòria al repositori del núvol de **GitHub**. D'aquesta manera, l'usuari sempre té la còpia de seguretat original de tot el programa als seus discos, però gaudeix de les actualitzacions web al moment gràcies a l'enllaç de GitHub amb Streamlit Cloud.
+---
 
+### 6.4 Seguretat i Domòtica (`modules/seguretat.py`, `modules/domotica.py`)
+- `modules/seguretat.py`: Estat de càmeres, accessos i alarmes de la llar.
+- `modules/domotica.py`: Integració amb instàncies locals de Home Assistant, llums i sensors.
+
+---
+
+## 7. Mòduls de Prioritat 5: Administració, Nucli i Serveis Transversals
+
+### 7.1 Configuració Global (`modules/admin.py`, `core/config_manager.py`)
+- `👤 Administrador`: Dades de contacte, avatar i PIN mestre.
+- `🏷️ Títol de la casa`: Personalització de text, colors i mida de la capçalera d'inici.
+- `👨‍👩‍👧‍👦 Família`: Membres de la llar amb data de naixement europea (`DD/MM/AAAA`), edat automàtica, telèfon mòbil, al·lèrgies mèdiques, vetos personals, plats comodí favorits i commutador de presència (`🟢 Present` vs `⚪ Fora`). Neteja d'estat de sessió (`f_`) en desar per forçar la lectura neta des de `core/config.json`.
+- `🍳 Aparells i Eines de Cuina`: Selector visual del catàleg d'estris de cuina de la llar amb miniatures homogènies i ampliació modal interactiva.
+- `🤝 Tutelats`, `🏦 Bancs`, `🎨 Aspecte i Tema`, `🔘 Icones d'inici`, `🌐 Idiomes`.
+
+---
+
+### 7.2 Laboratori IA - Harness (`core/harness.py`)
+- **Dataset mestre**: Bateria de casos de prova exhaustius a `data/harness_menu_cases.json` per avaluar l'adherència del model d'IA a les regles de la llar.
+- **Execució Asíncrona en Segon Pla**: Llançament de proves sense bloquejar la interfície d'usuari, monitorant el progrés a `data/harness_status.json`.
+- **Avaluadors deterministes**: Tolerància 0 a al·lèrgens (amb filtre previ de termes segurs com `sense lactosa` o `apte per a celíacs` per evitar falsos positius), verificació de plats alternatius per vetos, control d'hidrats consecutius i compliment d'aparells disponibles.
+- **Exportació d'informes en format Text (.txt)**.
+- **Models recomanats**: `gemini-2.5-flash`, `gemini-3.8-flash`.
+
+---
+
+### 7.3 Gestió de Bases de Dades i Sincronització Offline (`modules/bases_dades.py`, `modules/sincronitzacio.py`)
+- **Gestor de Bases de Dades (`modules/bases_dades.py`)**: Accessible des del menú superior, permet visualitzar i editar en temps real (inserir, modificar i esborrar) totes les taules de Supabase mitjançant `st.data_editor`, amb ordenació cronològica real per data i clau primària.
+- **Consolidar Dades Offline (`modules/sincronitzacio.py`)**: Visualitza i sincronitza en bloc a Supabase les mutacions retingudes a la cua `sync_queue.json` durant caigudes d'internet.
+
+---
+
+### 7.4 Sistema Global d'Alertes (`core/alerts.py`)
+- **Campaneta de Notificacions Global (`🔔`)**: Ubicada permanentment a la barra superior desplegable i a la pantalla d'inici amb recompte en temps real.
+- **Alertes monitorades**:
+  - Tiquets de compra pendents de desglossar (`ticketPendent = True`).
+  - Tasques de manteniment de la llar pendents o vençudes amb `diesAvis` configurables i assignació a membres.
+  - Canvis d'oli, revisió de rodes, nivells de líquids i ITV del vehicle.
+  - Venciment de garanties de productes de la llar (avís previ a 60 dies).
+  - Avisos familiars i administratius.
+- **Optimització**: Memòria cau temporal de 60 segons a `app.py` i reutilització directa dels DataFrames actius de la sessió.
+
+---
+
+### 7.5 Impressora de Tiquets (`modules/impressora.py`)
+- Suport per a impressores de tiquets de compra (rotlles de 76mm o 80mm).
+- Suport dual d'impressió:
+  - **RAW ESC/POS en local**: Impressió directa amb comandament de tall automàtic de paper (`\x1dV\x00`) i salts de línia de marge de seguretat entre el capçal i la guillotina.
+  - **Impressió web neta**: Compatible amb Streamlit Cloud mitjançant `window.print()` estilitzat.
+- Integració directa al desplegable de cada supermercat a la Llista de la Compra.
+
+---
+
+## 8. Annex: Historial de Canvis Recents Consolidat
+
+| Data | Mòdul Afectat | Descripció del Canvi Consolidat |
+|:---|:---|:---|
+| **26/10/2026** | **Llum i Aigua / Preus** | **Registre Persistent de Preus Horaris PVPC i Auditoria Factura**: Creat el registre diari `data/preus_llum_diaris.json` (accessible des del menú superior *Editar > 📂 Arxius JSON* sense afegir noves pestanyes), gravació automàtica continuada de les 24h de cada dia, funció de contrast de consums i auditoria completa de la factura 10-2026 (66,59 €, 449,572 kWh amb 25h de preus negatius). |
+| **25/10/2026** | **Escaneig Tiquets** | **Restauració escaneig directe 1-clic**: Nou motor natiu WinRT ([`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1)), superant l'antiga fallada de bloqueig temporal WIA (`ERROR_SHARING_VIOLATION` / `0x80030070`). Eliminats botons secundaris a [`auto_scan_ui.py`](file:///e:/Dashboard/auto_scan_ui.py) deixant només `🖨️ Escanejar Tiquet`. |
+| **25/10/2026** | **Cotxe / Manteniment** | **Seccions Col·lapsables**: Totes les seccions de la pestanya *Manteniment* transformades en blocs plegables independents (`st.expander`) amb badges informatius en temps real als encapçalaments i control de desplegament global. |
+| **24/10/2026** | **Rendiment Core** | **Pla d'optimització de 30 dies**: Finestra activa de 30 dies a Supabase + arxiu històric en CSV amb memòria cau de 24h per a taules massives. Eliminats els buidats massius de cau, passant de bloquejos de 20s a càrregues en menys d'1s. |
+| **24/10/2026** | **Compres Super** | **Model Matemàtic de Preu Final Fix ($PF = B \times (1 - d)$)**: Enginyeria inversa de promocions a la càrrega manual de línies, mantenint el Total Línia invariable i fidel al tiquet de caixa. |
+| **24/10/2026** | **Llum i Aigua** | **Estudi Solar PVGIS i Acumuladors**: Integrat simulador fotovoltaic amb dades oficials de radiació solar, desdoblament d'acumuladors tèrmics amb persistència a `data/acumuladors_config.json`, i ingesta històrica de factures elèctriques en PDF. |
+| **23/10/2026** | **Llum i Aigua** | **Creació del Mòdul '💡 Llum i Aigua'**: Preus PVPC horaris en directe, gestió de factures elèctriques i d'aigua amb visor natiu PDF.js i sincronització a Supabase IDs 9 i 10. |
+| **22/10/2026** | **Cotxe** | **Control de Nivells**: Secció independent per a la revisió de líquids del vehicle (oli, refrigerant, frens, eixugaparabrises) amb planificacions i alertes per km i temps. |
+| **22/10/2026** | **Agenda** | **Control Fet/No Fet i Mòbil 1 Línia**: Botons interactius `✅`/`❌` amb colors sòlids vibrants i regles CSS `:has(.cal-action-btn)` per mantenir les 5 accions en una sola fila horitzontal a telèfons mòbils. |
+| **21/10/2026** | **Manteniment Llar** | **Tasques Periòdiques i Subtasques**: Generació en sèrie de tasques recurrents, subtasques amb cadència pròpia i generador interactiu de tasques per al proper any al menú superior. |
+| **19/10/2026** | **Manteniment Llar** | **Gestió Documental (Manuals i Garanties)**: Dipòsit de documents PDF amb visor interactiu HTML5 Canvas (PDF.js) i semàfor de venciment de garanties. |
+| **18/10/2026** | **Econòmic / Compres** | **Navegació Nativa per Pestanyes**: Ús del paràmetre natiu `default` a `st.tabs`, creació de botons túnel bidireccionals i quantitat editable a destí per a traspassos de comptes. |
+| **17/10/2026** | **Compres Super** | **Blindatge de Dates i Suport PDF**: Sanejament de dates contra errors matricials d'OCR, bloqueig de dates futures, extracció nativa de PDFs de supermercat amb `pypdf` i nous models Gemini. |
+| **16/10/2026** | **Econòmic** | **Pagues Extres i Nou Any Comptable**: Incorporació de pagues extres i selector d'anys a 3 bandes ([any-1, any, any+1]) amb projeccions visuals. |
+| **16/10/2026** | **Impressora** | **Impressora de Tiquets**: Integració d'impressió RAW ESC/POS de llistes de compra amb tall de paper i vista d'impressió web. |
+| **18/09/2026** | **Nucli / BBDD** | **Arquitectura Offline**: Mode desconnectat amb cua local `sync_queue.json` i mòdul de consolidació de dades. |
+| **13/09/2026** | **BBDD / Interfície** | **Gestor de Bases de Dades**: Creació de `modules/bases_dades.py` i barra de navegació superior d'escriptori amb 4 menús clàssics. |

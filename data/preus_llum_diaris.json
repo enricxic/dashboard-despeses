@@ -1,0 +1,6442 @@
+{
+  "2026-09-16": {
+    "data": "16/09/2026",
+    "data_iso": "2026-09-16",
+    "dia_setmana": "Dimecres",
+    "preu_mitja": 0.177022,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.046805
+    },
+    "hora_cara": {
+      "slot": "21-22h",
+      "preu": 0.339044
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.206558,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.20288,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.200464,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.197157,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.195334,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.20288,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.210568,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.243825,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.245261,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.139189,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.122649,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.117726,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.116061,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.115535,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.046805,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.04699,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.047428,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.050574,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.151667,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.264649,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.337437,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.339044,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.236035,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.211815,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-17": {
+    "data": "17/09/2026",
+    "data_iso": "2026-09-17",
+    "dia_setmana": "Dijous",
+    "preu_mitja": 0.182414,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.016219
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.359446
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.18528,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.167403,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.147301,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.136003,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.141581,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.151656,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.203636,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.252053,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.270279,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.20643,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.186049,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.098043,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.084883,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.085263,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.016219,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.023326,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.049949,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.130286,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.282322,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.338216,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.359446,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.352018,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.263114,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.247183,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-18": {
+    "data": "18/09/2026",
+    "data_iso": "2026-09-18",
+    "dia_setmana": "Divendres",
+    "preu_mitja": 0.178354,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.020365
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.325593
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.202049,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.196127,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.19536,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.193729,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.190165,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.197585,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.211287,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.241885,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.265603,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.207187,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.166082,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.096704,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.09327,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.089139,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.020365,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.02095,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.021068,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.067612,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.235013,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.310398,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.325593,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.309082,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.220537,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.203707,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-19": {
+    "data": "19/09/2026",
+    "data_iso": "2026-09-19",
+    "dia_setmana": "Dissabte",
+    "preu_mitja": 0.136375,
+    "hora_barata": {
+      "slot": "13-14h",
+      "preu": 0.004122
+    },
+    "hora_cara": {
+      "slot": "21-22h",
+      "preu": 0.263889
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.203913,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.202953,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.200204,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.198487,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.201653,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.205353,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.215893,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.240386,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.219673,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.073832,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.005538,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.005597,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.005268,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.004122,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.004181,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.005451,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.005798,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.006006,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.086029,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.193628,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.261096,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.263889,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.232766,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.231285,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-09-20": {
+    "data": "20/09/2026",
+    "data_iso": "2026-09-20",
+    "dia_setmana": "Diumenge",
+    "preu_mitja": 0.141339,
+    "hora_barata": {
+      "slot": "10-11h",
+      "preu": 0.006853
+    },
+    "hora_cara": {
+      "slot": "21-22h",
+      "preu": 0.265852
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.216879,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.216416,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.214071,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.213007,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.213209,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.21271,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.211084,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.231932,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.221339,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.046814,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.006853,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.009243,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.011811,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.010162,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.010019,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.011229,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.011918,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.010825,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.075618,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.240754,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.265611,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.265852,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.236089,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.228687,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-09-21": {
+    "data": "21/09/2026",
+    "data_iso": "2026-09-21",
+    "dia_setmana": "Dilluns",
+    "preu_mitja": 0.196646,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.018101
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.414827
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.20137,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.191109,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.185822,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.183259,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.182596,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.192256,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.215179,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.291224,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.319124,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.214009,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.170268,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.091997,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.08745,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.087311,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.018101,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.022888,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.036578,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.085776,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.24145,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.367741,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.414827,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.396107,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.277949,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.245121,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-22": {
+    "data": "22/09/2026",
+    "data_iso": "2026-09-22",
+    "dia_setmana": "Dimarts",
+    "preu_mitja": 0.198897,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.019131
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.411042
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.188337,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.183514,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.182288,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.17818,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.179633,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.186779,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.210899,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.298535,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.333502,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.192497,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.165318,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.121028,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.092288,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.073021,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.019131,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.028878,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.054205,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.118959,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.252935,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.371173,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.411042,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.380898,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.29183,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.25867,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-23": {
+    "data": "23/09/2026",
+    "data_iso": "2026-09-23",
+    "dia_setmana": "Dimecres",
+    "preu_mitja": 0.203041,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.039636
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.393527
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.198843,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.191816,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.18679,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.190739,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.193378,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.19178,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.20841,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.259494,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.28865,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.205857,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.198867,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.150327,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.117459,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.09273,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.039636,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.045692,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.073825,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.119938,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.257164,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.35559,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.393527,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.370333,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.290582,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.251554,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-24": {
+    "data": "24/09/2026",
+    "data_iso": "2026-09-24",
+    "dia_setmana": "Dijous",
+    "preu_mitja": 0.194263,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.049161
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.389219
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.189012,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.188677,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.187513,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.18717,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.18484,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.186461,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.194762,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.22115,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.256908,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.203416,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.185618,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.150759,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.121974,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.102945,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.049161,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.053155,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.088899,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.112219,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.242356,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.337326,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.389219,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.357805,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.241145,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.229829,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-25": {
+    "data": "25/09/2026",
+    "data_iso": "2026-09-25",
+    "dia_setmana": "Divendres",
+    "preu_mitja": 0.200561,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.041971
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.390984
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.194997,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.197038,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.175278,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.175745,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.175326,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.178263,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.208837,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.272301,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.291471,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.211183,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.209366,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.158733,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.12448,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.106845,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.041971,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.048059,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.083645,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.115875,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.253159,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.370871,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.390984,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.350902,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.248769,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.229365,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-26": {
+    "data": "26/09/2026",
+    "data_iso": "2026-09-26",
+    "dia_setmana": "Dissabte",
+    "preu_mitja": 0.144606,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": -0.012627
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.302091
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.214516,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.198573,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.193404,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.193093,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.193982,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.194539,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.19718,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.231334,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.235853,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.166617,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.051537,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": -0.009655,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": -0.011815,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": -0.012346,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": -0.012627,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": -0.012275,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": -0.0115,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.026697,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.157598,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.262817,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.302091,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.274731,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.229295,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.216916,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-09-27": {
+    "data": "27/09/2026",
+    "data_iso": "2026-09-27",
+    "dia_setmana": "Diumenge",
+    "preu_mitja": 0.138655,
+    "hora_barata": {
+      "slot": "11-12h",
+      "preu": -0.000504
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.257605
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.213519,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.207354,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.198409,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.192594,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.188311,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.185365,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.186569,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.204702,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.197076,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.105371,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.017794,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": -0.000504,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.000544,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": -0.00017,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": -0.000329,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 6.5e-05,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.008433,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.070448,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.182735,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.2469,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.257605,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.239242,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.216198,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.209496,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-09-28": {
+    "data": "28/09/2026",
+    "data_iso": "2026-09-28",
+    "dia_setmana": "Dilluns",
+    "preu_mitja": 0.209056,
+    "hora_barata": {
+      "slot": "03-04h",
+      "preu": 0.114786
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.345782
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.122561,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.122896,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.116341,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.114786,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.120228,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.13553,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.179314,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.233242,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.279827,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.262947,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.289,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.24964,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.213618,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.203388,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.142516,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.153938,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.18519,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.224396,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.309524,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.31672,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.345782,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.303857,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.209449,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.182654,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-29": {
+    "data": "29/09/2026",
+    "data_iso": "2026-09-29",
+    "dia_setmana": "Dimarts",
+    "preu_mitja": 0.185908,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.025203
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.343139
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.226217,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.215237,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.200478,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.190766,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.174939,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.184885,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.212873,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.261169,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.283974,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.223255,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.189957,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.110875,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.097657,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.094731,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.025203,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.025779,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.02683,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.080922,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.236805,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.326979,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.343139,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.312902,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.221425,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.194802,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-09-30": {
+    "data": "30/09/2026",
+    "data_iso": "2026-09-30",
+    "dia_setmana": "Dimecres",
+    "preu_mitja": 0.200293,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.100789
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.353258
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.121444,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.108985,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.110057,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.115994,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.119096,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.142269,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.163759,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.225962,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.250332,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.223131,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.248788,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.197742,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.174548,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.158755,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.100789,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.123082,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.136185,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.200503,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.323523,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.346706,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.353258,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.332015,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.268698,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.261415,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-01": {
+    "data": "01/10/2026",
+    "data_iso": "2026-10-01",
+    "dia_setmana": "Dijous",
+    "preu_mitja": 0.206128,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.057961
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.355802
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.205855,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.210933,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.20196,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.204013,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.199207,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.195575,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.213146,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.242746,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.268976,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.240624,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.227773,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.164204,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.13505,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.128444,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.057961,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.068541,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.087087,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.116657,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.264952,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.337149,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.355802,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.332671,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.247376,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.24038,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-02": {
+    "data": "02/10/2026",
+    "data_iso": "2026-10-02",
+    "dia_setmana": "Divendres",
+    "preu_mitja": 0.220649,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.129696
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.379776
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.160898,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.14965,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.145551,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.145302,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.152411,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.177891,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.222602,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.274343,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.322896,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.245087,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.240683,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.204003,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.201251,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.198913,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.129696,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.137359,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.14452,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.169108,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.310293,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.354353,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.379776,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.34402,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.255895,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.229085,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-03": {
+    "data": "03/10/2026",
+    "data_iso": "2026-10-03",
+    "dia_setmana": "Dissabte",
+    "preu_mitja": 0.169332,
+    "hora_barata": {
+      "slot": "13-14h",
+      "preu": 0.048477
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.268207
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.187796,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.173067,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.166074,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.161846,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.158656,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.162905,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.181782,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.214056,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.201256,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.189313,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.16259,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.130091,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.088394,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.048477,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.061562,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.101346,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.126993,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.151052,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.20325,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.251975,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.268207,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.24659,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.221795,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.204904,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-04": {
+    "data": "04/10/2026",
+    "data_iso": "2026-10-04",
+    "dia_setmana": "Diumenge",
+    "preu_mitja": 0.173985,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.054888
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.27441
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.198339,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.190278,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.186862,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.182533,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.186138,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.175481,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.179492,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.210211,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.223695,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.1989,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.149933,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.102303,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.071616,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.058616,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.054888,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.071301,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.118848,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.158057,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.218937,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.266144,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.27441,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.248553,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.230642,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.219457,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-05": {
+    "data": "05/10/2026",
+    "data_iso": "2026-10-05",
+    "dia_setmana": "Dilluns",
+    "preu_mitja": 0.222981,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.125402
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.368521
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.180415,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.17625,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.166933,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.163623,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.1634,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.166784,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.202897,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.253115,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.288165,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.237084,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.263338,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.213229,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.198668,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.197478,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.125402,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.136347,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.155191,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.197679,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.30521,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.359804,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.368521,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.338562,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.258397,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.235056,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-06": {
+    "data": "06/10/2026",
+    "data_iso": "2026-10-06",
+    "dia_setmana": "Dimarts",
+    "preu_mitja": 0.218217,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.138108
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.359842
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.171969,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.16271,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.157853,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.152858,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.151417,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.155365,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.196199,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.236218,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.269519,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.219469,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.268596,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.247185,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.22291,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.215544,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.138108,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.143505,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.157219,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.180937,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.282428,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.329231,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.359842,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.335833,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.247893,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.234393,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-07": {
+    "data": "07/10/2026",
+    "data_iso": "2026-10-07",
+    "dia_setmana": "Dimecres",
+    "preu_mitja": 0.20988,
+    "hora_barata": {
+      "slot": "15-16h",
+      "preu": 0.084938
+    },
+    "hora_cara": {
+      "slot": "19-20h",
+      "preu": 0.327363
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.209151,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.19367,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.183649,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.178833,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.173121,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.171281,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.192206,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.24721,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.279526,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.241901,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.267022,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.227107,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.209592,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.205319,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.110395,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.084938,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.090095,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.142518,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.262667,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.327363,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.322408,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.301013,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.21904,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.197106,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-08": {
+    "data": "08/10/2026",
+    "data_iso": "2026-10-08",
+    "dia_setmana": "Dijous",
+    "preu_mitja": 0.18335,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.047936
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.342477
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.240684,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.222976,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.199596,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.176722,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.17111,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.170184,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.173291,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.218119,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.275118,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.188516,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.134055,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.116953,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.116668,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.116347,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.047936,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.0487,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.049066,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.050741,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.211102,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.316807,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.342477,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.329405,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.251567,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.232268,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-09": {
+    "data": "09/10/2026",
+    "data_iso": "2026-10-09",
+    "dia_setmana": "Divendres",
+    "preu_mitja": 0.187817,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.051438
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.350482
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.195092,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.172126,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.167965,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.177262,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.181886,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.193332,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.200557,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.225136,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.260619,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.186898,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.137303,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.119657,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.119742,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.119587,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.051438,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.05255,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.052851,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.063357,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.248188,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.345571,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.350482,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.342902,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.274902,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.268209,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-10": {
+    "data": "10/10/2026",
+    "data_iso": "2026-10-10",
+    "dia_setmana": "Dissabte",
+    "preu_mitja": 0.155271,
+    "hora_barata": {
+      "slot": "13-14h",
+      "preu": -0.002066
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.284462
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.218236,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.218041,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.220879,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.222396,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.229973,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.232204,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.231706,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.24203,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.239491,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.151724,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.028413,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": -0.000759,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": -0.001473,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": -0.002066,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": -0.001949,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": -0.00037,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": -0.000345,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.0331,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.16581,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.245012,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.284462,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.28339,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.243616,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.242975,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-11": {
+    "data": "11/10/2026",
+    "data_iso": "2026-10-11",
+    "dia_setmana": "Diumenge",
+    "preu_mitja": 0.16256,
+    "hora_barata": {
+      "slot": "15-16h",
+      "preu": -0.004644
+    },
+    "hora_cara": {
+      "slot": "19-20h",
+      "preu": 0.288645
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.221017,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.224962,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.225451,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.224631,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.226226,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.225757,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.2248,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.229785,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.230655,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.166567,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.094165,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.028738,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": -0.000532,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 8e-05,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": -0.003224,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": -0.004644,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": -0.001498,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.075347,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.212137,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.288645,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.284907,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.259757,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.23475,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.232965,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-12": {
+    "data": "12/10/2026",
+    "data_iso": "2026-10-12",
+    "dia_setmana": "Dilluns",
+    "preu_mitja": 0.166687,
+    "hora_barata": {
+      "slot": "16-17h",
+      "preu": -0.013143
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.308791
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.221075,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.228104,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.218514,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.216763,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.217799,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.20657,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.225363,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.267702,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.272922,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.205153,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.068474,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": -0.005683,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": -0.010847,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": -0.005715,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": -0.010985,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": -0.01148,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": -0.013143,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.039948,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.213092,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.302466,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.308791,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.30246,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.279879,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.263268,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-13": {
+    "data": "13/10/2026",
+    "data_iso": "2026-10-13",
+    "dia_setmana": "Dimarts",
+    "preu_mitja": 0.208213,
+    "hora_barata": {
+      "slot": "15-16h",
+      "preu": 0.033815
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.381771
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.21455,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.199517,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.199457,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.201501,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.200556,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.204366,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.223494,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.257732,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.306253,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.238612,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.243121,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.148664,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.117379,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.119218,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.042374,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.033815,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.049197,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.131057,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.29124,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.348259,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.381771,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.346108,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.265464,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.233396,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-14": {
+    "data": "14/10/2026",
+    "data_iso": "2026-10-14",
+    "dia_setmana": "Dimecres",
+    "preu_mitja": 0.221357,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.052007
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.417116
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.185978,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.179889,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.17607,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.176704,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.187302,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.192768,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.205888,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.282453,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.348546,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.280927,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.253085,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.164733,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.124038,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.121679,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.052007,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.052635,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.088199,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.161132,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.343738,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.405576,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.417116,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.366536,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.279449,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.266132,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-15": {
+    "data": "15/10/2026",
+    "data_iso": "2026-10-15",
+    "dia_setmana": "Dijous",
+    "preu_mitja": 0.22087,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.063353
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.394432
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.203149,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.191908,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.183301,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.177187,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.174171,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.183924,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.217704,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.271157,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.319712,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.255454,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.252032,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.176984,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.14782,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.120537,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.063353,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.074096,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.113634,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.183799,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.324222,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.381721,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.394432,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.357348,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.273393,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.259831,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-16": {
+    "data": "16/10/2026",
+    "data_iso": "2026-10-16",
+    "dia_setmana": "Divendres",
+    "preu_mitja": 0.215349,
+    "hora_barata": {
+      "slot": "15-16h",
+      "preu": 0.07361
+    },
+    "hora_cara": {
+      "slot": "19-20h",
+      "preu": 0.365869
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.19693,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.182792,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.174687,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.170607,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.171335,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.180535,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.231707,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.265805,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.311467,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.268121,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.272983,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.19296,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.153383,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.15085,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.082982,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.07361,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.109008,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.173445,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.319637,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.365869,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.353985,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.328024,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.228447,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.209196,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-17": {
+    "data": "17/10/2026",
+    "data_iso": "2026-10-17",
+    "dia_setmana": "Dissabte",
+    "preu_mitja": 0.144324,
+    "hora_barata": {
+      "slot": "13-14h",
+      "preu": 0.01781
+    },
+    "hora_cara": {
+      "slot": "00-01h",
+      "preu": 0.246765
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.246765,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.232999,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.215933,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.191835,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.180614,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.172476,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.194155,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.224457,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.24049,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.176681,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.090507,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.019737,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.018154,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.01781,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.018037,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.019235,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.022758,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.074831,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.155245,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.197527,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.198483,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.197138,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.186961,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.170944,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-18": {
+    "data": "18/10/2026",
+    "data_iso": "2026-10-18",
+    "dia_setmana": "Diumenge",
+    "preu_mitja": 0.139685,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.046828
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.259021
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.199626,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.192873,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.171988,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.1405,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.136184,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.135028,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.160972,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.172645,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.174963,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.123351,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.054399,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.050643,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.049725,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.048858,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.046828,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.048582,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.050204,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.053378,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.137148,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.23843,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.259021,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.24822,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.238035,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.22083,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-19": {
+    "data": "19/10/2026",
+    "data_iso": "2026-10-19",
+    "dia_setmana": "Dilluns",
+    "preu_mitja": 0.22736,
+    "hora_barata": {
+      "slot": "02-03h",
+      "preu": 0.129553
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.383207
+    },
+    "font": "e-distribución (PVPC Factura)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.135287,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.129789,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.129553,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.131387,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.131507,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.145088,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.177843,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.219191,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.29963,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.270633,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.296034,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.241689,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.219376,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.22002,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.158767,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.167741,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.196139,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.239191,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.349238,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.371837,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.383207,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.35188,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.253666,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.237956,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-21": {
+    "data": "21/10/2026",
+    "data_iso": "2026-10-21",
+    "dia_setmana": "Dimecres",
+    "preu_mitja": 0.2047,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.0184
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.4181
+    },
+    "font": "REE (apidatos.ree.es)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.1904,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.1914,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.18,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.1739,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.1736,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.1789,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.2052,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.2719,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.3406,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.2517,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.1746,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.0892,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.0879,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.0875,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.0184,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.0188,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.0192,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.0966,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.3201,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.3926,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.4181,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.417,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.3233,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.2931,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-22": {
+    "data": "22/10/2026",
+    "data_iso": "2026-10-22",
+    "dia_setmana": "Dijous",
+    "preu_mitja": 0.2077,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.0131
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.3754
+    },
+    "font": "REE (apidatos.ree.es)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.232,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.2247,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.2225,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.2229,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.221,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.2203,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.2387,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.2792,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.3296,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.2808,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.247,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.1558,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.0897,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.0837,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.0131,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.0135,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.0139,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.0498,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.2754,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.368,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.3754,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.3421,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.2545,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.2324,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-23": {
+    "data": "23/10/2026",
+    "data_iso": "2026-10-23",
+    "dia_setmana": "Divendres",
+    "preu_mitja": 0.1945,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.0512
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.377
+    },
+    "font": "REE (apidatos.ree.es)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.1827,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.1636,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.1358,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.1336,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.1308,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.1394,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.1738,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.2292,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.2887,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.2512,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.2135,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.1303,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.1206,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.1196,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.0512,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.0519,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.0528,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.1067,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.2967,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.3664,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.377,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.372,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.2926,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.289,
+        "tram": "Llano"
+      }
+    ]
+  },
+  "2026-10-24": {
+    "data": "24/10/2026",
+    "data_iso": "2026-10-24",
+    "dia_setmana": "Dissabte",
+    "preu_mitja": -0.6975,
+    "hora_barata": {
+      "slot": "12-13h",
+      "preu": -4.31
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.2548
+    },
+    "font": "REE (apidatos.ree.es)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.2282,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.2289,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.2279,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.2288,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.2289,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.2282,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.2273,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.238,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.2458,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.1891,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.068,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": -2.51,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": -4.31,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": -4.25,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": -4.08,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": -2.86,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": -2.48,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.0295,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.1717,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.2465,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.2548,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.2532,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.2338,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.2206,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-25": {
+    "data": "25/10/2026",
+    "data_iso": "2026-10-25",
+    "dia_setmana": "Diumenge",
+    "preu_mitja": 0.1769,
+    "hora_barata": {
+      "slot": "13-14h",
+      "preu": 0.0414
+    },
+    "hora_cara": {
+      "slot": "21-22h",
+      "preu": 0.3468
+    },
+    "font": "REE (apidatos.ree.es)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.262,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.234,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.2263,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.212,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.1903,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.1776,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.1873,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.2131,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.2326,
+        "tram": "Valle"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.119,
+        "tram": "Valle"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.0441,
+        "tram": "Valle"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.0428,
+        "tram": "Valle"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.0417,
+        "tram": "Valle"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.0414,
+        "tram": "Valle"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.0421,
+        "tram": "Valle"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.0429,
+        "tram": "Valle"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.0463,
+        "tram": "Valle"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.0545,
+        "tram": "Valle"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.1877,
+        "tram": "Valle"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.3095,
+        "tram": "Valle"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.3325,
+        "tram": "Valle"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.3468,
+        "tram": "Valle"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.3324,
+        "tram": "Valle"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.3258,
+        "tram": "Valle"
+      }
+    ]
+  },
+  "2026-10-26": {
+    "data": "26/10/2026",
+    "data_iso": "2026-10-26",
+    "dia_setmana": "Dilluns",
+    "preu_mitja": 0.2275,
+    "hora_barata": {
+      "slot": "14-15h",
+      "preu": 0.0496
+    },
+    "hora_cara": {
+      "slot": "20-21h",
+      "preu": 0.4055
+    },
+    "font": "REE (apidatos.ree.es)",
+    "hores": [
+      {
+        "hora": 0,
+        "slot": "00-01h",
+        "preu": 0.2126,
+        "tram": "Valle"
+      },
+      {
+        "hora": 1,
+        "slot": "01-02h",
+        "preu": 0.213,
+        "tram": "Valle"
+      },
+      {
+        "hora": 2,
+        "slot": "02-03h",
+        "preu": 0.213,
+        "tram": "Valle"
+      },
+      {
+        "hora": 3,
+        "slot": "03-04h",
+        "preu": 0.213,
+        "tram": "Valle"
+      },
+      {
+        "hora": 4,
+        "slot": "04-05h",
+        "preu": 0.2138,
+        "tram": "Valle"
+      },
+      {
+        "hora": 5,
+        "slot": "05-06h",
+        "preu": 0.2203,
+        "tram": "Valle"
+      },
+      {
+        "hora": 6,
+        "slot": "06-07h",
+        "preu": 0.241,
+        "tram": "Valle"
+      },
+      {
+        "hora": 7,
+        "slot": "07-08h",
+        "preu": 0.3002,
+        "tram": "Valle"
+      },
+      {
+        "hora": 8,
+        "slot": "08-09h",
+        "preu": 0.2667,
+        "tram": "Llano"
+      },
+      {
+        "hora": 9,
+        "slot": "09-10h",
+        "preu": 0.1711,
+        "tram": "Llano"
+      },
+      {
+        "hora": 10,
+        "slot": "10-11h",
+        "preu": 0.1612,
+        "tram": "Punta"
+      },
+      {
+        "hora": 11,
+        "slot": "11-12h",
+        "preu": 0.1246,
+        "tram": "Punta"
+      },
+      {
+        "hora": 12,
+        "slot": "12-13h",
+        "preu": 0.1216,
+        "tram": "Punta"
+      },
+      {
+        "hora": 13,
+        "slot": "13-14h",
+        "preu": 0.1223,
+        "tram": "Punta"
+      },
+      {
+        "hora": 14,
+        "slot": "14-15h",
+        "preu": 0.0496,
+        "tram": "Llano"
+      },
+      {
+        "hora": 15,
+        "slot": "15-16h",
+        "preu": 0.0704,
+        "tram": "Llano"
+      },
+      {
+        "hora": 16,
+        "slot": "16-17h",
+        "preu": 0.1606,
+        "tram": "Llano"
+      },
+      {
+        "hora": 17,
+        "slot": "17-18h",
+        "preu": 0.2818,
+        "tram": "Llano"
+      },
+      {
+        "hora": 18,
+        "slot": "18-19h",
+        "preu": 0.3876,
+        "tram": "Punta"
+      },
+      {
+        "hora": 19,
+        "slot": "19-20h",
+        "preu": 0.401,
+        "tram": "Punta"
+      },
+      {
+        "hora": 20,
+        "slot": "20-21h",
+        "preu": 0.4055,
+        "tram": "Punta"
+      },
+      {
+        "hora": 21,
+        "slot": "21-22h",
+        "preu": 0.3855,
+        "tram": "Punta"
+      },
+      {
+        "hora": 22,
+        "slot": "22-23h",
+        "preu": 0.2678,
+        "tram": "Llano"
+      },
+      {
+        "hora": 23,
+        "slot": "23-24h",
+        "preu": 0.2562,
+        "tram": "Llano"
+      }
+    ]
+  }
+}

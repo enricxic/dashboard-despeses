@@ -11,6 +11,7 @@ PROJECT_ROOT = os.path.dirname(CORE_DIR)
 DATA_FILE = os.path.join(PROJECT_ROOT, "data", "consum_llum.json")
 CSV_FILE = os.path.join(PROJECT_ROOT, "csv", "consum_llum.csv")
 PDF_DIR = os.path.join(PROJECT_ROOT, "PDF", "Factures_Llum")
+PREUS_DIARIS_FILE = os.path.join(PROJECT_ROOT, "data", "preus_llum_diaris.json")
 
 CONFIG_ID = 9  # ID reservat a Supabase app_config
 
@@ -393,11 +394,13 @@ def get_preu_llum_dema() -> dict:
     # 1. Provar tarifaluzhora.es demà
     res = fetch_preu_llum_dema_tarifaluzhora()
     if res and res.get("hores"):
+        save_preu_llum_diari(res)
         return res
         
     # 2. Fallback REE demà
     res_ree = fetch_preu_llum_ree(dema_dt)
     if res_ree and res_ree.get("hores"):
+        save_preu_llum_diari(res_ree)
         return res_ree
         
     # 3. Pendent de publicació
@@ -585,18 +588,151 @@ def calcular_finestra_acumuladors(hores_list: list, durada_hores: int = 5, franj
     return res
 
 
+def load_preus_llum_diaris() -> dict:
+    """
+    Carrega el registre històric complet de preus diaris de la llum (PVPC).
+    Retorna un diccionari ordenat per data ISO (YYYY-MM-DD).
+    """
+    if not os.path.exists(PREUS_DIARIS_FILE):
+        return {}
+    try:
+        with open(PREUS_DIARIS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error carregant {PREUS_DIARIS_FILE}: {e}")
+        return {}
+
+
+def save_preu_llum_diari(res: dict) -> bool:
+    """
+    Registra automàticament les 24 hores de preus PVPC del dia al fitxer persistent data/preus_llum_diaris.json.
+    Evita duplicats, actualitza si hi ha noves dades i manté l'arxiu ordenat per data.
+    """
+    if not res or not res.get("hores") or len(res["hores"]) < 20:
+        return False
+        
+    data_iso = res.get("data_iso")
+    if not data_iso:
+        try:
+            dt = datetime.strptime(res.get("data", ""), "%d/%m/%Y")
+            data_iso = dt.strftime("%Y-%m-%d")
+        except Exception:
+            data_iso = datetime.now().strftime("%Y-%m-%d")
+            
+    try:
+        records = load_preus_llum_diaris()
+        dt_obj = datetime.strptime(data_iso, "%Y-%m-%d")
+        
+        hores_list = [{
+            "hora": h.get("hora"),
+            "slot": h.get("slot"),
+            "preu": round(float(h.get("preu", 0.0)), 6),
+            "tram": h.get("tram", "")
+        } for h in res.get("hores", [])]
+        
+        min_item = min(hores_list, key=lambda x: x["preu"]) if hores_list else {}
+        max_item = max(hores_list, key=lambda x: x["preu"]) if hores_list else {}
+        avg_pr = res.get("preu_mitja")
+        if avg_pr is None and hores_list:
+            avg_pr = round(sum(x["preu"] for x in hores_list) / len(hores_list), 6)
+            
+        records[data_iso] = {
+            "data": res.get("data", dt_obj.strftime("%d/%m/%Y")),
+            "data_iso": data_iso,
+            "dia_setmana": DIES_SETMANA_CA[dt_obj.weekday()],
+            "preu_mitja": avg_pr,
+            "hora_barata": {"slot": min_item.get("slot", ""), "preu": min_item.get("preu", 0.0)},
+            "hora_cara": {"slot": max_item.get("slot", ""), "preu": max_item.get("preu", 0.0)},
+            "font": res.get("font", "PVPC"),
+            "hores": hores_list,
+            "actualitzat_a": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        records_sorted = dict(sorted(records.items()))
+        os.makedirs(os.path.dirname(PREUS_DIARIS_FILE), exist_ok=True)
+        with open(PREUS_DIARIS_FILE, "w", encoding="utf-8") as f:
+            json.dump(records_sorted, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"Error desant preu llum diari a {PREUS_DIARIS_FILE}: {e}")
+        return False
+
+
+def contrastar_consum_amb_preus_diaris(csv_path: str) -> dict:
+    """
+    Creua un fitxer CSV de consum horari de la distribuïdora (amb columnes Fecha, Hora, Consumo Wh)
+    amb el registre històric de preus diaris data/preus_llum_diaris.json.
+    """
+    if not os.path.exists(csv_path):
+        return {"error": f"Fitxer no trobat: {csv_path}"}
+        
+    preus_map = load_preus_llum_diaris()
+    try:
+        df = pd.read_csv(csv_path, skiprows=6, skipinitialspace=True)
+        df.columns = [c.strip() for c in df.columns]
+        c_fecha = [c for c in df.columns if 'Fecha' in c][0]
+        c_hora = [c for c in df.columns if 'Hora' in c][0]
+        c_wh = [c for c in df.columns if 'Wh' in c][0]
+        c_coste = [c for c in df.columns if 'Coste' in c]
+        
+        df = df[df[c_fecha].astype(str).str.startswith('202')].copy()
+        df['Hora'] = pd.to_numeric(df[c_hora], errors='coerce').fillna(0).astype(int)
+        df['Wh'] = pd.to_numeric(df[c_wh], errors='coerce').fillna(0)
+        
+        total_wh = df['Wh'].sum()
+        total_kwh = total_wh / 1000.0
+        
+        total_cost_calc = 0.0
+        hores_auditades = 0
+        hores_sense_preu = 0
+        
+        for _, row in df.iterrows():
+            f_str = str(row[c_fecha]).strip()
+            h_idx = int(row['Hora']) - 1
+            wh = float(row['Wh'])
+            kwh = wh / 1000.0
+            
+            day_entry = preus_map.get(f_str)
+            if day_entry and len(day_entry.get("hores", [])) > h_idx:
+                pr = float(day_entry["hores"][h_idx]["preu"])
+                total_cost_calc += kwh * pr
+                hores_auditades += 1
+            else:
+                hores_sense_preu += 1
+                
+        cost_csv = None
+        if c_coste:
+            df['Coste_CSV'] = pd.to_numeric(df[c_coste[0]], errors='coerce').fillna(0)
+            cost_csv = round(float(df['Coste_CSV'].sum()), 2)
+            
+        return {
+            "total_kwh": round(total_kwh, 3),
+            "cost_calculat_pvpc": round(total_cost_calc, 2),
+            "cost_informat_csv": cost_csv,
+            "hores_auditades": hores_auditades,
+            "hores_sense_preu": hores_sense_preu,
+            "dates_cobertes": len(df[c_fecha].unique()),
+            "coincidencia_exacta": (cost_csv is not None and abs(round(total_cost_calc, 2) - cost_csv) <= 0.05)
+        }
+    except Exception as e:
+        return {"error": f"Error processant contrast: {e}"}
+
+
 def get_preu_llum_avui() -> dict:
     """
     Funció principal que obté les dades de preu de la llum d'avui.
     Prioritat:
       1. tarifaluzhora.es
       2. REE apidatos.ree.es (Fallback)
+    Desa automàticament les 24 hores de preus a data/preus_llum_diaris.json.
     """
     res = fetch_preu_llum_tarifaluzhora()
     if res and res.get("hores"):
+        save_preu_llum_diari(res)
         return res
     res_ree = fetch_preu_llum_ree(datetime.now())
     if res_ree and res_ree.get("hores"):
+        save_preu_llum_diari(res_ree)
         return res_ree
     return None
 

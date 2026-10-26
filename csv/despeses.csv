@@ -1,4 +1,24 @@
 ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategoria;Idconcepte;Comentari;ticketPendent
+8217;TradeRep.;Dèbit;26/10/2026;octubre;2026;0.0;15.05;Càrrec;menjar;Novavenda;;True
+8216;BBVA;VISA;26/10/2026;octubre;2026;0.0;30.04;Càrrec;manteniment;Aliexpress;Termòmetre programador;False
+8215;TradeRep.;Compte;26/10/2026;octubre;2026;100.0;0.0;op_banc;op_banc;Traspàs comptes;;False
+8214;BBVA;Compte;26/10/2026;octubre;2026;0.0;100.0;op_banc;op_banc;Traspàs comptes;;False
+8213;TradeRep.;Compte;25/10/2026;octubre;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
+8212;BBVA;Compte;25/10/2026;octubre;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
+8211;LaCaixa;Compte;25/10/2026;octubre;2026;0.0;50.0;op_banc;op_banc;Reintegre Caixer;;False
+8210;LaCaixa;Compte;25/10/2026;octubre;2026;628.8;0.0;Ingrés;ingres_general;Pensió no contributiva;;False
+8209;TradeRep.;Dèbit;25/10/2026;octubre;2026;0.0;6.9;Càrrec;restaurant;Bar;Casino Arbúcies ;False
+8208;TradeRep.;Dèbit;24/10/2026;octubre;2026;0.0;31.0;Càrrec;restaurant;Restaurant;Pizza fira flabiol;False
+8207;TradeRep.;Dèbit;24/10/2026;octubre;2026;0.0;40.65;Càrrec;menjar;Plaça;;False
+8206;Efectiu;;25/10/2026;octubre;2026;0.0;3.88;Càrrec;menjar;Fruiteria Deepak;;False
+8205;Efectiu;;23/10/2026;octubre;2026;0.0;18.0;Càrrec;restaurant;Restaurant;Sopar gimnàs Isabel ;False
+8204;Efectiu;;24/10/2026;octubre;2026;0.0;5.0;Càrrec;varis;Regal;Tortuga 3D;False
+8203;Efectiu;;25/10/2026;octubre;2026;0.0;54.2;Càrrec;restaurant;Restaurant;Fira castanya i flabiol ;False
+8202;Efectiu;;24/10/2026;octubre;2026;0.0;21.0;Càrrec;menjar;Plaça;;False
+8201;TradeRep.;Dèbit;23/10/2026;octubre;2026;0.0;18.53;Càrrec;menjar;Dia;;False
+8200;BBVA;Compte;25/10/2026;octubre;2026;940.74;0.0;Ingrés;ingres_general;Pensió Enric;;False
+8199;BBVA;Compte;25/10/2026;octubre;2026;962.5;0.0;Ingrés;ingres_general;Pensió Isabel;;False
+8198;BBVA;Compte;25/10/2026;octubre;2026;0.0;100.0;op_banc;op_banc;Reintegre Caixer;;False
 8197;Efectiu;;23/10/2026;octubre;2026;0.0;5.0;Càrrec;personal;Jordi;;False
 8196;Efectiu;;23/10/2026;octubre;2026;0.0;3.5;Càrrec;menjar;Carn. Arimany;;False
 8195;TradeRep.;Dèbit;22/10/2026;octubre;2026;0.0;6.34;Càrrec;menjar;Fleca Arnau;;False
