@@ -71,7 +71,12 @@ def render():
             df_km_car_sorted = df_km_car.copy()
             df_km_car_sorted['parsed_date'] = df_km_car_sorted['data'].apply(parse_excel_date)
             df_km_car_sorted = df_km_car_sorted.sort_values(by='parsed_date', ascending=False)
-            last_km = float(df_km_car_sorted.dropna(subset=['contador'])['contador'].iloc[0])
+            val_last = df_km_car_sorted.dropna(subset=['contador'])['contador']
+            if not val_last.empty:
+                last_km = float(val_last.iloc[0])
+            max_cont = pd.to_numeric(df_km_car['contador'], errors='coerce').max()
+            if pd.notna(max_cont) and float(max_cont) > last_km:
+                last_km = float(max_cont)
 
         # --- Lectura per foto del comptaquilòmetres ---
         odo_key = f"km_odo_{km_version}"
@@ -112,8 +117,8 @@ def render():
             info = st.session_state.get("km_ocr_info")
             if info:
                 km_l, conf = info
-                if km_l < last_km:
-                    st.warning(f"⚠️ Llegit {int(km_l):,} km, però és inferior a l'última lectura ({int(last_km):,}). Revisa-ho.")
+                if km_l <= last_km:
+                    st.warning(f"⚠️ Llegit {int(km_l):,} km, però és igual o inferior a l'última lectura registrada ({int(last_km):,} km). Revisa-ho.")
                 else:
                     st.success(f"✅ Llegit: **{int(km_l):,} km** (confiança {conf}). S'ha omplert la lectura de l'odòmetre; revisa-la abans de desar.")
 
@@ -121,10 +126,33 @@ def render():
         with r1_col1:
             data_val = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key=f"km_data_{km_version}")
         with r1_col2:
-            contador_val = st.number_input("Lectura Odòmetre (km totals)", min_value=0.0, value=None, placeholder=f"Última: {last_km:g}", step=1.0, key=f"km_odo_{km_version}")
+            placeholder_odo = f"Última: {int(last_km):,}".replace(",", ".") if last_km > 0 else "0"
+            contador_val = st.number_input(
+                "Lectura Odòmetre (km totals)",
+                min_value=0.0,
+                value=None,
+                placeholder=placeholder_odo,
+                step=1.0,
+                key=f"km_odo_{km_version}",
+                help=f"Ha de ser estrictament superior a l'última quantitat registrada de l'odòmetre ({int(last_km):,} km)"
+            )
+            if contador_val is not None and contador_val <= last_km:
+                st.markdown(
+                    f"<div style='color: #ef4444; font-size: 0.8rem; font-weight: 600; margin-top: -8px; margin-bottom: 6px;'>"
+                    f"⚠️ Els km han de ser superiors a l'última lectura ({int(last_km):,} km)"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
         with r1_col3:
-            km_val = max(0.0, contador_val - last_km) if contador_val is not None else 0.0
-            st.text_input("Kilòmetres del trajecte", value=f"{km_val:g}", disabled=True)
+            is_valid_odo = (contador_val is not None and contador_val > last_km)
+            km_val = (contador_val - last_km) if is_valid_odo else 0.0
+            if contador_val is not None and contador_val <= last_km:
+                trajecte_label = "0 km (⚠️ Invàlid: ≤ odòmetre)"
+            elif contador_val is not None:
+                trajecte_label = f"{int(km_val):,} km"
+            else:
+                trajecte_label = "0 km"
+            st.text_input("Kilòmetres del trajecte", value=trajecte_label, disabled=True)
 
         ruta_opts = get_config_routes(df_km)
         if "Nova ruta..." not in ruta_opts:
@@ -160,6 +188,8 @@ def render():
         if submitted:
             if contador_val is None or contador_val <= 0:
                 st.error("⚠️ Heu d'introduir una lectura d'odòmetre vàlida.")
+            elif contador_val <= last_km:
+                st.error(f"⚠️ **Error de validació**: Els kilòmetres entrats ({int(contador_val):,} km) mai poden ser iguals o inferiors a l'última quantitat registrada de l'odòmetre ({int(last_km):,} km). El nou registre ha de ser estrictament superior.")
             elif not ruta_val or not ruta_val.strip():
                 st.error("⚠️ Heu d'especificar la ruta.")
             else:
