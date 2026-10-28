@@ -825,20 +825,177 @@ Monitorització de factures de compra, pòlisses d'assegurança i tiquets de gar
 ---
 
 ### 5.3 Cotxe i Mobilitat (`modules/cotxe.py`)
+Mòdul especialitzat en la gestió del vehicle familiar, registre de trajectes i quilometratge per lectura d'odòmetre amb comprovació estricta anti-errors, control de proveïments de combustible i consum real, vigilància mecànica integral col·lapsable (oli, pneumàtics, pressió, líquids i taller) i mètriques analítiques de cost per quilòmetre.
 
-#### A. Registre de Km, Repostatge i Consum
-- `🛣️ Registre Km i Rutes`: Càlcul automàtic de quilometratge per lectura d'odòmetre amb plantilles de rutes habituals.
-- `⛽ Repostatge`: Taula de proveïments de combustible amb seguiment de preus i estacions.
-- `📊 Consum`: Gràfic de consum mitjà (L/100km).
+#### A. Arquitectura del Mòdul i Fonts de Dades
+El mòdul interactua amb les següents taules a Supabase (PostgreSQL) i fitxers de configuració:
+1. **Taules Principals**:
+   - `kmCotxe` / `csv/kmCotxe.csv`: Registre cronològic de lectures del comptaquilòmetres i desplaçaments (`idKm`, `data`, `contador`, `km`, `ruta`, `observacions`, `conductor`).
+   - `repostatge` / `csv/repostatge.csv`: Històric de càrregues de combustible (`idRepost`, `data`, `litres`, `preu_litre`, `total_import`, `estacio`, `tipus_combustible`, `km_odometre`).
+   - `manteniment_cotxe.json` (sincronitzat a Supabase): Registre de canvis d'oli, pneumàtics, inflats de rodes, nivells de líquids i entrades a taller.
+2. **Configuració de Rutes Habituals**:
+   - `rutes_config` (centralitzat a `categories_conceptes.json`): Catàleg de trajectes freqüents de la llar amb quilometratges predefinits (ex: Arbúcies-Girona, Arbúcies-Vic, etc.) per accelerar l'entrada de dades.
+3. **Mecanisme de Validació Estricta d'Odòmetre**:
+   - Blindatge en temps real que impedeix desar lectures incoherents on el quilometratge entrat sigui igual o inferior a l'últim valor registrat a la base de dades (`contador_val > last_km`).
 
-#### B. Manteniment Integral Col·lapsable
-Totes les seccions estan organitzades en blocs desplegables independents (`st.expander`) per mantenir la interfície compacta, amb interruptor superior *"Desplegar totes les seccions"* i badges informatius en temps real als encapçalaments:
-1. **`🛢️ Canvi d'Oli`**: Km actuals, límit de canvi, km restants i barra de desgast.
-2. **`🛞 Canvi de Rodes`**: Substitució de cobertes davanteres, posteriors o completes amb alertes per quilometratge.
-3. **`💨 Inflat de Rodes`**: Pressió en bar, dates de revisió periòdica i vinculació a viatges llargs.
-4. **`🧪 Control de Nivells`**: Secció independent per al seguiment dels líquids del vehicle (oli de motor, refrigerant, frens, eixugaparabrises) amb planificacions per km i per dies.
-5. **`🛠️ Taller i Avaries`**: Entrades per manteniment, ITV, avaries o reparacions amb control d'estat (Resolt, Pendent, En taller).
-6. **`📋 Històric de Manteniment i Taller`**: Taula interactiva amb filtratge per tipus, càlcul de despesa total acumulada (€) i eines d'edició.
+---
+
+#### B. Cicle de Vida i Flux Operatiu de Mobilitat
+
+```mermaid
+flowchart TD
+    A["🚗 Lectura d'Odòmetre (Manual o Foto OCR)"] --> B{"Validació: contador_val > last_km?"}
+    B -- No --> C["⛔ Bloqueig en Vermell: Quilometratge Invàlid"]
+    B -- Sí --> D["💾 Càlcul de Trajecte i Desat a kmCotxe"]
+    D --> E["⛽ Registre de Repostatge de Combustible"]
+    E --> F["💰 Sincronització amb Despeses (modules/economic.py)"]
+    D --> G["🔍 Avaluació de Desgaste Mecànic per Km"]
+    G --> H{"Km restants d'oli/rodes < llindar avís?"}
+    H -- Sí --> I["🔔 Alerta a la Campaneta de la Barra Superior"]
+    H -- No --> J["🟢 Estat Mecànic Correcte"]
+```
+
+- **Pas 1: Lectura de Quilòmetres**: L'usuari introdueix el valor de l'odòmetre o puja una foto del quadre de comandaments. El sistema verifica que el valor superi l'anterior; si no, bloqueja el botó de desar.
+- **Pas 2: Càlcul de Trajecte**: Es computen els quilòmetres nets recorreguts ($\Delta	ext{Km} = 	ext{contador} - 	ext{last\_km}$) i s'associa la ruta escollida.
+- **Pas 3: Repostatge i Cost**: En posar benzina o dièsel, s'anoten litres i import, alimentant el càlcul de consum i generant l'apunt a despeses.
+- **Pas 4: Monitorització de Desgast**: A cada increment de quilòmetres, el mòdul recalcula la vida útil restant de l'oli i les rodes, avisant quan cal demanar hora al taller.
+
+---
+
+#### C. Detall Exhaustiu de les 4 Pestanyes de la Interfície Gràfica
+
+El mòdul s'estructura en 4 pestanyes operatives mitjançant `st.tabs` amb suport per a commutació dinàmica i paràmetres URL (`?tab=...`):
+
+---
+
+##### 5.3.1 Pestanya 1: `🛣️ Registre Km i Rutes` (Control d'Odòmetre i Desplaçaments)
+
+La interfície d'enregistrament diari de desplaçaments del vehicle:
+
+1. **Mètriques Resum d'Odòmetre (Top Container)**:
+   - **`Darrer Odòmetre Registrat`**: Mostra la lectura acumulada oficial en quilòmetres (ex: `184.250 km`).
+   - **`Data Darrera Lectura`**: Indica quan es va efectuar l'últim registre per situar temporalment l'usuari.
+
+2. **Formulari de Nova Lectura i Rutes**:
+   - **Camp `Data` (`st.date_input`)**: Data del desplaçament.
+   - **Camp `Lectura de l'Odòmetre (Km totals)` (`st.number_input`)**: Valor actual del comptador del cotxe.
+   - **Mecanisme de Validació Estricta d'Odòmetre**:
+     - Si l'usuari escriu un valor igual o inferior a l'últim registrat (`contador_val <= last_km`):
+       - Es mostra una **alerta visual vermella** immediata: `⚠️ Els kilòmetres entrats (X km) han de ser estrictament superiors a l'últim odòmetre registrat (Y km).`
+       - El camp calculat del trajecte mostra un text d'error: `❌ Trajecte invàlid`.
+       - El botó de desat queda completament **deshabilitat**.
+     - Si el valor és vàlid (`contador_val > last_km`):
+       - Es computa a l'instant el trajecte realitzat: `🚗 Trajecte calculat: +Z km`.
+       - El botó verd `💾 Registrar lectura de km` s'habilita per desar a Supabase.
+   - **Selector de Plantilles de Rutes Habituals**:
+     - Desplegable amb trajectes freqüents preconfigurats (ex: *Arbúcies - Girona*, *Arbúcies - Vic*, *Anar a la feina*).
+     - Botó `➕ Afegir nova ruta`: Permet donar d'alta rutes recurrents personalitzades a `categories_conceptes.json`.
+   - **Selector de Conductor**: Permet assignar qui conduïa el vehicle (Enric, Isabel, etc.).
+   - **Camp `Observacions`**: Detalls puntuals del viatge (ex: *Trànsit dens*, *Pluja*, *Ruta per autopista AP-7*).
+
+3. **Reconeixement OCR per Foto (`📸 Llegir km amb una foto del comptaquilòmetres`)**:
+   - **Expander Desplegable**: Permet pujar una fotografia feta amb el mòbil al quadre de comandaments del cotxe (`st.file_uploader`).
+   - **Processament per Visió**: Tesseract OCR extreu automàticament els dígits numèrics de la pantalla digital o analògica de l'odòmetre i preomple el camp de quilòmetres sense necessitat d'escriure'l a mà.
+
+4. **Taula Històrica de Rutes (`st.dataframe`)**:
+   - Graella completa de viatges ordenats cronològicament.
+   - Mostra: Data, Odòmetre, Km fets en el viatge, Ruta, Conductor i Observacions.
+   - Botons d'acció per editar o eliminar registres erronis.
+
+---
+
+##### 5.3.2 Pestanya 2: `⛽ Repostatge` (Proveïment i Despesa de Carburant)
+
+Gestió de combustible del vehicle:
+
+1. **Formulari de Càrrega de Carburant**:
+   - **Camp `Data`**: Data de la visita a la benzinera.
+   - **Selector `Estació de Servei`**: Desplegable amb les gasolineres habituals (ex: *EsclatOil*, *Repsol*, *BonÀrea*, *Cepsa*). Botó per afegir-ne de noves.
+   - **Selector `Tipus de Carburant`**: Dièsel, Gasolina 95, Gasolina 98, GLP.
+   - **Camps Numèrics Connectats**:
+     - `Litres subministrats` (l).
+     - `Preu per litre` (€/l).
+     - `Import total` (€): Es calcula automàticament com $	ext{Litres} 	imes 	ext{Preu/litre}$ amb possibilitat d'ajust manual per arrodoniments de sortidor.
+     - `Quilòmetres actuals de l'odòmetre`: Lectura del comptaquilòmetres en el moment de repostar (clau per al càlcul de consums).
+   - **Casella `Enviar a despeses financeres`**: Si està marcada, crea immediatament un apunt de despesa comptable a la taula `despeses` de [`modules/economic.py`](file:///e:/Dashboard/modules/economic.py) sota la categoria de mobilitat.
+
+2. **Taula Històrica de Proveïments**:
+   - Registre històric amb filtres per any i estació de servei.
+   - Mètriques de resum: Total litres consumits, despesa acumulada en carburant i preu mitjà del litre pagat.
+
+---
+
+##### 5.3.3 Pestanya 3: `🔧 Manteniment i Nivells` (Estructura Col·lapsable d'Expanders)
+
+Monitor mecànic integral organitzat en blocs desplegables independents (`st.expander`) per mantenir una navegació neta i compacta, amb interruptor superior *"Desplegar totes les seccions"* i **badges d'estat en temps real als encapçalaments**:
+
+1. **Interruptor General i Configuració d'Alertes**:
+   - **Casella `Desplegar totes les seccions`**: Obre o tanca de cop tots els blocs plegables.
+   - **Expander `🔔 Configuració d'avisos`**: Permet definir amb quants quilòmetres d'antelació el sistema comença a avisar a la campaneta de la barra superior (per defecte: `1.000 km abans`).
+
+2. **Expander `🛢️ Canvi d'Oli` (amb badge dinàmic de km restants)**:
+   - Mostra: Km de l'últim canvi, interval recomanat pel fabricant (ex: 15.000 km / 1 any), quilòmetres que falten per al proper servei i data estimada segons el ritme d'ús del cotxe.
+   - **Barra de Desgast de l'Oli**: Indicador visual percentual de degradació.
+   - **Formulari `✏️ Registrar canvi d'oli`**: Permet anotar la data, quilometratge del canvi, marca/viscositat de l'oli utilitzat (ex: *5W30 Sintètic*) i si s'ha canviat també el filtre d'oli.
+
+3. **Expander `🛞 Canvi de Rodes` (Estat dels Pneumàtics)**:
+   - Control independent de les cobertes de l'eix davanter i de l'eix posterior.
+   - Mostra els quilòmetres acumulats per cada joc de pneumàtics respecte a la seva vida útil estimada (ex: 40.000 km).
+   - Formulari de planificació i registre de substitució (Davanteres, Darreres o les 4 rodes alhora).
+
+4. **Expander `💨 Inflat de Rodes (Pressió)`**:
+   - Monitorització de la pressió dels pneumàtics en fred en bars (ex: Davant 2.3 bar, Darrere 2.2 bar).
+   - **Planificació de Revisions**: Permet programar dates fixes de comprovació o vincular-les abans de viatges llargs de vacances.
+   - **Formulari `✏️ Registrar inflat de rodes fet`**: Desa la data, pressions aplicades i estat de la vàlvula.
+
+5. **Expander `🧪 Control de Nivells` (Els 4 Líquids Bàsics)**:
+   - Secció especialitzada per a la inspecció regular dels fluids del compartiment del motor:
+     1. **Nivell d'Oli de Motor**: Estat entre marques Mínim i Màxim de la varilla.
+     2. **Líquid Refrigerant / Anticongelant**: Nivell del vas d'expansió.
+     3. **Líquid de Frens**: Estat del dipòsit de la bomba de fre.
+     4. **Líquid Eixugaparabrises**: Estat de reserva i addició de sabó netejador.
+   - Formulari de planificació d'inspeccions i registre de comprovació amb caselles de farciment si ha calgut afegir líquid.
+
+6. **Expander `🛠️ Taller i Avaries` (Reparacions i ITV)**:
+   - Registre d'incidències greus, manteniments extraordinaris o revisions d'ITV.
+   - Camps: Data d'entrada, Taller mecànic, Descripció dels treballs, Peces substituïdes, Import de la factura i estat (`En taller`, `Pendent de recanvi`, `Resolt`).
+
+7. **Expander `📋 Històric de Manteniment i Taller`**:
+   - Taula cronològica consolidada de totes les actuacions mecàniques sobre el vehicle.
+   - Mètrica KPI del cost total acumulat en manteniment mecànic al llarg de la vida útil del cotxe.
+
+---
+
+##### 5.3.4 Pestanya 4: `📊 Consum i Rendiment` (KPIs Analítics i Eficiència)
+
+Panell d'intel·ligència energètica i econòmica del vehicle:
+
+1. **Càlcul Matemàtic del Consum Mitjà ($l/100	ext{ km}$)**:
+   - Aplica la fórmula real d'eficiència creuant els litres omplerts amb la distància recorreguda entre proveïments complets:
+     $$	ext{Consum} = rac{	ext{Litres}}{\Delta 	ext{Km}} 	imes 100 \quad (l/100	ext{ km})$$
+   - Indicador de consum mitjà històric en comparació amb el consum oficial homologat del vehicle.
+
+2. **Càlcul del Cost Global per Quilòmetre (€/km)**:
+   - Computa el cost real de moure el vehicle sumant el combustible i el desgast mecànic:
+     $$	ext{Cost/km} = rac{\sum 	ext{Carburant (€)} + \sum 	ext{Manteniment i Taller (€)}}{	ext{Km Totals Recorreguts}}$$
+
+3. **Gràfics Interactius de Plotly**:
+   - **Evolució del Consum**: Línia temporal de consum mitjà mensual per detectar augments de consum derivats de filtres bruts o pneumàtics desinflats.
+   - **Històric del Preu del Carburant**: Gràfic d'evolució del preu pagat per litre (€/l) al llarg dels mesos.
+   - **Distribució per Estacions de Servei**: Gràfic de barres que compara quines gasolineres han ofert els preus més competitius.
+
+---
+
+#### D. Navegació Dinàmica i Enllaços amb Altres Mòduls
+- **Navegació per Paràmetres URL (`st.query_params`)**:
+  - `?tab=km`: Obre directament el registre de quilometratge i rutes.
+  - `?tab=repostatge`: Condueix a la càrrega de combustible.
+  - `?tab=oli`: Desplega els controls mecànics col·lapsables.
+  - `?tab=consum`: Activa el panell d'eficiència i estadístiques.
+- **Interconnexions amb el Sistema Global**:
+  - **[`modules/economic.py`](file:///e:/Dashboard/modules/economic.py)**: Les càrregues de combustible i les factures de taller mecànic es consoliden automàticament a les despeses generals del pressupost familiar.
+  - **[`core/alerts.py`](file:///e:/Dashboard/core/alerts.py)**: Notificacions preventives a la campaneta superior (`🔔`) quan manquen menys de 1.000 km per al canvi d'oli, rodes o venciment d'ITV.
+  - **Menú Superior `Editar > 📂 Arxius JSON`**: Accés per consultar i modificar el llistat de rutes habituals.
 
 ---
 
