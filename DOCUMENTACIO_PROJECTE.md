@@ -197,32 +197,169 @@ flowchart TD
 
 ---
 
-#### C. Detall de les 6 Pestanyes de la Interfície Gràfica
+#### C. Detall Exhaustiu de les 6 Pestanyes de la Interfície Gràfica
 
-El mòdul s'estructura en 6 vistes especialitzades mitjançant `st.tabs` amb suport per a paràmetres URL (`?tab=...`):
+El mòdul s'estructura en 6 vistes especialitzades mitjançant `st.tabs` amb suport natiu per a commutació dinàmica i paràmetres URL (`?tab=...`):
 
-1. **`🛒 Compres Super` (Entrada i Desglossament)**:
-   - Capçalera dividida en 2 columnes: informació del tiquet bancari pendent a l'esquerra i zona d'escàner/càrrega a la dreta.
-   - Taula editable d'articles amb selectors de família, article, unitats, pes, preu i descompte.
-   - Panell d'assignació financera (Banc i Forma de Pagament) i botons d'acció ràpida.
-2. **`📝 Llista de la Compra`**:
-   - Generació automàtica basada en els productes que han quedat per sota de l'estoc mínim al rebost.
-   - Checklist interactiva per marcar articles al telèfon mòbil mentre s'és al supermercat.
-   - Botó directe per imprimir la llista física a la impressora tèrmica de tiquets ESC/POS (`modules/impressora.py`).
-3. **`🥫 Rebost` (Gestió d'Estoc)**:
-   - Inventari complet de queviures classificat per famílies d'aliments.
-   - Semàfor visual d'estoc: 🟢 Suficient, 🟡 Sota mínims, 🔴 Esgotat.
-   - Control de dates de caducitat amb alertes de consum preferent i botons ràpids d'increment/decrement en 1 clic.
-4. **`📊 Estadístiques` (Anàlisi i Gràfics)**:
-   - KPIs de despesa mensual, estalvi aconseguit en euros i percentatge de descompte mitjà.
-   - **Gràfic de Donut interactiu (Plotly)**: Comparativa visual de *Preu Net Pagat vs Promoció/Estalvi*.
-   - Històric mensual de despesa per supermercat i distribució de despesa per famílies d'aliments.
-5. **`🔍 Comparador de Preus`**:
-   - Motor de cerca que creua els preus històrics d'un mateix producte entre diferents cadenes comercials.
-   - Taula comparativa de preu unitari mitjà (€/kg o €/u) per identificar on surt més a compte comprar cada article.
-6. **`📰 Fulletons`**:
-   - Panell per consultar ofertes setmanals i fulletons comercials en PDF o imatge.
-   - Registre d'ofertes destacades sincronitzat amb `data/ofertes.json`.
+---
+
+##### 4.1.1 Pestanya 1: `🛒 Compres Super` (Entrada de Tiquets i Desglossament)
+La interfície d'adquisició, estructuració per IA, auditoria i consolidació comptable.
+
+1. **Capçalera Superior Esquerra (Reconciliació de Tiquets Bancaris Pendents)**:
+   - **Informació de Tiquet Pendent**: Mostra la referència del moviment bancari carregat pel banc que encara no s'ha desglossat *(Exemple: `🛒 Desglossant: Nº 8207 — Plaça (24/10/2026) — 43.65 €`)*.
+   - **Botó `🛒 Desglossar Nº X`**: Si hi ha tiquets pendents a `despeses`, cada línia compta amb aquest botó verd destacat que precarrega automàticament el súper, la data i el banc a la sessió actual.
+   - **Botó `❌ Desvincular`**: Allibera el tiquet pendent actiu per permetre a l'usuari entrar una compra independent des de zero.
+   - **Botó Túnel `⚡ Mòdul Econòmic`**: Redirigeix a la pestanya econòmica per revisar els detalls del moviment original.
+   - **Control de Coincidència de Total (Mismatch)**: Si la suma dels articles desglossats difereix del total del càrrec bancari, apareix una alerta taronja amb la diferència en euros i un botó interactiu **`Forçar correcció del banc a X.XX €`** per ajustar el moviment financer sense errors manuals.
+
+2. **Capçalera Superior Dreta (Escaneig i Gestió d'Imatge)**:
+   - **Botó `🖨️ Obrir Escàner`**: Executa en segon pla l'aplicació nativa WinRT [`auto_scan_ui.py`](file:///e:/Dashboard/auto_scan_ui.py), obrint la interfície ràpida d'escaneig de sobretaula directament a la pantalla de l'usuari.
+   - **Botó `📥 Carregar últim (tiquet)`**: Detecta automàticament el darrer fitxer generat a `tickets/` (ex. `ticket_BonPreu_281026.jpg`). Si s'ha escanejat fa menys d'una hora, es ressalta en color verd (`type="primary"`) i amb un sol clic l'ingereix a l'OCR encapsulant-lo amb [`LocalFileWrapper`](file:///e:/Dashboard/modules/compres.py) sense obrir cap diàleg de fitxers de Windows.
+   - **Expander `📂 Historial de tiquets escanejats`**: Desplegable per seleccionar qualsevol dels 8 darrers tiquets escanejats amb data i hora de captura.
+   - **Selector Manual `📷 Llegir ticket` (`st.file_uploader`)**: Admet fitxers en formats d'imatge (`jpg`, `png`, `webp`, `bmp`), documents `pdf` de supermercat (processats mitjançant `pypdf`) i fitxers `txt`.
+   - **Badge d'Arxiu Actiu**: Mostra el nom del fitxer i la mida en KB.
+   - **Botó `🔄` (Reintentar)**: Permet canviar de model d'IA i forçar una reavaluació de la mateixa imatge si la primera lectura no ha estat òptima.
+   - **Botó `❌` (Descartar)**: Neteja la imatge de la memòria cau i reinicia el selector per carregar-ne un de nou.
+
+3. **Configuració Financera i Models d'IA**:
+   - **Casella `Enviar a despeses`**: Marca si el tiquet ha de crear automàticament un apunt comptable a la taula `despeses` (si no prové d'un tiquet bancari pendent).
+   - **Desplegables `Banc` i `Forma de Pagament`**: Selecció del compte financer (BBVA, LaCaixa, Efectiu, etc.) i el mitjà (Targeta, Transferència, Efectiu). Bloqueja el desat si no s'ha triat banc.
+   - **Selector Ràdio `Mètode d'Escaneig`**: Permet alternar entre **⚡ Híbrid (Tesseract+IA, recomanat)** (extracció de text local per OCR i estructuració per IA) o **👁️ Visió Pura (Directa)** (enviament directe de la imatge al model multimodal).
+   - **Selector de Models d'Intel·ligència Artificial (`render_ai_selector`)**: Desplegable dinàmic per triar el proveïdor (Gemini, Groq, DeepSeek) i el model concret (Gemini 2.5 Flash, Gemini 3.8 Flash, etc.), adaptant-se automàticament si el model suporta visió directa o requereix Tesseract previ.
+
+4. **Metadades del Tiquet (Data i Supermercat)**:
+   - **Selector `Data` (`st.date_input`)**: Data del tiquet amb bloqueig absolut de dates futures. Si té més de 7 dies d'antiguitat, s'activa un avís informatiu.
+   - **Botó `Avui`**: Assigna instantàniament la data actual al selector amb un sol clic.
+   - **Desplegable `Supermercat`**: Llista de cadenes comercials homologades.
+   - **Botó `Nou` / Panell d'Alta de Súper**: Obre un camp de text que permet enregistrar un nou supermercat tant a Supabase (`tb_supers`) com al fitxer de configuració local (`categories_conceptes.json`) sense sortir de la pàgina.
+
+5. **Panell d'Entrada i Correcció Manual d'Articles**:
+   - **Camps en Cascada `FAMILIA` i `ARTICLE`**: Desplegables interconnectats per seleccionar la família (ex: `lactics`, `fruita`, `carn`) i l'article normalitzat de la base de dades.
+   - **Botó `✚` (Afegir Nou Article al Catàleg)**: Obre el diàleg modal `@st.dialog("➕ Afegir nou article")` per enregistrar un producte desconegut a `tb_productes` al vol, assignant-li nom canònic, família i equivalència de supermercat.
+   - **Camp `PES`**: Camp per indicar el pes en grams o quilos (si és un article a granel).
+   - **Camp Numèric `QUANTITAT`**: Unitats de l'article (normalitzat a 1 en productes a pes).
+   - **Camp Numèric `PREU UNIT.`**: Preu per unitat en euros.
+   - **Camps de Descompte (`%` i `PROMOCIÓ`)**: Permeten aplicar la fórmula d'enginyeria inversa de promocions. En modificar qualsevol dels dos valors, el sistema recalcula la base teòrica mantenint fix el preu real pagat.
+   - **Camp `TOTAL LÍNIA`**: Mostra l'import líquid total de la línia calculat automàticament (deshabilitat per protegir la integritat matemàtica).
+   - **Casella `Reb.`**: Casella per indicar si aquest producte ha d'incrementar les existències del rebost domèstic en finalitzar el tiquet.
+   - **Botó `Intro línia`**: Afegeix l'article a la taula provisional de compra.
+
+6. **Taula Interactiva d'Articles i Accions Finals**:
+   - **Llistat de Línies**: Graella amb tots els productes extrets per la IA o afegits manualment.
+   - **Botó `✏️` (Modificar línia)**: Carrega les dades de la línia seleccionada als camps superiors per editar-ne la família, article, preu o promoció.
+   - **Botó `🗑️` (Eliminar línia)**: Elimina l'article del tiquet provisional.
+   - **Camp `Descompte global del Tiquet (€)`**: Permet introduir descomptes globals de caixa (ex: vals de 5 € de fidelitat) que es reparteixen de forma ponderada.
+   - **Botó `💾 Fi Tiquet` (`type="primary"`)**: Porta a terme la validació integral:
+     - Bloqueja l'acció si hi ha articles pendents de categoritzar (`familia == 'Pendent'`).
+     - Si la data supera els 7 dies, activa el modal de confirmació expressa `@st.dialog`.
+     - Executa la inserció massiva a `compresSuper`, actualitza `despeses` (`ticketPendent = False`), refresca el rebost i neteja els formularis.
+   - **Botó `Netejar Tiquet`**: Restableix la sessió buidant la taula temporal sense modificar la base de dades.
+
+---
+
+##### 4.1.2 Pestanya 2: `📝 Llista de la Compra` (Planificació i Checklist)
+Eina àgil per preparar la compra des de casa i marcar els productes al mòbil o imprimir-los en paper físic.
+
+1. **Generador Automàtic d'Estocs Mínims**:
+   - Analitza el rebost en temps real: qualsevol article amb `stock < stock_minim` s'incorpora automàticament a la llista de compra proposada, calculant la quantitat exacta que cal reposar.
+   - Agrupació intel·ligent per establiment comercial habitual (BonPreu, Dia, Mercadona, etc.) o sota la secció `Sense súper assignat`.
+
+2. **Panell d'Alta de Peticions Puntuals**:
+   - **Botó `➕ Afegir petició puntual`**: Desplega un formulari per afegir articles que no formen part de l'inventari regular (ex: bateries, eines, articles especials).
+   - **Desplegable `Supermercat`**: Assigna a quina botiga s'ha d'anar a comprar l'article.
+   - **Camp `Nom lliure (nou)`** o **`O tria del catàleg`**: Permet escriure qualsevol text lliure o cercar un producte ja existent a la base de dades.
+   - **Camp `Quantitat`**: Nombre d'unitats requerides.
+
+3. **Interfície de Checklist per a Supermercat**:
+   - **Acordions per Supermercat (`st.expander`)**: Cada botiga es presenta en un acordió independent que mostra el nombre total d'articles pendents i la suma estimada de diners.
+   - **Caselles de Verificació Interactives (`st.checkbox`)**: Dissenyades per utilitzar-se des del navegador del telèfon mòbil mentre s'és al passadís del súper. En marcar un producte, queda ratllat visualment.
+   - **Botó `🧹 Netejar peticions lliures`**: Elimina de cop les peticions puntuals que ja s'han adquirit.
+   - **Selector de Canvi de Destí**: Permet moure un article pendent d'un supermercat a un altre amb un sol clic si es decideix comprar-lo en una altra botiga.
+
+4. **Integració amb Impressora Tèrmica ESC/POS**:
+   - Botó directe per transmetre la llista completa o d'un sol supermercat a la impressora física de tiquets mitjançant [`modules/impressora.py`](file:///e:/Dashboard/modules/impressora.py), amb tall automàtic de paper per portar la llista impresa a la butxaca.
+
+---
+
+##### 4.1.3 Pestanya 3: `🥫 Rebost` (Gestió d'Inventari Domèstic)
+Control físic dels queviures emmagatzemats a la cuina, armaris i congelador.
+
+1. **Inventari General de Queviures**:
+   - Graella completa d'articles agrupats per categories (`Conserves`, `Làctics`, `Begudes`, `Neteja`, etc.).
+   - Mostra en columnes: Article, Família, Estoc Actual, Estoc Mínim de Seguretat i Data de Darrera Entrada.
+
+2. **Semàfor Visual d'Estoc**:
+   - 🟢 **Verd (Suficient)**: Quantitat per sobre de l'estoc mínim.
+   - 🟡 **Groc (Sota mínims)**: Quantitat igual o per sota del llindar de seguretat (alerta groga d'atenció).
+   - 🔴 **Vermell (Esgotat)**: Estoc a zero (provoca l'alta automàtica a la *Llista de la Compra*).
+
+3. **Controls d'Ajust Ràpid en 1 Clic**:
+   - **Botó `➕ Afegir 1`**: Incrementa l'estoc manualment quan es porta un article a casa sense tiquet.
+   - **Botó `➖ Gastar 1`**: Descompta una unitat quan s'obre o consumeix un paquet a la cuina.
+   - Sincronització immediata amb Supabase sense requerir recàrregues completes de pàgina.
+
+4. **Control de Caducitats i Consum Preferent**:
+   - Registre de dates de venciment per a productes peribles.
+   - Avisos visuals i notificacions a la campaneta d'alertes superior (`🔔`) quan un producte està a punt de caducar.
+
+5. **Vinculació de Codis de Barres (Lectura Làser)**:
+   - Desplegable de productes i botó **`🔗 Enllaçar Codi i Producte`**: Permet assignar el codi EAN d'un codi de barres llegit per pistola làser a un article del catàleg per a futures lectures instantànies.
+
+---
+
+##### 4.1.4 Pestanya 4: `📊 Estadístiques` (Mètriques Financeres i Gràfics Interactius)
+Panell analític per auditar el cost dels aliments, l'estalvi aconseguit i els patrons de consum familiar.
+
+1. **Filtres de Segmentació Temporal**:
+   - **Selector `Any`**: Filtra l'històric d'anys disponibles (ex: 2024, 2025, 2026).
+   - **Selector `Mes`**: Permet avaluar tot l'any conjuntament (`Tots`) o centrar-se en un mes específic.
+
+2. **Targetes KPI Resum**:
+   - **`Total Compra Pagada`**: Despesa neta real en euros efectuada en queviures durant el període.
+   - **`Total Estalvi Generat`**: Suma de tots els descomptes i promocions assolits, amb un indicador delta verd que reflecteix el percentatge d'estalvi aconseguit sobre el total teòric.
+   - **`Preu Sense Ofertes`**: Import teòric brut que s'hauria abonat si els productes s'haguessin comprat sense cap rebaixa o promoció.
+   - **`Nº Línies / Articles`**: Volum total d'articles físics adquirits.
+
+3. **Gràfics Interactius de Plotly**:
+   - **Gràfic de Donut (*Pagat vs Estalvi*)**: Mostra visualment la proporció entre els diners realment pagats i els diners que s'han estalviat gràcies a ofertes i vals.
+   - **Gràfic de Pastís per Famílies d'Aliments**: Distribució percentual de la despesa en funció del tipus d'aliment (Carnisseria, Fruita/Verdura, Làctics, Neteja, etc.).
+   - **Gràfic de Barres per Supermercat**: Rànquing visual del volum de despesa acumulat a cada comerç per conèixer a quina cadena es destina el pressupost d'alimentació.
+
+---
+
+##### 4.1.5 Pestanya 5: `🔍 Comparador de Preus` (Intel·ligència de Compra)
+Cercador creuat per identificar diferències de preu entre cadenes i contrarestar la inflació.
+
+1. **Filtres de Cerca de Mercat**:
+   - **Selector Ràdio `👀 Filtrar productes per`**: Permet triar entre visualitzar només els articles que falten a la llista de compra actual (`🛒 A la llista de compra`) o explorar tot l'històric de la base de dades (`📦 Tot el catàleg`).
+   - **Camp `🔍 Buscar producte...`**: Cerca en temps real per nom o paraula clau.
+
+2. **Graella Comparativa de Comerços**:
+   - Taula comparativa que creua els productes amb els diferents supermercats, mostrant el darrer preu registrat i el preu unitari normalitzat (€/kg o €/u).
+   - Identificació visual del comerç que ofereix el millor preu per a cada producte.
+
+3. **Històric d'Evolució Temporal per Article**:
+   - **Desplegable `🔍 Selecciona un producte`**: Mostra la cronologia completa de compres d'aquell article al llarg dels mesos.
+   - Taula d'evolució amb data, supermercat, preu unitari pagat i variació percentual per detectar pujades o baixades de preu entre cadenes.
+
+4. **Panell d'Anotació d'Ofertes de Mercat**:
+   - Formulari per registrar ofertes externes detectades: selectors de producte, súper, tipus de promoció (`Preu rebaixat`, `3x2`, `2a unitat %`) i preu final ofertat.
+
+---
+
+##### 4.1.6 Pestanya 6: `📰 Fulletons` (Catàlegs i Promocions Setmanals)
+Espai dedicat a consultar i arxivar catàlegs promocionals i descomptes especials.
+
+1. **Visualitzador de Fulletons Comercials**:
+   - Galeria d'imatges i documents PDF dels fulletons en curs de les cadenes habituals (Lidl, Dia, BonPreu, etc.).
+   - Consulta ràpida abans de planificar els menús de la setmana o fer la llista de la compra.
+
+2. **Cercador de Promocions Actives**:
+   - Selector de producte que creua els descomptes vigents amb el catàleg per saber si algun article habitual té promoció activa.
+
+3. **Persistència i Sincronització Núvol**:
+   - Integrat directament amb la taula `data/ofertes.json` (Config ID 6 de Supabase), garantint que les ofertes desades es mantinguin disponibles a tots els dispositius mòbils i ordinadors.
 
 ---
 
