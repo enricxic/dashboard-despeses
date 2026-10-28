@@ -1485,48 +1485,377 @@ Mòduls complementaris de protecció física de la llar, videovigilància, integ
 
 ## 7. Mòduls de Prioritat 5: Administració, Nucli i Serveis Transversals
 
-### 7.1 Configuració Global (`modules/admin.py`, `core/config_manager.py`)
-- `👤 Administrador`: Dades de contacte, avatar i PIN mestre.
-- `🏷️ Títol de la casa`: Personalització de text, colors i mida de la capçalera d'inici.
-- `👨‍👩‍👧‍👦 Família`: Membres de la llar amb data de naixement europea (`DD/MM/AAAA`), edat automàtica, telèfon mòbil, al·lèrgies mèdiques, vetos personals, plats comodí favorits i commutador de presència (`🟢 Present` vs `⚪ Fora`). Neteja d'estat de sessió (`f_`) en desar per forçar la lectura neta des de `core/config.json`.
-- `🍳 Aparells i Eines de Cuina`: Selector visual del catàleg d'estris de cuina de la llar amb miniatures homogènies i ampliació modal interactiva.
-- `🤝 Tutelats`, `🏦 Bancs`, `🎨 Aspecte i Tema`, `🔘 Icones d'inici`, `🌐 Idiomes`.
+---
+
+### 7.1 Administració i Configuració Global (`modules/admin.py`, `core/config_manager.py`)
+
+#### A. Ajustos, Fonts de Dades, Taules i Configuració
+1. **Fitxer Central de Configuració (`core/config.json`)**:
+   - Tota la parametrització de l'aplicació es governa a través de [`core/config_manager.py`](file:///e:/Dashboard/core/config_manager.py), que carrega i desa de manera atòmica el fitxer JSON [`core/config.json`](file:///e:/Dashboard/core/config.json).
+   - Estructura clau de dades:
+     - `admin`: Nom, correu electrònic, telèfon, avatar (emoji o URL) i hash/PIN de seguretat d'accés mestre.
+     - `titol_casa`: Text del rètol superior (ex: *"XIQUIHOUSE"*), subtítol, color hexadecimal de la capçalera (`#f39c12`), tipografia i mides.
+     - `familia`: Array d'objectes amb el perfil complet de cada membre: `{id, nom, data_naixement, rol, color, telefon, alergies, vetos, plats_favorits, present}`.
+     - `menjar`: Paràmetres dietètics globals, ràtios calòriques per àpat, catàleg d'eines actives i estris disponibles (`cataleg_eines`).
+     - `periferics`: Paràmetres del maquinari de la llar, incloent impressora tèrmica de tiquets (`nom_controlador`, `metode_impressio`, `salts_linia_tall`, `tall_automatic`) i paràmetres de l'escàner USB (motor WinRT / WIA, resolució DPI).
+     - `icones_actives`: Mapa booleà que habilita o oculta cadascuna de les targetes interactives del tauler d'inici (`landing`).
+     - `tutelats`: Llistat de persones o familiars sota tutela legal o gestió delegada amb comptes associats.
+     - `bancs`: Catàleg d'entitats bancàries de la llar amb colors corporatius i identificadors per a filtratge ràpid.
+     - `tema`: Selector de paleta visual (*Fosc* / *Clar*).
+     - `idioma`: Idioma predeterminat de la interfície (*ca* / *es*).
+2. **Neteja d'Estat i Resolució d'Inconsistències de Sessió**:
+   - Per evitar que els widgets de Streamlit mantinguin claus obsoletes en memòria cau després de desar o navegar entre seccions, [`modules/admin.py`](file:///e:/Dashboard/modules/admin.py) incorpora `_clear_all_admin_widget_keys()` i `_clear_section_session_keys(prefix)`, encarregades d'eliminar de `st.session_state` totes les claus temporals de formularis (`f_` per a família, `t_` per a tutelats, `b_` per a bancs).
+   - Cada desat sincronitza el disc i invoca immediatament `st.cache_data.clear()` per refrescar la informació en tots els mòduls dependents.
+
+---
+
+#### B. Flux de Treball del Mòdul d'Administració
+
+```mermaid
+flowchart TD
+    A["⚙️ Menú Administració"] --> B["Cerca o Selecció de Secció (12 Panells)"]
+    
+    B --> C1["👤 Administrador"]
+    B --> C2["🏷️ Títol Casa i Accés Directe"]
+    B --> C3["👨‍👩‍👧‍👦 Perfils Familiars i Dietes"]
+    B --> C4["🍽️ Eines de Cuina i Nutrició"]
+    B --> C5["🔌 Perifèrics (Impressora / Escàner)"]
+    B --> C6["🧪 Laboratori IA (Harness)"]
+    B --> C7["🔘 Visibilitat Mòduls d'Inici"]
+    B --> C8["🤝 Tutelats, Bancs, Tema, Idioma"]
+    
+    C1 --> D["Edició Paràmetres / PIN"]
+    C2 --> E["Actualització Windows Shortcut (.lnk)"]
+    C3 --> F["Validació Data Naixement (Edat automàtica)"]
+    C4 --> G["Càrrega Imatge Base64 i Modal"]
+    C5 --> H["Comprovació Drivers Win32Print / WIA"]
+    C7 --> I["Commutadors On/Off de Mòduls"]
+    
+    D & E & F & G & H & I --> J["💾 Botó Desar Configuració"]
+    J --> K["Escritura Atòmica a core/config.json"]
+    K --> L["Neteja Claus Sessió (_clear_section_session_keys)"]
+    L --> M["st.cache_data.clear() i Notificació d'Èxit"]
+```
+
+---
+
+#### C. Detall Exhaustiu de les 12 Seccions de Configuració
+
+##### 1. Secció 👤 Administrador
+- **Capçalera Dinàmica i Avatar**: Targeta corporativa d'estil Chrome Settings que reflecteix el nom complet de l'administrador, rol del sistema (`admin`), correu electrònic i avatar circular amb fons degradat.
+- **Formulari de Dades Personals**:
+  - `Nom de l'Administrador`: Camp de text editable vinculat a la sessió activa.
+  - `Correu Electrònic`: Text d'avís per a notificacions administratives.
+  - `Telèfon de Contacte`: Per a integracions de missatgeria o avisos d'urgència.
+  - `Selector d'Avatar`: Tria d'emojis o càrrega d'imatge local.
+- **PIN Mestre de Seguretat**:
+  - Camp de contrasenya/PIN numèric per desbloquejar accions de màxima sensibilitat (esborrat massiu de registres, accés al gestor de bases de dades des d'usuaris convidats o configuració de passarel·les bancàries).
+
+##### 2. Secció 🏷️ Títol de la casa
+- **Personalització Visual de la Marca de la Llar**:
+  - `Text del Títol Principal`: Camp de text (per defecte *"XIQUIHOUSE"*).
+  - `Subtítol o Lema`: Text secundari (ex: *"Gestió Integral de la Llar"*).
+  - `Color Principal del Rètol`: Color picker interactiu per definir el to hexadecimal (per defecte `#f39c12`) que tenyeix les capçaleres de tots els mòduls.
+  - `Mida i Estil de Tipografia`: Selector de grandària (normal, gran, extra gran).
+  - `Caixa de Vista Prèvia en Temps Real`: Panell delimitat amb vores discontínues que renderitza immediatament el text i el color escollits tal com es visualitzaran a la pantalla d'inici.
+- **Actualitzador de l'Accés Directe d'Escriptori de Windows (`_update_desktop_shortcut`)**:
+  - Quan es modifica el títol de la casa, l'aplicació executa un script en segon pla que reanomena i reconfigura automàticament l'accés directe `.lnk` ubicat a l'escriptori de Windows de l'ordinador amfitrió per mantenir la coherència de marca del sistema.
+
+##### 3. Secció 👨‍👩‍👧‍👦 Família
+- **Llistat de Membres Familiars**:
+  - Cada membre es presenta en una targeta independent plegable (`st.expander`) o llista estructurada.
+  - `Nom i Cognoms`: Identificador del familiar.
+  - `Data de Naixement`: Format europeu estricte (`DD/MM/AAAA`).
+  - `Càlcul Dinàmic d'Edat (`calcular_edat`)`: Funció algorísmica que processa dates en formats string o objecte datetime i calcula exactament els anys complerts tenint en compte mes i dia actuals.
+  - `Rol Familiar`: Selector (Pare, Mare, Fill/a, Avi/àvia, Convidat).
+  - `Color Identificador`: Color picker per al calendari d'agenda, torns de medicació i tasques de manteniment.
+  - `Telèfon Mòbil`: Per a vinculació d'alertes personals.
+  - `Al·lèrgies i Intol·leràncies Mèdiques`: Camp de text lliure (separat per comes) estrictament connectat amb el planificador de menús IA i el banc de proves Harness (tolerància 0%).
+  - `Vetos Alimentaris Personals`: Aliments que el familiar no vol menjar (encara que no siguin al·lèrgies).
+  - `Plats Comodí / Favorits`: Plats segurs d'emergència per substituir automàticament qualsevol àpat que contingui un veto.
+  - `Commutador de Presència (`🟢 Present` vs `⚪ Fora`)`: Permet desactivar temporalment un membre quan està de viatge, de vacances o fora de casa perquè la generació de menús i compres no calculi racions innecessàries.
+- **Accions i Modals de Família**:
+  - `➕ Afegir Membre Familiar`: Formulari emergent per registrar nous integrants.
+  - `🗑️ Esborrar Membre Familiar (`show_delete_family_member_dialog`)`: Modal de seguretat de Streamlit (`@st.dialog`) que sol·licita confirmació explícita abans d'eliminar el registre per evitar pèrdues accidentals.
+  - `💾 Desar Canvis de Família`: Invoca `_on_save_family_members()`, purga les claus `f_` de la sessió i reescriu el fitxer de configuració.
+
+##### 4. Secció 🍽️ Menús i Nutrició / 🍳 Eines de Cuina
+- **Catàleg Visual d'Eines i Aparells de Cuina (`DEFAULT_CATALEG_EINES`)**:
+  - Catàleg complet d'electrodomèstics i estris: Forn elèctric, Microones, Fregidora d'aire (*Airfryer*), Robot de cuina (Thermomix), Batedora de vas, Paella gran, Olla a pressió, Graella elèctrica, Vaporera, etc.
+  - `Miniatures i Resolució d'Imatges (`_get_eina_foto_src`)`: Cerca intel·ligent a les carpetes locals del projecte (`imatges/Eines/`, `imatges/Productes/`, etc.) o fonts web remotes, convertint fitxers locals a fluxos segurs en Base64 (`data:image/png;base64,...`).
+  - `Visor Modal d'Eines (`_render_eina_thumb_html`)`: Modal CSS pur amb etiquetes `<label>` i caixes ocultes que permet fer clic a la miniatura de 56x56 px per obrir un visor ampliat d'alta resolució amb descripció tècnica sense fer recàrrega de pàgina.
+  - `Interruptors d'Activació (`_on_eina_change`)`: Permet marcar quins aparells estan realment disponibles a la cuina de la casa. El planificador de menús IA no proposarà mai receptes que requereixin eines apagades.
+  - `Pujada d'Eines Personalitzades`: Formulari amb doble pestanya (`📁 Pujar fitxer PC/Mòbil` o `🔗 Enllaç URL`) per incorporar nous estris amb foto, nom i descripció.
+
+##### 5. Secció 🔔 Alertes Globals
+- **Configuració de Llindars de Notificació**:
+  - `Avisos de Loteria i Sorteigs`: Dies d'antelació per a la caducitat de dècims.
+  - `Marge d'Avisos de Manteniment`: Dies de preavís abans del venciment de tasques domèstiques recurrents.
+  - `Avisos de Caducitat de Garanties`: Llindar d'avís en dies per a aparells i electrodomèstics de la llar.
+  - `Visibilitat a la Campaneta`: Selectors per activar o silenciar categories d'alertes específiques al panell superior.
+
+##### 6. Secció 🔌 Perifèrics (Impressora i Escàner)
+- **Impressora Tèrmica de Tiquets (ESC/POS)**:
+  - `Llistat de Controladors Detectats`: Detecció automàtica d'impressores locals de Windows mitjançant `win32print`.
+  - `Controlador Seleccionat`: Selector del dispositiu (per defecte `BIXOLON_SRP275`).
+  - `Mètode d'Impressió Preferit`: Radio button entre *RAW ESC/POS (Windows natiu local)* i *Impressió Web (HTML5/window.print())*.
+  - `Salts de Línia de Marge`: Quantitat de salts buits (per defecte 6) abans de tallar perquè el text no quedi atrapat sota la guillotina.
+  - `Tall de Paper Automàtic`: Interruptor per enviar la comanda ESC/POS `\x1dV\x00` en finalitzar.
+  - `Botó d'Impressió de Prova`: Envia un tiquet curt de diagnòstic per verificar alimentació de paper i impressió de capçalera.
+- **Escàner USB de Documents i Tiquets**:
+  - `Motor d'Escaneig`: Selector entre el motor d'última generació WinRT natiu ([`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1)) o l'API clàssica WIA.
+  - `Resolució d'Escaneig (DPI)`: 150 DPI (ràpid per a OCR) o 300 DPI (alta definició).
+  - `Ruta de Destí`: Carpeta local predeterminada (`tickets/`).
+
+##### 7. Secció 🧪 Laboratori IA (Harness)
+- Accés directe als controls del banc de proves heurístic i informes d'avaluació de models (vegeu subapartat 7.2).
+
+##### 8. Secció 🤝 Tutelats
+- Gestió de registres de familiars sota tutela legal o gestió delegada, assignant comptes bancaris, límits de despesa i alertes administratives específiques.
+
+##### 9. Secció 🏦 Bancs
+- Gestió del catàleg d'entitats financeres de la llar (CaixaBank, BBVA, Santander, Revolut, etc.), codis de color identificatius i associació amb els comptes de [`modules/economic.py`](file:///e:/Dashboard/modules/economic.py).
+
+##### 10. Secció 🎨 Aspecte i Tema
+- Selector d'estil visual de l'aplicació entre tema **Fosc** (paleta fosca d'alt contrast amb fons `#0f172a` i targetes `#1e293b`) i tema **Clar** (estil corporatiu net amb fons blanc i vores suaus `#dadce0`).
+
+##### 11. Secció 🔘 Icones pantalla d'inici (Visibilitat)
+- Matriu d'interruptors (*toggles*) per activar o ocultar qualsevol de les targetes del menú principal (*Landing*):
+  - `Compres i Rebost`, `Econòmic`, `Llum i Aigua`, `Cotxe`, `Manteniment`, `Menús i Cuina`, `Agenda`, `Medicació`, `Seguretat`, `Domòtica`, `Jocs / Oci`.
+  - Desa instantàniament a `icones_actives` i reordena la graella del tauler.
+
+##### 12. Secció 🌐 Idiomes
+- Selector d'idioma de l'aplicació (*Català* / *Castellà*) amb diccionari de cadenes transversals a [`core/config_manager.py`](file:///e:/Dashboard/core/config_manager.py).
+
+---
+
+#### D. Interfície Gràfica, Elements Interactius i Enllaços Intermòdul
+1. **Disseny d'Interfície Chrome Settings**:
+   - Estructura a dues columnes (`col_menu: 3`, `col_body: 7`): barra lateral d'accés ràpid amb cercador en viu de seccions a l'esquerra, i àrea de formulari amb targetes arrodonides a la dreta.
+2. **Sistema de Missatges Flash (`_render_flash_message`)**:
+   - En desar dades satisfactòriament, es genera un banner verd temporal a la part superior del formulari (`st.session_state["flash_success"]`) que confirma l'operació i s'esvaeix al següent cicle.
+3. **Connexions Intermòdul**:
+   - **Compres (`modules/compres.py`)**: Rep els paràmetres de l'escàner i la impressora de tiquets.
+   - **Menús (`modules/menjar.py`)**: Llegeix els membres presents, al·lèrgies, vetos, plats favorits i el catàleg d'eines actives.
+   - **Agenda (`modules/calendari.py`) i Medicació (`modules/medicacio.py`)**: Utilitzen els membres familiars i els seus colors assignats per a filtres i avatars.
+   - **Landing (`modules/dashboard.py`)**: Governa la renderització dels botons segons el mapa `icones_actives`.
 
 ---
 
 ### 7.2 Laboratori IA - Harness (`core/harness.py`)
-- **Dataset mestre**: Bateria de casos de prova exhaustius a `data/harness_menu_cases.json` per avaluar l'adherència del model d'IA a les regles de la llar.
-- **Execució Asíncrona en Segon Pla**: Llançament de proves sense bloquejar la interfície d'usuari, monitorant el progrés a `data/harness_status.json`.
-- **Avaluadors deterministes**: Tolerància 0 a al·lèrgens (amb filtre previ de termes segurs com `sense lactosa` o `apte per a celíacs` per evitar falsos positius), verificació de plats alternatius per vetos, control d'hidrats consecutius i compliment d'aparells disponibles.
-- **Exportació d'informes en format Text (.txt)**.
-- **Models recomanats**: `gemini-2.5-flash`, `gemini-3.8-flash`.
+
+#### A. Arquitectura d'Avaluació Determinista i Dades de Prova
+1. **Propòsit del Mòdul**:
+   - El banc de proves **Harness** ([`core/harness.py`](file:///e:/Dashboard/core/harness.py)) és un entorn de proves automàtiques dissenyat per avaluar rigorosament la qualitat, fidelitat i seguretat dels models d'intel·ligència artificial (Gemini 2.5 Flash, Gemini 3.8 Flash, DeepSeek, etc.) abans de desplegar-los per a la generació de menús familiars.
+2. **Bateria de Casos de Prova (`data/harness_menu_cases.json`)**:
+   - Conté escenaris extrems de prova dissenyats expressament per estressar el model:
+     - Casos amb múltiples membres amb al·lèrgies severes creuades (celiaquia, intolerància a la lactosa, al·lèrgia als fruits secs).
+     - Escenaris amb múltiples vetos alimentaris personals i exigència de plats comodí específics.
+     - Restriccions d'eines (ex: cuines sense forn ni fregidora d'aire).
+     - Rebosts amb estoc limitat que cal consumir amb caràcter prioritari.
+3. **Cas en Viu de la Família (`get_live_family_test_case`)**:
+   - A més dels casos sintètics, el banc de proves extreu automàticament la configuració real vigent de la família i el catàleg d'eines des de [`core/config.json`](file:///e:/Dashboard/core/config.json) per avaluar com es comportaria el model amb la situació domèstica d'avui mateix.
+
+---
+
+#### B. Flux de Treball del Banc de Proves Harness
+
+```mermaid
+flowchart TD
+    A["🧪 Llançament Suite Harness"] --> B["Carrega Casos Sintètics + Cas Familiar en Viu"]
+    B --> C["Crea Fil Asíncron en Segon Pla (_harness_background_worker)"]
+    C --> D["Monitoratge d'Estat a data/harness_status.json"]
+    
+    subgraph ExecucioPerCas ["Bucle d'Avaluació per Cas"]
+        D --> E["Construcció System Prompt amb Regles Familiars"]
+        E --> F["Crida a la API del Model d'IA"]
+        F --> G["Parseig i Sanejament de JSON (parse_and_clean_json)"]
+        G --> H["Filtre de Seguretat Previ (netejar_termes_segurs)"]
+        H --> I["8 Avaluadors Heurístics Deterministes"]
+    end
+    
+    I --> J["Puntuació Global Ponderada (0 - 10)"]
+    J --> K["Generació Informes: Text Pla (.txt) i Markdown"]
+    K --> L["Presentació a la Interfície d'Usuari amb Taula Resum"]
+```
+
+---
+
+#### C. Detall dels 8 Avaluadors Heurístics i Mètriques de Rendiment
+
+1. **Seguretat d'Al·lèrgies Mèdiques (`grade_alergies`)**:
+   - **Tolerància 0%**: Qualsevol presència d'un al·lergen prohibit en un àpat destinat al familiar afectat atorga immediatament un 0 en la prova.
+   - **Filtre de Termes Segurs (`netejar_termes_segurs`)**: L'algorisme neteja prèviament qualificatius segurs com *"sense gluten"*, *"sense lactosa"*, *"apte per a celíacs"* o *"llet vegetal"* per evitar falsos positius en avaluar paraules clau com *"gluten"* o *"llet"*.
+2. **Vetos Personals i Desdoblament (`grade_vetos_i_desdoblament`)**:
+   - Verifica que cap membre rebi un aliment vetat. Si un aliment vetat apareix al menú general, avalua si el model ha desdoblat correctament l'àpat oferint l'alternativa del plat comodí registrat a la fitxa del familiar.
+3. **Regles Dietètiques de la Llar (`grade_regles_llar`)**:
+   - Verifica l'equilibri nutricional setmanal: presència de verdura diària, freqüència mínima de peix (almenys 2-3 cops per setmana), racions de llegums i limitació de carns vermelles o fregits.
+4. **Anti-repetició d'Hidrats Consecutius (`grade_repeticions_hidrats`)**:
+   - Penalitza la coincidència d'hidrats pesants en el mateix dia (ex: paella o pasta per dinar combinat amb pizza o arròs per sopar).
+5. **Alineació amb Puntuacions d'Estrelles (`grade_puntuacions_estrelles`)**:
+   - Comprova si el model prioritza les receptes amb 4 o 5 estrelles del catàleg històric de la casa enfront de plats amb valoracions baixes.
+6. **Eines de Cuina i Forn (`grade_eines_i_forn`)**:
+   - Avalua si les receptes proposades respecten el catàleg d'estris actius i penalitza si es programa un ús simultani o incompatible d'aparells (ex: demanar forn simultàniament a diferents temperatures).
+7. **Aprofitament d'Estoc del Rebost (`grade_aprofitament_estoc`)**:
+   - Premia les propostes que incorporen ingredients marcats com a *"consum preferent"* o amb sobreestoc al rebost i congelador de [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py).
+8. **Control Dietètic i Calòric (`grade_control_dietetic`)**:
+   - Supervisa que l'aportació energètica s'ajusti als objectius de manteniment o pèrdua de pes definits per als membres de la casa.
+
+---
+
+#### D. Execució en Segon Pla, Monitorització i Generació d'Informes
+- **Motor Asíncron (`_harness_background_worker`, `start_harness_suite_background`)**:
+  - Les proves d'IA poden trigar entre 30 segons i 3 minuts segons la quantitat de casos. El motor llança un fil de segon pla (*threading*) que escriu el progrés en percentatge, el cas actiu i els registres a [`data/harness_status.json`](file:///e:/Dashboard/data/harness_status.json).
+  - La interfície mostra una barra de progrés viva que es refresca sense bloquejar la navegació de l'usuari per altres mòduls.
+- **Generador d'Informes en Text Pla (`generate_harness_txt_report`)**:
+  - Produeix un fitxer de text estructurat descarregable amb diagnòstic pas a pas, temps de resposta de la API, tokens consumits, violacions detectades i recomanacions de millora del prompt.
+- **Informe Markdown (`generate_harness_markdown_report`)**:
+  - Renderitza una taula visual amb codi de colors (verd per a notes superiors a 8, groc entre 5 i 8, vermell per sota de 5) i resum gràfic de compliment per categoria.
 
 ---
 
 ### 7.3 Gestió de Bases de Dades i Sincronització Offline (`modules/bases_dades.py`, `modules/sincronitzacio.py`)
-- **Gestor de Bases de Dades (`modules/bases_dades.py`)**: Accessible des del menú superior, permet visualitzar i editar en temps real (inserir, modificar i esborrar) totes les taules de Supabase mitjançant `st.data_editor`, amb ordenació cronològica real per data i clau primària.
-- **Consolidar Dades Offline (`modules/sincronitzacio.py`)**: Visualitza i sincronitza en bloc a Supabase les mutacions retingudes a la cua `sync_queue.json` durant caigudes d'internet.
+
+#### A. Gestor de Bases de Dades Supabase en Temps Real (`modules/bases_dades.py`)
+1. **Accés i Permisos d'Accés**:
+   - Accessible des del menú superior d'escriptori (*Eines > 🗄️ Bases de Dades*) o mitjançant el paràmetre URL `?db=nom_taula`.
+   - Protegit per rol: només els usuaris amb rol `admin` o convidats amb PIN mestre poden visualitzar o modificar taules.
+2. **Explorador Multitaula**:
+   - Desplegable amb totes les taules relacionals de Supabase: `despeses`, `ingressos`, `compresSuper`, `carteraSuper`, `gasolina`, `kmCotxe`, `revisionsCotxe`, `hipoteca`, `limitsDespeses`, `pagadors`, `documentsLlar`, `mantenimentLlar`, `medicacio`, etc.
+   - Detecta automàticament la clau primària (*Primary Key*) segons la matriu `PK_MAP` (`idPago`, `idIngres`, `IdCompra`, `idGasolina`, `idRuta`, `idTRCartera`, `id`).
+3. **Editor de Dades Integrat (`st.data_editor`)**:
+   - Permet afegir noves files al final de la graella, modificar qualsevol cel·la fent doble clic i seleccionar files per a la seva eliminació física a Supabase.
+   - Commutador de seguretat `Ordenar pel més recent primer` per auditar immediatament les darreres transaccions registrades.
+4. **Panell Desplegable de Filtres Ràpids (`🔍 Filtres`)**:
+   - Detecta intel·ligentment el tipus de columnes del DataFrame actiu i genera filtres visuals adaptats:
+     - Selectors de columna única: Banc, Forma de Pagament, Mes, Any, Categoria, Estat de Tiquet Pendent (`ticketPendent`).
+     - Cerca per text lliure a Concepte o Article.
+     - Filtratge per rang d'import monetari (`apply_import_filter`).
+     - Botó `Netejar Filtres` per restaurar la vista completa de la taula amb un sol clic.
+
+---
+
+#### B. Sincronització Offline i Consolidació de Dades (`modules/sincronitzacio.py`)
+1. **Arquitectura d'Operació Desconnectada**:
+   - Si la connexió a Internet cau mentre s'introdueix una despesa, una ruta de cotxe o una compra, l'aplicació entra automàticament en mode desconnectat (*is_offline*).
+   - Totes les peticions de mutació s'encapsulen com a objectes JSON atòmics i s'emmagatzemen a la cua local [`sync_queue.json`](file:///e:/Dashboard/sync_queue.json):
+     - `INSERT`: Nova fila amb dades completes.
+     - `INSERT_BULK`: Línies massives (ex: línies d'un tiquet de supermercat).
+     - `UPDATE`: Nom de taula, clau primària, identificador i mapa de canvis.
+     - `DELETE`: Identificador de la fila per eliminar.
+2. **Panell de Gestió de la Cua**:
+   - Si la cua conté operacions pendents, es mostra una taula informativa amb la data/hora de la modificació local, la taula afectada i el detall del canvi.
+3. **Botons d'Acció**:
+   - `🗑️ Netejar Cua (Descartar canvis locals)`: Esborra el fitxer `sync_queue.json` descartant les modificacions fetes fora de línia.
+   - `🚀 Pujar Canvis a Supabase i Consolidar`: Itera sobre la cua executant cadascuna de les operacions mitjançant la instància de Supabase, informant del nombre d'accions completades amb èxit, gestionant possibles col·lisions i restaurant l'estat en línia.
+
+---
+
+#### C. Flux de Treball de Sincronització Offline
+
+```mermaid
+flowchart TD
+    A["Mutació de Dades (Insert / Update / Delete)"] --> B{"Connexió Supabase Activa?"}
+    
+    B -- Sí --> C["Execució Immediata a Supabase"]
+    B -- No / Error --> D["Enregistrament a la Cua Local (sync_queue.json)"]
+    D --> E["Activació Mode Offline a la Interfície"]
+    
+    E --> F["Mòdul de Sincronització (modules/sincronitzacio.py)"]
+    F --> G["Inspecció Visual de les Operacions Pendents"]
+    
+    G --> H{"Decisió de l'Usuari"}
+    H -- Descartar --> I["🗑️ Netejar Cua (Elimina sync_queue.json)"]
+    H -- Pujar --> J["🚀 Consolidar Canvis a Supabase"]
+    
+    J --> K["Processament per Lots (Insert / Bulk / Update / Delete)"]
+    K --> L{"S'han produït errors?"}
+    L -- No --> M["✅ Èxit: Buidatge de Cua i Restabliment Online"]
+    L -- Sí --> N["⚠️ Alerta d'Errors Parcials i Conservació de Pendents"]
+```
 
 ---
 
 ### 7.4 Sistema Global d'Alertes (`core/alerts.py`)
-- **Campaneta de Notificacions Global (`🔔`)**: Ubicada permanentment a la barra superior desplegable i a la pantalla d'inici amb recompte en temps real.
-- **Alertes monitorades**:
-  - Tiquets de compra pendents de desglossar (`ticketPendent = True`).
-  - Tasques de manteniment de la llar pendents o vençudes amb `diesAvis` configurables i assignació a membres.
-  - Canvis d'oli, revisió de rodes, nivells de líquids i ITV del vehicle.
-  - Venciment de garanties de productes de la llar (avís previ a 60 dies).
-  - Avisos familiars i administratius.
-- **Optimització**: Memòria cau temporal de 60 segons a `app.py` i reutilització directa dels DataFrames actius de la sessió.
+
+#### A. Arquitectura Transversal i Agregació d'Alertes Multimòdul
+1. **Campaneta de Notificacions Persistent (`🔔`)**:
+   - La campaneta d'alertes està present de forma unificada a la barra superior de navegació de l'aplicació i al tauler d'inici (*Landing*).
+   - Mostra un distintiu numèric en temps real (*badge*) amb la suma d'avisos pendents que requereixen atenció.
+2. **Optimització de Memòria i Rendiment**:
+   - Per evitar consultes redundants a la base de dades, [`core/alerts.py`](file:///e:/Dashboard/core/alerts.py) aprofita directament els DataFrames actius ja presents a la memòria de sessió (`df_desp`, `df_km`, `df_limits`). Només si la sessió és verge invoca `load_dashboard_data`.
+   - [`app.py`](file:///e:/Dashboard/app.py) manté una memòria cau de 60 segons sobre el recompte per mantenir la navegació fluida i sense latència.
 
 ---
 
-### 7.5 Impressora de Tiquets (`modules/impressora.py`)
-- Suport per a impressores de tiquets de compra (rotlles de 76mm o 80mm).
-- Suport dual d'impressió:
-  - **RAW ESC/POS en local**: Impressió directa amb comandament de tall automàtic de paper (`\x1dV\x00`) i salts de línia de marge de seguretat entre el capçal i la guillotina.
-  - **Impressió web neta**: Compatible amb Streamlit Cloud mitjançant `window.print()` estilitzat.
-- Integració directa al desplegable de cada supermercat a la Llista de la Compra.
+#### B. Catàleg de Regles de Notificació i Semàfor de Severitat
+
+| Tipus / Mòdul | Icona | Condició d'Activació | Nivell d'Alerta | Missatge Emetut |
+|:---|:---:|:---|:---:|:---|
+| **Cotxe (Oli)** | 🔧 | Kms restants per canvi d'oli $\le 0$ km | **Error (Vermell)** | *"Cal fer el canvi d'oli (previst als X km). Superat per Y km."* |
+| **Cotxe (Oli)** | 🔧 | Kms restants per canvi d'oli $\le$ llindar d'avís | **Warning (Groc)** | *"Queden X km per al canvi d'oli (als Y km)."* |
+| **Cotxe (Pneumàtics)** | 🛞 | Kms restants per canvi de rodes $\le$ llindar | **Warning / Error** | *"Revisar/canviar rodes: previst als X km (Y km restants)."* |
+| **Cotxe (Inflat)** | 🛞 | Data d'inflat superada o dins del marge | **Warning / Error** | *"Inflat de rodes pendent des del DD/MM/AAAA o proper."* |
+| **Cotxe (Nivells)** | 💧 | Data de revisió de líquids vençuda o pròxima | **Warning / Error** | *"Revisió de nivells de líquids (refrigerant/oli/frens) pendent."* |
+| **Cotxe (ITV)** | 📋 | Caducitat de la ITV en menys de 30 dies | **Warning / Error** | *"Inspecció Tècnica de Vehicles (ITV) pendent de renovar."* |
+| **Compres** | 🛒 | `ticketPendent == True` | **Warning (Groc)** | *"Hi ha tiquets de compra escanejats pendents de desglossar."* |
+| **Manteniment** | 🏠 | Tasca domèstica amb data límit vençuda | **Error (Vermell)** | *"Tasca de manteniment vençuda assignada a [Familiar]."* |
+| **Manteniment** | 🏠 | Dies restants per a tasca $\le diesAvis$ | **Warning (Groc)** | *"Tasca de manteniment propera en els propers X dies."* |
+| **Garanties** | 🛡️ | Venciment de garantia d'aparell domèstic $\le 60$ dies | **Info (Blau)** | *"La garantia del producte [Nom] caduca el DD/MM/AAAA."* |
+| **Medicació** | 💊 | Presa planificada no marcada amb retard $> 1$ h | **Warning (Groc)** | *"Presa de medicació de [Familiar] pendent d'administració."* |
+
+---
+
+### 7.5 Controlador d'Impressió de Tiquets (`modules/impressora.py`)
+
+#### A. Protocol Dual: RAW ESC/POS Local vs Web Print HTML5
+1. **Objectiu del Mòdul**:
+   - Permet imprimir físicament en paper tèrmic de rotllo continu (76 mm o 80 mm) les llistes de la compra generades a [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py), facilitant la compra al supermercat sense dependre de la pantalla del mòbil.
+2. **Arquitectura Dual d'Impressió**:
+   - **Mode Local Windows (RAW ESC/POS)**: Utilitza el mòdul `win32print` per comunicar-se directament amb el controlador de Windows de la impressora tèrmica (ex: *BIXOLON SRP-275*, *Epson TM-T20*, etc.). Envia fluxos de bytes binaris no interpretats amb comandaments nadius del capçal matricial.
+   - **Mode Web Universal (HTML5 / window.print())**: Si l'aplicació s'executa en un dispositiu mòbil, tauleta o a través de Streamlit Cloud, genera una finestra emergent neta en HTML5 amb CSS calibrat a amplada fixa (80 mm) i llança el diàleg natiu d'impressió del navegador.
+
+---
+
+#### B. Normalització Matricial de Text i Seqüències de Control de Tall
+1. **Funció de Sanejament Matricial (`normalitzar_per_a_matriu`)**:
+   - Les impressores matricials d'agulles i tèrmiques tradicionals sovint presenten taules de caràcters reduïdes (*CodePage 437/850*). Per evitar que accents catalans o caràcters especials es converteixin en símbols inintel·ligibles, la funció substitueix automàticament accents, dièresis i la ela geminada (`à->a`, `é->e`, `í->i`, `ç->c`, `·->.`, etc.).
+2. **Formatador d'Amplada Fixa (32 Caràcters per Línia)**:
+   - Modela cada línia exactament a 32 columnes:
+     - Checkbox buit per marcar a mà durant la compra (`[ ]`).
+     - Quantitat necessària (`2x`).
+     - Nom de l'article truncat a 16 caràcters per evitar salts de línia antiestètics.
+     - Preu estimat aliniat a la dreta amb indicador monetari.
+3. **Seqüències de Comandament ESC/POS**:
+   - `\x1b@`: Inicialització i restabliment de paràmetres del maquinari.
+   - `\x1ba\x01` i `\x1ba\x00`: Centrat de títols i alineació a l'esquerra del cos.
+   - `\x1bE\x01` i `\x1bE\x00`: Activació i desactivació de text en negreta.
+   - Salts de línia de seguretat (configurables, per defecte 6) per desplaçar el text imprès més enllà del corró d'arrossegament.
+   - `\x1dV\x00` (*GS V 0*): Comanda de tall de paper complet o parcial (*Auto Cut*).
+
+---
+
+#### C. Flux d'Impressió i Formatació de Llistes de la Compra
+
+```mermaid
+flowchart TD
+    A["🛒 Llista de la Compra a modules/compres.py"] --> B{"Tria d'Impressió de l'Usuari"}
+    
+    B -- Per Supermercat --> C["formatar_linies_tiquet (Ex: Mercadona)"]
+    B -- Tots els Súpers --> D["formatar_tots_els_supermercats (__ALL__)"]
+    
+    C & D --> E["Normalització Matricial de Caràcters (Sense accents / 32 cols)"]
+    E --> F{"Entorn d'Execució"}
+    
+    F -- Escriptori Local (Windows) --> G["imprimir_directe_bixolon"]
+    G --> H["Muntatge Seqüència RAW ESC/POS (Init, Bold, Línies, Salts, Tall)"]
+    H --> I["Enviament via win32print (Spooler Directe)"]
+    I --> J["🖨️ Sortida Física del Tiquet amb Tall Automàtic"]
+    
+    F -- Web / Mòbil / Cloud --> K["generar_html_imprimir_tiquet"]
+    K --> L["Finestra Emergent HTML5 amb window.print()"]
+    L --> M["📱 Diàleg d'Impressió del Navegador o Impressora Wi-Fi"]
+```
 
 ---
 
