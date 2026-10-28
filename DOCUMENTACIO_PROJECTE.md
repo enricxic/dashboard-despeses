@@ -552,34 +552,137 @@ Agent conversacional dotat de context sobre la situació econòmica real de la l
 ## 5. Mòduls de Prioritat 3: Subministraments i Manteniment de la Llar
 
 ### 5.1 Llum i Aigua (`modules/llum_aigua.py`)
+Mòdul central per al seguiment, control analític i optimització energètica dels subministraments bàsics de la llar (electricitat i aigua potable), monitorització de tarifes regulades (PVPC), gestió d'acumuladors tèrmics de calor, ingesta digital de factures en PDF amb visor interactiu i estudi fotovoltaic d'autoconsum basat en dades satel·litàries oficials de la Unió Europea (PVGIS).
 
-#### A. Subministrament Elèctric (⚡ Consum Llum)
-- **Preus PVPC / Tarifa Regulada en Directe**: *Scraper* automatitzat a proveïdors oficials amb canal de contingència (*fallback*) a l'API de Red Eléctrica de España (`apidatos.ree.es`). Mètriques de preu actual per tram tarifari (🟢 Vall, 🟡 Pla, 🔴 Punta), preu mitjà del dia, hora més barata i hora més cara.
-- **Gràfic Horari de 24 Hores (Plotly)**: Visualització interactiva de la corba de preus amb barres acolorides per tram horari 2.0TD.
-- **Optimitzador de Càrrega d'Acumuladors de Calor**:
-  - Algoritme que calcula la millor finestra contínua de càrrega per a cada acumulador de la llar, aprofitant les potències contractades per a cada tram horari (Vall nocturn o vall solar diürn).
-  - Selector d'hores necessàries independent per a cada zona, amb persistència a `data/acumuladors_config.json`.
-- **Registre de Factures Elèctriques i Ingesta PDF Automàtica**:
-  - Botó ràpid `📄 Nova factura llum` amb càrrega de PDF i extracció OCR/Regex automàtica de número, període, import i consum per tram (P1, P2, P3).
-  - Dipòsit de factures elèctriques en PDF a `PDF/Factures_Llum/` amb consolidació de consums i imports a Supabase ID 9.
-  - Visor interactiu de PDF basat en PDF.js (HTML5 Canvas).
-  - Gràfic mensual de barres apilades amb els preus totals situats netament sobre les barres.
+#### A. Arquitectura Energètica i Fonts de Dades
+El mòdul integra de forma transparent múltiples fonts d'informació oficials, fitxers de configuració i bases de dades al núvol:
+1. **Taules a Supabase (PostgreSQL)**:
+   - `data/consum_llum.json` / `csv/consum_llum.csv` (Config ID 9): Registre històric complet de factures elèctriques (`idFactura`, `numFactura`, `dataInici`, `dataFi`, `diesFactura`, `importTotal`, `consumTotal`, `kWh_P1`, `kWh_P2`, `kWh_P3`, `potencia_P1`, `potencia_P2`, `pdf_filename`).
+   - `data/consum_aigua.json` / `csv/consum_aigua.csv` (Config ID 10): Registre de factures d'aigua (`idFactura`, `numFactura`, `dataInici`, `dataFi`, `diesFactura`, `importTotal`, `consum_m3`, `lecturaAnterior`, `lecturaActual`, `pdf_filename`).
+2. **Arxius de Registre Diari i Configuració Local**:
+   - `data/preus_llum_diaris.json`: Registre continuat de les 24 hores dels preus PVPC de cada dia, permetent contrastar consums històrics hora a hora amb els preus reals de mercat. Accessible des del menú superior `Editar > 📂 Arxius JSON`.
+   - `data/acumuladors_config.json`: Paràmetres tècnics dels acumuladors de calor de la llar (potències en kW i hores de càrrega necessàries per a cada estança).
+   - Dipòsits de Documents PDF: `PDF/Factures_Llum/` i `PDF/Factures_Aigua/`.
+3. **APIs Externes en Temps Real**:
+   - **Red Eléctrica de España (REE / ESIOS - `apidatos.ree.es`)**: Connexió en viu per obtenir els preus horaris de la tarifa regulada 2.0TD (avui i demà a partir de les 20:15h).
+   - **PVGIS (Comissió Europea - `re.jrc.ec.europa.eu`)**: API de radiació solar satel·litària per calcular el rendiment fotovoltaic segons les coordenades GPS exactes de l'habitatge.
 
-#### B. Subministrament Hídric (💧 Consum Aigua)
-- Registre de factures d'aigua, lectures de comptador i consums en m³.
-- Dipòsit de factures a `PDF/Factures_Aigua/` amb visor integrat PDF.js i sincronització a Supabase ID 10.
-- Gràfics d'evolució de consum en m³ i cost per factura.
+---
 
-#### C. Simulador Estudi Solar PVGIS (☀️ Estudi Solar)
-- Model de radiació solar personalitzat amb dades oficials de PVGIS segons la ubicació geogràfica de l'habitatge (aplicant les Hores de Sol Pic mensuals reals).
-- Simulador interactiu amb paràmetres dinàmics:
-  - Nombre de plaques solars (mòduls fotovoltaics de potència configurable).
-  - Orientació de la coberta segons la teulada de l'habitatge (Est-Oest, Sud òptim, etc.).
-  - Emmagatzematge en bateries de liti (0 a 15 kWh).
-  - Derivació d'excedents als acumuladors tèrmics de la llar.
-- Contrast en temps real contra el consum elèctric anual real extret de l'històric de factures registrades.
-- **Anàlisi jurídica i econòmica de compensació d'excedents**: Contrast de la factura elèctrica amb la normativa vigent (RD 244/2019, on els excedents només compensen fins al valor del terme d'energia, sense reduir el terme de potència).
-- Comparativa d'inversió "Clau en mà" vs modalitat "Mixta / DIY" i guia de seguretat per a teulada de teules (fixació sense perforació directa).
+#### B. Cicle de Vida i Flux Operatiu dels Subministraments
+
+```mermaid
+flowchart TD
+    A["🌐 Scraping Preus PVPC (REE apidatos.ree.es)"] --> B["📊 Registre Horari 24h a preus_llum_diaris.json"]
+    B --> C["🔥 Optimitzador de Càrrega d'Acumuladors Tèrmics"]
+    D["📄 Arribada de Factura (PDF Llum o Aigua)"] --> E["⚡ Ingesta i Extracció Automàtica (pypdf/regex)"]
+    E --> F["🔍 Auditoria i Contrast de Consum Horari"]
+    F --> G["💾 Desat a Supabase (IDs 9 i 10) + Arxiu PDF"]
+    G --> H["💰 Sincronització amb Despeses (modules/economic.py)"]
+    G --> I["☀️ Simulador Solar PVGIS (Càlcul d'Autoconsum i Bateria)"]
+```
+
+- **Pas 1: Captura i Gravació PVPC**: L'algoritme consulta la tarifa regulada d'avui i demà, identificant els trams (Vall, Pla, Punta) i gravant les 24 hores a `data/preus_llum_diaris.json`.
+- **Pas 2: Optimització de Climatització**: Calcula la millor franja contínua per carregar els acumuladors de calor aprofitant les hores més econòmiques (vall nocturn o vall solar diürn).
+- **Pas 3: Ingesta Digital de Factures**: En rebre una factura en PDF, l'usuari la carrega; el motor extreu automàticament imports, dates, consums per tram i potències contractades.
+- **Pas 4: Auditoria de Facturació**: Es verifica si l'import facturat coincideix amb els consums per hora, desglossant termes d'energia, potència, lloguer de comptador i bonificacions (com el Bono Social).
+- **Pas 5: Sincronització i Estudi Solar**: Les dades es consoliden a la comptabilitat i alimenten el simulador fotovoltaic PVGIS per calcular l'estalvi potencial amb plaques solars.
+
+---
+
+#### C. Detall Exhaustiu de les 3 Pestanyes de la Interfície Gràfica
+
+El mòdul s'estructura en 3 grans àmbits mitjançant `st.tabs`:
+
+---
+
+##### 5.1.1 Pestanya 1: `⚡ Consum Llum` (Preus PVPC, Acumuladors i Factures Elèctriques)
+
+Aquesta vista es divideix en 3 subpestanyes interactives superiors i un panell inferior de gestió documental de factures:
+
+1. **Subpestanya 1.1: `📅 Preus d'Avui`**:
+   - **Targetes KPI en Temps Real**:
+     - `Preu Actual`: Preu en €/kWh de l'hora en curs amb etiqueta de color vibrant segons el tram (🟢 Vall, 🟡 Pla, 🔴 Punta).
+     - `Preu Mitjà`: Mitjana ponderada de les 24 hores del dia.
+     - `Hora Més Barata`: Franja horària amb el cost mínim (indicant si hi ha preus negatius o propers a 0 €).
+     - `Hora Més Cara`: Franja horària amb el cost màxim a evitar.
+   - **Gràfic Horari de 24 Hores (Plotly)**: Corba interactiva de barres verticals on cada barra correspon a una hora del dia (00h a 23h), acolorida segons la tarifa regulada 2.0TD (verd per a vall, groc per a pla, vermell per a punta). En passar el cursor, es visualitza el preu exacte en €/kWh i €/MWh.
+   - **Secció d'Optimització d'Acumuladors de Calor**:
+     - Llegeix les característiques tècniques de `data/acumuladors_config.json`.
+     - **Selector d'Hores de Càrrega**: Permet escollir quantes hores de càrrega requereix cada acumulador segons la temperatura exterior.
+     - **Càlcul de Finestra Òptima Contínua**: L'algoritme troba el període d'hores consecutives més econòmic per a la càrrega, maximitzant el rendiment tèrmic dels nuclis ceràmics sense disparar el cost elèctric.
+
+2. **Subpestanya 1.2: `🔮 Preus de Demà`**:
+   - Es publica automàticament cada dia a partir de les 20:15h (quan l'operador del mercat OMIE i REE publiquen la subhasta diària).
+   - Ofereix el mateix conjunt de mètriques KPI i gràfic horari de 24 hores que la pestanya d'avui, facilitant la planificació anticipada d'electrodomèstics d'alt consum (rentadores, assecadores, rentavaixelles o recàrrega de vehicle).
+
+3. **Subpestanya 1.3: `⚖️ Comparativa Avui vs Demà`**:
+   - **Gràfic Combinat de Doble Línia (Plotly)**: Superposa la corba horària d'avui davant la de demà per comparar l'evolució del cost energètic hora a hora.
+   - **KPIs de Variació**: Percentatge d'increment o descens del preu mitjà per saber si convé avançar o endarrerir consums intensius.
+
+4. **Gestió de Factures Elèctriques (Històric i Ingesta PDF)**:
+   - **Botó `📄 Nova factura llum`**: Desplega el panell de càrrega per arrossegar el document PDF emès per la comercialitzadora (Endesa, Iberdrola, Naturgy, PVPC, etc.).
+   - **Extracció Automàtica Intel·ligent (`extract_data_from_pdf_bytes`)**:
+     - Extreu via text digital i expressions regulars el número de factura, les dates d'inici i final, els dies facturats, l'import total en euros, els kWh consumits per tram (P1 Punta, P2 Pla, P3 Vall) i les potències contractades.
+   - **Visor Natiu de Factures PDF (`view_pdf_dialog`)**: Obre un diàleg modal `@st.dialog` amb el document renderitzat sobre un llenç HTML5 (PDF.js Canvas), amb botons de canvi de pàgina, zoom i descàrrega.
+   - **Taula d'Històric de Factures (`st.dataframe`)**: Mostra totes les factures registrades amb columnes configurades. Cada fila disposa de botons per:
+     - `👁️`: Veure el document PDF original al visor.
+     - `✏️`: Obrir el modal d'edició (`edit_factura_dialog`) per corregir qualsevol dada.
+     - `🗑️`: Esborrar la factura i eliminar el fitxer físic de disc (`delete_factura_dialog`).
+   - **Gràfic Mensual de Consum per Tram (Plotly Stacked Bar)**: Gràfic de barres apilades que reflecteix el consum en kWh de P1, P2 i P3 per a cada mes, coronat amb l'etiqueta flotant neta del preu total en euros sobre cada barra.
+
+---
+
+##### 5.1.2 Pestanya 2: `💧 Consum Aigua` (Lectures de Comptador i Factures Hídriques)
+
+Control del subministrament d'aigua de xarxa de l'habitatge:
+
+1. **Gestió i Ingesta de Factures d'Aigua**:
+   - **Botó `📄 Nova factura aigua`**: Càrrega del PDF oficial de la companyia d'aigües (ex: Sorea, Agbar, Aigües municipals).
+   - **Extracció Automàtica de Paràmetres**: Número de rebut, període de consum, import total, volum en metres cúbics ($m^3$), lectura anterior del comptador i lectura actual.
+   - **Visor PDF Integrat**: Revisa visualment la factura en PDF mitjançant el visor `PDF.js`.
+
+2. **Taula Històrica de Facturació Hídrica**:
+   - Llistat cronològic de consums en $m^3$, dies de facturació, quota fixa de servei, cànon d'aigua i import total.
+   - Accions d'edició ràpida (`edit_factura_aigua_dialog`) i eliminació segura (`delete_factura_aigua_dialog`).
+
+3. **Gràfics d'Evolució Hídrica (Plotly)**:
+   - **Evolució de Consum en $m^3$**: Barres mensuals de volum consumit amb línia de tendència de consum mitjà diari en litres per persona.
+   - **Cost Mitjà del Metre Cúbic**: Ràtio entre import pagat i volum real ($€/m^3$) per vigilar increments de tarifes municipals o canvis de tram de consum.
+
+---
+
+##### 5.1.3 Pestanya 3: `☀️ Estudi Solar i Autoconsum (PVGIS)`
+
+Eina de modelització i enginyeria financera per avaluar la instal·lació de panells solars fotovoltaics a l'habitatge:
+
+1. **Paràmetres Dinàmics de la Instal·lació**:
+   - **Selector de Potència per Panell**: Desplegable per escollir la potència dels mòduls (400W, 450W, 500W, 550W).
+   - **Control de Nombre de Plaques**: Selector numèric de mòduls fotovoltaics a instal·lar.
+   - **Orientació i Inclinació de Teulada**: Ajust segons la coberta real de la casa (Sud pur, Est-Oest, inclinació en graus).
+   - **Capacitat d'Emmagatzematge en Bateria**: Selector de capacitat útil en kWh (de 0 a 15 kWh de bateries de liti LFP).
+   - **Derivació a Acumuladors Tèrmics**: Opció per derivar automàticament els excedents solars cap a la calefacció d'acumuladors de calor abans d'abocar energia a la xarxa.
+
+2. **Model de Radiació Solar PVGIS (Comissió Europea)**:
+   - Aplica les dades oficials d'Hores de Sol Pic (HSP) mensuals basades en satèl·lits meteorològics per a les coordenades exactes de l'habitatge.
+   - Contrast en temps real contra el consum elèctric real extret de l'històric de factures registrades a `consum_llum.json`.
+
+3. **Simulació Econòmica i Normativa d'Autoconsum (RD 244/2019)**:
+   - **Compensació d'Excedents Realista**: Simula fidelment la legislació vigent, on els excedents abocats només compensen fins al valor de l'energia consumida de la xarxa durant el període, sense reduir mai el terme de potència fix ni els peatges del sistema.
+   - **Càlcul d'Autosuficiència Energètica (%)**: Percentatge de l'energia total de la llar que quedarà coberta directament pel sol.
+   - **Comparativa Financera d'Inversió**: Balanç entre la modalitat "Clau en mà" (instal·lador comercial) i modalitat "Mixta / DIY" (adquisició directa de materials i suport d'electricista autoritzat per al butlletí CIE).
+
+---
+
+#### D. Navegació Dinàmica i Enllaços amb Altres Mòduls
+- **Navegació per Paràmetres URL (`st.query_params`)**:
+  - `?tab=llum`: Obre directament la secció elèctrica i tarifes PVPC.
+  - `?tab=aigua`: Condueix a les factures d'aigua.
+  - `?tab=solar`: Activa el simulador fotovoltaic PVGIS.
+- **Interconnexions amb la Resta del Dashboard**:
+  - **[`modules/economic.py`](file:///e:/Dashboard/modules/economic.py)**: Les factures elèctriques i d'aigua confirmades es consoliden automàticament a les línies de despesa de subministraments de la comptabilitat general.
+  - **Menú Superior `Editar > 📂 Arxius JSON`**: Accés directe per consultar o editar `data/preus_llum_diaris.json` i `data/acumuladors_config.json`.
+  - **Domòtica i Alertes**: Connexió futura amb sistemes domòtics (Home Assistant) per disparar relés de càrrega d'acumuladors en les hores vall calculades.
 
 ---
 
