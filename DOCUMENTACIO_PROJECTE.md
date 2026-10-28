@@ -376,29 +376,176 @@ Espai dedicat a consultar i arxivar catàlegs promocionals i descomptes especial
 ---
 
 ### 4.2 Mòdul Econòmic i Dashboard (`modules/economic.py`, `modules/dashboard.py`)
+Mòdul mestre de control pressupostari, tresoreria bancària, seguiment patrimonial, projecció financera plurianual i comptabilitat familiar integral. Articula la dualitat entre la **Vista Executiva de Dashboard** ([`modules/dashboard.py`](file:///e:/Dashboard/modules/dashboard.py)) i la **Vista Operativa de Gestió Econòmica** ([`modules/economic.py`](file:///e:/Dashboard/modules/economic.py)).
 
-#### A. Dashboard General
-- Targetes KPI dels saldos actualitzats dels comptes bancaris i caixes d'efectiu configurats al sistema.
-- Gràfic comparatiu d'ingressos i despeses amb finestra temporal de 3 anys (`any-1`, `any`, `any+1`) i projeccions visuals per als mesos futurs.
-- Taula de detalls del mes amb selecció interactiva de categories (`st.dataframe` amb `on_select="rerun"` i claus d'estat estables).
+#### A. Arquitectura Financera i Fonts de Dades
+El mòdul opera sincronitzant les següents taules a Supabase (PostgreSQL) i fitxers de configuració:
+1. **Taules Principals**:
+   - `despeses`: Moviments reals de despesa (`ID_mov`, `Data`, `Banc`, `FormaPago`, `IdCategoria`, `Idconcepte`, `Import càrrec`, `ticketPendent`).
+   - `ingressos`: Ingressos reals i cobraments (`ID_mov`, `Data`, `Banc`, `FormaPago`, `IdCategoria`, `Idconcepte`, `Import abonament`).
+   - `pagaments`: Taula mestre de **previsió de despeses i quotes periòdiques** de tot l'any (`idPago`, `Banc`, `Formapago`, `Data`, `dia`, `mes`, `any`, `Categoria`, `Concepte`, `Import`, `pagat`, `banc_desti`, `import_desti`).
+   - `inversions`: Seguiment de posicions financeres, accions i fons indexats (Trade Republic, NVIDIA, S&P 500, etc.).
+   - `sync_queue.json`: Cua local de mutacions retingudes en cas de pèrdua de connectivitat.
+2. **Configuració Centralitzada**:
+   - `categories_conceptes.json` (Config ID 1): Arbre taxonòmic de categories de despesa/ingrés, conceptes associats, llista de comptes bancaris oficials (`BBVA`, `La Caixa`, `Trade Repub.`, `Casa`, `Tg.Moneder`, `CORTEINGLÉS`, `Pago VISA`) i formes de pagament.
+3. **Mecanisme de Zero Latència**:
+   - Totes les modificacions (`insert_db_row`, `update_db_row`, `delete_db_row`) alteren directament el DataFrame a `st.session_state` i buiden quirúrgicament la finestra recent, sense reiniciar la memòria cau massiva de 24 hores.
 
-#### B. Previsió de Despeses i Ingressos
-- Taules amb filtratge dinàmic per Any, Mes, Banc i Estat (Pagat/Pendent), amb configuració nativa de columnes (`st.column_config`).
-- Modificació d'imports en bloc per a pagaments pendents futurs.
+---
 
-#### C. Generador de Nou Any Comptable i Pagues Extres (Modal Interactiu)
-- Accessible des del menú superior: `Mòduls > Mòdul Econòmic > 📅 Afegir nou any comptable`.
-- Permet revisar i editar els imports estimats de cada partida abans de generar els 12 mesos de l'any següent.
-- **Pestanya Pagues Extres**: Permet programar pagues extres o ingressos extraordinaris recurrents (ex. juny i novembre) associats a les pensions o nòmines de la família, integrant-se a la xifra anual d'ingressos.
+#### B. Cicle de Vida del Flux Financer
 
-#### D. Ingrés / Despesa General i Traspassos entre Comptes
-- Formulari ràpid de moviments reals (despeses, ingressos, gasolina i traspassos).
-- **Traspassos entre comptes (`op_banc`)**: Incorpora el camp "Quantitat al banc de destí (€)" configurable amb càlcul visual de la diferència, per reflectir situacions on una part del traspàs es reté o es destina a una altra partida.
-- Neteja del desglòs mitjançant el filtre `grup != op_banc` per no duplicar operacions tècniques a la cartera.
+```mermaid
+flowchart TD
+    A["📅 Generador de Nou Any Comptable"] --> B["🔴 Previsió de Despeses i Ingressos (pagat = 'pendent')"]
+    B --> C["🏦 Arribada del Càrrec Bancari o Cobrament Real"]
+    C --> D{"Comprovació d'Import i Concepte"}
+    D --> E["✅ Marcatge com a 'Pagat' / Liquidat"]
+    E --> F["📊 Actualització Instantània de Saldos Bancaris"]
+    F --> G["🔍 Conciliació d'Extracte Bancari (show_bank_extract_modal)"]
+    G --> H["📈 Anàlisi d'Inversions i Fons d'Estalvi"]
+```
 
-#### E. Inversions i Fons d'Estalvi
-- Seguiment de posicions en carteres d'inversió (accions, fons indexats, etc.) amb filtres per Any, Mes i Concepte.
-- Evolució dels fons d'estalvi programats amb gràfics interactius d'aportacions i rescats.
+- **Pas 1: Planificació Anual**: A través del generador d'any comptable, es projecten totes les quotes fixes, subministraments, hipoteques, impostos i pagues extres dels 12 mesos com a `pendent`.
+- **Pas 2: Execució Mensual**: A mesura que avança el mes, l'usuari o el banc van liquidant càrrecs. Des de la taula de previsió es pot marcar com a `Pagat` individualment o mitjançant liquidació massiva.
+- **Pas 3: Conciliació i Extracte**: Fent clic a qualsevol targeta de compte bancari, s'obre l'extracte mensual per verificar que el saldo quadra amb el banc real.
+- **Pas 4: Traspassos i Inversions**: Gestió de traspassos entre comptes amb control d'imports a destí i seguiment de les carteres d'inversió.
+
+---
+
+#### C. Detall Exhaustiu de les Vistes i Controls Interactius
+
+##### 4.2.1 Vista Executiva: Dashboard General (`view_mode == "dashboard"`)
+La pantalla d'inici i comandament financer del Dashboard ([`modules/dashboard.py`](file:///e:/Dashboard/modules/dashboard.py)).
+
+1. **Targetes Interactives de Tresoreria i Comptes Bancaris (Top Container)**:
+   - **Mètrica Principal de Saldo Global**: Mostra la suma consolidada de diners de tots els comptes actius: `💰 Saldo Comptes: X.XX €` en verd vibrant i tipografia destacada.
+   - **Botons-Targeta de Comptes Bancaris**: Bloc horitzontal amb un botó estilitzat per a cada compte oficial en l'ordre estricte: `BBVA`, `La Caixa`, `TRADE REPUB.`, `Casa` (Efectiu), `Tg.Moneder`, `CORTEINGLÉS`, `Pago VISA`.
+     - Tipografia condicional: Verd si el saldo és positiu (`> 0.05 €`), Vermell si és negatiu (`< -0.05 €`).
+     - **Acció en 1 Clic**: En clicar sobre qualsevol targeta de banc, s'obre el modal **`show_bank_extract_modal(banc, any, mes)`**.
+   - **Diàleg Modal d'Extracte Bancari (`show_bank_extract_modal`)**:
+     - Mostra l'extracte complet d'aquell compte per al mes actiu: Saldo inicial a l'inici de mes, llistat cronològic de càrrecs i abonaments amb categoria i concepte, i saldo final resultant.
+
+2. **Filtres Temporals i Límits de Despesa**:
+   - **Títol Dinàmic**: `📅 Resum Mensual d'Ingressos i Despeses {Any}`.
+   - **Botó Popover `🔍`**: Desplega el selector d'Any i la casella **`Veure límits despesa`** per mostrar les fites pressupostàries mensuals.
+
+3. **Gràfica Temporal i Taula Resum de Categories**:
+   - **Gràfic Comparatiu d'Ingressos vs Despeses (Plotly)**: Finestra temporal de 3 anys (`Any-1`, `Any`, `Any+1`) per comparar l'evolució del mes actual amb anys anteriors i projeccions futures.
+   - **Taula Resum Ràpida (`generate_fast_summary_table_html`)**: Taula HTML optimitzada amb estils visuals i gradient cromàtic verd/vermell segons el saldo de cada categoria.
+   - **Taula Interactiva de Detall del Mes (`st.dataframe` amb `on_select="rerun"`)**: Permet fer clic a qualsevol fila o categoria per filtrar automàticament els moviments individuals a la part inferior de la pantalla.
+
+---
+
+##### 4.2.2 Vista Operativa: Mòdul Econòmic (`view_mode == "economic"`)
+La interfície de treball comptable estructurada en 6 pestanyes especialitzades ([`modules/economic.py`](file:///e:/Dashboard/modules/economic.py)):
+
+---
+
+##### 4.2.2.1 Pestanya 1: `📝 Ingrés / Despesa General`
+Panell d'entrada de transaccions reals del dia a dia i moviments d'efectiu/bancaris que no provenen de tiquets de supermercat.
+
+1. **Formulari Ràpid d'Apunt Contable**:
+   - **Ràdio de Tipus**: `Despesa`, `Ingrés`, `Gasolina`, `Traspàs entre comptes`.
+   - **Selectors en Cascada**: `Categoria` i `Concepte` amb càrrega dinàmica des de `categories_conceptes.json`.
+   - **Selector de Compte i Mètode**: `Banc` (origen) i `Forma de Pagament`.
+   - **Camps Numèrics**: `Import (€)` i `Data` de la transacció.
+2. **Sub-formulari de Traspassos entre Comptes (`op_banc`)**:
+   - En seleccionar un traspàs, apareixen els camps: `Banc d'Origen`, `Banc de Destí`, `Import a Origen` i el camp especial **`Quantitat al banc de destí (€)`**.
+   - **Control de Retencions**: Permet reflectir situacions on una part del traspàs es reté en comissions o es desvia a una altra guardiola, calculant automàticament la diferència.
+   - **Filtre de Neteja**: El sistema marca aquests moviments com a `op_banc` per no falsejar les estadístiques de consum familiar.
+3. **Històric Recent de Moviments**:
+   - Graella amb botons d'edició ràpida `✏️` i eliminació `🗑️` amb desplaçament automàtic cap a la paperera de reciclatge.
+
+---
+
+##### 4.2.2.2 Pestanya 2: `🔴 Prev. Despeses` (Pagaments Programats)
+Gestió integral de totes les obligacions econòmiques futures i passades de l'exercici.
+
+1. **Formulari Acordió `➕ Nova Previsió de Pagament`**:
+   - Permet programar una nova despesa futura: Data/Dia, Concepte, Categoria, Import estimat, Banc assignat i periodicitat.
+2. **Filtres i Cercadors de la Taula de Pagaments**:
+   - Selectors de filtratge múltiple per: `Any`, `Mes`, `Banc` i `Estat` (Tots, Només Pagats, Només Pendents).
+   - Cercador per text de conceptes (ex: `Ibi`, `Assegurança`, `Lloguer`).
+3. **Taula Interactiva de Previsió (`st.dataframe`)**:
+   - Configuració nativa de columnes (`st.column_config`): Data en format català, imports en euros alineats, i checkboxes interactives de `pagat`.
+4. **Accions Massives i Confirmació d'Operacions**:
+   - **Modificació d'Imports en Bloc**: Permet ajustar l'import previst de múltiples rebuts abans que es cobrin.
+   - **Liquidació en Bloc (`dialog_confirmar_operacions`)**: Modal per confirmar la liquidació de tots els rebuts pendents d'un mes seleccionat d'un sol cop.
+
+---
+
+##### 4.2.2.3 Pestanya 3: `🟢 Prev. Ingressos` (Nòmines i Rendiments)
+Seguiment de les fonts d'entrada monetària de la unitat familiar.
+
+1. **Formulari `➕ Nova Previsió d'Ingrés`**:
+   - Registre d'ingressos futurs programats: Nòmines mensuals, pensions, cobraments d'assegurances, lloguers o devolucions fiscals.
+2. **Control d'Estat de Cobrament**:
+   - Taula amb indicadors d'estat: `🟢 Pagat/Cobrat` vs `🟡 Pendent`.
+   - Enllaç directe amb el banc receptor per comprovar la data exacta d'ingrés en compte.
+3. **Mètriques Resum d'Ingressos**:
+   - KPIs de total ingressat al mes, total pendent de cobrar i comparativa respecte a la previsió inicial.
+
+---
+
+##### 4.2.2.4 Pestanya 4: `📈 Inversions` (Patrimoni i Actius)
+Control de carteres de valors, fons indexats i plataformes fintech.
+
+1. **Integració de Posicions (Trade Republic, ETFs, Accions)**:
+   - Monitorització de carteres amb detall de títols (ex: NVIDIA, S&P 500, fons monetaris).
+   - Registre d'aportacions mensuals recurrents (ex: aportacions de 25 €/mes programades).
+2. **Seguiment de Rendibilitat i Plusvàlues**:
+   - Càlcul de capital invertit acumulat enfront del valor liquidatiu actual.
+   - Gràfics d'evolució patrimonial i gràfic de barres d'aportacions netes.
+
+---
+
+##### 4.2.2.5 Pestanya 5: `💰 Estalvis` (Metes i Reserves)
+Gestió de fons d'emergència i guardioles familiars.
+
+1. **Compte i Caixes d'Estalvi**:
+   - Separació comptable dels fons immobilitzats per a contingències (reparacions del vehicle, vacances, impostos anuals).
+2. **Definició de Metes d'Estalvi**:
+   - Barres de progrés interactives que mostren el percentatge assolit per a cada objectiu d'estalvi familiar.
+   - Formulari per registrar aportacions o rescats de diners entre el compte corrent i la guardiola d'estalvis.
+
+---
+
+##### 4.2.2.6 Pestanya 6: `🤖 Xat IA` (Assistent Financer Intel·ligent)
+Agent conversacional dotat de context sobre la situació econòmica real de la llar.
+
+1. **Context Financer Connectat**:
+   - L'assistent disposa de visibilitat sobre els saldos actuals dels comptes, les despeses del mes en curs i les previsions pendents.
+2. **Consultes en Llenguatge Natural**:
+   - Permet formular preguntes com: *"Puc afrontar una despesa extraordinària de 500 € aquest mes?"*, *"A quant puja la despesa de supermercat aquest trimestre?"* o *"Quin marge d'estalvi tenim fins a final d'any?"*.
+3. **Respostes Estructurades**:
+   - Proporciona recomanacions d'ajust pressupostari, càlculs de desviació i alertes de liquiditat.
+
+---
+
+#### D. Diàlegs Modals i Eines Globals del Mòdul
+
+1. **`📅 Afegir Nou Any Comptable` (`show_afegir_any_comptable_dialog`)**:
+   - Accessible des del menú superior: `Mòduls > Mòdul Econòmic > 📅 Afegir nou any comptable`.
+   - Modal amb 3 pestanyes interactives:
+     - **Pestanya 1 (Ingressos recurrents)**: Revisa imports de nòmines i pensions per projectar els 12 mesos de l'any següent.
+     - **Pestanya 2 (Despeses recurrents)**: Permet editar l'estimació de quotes mensuals (lloguer, hipoteca, assegurances, llum, aigua, etc.) abans de generar-les.
+     - **Pestanya 3 (Pagues Extres)**: Permet programar les pagues dobles d'estiu (juny) i Nadal (novembre/desembre), afegint-les automàticament a les previsions.
+   - **Botó Generador**: Genera en bloc centenars de registres a `pagaments` amb `pagat = 'pendent'` sense bloquejar la base de dades.
+
+2. **`🗑️ Paperera de Reciclatge` (`show_paperera_modal`)**:
+   - Registre d'auditoria de moviments eliminats.
+   - Permet restaurar un registre esborrat per error amb un sol clic (`Restaurar`).
+
+3. **`📦 Modal d'Inventari` (`modal_inventari`)**:
+   - Balanç patrimonial de béns materials i equipament de la llar.
+
+---
+
+#### E. Enllaços i Interconnexions amb Altres Mòduls
+- **[`modules/compres.py`](file:///e:/Dashboard/modules/compres.py)**: Connexió bidireccional immediata. Cada desglossament de tiquet a compres tanca el pendent a `despeses` (`ticketPendent = False`), i el botó `⚡ Mòdul Econòmic` permet alternar entre ambdós mòduls sense perdre context.
+- **[`modules/llum_aigua.py`](file:///e:/Dashboard/modules/llum_aigua.py)**: Les factures elèctriques i d'aigua confirmades es consoliden automàticament a les partides corresponents de despeses generals.
+- **[`modules/cotxe.py`](file:///e:/Dashboard/modules/cotxe.py)**: Els repostatges de combustible i les factures de taller s'imputen com a despeses del vehicle a la categoria de mobilitat.
 
 ---
 
