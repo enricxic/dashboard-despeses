@@ -140,48 +140,101 @@ Dashboard/
 ## 4. Mòduls de Prioritat 2: Gestió Econòmica i Compres
 
 ### 4.1 Compres Super i Stock (`modules/compres.py`)
-Mòdul central per a la ingesta de tiquets de compra, control pressupostari d'alimentació, gestió d'estoc del rebost i generació de llistes de compra.
+Mòdul central i neuràlgic per a la ingesta intel·ligent de tiquets de compra, control pressupostari d'alimentació, gestió d'estoc del rebost domèstic, generació dinàmica de llistes de compra, comparativa històrica de preus i seguiment d'ofertes.
 
-#### A. Escaneig Directe 1-Clic per a Escàners de Sobremesa (`scanner.py`, `scan_winrt.ps1`, `auto_scan_ui.py`, `modules/compres.py`)
-- **Arquitectura Natiu WinRT**: Utilitza l'API moderna UWP/WinRT de Windows (`Windows.Devices.Scanners.ImageScanner`) a través de [`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1), compatible amb qualsevol escàner USB reconegut pel sistema operatiu (incloent models com l'HP Scanjet G3110) i eliminant bloquejos de concurrència de fitxers temporals.
-- **Integració Directa a Compres Super (`modules/compres.py`)**:
-  - Botó **`🖨️ Obrir Escàner`**: Llança l'aplicació d'escriptori [`auto_scan_ui.py`](file:///e:/Dashboard/auto_scan_ui.py) directament des de la pantalla de compres en entorn local.
-  - Botó **`📥 Carregar últim tiquet escanejat` (1 clic)**: Detecta automàticament el darrer tiquet guardat a `tickets/` (ex. `ticket_BonPreu_281026.jpg`), amb ressaltat verd si és recent (< 1 hora), i l'ingereix instantàniament al motor d'OCR mitjançant [`LocalFileWrapper`](file:///e:/Dashboard/modules/compres.py), sense haver d'obrir el diàleg de tria d'arxius del navegador ni navegar per carpetes del sistema.
-  - **Historial d'escanejats**: Desplegable per seleccionar qualsevol dels darrers tiquets escanejats de la carpeta `tickets/`.
-  - **Fallback intel·ligent del nom de fitxer**: Si l'OCR és borrós i no extreu el supermercat o la data, el sistema els recupera automàticament de l'estructura del fitxer (`ticket_<super>_<date>.jpg`).
-  - **Descartar / Reintentar**: Botons `🔄` (repassar amb un altre model d'IA) i `❌` (descartar tiquet carregat).
+#### A. Arquitectura del Mòdul i Fonts de Dades
+El mòdul articula el flux complet dels queviures de la llar connectant les següents taules i fonts de configuració:
+1. **Taules a Supabase (PostgreSQL)**:
+   - `compresSuper`: Registre atòmic línia per línia de cada article comprat (`IdCompra`, `data`, `mes`, `any`, `super`, `familia`, `article`, `pes`, `quantitat`, `preuUnit`, `prom`, `totLinea`, `IdDespesa`, `descompte`, `rebost`).
+   - `despeses`: Moviments comptables i bancaris. Els moviments de supermercat pendents de desglossar tenen `ticketPendent = True`. En finalitzar la compra, s'enllacen automàticament via `IdDespesa` i el flag s'actualitza a `False`.
+   - `tb_productes`: Catàleg mestre d'articles normalitzats amb la seva família canònica (`lactics`, `fruita`, `verdura`, `carn`, etc.) i equivalències de text segons cada supermercat.
+   - `tb_supers`: Llista de comerços homologats (`Dia`, `bonArea`, `Mercadona`, `Consum`, `Esclat`, `Novavenda`, `Lidl`, `Aldi`, etc.).
+2. **Fitxers de Configuració Centralitzats**:
+   - `categories_conceptes.json` (ID 1): Defineix les famílies permeses i el catàleg de supermercats actius.
+   - `data/ofertes.json` (ID 6): Registre d'ofertes de fulletons i descomptes setmanals.
+   - `core/ocr_rules.md`: Regles manuals d'extracció que s'injecten al prompt d'IA per resoldre particularitats d'estil de tiquets segons la cadena comercial.
+3. **Perifèrics Integrats**:
+   - **Escàner USB (WinRT / WIA)**: Captura física de tiquets a 300 DPI mitjançant `scanner.py` i `auto_scan_ui.py`.
+   - **Impressora Tèrmica ESC/POS**: Impressió física directa de la llista de la compra a través de `modules/impressora.py`.
 
-#### B. Motor OCR Intel·ligent amb Visió Multimodal
-- **Formats admesos**: Imatges (`png`, `jpg`, `jpeg`, `webp`, `bmp`), documents digitals de supermercat (`pdf` amb extracció de text per `pypdf`) i fitxers de text (`txt`).
-- **Models suportats**: Models multimodals d'alta velocitat (`gemini-2.5-flash`, `gemini-3.8-flash`). Si l'usuari tria modalitat de visió pura, el selector es filtra dinàmicament per models que admeten imatge directa.
-- **Regles de súper editables (`core/ocr_rules.md`)**: Accessible des del menú superior "Editar", permet instruir el model d'IA sobre estructures específiques de tiquets per cadena comercial sense modificar el codi font.
-- **Quantitats enteres**: Els productes venuts a pes (fruita, verdura, carnisseria) es normalitzen sempre a quantitat entera = 1 amb l'import final com a preu unitari, evitant fraccions estranyes.
+---
 
-#### C. Fórmula d'Enginyeria Inversa de Descomptes ($PF = B \times (1 - d)$)
-Quan s'introdueix manualment un article amb descompte, el camp `TOTAL LÍNIA` representa el **Preu Final realment pagat ($PF$)** que figura al tiquet de caixa:
-$$PF = B \times (1 - d) \implies B = \frac{PF}{1 - d}$$
-- En indicar el `%`, el sistema calcula la Base ($B$) incrementant el `PREU UNIT.` i assigna l'estalvi a `PROMOCIÓ`.
-- El `TOTAL LÍNIA` roman constant i fidel al tiquet.
-- Reactivitat en temps real amb gestors `on_change` i càlcul invers quan s'escriu la promoció directament en euros.
+#### B. Cicle de Vida i Flux Pas a Pas d'un Tiquet
 
-#### D. Validació i Sanejament Estricte de Dates (`sanitize_ticket_date`)
-- **Blindatge contra errors d'OCR**: Valida i corregeix confusions freqüents en impressores de tiquets matricials.
-- **Data mai superior a la data actual**: El selector de data i el motor de desat bloquegen qualsevol data futura (`> date.today()`).
-- **Confirmació automàtica si fa més d'una setmana (> 7 dies)**: Si la data detectada té una antiguitat superior a 7 dies, es mostra un indicador clar i un diàleg modal (`@st.dialog`) per confirmar la data abans de registrar el tiquet a la base de dades.
+```mermaid
+flowchart TD
+    A["🖨️ Escaneig 1-Clic o Càrrega Fitxer"] --> B["⚡ Extracció OCR / Visió Multimodal"]
+    B --> C["🤖 Estructuració JSON + Fallback Nom Fitxer"]
+    C --> D["🔍 Reconciliació Automàtica amb tb_productes"]
+    D --> E{"Hi ha articles 'Pendent'?"}
+    E -- Sí --> F["⚠️ Bloqueig: L'usuari ha d'assignar Família/Article"]
+    E -- No --> G["📅 Validació de Data (Control > 7 dies)"]
+    G --> H["💰 Vinculació Financera (Banc / Forma Pagament)"]
+    H --> I["💾 Desat Final: INSERT compresSuper + UPDATE despeses"]
+    I --> J["🥫 Actualització Automàtica d'Estoc al Rebost"]
+```
 
-#### E. Gestió de Tiquets Pendents de Desglossar i Alertes Globals
-- Capçalera compacta en una sola fila horitzontal: Informació del tiquet pendent *(Exemple: `• Nº Tiquet — Supermercat — Import €`)* al costat del botó de càrrega `[ ⭡ Upload ]`.
-- Notificació automàtica a la campaneta d'alertes superior (`🔔`).
-- En finalitzar el desglossament, el moviment existent s'actualitza via `UPDATE` (`ticketPendent = False`), enllaçant els articles a `compresSuper` sense duplicar registres.
+- **Pas 1: Ingesta del document**:
+  - *Opció 1-Clic Escàner*: En prémer `🖨️ Obrir Escàner`, s'obre la finestra d'escriptori [`auto_scan_ui.py`](file:///e:/Dashboard/auto_scan_ui.py) que adquireix la imatge del vidre a 300 DPI i la desa a `tickets/ticket_<super>_<data>.jpg`. En tornar a Streamlit, el botó verd destacat `📥 Carregar últim tiquet escanejat` l'ingereix instantàniament al motor d'OCR sense obrir cap diàleg de carpetes de Windows mitjançant [`LocalFileWrapper`](file:///e:/Dashboard/modules/compres.py).
+  - *Opció Càrrega Manual*: Admet imatges (`png`, `jpg`, `jpeg`, `webp`, `bmp`), documents digitals de supermercat (`pdf` amb extracció de text per `pypdf`) i tiquets de text (`txt`).
+- **Pas 2: Extracció intel·ligent per IA**:
+  - *Mode Híbrid*: Tesseract OCR llegeix el text i el model de llenguatge (Gemini 2.5 Flash) el parseja a JSON net.
+  - *Mode Visió Pura*: Envia la imatge directament al model multimodal.
+  - *Fallback intel·ligent*: Si la capçalera està borrosa, el sistema extreu el súper i la data directament del nom del fitxer (`ticket_<super>_<data>.jpg`).
+- **Pas 3: Reconciliació amb el catàleg i descomptes**:
+  - Cada línia s'emparella amb `tb_productes` mitjançant cerca difusa (`difflib`).
+  - **Fórmula d'Enginyeria Inversa de Descomptes**: El preu final pagat ($PF$) roman invariable i el sistema dedueix la base teòrica ($B$):
+    $$PF = B \times (1 - d) \implies B = \frac{PF}{1 - d}$$
+- **Pas 4: Validació de data i bloqueig de seguretat**:
+  - Data mai superior a avui (`> date.today()`).
+  - Si té més de 7 dies, s'obre el modal interactiu `@st.dialog` de confirmació de data.
+  - Els articles desconeguts (`Pendent`) bloquegen el desat per evitar embrutar el catàleg.
+- **Pas 5: Desat i consolidació econòmica**:
+  - Es genera la despesa a `despeses` o es desglossa el tiquet bancari existent (`ticketPendent = False`).
+  - S'insereixen els articles a `compresSuper` de forma atòmica.
+- **Pas 6: Sincronització amb el Rebost**:
+  - Els articles marcats incrementen automàticament l'estoc al rebost domèstic.
 
-#### F. Auditoria d'Entrada Estricta i Neteja d'Orfes
-- Els articles desconeguts ('Pendent') no s'insereixen automàticament a la base de dades; el sistema bloqueja el tiquet fins que l'usuari els hagi categoritzat o esborrat, protegint el catàleg de productes.
-- Eina **Neteja d'Orfes (OCR)** al menú "Editar" per netejar o enllaçar articles antics.
+---
 
-#### G. Anàlisi d'Estalvi i Gràfics a Estadístiques
-- Còmput de promocions d'article (`prom`) i descomptes de tiquet (`descompte`) davant l'import net pagat (`totLinea`).
-- Mètriques KPI d'estalvi generat, % global de descompte i comerç amb major estalvi.
-- Gràfic de Donut interactiu (Plotly) de Compra Pagada vs Promoció/Estalvi.
+#### C. Detall de les 6 Pestanyes de la Interfície Gràfica
+
+El mòdul s'estructura en 6 vistes especialitzades mitjançant `st.tabs` amb suport per a paràmetres URL (`?tab=...`):
+
+1. **`🛒 Compres Super` (Entrada i Desglossament)**:
+   - Capçalera dividida en 2 columnes: informació del tiquet bancari pendent a l'esquerra i zona d'escàner/càrrega a la dreta.
+   - Taula editable d'articles amb selectors de família, article, unitats, pes, preu i descompte.
+   - Panell d'assignació financera (Banc i Forma de Pagament) i botons d'acció ràpida.
+2. **`📝 Llista de la Compra`**:
+   - Generació automàtica basada en els productes que han quedat per sota de l'estoc mínim al rebost.
+   - Checklist interactiva per marcar articles al telèfon mòbil mentre s'és al supermercat.
+   - Botó directe per imprimir la llista física a la impressora tèrmica de tiquets ESC/POS (`modules/impressora.py`).
+3. **`🥫 Rebost` (Gestió d'Estoc)**:
+   - Inventari complet de queviures classificat per famílies d'aliments.
+   - Semàfor visual d'estoc: 🟢 Suficient, 🟡 Sota mínims, 🔴 Esgotat.
+   - Control de dates de caducitat amb alertes de consum preferent i botons ràpids d'increment/decrement en 1 clic.
+4. **`📊 Estadístiques` (Anàlisi i Gràfics)**:
+   - KPIs de despesa mensual, estalvi aconseguit en euros i percentatge de descompte mitjà.
+   - **Gràfic de Donut interactiu (Plotly)**: Comparativa visual de *Preu Net Pagat vs Promoció/Estalvi*.
+   - Històric mensual de despesa per supermercat i distribució de despesa per famílies d'aliments.
+5. **`🔍 Comparador de Preus`**:
+   - Motor de cerca que creua els preus històrics d'un mateix producte entre diferents cadenes comercials.
+   - Taula comparativa de preu unitari mitjà (€/kg o €/u) per identificar on surt més a compte comprar cada article.
+6. **`📰 Fulletons`**:
+   - Panell per consultar ofertes setmanals i fulletons comercials en PDF o imatge.
+   - Registre d'ofertes destacades sincronitzat amb `data/ofertes.json`.
+
+---
+
+#### D. Navegació Dinàmica i Enllaços amb Altres Mòduls
+- **Navegació per Paràmetres URL (`st.query_params`)**:
+  - Permet crear enllaços directes des de notificacions o altres mòduls: `?tab=rebost`, `?tab=llista_compra`, `?tab=compres_super`.
+  - Commutació de pestanyes automàtica mitjançant JavaScript injectat al document pare sense recàrregues completes.
+- **Interconnexió amb el Sistema Global**:
+  - **[`modules/economic.py`](file:///e:/Dashboard/modules/economic.py)**: Actualització directa dels saldos bancaris i del balanç mensual d'ingressos/despeses.
+  - **[`modules/menjar.py`](file:///e:/Dashboard/modules/menjar.py)**: Els ingredients del rebost alimenten les receptes i el recomanador IA de menús setmanals.
+  - **[`modules/impressora.py`](file:///e:/Dashboard/modules/impressora.py)**: Servei d'impressió en paper tèrmic per a la llista de la compra.
+  - **Menú Superior `Editar`**: Accés directe a `✏️ Regles OCR` (`core/ocr_rules.md`) i `📂 Arxius JSON` (`categories_conceptes.json`) sense canviar de pàgina.
 
 ---
 
