@@ -38,6 +38,19 @@ from core.aigua_manager import (
 )
 from core.manteniment_manager import get_pdf_path, get_pdf_dir
 
+def _parse_dmy_or_iso(date_val, fallback=None):
+    if not date_val:
+        return fallback if fallback is not None else datetime.today().date()
+    if isinstance(date_val, (date, datetime)):
+        return date_val if isinstance(date_val, date) else date_val.date()
+    s = str(date_val).strip()
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except Exception:
+            pass
+    return fallback if fallback is not None else datetime.today().date()
+
 # =========================================================================
 # VISOR INTERACTIU DE PDF (PDF.js Canvas)
 # =========================================================================
@@ -245,26 +258,17 @@ def edit_factura_dialog(factura: dict):
     
     col1, col2 = st.columns(2)
     with col1:
-        try:
-            dt_factura = datetime.strptime(factura.get("dataFactura", datetime.today().strftime("%d/%m/%Y")), "%d/%m/%Y").date()
-        except Exception:
-            dt_factura = datetime.today().date()
+        dt_factura = _parse_dmy_or_iso(factura.get("dataFactura"))
         new_df = st.date_input("Data Factura", value=dt_factura, format="DD/MM/YYYY", key="ed_fact_df")
     with col2:
         new_mes = st.text_input("Mes / Any (ex: 10/2026)", value=factura.get("mesAny", ""), key="ed_fact_mes")
         
     c_p1, c_p2 = st.columns(2)
     with c_p1:
-        try:
-            dt_pi = datetime.strptime(factura.get("periodeInici", ""), "%d/%m/%Y").date()
-        except Exception:
-            dt_pi = datetime.today().date()
+        dt_pi = _parse_dmy_or_iso(factura.get("periodeInici"))
         new_pi = st.date_input("Període Inici", value=dt_pi, format="DD/MM/YYYY", key="ed_fact_pi")
     with c_p2:
-        try:
-            dt_pf = datetime.strptime(factura.get("periodeFi", ""), "%d/%m/%Y").date()
-        except Exception:
-            dt_pf = datetime.today().date()
+        dt_pf = _parse_dmy_or_iso(factura.get("periodeFi"))
         new_pf = st.date_input("Període Fi", value=dt_pf, format="DD/MM/YYYY", key="ed_fact_pf")
         
     new_imp = st.number_input("Import Total Factura (€) *", min_value=0.0, value=float(factura.get("importTotal", 0.0)), step=0.01, format="%.2f", key="ed_fact_imp")
@@ -346,26 +350,17 @@ def edit_factura_aigua_dialog(factura: dict):
     
     col1, col2 = st.columns(2)
     with col1:
-        try:
-            dt_factura = datetime.strptime(factura.get("dataFactura", datetime.today().strftime("%d/%m/%Y")), "%d/%m/%Y").date()
-        except Exception:
-            dt_factura = datetime.today().date()
+        dt_factura = _parse_dmy_or_iso(factura.get("dataFactura"))
         new_df = st.date_input("Data Factura", value=dt_factura, format="DD/MM/YYYY", key="ed_fact_aigua_df")
     with col2:
         new_mes = st.text_input("Mes / Any (ex: 10/2026)", value=factura.get("mesAny", ""), key="ed_fact_aigua_mes")
         
     c_p1, c_p2 = st.columns(2)
     with c_p1:
-        try:
-            dt_pi = datetime.strptime(factura.get("periodeInici", ""), "%d/%m/%Y").date()
-        except Exception:
-            dt_pi = datetime.today().date()
+        dt_pi = _parse_dmy_or_iso(factura.get("periodeInici"))
         new_pi = st.date_input("Període Inici", value=dt_pi, format="DD/MM/YYYY", key="ed_fact_aigua_pi")
     with c_p2:
-        try:
-            dt_pf = datetime.strptime(factura.get("periodeFi", ""), "%d/%m/%Y").date()
-        except Exception:
-            dt_pf = datetime.today().date()
+        dt_pf = _parse_dmy_or_iso(factura.get("periodeFi"))
         new_pf = st.date_input("Període Fi", value=dt_pf, format="DD/MM/YYYY", key="ed_fact_aigua_pf")
         
     c_c1, c_c2 = st.columns(2)
@@ -1218,9 +1213,9 @@ def render_consum_llum_tab():
                             pdf_fname = ""
 
                     add_factura_llum(
-                        data_factura=in_data_fact.strftime("%Y-%m-%d"),
-                        periode_inici=in_p_inici.strftime("%Y-%m-%d"),
-                        periode_fi=in_p_fi.strftime("%Y-%m-%d"),
+                        data_factura=in_data_fact.strftime("%d/%m/%Y"),
+                        periode_inici=in_p_inici.strftime("%d/%m/%Y"),
+                        periode_fi=in_p_fi.strftime("%d/%m/%Y"),
                         mes_any=in_mes_any.strip(),
                         import_total=in_import,
                         kwh_punta=in_kwh_punta,
