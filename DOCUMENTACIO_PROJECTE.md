@@ -1170,24 +1170,160 @@ Espai col·laboratiu per als membres de la família:
 ---
 
 ### 6.2 Agenda i Calendari Familiar (`modules/calendari.py`, `core/calendar_manager.py`)
+Mòdul central de coordinació temporal, esdeveniments, cites mèdiques, compromisos laborals i rutines familiars de la llar. Integra sincronització bidireccional iCal amb Google Calendar, graella interactiva mensual responsive estil Google Calendar, vista d'agenda cronològica, control d'acompliment en 1 clic (Fet / No Fet), creació ràpida intel·ligent mitjançant processament de llenguatge natural i disseny ultra-compacte d'una sola línia horitzontal adaptat a telèfons mòbils.
 
-#### A. Vistes del Calendari
-- **Vista Graella Mensual (Estil Google Calendar)**: Graella interactiva responsive amb colors per membre familiar i categoria, comptadors diaris i navegació fluida.
-- **Vista Llista / Agenda**: Llistat cronològic estricte del període seleccionat.
-- **Consulta i Gestió del Dia**: En fer clic a qualsevol dia de la graella, es mostren a sota tots els esdeveniments d'aquell dia amb accions completes i formulari directe per afegir noves tasques.
+#### A. Arquitectura del Calendari i Fonts de Dades
+El mòdul articula la informació temporal connectant bases de dades remotes a Supabase, memòries cau locals i feeds de tercers:
+1. **Taules a Supabase (PostgreSQL)**:
+   - `data/events.json` (Config ID 3): Dipòsit centralitzat d'esdeveniments manuals de la família i estats d'acompliment (`id`, `titol`, `data_inici`, `data_fi`, `hora_inici`, `hora_fi`, `tot_el_dia`, `categoria`, `membre`, `lloc`, `notes`, `status_fet`, `uid_ical`).
+   - `data/feeds_cache.json` (Config ID 4): Memòria cau persistent de subscripcions iCal externes (Google Calendar personals d'Enric, Isabel, etc.).
+2. **Configuració de Membres i Colors (`core/config.json` - Config ID 2)**:
+   - Defineix els membres de la unitat familiar i assigna una paleta de colors única a cadascun per identificar a l'instant qui té cada compromís a la graella.
+3. **Mecanisme de Desduplicació i Canonicitat (`core/calendar_manager.py`)**:
+   - Algoritme `deduplicate_events` basat en empremta hash i UID iCal que impedeix duplicitats per concurrència de feeds i gestiona de forma canònica les excepcions de recurrències (`RECURRENCE-ID`).
+   - **Triple Clau de Persistència**: Garanteix que si un esdeveniment prové d'un feed extern o es crea manualment, el seu estat (Fet / No Fet) queda ancorat permanentment a la base de dades sense perdre's en sincronitzar.
 
-#### B. Control d'Acompliment (Fet / No Fet)
-- Cada esdeveniment disposa de dos botons interactius:
-  - **Check verd (`✅`)**: Marca com a feta la tasca (il·luminació verda maragda `#10b981`, prefix `✅ ` al títol i insígnia `FET`).
-  - **Creu vermella (`❌`)**: Marca com a no feta o cancel·lada (il·luminació vermella `#ef4444`, prefix `❌ ` i text ratllat).
-- Persistència a Supabase `app_config` ID 3 amb clau triple (ID esdeveniment, UID iCal i títol normalitzat).
+---
 
-#### C. Sincronització iCal Bidireccional i Desduplicació
-- Connexió amb feeds de Google Calendar personals.
-- Algoritme `deduplicate_events` per evitar duplicats per concurrència i gestió canònica d'excepcions de recurrències (`RECURRENCE-ID`).
+#### B. Cicle de Vida i Flux Operatiu d'un Esdeveniment
 
-#### D. Disseny Compacte en 1 Sola Línia Horitzontal per a Mòbils
-- Regles CSS flexbox amb `:has(.cal-action-btn)` que mantenen els 5 botons d'acció (`✔️`/`✅`, `✖️`/`❌`, `✏️`, `🗑️`, `📅 GCal`) en una sola fila horitzontal, eliminant l'apilament vertical en telèfons intel·ligents.
+```mermaid
+flowchart TD
+    A["➕ Creació d'Esdeveniment (Manual o LLN Ràpid)"] --> B["💾 Desat a data/events.json (Supabase ID 3)"]
+    C["🔄 Sincro Feeds iCal (Google Calendar)"] --> D["🔍 Desduplicació i Cache a data/feeds_cache.json"]
+    B --> E["📅 Renderització a la Graella Mensual o Llista Agenda"]
+    D --> E
+    E --> F["🖱️ Clic a Casella de Dia -> Panell de Detalls"]
+    F --> G{"Acció d'Acompliment"}
+    G -- "✅ Fet" --> H["🟢 Estat FET: Fons Maragda, Prefix ✅ i Ratllat"]
+    G -- "❌ No Fet" --> I["🔴 Estat CANCEL·LAT: Fons Vermell, Prefix ❌"]
+    G -- "Pendent" --> J["⚪ Estat Normal de Calendari"]
+```
+
+- **Pas 1: Ingesta del Compromís**: L'usuari crea l'esdeveniment emplenant el formulari complet o teclejant una instrucció ràpida en llenguatge natural.
+- **Pas 2: Fusió de Feeds**: El motor fusiona els esdeveniments manuals amb els calendaris externs de Google Calendar, netejant duplicats.
+- **Pas 3: Visualització Personalitzada**: Es pinta la graella mensual o la llista cronològica aplicant els colors corporatius de cada membre familiar.
+- **Pas 4: Consulta del Dia**: En fer clic sobre qualsevol casella de la graella, es despleguen a sota tots els seus esdeveniments en targetes interactives.
+- **Pas 5: Resolució en 1 Clic**: L'usuari marca si s'ha fet o no es pot fer mitjançant els botons verds i vermells de resolució immediata.
+
+---
+
+#### C. Detall Exhaustiu de les Vistes i Controls Interactius
+
+El mòdul disposa d'un comandament superior unificat i dues vistes principals commutables mitjançant `st.radio`:
+
+---
+
+##### 6.2.1 Comandament Superior d'Accions i Navegació Temporal
+
+1. **Barra d'Eines Principal**:
+   - **Botó `➕ Nou` (`btn_open_new_ev`, `type="primary"`)**: Desplega el panell d'alta per enregistrar un nou esdeveniment o cita.
+   - **Botó `🔄 Sincro` (`btn_sync_feeds`)**: Força la descàrrega i sincronització immediata dels feeds iCal de Google Calendar, actualitzant `data/feeds_cache.json`.
+   - **Navegació de Mesos**:
+     - Botó `◀` (`cal_prev_month`): Retrocedeix al mes anterior.
+     - Botó `Avui` (`cal_btn_today`): Retorna immediatament al mes i dia actuals.
+     - Botó `▶` (`cal_next_month`): Avança al mes següent.
+   - **Títol Dinàmic**: Retola el mes en català i l'any actiu en tipografia destacada *(Exemple: `📅 Octubre 2026`)*.
+2. **Selector de Mode de Vista (`st.radio`)**:
+   - Ràdio horitzontal compacte per alternar entre **`📅 Calendari` (Vista Graella)** i **`📋 Agenda / Llista` (Vista Cronològica)**, memoritzant la preferència a `st.session_state.cal_view_mode`.
+
+---
+
+##### 6.2.2 Formulari d'Alta d'Esdeveniments (`st.tabs`)
+
+En prémer `➕ Nou`, es desplega un panell organitzat en dues pestanyes de creació:
+
+1. **Pestanya `⚡ Creació ràpida intel·ligent`**:
+   - Camp de text lliure preparat per processar llenguatge natural.
+   - L'usuari pot escriure frases quotidianes *(Exemple: "Dilluns que ve a les 10h dentista de l'Enric a Girona")*.
+   - **Parser Intel·ligent**: Descompon la frase, extreu automàticament la data, l'hora d'inici, el membre familiar assignat i la categoria mèdica.
+   - **Botó `⚡ Crear ràpidament` (`type="primary"`)**: Valida l'extracció i desa l'esdeveniment a l'instant.
+2. **Pestanya `📝 Formulari complet`**:
+   - **Camp `Títol de l'esdeveniment`**: Descripció de l'acte o cita.
+   - **Selector `Membre familiar`**: Desplegable per assignar a Enric, Isabel o `Tothom`.
+   - **Casella `Tot el dia`**: Deshabilita la selecció d'hores per a festius o esdeveniments de jornada completa.
+   - **Selectors de Data i Hora**: `Data d'inici`, `Data de finalització`, `Hora d'inici` i `Hora de finalització`.
+   - **Selector `Categoria`**: Desplegable amb codi visual per a: `Metge`, `Feina`, `Oci / Social`, `Llar`, `Aniversari`, `Reunió`, `Esport`, `Altres`.
+   - **Camp `Lloc / Ubicació`**: Adreça o centre on té lloc la cita.
+   - **Camp `Notes / Descripció`**: Instruccions, documents necessaris o observacions.
+   - **Botó `💾 Desar Esdeveniment`**: Insereix el registre a `data/events.json` i actualitza Supabase ID 3.
+   - **Botó `❌ Cancel·lar`**: Tanca el panell sense desar canvis.
+
+---
+
+##### 6.2.3 Vista 1: `📅 Calendari` (Graella Mensual Estil Google Calendar)
+
+La vista visual per excel·lència de l'agenda domèstica:
+
+1. **Graella de 7 Columnes (Dilluns a Diumenge)**:
+   - Capçaleres amb els dies de la setmana en català (*Dl, Dt, Dc, Dj, Dv, Ds, Dg*).
+   - **Caselles de Dia Interactives**:
+     - Vores suaus amb efecte hover en passar el cursor.
+     - Indicador numèric de dia al cantó superior.
+     - **Ressaltat Especial d'Avui**: La casella del dia en curs compta amb una vora blava brillant vibrant (`#38bdf8`) i fons il·luminat per identificar la jornada d'un sol cop d'ull.
+   - **Pastilles d'Esdeveniments**:
+     - Petites càpsules de color dins de cada casella que mostren l'hora i el títol del compromís.
+     - El color de la càpsula identifica el membre familiar associat (segons `core/config.json`).
+     - Recompte numèric si un dia té més esdeveniments dels que caben visualment a la casella.
+2. **Panell de Gestió del Dia Seleccionat (Sub-graella)**:
+   - En fer clic a qualsevol dia de la graella, aquest queda marcat amb una vora daurada i es desplega a sota la secció detallada **`🗓️ Esdeveniments per al dia DD/MM/YYYY`**:
+     - Botó **`➕ Nou Esdeveniment per a aquest dia`**: Obre el formulari preomplint automàticament la data seleccionada.
+     - **Targetes Detallades d'Esdeveniments**: Targetes àmplies amb l'hora, títol, membre, categoria, ubicació i el conjunt de botons d'acció ràpida.
+
+---
+
+##### 6.2.4 Vista 2: `📋 Agenda / Llista` (Llistat Cronològic Continu)
+
+Ideal per consultar la planificació setmanal o mensual com una agenda contínua:
+
+1. **Agrupació Seqüencial per Dates**:
+   - Els esdeveniments es presenten ordenats cronològicament dia a dia de forma descendent.
+   - Capçalera per a cada data indicant el dia de la setmana, número i mes.
+2. **Targetes d'Agenda**:
+   - Franja horària (ex: `09:30 - 10:30` o `Tot el dia`).
+   - Insígnia de categoria i identificador de la persona responsable.
+   - Accés complet als botons d'acció de resolució, edició i eliminació.
+
+---
+
+##### 6.2.5 Sistema d'Acompliment Fet / No Fet i Disseny Mòbil en 1 Línia
+
+Un dels punts més potents del mòdul és el control d'estat immediat de qualsevol compromís:
+
+1. **Botons d'Acció de Resolució**:
+   - **Botó `✅` / `✔️` (Fet / Completat)**:
+     - En prémer-lo, l'esdeveniment s'il·lumina en color verd maragda sòlid (`#10b981`).
+     - S'afegeix el prefix `✅ ` al títol, es ratlla el text i es mostra la insígnia destacada `FET`.
+     - Si es torna a prémer, es desmarca tornant a l'estat pendent original.
+   - **Botó `❌` / `✖️` (No fet / Cancel·lat)**:
+     - En prémer-lo, l'esdeveniment s'il·lumina en color vermell coral sòlid (`#ef4444`).
+     - S'afegeix el prefix `❌ `, es ratlla el text i es mostra la insígnia `NO FET`.
+     - Permet documentar cites cancel·lades o tasques no realitzades sense haver d'esborrar el registre de l'historial.
+   - **Botó `✏️` (Modificar)**: Obre el formulari per editar el títol, horaris, membre o categoria.
+   - **Botó `🗑️` (Esborrar)**: Elimina l'esdeveniment definitivament de la base de dades.
+2. **Arquitectura CSS Avançada Mòbil en 1 Sola Línia (`:has(.cal-action-btn)`)**:
+   - Per evitar que els 4 botons d'acció (`✅`, `❌`, `✏️`, `🗑️`) s'apilin verticalment a les pantalles estretes dels telèfons intel·ligents, s'ha programat una regla CSS Flexbox específica:
+     ```css
+     div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) {
+         flex-direction: row !important;
+         flex-wrap: nowrap !important;
+         align-items: center !important;
+         gap: 4px !important;
+     }
+     ```
+   - Garanteix que tota la botonera de control romangui sempre neta, compacta i accessible en una sola fila horitzontal des de qualsevol dispositiu mòbil.
+
+---
+
+#### D. Navegació Dinàmica i Enllaços amb Altres Mòduls
+- **Navegació per Paràmetres URL (`st.query_params`)**:
+  - `?tab=calendari` o `?mode=grid`: Obre la vista de graella mensual.
+  - `?mode=agenda`: Condueix directament a la llista cronològica.
+- **Interconnexions amb la Resta del Sistema**:
+  - **[`modules/manteniment.py`](file:///e:/Dashboard/modules/manteniment.py)**: Les tasques de manteniment domèstic marcades amb `send_to_calendar` es reflecteixen automàticament a l'agenda familiar amb la icona `🛠️`.
+  - **[`modules/menjar.py`](file:///e:/Dashboard/modules/menjar.py)**: Els menús setmanals es poden projectar a l'agenda com a referència dels àpats de la llar.
+  - **[`modules/medicacio.py`](file:///e:/Dashboard/modules/medicacio.py)**: Els tractaments mèdics i pautes temporals sincronitzen alertes horàries a l'agenda.
+  - **Menú Superior `Editar > 📂 Arxius JSON`**: Accés directe per consultar o restaurar `data/events.json` i `data/feeds_cache.json`.
 
 ---
 
