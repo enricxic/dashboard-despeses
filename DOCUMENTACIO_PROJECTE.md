@@ -687,29 +687,140 @@ Eina de modelització i enginyeria financera per avaluar la instal·lació de pa
 ---
 
 ### 5.2 Manteniment de la Llar (`modules/manteniment.py`)
+Mòdul integral de gestió operativa de la llar, planificació de tasques domèstiques recurrents i reparacions, coordinació familiar de responsabilitats, gestió documental centralitzada de manuals d'instruccions d'aparells i vigilància semafòrica de venciments de garanties i factures de compra.
 
-#### A. Registre de Manteniment i Tasques Periòdiques
-- **Camps normalitzats**: `idManteniment`, `dataManteniment`, `feina` (feina concreta), `tipus` (`Reparació`, `Manteniment`, `Feina casa`, `Altres`), `alertaA` (multiselecció de membres o "Tothom"), `diesAvis` (antelació configurable per a l'avís a la campaneta), `acompliment` (`Sí`/`No`) i `observacions`.
-- **Selector de Periodicitat**:
-  - Opcions: Puntual, Diària, Setmanal, Quinzenal, Mensual, Bimestral, Trimestral, Semestral, Anual o Personalitzada.
-  - Límit de generació configurable: Per nombre de vegades o `"Fins a final d'any (31/12)"`.
-  - Generació en sèrie (`serie_id`) amb etiqueta descriptiva `🔁 Periodicitat (X/N)`.
-  - En editar una tasca, opció per actualitzar i regenerar les properes tasques pendents de la sèrie respectant les ja realitzades.
-- **Subtasques amb Cadència Pròpia (`subtasques_template`)**:
-  - Permet afegir subtasques amb ritme propi dins d'una tasca periòdica *(Exemple d'ús: revisar un filtre cada 6 mesos dins d'una tasca de neteja quinzenal)*.
-  - Checklist interactiu a les targetes amb recompte de progrés (`📋 Subtasques (1/2)`).
-  - Sincronització automàtica: en completar la tasca principal es completen les subtasques, i en completar totes les subtasques es marca la tasca principal.
-- **Generador de Tasques del Proper Any (Modal Interactiu)**:
-  - Accessible des del menú superior: `Mòduls > Manteniment de la llar > 📅 Generar tasques proper any`.
-  - Proposa automàticament el proper any i genera en bloc les tasques recurrents de la llar sincronitzant-les amb el calendari familiar.
-- **Neteja del formulari**: Reinicialització automàtica de camps després de desar i desacoblament de la tecla `Enter` als diàlegs modals per evitar tancaments accidentals.
+#### A. Arquitectura del Mòdul i Fonts de Dades
+El mòdul opera combinant registres JSON sincronitzats a Supabase, repositoris físics de documents PDF i el perfil familiar:
+1. **Taules a Supabase (PostgreSQL)**:
+   - `data/registre_manteniment.json` / `csv/manteniment.csv` (Config ID 8): Registre de tasques i manteniments (`idManteniment`, `dataManteniment`, `feina`, `tipus`, `alertaA`, `diesAvis`, `acompliment`, `observacions`, `serie_id`, `recurrencia`, `subtasques`, `subtasques_template`, `send_to_calendar`).
+   - `data/manteniment_docs.json` (Config ID 7): Dipòsit documental de metadades de Manuals i Garanties (`id`, `categoria`, `titol`, `aparell`, `estanca`, `establiment`, `data_compra`, `data_fi_garantia`, `import`, `filename`, `num_pagines`).
+2. **Dipòsit Documental Físic**:
+   - `PDF/Manuals/`: Manuals d'ús d'electrodomèstics, maquinària i equips de la llar.
+   - `PDF/Garanties/`: Factures de compra, tiquets de garantia i pòlisses oficials.
+3. **Mòduls Interconnectats**:
+   - `core/config.json` (Config ID 2): Llegeix els noms dels membres de la unitat familiar per assignar responsabilitats personals al camp `alertaA`.
+   - `core/calendar_manager.py`: Sincronització bidireccional de tasques de manteniment amb l'agenda familiar (`modules/calendari.py`).
+   - `core/alerts.py`: Motor d'avisos a la campaneta superior (`🔔`) segons els dies d'antelació configurats (`diesAvis`).
 
-#### B. Gestió Documental de la Llar: Manuals i Garanties
-- Subcarpetes físiques dedicades: `PDF/Manuals/` i `PDF/Garanties/`.
-- Registre JSON centralitzat (`data/manteniment_docs.json`) sincronitzat a Supabase ID 7.
-- **Visor interactiu basat en PDF.js (HTML5 Canvas)**: Renderització neta sense bloquejos d'iframe, amb controls de zoom, pàgines i descàrrega.
-- **Seguiment semafòric de garanties**: Càlcul de dies de cobertura restants (🟢 Vigents, ⚠️ Venciment en menys de 60 dies, 🔴 Caducades).
-- **Auto-detecció de fitxers**: Si s'afegeix un PDF directament a les carpetes del disc, el motor l'adhereix automàticament al registre JSON sense sobreescriure les dades existents.
+---
+
+#### B. Cicle de Vida i Flux Operatiu de Manteniment
+
+```mermaid
+flowchart TD
+    A["➕ Creació de Tasca (Puntual o Periòdica)"] --> B["📅 Sincronització Automàtica amb el Calendari Familiar"]
+    B --> C["🔔 Alerta a la Campaneta segons diesAvis"]
+    C --> D{"Realització de Feina i Subtasques"}
+    D --> E["✅ Toggle d'Acompliment en 1 Clic (Feta/Pendent)"]
+    E --> F["🔁 Auto-Generació de la Propera Tasca de la Sèrie"]
+    G["📄 Arribada de Manual o Garantia PDF"] --> H["📚 Catalogació Documental i Visor HTML5 Canvas"]
+    H --> I["🛡️ Vigilància Semafòrica de Garanties (Vigent/Propera/Vençuda)"]
+```
+
+- **Pas 1: Planificació de la Feina**: Es defineix la tasca amb el seu tipus (Manteniment, Reparació, Feina de casa), assignació a un membre o a tothom, dies d'avís i periodicitat (setmanal, mensual, anual, etc.).
+- **Pas 2: Sincronització i Avisos**: La tasca s'envia opcionalment al calendari familiar i, quan falten els dies establerts a `diesAvis`, apareix destacada a la campaneta d'alertes.
+- **Pas 3: Execució i Subtasques**: Es revisen les subtasques associades (ex: netejar filtre d'aire, greixar engranatges). En completar-les, la tasca principal es marca com a feta amb un sol clic (`acompliment = 'Sí'`).
+- **Pas 4: Gestió Documental i Garanties**: Els aparells nous es donen d'alta pujant el seu manual i factura; el sistema calcula automàticament els dies de garantia restants i alerta abans que caduqui la cobertura.
+
+---
+
+#### C. Detall Exhaustiu de les 3 Pestanyes de la Interfície Gràfica
+
+El mòdul s'estructura en 3 pestanyes operatives mitjançant `st.tabs` amb suport per a paràmetres URL (`?tab=...`):
+
+---
+
+##### 5.2.1 Pestanya 1: `🛠️ Registre de Manteniment` (Tasques, Reparacions i Feines de Casa)
+
+La interfície d'execució diària de manteniments de la llar:
+
+1. **Barra d'Accions Superiors i Filtres**:
+   - **Botó `➕ Nova Tasca` (`type="primary"`)**: Obre el formulari d'alta d'una nova tasca o manteniment.
+   - **Filtre de Membre Familiar**: Desplegable per filtrar les tasques assignades a una persona concreta (ex: Enric, Isabel) o veure les de `Tothom`.
+   - **Filtres Temporals i d'Estat**:
+     - Selectors d'Any i Mes per segmentar l'històric.
+     - Selector d'Estat: `Totes`, `Pendents`, `Fetes`, `Vençudes` (amb data anterior a avui i encara no complertes).
+
+2. **Formulari d'Alta i Edició de Tasques (`edit_task_dialog`)**:
+   - **Camp `Data` (`st.date_input`)**: Data prevista d'execució.
+   - **Camp `Feina` (`st.text_input`)**: Descripció concisa de l'actuació (ex: *Canviar filtre d'osmosi*, *Revisió caldera gas*, *Pintar barana jardí*).
+   - **Selector `Tipus`**: Desplegable amb 4 categories: `Manteniment`, `Reparació`, `Feina casa`, `Altres`.
+   - **Selector Multiselecció `Alerta a`**: Permet triar un o diversos membres de la família o l'opció `Tothom`.
+   - **Camp Numèric `Dies d'avís`**: Antelació en dies amb què el sistema començarà a avisar a la campaneta superior (`🔔`) abans de la data de venciment.
+   - **Selector de Periodicitat**:
+     - Opcions: `Puntual`, `Diària`, `Setmanal`, `Quinzenal`, `Mensual`, `Bimestral`, `Trimestral`, `Semestral`, `Anual` o `Personalitzada`.
+     - Límit de generació configurable: Per nombre de repeticions o l'opció especial `"Fins a final d'any (31/12)"`.
+     - Agrupació per sèrie (`serie_id`): Enllaça totes les concurrències d'una mateixa rutina amb la numeració correlativa `🔁 Periodicitat (X/N)`.
+   - **Gestor de Subtasques amb Cadència Pròpia (`subtasques_template`)**:
+     - Permet definir subtasques subordinades amb ritmes propis *(Exemple: tasca mare mensual amb una subtasca que només toca fer cada 3 mesos)*.
+   - **Casella `Enviar al Calendari`**: Sincronitza la tasca amb l'agenda familiar (`data/events.json`).
+   - **Camp `Observacions`**: Notes tècniques, números de telèfon de tècnics o instruccions addicionals.
+
+3. **Targetes Interactives de Tasca (Graella Operativa)**:
+   - Cada tasca es mostra en una targeta visual amb codi de color segons el seu estat:
+     - 🔴 **Vençuda**: Fons d'alerta vermell si la data ha passat i no s'ha completat.
+     - 🟡 **Pendent Pròxima**: Fons groc si s'acosta la data.
+     - 🟢 **Completada**: Fons verd suau amb text ratllat.
+   - **Botó Toggle d'Acompliment `✅ / ❌`**: Commuta en 1 sol clic l'estat entre feta i pendent (`toggle_manteniment_acompliment`), actualitzant immediatament el comptador d'alertes.
+   - **Checklist de Subtasques**: Caselles interactives per marcar subtasques individuals amb indicador de fracció de progrés *(Exemple: `📋 Subtasques (2/3)`)*.
+   - **Botó `✏️` (Editar)**: Obre el modal per ajustar dates, periodicitats o membres assignats.
+   - **Botó `🗑️` (Eliminar)**: Obre el modal de confirmació per esborrar la tasca puntual o tota la sèrie pendent (`delete_task_dialog`).
+
+4. **Generador de Tasques del Proper Any (`show_generar_any_manteniment_dialog`)**:
+   - Accessible des del botó dedicat o el menú superior `Mòduls > Manteniment de la llar > 📅 Generar tasques proper any`.
+   - Revisa automàticament els patrons de totes les tasques periòdiques actives i proposa la generació en bloc de tot el calendari de manteniment de l'any següent, evitant omissions i garantint continuïtat en la cura de la llar.
+
+---
+
+##### 5.2.2 Pestanya 2: `📚 Manuals d'Instruccions` (Dipòsit Documental de la Llar)
+
+Arxiu centralitzat de manuals tècnics i llibrets d'instruccions d'aparells, calderes, electrodomèstics i eines de la casa:
+
+1. **Controls d'Alta i Cerca Documental**:
+   - **Botó `➕ Afegir Manual` (`type="primary"`)**: Obre el diàleg modal `add_manual_dialog`:
+     - Camps: `Títol del document`, `Aparell o model`, `Estança / Ubicació` (Cuina, Safareig, Garatge, Jardí, etc.) i component de càrrega d'arxiu PDF (`st.file_uploader`).
+   - **Cercador de Manuals**: Barra de cerca predictiva per localitzar manuals per paraula clau, marca o aparell (ex: *Bosch*, *Caldera Baxi*, *Aire condicionat*).
+   - **Filtre per Estança**: Desplegable per visualitzar només els equips d'una habitació concreta.
+
+2. **Targetes Interactives de Manuals**:
+   - Cada manual es presenta en una targeta amb miniatura documental, nom de l'equip, estança i recompte de pàgines (`📄 X pàgines`).
+   - **Botó `👁️ Veure Manual`**: Obre el visor natiu `view_pdf_dialog` (renderització Canvas HTML5 via PDF.js), que permet llegir el manual còmodament a pantalla completa sense descarregar-lo ni patir bloquejos d'iframes.
+   - **Botó `✏️ Editar`**: Modifica metadades (canvi d'estança o títol).
+   - **Botó `🗑️ Eliminar`**: Esborra el registre de Supabase i elimina el fitxer físic de `PDF/Manuals/` (`delete_document_dialog`).
+
+---
+
+##### 5.2.3 Pestanya 3: `🛡️ Garanties i Factures de Compra` (Vigilància Semafòrica de Cobertures)
+
+Monitorització de factures de compra, pòlisses d'assegurança i tiquets de garantia per no perdre cap dret de reparació o canvi:
+
+1. **Alta de Garanties i Factures (`add_garantia_dialog`)**:
+   - **Botó `➕ Afegir Garantia` (`type="primary"`)**: Obre el modal d'enregistrament:
+     - Camps: `Títol / Descripció`, `Aparell o bé cobert`, `Establiment de compra` (ex: MediaMarkt, El Corte Inglés, Amazon), `Data de compra`, `Data de fi de garantia`, `Import de compra (€)` i càrrega del fitxer PDF de la factura o tiquet.
+
+2. **Motor de Càlcul Semafòric de Cobertura (`calculate_warranty_status`)**:
+   - L'algoritme avalua en temps real els dies que manquen fins a la data de venciment:
+     - 🟢 **Vigent**: Garantia activa amb més de 90 dies de cobertura restant.
+     - 🟡 **Venciment Proper**: Menys de 90 dies per a la caducitat (genera un avís groc de revisió preventiva abans que expiri la protecció legal).
+     - 🔴 **Vençuda / Caducada**: Cobertura extingida.
+
+3. **Graella de Garanties i Accions**:
+   - Targetes visuals amb l'import original, botiga, període de cobertura i dies restants en format destacat.
+   - **Botó `👁️ Veure Factura / Garantia`**: Visualitza el tiquet o factura original d'alta resolució al visor PDF.js.
+   - **Botó `✏️ Editar`**: Permet corregir dates de compra o imports.
+   - **Botó `🗑️ Eliminar`**: Esborra el registre i neteja el PDF associat de `PDF/Garanties/`.
+
+---
+
+#### D. Navegació Dinàmica i Enllaços amb Altres Mòduls
+- **Navegació per Paràmetres URL (`st.query_params`)**:
+  - `?tab=registre`: Activa directament la graella de tasques de manteniment.
+  - `?tab=manuals`: Condueix a la biblioteca de manuals d'instruccions.
+  - `?tab=garanties`: Obre el monitor de venciments de garanties.
+- **Interconnexions amb la Resta del Sistema**:
+  - **[`modules/calendari.py`](file:///e:/Dashboard/modules/calendari.py)**: Les tasques marcades amb `send_to_calendar` es reflecteixen a l'agenda familiar com a esdeveniments amb icona d'eina (`🛠️`).
+  - **[`core/alerts.py`](file:///e:/Dashboard/core/alerts.py)**: Les tasques que arriben al seu període d'avís (`diesAvis`) i les garanties amb venciment proper (< 90 dies) s'envien automàticament a la campaneta d'alertes de la barra superior.
+  - **Menú Superior `Mòduls > Manteniment de la llar`**: Enllaços ràpids per obrir el generador d'any o consultar la documentació tècnica.
 
 ---
 
