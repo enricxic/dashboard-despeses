@@ -48,6 +48,7 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 329;BBVA;21/03/2025;21;marzo;2025.0;ingres_general;Hisenda 100;100.0;;cobrat
 328;BBVA;21/03/2025;21;marzo;2025.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 327;LaCaixa;25/02/2025;25;febrero;2025.0;ingres_general;Complement Generalitat;119.67;;cobrat
+323;BBVA;25/02/2025;25;febrero;2025.0;ingres_general;Pensió Isabel;926.13;;cobrat
 451;BBVA;25/03/2026;25;marzo;2026.0;ingres_general;Cartera DP Gran;45.4;;cobrat
 450;BBVA;25/03/2026;25;marzo;2026.0;ingres_general;Pensió Isabel;951.2;;cobrat
 449;BBVA;25/03/2026;25;marzo;2026.0;ingres_general;Pensió Enric;940.74;;cobrat
@@ -67,7 +68,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 326;LaCaixa;25/02/2025;25;febrero;2025.0;ingres_general;Pensió no contributiva;564.7;;cobrat
 325;BBVA;25/02/2025;25;febrero;2025.0;ingres_general;Cartera DP Petit;14.058;;cobrat
 324;BBVA;25/02/2025;25;febrero;2025.0;ingres_general;Cartera DP Gran;42.01;;cobrat
-323;BBVA;25/02/2025;25;febrero;2025.0;ingres_general;Pensió Isabel;926.13;;cobrat
 322;BBVA;25/02/2025;25;febrero;2025.0;ingres_general;Pensió Enric;916.01;;cobrat
 321;BBVA;21/02/2025;21;febrero;2025.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 320;BBVA;21/02/2025;21;febrero;2025.0;ingres_general;Hisenda 100;100.0;;cobrat
@@ -93,26 +93,16 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 236;LaCaixa;25/06/2024;25;junio;2024.0;ingres_general;Pensió no contributiva;1035.8;;cobrat
 235;BBVA;25/06/2024;25;junio;2024.0;ingres_general;Cartera DP Petit;17.92;;cobrat
 234;BBVA;25/06/2024;25;junio;2024.0;ingres_general;Cartera DP Gran;56.64;;cobrat
-664;Efectiu;30/10/2026;30;octubre;2026.0;ingres_extra;Feina Foto;38.0;Fotos Olga Coris 57 10x15;pendent
+664;Efectiu;30/10/2026;30;octubre;2026.0;ingres_extra;Feina Foto;38.0;Fotos Olga Coris 57 10x15;cobrat
+155;BBVA;30/11/2023;30;noviembre;2023.0;ingres_general;Hisenda 100;100.0;;cobrat
+150;BBVA;25/11/2023;25;noviembre;2023.0;ingres_general;Cartera DP Gran;53.09;;cobrat
 662;LaCaixa;25/06/2027;25;junio;2027.0;ingres_general;Paga Extra Jordi;628.8;;pendent
 627;BBVA;21/09/2027;21;septiembre;2027.0;ingres_general;Hisenda 50 2;50.0;;pendent
 626;LaCaixa;25/09/2027;25;septiembre;2027.0;ingres_general;Pensió no contributiva;628.8;;pendent
 625;BBVA;29/09/2027;29;septiembre;2027.0;ingres_general;Cartera DP Petit;19.21;;pendent
-155;BBVA;30/11/2023;30;noviembre;2023.0;ingres_general;Hisenda 100;100.0;;cobrat
-150;BBVA;25/11/2023;25;noviembre;2023.0;ingres_general;Cartera DP Gran;53.09;;cobrat
 132;LaCaixa;25/09/2023;25;septiembre;2023.0;ingres_general;Complement Generalitat;183.58;;cobrat
 127;BBVA;10/09/2023;10;septiembre;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
 126;BBVA;10/09/2023;10;septiembre;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
-624;BBVA;25/09/2027;25;septiembre;2027.0;ingres_general;Cartera DP Gran;45.4;;pendent
-623;BBVA;25/09/2027;25;septiembre;2027.0;ingres_general;Pensió Isabel;962.5;;pendent
-622;BBVA;25/09/2027;25;septiembre;2027.0;ingres_general;Pensió Enric;940.74;;pendent
-592;BBVA;21/05/2027;21;mayo;2027.0;ingres_general;Hisenda 100;100.0;;pendent
-591;BBVA;21/05/2027;21;mayo;2027.0;ingres_general;Hisenda 50 2;50.0;;pendent
-530;BBVA;21/12/2026;21;diciembre;2026.0;ingres_general;Hisenda 50 1;50.0;;pendent
-529;LaCaixa;25/11/2026;25;noviembre;2026.0;ingres_general;Complement Generalitat;119.67;;pendent
-460;BBVA;25/04/2026;25;abril;2026.0;ingres_general;Cartera DP Gran;48.89;;cobrat
-459;BBVA;25/04/2026;25;abril;2026.0;ingres_general;Pensió Isabel;951.2;;cobrat
-458;BBVA;25/04/2026;25;abril;2026.0;ingres_general;Pensió Enric;940.74;;cobrat
 21;Efectiu;20/12/2022;20;diciembre;2022.0;ingres_extra;Feina Foto;40.0;Calendaris Paqui Moreno;cobrat
 20;Efectiu;15/12/2022;15;diciembre;2022.0;ingres_extra;Xarrup estovalles;300.0;;cobrat
 19;Efectiu;15/12/2022;15;diciembre;2022.0;ingres_extra;Feina Foto;0.0;Feli Bonilla;cobrat
@@ -123,16 +113,26 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 14;BBVA;29/11/2022;29;noviembre;2022.0;ingres_general;Cartera DP Gran;47.14;;cobrat
 13;BBVA;28/11/2022;28;noviembre;2022.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 12;BBVA;28/11/2022;28;noviembre;2022.0;ingres_general;Hisenda 100;100.0;;cobrat
+624;BBVA;25/09/2027;25;septiembre;2027.0;ingres_general;Cartera DP Gran;45.4;;pendent
+623;BBVA;25/09/2027;25;septiembre;2027.0;ingres_general;Pensió Isabel;962.5;;pendent
+622;BBVA;25/09/2027;25;septiembre;2027.0;ingres_general;Pensió Enric;940.74;;pendent
+592;BBVA;21/05/2027;21;mayo;2027.0;ingres_general;Hisenda 100;100.0;;pendent
+591;BBVA;21/05/2027;21;mayo;2027.0;ingres_general;Hisenda 50 2;50.0;;pendent
+530;BBVA;21/12/2026;21;diciembre;2026.0;ingres_general;Hisenda 50 1;50.0;;pendent
+529;LaCaixa;25/11/2026;25;noviembre;2026.0;ingres_general;Complement Generalitat;119.67;;pendent
+460;BBVA;25/04/2026;25;abril;2026.0;ingres_general;Cartera DP Gran;48.89;;cobrat
+459;BBVA;25/04/2026;25;abril;2026.0;ingres_general;Pensió Isabel;951.2;;cobrat
+458;BBVA;25/04/2026;25;abril;2026.0;ingres_general;Pensió Enric;940.74;;cobrat
 457;BBVA;21/04/2026;21;abril;2026.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 456;BBVA;21/04/2026;21;abril;2026.0;ingres_general;Hisenda 100;100.0;;cobrat
 455;BBVA;21/04/2026;21;abril;2026.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 454;LaCaixa;25/03/2026;25;marzo;2026.0;ingres_general;Complement Generalitat;68.25;;cobrat
 453;LaCaixa;25/03/2026;25;marzo;2026.0;ingres_general;Pensió no contributiva;628.8;;cobrat
 452;BBVA;25/03/2026;25;marzo;2026.0;ingres_general;Cartera DP Petit;0.0;;cobrat
-70;BBVA;25/04/2023;25;abril;2023.0;ingres_general;Cartera DP Petit;23.14;;cobrat
-69;BBVA;25/04/2023;25;abril;2023.0;ingres_general;Cartera DP Gran;53.06;;cobrat
 621;LaCaixa;25/09/2027;25;septiembre;2027.0;ingres_general;Complement Generalitat;119.67;;pendent
 620;BBVA;21/08/2027;21;agosto;2027.0;ingres_general;Hisenda 50 1;50.0;;pendent
+70;BBVA;25/04/2023;25;abril;2023.0;ingres_general;Cartera DP Petit;23.14;;cobrat
+69;BBVA;25/04/2023;25;abril;2023.0;ingres_general;Cartera DP Gran;53.06;;cobrat
 619;BBVA;21/08/2027;21;agosto;2027.0;ingres_general;Hisenda 100;100.0;;pendent
 618;BBVA;21/08/2027;21;agosto;2027.0;ingres_general;Hisenda 50 2;50.0;;pendent
 617;LaCaixa;25/08/2027;25;agosto;2027.0;ingres_general;Pensió no contributiva;628.8;;pendent
@@ -159,10 +159,10 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 595;BBVA;25/06/2027;25;junio;2027.0;ingres_general;Pensió Enric;940.74;;pendent
 594;LaCaixa;25/06/2027;25;junio;2027.0;ingres_general;Complement Generalitat;119.67;;pendent
 593;BBVA;21/05/2027;21;mayo;2027.0;ingres_general;Hisenda 50 1;50.0;;pendent
-68;BBVA;10/04/2023;10;abril;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
-67;BBVA;10/04/2023;10;abril;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
 590;LaCaixa;25/05/2027;25;mayo;2027.0;ingres_general;Pensió no contributiva;628.8;;pendent
 589;BBVA;29/05/2027;29;mayo;2027.0;ingres_general;Cartera DP Petit;19.21;;pendent
+68;BBVA;10/04/2023;10;abril;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
+67;BBVA;10/04/2023;10;abril;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
 588;BBVA;25/05/2027;25;mayo;2027.0;ingres_general;Cartera DP Gran;45.4;;pendent
 587;BBVA;25/05/2027;25;mayo;2027.0;ingres_general;Pensió Isabel;962.5;;pendent
 586;BBVA;25/05/2027;25;mayo;2027.0;ingres_general;Pensió Enric;940.74;;pendent
@@ -221,17 +221,7 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 463;LaCaixa;25/04/2026;25;abril;2026.0;ingres_general;Complement Generalitat;68.25;;cobrat
 462;LaCaixa;25/04/2026;25;abril;2026.0;ingres_general;Pensió no contributiva;628.8;;cobrat
 503;BBVA;21/09/2026;21;septiembre;2026.0;ingres_general;Hisenda 50 2;50.0;;cobrat
-66;BBVA;31/03/2023;31;marzo;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
-65;BBVA;31/03/2023;31;marzo;2023.0;ingres_general;Hisenda 100;100.0;;cobrat
-64;BBVA;31/03/2023;31;marzo;2023.0;ingres_general;Hisenda 50 1;50.0;;cobrat
-63;LaCaixa;25/03/2023;25;marzo;2023.0;ingres_general;Complement Generalitat;172.07;;cobrat
-62;LaCaixa;25/03/2023;25;marzo;2023.0;ingres_general;Pensió no contributiva;484.61;;cobrat
-61;BBVA;25/03/2023;25;marzo;2023.0;ingres_general;Cartera DP Petit;14.53;;cobrat
-60;BBVA;25/03/2023;25;marzo;2023.0;ingres_general;Cartera DP Gran;50.1;;cobrat
 502;BBVA;21/09/2026;21;septiembre;2026.0;ingres_general;Hisenda 100;100.0;;cobrat
-59;Efectiu;15/03/2023;15;marzo;2023.0;ingres_extra;Feina Horeca;1300.0;Tramuntana Palamós;cobrat
-58;BBVA;10/03/2023;10;marzo;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
-56;BBVA;28/02/2023;28;febrero;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 501;BBVA;21/09/2026;21;septiembre;2026.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 500;LaCaixa;25/08/2026;25;agosto;2026.0;ingres_general;Complement Generalitat;68.25;;cobrat
 499;LaCaixa;25/08/2026;25;agosto;2026.0;ingres_general;Pensió no contributiva;628.8;;cobrat
@@ -240,6 +230,16 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 496;BBVA;25/08/2026;25;agosto;2026.0;ingres_general;Pensió Isabel;962.5;;cobrat
 495;BBVA;21/08/2026;21;agosto;2026.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 494;BBVA;21/08/2026;21;agosto;2026.0;ingres_general;Hisenda 100;100.0;;cobrat
+66;BBVA;31/03/2023;31;marzo;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
+65;BBVA;31/03/2023;31;marzo;2023.0;ingres_general;Hisenda 100;100.0;;cobrat
+64;BBVA;31/03/2023;31;marzo;2023.0;ingres_general;Hisenda 50 1;50.0;;cobrat
+63;LaCaixa;25/03/2023;25;marzo;2023.0;ingres_general;Complement Generalitat;172.07;;cobrat
+62;LaCaixa;25/03/2023;25;marzo;2023.0;ingres_general;Pensió no contributiva;484.61;;cobrat
+61;BBVA;25/03/2023;25;marzo;2023.0;ingres_general;Cartera DP Petit;14.53;;cobrat
+60;BBVA;25/03/2023;25;marzo;2023.0;ingres_general;Cartera DP Gran;50.1;;cobrat
+59;Efectiu;15/03/2023;15;marzo;2023.0;ingres_extra;Feina Horeca;1300.0;Tramuntana Palamós;cobrat
+58;BBVA;10/03/2023;10;marzo;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
+56;BBVA;28/02/2023;28;febrero;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 493;BBVA;21/08/2026;21;agosto;2026.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 492;LaCaixa;25/07/2026;25;julio;2026.0;ingres_general;Complement Generalitat;68.25;;cobrat
 491;LaCaixa;25/07/2026;25;julio;2026.0;ingres_general;Pensió no contributiva;628.8;;cobrat
@@ -260,16 +260,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 52;LaCaixa;25/02/2023;25;febrero;2023.0;ingres_general;Pensió no contributiva;484.61;;cobrat
 551;BBVA;25/01/2027;25;enero;2027.0;ingres_general;Pensió Isabel;962.5;;pendent
 51;BBVA;25/02/2023;25;febrero;2023.0;ingres_general;Cartera DP Petit;14.09;;cobrat
-42;BBVA;29/01/2023;29;enero;2023.0;ingres_general;Cartera DP Petit;22.74;;cobrat
-41;BBVA;29/01/2023;29;enero;2023.0;ingres_general;Cartera DP Gran;80.01;;cobrat
-40;BBVA;28/01/2023;28;enero;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
-39;BBVA;28/01/2023;28;enero;2023.0;ingres_general;Hisenda 100;100.0;;cobrat
-38;BBVA;28/01/2023;28;enero;2023.0;ingres_general;Hisenda 50 1;50.0;;cobrat
-37;LaCaixa;25/01/2023;25;enero;2023.0;ingres_general;Complement Generalitat;172.07;;cobrat
-36;LaCaixa;25/01/2023;25;enero;2023.0;ingres_general;Pensió no contributiva;484.61;;cobrat
-35;Efectiu;14/01/2023;14;enero;2023.0;ingres_extra;Feina Foto;150.0;Lidia Cerrillo;cobrat
-34;BBVA;14/01/2023;14;enero;2023.0;ingres_extra;Subvenció;156.65;;cobrat
-33;BBVA;10/01/2023;10;enero;2023.0;ingres_general;Abonament Ajuda Enric;463.21;;cobrat
 550;BBVA;25/01/2027;25;enero;2027.0;ingres_general;Pensió Enric;940.74;;pendent
 549;LaCaixa;25/01/2027;25;enero;2027.0;ingres_general;Complement Generalitat;119.67;;pendent
 548;LaCaixa;28/09/2026;28;septiembre;2026.0;ingres_general;Complement Generalitat;531.03;regulació ingressos;cobrat
@@ -277,16 +267,26 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 521;BBVA;21/11/2026;21;noviembre;2026.0;ingres_general;Hisenda 50 2;50.0;;pendent
 520;BBVA;21/11/2026;21;noviembre;2026.0;ingres_general;Hisenda 100;100.0;;pendent
 519;BBVA;21/11/2026;21;noviembre;2026.0;ingres_general;Hisenda 50 1;50.0;;pendent
-518;LaCaixa;25/10/2026;25;octubre;2026.0;ingres_general;Complement Generalitat;119.67;;pendent
+518;LaCaixa;25/10/2026;25;octubre;2026.0;ingres_general;Complement Generalitat;119.67;;cobrat
 517;LaCaixa;25/10/2026;25;octubre;2026.0;ingres_general;Pensió no contributiva;628.8;;cobrat
 516;BBVA;25/10/2026;25;octubre;2026.0;ingres_general;Cartera DP Petit;13.99;;pendent
 515;BBVA;25/10/2026;25;octubre;2026.0;ingres_general;Cartera DP Gran;47.14;;pendent
 514;BBVA;25/10/2026;25;octubre;2026.0;ingres_general;Pensió Isabel;962.5;;cobrat
+42;BBVA;29/01/2023;29;enero;2023.0;ingres_general;Cartera DP Petit;22.74;;cobrat
+41;BBVA;29/01/2023;29;enero;2023.0;ingres_general;Cartera DP Gran;80.01;;cobrat
+40;BBVA;28/01/2023;28;enero;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
+39;BBVA;28/01/2023;28;enero;2023.0;ingres_general;Hisenda 100;100.0;;cobrat
+38;BBVA;28/01/2023;28;enero;2023.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 513;BBVA;25/10/2026;25;octubre;2026.0;ingres_general;Pensió Enric;940.74;;cobrat
+37;LaCaixa;25/01/2023;25;enero;2023.0;ingres_general;Complement Generalitat;172.07;;cobrat
+36;LaCaixa;25/01/2023;25;enero;2023.0;ingres_general;Pensió no contributiva;484.61;;cobrat
+35;Efectiu;14/01/2023;14;enero;2023.0;ingres_extra;Feina Foto;150.0;Lidia Cerrillo;cobrat
+34;BBVA;14/01/2023;14;enero;2023.0;ingres_extra;Subvenció;156.65;;cobrat
 512;BBVA;21/10/2026;21;octubre;2026.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 511;BBVA;21/10/2026;21;octubre;2026.0;ingres_general;Hisenda 100;100.0;;cobrat
 510;BBVA;21/10/2026;21;octubre;2026.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 509;LaCaixa;25/09/2026;25;septiembre;2026.0;ingres_general;Complement Generalitat;0.0;;cobrat
+33;BBVA;10/01/2023;10;enero;2023.0;ingres_general;Abonament Ajuda Enric;463.21;;cobrat
 32;BBVA;10/01/2023;10;enero;2023.0;ingres_general;Abonament Ajuda Isabel;463.21;;cobrat
 31;Efectiu;31/12/2022;31;diciembre;2022.0;ingres_extra;Ingres Extra;100.0;Loteria;cobrat
 30;BBVA;29/12/2022;29;diciembre;2022.0;ingres_general;Cartera DP Petit;25.18;;cobrat
@@ -357,14 +357,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 365;LaCaixa;25/06/2025;25;junio;2025.0;ingres_general;Pensió no contributiva;1129.4;;cobrat
 364;BBVA;25/06/2025;25;junio;2025.0;ingres_general;Cartera DP Petit;17.25;;cobrat
 363;BBVA;25/06/2025;25;junio;2025.0;ingres_general;Cartera DP Gran;42.01;;cobrat
-317;BBVA;04/02/2025;04;febrero;2025.0;ingres_extra;Venda Articles;1750.0;Venda Or;cobrat
-316;BBVA;29/01/2025;29;enero;2025.0;ingres_general;Cartera DP Petit;18.02;;cobrat
-315;BBVA;29/01/2025;29;enero;2025.0;ingres_general;Cartera DP Gran;63.26;;cobrat
-314;LaCaixa;25/01/2025;25;enero;2025.0;ingres_general;Complement Generalitat;119.67;;cobrat
-313;LaCaixa;25/01/2025;25;enero;2025.0;ingres_general;Pensió no contributiva;564.7;;cobrat
-312;BBVA;25/01/2025;25/01/1900;enero;2025.0;ingres_general;Pensió Isabel;926.13;;cobrat
-311;BBVA;25/01/2025;25;enero;2025.0;ingres_general;Pensió Enric;916.01;;cobrat
-310;BBVA;21/01/2025;21;enero;2025.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 151;BBVA;25/11/2023;25;noviembre;2023.0;ingres_general;Cartera DP Petit;4.4;;cobrat
 133;BBVA;30/09/2023;30;septiembre;2023.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 48;Efectiu;15/02/2023;15;febrero;2023.0;ingres_extra;Feina Horeca;295.0;Cafeteria Avinguda;cobrat
@@ -373,6 +365,14 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 45;BBVA;07/02/2023;07;febrero;2023.0;ingres_extra;Promos;10.0;;cobrat
 44;Efectiu;06/02/2023;06;febrero;2023.0;ingres_extra;Casament;50.0;Vídeo;cobrat
 43;Efectiu;31/01/2023;31;enero;2023.0;ingres_extra;Feina Foto;0.0;Olga Coris;cobrat
+317;BBVA;04/02/2025;04;febrero;2025.0;ingres_extra;Venda Articles;1750.0;Venda Or;cobrat
+316;BBVA;29/01/2025;29;enero;2025.0;ingres_general;Cartera DP Petit;18.02;;cobrat
+315;BBVA;29/01/2025;29;enero;2025.0;ingres_general;Cartera DP Gran;63.26;;cobrat
+314;LaCaixa;25/01/2025;25;enero;2025.0;ingres_general;Complement Generalitat;119.67;;cobrat
+313;LaCaixa;25/01/2025;25;enero;2025.0;ingres_general;Pensió no contributiva;564.7;;cobrat
+312;BBVA;25/01/2025;25/01/1900;enero;2025.0;ingres_general;Pensió Isabel;926.13;;cobrat
+311;BBVA;25/01/2025;25;enero;2025.0;ingres_general;Pensió Enric;916.01;;cobrat
+310;BBVA;21/01/2025;21;enero;2025.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 309;BBVA;21/01/2025;21;enero;2025.0;ingres_general;Hisenda 100;100.0;;cobrat
 308;BBVA;21/01/2025;21;enero;2025.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 307;Efectiu;16/01/2025;16;enero;2025.0;ingres_extra;Feina Foto;30.0;Fotos Paqui Moreno;cobrat
@@ -422,15 +422,21 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 153;LaCaixa;25/11/2023;25;noviembre;2023.0;ingres_general;Complement Generalitat;183.58;;cobrat
 152;LaCaixa;25/11/2023;25;noviembre;2023.0;ingres_general;Pensió no contributiva;969.22;;cobrat
 131;LaCaixa;25/09/2023;25;septiembre;2023.0;ingres_general;Pensió no contributiva;484.61;;cobrat
-148;BBVA;15/11/2023;15;noviembre;2023.0;ingres_extra;Gestions banc;2.01;ING tancament comptes;cobrat
-147;BBVA;10/11/2023;10;noviembre;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
 661;BBVA;26/11/2027;26;noviembre;2027.0;ingres_general;Paga extra Enric;940.75;;pendent
 554;LaCaixa;25/01/2027;25;enero;2027.0;ingres_general;Pensió no contributiva;628.8;;pendent
+148;BBVA;15/11/2023;15;noviembre;2023.0;ingres_extra;Gestions banc;2.01;ING tancament comptes;cobrat
 553;BBVA;29/01/2027;29;enero;2027.0;ingres_general;Cartera DP Petit;19.21;;pendent
+552;BBVA;25/01/2027;25;enero;2027.0;ingres_general;Cartera DP Gran;45.4;;pendent
+147;BBVA;10/11/2023;10;noviembre;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
 146;BBVA;10/11/2023;10;noviembre;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
 11;BBVA;28/11/2022;28;noviembre;2022.0;ingres_general;Hisenda 50 1;50.0;;cobrat
-552;BBVA;25/01/2027;25;enero;2027.0;ingres_general;Cartera DP Gran;45.4;;pendent
+10;LaCaixa;25/11/2022;25;noviembre;2022.0;ingres_general;Complement Generalitat;172.07;;cobrat
 256;BBVA;25/08/2024;25;agosto;2024.0;ingres_general;Cartera DP Petit;13.65;;cobrat
+9;LaCaixa;25/11/2022;25;noviembre;2022.0;ingres_general;Pensió no contributiva;969.22;;cobrat
+8;BBVA;25/11/2022;25;noviembre;2022.0;ingres_extra;Subvenció;313.3;Bo social tèrmic;cobrat
+7;BBVA;25/11/2022;25;noviembre;2022.0;ingres_extra;Subvenció;85.21;Bonif. Ajunt.;cobrat
+6;Efectiu;18/11/2022;18;noviembre;2022.0;ingres_extra;Feina Foto;40.0;30x40 Ferriol;cobrat
+5;BBVA;15/11/2022;15;noviembre;2022.0;ingres_extra;Vinted;37.0;;cobrat
 255;BBVA;25/08/2024;25;agosto;2024.0;ingres_general;Cartera DP Gran;43.91;;cobrat
 254;BBVA;25/08/2024;25;agosto;2024.0;ingres_general;Pensió Isabel;897.46;;cobrat
 253;BBVA;25/08/2024;25;agosto;2024.0;ingres_general;Pensió Enric;891.06;;cobrat
@@ -440,12 +446,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 249;BBVA;30/07/2024;30;julio;2024.0;ingres_general;Hisenda 100;100.0;;cobrat
 227;Efectiu;15/06/2024;15;junio;2024.0;ingres_extra;Feina Horeca;365.0;Cartes Xarrup 2024;cobrat
 226;BBVA;10/06/2024;10;junio;2024.0;ingres_extra;Promos;10.0;;cobrat
-10;LaCaixa;25/11/2022;25;noviembre;2022.0;ingres_general;Complement Generalitat;172.07;;cobrat
-9;LaCaixa;25/11/2022;25;noviembre;2022.0;ingres_general;Pensió no contributiva;969.22;;cobrat
-8;BBVA;25/11/2022;25;noviembre;2022.0;ingres_extra;Subvenció;313.3;Bo social tèrmic;cobrat
-7;BBVA;25/11/2022;25;noviembre;2022.0;ingres_extra;Subvenció;85.21;Bonif. Ajunt.;cobrat
-6;Efectiu;18/11/2022;18;noviembre;2022.0;ingres_extra;Feina Foto;40.0;30x40 Ferriol;cobrat
-5;BBVA;15/11/2022;15;noviembre;2022.0;ingres_extra;Vinted;37.0;;cobrat
 4;Efectiu;14/11/2022;14;noviembre;2022.0;ingres_extra;Casament;725.0;Joan-Mariana;cobrat
 3;Efectiu;11/11/2022;11;noviembre;2022.0;ingres_extra;Ingrés Extra;66.0;radiadors;cobrat
 2;BBVA;10/11/2022;10;noviembre;2022.0;ingres_general;Abonament Ajuda Enric;463.21;;cobrat
@@ -457,7 +457,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 221;LaCaixa;25/05/2024;25;mayo;2024.0;ingres_general;Complement Generalitat;151.6;;cobrat
 220;LaCaixa;25/05/2024;25;mayo;2024.0;ingres_general;Pensió no contributiva;517.9;;cobrat
 149;Efectiu;20/11/2023;20;noviembre;2023.0;ingres_extra;Feina Horeca;320.0;Xarrup estovalles;cobrat
-116;Efectiu;12/08/2023;12;agosto;2023.0;ingres_extra;Feina Foto;280.0;Festa Lidia Cerrillo;cobrat
 561;BBVA;25/02/2027;25;febrero;2027.0;ingres_general;Cartera DP Gran;45.4;;pendent
 560;BBVA;25/02/2027;25;febrero;2027.0;ingres_general;Pensió Isabel;962.5;;pendent
 559;BBVA;25/02/2027;25;febrero;2027.0;ingres_general;Pensió Enric;940.74;;pendent
@@ -466,6 +465,8 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 556;BBVA;21/01/2027;21;enero;2027.0;ingres_general;Hisenda 100;100.0;;pendent
 555;BBVA;21/01/2027;21;enero;2027.0;ingres_general;Hisenda 50 2;50.0;;pendent
 543;Efectiu;23/06/2026;23;junio;2026.0;ingres_extra;Feina Horeca;805.0;;cobrat
+248;BBVA;30/07/2024;30;julio;2024.0;ingres_general;Hisenda 50 1;50.0;;cobrat
+116;Efectiu;12/08/2023;12;agosto;2023.0;ingres_extra;Feina Foto;280.0;Festa Lidia Cerrillo;cobrat
 115;BBVA;10/08/2023;10;agosto;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
 114;BBVA;10/08/2023;10;agosto;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
 113;BBVA;04/08/2023;04;agosto;2023.0;ingres_extra;Vinted;39.46;;cobrat
@@ -474,7 +475,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 110;BBVA;30/07/2023;30;julio;2023.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 109;LaCaixa;25/07/2023;25;julio;2023.0;ingres_general;Complement Generalitat;183.58;;cobrat
 108;LaCaixa;25/07/2023;25;julio;2023.0;ingres_general;Pensió no contributiva;484.61;;cobrat
-248;BBVA;30/07/2024;30;julio;2024.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 247;LaCaixa;25/07/2024;25;julio;2024.0;ingres_general;Complement Generalitat;151.6;;cobrat
 246;LaCaixa;25/07/2024;25;julio;2024.0;ingres_general;Pensió no contributiva;517.9;;cobrat
 245;BBVA;25/07/2024;25;julio;2024.0;ingres_general;Cartera DP Petit;17.97;;cobrat
@@ -491,12 +491,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 198;Efectiu;25/03/2024;25/01/1900;marzo;2024.0;ingres_extra;Feina Horeca;300.0;Estovalles Xarrup;cobrat
 197;LaCaixa;25/03/2024;25;marzo;2024.0;ingres_general;Complement Generalitat;151.6;;cobrat
 196;LaCaixa;25/03/2024;25;marzo;2024.0;ingres_general;Pensió no contributiva;517.9;;cobrat
-81;BBVA;15/05/2023;15;mayo;2023.0;ingres_extra;Feina Horeca;430.0;L'Olivera;cobrat
-80;Efectiu;11/05/2023;11;mayo;2023.0;ingres_extra;Feina Horeca;325.0;Estovalles Xarrup;cobrat
-79;Efectiu;11/05/2023;11;mayo;2023.0;ingres_extra;Feina Foto;130.0;Àlbum Lidia Cerrilo;cobrat
-78;Efectiu;11/05/2023;11;mayo;2023.0;ingres_extra;Casament;350.0;Montse Simon;cobrat
-77;BBVA;10/05/2023;10;mayo;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
-76;BBVA;10/05/2023;10;mayo;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
 580;BBVA;29/04/2027;29;abril;2027.0;ingres_general;Cartera DP Petit;19.21;;pendent
 579;BBVA;25/04/2027;25;abril;2027.0;ingres_general;Cartera DP Gran;45.4;;pendent
 578;BBVA;25/04/2027;25;abril;2027.0;ingres_general;Pensió Isabel;962.5;;pendent
@@ -506,11 +500,17 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 574;BBVA;21/03/2027;21;marzo;2027.0;ingres_general;Hisenda 100;100.0;;pendent
 573;BBVA;21/03/2027;21;marzo;2027.0;ingres_general;Hisenda 50 2;50.0;;pendent
 572;LaCaixa;25/03/2027;25;marzo;2027.0;ingres_general;Pensió no contributiva;628.8;;pendent
+398;BBVA;21/10/2025;21;octubre;2025.0;ingres_general;Hisenda 100;100.0;;cobrat
+81;BBVA;15/05/2023;15;mayo;2023.0;ingres_extra;Feina Horeca;430.0;L'Olivera;cobrat
+80;Efectiu;11/05/2023;11;mayo;2023.0;ingres_extra;Feina Horeca;325.0;Estovalles Xarrup;cobrat
+79;Efectiu;11/05/2023;11;mayo;2023.0;ingres_extra;Feina Foto;130.0;Àlbum Lidia Cerrilo;cobrat
+78;Efectiu;11/05/2023;11;mayo;2023.0;ingres_extra;Casament;350.0;Montse Simon;cobrat
+77;BBVA;10/05/2023;10;mayo;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
+76;BBVA;10/05/2023;10;mayo;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
 75;BBVA;30/04/2023;30;abril;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 74;BBVA;30/04/2023;30;abril;2023.0;ingres_general;Hisenda 100;100.0;;cobrat
 73;BBVA;30/04/2023;30;abril;2023.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 72;LaCaixa;25/04/2023;25;abril;2023.0;ingres_general;Complement Generalitat;172.07;;cobrat
-398;BBVA;21/10/2025;21;octubre;2025.0;ingres_general;Hisenda 100;100.0;;cobrat
 397;BBVA;21/10/2025;21;octubre;2025.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 396;LaCaixa;25/09/2025;25;septiembre;2025.0;ingres_general;Complement Generalitat;119.67;;cobrat
 395;LaCaixa;25/09/2025;25;septiembre;2025.0;ingres_general;Pensió no contributiva;564.7;;cobrat
@@ -524,10 +524,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 84;LaCaixa;25/05/2023;25;mayo;2023.0;ingres_general;Pensió no contributiva;484.61;;cobrat
 83;BBVA;25/05/2023;25;mayo;2023.0;ingres_general;Cartera DP Petit;30.86;;cobrat
 82;BBVA;25/05/2023;25;mayo;2023.0;ingres_general;Cartera DP Gran;50.1;;cobrat
-161;BBVA;20/12/2023;20;diciembre;2023.0;ingres_extra;Promos;20.0;;cobrat
-160;Efectiu;20/12/2023;20;diciembre;2023.0;ingres_extra;Feina Foto;45.0;Calendaris Paqui Moreno;cobrat
-159;BBVA;10/12/2023;10;diciembre;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
-158;BBVA;10/12/2023;10;diciembre;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
 584;BBVA;21/04/2027;21;abril;2027.0;ingres_general;Hisenda 50 1;50.0;;pendent
 583;BBVA;21/04/2027;21;abril;2027.0;ingres_general;Hisenda 100;100.0;;pendent
 582;BBVA;21/04/2027;21;abril;2027.0;ingres_general;Hisenda 50 2;50.0;;pendent
@@ -540,6 +536,10 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 213;BBVA;30/04/2024;30;abril;2024.0;ingres_general;Hisenda 100;100.0;;cobrat
 212;BBVA;30/04/2024;30;abril;2024.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 211;BBVA;25/04/2024;25;abril;2024.0;ingres_general;Pensió Isabel;0.0;;cobrat
+161;BBVA;20/12/2023;20;diciembre;2023.0;ingres_extra;Promos;20.0;;cobrat
+160;Efectiu;20/12/2023;20;diciembre;2023.0;ingres_extra;Feina Foto;45.0;Calendaris Paqui Moreno;cobrat
+159;BBVA;10/12/2023;10;diciembre;2023.0;ingres_general;Abonament Ajuda Enric;480.0;;cobrat
+158;BBVA;10/12/2023;10;diciembre;2023.0;ingres_general;Abonament Ajuda Isabel;480.0;;cobrat
 157;Efectiu;09/12/2023;09;diciembre;2023.0;ingres_extra;Feina Foto;15.0;Felicitacions NataliaBonilla;cobrat
 156;BBVA;30/11/2023;30;noviembre;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 135;BBVA;30/09/2023;30;septiembre;2023.0;ingres_general;Hisenda 50 2;50.0;;cobrat
@@ -617,6 +617,7 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 428;BBVA;21/01/2026;21;enero;2026.0;ingres_general;Hisenda 100;100.0;;cobrat
 427;BBVA;21/01/2026;21;enero;2026.0;ingres_general;Hisenda 50 1;50.0;;cobrat
 426;LaCaixa;25/12/2025;25;diciembre;2025.0;ingres_general;Complement Generalitat;119.67;;cobrat
+117;BBVA;19/08/2023;19;agosto;2023.0;ingres_extra;Promos;10.0;;cobrat
 425;LaCaixa;25/12/2025;25;diciembre;2025.0;ingres_general;Pensió no contributiva;564.7;;cobrat
 424;BBVA;25/12/2025;25;diciembre;2025.0;ingres_general;Cartera DP Petit;17.7;;cobrat
 423;BBVA;25/12/2025;25;diciembre;2025.0;ingres_general;Cartera DP Gran;42.01;;cobrat
@@ -624,7 +625,6 @@ idIngres;Banc;Data;dia;mes;any;Categoria;Concepte;Import;comentari;cobrat
 421;BBVA;25/12/2025;25;diciembre;2025.0;ingres_general;Pensió Enric;916.01;;cobrat
 420;BBVA;21/12/2025;21;diciembre;2025.0;ingres_general;Hisenda 50 2;50.0;;cobrat
 419;BBVA;21/12/2025;21;diciembre;2025.0;ingres_general;Hisenda 100;100.0;;cobrat
-117;BBVA;19/08/2023;19;agosto;2023.0;ingres_extra;Promos;10.0;;cobrat
 107;BBVA;25/07/2023;25;julio;2023.0;ingres_general;Cartera DP Petit;19.37;;cobrat
 106;BBVA;25/07/2023;25;julio;2023.0;ingres_general;Cartera DP Gran;74.32;;cobrat
 105;BBVA;24/07/2023;24;julio;2023.0;ingres_extra;Devolució Hisenda;200.0;Ajuda ;cobrat

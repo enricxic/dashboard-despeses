@@ -30,6 +30,29 @@ month_translations = {
 import base64
 import requests
 import plotly.express as px
+import io
+
+class LocalFileWrapper:
+    """Emula un UploadedFile de Streamlit per a fitxers locals d'escàner a tickets/"""
+    def __init__(self, filepath):
+        self.filepath = filepath
+        self.name = os.path.basename(filepath)
+        self.size = os.path.getsize(filepath)
+        with open(filepath, 'rb') as f:
+            self._bytes = f.read()
+        self._bio = io.BytesIO(self._bytes)
+
+    def read(self, *args):
+        return self._bio.read(*args)
+
+    def seek(self, offset, whence=0):
+        return self._bio.seek(offset, whence)
+
+    def tell(self):
+        return self._bio.tell()
+
+    def getvalue(self):
+        return self._bytes
 
 def clear_form_state(prefix: str):
     for key in list(st.session_state.keys()):
@@ -1158,6 +1181,7 @@ def cb_clear_ticket():
         st.session_state["ticket_super_widget"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
+    st.session_state.pop("loaded_scanned_file", None)
     if "scanned_file" in st.session_state:
         del st.session_state["scanned_file"]
     # Reset manual inputs
@@ -1526,6 +1550,7 @@ def cb_finalize_ticket():
     st.session_state["ticket_bank_sel"] = ""
     st.session_state["ticket_pay_method_sel"] = ""
     st.session_state["processed_file_id"] = None
+    st.session_state.pop("loaded_scanned_file", None)
     if "scanned_file" in st.session_state:
         del st.session_state["scanned_file"]
     # Reset manual inputs
@@ -1676,7 +1701,7 @@ def render_compres_super_interface():
         pendents = df_desp[df_desp['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])]
 
     # Línia compartida: Info tiquet pendent (Foto 2) + Upload (Foto 3) sota de Compres Super
-    col_top_left, col_top_right = st.columns([0.60, 0.40], vertical_alignment="center")
+    col_top_left, col_top_right = st.columns([0.52, 0.48], vertical_alignment="top")
     
     with col_top_left:
         if pending_ticket_id:
@@ -1731,24 +1756,111 @@ def render_compres_super_interface():
             st.write("")
             
     with col_top_right:
+        # 1. Escaneig directe i detecció de tiquets a la carpeta tickets/
+        tickets_dir = "tickets" if os.path.exists("tickets") else "E:/Dashboard/tickets"
+        recent_scans = []
+        if os.path.exists(tickets_dir):
+            valid_exts = (".jpg", ".jpeg", ".png", ".pdf", ".bmp", ".webp")
+            for fn in os.listdir(tickets_dir):
+                if fn.lower().endswith(valid_exts):
+                    fp = os.path.join(tickets_dir, fn)
+                    try:
+                        recent_scans.append((fp, fn, os.path.getmtime(fp)))
+                    except Exception:
+                        pass
+            recent_scans.sort(key=lambda x: x[2], reverse=True)
+
+        col_scan_btn1, col_scan_btn2 = st.columns([0.46, 0.54], vertical_alignment="center")
+        with col_scan_btn1:
+            if st.button("🖨️ Obrir Escàner", key="btn_open_scanner_ui", use_container_width=True, help="Obre la finestra d'escaneig ràpid per adquirir el tiquet físic des de l'escàner"):
+                try:
+                    import subprocess
+                    import sys
+                    scanner_script = os.path.abspath("auto_scan_ui.py")
+                    if os.path.exists(scanner_script):
+                        creationflags = 0x08000000 if os.name == 'nt' else 0
+                        subprocess.Popen([sys.executable, scanner_script])
+                        st.toast("🖨️ Finestra d'escaneig oberta. Quan acabis, prem 'Carregar últim'.", icon="🖨️")
+                    else:
+                        st.error("No s'ha trobat auto_scan_ui.py")
+                except Exception as e_scan:
+                    st.error(f"Error obrint l'escàner: {e_scan}")
+
+        with col_scan_btn2:
+            if recent_scans:
+                latest_fp, latest_fn, latest_mtime = recent_scans[0]
+                now_ts = datetime.now().timestamp()
+                is_recent = (now_ts - latest_mtime) < 3600  # Última hora
+                btn_type = "primary" if is_recent else "secondary"
+                short_fn = latest_fn.replace("ticket_", "").replace(".jpg", "").replace(".png", "")
+                try:
+                    time_label = datetime.fromtimestamp(latest_mtime).strftime("%H:%M")
+                except Exception:
+                    time_label = ""
+                btn_label = f"📥 Carregar {short_fn} ({time_label})" if time_label else f"📥 Carregar {short_fn}"
+                if len(btn_label) > 28:
+                    btn_label = f"📥 Carregar {short_fn[:14]}... ({time_label})"
+                if st.button(btn_label, key="btn_load_latest_scan", type=btn_type, use_container_width=True, help=f"Carrega directament {latest_fn} per processar-lo amb OCR"):
+                    st.session_state["loaded_scanned_file"] = latest_fp
+                    st.session_state.pop("processed_file_id", None)
+                    st.session_state.pop("ocr_failed", None)
+                    st.rerun()
+            else:
+                st.caption("Cap tiquet a tickets/")
+
+        # Desplegable si hi ha múltiples tiquets a tickets/
+        if len(recent_scans) > 1:
+            with st.expander("📂 Historial de tiquets escanejats", expanded=False):
+                ticket_options = {f"{fn} ({datetime.fromtimestamp(mt).strftime('%d/%m %H:%M')})": fp for fp, fn, mt in recent_scans[:8]}
+                sel_opt = st.selectbox("Tria tiquet escanejat:", list(ticket_options.keys()), key="sel_scanned_history")
+                if st.button("📥 Carregar seleccionat", key="btn_load_selected_history"):
+                    st.session_state["loaded_scanned_file"] = ticket_options[sel_opt]
+                    st.session_state.pop("processed_file_id", None)
+                    st.session_state.pop("ocr_failed", None)
+                    st.rerun()
+
+        # 2. Selector manual de fitxer (Pujar PDF, imatge, etc.)
         uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
-        uploaded_file = st.file_uploader(
+        raw_uploaded_file = st.file_uploader(
             "📷 Llegir ticket",
             type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "jfif", "bmp"],
             label_visibility="collapsed",
-            key=uploader_key
+            key=uploader_key,
+            help="Tria un fitxer manualment des del disc o dispositiu"
         )
+
+        uploaded_file = None
+        if raw_uploaded_file is not None:
+            uploaded_file = raw_uploaded_file
+            st.session_state.pop("loaded_scanned_file", None)
+        elif st.session_state.get("loaded_scanned_file"):
+            scanned_p = st.session_state["loaded_scanned_file"]
+            if os.path.exists(scanned_p):
+                uploaded_file = LocalFileWrapper(scanned_p)
+            else:
+                st.session_state.pop("loaded_scanned_file", None)
+
         if uploaded_file is not None:
-            col_f1, col_f2 = st.columns([3, 1], vertical_alignment="center")
+            col_f1, col_f2 = st.columns([0.68, 0.32], vertical_alignment="center")
             with col_f1:
                 size_kb = round(uploaded_file.size / 1024, 1) if hasattr(uploaded_file, 'size') else 0
                 st.caption(f"📁 **Fitxer:** `{uploaded_file.name}` ({size_kb} KB)")
             with col_f2:
                 file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-                if st.session_state.get("ocr_failed", False) or st.session_state.get("processed_file_id") == file_id:
-                    if st.button("🔄 Reintentar", key="btn_retry_ocr_ui", help="Torna a passar el tiquet per la IA"):
+                col_sub_re, col_sub_del = st.columns([1, 1])
+                with col_sub_re:
+                    if st.session_state.get("ocr_failed", False) or st.session_state.get("processed_file_id") == file_id:
+                        if st.button("🔄", key="btn_retry_ocr_ui", help="Torna a passar el tiquet per la IA"):
+                            st.session_state.pop("processed_file_id", None)
+                            st.session_state.pop("ocr_failed", None)
+                            st.rerun()
+                with col_sub_del:
+                    if st.button("❌", key="btn_discard_loaded_ticket", help="Descartar aquest tiquet"):
+                        st.session_state.pop("loaded_scanned_file", None)
                         st.session_state.pop("processed_file_id", None)
                         st.session_state.pop("ocr_failed", None)
+                        curr_uidx = int(uploader_key.split("_")[-1]) if "_" in uploader_key and uploader_key.split("_")[-1].isdigit() else 0
+                        st.session_state["uploader_key"] = f"ticket_file_uploader_{curr_uidx + 1}"
                         st.rerun()
         
     # Row 1: Send to expense checkbox, Bank, Payment Method, Mètode d'Escaneig + Selector IA
@@ -2055,6 +2167,30 @@ Retorna ÚNICAMENT l'objecte JSON.
                         if cand:
                             st.session_state["ticket_date"] = cand
                             st.session_state["ticket_date_widget"] = cand
+
+                    # Fallback intel·ligent des del nom de fitxer d'escàner (ticket_<super>_<date>)
+                    if not st.session_state.get("ticket_super_val") or not data.get("data"):
+                        import re
+                        m_scan = re.match(r"^ticket_([A-Za-z0-9_]+)_(\d{6,8})\.", uploaded_file.name)
+                        if m_scan:
+                            fn_super_raw, fn_date_raw = m_scan.groups()
+                            if not st.session_state.get("ticket_super_val") and fn_super_raw:
+                                fn_super_clean = fn_super_raw.replace("_", " ").strip()
+                                for sp in get_config_supers():
+                                    if sp.lower() == fn_super_clean.lower():
+                                        fn_super_clean = sp
+                                        break
+                                st.session_state["ticket_super_val"] = fn_super_clean
+                                st.session_state["ticket_super_widget"] = fn_super_clean
+                            if not data.get("data") and fn_date_raw:
+                                if len(fn_date_raw) == 6:
+                                    date_fmt_str = f"{fn_date_raw[:2]}/{fn_date_raw[2:4]}/20{fn_date_raw[4:]}"
+                                else:
+                                    date_fmt_str = f"{fn_date_raw[:2]}/{fn_date_raw[2:4]}/{fn_date_raw[4:]}"
+                                cand_fn = sanitize_ticket_date(date_fmt_str)
+                                if cand_fn:
+                                    st.session_state["ticket_date"] = cand_fn
+                                    st.session_state["ticket_date_widget"] = cand_fn
 
                     # 3. Mapejar els articles
                     parsed = []

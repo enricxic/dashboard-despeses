@@ -142,12 +142,14 @@ Dashboard/
 ### 4.1 Compres Super i Stock (`modules/compres.py`)
 Mòdul central per a la ingesta de tiquets de compra, control pressupostari d'alimentació, gestió d'estoc del rebost i generació de llistes de compra.
 
-#### A. Escaneig Directe 1-Clic per a Escàners de Sobremesa (`scanner.py`, `scan_winrt.ps1`, `auto_scan_ui.py`)
+#### A. Escaneig Directe 1-Clic per a Escàners de Sobremesa (`scanner.py`, `scan_winrt.ps1`, `auto_scan_ui.py`, `modules/compres.py`)
 - **Arquitectura Natiu WinRT**: Utilitza l'API moderna UWP/WinRT de Windows (`Windows.Devices.Scanners.ImageScanner`) a través de [`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1), compatible amb qualsevol escàner USB reconegut pel sistema operatiu (incloent models com l'HP Scanjet G3110) i eliminant bloquejos de concurrència de fitxers temporals.
-- **Accés directe d'escriptori (`Escanejar Tiquet.lnk` / `auto_scan_ui.py`)**:
-  - Selecció del Supermercat i Data del tiquet.
-  - Botó verd destacat **`🖨️ Escanejar Tiquet`**.
-  - Adquireix la imatge del vidre de l'escàner, la converteix automàticament a JPEG d'alta resolució mitjançant Pillow i la desa directament a `tickets/ticket_<super>_<date>.jpg` sense requerir cap intervenció manual ni obrir aplicacions externes.
+- **Integració Directa a Compres Super (`modules/compres.py`)**:
+  - Botó **`🖨️ Obrir Escàner`**: Llança l'aplicació d'escriptori [`auto_scan_ui.py`](file:///e:/Dashboard/auto_scan_ui.py) directament des de la pantalla de compres en entorn local.
+  - Botó **`📥 Carregar últim tiquet escanejat` (1 clic)**: Detecta automàticament el darrer tiquet guardat a `tickets/` (ex. `ticket_BonPreu_281026.jpg`), amb ressaltat verd si és recent (< 1 hora), i l'ingereix instantàniament al motor d'OCR mitjançant [`LocalFileWrapper`](file:///e:/Dashboard/modules/compres.py), sense haver d'obrir el diàleg de tria d'arxius del navegador ni navegar per carpetes del sistema.
+  - **Historial d'escanejats**: Desplegable per seleccionar qualsevol dels darrers tiquets escanejats de la carpeta `tickets/`.
+  - **Fallback intel·ligent del nom de fitxer**: Si l'OCR és borrós i no extreu el supermercat o la data, el sistema els recupera automàticament de l'estructura del fitxer (`ticket_<super>_<date>.jpg`).
+  - **Descartar / Reintentar**: Botons `🔄` (repassar amb un altre model d'IA) i `❌` (descartar tiquet carregat).
 
 #### B. Motor OCR Intel·ligent amb Visió Multimodal
 - **Formats admesos**: Imatges (`png`, `jpg`, `jpeg`, `webp`, `bmp`), documents digitals de supermercat (`pdf` amb extracció de text per `pypdf`) i fitxers de text (`txt`).
@@ -412,6 +414,9 @@ Totes les seccions estan organitzades en blocs desplegables independents (`st.ex
 |:---|:---|:---|
 | **27/10/2026** | **Cotxe / Km i Rutes** | **Control Estricte d'Odòmetre**: Bloqueig i validació perquè els kilòmetres entrats a una nova ruta mai puguin ser iguals o inferiors a l'última lectura registrada de l'odòmetre (`contador_val > last_km`), amb avís dinàmic en vermell, indicador de trajecte invàlid i protecció tant a l'entrada manual com a l'escaneig per foto OCR. |
 | **26/10/2026** | **Llum i Aigua / Preus** | **Registre Persistent de Preus Horaris PVPC i Auditoria Factura**: Creat el registre diari `data/preus_llum_diaris.json` (accessible des del menú superior *Editar > 📂 Arxius JSON* sense afegir noves pestanyes), gravació automàtica continuada de les 24h de cada dia, funció de contrast de consums i auditoria completa de la factura 10-2026 (66,59 €, 449,572 kWh amb 25h de preus negatius). |
+| **28/10/2026** | **Compres / Escàner** | **Integració 1-Clic d'Escaneig a Compres**: Afegits botons `🖨️ Obrir Escàner` i `📥 Carregar últim tiquet` a `modules/compres.py`, encapsulament `LocalFileWrapper` i fallback automàtic de supermercat i data des del nom de fitxer (`tickets/ticket_<super>_<date>.jpg`). |
+| **28/10/2026** | **Cotxe / Odòmetre** | **Validació Estricta de Km**: Bloqueig d'entrades de quilòmetres inferiors o iguals al darrer registre a `modules/cotxe.py` amb alerta visual vermella en temps real. |
+| **28/10/2026** | **Llum / PVPC** | **Registre Diari de Preus PVPC**: Implementació de registre horari persistent a `data/preus_llum_diaris.json` i funcions de contrast de consum a `core/llum_manager.py`. |
 | **25/10/2026** | **Escaneig Tiquets** | **Restauració escaneig directe 1-clic**: Nou motor natiu WinRT ([`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1)), superant l'antiga fallada de bloqueig temporal WIA (`ERROR_SHARING_VIOLATION` / `0x80030070`). Eliminats botons secundaris a [`auto_scan_ui.py`](file:///e:/Dashboard/auto_scan_ui.py) deixant només `🖨️ Escanejar Tiquet`. |
 | **25/10/2026** | **Cotxe / Manteniment** | **Seccions Col·lapsables**: Totes les seccions de la pestanya *Manteniment* transformades en blocs plegables independents (`st.expander`) amb badges informatius en temps real als encapçalaments i control de desplegament global. |
 | **24/10/2026** | **Rendiment Core** | **Pla d'optimització de 30 dies**: Finestra activa de 30 dies a Supabase + arxiu històric en CSV amb memòria cau de 24h per a taules massives. Eliminats els buidats massius de cau, passant de bloquejos de 20s a càrregues en menys d'1s. |
