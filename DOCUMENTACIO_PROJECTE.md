@@ -1328,9 +1328,138 @@ Un dels punts més potents del mòdul és el control d'estat immediat de qualsev
 ---
 
 ### 6.3 Control de Medicació (`modules/medicacio.py`)
-- Pautes mèdiques de cada membre familiar i tutelats.
-- Vista de preses d'avui i supervisió d'horaris.
-- Gestió de la farmaciola de la llar amb sincronització a Supabase `app_config` ID 5.
+Mòdul de vigilància de la salut, supervisió de pautes farmacològiques de familiars i persones tutelades, registre de preses diàries en temps real amb comprovació d'adherència terapèutica i injecció automàtica d'alarmes mèdiques a Google Calendar mitjançant compte de servei o fitxers d'exportació iCal (.ics).
+
+#### A. Arquitectura Farmacèutica i Fonts de Dades
+El mòdul combina persistència al núvol a Supabase, integració d'APIs de Google Cloud i el perfil sanitari familiar:
+1. **Taules a Supabase (PostgreSQL)**:
+   - `data/medication_plans.json` (Config ID 5): Registre centralitzat de plans mèdics actius i històrics (`id`, `patient_name`, `patient_type`, `medication_name`, `dosage`, `instructions`, `frequency_type`, `times`, `start_date`, `duration_days`, `calendar_id`, `gcal_synced`, `events`).
+2. **Configuració de Pacients (`core/config.json` - Config ID 2)**:
+   - Catàleg de membres de la llar i persones tutelades subjectes a supervisió mèdica (nom, tipus de pacient, correus electrònics associats).
+3. **Google Calendar API & Service Account (`core/google_credentials.json`)**:
+   - Pont d'integració oficial amb Google Cloud que permet injectar automàticament centenars de preses mèdiques als calendaris dels telèfons intel·ligents dels pacients amb notificacions i alertes sonores sense intervenció manual.
+   - **Mode Fallback Universal (.ICS)**: Si no es disposa de compte de servei, el mòdul genera paquets de calendari descarregables en format estàndard RFC 5545 (`.ics`) per importar a qualsevol dispositiu Apple, Android o Windows.
+
+---
+
+#### B. Cicle de Vida i Flux Operatiu de Medicació
+
+```mermaid
+flowchart TD
+    A["➕ Prescripció / Alta de Pla (Fàrmac, Dosi, Hores)"] --> B["🚀 Injecció d'Alarmes a Google Calendar API (o .ICS)"]
+    B --> C["💾 Persistència a data/medication_plans.json (ID 5)"]
+    C --> D["📅 Supervisió a Preses d'Avui (Filtre per Pacient)"]
+    D --> E{"Estat de la Presa"}
+    E -- "Dins de termini" --> F["⏰ PENDENT (Badge Groc)"]
+    E -- "Més d'1h de retard" --> G["⚠️ RETARD (Badge Vermell)"]
+    D --> H["✅ Clic a 'Prendre': Confirmació de Presa"]
+    H --> I["🟢 PRESA CONFIRMADA (Hora exacta de consum)"]
+    I --> J["📊 Recàlcul d'Adherència Terapèutica (%)"]
+```
+
+- **Pas 1: Alta del Tractament**: Es defineix el pacient, fàrmac, dosificació, pauta horària (ex: cada 8h, cada 12h, personalitzada) i durada del tractament.
+- **Pas 2: Injecció de Calendari**: El sistema calcula totes les preses individuals i les injecta directament al calendari de Google de la persona amb alarmes al seu mòbil.
+- **Pas 3: Supervisió en Temps Real**: A la pestanya de preses d'avui es monitoritza cada dosi amb codis de color (pendent, retardada o confirmada).
+- **Pas 4: Confirmació en 1 Clic**: El pacient o cuidador prem `✅ Prendre`; el sistema grava l'hora exacta de la presa (`confirmed_at`) i recalcula l'adherència.
+
+---
+
+#### C. Detall Exhaustiu de les 4 Pestanyes de la Interfície Gràfica
+
+El mòdul s'estructura en 4 pestanyes operatives mitjançant `st.tabs` amb suport per a paràmetres URL (`?tab=...`):
+
+---
+
+##### 6.3.1 Pestanya 1: `📅 Preses d'Avui & Supervisió` (Panell Diari de Control)
+
+La pantalla operativa d'administració i comprovació de preses de la jornada:
+
+1. **Capçalera i Filtre per Pacient**:
+   - Títol dinàmic amb la data d'avui *(Exemple: `🕒 Pauta de Preses per a Avui (28/10/2026)`)*.
+   - **Desplegable `Filtrar per persona`**: Permet veure els medicaments de tota la família alhora (`Tots els pacients`) o centrar-se en un pacient concret (ex: Enric, Persona tutelada).
+2. **Targetes Interactives de Presa**:
+   - Cada presa del dia es presenta en una targeta visual dividida en 3 blocs:
+     - **Caixa Horària (`med-time-box`)**: Caixa estilitzada a l'esquerra que destaca l'hora exacta de la dosi en gran (ex: `08:00`, `14:00`, `21:00`).
+     - **Informació del Fàrmac**: Nom del medicament amb dosi *(Ex: `💊 Paracetamol (1g)`)*, pacient destinatari, tipus de pacient i instruccions mèdiques (ex: *Prendre després de dinar amb un got d'aigua*).
+     - **Badges Semafòrics d'Estat**:
+       - 🟢 **`✅ PRESA CONFIRMADA (a les 14:12)`**: Fons verd amb l'hora exacta en què es va prendre la pastilla.
+       - 🔴 **`⚠️ RETARD (>1h)`**: Fons vermell d'alerta si ha passat més d'una hora de l'hora pautada sense confirmació.
+       - 🟡 **`⏰ PENDENT`**: Fons groc per a les preses futures del dia.
+3. **Accions Ràpides en 1 Clic**:
+   - **Botó `✅ Prendre` / `↩️ Desfer`**: Commuta a l'instant l'estat de la dosi (`toggle_intake_manual`). Si es confirma, queda registrat; si s'ha premut per error, el botó permet desfer la confirmació.
+   - **Botó `📅 GCal`**: Enllaç directe que obre l'esdeveniment a l'aplicació web o mòbil de Google Calendar.
+
+---
+
+##### 6.3.2 Pestanya 2: `➕ Crear Nou Pla de Medicació` (Programador de Tractaments)
+
+Formulari per donar d'alta una nova pauta mèdica temporal o crònica:
+
+1. **Dades del Destinatari**:
+   - **Selector `Pacient / Destinatari del pla *`**: Desplegable amb els familiars i tutelats del sistema.
+   - **Camp `Correu de Google Calendar de destí`**: Adreça de Gmail del pacient on s'injectaran les alertes.
+2. **Definició del Fàrmac i Posologia**:
+   - **Camp `Nom del medicament *`**: Camp de text predictiu (ex: *Sintrom, Omeprazol, Ibuprofèn*).
+   - **Camp `Dosi / Format`**: Especificació de càrrega (ex: *500mg, 1 comprimit, 1 sobre, 2 gotes*).
+   - **Pauta / Freqüència (`FREQUENCY_PRESETS`)**:
+     - Presets preconfigurats amb un sol clic:
+       - *Cada 8 hores* (`08:00, 16:00, 00:00`)
+       - *Cada 12 hores* (`08:00, 20:00`)
+       - *1 cop al dia (Matí)* (`09:00`)
+       - *1 cop al dia (Nit)* (`21:00`)
+       - *Cada 6 hores* (`06:00, 12:00, 18:00, 00:00`)
+       - *Personalitzat*: Habilita un camp per teclejar hores arbitràries separades per comes.
+3. **Temporització del Tractament**:
+   - **`Data d'inici`**: Selector de calendari.
+   - **`Durada del tractament (dies)`**: Selector numèric (de 1 a 365 dies).
+   - **`Instruccions / Pauta mèdica`**: Recomanacions de consum (amb menjars, en dejú, protecció gàstrica).
+4. **Execució i Exportació**:
+   - **Botó `🚀 Crear i Enviar a Google Calendar` (`type="primary"`)**: Genera totes les instàncies de presa i les envia per API directa al calendari de Google de la persona tutelada.
+   - **Botó `📥 Descarregar fitxer .ICS del Pla`**: Genera i descarrega a l'ordinador el paquet `.ics` per a dispositius sense connexió a compte de servei.
+
+---
+
+##### 6.3.3 Pestanya 3: `📋 Historial de Plans Actius i Adherència` (Seguiment Clínic)
+
+Supervisió continuada del compliment dels tractaments mèdics de la família:
+
+1. **Acordions per Medicament i Pacient (`st.expander`)**:
+   - Cada tractament es presenta en un acordió que retola en temps real el recompte de preses i l'adherència:
+     *(Exemple: `💊 Amoxicil·lina · 👤 Isabel (19/21 preses realitzades · 90%)`)*.
+2. **Mètriques d'Adherència Terapèutica**:
+   - **Barra de Progrés (`st.progress`)**: Proporció visual del compliment del tractament.
+   - **Percentatge d'Adherència**: Indicador verd amb la taxa de compliment real de la pauta.
+3. **Fitxa de Condicions**:
+   - Mostra dosi, freqüència d'hores, període de dates, adreça de Google Calendar i instruccions mèdiques.
+4. **Botó `🗑️ Eliminar Pla`**:
+   - Permet cancel·lar el tractament mèdic, eliminant el pla actiu i netejant la base de dades.
+
+---
+
+##### 6.3.4 Pestanya 4: `⚙️ Connexió Google Calendar API & Guia` (Configuració del Servei)
+
+Panell d'administració tècnica de la passarel·la amb Google Cloud:
+
+1. **Estat de la Connexió**:
+   - 🟢 **Compte de Servei Connectat**: Mostra l'adreça del compte de servei actiu (ex: `service-account@dashboard-familiar.iam.gserviceaccount.com`).
+   - 🟡 **Mode Manual / Fallback**: Indica que el compte de servei no està configurat i que s'està utilitzant el mode d'enllaços web directes i fitxers `.ics`.
+2. **Guia d'Enllaç de Calendaris per a Persones Tutelades**:
+   - Procediment oficial de 5 passos per compartir el calendari de Google d'un familiar amb el compte de servei del Dashboard amb permisos d'edició.
+3. **Instruccions de Configuració Inicial de Google Cloud Console**:
+   - Explicació pas a pas per descarregar les credencials JSON gratuïtes a `core/google_credentials.json`.
+
+---
+
+#### D. Navegació Dinàmica i Enllaços amb Altres Mòduls
+- **Navegació per Paràmetres URL (`st.query_params`)**:
+  - `?tab=avui`: Obre la pauta diària de preses.
+  - `?tab=nou`: Desplega el programador de nous tractaments.
+  - `?tab=plans`: Condueix a l'historial i mètriques d'adherència.
+  - `?tab=config`: Mostra l'estat de la Google Calendar API.
+- **Interconnexions amb la Resta del Sistema**:
+  - **[`modules/calendari.py`](file:///e:/Dashboard/modules/calendari.py)**: Les preses de medicació es poden visualitzar a l'agenda familiar sincronitzada amb la categoria mèdica.
+  - **[`core/alerts.py`](file:///e:/Dashboard/core/alerts.py)**: Les dosis amb retard superior a una hora generen notificacions d'urgència a la campaneta de la barra superior (`🔔`).
+  - **Menú Superior `Editar > 📂 Arxius JSON`**: Accés per inspeccionar o restaurar `data/medication_plans.json`.
 
 ---
 
