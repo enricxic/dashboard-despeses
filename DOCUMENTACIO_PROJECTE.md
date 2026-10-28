@@ -1464,8 +1464,22 @@ Panell d'administració tècnica de la passarel·la amb Google Cloud:
 ---
 
 ### 6.4 Seguretat i Domòtica (`modules/seguretat.py`, `modules/domotica.py`)
-- `modules/seguretat.py`: Estat de càmeres, accessos i alarmes de la llar.
-- `modules/domotica.py`: Integració amb instàncies locals de Home Assistant, llums i sensors.
+Mòduls complementaris de protecció física de la llar, videovigilància, integració amb sistemes domòtics intel·ligents (Home Assistant) i control d'accessos de la casa.
+
+#### A. Arquitectura i Estat Actual d'Implementació
+1. **Model Modular de Connexió**:
+   - Ambdós mòduls estan desacoblats estructuralment a la carpeta `modules/`, connectats al router principal [`app.py`](file:///e:/Dashboard/app.py) i governats pel selector de visibilitat de mòduls d'administració ([`modules/admin.py`](file:///e:/Dashboard/modules/admin.py)).
+   - Actualment actuen com a **mòduls d'enllaç i panell de destí (Landing / Stubs)** amb capçalera corporativa dinàmica (`render_header_with_avatar`), preparats per a la connexió d'APIs locals.
+2. **Especificació d'Integració Domòtica (`modules/domotica.py`)**:
+   - **Passarel·la Home Assistant (REST API / WebSocket)**: Dissenyat per connectar amb la instància local de Home Assistant de la llar mitjançant token de llarga durada (*Long-Lived Access Token*).
+   - **Control de Climatització i Acumuladors**: Connectat lògicament amb [`modules/llum_aigua.py`](file:///e:/Dashboard/modules/llum_aigua.py) per actuar sobre relés intel·ligents (Shelly / Sonoff) i encendre els acumuladors de calor en les hores vall més barates del PVPC.
+   - **Monitorització de Sensors Ambientals**: Lectura de termòstats, humitat, sensors de presència i consum elèctric en temps real.
+3. **Especificació de Seguretat i Videovigilància (`modules/seguretat.py`)**:
+   - **Feeds RTSP / WebRTC**: Receptor per a càmeres IP domèstiques compatibles amb ONVIF / RTSP (vigilància d'accessos exteriors, jardí i garatge).
+   - **Estat d'Alarma i Sensors d'Obertura**: Supervisió de l'estat d'armat de l'alarma de la llar i comprovació d'obertura de portes i finestres abans de sortir de casa.
+
+#### B. Administració i Visibilitat des de la Barra Superior
+- Des de **`⚙️ Administració > Visibilitat de Mòduls`**, l'usuari pot activar o ocultar aquestes icones de la pàgina principal d'inici amb un sol clic, mantenint el Dashboard adaptat a les necessitats reals de la família en cada moment.
 
 ---
 
