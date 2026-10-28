@@ -1002,35 +1002,170 @@ Panell d'intel·ligència energètica i econòmica del vehicle:
 ## 6. Mòduls de Prioritat 4: Família, Nutrició i Benestar
 
 ### 6.1 Menús i Cuina (`modules/menjar.py`)
+Mòdul gastronòmic i nutricional per a la planificació setmanal dels àpats de la llar (dinars i sopars), recomanador intel·ligent d'alimentació basat en IA amb perfils mèdics i personals, gestor d'estoc d'ingredients connectat amb el rebost en temps real, llibre mestre de receptes amb escalat automàtic de comensals i organització de cuina avançada (*mise en place* i *batch cooking*).
 
-#### A. Base de Dades del Receptari (`tb_receptes_pro`)
-- Catàleg de receptes estructurades amb ingredients, instruccions pas a pas i *mise en place*.
-- **Racions de referència**: Totes les quantitats de la base de dades es defineixen per a un nombre de comensals base per defecte (configurable segons el nucli familiar).
+#### A. Arquitectura Gastronòmica i Fonts de Dades
+El mòdul unifica taules estructurades a Supabase, perfils nutricionals familiars i el repositori de queviures:
+1. **Taules a Supabase (PostgreSQL)**:
+   - `tb_receptes_pro`: Catàleg mestre de receptes (`idRecepta`, `titol`, `categoria`, `dificultat`, `temps_minuts`, `comensals_base`, `ingredients_raw`, `instruccions`, `eines_necessaries`, `imatge_url`, `calories_racio`, `proteines_g`, `hidrats_g`, `greixos_g`, `valoracio_estrelles`).
+   - `tb_historial_menjars`: Registre històric d'àpats consumits amb data i tipus d'àpat per alimentar les regles anti-repetició.
+   - `tb_peticions_menjar`: Bústia de propostes i plats desitjats pels diferents membres de la família.
+   - `menu_setmanal`: Emmagatzematge del pla setmanal actiu de dilluns a diumenge.
+2. **Configuració Nutricional i Familiar (`core/config.json` - Config ID 2)**:
+   - **Comensals per defecte**: Xifra de referència de la llar (per defecte: 3 comensals).
+   - **Al·lèrgies Mèdiques**: Bloqueig estricte d'ingredients a nivell de salut (ex: celiaquia, fruits secs, lactosa).
+   - **Vetos Personals**: Preferències d'aliments que un membre concret no consumeix (ex: bledes, casqueria, ceba crua), associant automàticament un **plat comodí ràpid** (ex: truita, carn a la planxa) per a aquell membre, compartint la mateixa guarnició familiar.
+   - **Eines de Cuina Disponibles**: Catàleg d'aparells presents a la llar (Thermomix, Forn elèctric, Airfryer, Olla express, Paella, etc.).
+3. **Connexió en Temps Real amb el Rebost**:
+   - Revisa l'estoc d'aliments de `compresSuper` i prioritza receptes que aprofitin ingredients peribles propers a la seva data de consum preferent, reduint a zero el malbaratament domèstic.
 
-#### B. Motor d'Escalat Dinàmic de Comensals (`scale_ingredients`)
-- Algoritme Regex que processa quantitats, unitats i fraccions (`250g`, `4 ous`, `1/2 cullerada`, `1.5 kg`) aplicant el recàlcul proporcional:
-  $$\text{Quantitat Recalculada} = \text{Quantitat Base} \times \frac{\text{Comensals}}{\text{Racions Base}}$$
-- Els ingredients no quantificables linealment (*sal i pebre al gust*, *herbes*) es mantenen invariables.
-- Selector interactiu a la fitxa de la recepta que permet simular quantitats a temps real d'1 a 30 persones.
+---
 
-#### C. Pautes Estètiques de Fotografia Gastronòmica
-- Angle elevat a 45° en primer pla (Close-up) en proporció **4:3**. Ambientació neta amb llum natural càlida i fidelitat absoluta als ingredients reals de la recepta.
+#### B. Cicle de Vida i Flux Operatiu Gastronòmic
 
-#### D. Perfils Familiars, Al·lèrgies Mèdiques vs Vetos Personals
-- **Al·lèrgia mèdica**: Bloqueig estricte de la recepta per a tota la família.
-- **Veto personal**: Quan un membre no consumeix un aliment determinat *(Exemple: bledes o casqueria)* però la resta de la família sí, el planificador no bloqueja el plat i assigna automàticament un **plat alternatiu ràpid comodí** *(Exemple: truita o carn a la planxa)* per a aquell membre, compartint la mateixa guarnició.
+```mermaid
+flowchart TD
+    A["📥 Bústia de Peticions Familiars"] --> B["🤖 Generador de Menú amb IA (Gemini)"]
+    C["🥫 Ingredients del Rebost en Temps Real"] --> B
+    D["⚙️ Perfil Familiar (Al·lèrgies, Vetos, Eines)"] --> B
+    B --> E["📅 Menú Setmanal Planificat (Dilluns a Diumenge)"]
+    E --> F["🔄 Ajust Manual de Plats (modal_canvi_plat)"]
+    F --> G["👥 Escalat Automàtic de Comensals (scale_ingredients)"]
+    G --> H["👨‍🍳 Mise en Place i Batch Cooking de Diumenge"]
+    G --> I["🛒 Generació d'Ingredients a la Llista de la Compra"]
+    E --> J["💾 Desat a tb_historial_menjars (Anti-repetició)"]
+```
 
-#### E. Recomanador de Menús Intel·ligent amb IA
-- Generació setmanal considerant membres actius, eines disponibles a la cuina, regles de salut (carns vermelles, freqüència de peix i llegums) i no-repetició d'hidrats consecutius.
-- **Control dietètic de calories**: Fixació de límit calòric separat per a dinars i sopars, prioritzant receptes saludables i balancejant macronutrients amb etiquetes nutricionals.
-- **Anti-repetició estricta**: Llegeix `tb_historial_menjars` i prohibeix repetir plats consumits en els darrers X dies (configurable per l'usuari).
-- **Priorització per valoració**: Afavoreix les receptes amb 4 i 5 estrelles.
-- **Bústia de Peticions (`tb_peticions_menjar`)**: Permet als membres demanar plats desitjats que, un cop aprovats, s'incorporen automàticament al proper menú.
+- **Pas 1: Captura de Preferències i Rebost**: La IA consulta els ingredients que cal gastar del rebost, les peticions de la família i les regles dietètiques.
+- **Pas 2: Generació de la Proposta Setmanal**: Es construeix la graella de dinars i sopars balancejant carns, peixos, verdures i llegums, evitant hidrats consecutius i respectant els límits calòrics.
+- **Pas 3: Personalització i Canvi de Plats**: L'usuari pot substituir qualsevol plat amb el cercador interactiu `modal_canvi_plat`.
+- **Pas 4: Escalat i Preparació**: Es defineixen els comensals reals de cada àpat; el sistema recalcula les quantitats d'ingredients i deriva les tasques prèvies de cocció per al diumenge (*batch cooking*).
+- **Pas 5: Llista de Compra i Historial**: Els ingredients que no són al rebost s'envien automàticament a la llista de compra de [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py) i el menú es consolida a l'historial.
 
-#### F. Mise en Place de Diumenge (Batch Cooking) i Connexió amb l'Stock
-- Derivació automàtica de preparacions base (caldos, sofregits, verdures rostides).
-- Si hi ha brous o sofregit congelats a l'estoc, es descompten de la preparació de diumenge i de la llista de la compra:
-  $$\text{Compra} = \max(0, \text{Necessari} - \text{Stock})$$
+---
+
+#### C. Detall Exhaustiu de les 6 Pestanyes de la Interfície Gràfica
+
+El mòdul s'estructura en 6 pestanyes operatives mitjançant `st.tabs` amb suport per a paràmetres URL (`?tab=...`):
+
+---
+
+##### 6.1.1 Pestanya 1: `📅 Menú Setmanal` (Planificador Dinar i Sopar)
+
+La interfície d'organització dels àpats de la setmana en curs:
+
+1. **Subpestanyes per Dia (`🗓️ Dilluns` a `🗓️ Diumenge`)**:
+   - Cada dia de la setmana es presenta en una pestanya independent per oferir una visió clara i espaiosa dels àpats.
+2. **Targetes Interactives de Plat (Dinar i Sopar)**:
+   - Cada àpat compta amb seccions per a: **1r Plat**, **2n Plat** i **Postres**.
+   - Cada plat es renderitza amb la seva **fotografia oficial 4:3 en primer pla** i etiqueta de temps de cocció i dificultat.
+   - **Botó `🔄 Canviar Plat`**: Obre el diàleg modal `modal_canvi_plat` que permet substituir el plat proposat mitjançant cerca difusa o explorant per categoria (Primers, Segons, etc.).
+   - **Botó `📖 Veure Recepta`**: Obre la fitxa completa de preparació (`modal_recepta`).
+   - **Botó `👨‍🍳 Organització`**: Obre el modal `modal_organitzacio` amb les instruccions de cuina específiques per a aquell dia (descongelar la nit abans, temps d'inici, ordre de fogons).
+3. **Selector Dinàmic de Comensals**:
+   - Selector numèric que permet ajustar quantes persones dinaran o soparan aquell dia en concret, recalculant automàticament les racions dels ingredients.
+4. **Botó `💾 Desar Menú a l'Historial`**:
+   - Enregistra els plats efectivament servits a `tb_historial_menjars` per activar el filtre anti-repetició per als propers menús.
+
+---
+
+##### 6.1.2 Pestanya 2: `👨‍🍳 Mise en Place & Batch Cooking` (Preparacions Prèvies)
+
+Panell d'estratègia culinària per estalviar temps entre setmana:
+
+1. **Agrupació de Cocció de Diumenge (*Batch Cooking*)**:
+   - Revisa tots els àpats de la setmana i unifica les preparacions base que es poden cuinar de cop:
+     - Sofregits de ceba i tomàquet.
+     - Caldos i brous de pollastre o verdures.
+     - Cocció de llegums o verdures al vapor.
+     - Enfornat conjunt de tubercles o proteïnes.
+2. **Descompte Automàtic d'Estoc del Rebost**:
+   - Si al rebost o congelador ja hi ha caldos o sofregits desats, l'algoritme els descompta automàticament de la càrrega de treball del diumenge:
+     $$	ext{Feina de diumenge} = \max(0, 	ext{Necessari per als menús} - 	ext{Estoc al Rebost})$$
+3. **Eines de Cuina i Cronograma**:
+   - Guia visual amb les eines necessàries (Thermomix, Forn, Airfryer, Olla express) i ordre òptim d'execució per tenir-ho tot envasat en carmanyoles en menys de 2 hores.
+
+---
+
+##### 6.1.3 Pestanya 3: `🤖 Generador de Menús IA` (Nutrició Intel·ligent)
+
+Motor de recomanació nutricional basat en models multimodals avançats (Gemini):
+
+1. **Paràmetres i Filtres de Generació**:
+   - **Límit Calòric Independent**: Permet establir un màxim de calories per als dinars (ex: 700 kcal) i per als sopars (ex: 450 kcal).
+   - **Selector de Membres a Taula**: Caselles per indicar quins familiars seran a casa cada dia de la setmana.
+   - **Regles Dietètiques Integrades**: Màxim 1 cop per setmana carn vermella, mínim 2 cops peix, mínim 2 cops llegum i prohibició d'hidrats pesats consecutius.
+   - **Filtre Anti-repetició**: Llindar en dies per impedir que es repeteixin receptes consumides recentment a l'historial.
+2. **Núvol d'Etiquetes del Rebost (`render_pantry_tag_cloud`)**:
+   - Mostra en etiquetes interactives els aliments que són actualment al rebost de la llar.
+   - L'usuari pot fer clic sobre un ingredient (ex: *carbassa*, *llenties*, *xampinyons*) per obligar la IA a incloure'l al menú d'aquesta setmana.
+3. **Botó `⚡ Generar Menú amb IA`**:
+   - Executa el model de llenguatge amb el prompt estructurat i retorna la graella completa de la setmana amb opció d'aplicar-la o regenerar-la.
+
+---
+
+##### 6.1.4 Pestanya 4: `📖 Llibre de Receptes` (Receptari Familiar)
+
+Enciclopèdia culinària interactiva de la llar:
+
+1. **Expander de Cerca i Filtres Avançats**:
+   - **Camp `Cercar per nom...`**: Cerca en temps real per títol o ingredient clau.
+   - **Filtres Multiselecció**:
+     - `Categoria`: Primer, Segon, Postre, Complement, Guarnició, Salsa.
+     - `Dificultat`: Fàcil, Mitjana, Difícil.
+     - `Tipus de Dia`: Entre setmana, Cap de setmana, Festiu, Especial.
+     - `Àpat`: Esmorzar, Dinar, Sopar.
+     - `Origen`: Biblioteca pròpia / Internet.
+   - **Slider de Temps Màxim**: Filtra per durada de cocció (de 0 a 240 minuts).
+2. **Graella de Receptes Gastronòmiques**:
+   - Targetes visuals amb fotografia 4:3, valoració per estrelles (⭐), temps de preparació i etiqueta calòrica.
+3. **Fitxa Detallada de Recepta (`modal_recepta`)**:
+   - S'obre en clicar sobre qualsevol plat:
+     - **Selector d'Escalat Dinàmic de Comensals (1 a 30)**: Executa l'algoritme `scale_ingredients`, recalculant de forma proporcional grams, mil·lilitres, unitats i fraccions d'ingredients.
+     - Taula d'ingredients escalats i instruccions numerades pas a pas.
+     - Dades nutricionals per ració: Calories (kcal), Proteïnes (g), Hidrats de carboni (g) i Greixos (g).
+     - Eines de cuina requerides amb icones d'aparell.
+     - **Botó `🛒 Afegir a la Llista de Compra`**: Envia els ingredients que no són al rebost directament a la llista de compra de [`modules/compres.py`](file:///e:/Dashboard/modules/compres.py).
+
+---
+
+##### 6.1.5 Pestanya 5: `➕ Afegir Recepta` (Creació i Edició)
+
+Formulari estructurat per enregistrar nous plats al patrimoni culinari de la llar:
+
+1. **Metadades Bàsiques**: Títol del plat, categoria gastronòmica, temps de preparació en minuts, nivell de dificultat, tipus de dia recomanat i nombre de racions base.
+2. **Editor d'Ingredients i Procediment**:
+   - Àrea de text estructurada per llistar ingredients (un per línia amb quantitat i unitat).
+   - Pas a pas detallat de la tècnica de cocció.
+3. **Aparells i Nutrició**:
+   - Marcatge d'eines necessàries (Thermomix, Forn, Airfryer, etc.).
+   - Estimació de calories i macronutrients per ració.
+4. **Càrrega de Fotografia Gastronòmica**:
+   - Pujada d'imatge amb recomanació d'angle a 45° en format 4:3 per a una visualització òptima.
+
+---
+
+##### 6.1.6 Pestanya 6: `📥 Bústia de Peticions` (Participació Familiar)
+
+Espai col·laboratiu per als membres de la família:
+
+1. **Registre de Desitjos Gastronòmics**: Formulari ràpid on qualsevol membre pot indicar quin plat li faria il·lusió menjar (ex: *Canelons*, *Paella de marisc*, *Cremós de xocolata*).
+2. **Taula de Peticions Pendents**: Llista de propostes amb la data de la sol·licitud i el nom del membre de la família.
+3. **Botó d'Aprovació Directa**: En aprovar una petició, el plat s'incorpora com a prioritat màxima a la següent planificació de la IA o es col·loca directament al dia escollit.
+
+---
+
+#### D. Navegació Dinàmica i Enllaços amb Altres Mòduls
+- **Navegació per Paràmetres URL (`st.query_params`)**:
+  - `?tab=menu`: Obre el menú setmanal.
+  - `?tab=mise_en_place`: Condueix al pla de batch cooking.
+  - `?tab=generador`: Activa el generador d'intel·ligència artificial.
+  - `?tab=receptes`: Desplega el catàleg de receptes.
+  - `?tab=bustia`: Obre la bústia familiar de peticions.
+- **Interconnexions amb la Resta del Dashboard**:
+  - **[`modules/compres.py`](file:///e:/Dashboard/modules/compres.py)**: Connexió bidireccional: el rebost alimenta els ingredients disponibles per a les receptes, i el botó `🛒 Afegir a la llista` envia els queviures que manquen directament a la llista de la compra.
+  - **[`modules/calendari.py`](file:///e:/Dashboard/modules/calendari.py)**: Els menús setmanals confirmats es poden sincronitzar com a esdeveniments d'agenda familiar.
+  - **Menú Superior `Editar > 📂 Arxius JSON`**: Accés per revisar el perfil nutricional i eines a `core/config.json`.
 
 ---
 
