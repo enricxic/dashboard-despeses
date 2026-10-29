@@ -435,6 +435,17 @@ La pantalla d'inici i comandament financer del Dashboard ([`modules/dashboard.py
    - **Taula Resum Ràpida (`generate_fast_summary_table_html`)**: Taula HTML optimitzada amb estils visuals i gradient cromàtic verd/vermell segons el saldo de cada categoria.
    - **Taula Interactiva de Detall del Mes (`st.dataframe` amb `on_select="rerun"`)**: Permet fer clic a qualsevol fila o categoria per filtrar automàticament els moviments individuals a la part inferior de la pantalla.
 
+4. **Seccions Operatives de Detall Mensual: `📤 Pagaments del Mes` i `📥 Ingressos del Mes`**:
+   - **Llistats de Moviments del Mes**: Visualització clara de les previsions del mes actiu segregades entre pendents de liquidar i ja pagats/cobrats.
+   - **Ajust d'Import Real en 1 Clic**: Cada concepte pendent disposa d'una casella (`st.checkbox`) que en activar-se desplega un selector numèric per ajustar l'import real abans de confirmar l'operació.
+   - **Botons d'Acció de Traspàs a BBDD**: Botons dedicats `📥 Passar seleccionats a la BBDD` (per a pagaments) i `📥 Passar ingressos a BBDD` (per a ingressos) que activen el diàleg modal de conciliació.
+   - **Modal de Confirmació i Conciliació (`dialog_confirmar_operacions`)**:
+     - **Modificació de la Data de l'Apunt (`st.date_input`)**: Cada pagament o ingrés seleccionat inclou un selector de data individual en format `dd/mm/aaaa` que permet indicar exactament el dia de cobrament o càrrec en compte.
+     - **Control Estricte de Data del Mes**: El selector de data està blindat tant per interfície (`min_value` al dia 1 i `max_value` a l'últim dia del mes seleccionat) com per comprovació al servidor, impedint que es puguin desar operacions amb dates fora del mes en curs.
+     - **Assignació de Banc i Forma de Pagament**: Verificació del compte bancari associat amb selector desplegable si manca assignació prèvia.
+     - **Compatibilitat de Tipus amb PyArrow**: El registre de la data i del dia (`dia`) als DataFrames en memòria (`df_pag_local`, `df_ing_local`) està protegit mitjançant assignació polimòrfica i blocs d'excepció segurs, garantint el correcte funcionament en entorns cloud amb PyArrow (`string[pyarrow]`).
+     - **Automatització de Traspassos a Inversions**: Si un pagament té com a destí `TR Cartera`, el sistema genera simultàniament l'apunt de despesa, l'ingrés compensatori bancari i la compra a la taula d'inversions `tr_cartera` (NVIDIA o S&P500).
+
 ---
 
 ##### 4.2.2 Vista Operativa: Mòdul Econòmic (`view_mode == "economic"`)
@@ -1867,7 +1878,7 @@ flowchart TD
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
-| **29/10/2026** | **Econòmic / Dashboard** | **Control de Data de l'Apunt al Modal de Confirmació**: Integrat selector de data (`st.date_input`) amb format `dd/mm/aaaa` per a cadascun dels pagaments i ingressos seleccionats al diàleg `dialog_confirmar_operacions`. S'ha incorporat un control estricte que limita la data obligatòriament a l'interval del mes corresponent (`min_value` i `max_value` entre el dia 1 i l'últim dia de mes), amb validació de bloqueig al servidor i actualització coordinada a `despeses`, `tr_cartera` i taules de previsió. |
+| **29/10/2026** | **Econòmic / Dashboard** | **Control de Data i Compatibilitat PyArrow al Modal de Confirmació**: Integrat selector de data (`st.date_input`) en format `dd/mm/aaaa` als blocs *Pagaments del mes* i *Ingressos del mes* del Dashboard i previsions (`dialog_confirmar_operacions`). Control estricte que restringeix la data de l'apunt a l'interval del mes consultat (`min_value` i `max_value` entre el dia 1 i l'últim dia del mes). Resolució d'incompatibilitat de tipus amb PyArrow (`string[pyarrow]` a Streamlit Cloud) per al camp `dia` garantint tolerància a fallades en l'actualització de DataFrames en memòria i persistència a `despeses` / `tr_cartera`. |
 | **28/10/2026** | **Llum / Factures** | **Normalització de Dates a `dd/mm/aaaa` i Parser Resilient**: Conversió dels 44 registres històrics de `data/consum_llum.json`, `csv/consum_llum.csv` i Supabase ID=9 de format ISO a `dd/mm/aaaa` (`dataFactura`, `periodeInici`, `periodeFi`). Implementada la funció de suport `_parse_dmy_or_iso()` a `modules/llum_aigua.py` per garantir una lectura i edició 100% resilient dels períodes de facturació. |
 | **28/10/2026** | **Nucli / Editor JSON** | **Neteja d'Arxius Temporals Obsolets**: Eliminats els fitxers temporals obsolets d'antigues importacions de receptes (`pending_13.json`, `pending_13_real.json`, `missing_recipes.json`), netejant el menú superior desplegable `Editar > 📂 Arxius JSON` per mostrar exclusivament els fitxers de dades actius de l'aplicació. |
 | **28/10/2026** | **Documentació Global** | **Auditoria i Documentació Exhaustiva de la Secció 7**: Desglossament complet d'Administració (12 seccions estil Chrome Settings), Laboratori IA Harness (8 avaluadors deterministes i execució en segon pla), Gestor de Bases de Dades en temps real, Sincronització Offline i Controlador d'Impressora ESC/POS. |
