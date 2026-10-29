@@ -2530,12 +2530,28 @@ def render(view_mode="economic"):
                             save_to_csv(df_hip_local, 'hipoteca.csv')
                             st.session_state["df_hip"] = df_hip_local
                         else:
-                            df_pag_local.loc[res['idx'], 'pagat'] = 'Pagat'
-                            df_pag_local.loc[res['idx'], 'Import'] = float(res['import_final'])
-                            if 'Data' in df_pag_local.columns:
-                                df_pag_local.loc[res['idx'], 'Data'] = op_data
-                            if 'dia' in df_pag_local.columns and 'data_obj' in res:
-                                df_pag_local.loc[res['idx'], 'dia'] = int(res['data_obj'].day)
+                            try:
+                                df_pag_local.loc[res['idx'], 'pagat'] = 'Pagat'
+                            except Exception:
+                                pass
+                            try:
+                                df_pag_local.loc[res['idx'], 'Import'] = float(res['import_final'])
+                            except Exception:
+                                pass
+                            try:
+                                if 'Data' in df_pag_local.columns:
+                                    df_pag_local.loc[res['idx'], 'Data'] = str(op_data)
+                            except Exception:
+                                pass
+                            try:
+                                if 'dia' in df_pag_local.columns and 'data_obj' in res:
+                                    val_day = res['data_obj'].day
+                                    try:
+                                        df_pag_local.loc[res['idx'], 'dia'] = str(val_day)
+                                    except Exception:
+                                        df_pag_local.loc[res['idx'], 'dia'] = int(val_day)
+                            except Exception:
+                                pass
                         
                         new_row = {
                             'ID_mov': int(max_id),
@@ -2591,12 +2607,28 @@ def render(view_mode="economic"):
                             
                         updates_made = True
                     elif res['type'] == 'ingres':
-                        df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
-                        df_ing_local.loc[res['idx'], 'Import'] = float(res['import_final'])
-                        if 'Data' in df_ing_local.columns:
-                            df_ing_local.loc[res['idx'], 'Data'] = op_data
-                        if 'dia' in df_ing_local.columns and 'data_obj' in res:
-                            df_ing_local.loc[res['idx'], 'dia'] = int(res['data_obj'].day)
+                        try:
+                            df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
+                        except Exception:
+                            pass
+                        try:
+                            df_ing_local.loc[res['idx'], 'Import'] = float(res['import_final'])
+                        except Exception:
+                            pass
+                        try:
+                            if 'Data' in df_ing_local.columns:
+                                df_ing_local.loc[res['idx'], 'Data'] = str(op_data)
+                        except Exception:
+                            pass
+                        try:
+                            if 'dia' in df_ing_local.columns and 'data_obj' in res:
+                                val_day = res['data_obj'].day
+                                try:
+                                    df_ing_local.loc[res['idx'], 'dia'] = str(val_day)
+                                except Exception:
+                                    df_ing_local.loc[res['idx'], 'dia'] = int(val_day)
+                        except Exception:
+                            pass
                         new_row = {
                             'ID_mov': int(max_id),
                             'Data': op_data,
