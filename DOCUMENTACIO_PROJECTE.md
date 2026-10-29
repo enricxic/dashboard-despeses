@@ -469,9 +469,10 @@ Gestió integral de totes les obligacions econòmiques futures i passades de l'e
    - Cercador per text de conceptes (ex: `Ibi`, `Assegurança`, `Lloguer`).
 3. **Taula Interactiva de Previsió (`st.dataframe`)**:
    - Configuració nativa de columnes (`st.column_config`): Data en format català, imports en euros alineats, i checkboxes interactives de `pagat`.
-4. **Accions Massives i Confirmació d'Operacions**:
-   - **Modificació d'Imports en Bloc**: Permet ajustar l'import previst de múltiples rebuts abans que es cobrin.
-   - **Liquidació en Bloc (`dialog_confirmar_operacions`)**: Modal per confirmar la liquidació de tots els rebuts pendents d'un mes seleccionat d'un sol cop.
+4. **Accions Massives i Confirmació d'Operacions amb Control de Dates**:
+   - **Modificació d'Imports en Bloc**: Permet ajustar l'import previst de múltiples rebuts o ingressos abans de traspassar-los a la comptabilitat definitiva.
+   - **Liquidació i Confirmació en Bloc (`dialog_confirmar_operacions`)**: Diàleg modal interactiu que permet revisar cada concepte, verificar el banc associat (o assignar-ne un si manca) i **modificar la data de l'apunt** mitjançant un selector de dates (`st.date_input`) en format `dd/mm/aaaa`.
+   - **Control Estricte de Data del Mes**: El selector de dates està blindat visualment (`min_value` i `max_value`) i validat al servidor per garantir que la data de l'apunt estigui obligatòriament compresa entre el dia 1 i l'últim dia del mes consultat, impedint apunts erronis fora de període.
 
 ---
 
@@ -1866,6 +1867,7 @@ flowchart TD
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
+| **29/10/2026** | **Econòmic / Dashboard** | **Control de Data de l'Apunt al Modal de Confirmació**: Integrat selector de data (`st.date_input`) amb format `dd/mm/aaaa` per a cadascun dels pagaments i ingressos seleccionats al diàleg `dialog_confirmar_operacions`. S'ha incorporat un control estricte que limita la data obligatòriament a l'interval del mes corresponent (`min_value` i `max_value` entre el dia 1 i l'últim dia de mes), amb validació de bloqueig al servidor i actualització coordinada a `despeses`, `tr_cartera` i taules de previsió. |
 | **28/10/2026** | **Llum / Factures** | **Normalització de Dates a `dd/mm/aaaa` i Parser Resilient**: Conversió dels 44 registres històrics de `data/consum_llum.json`, `csv/consum_llum.csv` i Supabase ID=9 de format ISO a `dd/mm/aaaa` (`dataFactura`, `periodeInici`, `periodeFi`). Implementada la funció de suport `_parse_dmy_or_iso()` a `modules/llum_aigua.py` per garantir una lectura i edició 100% resilient dels períodes de facturació. |
 | **28/10/2026** | **Nucli / Editor JSON** | **Neteja d'Arxius Temporals Obsolets**: Eliminats els fitxers temporals obsolets d'antigues importacions de receptes (`pending_13.json`, `pending_13_real.json`, `missing_recipes.json`), netejant el menú superior desplegable `Editar > 📂 Arxius JSON` per mostrar exclusivament els fitxers de dades actius de l'aplicació. |
 | **28/10/2026** | **Documentació Global** | **Auditoria i Documentació Exhaustiva de la Secció 7**: Desglossament complet d'Administració (12 seccions estil Chrome Settings), Laboratori IA Harness (8 avaluadors deterministes i execució en segon pla), Gestor de Bases de Dades en temps real, Sincronització Offline i Controlador d'Impressora ESC/POS. |

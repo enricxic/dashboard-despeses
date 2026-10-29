@@ -2335,17 +2335,75 @@ def render(view_mode="economic"):
     
         @st.dialog("⚙️ Confirmar Operacions i Bancs", width="large")
         def dialog_confirmar_operacions(pagaments_sel, ingressos_sel, any_val, mes_cat):
-            st.write("Verifica els imports i bancs de les operacions seleccionades. Si a alguna li falta el banc, pots assignar-lo aquí mateix al vol.")
+            st.write("Verifica els imports, la data de l'apunt i el banc de les operacions seleccionades. La data ha d'estar obligatòriament dins del mes corresponent.")
             
+            import calendar
+            from datetime import date as d_date
             from core.db import get_config_banks
             bancs_disp = get_config_banks()
             if not bancs_disp:
                 bancs_disp = ["BBVA", "Sabadell", "TR Cartera", "Revolut", "Efectiu"]
+
+            # Resolució del mes i l'any per al control estricte de dates
+            try:
+                y = int(any_val)
+            except Exception:
+                y = datetime.today().year
+
+            m = 1
+            if mes_cat and str(mes_cat).lower() in CATALAN_MONTHS:
+                m = CATALAN_MONTHS.index(str(mes_cat).lower()) + 1
+            elif mes_cat and str(mes_cat).lower() in month_translations:
+                for cat_m, es_m in month_translations.items():
+                    if es_m.lower() == str(mes_cat).lower() and cat_m in CATALAN_MONTHS:
+                        m = CATALAN_MONTHS.index(cat_m) + 1
+                        break
+
+            max_days = calendar.monthrange(y, m)[1]
+            min_date_mes = d_date(y, m, 1)
+            max_date_mes = d_date(y, m, max_days)
         
+            def _infer_default_date(row_data):
+                # 1. Si la fila ja té 'Data' i pertany al mes
+                raw_d = row_data.get('Data') or row_data.get('data')
+                if raw_d and pd.notna(raw_d):
+                    s_d = str(raw_d).strip()
+                    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"):
+                        try:
+                            parsed = datetime.strptime(s_d, fmt).date()
+                            if parsed.year == y and parsed.month == m:
+                                return parsed
+                            elif 1 <= parsed.day <= max_days:
+                                return d_date(y, m, parsed.day)
+                        except Exception:
+                            pass
+
+                # 2. Si la fila té 'dia'
+                raw_dia = row_data.get('dia') or row_data.get('Dia')
+                if raw_dia and pd.notna(raw_dia):
+                    try:
+                        d = int(float(str(raw_dia).strip()))
+                        if 1 <= d <= 31:
+                            return d_date(y, m, min(d, max_days))
+                    except Exception:
+                        pass
+
+                # 3. Si som al mateix mes i any actual, agafem la data d'avui
+                today = datetime.today().date()
+                if today.year == y and today.month == m:
+                    return today
+
+                # 4. Fallback: hipoteca dia 30/max_days, altres dia 1 o dia d'avui limitat
+                concepte = str(row_data.get('Concepte', '')).lower()
+                if 'hipoteca' in concepte:
+                    return d_date(y, m, min(30, max_days))
+
+                return d_date(y, m, min(today.day, max_days))
+
             results = {}
         
             if pagaments_sel:
-                st.markdown("#### 🔴 Pagaments a processar")
+                st.markdown(f"#### 🔴 Pagaments a processar ({mes_cat.capitalize()} {y})")
                 for p in pagaments_sel:
                     idx = p['idx']
                     row = p['row']
@@ -2354,24 +2412,47 @@ def render(view_mode="economic"):
                     forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
                     if not forma_pago:
                         forma_pago = "Compte"
+
+                    def_date = _infer_default_date(row)
+                    def_date = max(min_date_mes, min(def_date, max_date_mes))
                 
-                    col_info, col_banc = st.columns([0.65, 0.35], vertical_alignment="center")
+                    col_info, col_data, col_banc = st.columns([0.42, 0.30, 0.28], vertical_alignment="center")
                     with col_info:
-                        st.markdown(f"**{row.get('Concepte', 'Pagament')}**<br><span style='font-size:1.1em;'>{amt:.2f} €</span>", unsafe_allow_html=True)
+                        st.markdown(f"**{row.get('Concepte', 'Pagament')}**<br><span style='font-size:1.15em; font-weight:600;'>{amt:.2f} €</span>", unsafe_allow_html=True)
                     
+                    with col_data:
+                        data_sel = st.date_input(
+                            "Data de l'apunt:",
+                            value=def_date,
+                            min_value=min_date_mes,
+                            max_value=max_date_mes,
+                            format="DD/MM/YYYY",
+                            key=f"data_pag_{idx}",
+                            help=f"La data ha d'estar entre el {min_date_mes.strftime('%d/%m/%Y')} i el {max_date_mes.strftime('%d/%m/%Y')}."
+                        )
+
                     with col_banc:
                         if not banc or banc.lower() == 'nan':
                             nou_banc = st.selectbox("Assigna Banc:", [""] + bancs_disp, key=f"sel_banc_pag_{idx}")
                             banc_final = nou_banc
                         else:
-                            st.markdown(f"<div style='padding-top:10px;'>➡️ **{banc}**</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; margin-bottom:2px;'>Banc assignat:</div><div style='font-size:1.05rem; font-weight:600;'>➡️ {banc}</div>", unsafe_allow_html=True)
                             banc_final = banc
                 
-                    results[f"pag_{idx}"] = {'type': 'pagament', 'idx': idx, 'row': row, 'banc': banc_final, 'forma_pago': forma_pago, 'import_final': amt}
+                    results[f"pag_{idx}"] = {
+                        'type': 'pagament',
+                        'idx': idx,
+                        'row': row,
+                        'banc': banc_final,
+                        'forma_pago': forma_pago,
+                        'import_final': amt,
+                        'data_final': data_sel.strftime("%d/%m/%Y"),
+                        'data_obj': data_sel
+                    }
                 st.divider()
                 
             if ingressos_sel:
-                st.markdown("#### 🟢 Ingressos a processar")
+                st.markdown(f"#### 🟢 Ingressos a processar ({mes_cat.capitalize()} {y})")
                 for i in ingressos_sel:
                     idx = i['idx']
                     row = i['row']
@@ -2380,20 +2461,43 @@ def render(view_mode="economic"):
                     forma_pago = str(row.get('Formapago', row.get('FormaPago', ''))).strip()
                     if not forma_pago:
                         forma_pago = "Compte"
+
+                    def_date = _infer_default_date(row)
+                    def_date = max(min_date_mes, min(def_date, max_date_mes))
                 
-                    col_info, col_banc = st.columns([0.65, 0.35], vertical_alignment="center")
+                    col_info, col_data, col_banc = st.columns([0.42, 0.30, 0.28], vertical_alignment="center")
                     with col_info:
-                        st.markdown(f"**{row.get('Concepte', 'Ingrés')}**<br><span style='font-size:1.1em;'>{amt:.2f} €</span>", unsafe_allow_html=True)
+                        st.markdown(f"**{row.get('Concepte', 'Ingrés')}**<br><span style='font-size:1.15em; font-weight:600;'>{amt:.2f} €</span>", unsafe_allow_html=True)
                     
+                    with col_data:
+                        data_sel = st.date_input(
+                            "Data de l'apunt:",
+                            value=def_date,
+                            min_value=min_date_mes,
+                            max_value=max_date_mes,
+                            format="DD/MM/YYYY",
+                            key=f"data_ing_{idx}",
+                            help=f"La data ha d'estar entre el {min_date_mes.strftime('%d/%m/%Y')} i el {max_date_mes.strftime('%d/%m/%Y')}."
+                        )
+
                     with col_banc:
                         if not banc or banc.lower() == 'nan':
                             nou_banc = st.selectbox("Assigna Banc:", [""] + bancs_disp, key=f"sel_banc_ing_{idx}")
                             banc_final = nou_banc
                         else:
-                            st.markdown(f"<div style='padding-top:10px;'>➡️ **{banc}**</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size:0.75rem; color:#94a3b8; margin-bottom:2px;'>Banc assignat:</div><div style='font-size:1.05rem; font-weight:600;'>➡️ {banc}</div>", unsafe_allow_html=True)
                             banc_final = banc
                 
-                    results[f"ing_{idx}"] = {'type': 'ingres', 'idx': idx, 'row': row, 'banc': banc_final, 'forma_pago': forma_pago, 'import_final': amt}
+                    results[f"ing_{idx}"] = {
+                        'type': 'ingres',
+                        'idx': idx,
+                        'row': row,
+                        'banc': banc_final,
+                        'forma_pago': forma_pago,
+                        'import_final': amt,
+                        'data_final': data_sel.strftime("%d/%m/%Y"),
+                        'data_obj': data_sel
+                    }
                 st.divider()
                 
             if st.button("✅ Confirmar i Desar a BBDD", type="primary", use_container_width=True):
@@ -2403,15 +2507,21 @@ def render(view_mode="economic"):
                 df_pag_local = st.session_state["df_pag"]
                 df_ing_local = st.session_state["df_ing"]
             
-                avui = datetime.now().strftime("%d/%m/%Y")
-            
-                updates_made = False
+                # Validacions prèvies de Banc i Data obligatòria dins del mes
                 for key, res in results.items():
                     if not res['banc']:
                         st.error(f"⚠️ Si us plau, assigna un Banc per a l'operació: **{res['row'].get('Concepte', '')}** utilitzant els desplegables de més amunt.")
                         return
-                    
+                    d_obj = res.get('data_obj')
+                    if d_obj and (d_obj.year != y or d_obj.month != m):
+                        st.error(f"⚠️ La data seleccionada ({res['data_final']}) per a **{res['row'].get('Concepte', '')}** no pertany al mes corresponent ({mes_cat.capitalize()} {y}). Ha d'estar entre el {min_date_mes.strftime('%d/%m/%Y')} i el {max_date_mes.strftime('%d/%m/%Y')}.")
+                        return
+
+                updates_made = False
+                for key, res in results.items():
                     max_id += 1
+                    op_data = str(res['data_final'])
+                    
                     if res['type'] == 'pagament':
                         if res['idx'] == 'hipoteca':
                             df_hip_local = st.session_state["df_hip"]
@@ -2422,10 +2532,14 @@ def render(view_mode="economic"):
                         else:
                             df_pag_local.loc[res['idx'], 'pagat'] = 'Pagat'
                             df_pag_local.loc[res['idx'], 'Import'] = float(res['import_final'])
+                            if 'Data' in df_pag_local.columns:
+                                df_pag_local.loc[res['idx'], 'Data'] = op_data
+                            if 'dia' in df_pag_local.columns and 'data_obj' in res:
+                                df_pag_local.loc[res['idx'], 'dia'] = int(res['data_obj'].day)
                         
                         new_row = {
                             'ID_mov': int(max_id),
-                            'Data': avui,
+                            'Data': op_data,
                             'Banc': str(res['banc']),
                             'FormaPago': str(res['forma_pago']),
                             'Idcategoria': str(res['row'].get('Categoria', 'despesa_general')),
@@ -2450,6 +2564,7 @@ def render(view_mode="economic"):
                             # 1. Add compensatory income to despeses
                             row_dest = new_row.copy()
                             row_dest['ID_mov'] = int(max_id + 1)
+                            row_dest['Data'] = op_data
                             row_dest['Banc'] = banc_desti_str
                             row_dest['Import càrrec'] = 0.0
                             row_dest['import ingrés'] = float(res['import_final'])
@@ -2461,8 +2576,9 @@ def render(view_mode="economic"):
                             if banc_desti_str == 'TR Cartera':
                                 concepte_str = str(res['row']['Concepte']).lower()
                                 cartera_val = 'NVIDIA' if 'nvidia' in concepte_str else 'S&P500'
+                                dt_tr = res['data_obj'] if 'data_obj' in res else datetime.now()
                                 new_tr_row = {
-                                    'DATA': datetime.now().strftime('%Y-%m-%d'),
+                                    'DATA': dt_tr.strftime('%Y-%m-%d'),
                                     'mes': month_translations.get(mes_cat.lower(), mes_cat.lower()),
                                     'any': int(any_val),
                                     'COMPRA': float(res['import_final']),
@@ -2477,9 +2593,13 @@ def render(view_mode="economic"):
                     elif res['type'] == 'ingres':
                         df_ing_local.loc[res['idx'], 'cobrat'] = 'cobrat'
                         df_ing_local.loc[res['idx'], 'Import'] = float(res['import_final'])
+                        if 'Data' in df_ing_local.columns:
+                            df_ing_local.loc[res['idx'], 'Data'] = op_data
+                        if 'dia' in df_ing_local.columns and 'data_obj' in res:
+                            df_ing_local.loc[res['idx'], 'dia'] = int(res['data_obj'].day)
                         new_row = {
                             'ID_mov': int(max_id),
-                            'Data': avui,
+                            'Data': op_data,
                             'Banc': str(res['banc']),
                             'FormaPago': str(res['forma_pago']),
                             'Idcategoria': 'ingres_general',
