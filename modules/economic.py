@@ -2725,7 +2725,9 @@ def render(view_mode="economic"):
                             continue
                     
                         # Assignem icones segons el concepte
-                        if any(k in concept_lower for k in ["hipoteca", "ajunt", "bbva asseg", "casa"]):
+                        if any(k in concept_lower for k in ["endesa", "llum", "electricitat", "iberdrola", "naturgy"]):
+                            icon = "⚡"
+                        elif any(k in concept_lower for k in ["hipoteca", "ajunt", "bbva asseg", "casa"]):
                             icon = "🏠"
                         elif any(k in concept_lower for k in ["cotxe", "lloguer parking"]):
                             icon = "🚗"
