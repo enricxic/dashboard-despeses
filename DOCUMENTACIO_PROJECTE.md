@@ -315,16 +315,20 @@ Panell analític per auditar el cost dels aliments, l'estalvi aconseguit i els p
    - **Selector `Any`**: Filtra l'històric d'anys disponibles (ex: 2024, 2025, 2026).
    - **Selector `Mes`**: Permet avaluar tot l'any conjuntament (`Tots`) o centrar-se en un mes específic.
 
-2. **Targetes KPI Resum**:
-   - **`Total Compra Pagada`**: Despesa neta real en euros efectuada en queviures durant el període.
-   - **`Total Estalvi Generat`**: Suma de tots els descomptes i promocions assolits, amb un indicador delta verd que reflecteix el percentatge d'estalvi aconseguit sobre el total teòric.
-   - **`Preu Sense Ofertes`**: Import teòric brut que s'hauria abonat si els productes s'haguessin comprat sense cap rebaixa o promoció.
+2. **Targetes KPI Resum i Conciliació de Categories**:
+   - **`Total Compra Pagada`**: Despesa total neta en euros abonada en conjunt per tots els tiquets de supermercat del període.
+   - **`Alimentació (Menjar)`**: Import net destinat exclusivament a alimentació, conciliat al cèntim amb la categoria `menjar` del Dashboard econòmic (descomptant vals de caixa globals).
+   - **`Neteja i Llar`**: Despesa en articles de drogueria, higiene i neteja adquirits als supermercats (conciliat amb la categoria `neteja` del Dashboard).
+   - **`Total Estalvi Generat`**: Suma de tots els descomptes i promocions assolits, amb percentatge d'estalvi aconseguit sobre el total teòric brut.
    - **`Nº Línies / Articles`**: Volum total d'articles físics adquirits.
 
-3. **Gràfics Interactius de Plotly**:
-   - **Gràfic de Donut (*Pagat vs Estalvi*)**: Mostra visualment la proporció entre els diners realment pagats i els diners que s'han estalviat gràcies a ofertes i vals.
-   - **Gràfic de Pastís per Famílies d'Aliments**: Distribució percentual de la despesa en funció del tipus d'aliment (Carnisseria, Fruita/Verdura, Làctics, Neteja, etc.).
-   - **Gràfic de Barres per Supermercat**: Rànquing visual del volum de despesa acumulat a cada comerç per conèixer a quina cadena es destina el pressupost d'alimentació.
+3. **Gràfics Interactius de Plotly i Panells de Conciliació**:
+   - **Pestanyes de Donut (*Compra vs Estalvi* i *Menjar vs Neteja*)**: Permet alternar entre la comparativa de despesa vs estalvi i la divisió exacta entre Alimentació (`menjar`) i Neteja/Drogueria (`neteja`).
+   - **Capsetes Informatives de Desglossament**:
+     - *Desglossament de l'Estalvi*: Detall de pagat net, promocions directes d'articles i descomptes globals de tiquet.
+     - *Conciliació Comptable (Dashboard)*: Taula explicativa que concilia el total del supermercat amb les categories de despesa del Dashboard econòmic.
+   - **Gràfic de Pastís per Famílies de Productes**: Distribució percentual de la despesa en funció de les famílies (Carn, Làctics, Verdura, Fruita, Neteja, etc.).
+   - **Gràfic de Barres per Supermercat**: Rànquing visual del volum de despesa acumulat a cada comerç per conèixer a quina cadena es destina el pressupost familiar.
 
 ---
 
@@ -1878,6 +1882,7 @@ flowchart TD
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
+| **29/10/2026** | **Compres Super / Estadístiques** | **Desglossament d'Alimentació vs Neteja i Conciliació amb el Dashboard**: Integrat el desglossament de la despesa de supermercat entre Alimentació neta (`menjar`), Neteja i Llar (`neteja`) i descomptes globals de caixa a les targetes KPI i a un nou panell de conciliació comptable amb selector de gràfic de donut (*Menjar vs Neteja*), quadrant al cèntim exacte la diferència entre el tiquet global de supermercat i la categoria *menjar* del Dashboard. |
 | **29/10/2026** | **Econòmic / Dashboard** | **Control de Data i Compatibilitat PyArrow al Modal de Confirmació**: Integrat selector de data (`st.date_input`) en format `dd/mm/aaaa` als blocs *Pagaments del mes* i *Ingressos del mes* del Dashboard i previsions (`dialog_confirmar_operacions`). Control estricte que restringeix la data de l'apunt a l'interval del mes consultat (`min_value` i `max_value` entre el dia 1 i l'últim dia del mes). Resolució d'incompatibilitat de tipus amb PyArrow (`string[pyarrow]` a Streamlit Cloud) per al camp `dia` garantint tolerància a fallades en l'actualització de DataFrames en memòria i persistència a `despeses` / `tr_cartera`. |
 | **28/10/2026** | **Llum / Factures** | **Normalització de Dates a `dd/mm/aaaa` i Parser Resilient**: Conversió dels 44 registres històrics de `data/consum_llum.json`, `csv/consum_llum.csv` i Supabase ID=9 de format ISO a `dd/mm/aaaa` (`dataFactura`, `periodeInici`, `periodeFi`). Implementada la funció de suport `_parse_dmy_or_iso()` a `modules/llum_aigua.py` per garantir una lectura i edició 100% resilient dels períodes de facturació. |
 | **28/10/2026** | **Nucli / Editor JSON** | **Neteja d'Arxius Temporals Obsolets**: Eliminats els fitxers temporals obsolets d'antigues importacions de receptes (`pending_13.json`, `pending_13_real.json`, `missing_recipes.json`), netejant el menú superior desplegable `Editar > 📂 Arxius JSON` per mostrar exclusivament els fitxers de dades actius de l'aplicació. |
