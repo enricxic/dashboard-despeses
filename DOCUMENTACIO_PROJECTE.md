@@ -455,6 +455,79 @@ El tiquet de BonPreu / Esclat presenta una estructura regular i detallada, amb p
 - **Quadre d'Impostos**: Taules d'IVA (`BASE`, `IVA 4%`, `IVA 10%`, `IVA 21%`, `QUOTA`).
 - **Dades de Transacció TPV**: Dades bancàries, número d'autorització, targeta emmascarada i missatges de confirmació de pagament.
 
+##### 2. Supermercat Novavenda
+
+El tiquet de Novavenda (habitualment gestionat per la societat *Comerbal, S.A.* a les comarques gironines) té una estructura molt característica en blocs multilínia per cada article, incorporant directament el codi de barres EAN i el detall de càlcul de quantitats.
+
+```text
++-------------------------------------------------------------+
+|                          NOVAVENDA                          |
+|                       Comerbal, S.A.                        |
+|              C/. Ramon Pagès, 3 baixos - Arbúcies           |
++-------------------------------------------------------------+
+|  BAGUETTE BELLSOLA 255G                            0,62 €   |
+|  1601             1 x 0,62 €                                |
+|  ARROS INTEGRAL A/ CHIA                            1,45 €   |
+|  VASET 2X125 G                                              |
+|  8410184033749     1 x 1,45 €                               |
+|  COOKIES INT                                       0,99 €   |
+|  MUES/TAR/PANSES FLORBU                                     |
+|  180G                                                       |
+|  8411414010677     1 x 0,99 €                               |
+|  PIPES GREFUSA TUJUANA 165                         4,86 €   |
+|  8413164004975     3 x 1,62 €                               |
+|  XOCOLATA MILKA 125G                              15,48 €   |
+|  8410172652525     12 x 1,29 €                              |
+|  OFERTA                                                     |
++-------------------------------------------------------------+
+|  Base         Tipus        Quota        Total               |
+|   3,94         4,00         0,16         4,10               |
+|  22,64        10,00         2,26        24,90               |
+|  TOTAL                                    29,00 €           |
+|  Factura simplificada 228                 Caixa 1           |
+|  Data: 31/10/2026 18:28:27                                  |
+|  PAGAMENT TARGETA                         29,00 €           |
++-------------------------------------------------------------+
+```
+
+###### A. Dades de Capçalera i Peu del Tiquet
+1. **Nom Comercial**: S'identifica pel logotip superior `NOVAVENDA` (NIF d'empresa: Comerbal, S.A.). A la base de dades es codifica com a `Novavenda`.
+2. **Ubicació de la Data i Hora**: A diferència d'altres supermercats, la data **NO** és a la capçalera sinó al **peu del tiquet**, just sota el total i la taula d'impostos *(Exemple: `Data: 31/10/2026 18:28:27`)*.
+3. **Número de Tiquet**: Figura al peu com a `Factura simplificada XXX` al costat del número de caixa (`Caixa X`).
+4. **Conciliació Financera**: Es concilia a `despeses` sota la categoria `menjar` i concepte `Novavenda`.
+
+###### B. Estructura de Bloc Multilínia per Article
+Cada article comprat a Novavenda es compon sempre d'un bloc de **2, 3 o fins i tot 4 línies consecutives**:
+1. **Primera Línia del Bloc (Nom i Import Total)**:
+   - Conté l'inici de la descripció del producte en majúscules (ex: `BAGUETTE BELLSOLA 255G`, `COOKIES INT`, `XOCOLATA MILKA 125G`).
+   - A l'extrem dret porta sempre el **preu total facturat de la línia** (`totLinea`).
+2. **Línies Intermèdies (Continuació de Descripció)**:
+   - Si el nom de l'article o el gramatge no caben en una sola línia, continuen a la segona o tercera línia (ex: `VASET 2X125 G`, `MUES/TAR/PANSES FLORBU`, `180G`, `FLORBU 120G`, `CLASSIQUES 150G`).
+   - **Regla d'or**: Cal concatenar totes aquestes línies de text en un sol nom descriptiu complet de l'article per cercar o desar a `tb_productes`.
+3. **Darrera Línia de Detall (Codi de Barres EAN i Fórmula de Càlcul)**:
+   - A l'esquerra: Codi intern de 4 dígits (ex: `1601`) o el **codi de barres EAN complet de 13 dígits** (ex: `8410184033749`, `8411414010677`, `8410172652525`).
+   - Al mig/dreta: La fórmula de quantitat i preu unitari: **`QUANTITAT x PREU_UNITARI €`** (ex: `1 x 0,62 €`, `3 x 1,62 €`, `12 x 1,29 €`).
+4. **Línia Opcional d'Oferta**:
+   - Si el producte gaudeix d'un preu especial o rebaixat, a sota de la línia de càlcul pot aparèixer la paraula `OFERTA`.
+   - El preu unitari que figura a `QUANTITAT x PREU_UNITARI €` ja és el **preu net reduït** (ex: la tauleta de Milka 125g venuda a 1,29 € en comptes del preu estàndard de 1,69 €).
+
+###### C. Regles de Codificació a compresSuper
+1. **Nom de l'Article**: Fusió íntegra de les línies de text del producte:
+   - `"COOKIES INT"` + `"MUES/TAR/PANSES FLORBU"` + `"180G"` $\rightarrow$ `"Cookies integrals muesli panses Florbu 180g"`.
+2. **Quantitat i Preu Unitari**:
+   - Extreure `quantitat` directament del primer valor de la fórmula (`3 x 1,62 €` $\rightarrow$ `quantitat = 3`).
+   - Assignar `preuUnit = 1.62`.
+   - `totLinea = 4.86` (preu de la primera línia, que compleix $\text{quantitat} \times \text{preuUnit} = \text{totLinea}$).
+3. **Codi de Barres EAN**:
+   - El número de 13 dígits permet l'emparellament directe amb la columna `codi_barres` a `tb_productes`, facilitant la lectura làser del rebost.
+4. **Descomptes Globals**:
+   - Si el tiquet no inclou cupons de caixa al peu, el total net és la suma exacta de tots els `totLinea` ($\sum \text{totLinea} = 29{,}00\text{ €}$, `descompte = 0.00`).
+
+###### D. Línies que Cal Ometre
+- Capçalera fiscal (`Comerbal, S.A.`, NIF, telèfon, adreça).
+- Quadre de desglossament d'IVA (`Base`, `Tipus`, `Quota`, `Total`).
+- Bloc de peu de pàgina de terminal de caixa (`Factura simplificada`, `Caixa`, `PAGAMENT`).
+
 ---
 
 ### 4.2 Mòdul Econòmic i Dashboard (`modules/economic.py`, `modules/dashboard.py`)

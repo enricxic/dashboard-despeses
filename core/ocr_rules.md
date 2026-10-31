@@ -20,7 +20,15 @@ Llegeix sempre detingudament l'apartat **"OFERTES"** (normalment al final del ti
 Si detectes que el tiquet és del Lidl, fixa't molt bé sota de cada línia de producte. Acostuma a posar-hi els descomptes aplicats al producte just a sota de la seva descripció. Aquest descompte ha de constar al camp "promocions" d'aquell producte en concret.
 
 ### REGLA SUPERMERCAT NOVAVENDA
-Si detectes que el tiquet és de Novavenda, gairebé tots els productes tenen una descripció que ocupa 2 línies consecutives. Has d'assegurar-te d'unir el contingut d'aquestes dues línies com un sol nom descriptiu del producte.
+Si detectes que el tiquet és de Novavenda:
+1. **Bloc multilínia per producte:** Cada article consta d'un bloc de 2, 3 o 4 línies consecutives:
+   - **Línia 1:** Primera part del nom de l'article i a l'extrem dret el preu total de la línia.
+   - **Línies intermèdies (si n'hi ha):** Continuació del nom del producte o format/gramatge (ex: "VASET 2X125 G", "MUES/TAR/PANSES FLORBU"). CAL UNIR totes aquestes línies de text en un sol nom descriptiu net de l'article.
+   - **Darrera línia de detall:** Conté a l'esquerra el codi intern o codi de barres EAN (ex: "8410184033749") i al mig/dreta la fórmula "QUANTITAT x PREU_UNITARI €" (ex: "3 x 1,62 €" o "12 x 1,29 €").
+2. **Quantitats múltiples:** Extreu la quantitat de la fórmula "N x Preu €" (si posa "3 x 1,62 €", quantitat = 3 i preu unitari = 1,62 €). El preu total de la línia és el que figura a l'extrem dret de la primera línia (4,86 €).
+3. **Data al peu del tiquet:** La data del tiquet NO és a la capçalera sinó al peu, just sota el Total o el quadre d'impostos (format: "Data: DD/MM/AAAA HH:MM:SS").
+4. **Ofertes de producte:** Si a sota de la línia de càlcul hi figura la paraula "OFERTA", el preu unitari de la fórmula ja és el preu d'oferta rebaixat.
+5. **Ignorar:** La informació fiscal superior (Comerbal, S.A.), el desglossament de bases i quotes d'IVA del peu, i les dades de pagament/caixa.
 
 ### REGLA SUPERMERCAT BONPREU / ESCLAT
 Si detectes que el tiquet és de BonPreu o Esclat:
