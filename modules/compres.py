@@ -1241,17 +1241,19 @@ def cb_finalize_ticket():
     if "finalize_error" in st.session_state:
         del st.session_state["finalize_error"]
         
+    discount = float(st.session_state.get("ticket_discount", 0.0) or 0.0)
     pending_ticket_id = st.session_state.get('pending_ticket_id')
     if pending_ticket_id:
         orig_amt = float(st.session_state.get('pending_import_carrec', 0.0))
-        sum_amt = sum(item['totLinea'] for item in items)
-        if abs(sum_amt - orig_amt) > 0.001:
-            st.session_state["finalize_error"] = f"Desquadrament! El banc diu {orig_amt:.2f} € i els productes sumen {sum_amt:.2f} €. Pots forçar la correcció del banc amb el botó que ha aparegut a dalt."
+        gross_sum = sum(item['totLinea'] for item in items)
+        sum_amt = round(gross_sum - discount, 2)
+        if abs(sum_amt - round(orig_amt, 2)) > 0.01:
+            desc_info = f" (articles: {gross_sum:.2f} € - descompte: {discount:.2f} €)" if discount > 0 else ""
+            st.session_state["finalize_error"] = f"Desquadrament! El banc diu {orig_amt:.2f} € i el total net del tiquet suma {sum_amt:.2f} €{desc_info}. Pots forçar la correcció del banc amb el botó que ha aparegut a dalt."
             st.session_state["pending_ticket_mismatch"] = True
             st.session_state["pending_ticket_sum"] = sum_amt
             return
-        
-    discount = st.session_state.get("ticket_discount", 0.0)
+
     send_expense = st.session_state.get("ticket_send_expense", True)
         
     if isinstance(ticket_date, datetime):
@@ -1645,7 +1647,7 @@ def render_compres_super_interface():
     if st.session_state.get("pending_ticket_mismatch"):
         orig_amt = float(st.session_state.get('pending_import_carrec', 0.0))
         sum_amt = float(st.session_state.get('pending_ticket_sum', 0.0))
-        st.warning(f"L'import inicial registrat al banc era de **{orig_amt:.2f} €**, però la suma dels productes és de **{sum_amt:.2f} €**.")
+        st.warning(f"L'import inicial registrat al banc era de **{orig_amt:.2f} €**, però el total net del tiquet és de **{sum_amt:.2f} €**.")
         if st.button(f"Forçar correcció del banc a {sum_amt:.2f} €", type="primary"):
             try:
                 supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -1741,6 +1743,7 @@ def render_compres_super_interface():
                         st.session_state['pending_banc'] = p_banc
                         st.session_state['pending_forma_pago'] = p_fp
                         st.session_state['pending_import_carrec'] = p_row['Import càrrec']
+                        st.session_state['ticket_discount'] = 0.0
                         st.session_state['ticket_super_val'] = p_super
                         st.session_state['ticket_super_widget'] = p_super
                         try:
@@ -2030,6 +2033,7 @@ Extreu i neteja els productes en un format JSON estricte:
 {{
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
     "data": "DD/MM/YYYY (si la trobes)",
+    "descompte_global": 0.0,
     "articles": [
     {{
         "nom_brut": "Nom exacte del producte, corregint errors d'OCR",
@@ -2039,7 +2043,7 @@ Extreu i neteja els productes en un format JSON estricte:
     }}
     ]
 }}
-Ignora descomptes genèrics, IVA, Targetes i subtotals. Extreu només productes reals. Retorna ÚNICAMENT l'objecte JSON.
+Si hi ha un descompte global o cupó al final del tiquet (en negatiu o deduït del total), posa el seu valor positiu a "descompte_global". Ignora IVA, Targetes i subtotals. Extreu només productes reals a "articles". Retorna ÚNICAMENT l'objecte JSON.
 """
                             ok_call, response_text, latency = call_llm_api(
                                 prompt=prompt,
@@ -2086,6 +2090,7 @@ L'estructura del JSON ha de ser EXACTAMENT aquesta:
 {
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
     "data": "DD/MM/YYYY (si la trobes)",
+    "descompte_global": 0.0,
     "articles": [
     {
         "nom_brut": "Nom exacte del producte que surt al tiquet, respectant lletres",
@@ -2096,9 +2101,10 @@ L'estructura del JSON ha de ser EXACTAMENT aquesta:
     ]
 }
 Notes importants:
-1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal, Ofertes, Cupons).
-2. Assegura't de capturar bé el 'preu_total' de la línia.
-3. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
+1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal).
+2. Si hi ha un descompte global o cupó al final del tiquet (en negatiu o deduït del total), posa el seu valor positiu a "descompte_global".
+3. Assegura't de capturar bé el 'preu_total' de la línia.
+4. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 Retorna ÚNICAMENT l'objecte JSON.
 """
                             ok_call, response_text, latency = call_llm_api(
@@ -2167,6 +2173,14 @@ Retorna ÚNICAMENT l'objecte JSON.
                         if cand:
                             st.session_state["ticket_date"] = cand
                             st.session_state["ticket_date_widget"] = cand
+
+                    # 3. Descompte global si es detecta al tiquet
+                    try:
+                        descompte_trobat = float(data.get("descompte_global", 0.0) or 0.0)
+                        if descompte_trobat > 0:
+                            st.session_state["ticket_discount"] = round(abs(descompte_trobat), 2)
+                    except Exception:
+                        pass
 
                     # Fallback intel·ligent des del nom de fitxer d'escàner (ticket_<super>_<date>)
                     if not st.session_state.get("ticket_super_val") or not data.get("data"):
@@ -3536,6 +3550,7 @@ def render_ingres_despesa_general_interface():
                 st.session_state['pending_banc'] = p_banc
                 st.session_state['pending_forma_pago'] = p_fp
                 st.session_state['pending_import_carrec'] = p_imp
+                st.session_state['ticket_discount'] = 0.0
                 st.session_state['ticket_super_val'] = p_super
                 st.session_state['ticket_super_widget'] = p_super
                 try:
