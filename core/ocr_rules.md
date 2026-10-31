@@ -21,3 +21,11 @@ Si detectes que el tiquet és del Lidl, fixa't molt bé sota de cada línia de p
 
 ### REGLA SUPERMERCAT NOVAVENDA
 Si detectes que el tiquet és de Novavenda, gairebé tots els productes tenen una descripció que ocupa 2 línies consecutives. Has d'assegurar-te d'unir el contingut d'aquestes dues línies com un sol nom descriptiu del producte.
+
+### REGLA SUPERMERCAT BONPREU / ESCLAT
+Si detectes que el tiquet és de BonPreu o Esclat:
+1. **Promocions per producte:** Si just a sota d'un article hi ha una línia que indica "PROMOCIÓ" o "PROM." amb un import en negatiu (ex: "-1,35"), aquest import s'ha d'assignar al camp "promocions" de l'article i el preu total de la línia ha de ser el net resultant (`preu_brut - promocio`). Si la promoció cobreix el 100% de l'import (producte regalat o 2a unitat gratis), el preu total de la línia serà 0,00 € però l'article s'ha d'incloure igualment.
+2. **Articles a pes (carnisseria, peixateria, fruiteria, verdura):** Solen figurar en dues línies consecutives: Línia 1 amb la descripció del producte (ex: "POLLASTRE SENCER") i Línia 2 amb el pes i el preu per quilo (ex: "1,225 kg x 4,49 €/kg") amb el total de la línia a l'extrem dret. Cal fusionar-ho en un sol article: nom de la Línia 1, `quantitat: 1`, camp `pes: "1.225 kg"`, i el total calculat a la dreta.
+3. **Descomptes globals de caixa al peu del tiquet:** Al final del tiquet poden aparèixer línies de descompte global com "-3 EUR REGAL", "- EUROS BESCANVIATS" o cupons de descompte general. NO els assignis a cap producte individual; suma'ls tots al camp "descompte_global" del tiquet.
+4. **Línies no producte a ignorar:** Ignora les línies informatives de fidelització ("EUROS ACUMULATS", "SALDO TARGETA CLIENT"), les bases i quotes d'IVA, i les dades del pagament amb targeta/TPV.
+

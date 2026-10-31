@@ -379,6 +379,84 @@ Espai dedicat a consultar i arxivar catàlegs promocionals i descomptes especial
 
 ---
 
+#### E. Normes de Codificació de Tiquets per Supermercat
+
+Aquesta secció recull els patrons d'extracció, regles de desglossament i particularitats de format dels tiquets físics segons cada cadena comercial, assegurant la màxima fidelitat entre el tiquet imprès, la base de dades `compresSuper` i el moviment bancari a `despeses`.
+
+##### 1. Supermercat BonPreu / Esclat
+
+El tiquet de BonPreu / Esclat presenta una estructura regular i detallada, amb patrons clars per a promocions, productes a pes i vals de descompte al peu del document.
+
+```text
++-------------------------------------------------------------+
+|                      BONPREU / ESCLAT                       |
+|  Data: 28/10/2026   Hora: 12:45   Caixa: 04   Tiquet: 8229  |
++-------------------------------------------------------------+
+|  CANELONS                          4,49 €                   |
+|    PROMOCIO                       -1,35 €                   |
+|  POLLASTRE SENCER                                           |
+|    1,225 kg x 4,49 €/kg            5,50 €                   |
+|  FUET                              2,95 €                   |
+|    PROMOCIO                       -2,95 €                   |
+|  ...                                                        |
++-------------------------------------------------------------+
+|  TOTAL PRODUCTES                  24,05 €                   |
+|  -3 EUR REGAL                     -3,00 €                   |
+|  - EUROS BESCANVIATS              -0,85 €                   |
+|  TOTAL PAGAT                      20,20 €                   |
+|  TARGETA BANCARIA                 20,20 €                   |
++-------------------------------------------------------------+
+```
+
+###### A. Dades de Capçalera i Vinculació Bancària
+1. **Identificació Comercial**: S'assigna el supermercat com a `BonPreu` (o `Esclat`).
+2. **Data**: Figura a la capçalera o al bloc inferior. Sempre en format dia/mes/any.
+3. **Conciliació Financera**: L'apunt a `despeses` es registra sota la categoria `menjar` i concepte `BonPreu`. L'import ha de coincidir al cèntim amb l'import final cobrat (`Import càrrec`).
+
+###### B. Articles Unitaris i Promocions en Línia
+1. **Producte Estàndard**:
+   - Descripció a l'esquerra (ex: `CANELONS`, `FORMATGE TALL`, `PA DE VIDRE`).
+   - Preu brut unitari a la dreta.
+   - `quantitat = 1` (o enter si es compren múltiples unitats).
+2. **Línies de Promoció / Descompte Directe**:
+   - Immediatament sota el producte pot aparèixer una línia `PROMOCIÓ -X,XX` o `PROM. -X,XX`.
+   - **Regla**: S'assigna aquest descompte al camp `prom` d'aquell article (`prom = -1.35`).
+   - El preu total de la línia (`totLinea`) reflecteix sempre el preu net real pagat:
+     $$\text{totLinea} = \text{Preu Brut} - |\text{Promoció}|$$
+3. **Promocions al 100% (Producte Regal o 2a Unitat Gratis)**:
+   - Si la promoció iguala el preu brut (ex: `FUET 2,95 €` amb `PROMOCIÓ -2,95 €`), el camp `totLinea` serà `0.00 €`.
+   - **Regla obligatòria**: L'article **NO** s'elimina; s'ha de registrar a `compresSuper` per mantenir la traçabilitat del consum, la família (`carn`) i l'actualització d'estoc al rebost.
+
+###### C. Articles a Pes (Fruiteria, Carnisseria, Peixateria)
+1. **Format en Dues Línies**:
+   - **Línia 1**: Nom del producte (ex: `POLLASTRE SENCER`).
+   - **Línia 2**: Pes i preu unitari (ex: `1,225 kg x 4,49 €/kg`) i a la dreta l'import total de la línia (`5,50 €`).
+2. **Regla de Codificació**:
+   - Fusionar ambdues línies en un únic registre.
+   - `quantitat = 1` (enter invariant).
+   - `pes = "1.225 kg"`.
+   - `preuUnit = 4.49` (preu per quilo) o preu total de la línia.
+   - `totLinea = 5.50` (import net facturat a la dreta).
+
+###### D. Descomptes Globals de Caixa (Final del Tiquet)
+1. **Tipus de Descomptes Globals a BonPreu**:
+   - Cupons regal en euros: `-3 EUR REGAL`, `-5 EUR REGAL`.
+   - Targeta client / guardiola: `- EUROS BESCANVIATS`.
+   - Vals promocionals de caixa.
+2. **Regla Fonamental d'Imputació**:
+   - Aquests descomptes **mai** s'assignen a un sol producte ni es creen com a línies d'article a `compresSuper`.
+   - Es sumen conjuntament en el valor de descompte global (`descompte_global`).
+   - A la base de dades `compresSuper`, s'enregistra a la columna `descompte` de la **primera línia** del tiquet (`descompte = suma_descomptes_globals`), quedant la resta de línies amb `0.0`.
+3. **Equació de Validació**:
+   $$\text{Total Net Tiquet} = \sum_{i=1}^{n} \text{totLinea}_i - \text{descompte\_global} \equiv \text{Import Càrrec Bancari}$$
+
+###### E. Línies Informatives que Cal Ometre
+- **Saldo i Acumulació Targeta Client**: `EUROS ACUMULATS`, `SALDO TARGETA CLIENT`, `ACUMULAT EN AQUESTA COMPRA` (són saldos per a futures compres, no rebaixes de la compra actual).
+- **Quadre d'Impostos**: Taules d'IVA (`BASE`, `IVA 4%`, `IVA 10%`, `IVA 21%`, `QUOTA`).
+- **Dades de Transacció TPV**: Dades bancàries, número d'autorització, targeta emmascarada i missatges de confirmació de pagament.
+
+---
+
 ### 4.2 Mòdul Econòmic i Dashboard (`modules/economic.py`, `modules/dashboard.py`)
 Mòdul mestre de control pressupostari, tresoreria bancària, seguiment patrimonial, projecció financera plurianual i comptabilitat familiar integral. Articula la dualitat entre la **Vista Executiva de Dashboard** ([`modules/dashboard.py`](file:///e:/Dashboard/modules/dashboard.py)) i la **Vista Operativa de Gestió Econòmica** ([`modules/economic.py`](file:///e:/Dashboard/modules/economic.py)).
 
