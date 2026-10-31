@@ -278,6 +278,23 @@ for al in st.session_state["global_alerts_list"]:
 if not alerts_html:
     alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
 
+# Navegació interna programàtica prioritària (evita rebots per query params desactualitzats al client)
+if st.session_state.get("nav_target_mod"):
+    target_mod = st.session_state.pop("nav_target_mod")
+    st.session_state.current_module = target_mod
+    st.session_state["_browser_mod"] = target_mod
+    st.query_params["mod"] = target_mod
+    target_tab = st.session_state.pop("nav_target_tab", None)
+    if target_tab:
+        st.query_params["tab"] = target_tab
+    elif "tab" in st.query_params:
+        try:
+            del st.query_params["tab"]
+        except Exception:
+            pass
+    for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar", "show_afegir_any_comptable"]:
+        st.session_state.pop(k, None)
+
 # Comprovar si s'ha seleccionat un mòdul a través de query params (des de l'HTML interactiu o URL del navegador)
 if "mod" in st.query_params:
     selected_mod = st.query_params.get("mod")

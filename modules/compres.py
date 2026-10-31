@@ -1613,9 +1613,12 @@ def render_compres_super_interface():
         st.markdown("<h2 style='margin:0; color:#f39c12;'>🛒 Compres Super</h2>", unsafe_allow_html=True)
     with col_h2:
         if st.button("⚡ Mòdul Econòmic", key="tunnel_to_economic", use_container_width=True, help="Túnel directe a Mòdul Econòmic (Ingrés / Despesa General)"):
+            st.session_state["nav_target_mod"] = "modules.economic"
+            st.session_state["nav_target_tab"] = "ingres_despesa"
             st.session_state.current_module = "modules.economic"
             st.session_state["_browser_mod"] = "modules.economic"
             st.query_params["mod"] = "modules.economic"
+            st.query_params["tab"] = "ingres_despesa"
             st.rerun()
     
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -3067,9 +3070,12 @@ def render_ingres_despesa_general_interface():
         st.markdown("<h3 style='color:#f39c12; margin:0;'>➕ Introduir Moviment Real (Despesa / Ingrés / Traspàs)</h3>", unsafe_allow_html=True)
     with col_h2:
         if st.button("⚡ Compres Super", key="tunnel_to_compres", use_container_width=True, help="Túnel directe a Compres Super"):
+            st.session_state["nav_target_mod"] = "modules.compres"
+            st.session_state["nav_target_tab"] = "compres_super"
             st.session_state.current_module = "modules.compres"
             st.session_state["_browser_mod"] = "modules.compres"
             st.query_params["mod"] = "modules.compres"
+            st.query_params["tab"] = "compres_super"
             st.rerun()
     st.write("---")
 
@@ -3563,9 +3569,12 @@ def render_ingres_despesa_general_interface():
                 st.session_state['ticket_pay_method_sel'] = p_fp
                 st.session_state['ticket_send_expense'] = True
                 
+                st.session_state["nav_target_mod"] = "modules.compres"
+                st.session_state["nav_target_tab"] = "compres_super"
                 st.session_state.current_module = "modules.compres"
                 st.session_state["_browser_mod"] = "modules.compres"
                 st.query_params["mod"] = "modules.compres"
+                st.query_params["tab"] = "compres_super"
                 st.rerun()
     else:
         st.info("No hi ha cap ticket pendent de desglossar.")
