@@ -999,8 +999,8 @@ Espai integral per a la planificació, disseny i seguiment d'obres majors, refor
 
 2. **Plànol i Croquis Interactiu (HTML5 Canvas Tàctil Mòbil/PC amb Foto de Fons)**:
    - Component de dibuix autònom (`modules/canvas_planol.py`) adaptat 100% a telèfons mòbils i tauletes mitjançant **Pointer Events** unificats i `touch-action: none` (permet arrossegar el dit sobre la quadreta sense desplaçar ni bloquejar la pàgina).
-   - **Controls de Zoom (`🔍+`, `🔍-`, `100%`)**: Botons de zoom suau (de 0.75x a 2.50x) amb contenidor de desplaçament fluid (`overflow: auto`, `max-height: 560px`) i precisió matemàtica de coordenades per a pantalla tàctil i ratolí a qualsevol escala.
-   - **Eina de Navegació i Desplaçament (`🖐️ Moure` / Pan)**: Eina dedicada per moure's i navegar lliurement pel plànol en qualsevol direcció arrossegant el dit o el ratolí quan s'ha fet zoom, sense risc de dibuixar línies accidentals.
+   - **Controls de Zoom (`🔍+`, `🔍-`, `100%`)**: Botons de zoom suau (de 0.75x a 2.50x) amb finestra de visualització de 380px i resolució nativa quadrada de 800x800 (`aspect-ratio: 1 / 1`), que garanteix un desplaçament fluid 100% bidireccional (tant vertical com horitzontal) i precisió matemàtica de coordenades per a pantalla tàctil i ratolí a qualsevol escala.
+   - **Eina de Navegació i Desplaçament (`🖐️ Moure` / Pan)**: Eina dedicada per moure's i navegar lliurement pel plànol en qualsevol direcció (vertical i horitzontal simultàniament) arrossegant el dit o el ratolí quan s'ha fet zoom, sense risc de dibuixar línies accidentals. Al prémer `100%` es recentra automàticament el plànol.
    - **Mode Paret Contínua (`🔗 Seguir traç: SÍ/NO`) per a Habitacions**:
      - Enllaç seqüencial automàtic dissenyat específicament per dibuixar habitacions completes.
      - Un cop traçada una paret, el sistema fixa l'últim extrem amb un halo maragda i etiqueta visible (*🔗 Propera paret*). La següent paret arrenca automàticament des d'aquell punt sense haver de buscar on continuava.

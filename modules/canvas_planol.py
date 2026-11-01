@@ -91,16 +91,17 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     width: 100%;
-    max-height: 560px;
+    height: 380px; /* Alçada fixa de finestra que permet scroll lliure tant vertical com horitzontal */
     margin: 0 auto;
   }}
   #planolCanvas {{
     display: block;
     width: 100%;
+    aspect-ratio: 1 / 1;
     height: auto;
     cursor: crosshair;
     background: #ffffff;
-    touch-action: none; /* Bloqueja l'scroll al tocar sobre el canvas per poder dibuixar */
+    touch-action: none; /* Bloqueja l'scroll nadiu per gestionar-lo amb l'eina Moure */
     transition: width 0.15s ease-out;
   }}
   #planolCanvas.pan-mode {{
@@ -244,12 +245,8 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
 </div>
 
 <div class="canvas-wrapper">
-  <!-- Resolució nativa nítida 800x520 escalada per CSS a la pantalla del mòbil -->
-  <canvas id="planolCanvas" width="800" height="520"></canvas>
-  <div class="status-bar">
-    <span id="toolStatus">👉 Mode Planta: Arrossega el dit per dibuixar una paret recta</span>
-    <span id="modeStatus">Graella: 20px ≈ 0,5m</span>
-  </div>
+  <!-- Resolució nativa nítida 800x800 escalada per CSS a la pantalla del mòbil -->
+  <canvas id="planolCanvas" width="800" height="800"></canvas>
 
   <!-- Modal emergent intern per Cotes i Textos (Compatible 100% mòbils) -->
   <div class="modal-overlay" id="customModal">
@@ -263,6 +260,11 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
       </div>
     </div>
   </div>
+</div>
+
+<div class="status-bar">
+  <span id="toolStatus">👉 Mode Planta: Arrossega el dit per dibuixar una paret recta</span>
+  <span id="modeStatus">Graella: 20px ≈ 0,5m</span>
 </div>
 
 <script>
@@ -296,7 +298,11 @@ function setZoom(val) {{
 }}
 function zoomIn() {{ setZoom(currentZoom + 0.25); }}
 function zoomOut() {{ setZoom(currentZoom - 0.25); }}
-function resetZoom() {{ setZoom(1.0); }}
+function resetZoom() {{
+  setZoom(1.0);
+  canvasWrapper.scrollLeft = (canvasWrapper.scrollWidth - canvasWrapper.clientWidth) / 2;
+  canvasWrapper.scrollTop = (canvasWrapper.scrollHeight - canvasWrapper.clientHeight) / 2;
+}}
 
 // Gestió de Mode de Vista: Planta (Terra) vs Alçat (Paret)
 function setViewMode(mode) {{
