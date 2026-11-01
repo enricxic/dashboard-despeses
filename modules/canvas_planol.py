@@ -88,8 +88,10 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
     border-radius: 10px;
     background: #ffffff;
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    overflow: hidden;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
     width: 100%;
+    max-height: 560px;
     margin: 0 auto;
   }}
   #planolCanvas {{
@@ -99,6 +101,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
     cursor: crosshair;
     background: #ffffff;
     touch-action: none; /* Bloqueja l'scroll al tocar sobre el canvas per poder dibuixar */
+    transition: width 0.15s ease-out;
   }}
   .status-bar {{
     display: flex;
@@ -127,7 +130,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
     padding: 16px;
     border-radius: 12px;
     width: 100%;
-    max-width: 320px;
+    max-width: 340px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     text-align: center;
   }}
@@ -156,8 +159,9 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
     background: #f1f5f9;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
-    padding: 4px 8px;
+    padding: 5px 9px;
     font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
   }}
   .modal-actions {{
@@ -186,6 +190,15 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
 <body>
 
 <div class="toolbar">
+  <!-- Mode de Vista: Planta (Terra) vs Alçat (Paret) -->
+  <div style="display: inline-flex; gap: 3px; background: #e2e8f0; padding: 2px; border-radius: 8px;">
+    <button class="btn active" id="btnModePlanta" onclick="setViewMode('planta')" style="padding: 6px 10px; font-size: 12px;">📐 Planta (Terra)</button>
+    <button class="btn" id="btnModeParet" onclick="setViewMode('paret')" style="padding: 6px 10px; font-size: 12px;">🧱 Alçat (Paret)</button>
+  </div>
+
+  <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
+
+  <!-- Eines de Dibuix -->
   <button class="btn active" id="btnWall" onclick="setTool('wall')">🧱 Paret</button>
   <button class="btn" id="btnRect" onclick="setTool('rect')">🔲 Espai</button>
   <button class="btn" id="btnDim" onclick="setTool('dim')">📏 Cota</button>
@@ -194,6 +207,13 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   
   <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
   
+  <!-- Controls de Zoom -->
+  <div style="display: inline-flex; gap: 2px; align-items: center; background: #f1f5f9; padding: 2px 4px; border-radius: 8px; border: 1px solid #cbd5e1;">
+    <button class="btn" onclick="zoomIn()" style="padding: 5px 8px; font-size: 12px;" title="Apropar plànol">🔍+</button>
+    <button class="btn" onclick="zoomOut()" style="padding: 5px 8px; font-size: 12px;" title="Allunyar plànol">🔍-</button>
+    <button class="btn" id="btnZoomVal" onclick="resetZoom()" style="padding: 5px 8px; font-size: 11px;" title="Restablir zoom a 100%">100%</button>
+  </div>
+
   <button class="btn btn-undo" onclick="undo()">↩️ Desfer</button>
   
   <label class="btn" style="cursor: pointer;">
@@ -202,7 +222,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   </label>
   
   <span style="font-size: 11px; color: #64748b; margin-left: 2px;">Opacitat:</span>
-  <input type="range" id="bgOpacity" min="10" max="100" value="60" style="width: 60px;" oninput="drawAll()">
+  <input type="range" id="bgOpacity" min="10" max="100" value="60" style="width: 50px;" oninput="drawAll()">
   
   <button class="btn" style="color:#ef4444;" onclick="clearCanvas()">🗑️</button>
   <button class="btn btn-success" onclick="downloadImage()">💾 Descarregar PNG</button>
@@ -212,12 +232,23 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   <!-- Resolució nativa nítida 800x520 escalada per CSS a la pantalla del mòbil -->
   <canvas id="planolCanvas" width="800" height="520"></canvas>
   <div class="status-bar">
-    <span id="toolStatus">👉 Arrossega el dit per dibuixar una paret recta</span>
-    <span>Graella: 20px ≈ 0,5m</span>
+    <span id="toolStatus">👉 Mode Planta: Arrossega el dit per dibuixar una paret recta</span>
+    <span id="modeStatus">Graella: 20px ≈ 0,5m</span>
   </div>
 
   <!-- Modal emergent intern per Cotes i Textos (Compatible 100% mòbils) -->
   <div class="modal-overlay" id="customModal">
+    <div class="modal-box">
+      <h4 id="modalTitle">Indica la mesura de la cota</h4>
+      <div class="preset-btns" id="modalPresets"></div>
+      <input type="text" class="modal-input" id="modalInput" autofocus>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal(false)">Cancel·lar</button>
+        <button class="btn-confirm" onclick="closeModal(true)">Acceptar</button>
+      </div>
+    </div>
+  </div>
+</div>
     <div class="modal-box">
       <h4 id="modalTitle">Indica la mesura de la cota</h4>
       <div class="preset-btns" id="modalPresets"></div>
@@ -236,6 +267,8 @@ const ctx = canvas.getContext('2d');
 const GRID_SIZE = 20;
 
 let currentTool = 'wall';
+let currentViewMode = 'planta'; // 'planta' (terra) o 'paret' (alçat)
+let currentZoom = 1.0;
 let isDrawing = false;
 let startX = 0, startY = 0;
 let elements = [];
@@ -243,6 +276,35 @@ let history = [];
 let bgImage = null;
 let bgOpacityInput = document.getElementById('bgOpacity');
 let pendingModalCallback = null;
+
+// Gestió de Zoom
+function setZoom(val) {{
+  currentZoom = Math.max(0.75, Math.min(2.5, Math.round(val * 100) / 100));
+  canvas.style.width = (currentZoom * 100) + '%';
+  const btnZ = document.getElementById('btnZoomVal');
+  if (btnZ) btnZ.innerText = Math.round(currentZoom * 100) + '%';
+}}
+function zoomIn() {{ setZoom(currentZoom + 0.25); }}
+function zoomOut() {{ setZoom(currentZoom - 0.25); }}
+function resetZoom() {{ setZoom(1.0); }}
+
+// Gestió de Mode de Vista: Planta (Terra) vs Alçat (Paret)
+function setViewMode(mode) {{
+  currentViewMode = mode;
+  document.getElementById('btnModePlanta').classList.toggle('active', mode === 'planta');
+  document.getElementById('btnModeParet').classList.toggle('active', mode === 'paret');
+  
+  const status = document.getElementById('toolStatus');
+  const modeStatus = document.getElementById('modeStatus');
+  if (mode === 'paret') {{
+    status.innerText = "🧱 Mode Alçat (Paret): Dibuixa alçades, amples i cotes d'una paret o façana vertical.";
+    modeStatus.innerText = "Vista: Alçat vertical (Sòl a Sostre)";
+  }} else {{
+    status.innerText = "📐 Mode Planta (Terra): Dibuixa la distribució horitzontal del terra.";
+    modeStatus.innerText = "Vista: Planta horitzontal (Terra)";
+  }}
+  drawAll();
+}}
 
 // Si hi ha imatge de fons preexistent
 const preBg = "{existing_bg_b64}";
@@ -257,15 +319,20 @@ if (preBg && preBg.length > 50) {{
 
 function setTool(tool) {{
   currentTool = tool;
-  document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.btn').forEach(b => {{
+    if (['btnWall', 'btnRect', 'btnDim', 'btnText', 'btnEraser'].includes(b.id)) {{
+      b.classList.remove('active');
+    }}
+  }});
   const btn = document.getElementById('btn' + tool.charAt(0).toUpperCase() + tool.slice(1));
   if (btn) btn.classList.add('active');
   
   const status = document.getElementById('toolStatus');
-  if (tool === 'wall') status.innerText = "👉 Paret: Arrossega el dit/ratolí per traçar una paret recta.";
-  else if (tool === 'rect') status.innerText = "👉 Espai: Arrossega en diagonal per crear una habitació o moble.";
-  else if (tool === 'dim') status.innerText = "👉 Cota: Arrossega d'un extrem a l'altre per mesurar la distància.";
-  else if (tool === 'text') status.innerText = "👉 Text: Toca sobre l'estança per posar-li nom o nota.";
+  const esParet = (currentViewMode === 'paret');
+  if (tool === 'wall') status.innerText = esParet ? "👉 Paret: Arrossega per traçar els límits o seccions de la paret." : "👉 Paret: Arrossega el dit per traçar una paret recta al terra.";
+  else if (tool === 'rect') status.innerText = esParet ? "👉 Espai: Arrossega per dibuixar una finestra, porta o moble suspès a la paret." : "👉 Espai: Arrossega per crear una habitació o moble.";
+  else if (tool === 'dim') status.innerText = esParet ? "👉 Cota: Arrossega verticalment per alçada (sostre/sòcol) o horitzontalment per amplada." : "👉 Cota: Arrossega d'un extrem a l'altre per mesurar la distància.";
+  else if (tool === 'text') status.innerText = esParet ? "👉 Text: Toca per anotar rajoles, forats a tapar, calç, ciment o canonades." : "👉 Text: Toca per posar nom a l'estança o nota.";
   else if (tool === 'eraser') status.innerText = "👉 Goma: Toca sobre qualsevol línia per esborrar-la.";
 }}
 
@@ -315,6 +382,36 @@ function drawGrid() {{
     ctx.lineTo(canvas.width, y);
     ctx.stroke();
   }}
+
+  // Guies visuals de referència quan estem en mode Alçat (Paret)
+  if (currentViewMode === 'paret') {{
+    ctx.save();
+    // Línia de Sòl / Terra (part inferior)
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height - 30);
+    ctx.lineTo(canvas.width, canvas.height - 30);
+    ctx.stroke();
+
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = '#059669';
+    ctx.textAlign = 'left';
+    ctx.fillText('⬇️ LÍNIA DE TERRA / SÒL (0,00 m)', 10, canvas.height - 36);
+
+    // Línia de Sostre (part superior)
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(0, 50);
+    ctx.lineTo(canvas.width, 50);
+    ctx.stroke();
+
+    ctx.fillStyle = '#475569';
+    ctx.fillText('⬆️ LÍNIA DE SOSTRE (Alçada: ~2,50 m)', 10, 42);
+    ctx.restore();
+  }}
 }}
 
 function drawAll() {{
@@ -362,8 +459,9 @@ function drawElement(el) {{
     ctx.fill();
     ctx.stroke();
   }} else if (el.type === 'dim') {{
-    ctx.strokeStyle = '#2563eb';
-    ctx.fillStyle = '#2563eb';
+    const isParetCota = el.isWall || false;
+    ctx.strokeStyle = isParetCota ? '#0284c7' : '#2563eb';
+    ctx.fillStyle = isParetCota ? '#0284c7' : '#2563eb';
     ctx.lineWidth = 2.5;
     
     // Línia principal
@@ -372,7 +470,7 @@ function drawElement(el) {{
     ctx.lineTo(el.x2, el.y2);
     ctx.stroke();
     
-    // Fletxes / ticks transversals
+    // Ticks transversals
     const angle = Math.atan2(el.y2 - el.y1, el.x2 - el.x1);
     const tickLen = 7;
     ctx.beginPath();
@@ -382,20 +480,31 @@ function drawElement(el) {{
     ctx.lineTo(el.x2 + Math.sin(angle)*tickLen, el.y2 - Math.cos(angle)*tickLen);
     ctx.stroke();
     
-    // Text de mida
+    // Text de mida amb fons protector per a fotos de paret
     const midX = (el.x1 + el.x2) / 2;
     const midY = (el.y1 + el.y2) / 2;
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillStyle = '#1d4ed8';
+    
+    const txt = el.text || '';
+    const tw = ctx.measureText(txt).width;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillRect(midX - tw/2 - 4, midY - 14, tw + 8, 16);
+    
+    ctx.fillStyle = isParetCota ? '#0369a1' : '#1d4ed8';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(el.text || '', midX, midY - 4);
+    ctx.fillText(txt, midX, midY - 1);
   }} else if (el.type === 'text') {{
-    ctx.font = 'bold 15px sans-serif';
+    ctx.font = 'bold 14px sans-serif';
+    const txt = el.text || '';
+    const tw = ctx.measureText(txt).width;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillRect(el.x - 3, el.y - 10, tw + 6, 18);
+    
     ctx.fillStyle = '#0f172a';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(el.text, el.x, el.y);
+    ctx.fillText(txt, el.x, el.y);
   }}
   ctx.restore();
 }}
@@ -440,9 +549,14 @@ canvas.addEventListener('pointerdown', (e) => {{
   const c = getPointerCoords(e);
   
   if (currentTool === 'text') {{
+    const isParet = (currentViewMode === 'paret');
+    const presetsTxt = isParet
+      ? ["Forat / Clivella", "Ciment cola", "Calç", "Pintura antihumitat", "Sòcol", "Rajola", "Finestra", "Aixeta", "Endoll"]
+      : ["Bany", "Dutxa", "Moble lavabo", "Porta", "Paret mestra", "Finestra"];
+    
     showInputModal(
-      "Etiqueta de l'espai o nota:",
-      ["Bany", "Dutxa", "Moble lavabo", "Porta", "Paret mestra", "Finestra"],
+      isParet ? "Etiqueta o detall de la paret:" : "Etiqueta de l'espai o estança:",
+      presetsTxt,
       "",
       (val) => {{
         if (val) {{
@@ -531,14 +645,31 @@ canvas.addEventListener('pointerup', (e) => {{
     }});
     drawAll();
   }} else if (currentTool === 'dim') {{
-    // Càlcul orientatiu: 40px ≈ 1m
     const pxDist = Math.hypot(endX - startX, endY - startY);
     const mDist = (pxDist / 40).toFixed(2);
+    const isParet = (currentViewMode === 'paret');
+    const isVertical = Math.abs(endY - startY) > Math.abs(endX - startX);
+    
+    let modalTitle = "Indica la mesura de la cota (Terra / Planta):";
+    let modalPresets = [mDist + " m", "1,00 m", "1,50 m", "2,00 m", "2,50 m", "3,00 m", "4,00 m"];
+    let defaultVal = mDist + " m";
+    
+    if (isParet) {{
+      if (isVertical) {{
+        modalTitle = "📐 Alçada de la Paret (Cota vertical):";
+        modalPresets = ["Alt: " + mDist + " m", "Alt: 2,50 m (Sostre)", "Alt: 2,20 m", "Alt: 1,80 m (Dutxa)", "Alt: 1,20 m (Sòcol)", "Alt: 0,90 m (Lavabo)"];
+        defaultVal = "Alt: " + mDist + " m";
+      }} else {{
+        modalTitle = "📐 Amplada de la Paret (Cota horitzontal):";
+        modalPresets = ["Ampl: " + mDist + " m", "Ampl: 1,00 m", "Ampl: 1,50 m", "Ampl: 2,00 m", "Ampl: 2,50 m", "Ampl: 3,00 m", "Ampl: 4,00 m"];
+        defaultVal = "Ampl: " + mDist + " m";
+      }}
+    }}
     
     showInputModal(
-      "Indica la mesura de la cota:",
-      [mDist + " m", "1,00 m", "1,20 m", "1,50 m", "2,00 m", "2,40 m"],
-      mDist + " m",
+      modalTitle,
+      modalPresets,
+      defaultVal,
       (userM) => {{
         elements.push({{
           type: 'dim',
@@ -546,7 +677,8 @@ canvas.addEventListener('pointerup', (e) => {{
           y1: startY,
           x2: endX,
           y2: endY,
-          text: userM || (mDist + " m")
+          text: userM || defaultVal,
+          isWall: isParet
         }});
         drawAll();
       }}
