@@ -409,8 +409,8 @@ def _render_materials_tab(projecte: Dict[str, Any]):
 
         st.caption(f"📦 **{n_stock}** en stock &nbsp;|&nbsp; ✅ **{n_comprat}** comprats &nbsp;|&nbsp; ⏳ **{n_pendent}** pendents de compra &nbsp;*(Total: {len(materials)} materials)*")
 
-        # Columnes per fila (4 columnes)
-        num_cols = 4
+        # Columnes per fila: 6 miniatures per fila per un format compacte i normalitzat
+        num_cols = 6
         rows = [materials[i:i + num_cols] for i in range(0, len(materials), num_cols)]
         for row_idx, row in enumerate(rows):
             cols = st.columns(num_cols)
@@ -423,12 +423,24 @@ def _render_materials_tab(projecte: Dict[str, Any]):
 
                 with cols[idx]:
                     with st.container(border=True):
-                        # 1. Miniatura neta (sense taules de preus ni textos feixucs)
+                        # 1. Caixa normalitzada de mida fixa (105px d'alçada)
+                        # object-fit: contain respecta la proporció vertical/horitzontal original sense deformar-la mai
                         if img_url:
-                            st.image(img_url, use_container_width=True)
+                            st.markdown(
+                                f"""
+                                <div class="thumb-img-box" style="width: 100%; height: 105px; display: flex; align-items: center; justify-content: center; background: #0f172a; border-radius: 6px; overflow: hidden; margin-bottom: 2px;">
+                                    <img src="{img_url}" style="max-width: 100%; max-height: 105px; width: auto; height: auto; object-fit: contain; display: block;" />
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
                         else:
                             st.markdown(
-                                "<div style='background:#1e293b; height:120px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:36px; border:1px dashed #475569;'>🧱</div>",
+                                """
+                                <div class="thumb-img-box" style="width: 100%; height: 105px; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; border: 1px dashed #475569; font-size: 28px; margin-bottom: 2px;">
+                                    🧱
+                                </div>
+                                """,
                                 unsafe_allow_html=True
                             )
 
@@ -441,7 +453,7 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                             badge = "⏳ Pendent"
 
                         # 3. Botó d'obertura que respon al clic o al doble clic
-                        lbl = f"{badge} · {nom_m}" if len(nom_m) <= 18 else f"{badge} · {nom_m[:16]}…"
+                        lbl = f"{badge} · {nom_m}" if len(nom_m) <= 13 else f"{badge} · {nom_m[:11]}…"
                         if st.button(lbl, key=f"btn_card_{project_id}_{mat_id}", use_container_width=True, help=f"Fes clic o doble clic per obrir la fitxa de: {nom_m}"):
                             dialog_detall_material(project_id, m)
 
@@ -452,13 +464,13 @@ def _render_materials_tab(projecte: Dict[str, Any]):
             (function() {
                 const doc = window.parent ? window.parent.document : document;
                 setTimeout(() => {
-                    const imgs = doc.querySelectorAll('[data-testid="stImage"] img');
-                    imgs.forEach(img => {
-                        img.style.cursor = 'pointer';
-                        img.setAttribute('title', 'Fes doble clic per obrir les dades d\\'aquest material');
-                        img.ondblclick = function(e) {
+                    const boxes = doc.querySelectorAll('.thumb-img-box');
+                    boxes.forEach(box => {
+                        box.style.cursor = 'pointer';
+                        box.setAttribute('title', 'Fes doble clic per obrir la fitxa del material');
+                        box.ondblclick = function(e) {
                             e.preventDefault();
-                            const block = img.closest('[data-testid="stVerticalBlock"]');
+                            const block = box.closest('[data-testid="stVerticalBlock"]');
                             if (block) {
                                 const btn = block.querySelector('button');
                                 if (btn) btn.click();
