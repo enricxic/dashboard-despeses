@@ -11,7 +11,7 @@ Totes les dates es mostren i s'introdueixen en format català/europeu DD/MM/AAAA
 
 import streamlit as st
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Dict, Any, List
 
 from core.projectes_manager import (
@@ -166,7 +166,7 @@ def _render_projecte_header(projecte: Dict[str, Any]):
                     p_inici = parse_date_cat(projecte.get("data_inici")) or date.today()
                     f_inici = st.date_input("Data inici (DD/MM/AAAA):", value=p_inici, format="DD/MM/YYYY")
                 with col_d3:
-                    p_fi = parse_date_cat(projecte.get("data_fi_prevista")) or (date.today() + pd.Timedelta(days=30)).to_pydatetime().date()
+                    p_fi = parse_date_cat(projecte.get("data_fi_prevista")) or (date.today() + timedelta(days=30))
                     f_fi = st.date_input("Data fi prevista (DD/MM/AAAA):", value=p_fi, format="DD/MM/YYYY")
 
                 f_press = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=pressupost_est, step=50.0)
@@ -400,7 +400,7 @@ def _render_fases_tab(projecte: Dict[str, Any]):
             with col_fd1:
                 fd_in = st.date_input("Data d'inici prevista (DD/MM/AAAA):", value=date.today(), format="DD/MM/YYYY")
             with col_fd2:
-                fd_out = st.date_input("Data de finalització (DD/MM/AAAA):", value=date.today() + pd.Timedelta(days=7), format="DD/MM/YYYY")
+                fd_out = st.date_input("Data de finalització (DD/MM/AAAA):", value=date.today() + timedelta(days=7), format="DD/MM/YYYY")
             
             sub_fase = st.form_submit_button("Crear Fase", type="primary")
             if sub_fase and f_nom:
@@ -491,7 +491,7 @@ def _render_modal_nou_projecte():
         with col_d1:
             d_in = st.date_input("Data prevista d'inici (DD/MM/AAAA):", value=date.today(), format="DD/MM/YYYY")
         with col_d2:
-            d_out = st.date_input("Data prevista de finalització (DD/MM/AAAA):", value=date.today() + pd.Timedelta(days=30), format="DD/MM/YYYY")
+            d_out = st.date_input("Data prevista de finalització (DD/MM/AAAA):", value=date.today() + timedelta(days=30), format="DD/MM/YYYY")
 
         col_sub1, col_sub2 = st.columns([1, 1])
         with col_sub1:
