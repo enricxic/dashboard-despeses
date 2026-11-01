@@ -599,6 +599,15 @@ drawAll();
 </body>
 </html>"""
 
+@st.dialog("📷 Fotografia de l'Obra")
+def dialog_veure_foto_gran(foto_path: str, titol: str, descripcio: str = ""):
+    """Finestra modal per veure la fotografia a mida completa."""
+    st.markdown(f"### {titol}")
+    if foto_path:
+        st.image(foto_path, use_container_width=True)
+    if descripcio:
+        st.info(descripcio)
+
 def render_planol_tab(projecte: Dict[str, Any]):
     """Renderitza la subpestanya de Plànol i Galeria de Fotos del projecte."""
     project_id = projecte.get("id", "nou")
@@ -681,25 +690,85 @@ def render_planol_tab(projecte: Dict[str, Any]):
 
     fotos = projecte.get("fotos", [])
     if fotos:
-        cols = st.columns(3)
-        for i, f in enumerate(fotos):
-            col = cols[i % 3]
-            with col:
-                tipus_badge = {
-                    "abans": "🔴 Abans",
-                    "durant": "🟡 Durant l'obra",
-                    "despres": "🟢 Resultat Final",
-                    "altre": "⚪ Altre"
-                }.get(f.get("tipus", "altre"), "⚪ Foto")
-                
-                st.markdown(f"**{tipus_badge}** — *{f.get('data', '')}*")
-                if f.get("path"):
-                    st.image(f.get("path"), use_container_width=True)
-                if f.get("descripcio"):
-                    st.caption(f.get("descripcio"))
-                if st.button("🗑️ Eliminar foto", key=f"del_foto_{project_id}_{f.get('id', i)}"):
-                    delete_projecte_foto(project_id, f.get("id"))
-                    st.rerun()
+        num_cols = 4  # 4 columnes per fila per una mida compacta i equilibrada
+        rows = [fotos[i:i + num_cols] for i in range(0, len(fotos), num_cols)]
+        for r_idx, row in enumerate(rows):
+            cols = st.columns(num_cols)
+            for idx, f in enumerate(row):
+                col = cols[idx]
+                with col:
+                    with st.container(border=True):
+                        tipus_badge = {
+                            "abans": "🔴 Abans",
+                            "durant": "🟡 Durant",
+                            "despres": "🟢 Resultat",
+                            "altre": "⚪ Foto"
+                        }.get(f.get("tipus", "altre"), "⚪ Foto")
+                        
+                        f_path = f.get("path")
+                        f_data = f.get("data", "")
+                        f_desc = f.get("descripcio", "")
+                        f_id = f.get("id", f"{r_idx}_{idx}")
+
+                        # Caixa normalitzada de mida fixa (180px d'alçada)
+                        # object-fit: contain respecta la proporció vertical original sense fer-la gegant
+                        if f_path:
+                            st.markdown(
+                                f"""
+                                <div class="project-photo-box" style="width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; background: #0f172a; border-radius: 6px; overflow: hidden; margin-bottom: 4px; cursor: pointer;">
+                                    <img src="{f_path}" style="max-width: 100%; max-height: 180px; width: auto; height: auto; object-fit: contain; display: block;" />
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+                        else:
+                            st.markdown(
+                                """
+                                <div style="width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; font-size: 32px; margin-bottom: 4px;">
+                                    📷
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+
+                        st.caption(f"**{tipus_badge}** · *{f_data}*")
+                        if f_desc:
+                            st.caption(f_desc[:40] + ("…" if len(f_desc) > 40 else ""))
+
+                        col_b1, col_b2 = st.columns([1.2, 0.8])
+                        with col_b1:
+                            if st.button("🔍 Veure", key=f"zoom_foto_{project_id}_{f_id}", use_container_width=True, help="Obrir foto a pantalla gran"):
+                                dialog_veure_foto_gran(f_path, f"{tipus_badge} — {f_data}", f_desc)
+                        with col_b2:
+                            if st.button("🗑️", key=f"del_foto_{project_id}_{f_id}", use_container_width=True, help="Eliminar aquesta foto"):
+                                delete_projecte_foto(project_id, f.get("id"))
+                                st.rerun()
+
+        # Suport de doble clic directe a les fotos de la galeria per ampliar
+        st.markdown(
+            """
+            <script>
+            (function() {
+                const doc = window.parent ? window.parent.document : document;
+                setTimeout(() => {
+                    const photoBoxes = doc.querySelectorAll('.project-photo-box');
+                    photoBoxes.forEach(box => {
+                        box.setAttribute('title', 'Fes doble clic per veure a pantalla gran');
+                        box.ondblclick = function(e) {
+                            e.preventDefault();
+                            const block = box.closest('[data-testid="stVerticalBlock"]');
+                            if (block) {
+                                const btn = block.querySelector('button');
+                                if (btn) btn.click();
+                            }
+                        };
+                    });
+                }, 300);
+            })();
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
     else:
         st.info("Encara no s'ha afegit cap fotografia a aquest projecte.")
 
