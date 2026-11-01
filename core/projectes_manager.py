@@ -73,6 +73,18 @@ def to_iso_date(d: Any) -> str:
 # CÀRREGA I DESAT HÍBRID
 # ==========================================
 
+def _is_valid_project(p: Any) -> bool:
+    """Verifica que l'objecte sigui un projecte real i no un apunt d'altres mòduls."""
+    if not isinstance(p, dict):
+        return False
+    # Descarta apunts de consum elèctric o aigua que haguessin entrat per col·lisió
+    if "kwhTotal" in p or "mesAny" in p or "comercialitzadora" in p or "m3" in p:
+        return False
+    # Un projecte vàlid té nom, id de projecte o llistes de materials/fases
+    if p.get("nom") or str(p.get("id", "")).startswith("proj_") or "materials" in p or "fases" in p:
+        return True
+    return False
+
 def load_projectes() -> List[Dict[str, Any]]:
     """Carrega la llista de projectes des de Supabase (id=9) o fallback local."""
     # 1. Intentar carregar de Supabase
@@ -90,8 +102,9 @@ def load_projectes() -> List[Dict[str, Any]]:
         if res.data and len(res.data) > 0 and res.data[0].get("config_json"):
             cfg = res.data[0]["config_json"]
             if isinstance(cfg, list):
-                _save_local(cfg)
-                return cfg
+                valid_projs = [p for p in cfg if _is_valid_project(p)]
+                _save_local(valid_projs)
+                return valid_projs
     except Exception:
         pass
 
@@ -101,7 +114,7 @@ def load_projectes() -> List[Dict[str, Any]]:
             with open(PROJECTES_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list):
-                    return data
+                    return [p for p in data if _is_valid_project(p)]
         except Exception:
             pass
 
@@ -109,8 +122,9 @@ def load_projectes() -> List[Dict[str, Any]]:
 
 def save_projectes(projectes: List[Dict[str, Any]]) -> bool:
     """Desa la llista de projectes tant a local com a Supabase."""
+    valid_projs = [p for p in projectes if _is_valid_project(p)]
     # 1. Sempre desar a fitxer local
-    _save_local(projectes)
+    _save_local(valid_projs)
 
     # 2. Replicar a Supabase
     try:
@@ -125,8 +139,8 @@ def save_projectes(projectes: List[Dict[str, Any]]) -> bool:
         supabase = get_supabase_client(role)
         supabase.table("app_config").upsert({
             "id": CONFIG_ID_PROJECTES,
-            "config_json": projectes,
-            "nom": "projectes_manteniment"
+            "config_json": [p for p in projectes if _is_valid_project(p)]
+            
         }).execute()
         return True
     except Exception:
