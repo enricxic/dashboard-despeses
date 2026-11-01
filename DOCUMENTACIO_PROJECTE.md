@@ -989,11 +989,13 @@ Monitorització de factures de compra, pòlisses d'assegurança i tiquets de gar
 
 ##### 5.2.4 Pestanya 4: `🏗️ Projectes d'Obra i Reformes` (Plànols Canvas, Materials, Fases i Assistent IA)
 
-Espai integral per a la planificació, disseny i seguiment d'obres majors, reformes i projectes de millora de la llar (ex: reforma de bany, substitució de terres, instal·lació de pèrgoles, renovació de pintura o cuina):
+Espai integral per a la planificació, disseny i seguiment d'obres majors, reformes i projectes de millora de la llar (ex: reforma de bany, impermeabilització de parets, substitució de terres, instal·lació de pèrgoles, renovació de pintura o cuina):
 
-1. **Arquitectura de Dades i Persistència**:
+1. **Arquitectura de Dades, Persistència i Capçalera**:
    - Taula `app_config` de Supabase (`id = 11`, `projectes_manteniment`) amb fallback local a `data/projectes_manteniment.json` (`core/projectes_manager.py`).
    - Totes les dates es presenten, s'introdueixen i es calculen estrictament en format català/europeu **`DD/MM/AAAA`** (`date.today() + timedelta(...)` i `st.date_input(format="DD/MM/YYYY")`).
+   - **Mètrica de Calendari sense retallades**: Presentació jeràrquica a la capçalera amb valor principal gran per a la Data d'Inici (`DD/MM/AAAA`) i línia secundària estilitzada per a la finalització (`🏁 Fi: DD/MM/AAAA`) amb amplada adaptativa i tooltip informatiu, eliminant els desbordaments de text (`...`).
+   - **Esborrat Segur de Projectes**: Botó destacat `🗑️ Esborrar aquest Projecte` a l'acordió d'opcions amb diàleg modal de confirmació clara (`@st.dialog("🗑️ Confirmar Eliminació del Projecte")`) que evita eliminacions accidentals.
 
 2. **Plànol i Croquis Interactiu (HTML5 Canvas Tàctil Mòbil/PC amb Foto de Fons)**:
    - Component de dibuix autònom (`modules/canvas_planol.py`) adaptat 100% a telèfons mòbils i tauletes mitjançant **Pointer Events** unificats i `touch-action: none` (permet arrossegar el dit sobre la quadreta sense desplaçar ni bloquejar la pàgina).
@@ -1002,24 +1004,38 @@ Espai integral per a la planificació, disseny i seguiment d'obres majors, refor
    - **Suport per a fotografia de fons**: Permet carregar una imatge real de l'estança o la foto d'un croquis fet a mà en paper, amb regulador d'opacitat per calcar i acotar al damunt.
    - **Guia d'Ús integrada**: Acordió desplegable (`📖 Guia d'Ús: Com funciona l'editor de plànols?`) disponible permanentment a la pròpia pestanya per consultar el funcionament en qualsevol moment.
    - Botó de descàrrega (`💾 Descarregar PNG`) i formulari de registre del plànol oficial del projecte.
-   - **Galeria fotogràfica de seguiment**: Fotografies classificades en *🔴 Abans*, *🟡 Durant l'obra* i *🟢 Després / Resultat final*, amb dates en `DD/MM/AAAA` i descripció.
+   - **Galeria fotogràfica de seguiment normalitzada**:
+     - Graella de 4 columnes amb caixes d'alçada uniforme (`180px`) i regla CSS `object-fit: contain` sobre fons fosc suau (`#0f172a`), evitant que les fotografies verticals preses amb el mòbil es desbordin ocupant tota la pantalla.
+     - **Zoom en Alta Resolució**: Botó `🔍 Veure` i esdeveniment de doble clic directe a la fotografia per obrir-la a pantalla completa mitjançant `@st.dialog("📷 Fotografia de l'Obra")`.
+     - Classificació per etapes (*🔴 Abans*, *🟡 Durant l'obra* i *🟢 Resultat final*), amb dates en `DD/MM/AAAA` i descripció.
 
-3. **Llistat de Materials i Control Pressupostari**:
-   - Taula de queviures d'obra: article, proveïdor (Obramat, Leroy Merlin, Bauhaus, etc.), quantitat, preu estimat i preu real pagat.
-   - Casella interactiva de `Comprat` en 1 clic per seguir els materials que ja es tenen a la llar.
-   - Mètriques KPI de despesa real vs pressupost màxim i desviació (€ i %).
+3. **Graella Visual de Materials, Control de Stock i Proveïdors en Memòria**:
+   - **Miniatures Compactes i Normalitzades**: Graella de 6 columnes per fila amb alçada fixa (`105px`) i `object-fit: contain` per preservar proporcions d'imatges verticals de mòbil (sacs de ciment, calç, etc.) sense deformar-les.
+   - **Obertura per Doble Clic o Clic**: En fer doble clic sobre qualsevol miniatura o prémer el botó inferior de la fitxa s'obre el diàleg modal complet `@st.dialog("🧱 Fitxa i Detalls del Material")`.
+   - **Fitxa Integral del Material**:
+     - Visualització i gestió de la foto: pujada d'arxiu/foto mòbil en Base64, generació instantània amb IA (Pollinations.ai), enllaç web extern o eliminació de foto.
+     - Edició de nom d'article, quantitat i preus (estimat i real).
+   - **Suport de Materials "Ja en Stock" (Cost 0 €)**:
+     - Possibilitat d'indicar la disponibilitat com a `📦 Ja en stock (a casa / reaprofitat)`.
+     - Distintiu visual `📦 Stock` a la miniatura i còmput automàtic de 0,00 € a la despesa real del projecte, assegurant que no resti pressupost a la llar.
+   - **Memòria Persistent de Proveïdors**:
+     - Catàleg emmagatzemat a `data/proveidors_projectes.json` gestionat per `get_llista_proveidors()` i `add_proveidor_memoria()`.
+     - Opció `➕ Afegir un altre proveïdor...` al desplegable que guarda de forma immediata qualsevol nou comerç o distribuïdor introduït per l'usuari perquè quedi disponible a perpetuïtat a tots els projectes.
 
-4. **Fases d'Execució i Progrés de l'Obra**:
-   - Desglossament per etapes constructives seqüencials (ex: Enderroc, Instal·lacions, Revestiments, Pintura).
-   - Checklist de subtasques interactives.
-   - Barra de progrés automàtica que calcula el percentatge d'execució assolit ($0\%$ a $100\%$).
+4. **Fases d'Execució, Checklist i Finalització d'Obra**:
+   - Desglossament per etapes constructives seqüencials (ex: Enderroc, Instal·lacions, Revestiments, Pintura) amb dates en `DD/MM/AAAA`.
+   - **Marcatge Directe de Fase Acabada**: Botó destacat `✅ Marcar Fase Acabada` dins de cada etapa (i botó `↩️ Reobrir Fase`), que commuta la fase a 100%, posa l'indicador en verd `🟢` i completa totes les subtasques associades.
+   - **Pregunta i Tancament d'Obra Automàtic**:
+     - Quan es completa la darrera fase (o totes les subtasques), el sistema activa el diàleg modal festiu `@st.dialog("🏆 Finalitzar l'Obra")` amb animació de globus (`st.balloons()`), preguntant: *"Totes les fases estan completades! La feina de l'obra està acabada? Vols marcar el projecte com a Finalitzat?"*.
+     - En confirmar, l'estat del projecte s'actualitza a `Finalitzat` i la capçalera reflecteix el 100% assolit.
+     - Banner superior a la pestanya de fases per confirmar o reobrir el projecte en qualsevol moment.
 
 5. **Assistent d'Intel·ligència Artificial d'Obra (`core/ai_projectes.py`)**:
    - Xat interactiu especialitzat integrat al context de cada projecte.
    - Assessorament en materials idonis, coles per a zones humides, aïllaments i eines necessàries.
    - Tutorials i procediments pas a pas amb temps d'assecat recomanats.
    - Orientació de preus mitjans de mercat per metre quadrat.
-   - **Generació 1-Clic**: Botons `✨ Suggerir Materials amb IA` i `✨ Generar Fases amb IA` per omplir automàticament les taules del projecte amb recomanacions professionals.
+   - **Generació 1-Clic**: Botons `✨ Suggerir Materials amb IA` (amb fotografies automàtiques de producte) i `✨ Generar Fases amb IA` per omplir automàticament les taules del projecte amb recomanacions professionals.
 
 ---
 
