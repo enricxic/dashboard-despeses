@@ -80,6 +80,7 @@ Per assegurar la persistència completa de les dades al núvol i evitar pèrdues
 | **8** | `data/registre_manteniment.json` / `csv/manteniment.csv` | Registre de tasques, reparacions i periodicitats de la llar |
 | **9** | `data/consum_llum.json` / `csv/consum_llum.csv` | Factures elèctriques, potències i consums per tram (històric) |
 | **10** | `data/consum_aigua.json` / `csv/consum_aigua.csv` | Factures d'aigua, lectures de comptador i consums en m³ |
+| **11** | `data/projectes_manteniment.json` | Projectes d'obra, reformes, plànols, materials i fases de la llar |
 
 ---
 
@@ -104,11 +105,14 @@ Dashboard/
 │   ├── llm.py / llm_ui.py         # Connectors d'intel·ligència artificial (Gemini, DeepSeek, etc.)
 │   ├── llum_manager.py            # Preus PVPC directe, optimitzador d'acumuladors i estudi solar PVGIS
 │   ├── manteniment_manager.py     # Gestor de manuals, garanties i tasques de manteniment periòdiques
+│   ├── projectes_manager.py       # Gestor de dades i persistència híbrida de projectes d'obra (id=11)
+│   ├── ai_projectes.py            # Assistent IA d'obra (materials, tutorials pas a pas, preus de mercat)
 │   └── ocr_rules.md               # Regles d'extracció de tiquets per supermercat
 ├── modules/
 │   ├── admin.py                   # ⚙️ Configuració global i laboratori IA (Harness)
 │   ├── bases_dades.py             # 🗄️ Gestor de taules Supabase en temps real
 │   ├── calendari.py               # 📅 Agenda familiar (Graella, Dia, Fet/No fet, mòbil 1 línia)
+│   ├── canvas_planol.py           # 📐 Editor gràfic HTML5 Canvas tàctil per a mòbil/PC i galeria d'obra
 │   ├── compres.py                 # 🛒 Compres Super (OCR, tiquets, desglossament, rebost, estalvi)
 │   ├── cotxe.py                   # 🚗 Km, repostatge, consum i manteniment col·lapsable
 │   ├── dashboard.py               # 📊 Dashboard general i KPIs financers
@@ -116,9 +120,10 @@ Dashboard/
 │   ├── economic.py                # 📈 Previsió despeses/ingressos, nou any, pagues extres, inversions
 │   ├── impressora.py              # 🖨️ Controlador d'impressora de tiquets de compra
 │   ├── llum_aigua.py              # 💡 Preus PVPC, acumuladors, factures PDF i simulador solar
-│   ├── manteniment.py             # 🛠️ Tasques periòdiques, subtasques, manuals i garanties PDF
+│   ├── manteniment.py             # 🛠️ Tasques periòdiques, subtasques, manuals, garanties i projectes
 │   ├── medicacio.py               # 💊 Control de medicació, pautes i tutelats
 │   ├── menjar.py                  # 🍽️ Receptari, recomanador IA, calories i mise en place
+│   ├── projectes_ui.py            # 🏗️ Interfície completa de la pestanya de projectes i reformes
 │   ├── seguretat.py               # 📹 Estat de càmeres, accessos i alarmes
 │   └── sincronitzacio.py          # 🔄 Consolidació de dades offline retingudes
 ├── PDF/                           # Magatzem centralitzat de documents en PDF
@@ -987,13 +992,16 @@ Monitorització de factures de compra, pòlisses d'assegurança i tiquets de gar
 Espai integral per a la planificació, disseny i seguiment d'obres majors, reformes i projectes de millora de la llar (ex: reforma de bany, substitució de terres, instal·lació de pèrgoles, renovació de pintura o cuina):
 
 1. **Arquitectura de Dades i Persistència**:
-   - Taula `app_config` de Supabase (`id = 9`, `projectes_manteniment`) amb fallback local a `data/projectes_manteniment.json` (`core/projectes_manager.py`).
-   - Totes les dates es presenten i s'introdueixen estrictament en format català **`DD/MM/AAAA`**.
+   - Taula `app_config` de Supabase (`id = 11`, `projectes_manteniment`) amb fallback local a `data/projectes_manteniment.json` (`core/projectes_manager.py`).
+   - Totes les dates es presenten, s'introdueixen i es calculen estrictament en format català/europeu **`DD/MM/AAAA`** (`date.today() + timedelta(...)` i `st.date_input(format="DD/MM/YYYY")`).
 
-2. **Plànol i Croquis Interactiu (HTML5 Canvas amb Foto de Fons)**:
-   - Component de dibuix autònom (`modules/canvas_planol.py`) que permet dibuixar parets rectes, espais rectangulars, etiquetes d'estances i cotes amb mides en metres (ex: `2,40 m`).
+2. **Plànol i Croquis Interactiu (HTML5 Canvas Tàctil Mòbil/PC amb Foto de Fons)**:
+   - Component de dibuix autònom (`modules/canvas_planol.py`) adaptat 100% a telèfons mòbils i tauletes mitjançant **Pointer Events** unificats i `touch-action: none` (permet arrossegar el dit sobre la quadreta sense desplaçar ni bloquejar la pàgina).
+   - Eines integrades: Parets rectes (`🧱 Paret`), espais i habitacions rectangulars (`🔲 Espai`), cotes de distància (`📏 Cota`), etiquetes de text (`🔤 Text`), goma d'esborrar (`🧹 Goma`) i botó de reversió immediata (`↩️ Desfer`).
+   - **Modal intern tàctil**: Formulari emergent intern compatible amb Android/iOS per introduir mides i noms d'estances sense dependre de `window.prompt()`.
    - **Suport per a fotografia de fons**: Permet carregar una imatge real de l'estança o la foto d'un croquis fet a mà en paper, amb regulador d'opacitat per calcar i acotar al damunt.
-   - Botó de descàrrega i desat del plànol oficial del projecte.
+   - **Guia d'Ús integrada**: Acordió desplegable (`📖 Guia d'Ús: Com funciona l'editor de plànols?`) disponible permanentment a la pròpia pestanya per consultar el funcionament en qualsevol moment.
+   - Botó de descàrrega (`💾 Descarregar PNG`) i formulari de registre del plànol oficial del projecte.
    - **Galeria fotogràfica de seguiment**: Fotografies classificades en *🔴 Abans*, *🟡 Durant l'obra* i *🟢 Després / Resultat final*, amb dates en `DD/MM/AAAA` i descripció.
 
 3. **Llistat de Materials i Control Pressupostari**:

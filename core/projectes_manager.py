@@ -16,7 +16,7 @@ from typing import List, Dict, Optional, Any
 _CURR_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(_CURR_DIR, ".."))
 PROJECTES_FILE = os.path.join(PROJECT_ROOT, "data", "projectes_manteniment.json")
-CONFIG_ID_PROJECTES = 9
+CONFIG_ID_PROJECTES = 11
 
 # ==========================================
 # UTILITATS DE FORMAT DE DATA (DD/MM/AAAA)
