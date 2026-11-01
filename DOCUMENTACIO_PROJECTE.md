@@ -1002,7 +1002,7 @@ Espai integral per a la planificació, disseny i seguiment d'obres majors, refor
    - Eines integrades: Parets rectes (`🧱 Paret`), espais i habitacions rectangulars (`🔲 Espai`), cotes de distància (`📏 Cota`), etiquetes de text (`🔤 Text`), goma d'esborrar (`🧹 Goma`) i botó de reversió immediata (`↩️ Desfer`).
    - **Modal intern tàctil**: Formulari emergent intern compatible amb Android/iOS per introduir mides i noms d'estances sense dependre de `window.prompt()`.
    - **Suport per a fotografia de fons**: Permet carregar una imatge real de l'estança o la foto d'un croquis fet a mà en paper, amb regulador d'opacitat per calcar i acotar al damunt.
-   - **Guia d'Ús integrada**: Acordió desplegable (`📖 Guia d'Ús: Com funciona l'editor de plànols?`) disponible permanentment a la pròpia pestanya per consultar el funcionament en qualsevol moment.
+   - **Guia d'Ús integrada**: Acordió desplegable (`📖 Guia d'Ús: Com funciona l'editor de plànols?`) disponible permanentment a la pròpia pestanya, que centralitza totes les instruccions tàctils per a ús mòbil i la descripció pas a pas de cada eina (alliberant l'espai vertical útil de l'editor Canvas).
    - Botó de descàrrega (`💾 Descarregar PNG`) i formulari de registre del plànol oficial del projecte.
    - **Galeria fotogràfica de seguiment normalitzada**:
      - Graella de 4 columnes amb caixes d'alçada uniforme (`180px`) i regla CSS `object-fit: contain` sobre fons fosc suau (`#0f172a`), evitant que les fotografies verticals preses amb el mòbil es desbordin ocupant tota la pantalla.

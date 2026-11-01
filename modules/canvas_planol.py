@@ -620,8 +620,15 @@ def render_planol_tab(projecte: Dict[str, Any]):
 
     # Guia d'ús desplegable integrada al projecte
     with st.expander("📖 Guia d'Ús: Com funciona l'editor de plànols?", expanded=False):
+        st.info("""📱 **Com utilitzar-lo al mòbil (tacte directe):**
+- **🧱 Paret / 🔲 Espai:** Arrossega el dit sobre la quadreta per traçar la línia o crear l'habitació.
+- **📏 Cota:** Arrossega el dit d'un extrem a l'altre per indicar una mesura en metres (s'obrirà un diàleg tàctil intern per triar o posar la mida).
+- **🔤 Text:** Toca sobre l'estança per posar-li nom (ex: *Bany, Dutxa, Cuina*).
+- **📷 Foto de fons:** Carrega una foto de l'estança real o d'un croquis en paper per dibuixar-hi al damunt.
+- **↩️ Desfer:** Elimina el darrer traç si t'has equivocat.
+""")
         st.markdown("""
-        #### 📱 Com funciona l'editor de plànols pas a pas
+        #### 📋 Guia d'eines pas a pas
 
         1. **🧱 Paret / Línia:**
            - Toca el botó **`🧱 Paret`**.
@@ -663,7 +670,6 @@ def render_planol_tab(projecte: Dict[str, Any]):
 
     # Editor interactiu Canvas
     with st.expander("✏️ Obrir Editor Gràfic de Plànol (Canvas)", expanded=(preview_png is None)):
-        st.info("📱 **Com utilitzar-lo al mòbil:**\n- **🧱 Paret / 🔲 Espai:** Arrossega el dit sobre la quadreta per traçar la línia o habitació.\n- **📏 Cota:** Arrossega el dit d'un extrem a l'altre per indicar una mesura en metres (s'obrirà un diàleg per posar la mida).\n- **🔤 Text:** Toca sobre l'estança per posar-li nom (ex: *Bany*, *Dutxa*).\n- **📷 Foto de fons:** Carrega una foto de l'estança o d'un croquis en paper per dibuixar-hi al damunt.\n- **↩️ Desfer:** Elimina el darrer traç si t'has equivocat.")
         html_code = get_canvas_html(project_id, existing_bg_b64=bg_b64)
         components.html(html_code, height=650, scrolling=False)
 
