@@ -210,7 +210,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   <button class="btn" id="btnRect" onclick="setTool('rect')">🔲 Espai</button>
   <button class="btn" id="btnDim" onclick="setTool('dim')">📏 Cota</button>
   <button class="btn" id="btnText" onclick="setTool('text')">🔤 Text</button>
-  <button class="btn" id="btnEraser" onclick="setTool('eraser')">🧹 Goma</button>
+  <button class="btn" id="btnEraser" onclick="toggleEraser()" title="Activa o desactiva la goma d'esborrar">🧹 Goma</button>
   <button class="btn" id="btnPan" onclick="togglePan()" title="Activa o desactiva el mode de moure la vista">🖐️ Moure</button>
   
   <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
@@ -310,8 +310,18 @@ function togglePan() {{
   if (currentTool === 'pan') {{
     setTool(previousDrawingTool || 'wall');
   }} else {{
-    previousDrawingTool = currentTool;
+    previousDrawingTool = (currentTool !== 'eraser') ? currentTool : 'wall';
     setTool('pan');
+  }}
+}}
+
+// Commutador ràpid de la Goma d'esborrar
+function toggleEraser() {{
+  if (currentTool === 'eraser') {{
+    setTool(previousDrawingTool || 'wall');
+  }} else {{
+    previousDrawingTool = (currentTool !== 'pan') ? currentTool : 'wall';
+    setTool('eraser');
   }}
 }}
 
@@ -345,12 +355,15 @@ if (preBg && preBg.length > 50) {{
 }}
 
 function setTool(tool) {{
-  // Si es torna a prémer Moure mentre ja està actiu, commuta a l'eina anterior
+  // Commutador si es torna a prémer la mateixa eina especial activa
   if (tool === 'pan' && currentTool === 'pan') {{
     tool = previousDrawingTool || 'wall';
   }}
+  if (tool === 'eraser' && currentTool === 'eraser') {{
+    tool = previousDrawingTool || 'wall';
+  }}
   
-  if (currentTool !== 'pan') {{
+  if (currentTool !== 'pan' && currentTool !== 'eraser') {{
     previousDrawingTool = currentTool;
   }}
 
@@ -385,6 +398,23 @@ function setTool(tool) {{
     }}
   }}
 
+  const btnEraser = document.getElementById('btnEraser');
+  if (btnEraser) {{
+    if (tool === 'eraser') {{
+      btnEraser.classList.add('active');
+      btnEraser.innerHTML = '🧹 Goma: ON';
+      btnEraser.style.background = '#dc2626';
+      btnEraser.style.borderColor = '#b91c1c';
+      btnEraser.style.color = '#ffffff';
+    }} else {{
+      btnEraser.classList.remove('active');
+      btnEraser.innerHTML = '🧹 Goma';
+      btnEraser.style.background = '';
+      btnEraser.style.borderColor = '';
+      btnEraser.style.color = '';
+    }}
+  }}
+
   if (tool === 'pan') {{
     canvas.classList.add('pan-mode');
   }} else {{
@@ -407,12 +437,59 @@ function setTool(tool) {{
   else if (tool === 'rect') status.innerText = esParet ? "👉 Espai: Arrossega per dibuixar una finestra, porta o moble suspès a la paret." : "👉 Espai: Arrossega per crear una habitació o moble.";
   else if (tool === 'dim') status.innerText = esParet ? "👉 Cota: Arrossega verticalment per alçada (sostre/sòcol) o horitzontalment per amplada." : "👉 Cota: Arrossega d'un extrem a l'altre per mesurar la distància.";
   else if (tool === 'text') status.innerText = esParet ? "👉 Text: Toca per anotar rajoles, forats a tapar, calç, ciment o canonades." : "👉 Text: Toca per posar nom a l'estança o nota.";
-  else if (tool === 'eraser') status.innerText = "👉 Goma: Toca sobre qualsevol línia per esborrar-la.";
+  else if (tool === 'eraser') status.innerText = "👉 Goma activada: Toca o passa el dit sobre qualsevol línia per esborrar-la. Toca 'Goma: ON' o 'Paret' per tornar a dibuixar.";
   else if (tool === 'pan') status.innerText = "👉 Moure activat: Arrossega per desplaçar el plànol. Toca 'Moure: ON' o 'Paret' per tornar a dibuixar.";
 }}
 
 function snap(val) {{
   return Math.round(val / GRID_SIZE) * GRID_SIZE;
+}}
+
+// Càlcul de distància matemàtica exacta entre un punt (px, py) i un segment de línia
+function distToSegment(px, py, x1, y1, x2, y2) {{
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const l2 = dx * dx + dy * dy;
+  if (l2 === 0) return Math.hypot(px - x1, py - y1);
+  let t = ((px - x1) * dx + (py - y1) * dy) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}}
+
+// Detecció intel·ligent si el toc cau sobre qualsevol element dibuixat (amb tolerància tàctil)
+function hitTestElement(el, px, py) {{
+  const HIT_RADIUS = 26; // 26px de tolerància per al dit al mòbil
+  if (el.type === 'wall' || el.type === 'dim') {{
+    return distToSegment(px, py, el.x1, el.y1, el.x2, el.y2) <= HIT_RADIUS;
+  }}
+  if (el.type === 'rect') {{
+    const dTop = distToSegment(px, py, el.x, el.y, el.x + el.w, el.y);
+    const dBottom = distToSegment(px, py, el.x, el.y + el.h, el.x + el.w, el.y + el.h);
+    const dLeft = distToSegment(px, py, el.x, el.y, el.x, el.y + el.h);
+    const dRight = distToSegment(px, py, el.x + el.w, el.y, el.x + el.w, el.y + el.h);
+    if (Math.min(dTop, dBottom, dLeft, dRight) <= HIT_RADIUS) return true;
+    if (px >= el.x && px <= el.x + el.w && py >= el.y && py <= el.y + el.h) return true;
+    return false;
+  }}
+  if (el.type === 'text') {{
+    return Math.hypot(el.x - px, el.y - py) <= 30;
+  }}
+  return false;
+}}
+
+// Funció per esborrar elements tocats per la goma
+function eraseAt(px, py) {{
+  const prevLen = elements.length;
+  elements = elements.filter(el => !hitTestElement(el, px, py));
+  if (elements.length !== prevLen) {{
+    saveHistory();
+    const lastWall = [...elements].reverse().find(el => el.type === 'wall');
+    lastWallEnd = lastWall ? {{ x: lastWall.x2, y: lastWall.y2 }} : null;
+    updateContinuousUI();
+    drawAll();
+    return true;
+  }}
+  return false;
 }}
 
 function findSnapPoint(rawX, rawY) {{
@@ -782,13 +859,9 @@ canvas.addEventListener('pointerdown', (e) => {{
   }}
   
   if (currentTool === 'eraser') {{
-    saveHistory();
-    elements = elements.filter(el => {{
-      const cx = el.x || (el.x1 + el.x2) / 2 || 0;
-      const cy = el.y || (el.y1 + el.y2) / 2 || 0;
-      return Math.hypot(cx - c.rawX, cy - c.rawY) > 30;
-    }});
-    drawAll();
+    isDrawing = true;
+    eraseAt(c.rawX, c.rawY);
+    try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
     return;
   }}
   
@@ -813,6 +886,14 @@ canvas.addEventListener('pointermove', (e) => {{
     const dy = e.clientY - panStartY;
     canvasWrapper.scrollLeft = scrollStartLeft - dx;
     canvasWrapper.scrollTop = scrollStartTop - dy;
+    return;
+  }}
+
+  if (currentTool === 'eraser') {{
+    if (isDrawing) {{
+      const c = getPointerCoords(e);
+      eraseAt(c.rawX, c.rawY);
+    }}
     return;
   }}
 
@@ -886,6 +967,12 @@ canvas.addEventListener('pointerup', (e) => {{
   if (isPanning || currentTool === 'pan') {{
     isPanning = false;
     canvas.classList.remove('grabbing');
+    try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
+    return;
+  }}
+
+  if (currentTool === 'eraser') {{
+    isDrawing = false;
     try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
     return;
   }}
@@ -971,13 +1058,14 @@ canvas.addEventListener('pointercancel', (e) => {{
   drawAll();
 }});
 
-// Seguretat global: alliberar arrossegament de moure fins i tot si el dit s'aixeca fora del canvas
+// Seguretat global: alliberar arrossegament i esborrat fins i tot si el dit s'aixeca fora del canvas
 window.addEventListener('pointerup', (e) => {{
   if (isPanning) {{
     isPanning = false;
     canvas.classList.remove('grabbing');
     try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
   }}
+  isDrawing = false;
 }});
 
 window.addEventListener('pointercancel', (e) => {{
@@ -986,6 +1074,7 @@ window.addEventListener('pointercancel', (e) => {{
     canvas.classList.remove('grabbing');
     try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
   }}
+  isDrawing = false;
 }});
 
 function loadBgImage(e) {{
