@@ -210,7 +210,7 @@ def _render_projecte_header(projecte: Dict[str, Any]):
     d_fi = format_date_cat(projecte.get("data_fi_prevista"))
 
     with st.container():
-        c1, c2, c3, c4 = st.columns([2, 1, 1, 1])
+        c1, c2, c3, c4 = st.columns([1.8, 0.9, 1.0, 1.3])
         with c1:
             st.markdown(f"### 🔨 {projecte.get('nom', 'Projecte')} <span style='font-size:14px; color:#64748b;'>({projecte.get('ubicacio', '')})</span>", unsafe_allow_html=True)
             if projecte.get("descripcio"):
@@ -220,7 +220,20 @@ def _render_projecte_header(projecte: Dict[str, Any]):
         with c3:
             st.metric("Despesa Real", f"{cost_comprat:.2f} €", delta=f"{pressupost_est - cost_comprat:.2f} € disp." if pressupost_est > 0 else None)
         with c4:
-            st.metric("Calendari (DD/MM/AAAA)", f"{d_inici or '-'} → {d_fi or '-'}")
+            if d_inici and d_fi:
+                st.metric(
+                    "Calendari d'Obra",
+                    d_inici,
+                    delta=f"🏁 Fi: {d_fi}",
+                    delta_color="off",
+                    help=f"Període planificat: de {d_inici} fins a {d_fi} (format DD/MM/AAAA)"
+                )
+            elif d_inici:
+                st.metric("Inici d'Obra", d_inici, help="Data d'inici prevista (DD/MM/AAAA)")
+            elif d_fi:
+                st.metric("Fi Prevista", d_fi, help="Data límit prevista (DD/MM/AAAA)")
+            else:
+                st.metric("Calendari", "Sense dates", help="Pots assignar dates editant el projecte")
 
         # Barra de progrés global
         st.progress(progres / 100.0, text=f"Progrés de l'obra: {progres}% completat")
