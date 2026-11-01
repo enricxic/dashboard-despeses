@@ -982,11 +982,45 @@ Monitorització de factures de compra, pòlisses d'assegurança i tiquets de gar
 
 ---
 
+##### 5.2.4 Pestanya 4: `🏗️ Projectes d'Obra i Reformes` (Plànols Canvas, Materials, Fases i Assistent IA)
+
+Espai integral per a la planificació, disseny i seguiment d'obres majors, reformes i projectes de millora de la llar (ex: reforma de bany, substitució de terres, instal·lació de pèrgoles, renovació de pintura o cuina):
+
+1. **Arquitectura de Dades i Persistència**:
+   - Taula `app_config` de Supabase (`id = 9`, `projectes_manteniment`) amb fallback local a `data/projectes_manteniment.json` (`core/projectes_manager.py`).
+   - Totes les dates es presenten i s'introdueixen estrictament en format català **`DD/MM/AAAA`**.
+
+2. **Plànol i Croquis Interactiu (HTML5 Canvas amb Foto de Fons)**:
+   - Component de dibuix autònom (`modules/canvas_planol.py`) que permet dibuixar parets rectes, espais rectangulars, etiquetes d'estances i cotes amb mides en metres (ex: `2,40 m`).
+   - **Suport per a fotografia de fons**: Permet carregar una imatge real de l'estança o la foto d'un croquis fet a mà en paper, amb regulador d'opacitat per calcar i acotar al damunt.
+   - Botó de descàrrega i desat del plànol oficial del projecte.
+   - **Galeria fotogràfica de seguiment**: Fotografies classificades en *🔴 Abans*, *🟡 Durant l'obra* i *🟢 Després / Resultat final*, amb dates en `DD/MM/AAAA` i descripció.
+
+3. **Llistat de Materials i Control Pressupostari**:
+   - Taula de queviures d'obra: article, proveïdor (Obramat, Leroy Merlin, Bauhaus, etc.), quantitat, preu estimat i preu real pagat.
+   - Casella interactiva de `Comprat` en 1 clic per seguir els materials que ja es tenen a la llar.
+   - Mètriques KPI de despesa real vs pressupost màxim i desviació (€ i %).
+
+4. **Fases d'Execució i Progrés de l'Obra**:
+   - Desglossament per etapes constructives seqüencials (ex: Enderroc, Instal·lacions, Revestiments, Pintura).
+   - Checklist de subtasques interactives.
+   - Barra de progrés automàtica que calcula el percentatge d'execució assolit ($0\%$ a $100\%$).
+
+5. **Assistent d'Intel·ligència Artificial d'Obra (`core/ai_projectes.py`)**:
+   - Xat interactiu especialitzat integrat al context de cada projecte.
+   - Assessorament en materials idonis, coles per a zones humides, aïllaments i eines necessàries.
+   - Tutorials i procediments pas a pas amb temps d'assecat recomanats.
+   - Orientació de preus mitjans de mercat per metre quadrat.
+   - **Generació 1-Clic**: Botons `✨ Suggerir Materials amb IA` i `✨ Generar Fases amb IA` per omplir automàticament les taules del projecte amb recomanacions professionals.
+
+---
+
 #### D. Navegació Dinàmica i Enllaços amb Altres Mòduls
 - **Navegació per Paràmetres URL (`st.query_params`)**:
   - `?tab=registre`: Activa directament la graella de tasques de manteniment.
   - `?tab=manuals`: Condueix a la biblioteca de manuals d'instruccions.
   - `?tab=garanties`: Obre el monitor de venciments de garanties.
+  - `?tab=projectes`: Obre el gestor de projectes d'obra i reformes.
 - **Interconnexions amb la Resta del Sistema**:
   - **[`modules/calendari.py`](file:///e:/Dashboard/modules/calendari.py)**: Les tasques marcades amb `send_to_calendar` es reflecteixen a l'agenda familiar com a esdeveniments amb icona d'eina (`🛠️`).
   - **[`core/alerts.py`](file:///e:/Dashboard/core/alerts.py)**: Les tasques que arriben al seu període d'avís (`diesAvis`) i les garanties amb venciment proper (< 90 dies) s'envien automàticament a la campaneta d'alertes de la barra superior.

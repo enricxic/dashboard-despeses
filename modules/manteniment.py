@@ -1166,7 +1166,7 @@ def render():
         st.session_state["show_generar_any_manteniment"] = False
         show_generar_any_manteniment_dialog(tasks, family_names)
 
-    tabs_list = ["📋 Registre Manteniment", "📖 Manuals", "🛡️ Garanties"]
+    tabs_list = ["📋 Registre Manteniment", "📖 Manuals", "🛡️ Garanties", "🏗️ Projectes"]
     tab_mapping = {
         "registre": "📋 Registre Manteniment",
         "registre_manteniment": "📋 Registre Manteniment",
@@ -1174,14 +1174,18 @@ def render():
         "manuals": "📖 Manuals",
         "manual": "📖 Manuals",
         "garanties": "🛡️ Garanties",
-        "garantia": "🛡️ Garanties"
+        "garantia": "🛡️ Garanties",
+        "projectes": "🏗️ Projectes",
+        "projecte": "🏗️ Projectes",
+        "reformes": "🏗️ Projectes",
+        "obres": "🏗️ Projectes"
     }
     tab_param = st.query_params.get("tab")
     default_tab = tab_mapping.get(tab_param)
     if default_tab not in tabs_list:
         default_tab = "📋 Registre Manteniment"
 
-    tab_registre, tab_manuals, tab_garanties = st.tabs(tabs_list, default=default_tab, key=f"tabs_manteniment_{tab_param or 'main'}")
+    tab_registre, tab_manuals, tab_garanties, tab_projectes = st.tabs(tabs_list, default=default_tab, key=f"tabs_manteniment_{tab_param or 'main'}")
 
     # =========================================================================
     # PESTANYA 1: REGISTRE DE MANTENIMENT
@@ -2076,3 +2080,10 @@ def render():
                         with col_a4:
                             if st.button("🗑️ Esborrar", use_container_width=True, key=f"del_gar_{doc.get('id')}"):
                                 delete_document_dialog("Garanties", doc.get("id"), doc.get("titol", "Garantia"), fname)
+
+    # =========================================================================
+    # PESTANYA 4: PROJECTES D'OBRA I REFORMES
+    # =========================================================================
+    with tab_projectes:
+        from modules.projectes_ui import render_projectes_tab
+        render_projectes_tab(family_names=family_names)
