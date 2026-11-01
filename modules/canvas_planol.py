@@ -103,6 +103,12 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
     touch-action: none; /* Bloqueja l'scroll al tocar sobre el canvas per poder dibuixar */
     transition: width 0.15s ease-out;
   }}
+  #planolCanvas.pan-mode {{
+    cursor: grab;
+  }}
+  #planolCanvas.grabbing {{
+    cursor: grabbing !important;
+  }}
   .status-bar {{
     display: flex;
     justify-content: space-between;
@@ -204,7 +210,16 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   <button class="btn" id="btnDim" onclick="setTool('dim')">📏 Cota</button>
   <button class="btn" id="btnText" onclick="setTool('text')">🔤 Text</button>
   <button class="btn" id="btnEraser" onclick="setTool('eraser')">🧹 Goma</button>
+  <button class="btn" id="btnPan" onclick="setTool('pan')" title="Arrossega el dit pel plànol per moure la vista">🖐️ Moure</button>
   
+  <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
+  
+  <!-- Opcions de Paret Contínua (Seguir traç automàtic) -->
+  <div style="display: inline-flex; gap: 3px; align-items: center;">
+    <button class="btn active" id="btnContinuous" onclick="toggleContinuous()" style="padding: 6px 9px; font-size: 12px; background: #059669; color: white; border-color: #047857;" title="Enllaça cada nova paret amb l'anterior automàticament">🔗 Seguir: SÍ</button>
+    <button class="btn" id="btnNewTrace" onclick="resetContinuous()" style="display:none; padding: 6px 8px; font-size: 11px; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;" title="Allibera el punt actiu per començar una paret en un altre lloc">⏹️ Desconnectar</button>
+  </div>
+
   <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
   
   <!-- Controls de Zoom -->
@@ -249,20 +264,10 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
     </div>
   </div>
 </div>
-    <div class="modal-box">
-      <h4 id="modalTitle">Indica la mesura de la cota</h4>
-      <div class="preset-btns" id="modalPresets"></div>
-      <input type="text" class="modal-input" id="modalInput" autofocus>
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeModal(false)">Cancel·lar</button>
-        <button class="btn-confirm" onclick="closeModal(true)">Acceptar</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
 const canvas = document.getElementById('planolCanvas');
+const canvasWrapper = document.querySelector('.canvas-wrapper');
 const ctx = canvas.getContext('2d');
 const GRID_SIZE = 20;
 
@@ -270,6 +275,11 @@ let currentTool = 'wall';
 let currentViewMode = 'planta'; // 'planta' (terra) o 'paret' (alçat)
 let currentZoom = 1.0;
 let isDrawing = false;
+let isPanning = false;
+let panStartX = 0, panStartY = 0;
+let scrollStartLeft = 0, scrollStartTop = 0;
+let isContinuous = true; // Mode enllaçar parets actiu per defecte
+let lastWallEnd = null; // Últim extrem de paret per continuar traç automàtic
 let startX = 0, startY = 0;
 let elements = [];
 let history = [];
@@ -320,36 +330,144 @@ if (preBg && preBg.length > 50) {{
 function setTool(tool) {{
   currentTool = tool;
   document.querySelectorAll('.btn').forEach(b => {{
-    if (['btnWall', 'btnRect', 'btnDim', 'btnText', 'btnEraser'].includes(b.id)) {{
+    if (['btnWall', 'btnRect', 'btnDim', 'btnText', 'btnEraser', 'btnPan'].includes(b.id)) {{
       b.classList.remove('active');
     }}
   }});
   const btn = document.getElementById('btn' + tool.charAt(0).toUpperCase() + tool.slice(1));
   if (btn) btn.classList.add('active');
   
+  if (tool === 'pan') {{
+    canvas.classList.add('pan-mode');
+  }} else {{
+    canvas.classList.remove('pan-mode');
+  }}
+
+  // Si canviem a eines que no són paret ni moure, desactivem el punt d'ancoratge
+  if (tool !== 'wall' && tool !== 'pan') {{
+    lastWallEnd = null;
+    updateContinuousUI();
+  }}
+  
   const status = document.getElementById('toolStatus');
   const esParet = (currentViewMode === 'paret');
-  if (tool === 'wall') status.innerText = esParet ? "👉 Paret: Arrossega per traçar els límits o seccions de la paret." : "👉 Paret: Arrossega el dit per traçar una paret recta al terra.";
+  if (tool === 'wall') {{
+    status.innerText = (isContinuous && lastWallEnd)
+      ? "👉 Paret contínua: Arrossega o toca la propera cantonada per seguir l'habitació des del punt marcat."
+      : (esParet ? "👉 Paret: Arrossega per traçar els límits o seccions de la paret." : "👉 Paret: Arrossega el dit per traçar una paret recta al terra.");
+  }}
   else if (tool === 'rect') status.innerText = esParet ? "👉 Espai: Arrossega per dibuixar una finestra, porta o moble suspès a la paret." : "👉 Espai: Arrossega per crear una habitació o moble.";
   else if (tool === 'dim') status.innerText = esParet ? "👉 Cota: Arrossega verticalment per alçada (sostre/sòcol) o horitzontalment per amplada." : "👉 Cota: Arrossega d'un extrem a l'altre per mesurar la distància.";
   else if (tool === 'text') status.innerText = esParet ? "👉 Text: Toca per anotar rajoles, forats a tapar, calç, ciment o canonades." : "👉 Text: Toca per posar nom a l'estança o nota.";
   else if (tool === 'eraser') status.innerText = "👉 Goma: Toca sobre qualsevol línia per esborrar-la.";
+  else if (tool === 'pan') status.innerText = "👉 Moure: Arrossega el dit o el ratolí pel plànol per desplaçar la vista amb zoom.";
 }}
 
 function snap(val) {{
   return Math.round(val / GRID_SIZE) * GRID_SIZE;
 }}
 
+function findSnapPoint(rawX, rawY) {{
+  const SNAP_THRESHOLD = 26; // Radi magnètic en px per enllaçar cantonades
+  let bestPt = null;
+  let minDist = SNAP_THRESHOLD;
+  
+  for (const el of elements) {{
+    if (el.type === 'wall' || el.type === 'dim') {{
+      const pts = [{{ x: el.x1, y: el.y1 }}, {{ x: el.x2, y: el.y2 }}];
+      for (const p of pts) {{
+        const d = Math.hypot(p.x - rawX, p.y - rawY);
+        if (d < minDist) {{
+          minDist = d;
+          bestPt = {{ x: p.x, y: p.y }};
+        }}
+      }}
+    }} else if (el.type === 'rect') {{
+      const corners = [
+        {{ x: el.x, y: el.y }},
+        {{ x: el.x + el.w, y: el.y }},
+        {{ x: el.x, y: el.y + el.h }},
+        {{ x: el.x + el.w, y: el.y + el.h }}
+      ];
+      for (const p of corners) {{
+        const d = Math.hypot(p.x - rawX, p.y - rawY);
+        if (d < minDist) {{
+          minDist = d;
+          bestPt = {{ x: p.x, y: p.y }};
+        }}
+      }}
+    }}
+  }}
+  return bestPt;
+}}
+
 function getPointerCoords(e) {{
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
   const scaleY = canvas.height / rect.height;
+  const rawX = (e.clientX - rect.left) * scaleX;
+  const rawY = (e.clientY - rect.top) * scaleY;
+
+  // 1. Cercar vèrtex o cantonada existent propera per fer snap magnètic
+  const snapPt = findSnapPoint(rawX, rawY);
+  if (snapPt) {{
+    return {{
+      x: snapPt.x,
+      y: snapPt.y,
+      rawX: rawX,
+      rawY: rawY,
+      isSnapped: true
+    }};
+  }}
+
+  // 2. Si no hi ha cantonada propera, ajustar a la graella estàndard
   return {{
-    x: snap((e.clientX - rect.left) * scaleX),
-    y: snap((e.clientY - rect.top) * scaleY),
-    rawX: (e.clientX - rect.left) * scaleX,
-    rawY: (e.clientY - rect.top) * scaleY
+    x: snap(rawX),
+    y: snap(rawY),
+    rawX: rawX,
+    rawY: rawY,
+    isSnapped: false
   }};
+}}
+
+function toggleContinuous() {{
+  isContinuous = !isContinuous;
+  if (!isContinuous) {{
+    lastWallEnd = null;
+  }}
+  updateContinuousUI();
+  drawAll();
+}}
+
+function resetContinuous() {{
+  lastWallEnd = null;
+  updateContinuousUI();
+  drawAll();
+  const status = document.getElementById('toolStatus');
+  if (status) status.innerText = "👉 Paret: Desconnectat. Toca o arrossega per començar una paret separada.";
+}}
+
+function updateContinuousUI() {{
+  const btnC = document.getElementById('btnContinuous');
+  const btnN = document.getElementById('btnNewTrace');
+  if (btnC) {{
+    if (isContinuous) {{
+      btnC.classList.add('active');
+      btnC.innerHTML = '🔗 Seguir: SÍ';
+      btnC.style.background = '#059669';
+      btnC.style.borderColor = '#047857';
+      btnC.style.color = '#ffffff';
+    }} else {{
+      btnC.classList.remove('active');
+      btnC.innerHTML = '🔗 Seguir: NO';
+      btnC.style.background = '#f1f5f9';
+      btnC.style.borderColor = '#cbd5e1';
+      btnC.style.color = '#334155';
+    }}
+  }}
+  if (btnN) {{
+    btnN.style.display = (isContinuous && lastWallEnd) ? 'inline-flex' : 'none';
+  }}
 }}
 
 function saveHistory() {{
@@ -360,11 +478,15 @@ function saveHistory() {{
 function undo() {{
   if (history.length > 0) {{
     elements = JSON.parse(history.pop());
-    drawAll();
   }} else if (elements.length > 0) {{
     elements.pop();
-    drawAll();
   }}
+  
+  // Trobar l'última paret que quedi per poder seguir el traç
+  const lastWall = [...elements].reverse().find(el => el.type === 'wall');
+  lastWallEnd = lastWall ? {{ x: lastWall.x2, y: lastWall.y2 }} : null;
+  updateContinuousUI();
+  drawAll();
 }}
 
 function drawGrid() {{
@@ -437,6 +559,31 @@ function drawAll() {{
   // 3. Elements
   for (const el of elements) {{
     drawElement(el);
+  }}
+
+  // 4. Indicador visual del punt d'ancoratge per a la propera paret (Mode continu)
+  if (isContinuous && currentTool === 'wall' && lastWallEnd && !isDrawing) {{
+    ctx.save();
+    // Halo verd maragda
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
+    ctx.beginPath();
+    ctx.arc(lastWallEnd.x, lastWallEnd.y, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Etiqueta flotant "🔗 Propera paret"
+    ctx.font = 'bold 11px sans-serif';
+    const tag = "🔗 Propera paret";
+    const tw = ctx.measureText(tag).width;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(lastWallEnd.x - tw/2 - 4, lastWallEnd.y - 25, tw + 8, 16);
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tag, lastWallEnd.x, lastWallEnd.y - 17);
+    ctx.restore();
   }}
 }}
 
@@ -546,6 +693,19 @@ function closeModal(confirm) {{
 // ESDEVENIMENTS TÀCTILS I RATOLÍ UNIFICATS (Pointer Events)
 canvas.addEventListener('pointerdown', (e) => {{
   e.preventDefault();
+
+  // Eina Pan / Moure plànol
+  if (currentTool === 'pan') {{
+    isPanning = true;
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    scrollStartLeft = canvasWrapper.scrollLeft;
+    scrollStartTop = canvasWrapper.scrollTop;
+    canvas.classList.add('grabbing');
+    try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+    return;
+  }}
+
   const c = getPointerCoords(e);
   
   if (currentTool === 'text') {{
@@ -581,12 +741,29 @@ canvas.addEventListener('pointerdown', (e) => {{
   }}
   
   isDrawing = true;
-  startX = c.x;
-  startY = c.y;
-  canvas.setPointerCapture(e.pointerId);
+
+  // Si estem traçant paret contínua i tenim un extrem anterior guardat
+  if (currentTool === 'wall' && isContinuous && lastWallEnd) {{
+    startX = lastWallEnd.x;
+    startY = lastWallEnd.y;
+  }} else {{
+    startX = c.x;
+    startY = c.y;
+  }}
+
+  try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
 }});
 
 canvas.addEventListener('pointermove', (e) => {{
+  if (isPanning) {{
+    e.preventDefault();
+    const dx = e.clientX - panStartX;
+    const dy = e.clientY - panStartY;
+    canvasWrapper.scrollLeft = scrollStartLeft - dx;
+    canvasWrapper.scrollTop = scrollStartTop - dy;
+    return;
+  }}
+
   if (!isDrawing) return;
   e.preventDefault();
   const c = getPointerCoords(e);
@@ -601,10 +778,27 @@ canvas.addEventListener('pointermove', (e) => {{
   ctx.setLineDash([4, 4]);
   if (currentTool === 'wall') {{
     ctx.lineWidth = 6;
+    ctx.strokeStyle = '#0f172a';
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(currX, currY);
     ctx.stroke();
+
+    // Mida dinàmica en metres durant el traç
+    const pxLen = Math.hypot(currX - startX, currY - startY);
+    if (pxLen > 10) {{
+      const mLen = (pxLen / 40).toFixed(2) + " m";
+      const midX = (startX + currX) / 2;
+      const midY = (startY + currY) / 2;
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      const tw = ctx.measureText(mLen).width;
+      ctx.fillRect(midX - tw/2 - 4, midY - 10, tw + 8, 16);
+      ctx.fillStyle = '#1e293b';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(mLen, midX, midY - 2);
+    }}
   }} else if (currentTool === 'rect') {{
     ctx.lineWidth = 2;
     ctx.strokeRect(startX, startY, currX - startX, currY - startY);
@@ -615,10 +809,35 @@ canvas.addEventListener('pointermove', (e) => {{
     ctx.lineTo(currX, currY);
     ctx.stroke();
   }}
+
+  // Si està enganxat a un vèrtex magnètic existent
+  if (c.isSnapped) {{
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
+    ctx.beginPath();
+    ctx.arc(currX, currY, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Creueta central
+    ctx.beginPath();
+    ctx.moveTo(currX - 12, currY);
+    ctx.lineTo(currX + 12, currY);
+    ctx.moveTo(currX, currY - 12);
+    ctx.lineTo(currX, currY + 12);
+    ctx.stroke();
+  }}
   ctx.restore();
 }});
 
 canvas.addEventListener('pointerup', (e) => {{
+  if (isPanning) {{
+    isPanning = false;
+    canvas.classList.remove('grabbing');
+    try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
+    return;
+  }}
+
   if (!isDrawing) return;
   e.preventDefault();
   isDrawing = false;
@@ -634,6 +853,10 @@ canvas.addEventListener('pointerup', (e) => {{
   
   if (currentTool === 'wall') {{
     elements.push({{ type: 'wall', x1: startX, y1: startY, x2: endX, y2: endY }});
+    if (isContinuous) {{
+      lastWallEnd = {{ x: endX, y: endY }};
+      updateContinuousUI();
+    }}
     drawAll();
   }} else if (currentTool === 'rect') {{
     elements.push({{
@@ -687,6 +910,11 @@ canvas.addEventListener('pointerup', (e) => {{
 }});
 
 canvas.addEventListener('pointercancel', (e) => {{
+  if (isPanning) {{
+    isPanning = false;
+    canvas.classList.remove('grabbing');
+    try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
+  }}
   isDrawing = false;
   drawAll();
 }});
@@ -710,6 +938,8 @@ function clearCanvas() {{
   if (confirm("Vols buidar tot el plànol dibuixat?")) {{
     saveHistory();
     elements = [];
+    lastWallEnd = null;
+    updateContinuousUI();
     drawAll();
   }}
 }}
@@ -753,43 +983,45 @@ def render_planol_tab(projecte: Dict[str, Any]):
     # Guia d'ús desplegable integrada al projecte
     with st.expander("📖 Guia d'Ús: Com funciona l'editor de plànols?", expanded=False):
         st.info("""📱 **Com utilitzar-lo al mòbil (tacte directe):**
-- **🧱 Paret / 🔲 Espai:** Arrossega el dit sobre la quadreta per traçar la línia o crear l'habitació.
-- **📏 Cota:** Arrossega el dit d'un extrem a l'altre per indicar una mesura en metres (s'obrirà un diàleg tàctil intern per triar o posar la mida).
-- **🔤 Text:** Toca sobre l'estança per posar-li nom (ex: *Bany, Dutxa, Cuina*).
-- **📷 Foto de fons:** Carrega una foto de l'estança real o d'un croquis en paper per dibuixar-hi al damunt.
+- **🧱 Paret / 🔗 Seguir traç:** Arrossega el dit per fer la primera paret. Les següents s'enllaçaran automàticament des de l'última cantonada (ideal per dibuixar habitacions senceres sense buscar on continua).
+- **🧲 Snap Magnètic:** En acostar el dit a qualsevol cantonada o extrem, s'activa un imant verd (`🟢`) que fixa la posició exacta i permet tancar l'habitació a la perfecció.
+- **🖐️ Moure:** Activa aquesta eina per desplaçar el plànol lliurement amb el dit quan hagis ampliat la vista amb zoom.
+- **🔍 Controls de Zoom:** Prem `🔍+`, `🔍-` o `100%` per apropar detalls o veure tota l'estança.
+- **📏 Cota:** Arrossega d'un extrem a l'altre per indicar mides en metres (a paret detecta alçades com sostre, dutxa o sòcols).
+- **🔤 Text:** Toca sobre l'estança o paret per posar etiquetes d'obra (*Bany, Forat, Ciment cola, Sòcol*).
+- **📷 Foto de fons:** Carrega una foto real per calcar-hi o afegir-hi cotes al damunt.
 - **↩️ Desfer:** Elimina el darrer traç si t'has equivocat.
 """)
         st.markdown("""
         #### 📋 Guia d'eines pas a pas
 
-        1. **🧱 Paret / Línia:**
-           - Toca el botó **`🧱 Paret`**.
-           - Posa el dit (o ratolí) sobre la quadreta i **arrossega** fins on acabi la paret. En aixecar el dit, es traçarà la línia negra.
+        1. **🧱 Paret i 🔗 Mode Continu (Habitacions fàcils):**
+           - Amb el botó **`🔗 Seguir: SÍ`** actiu, traça la primera paret.
+           - Veuràs un cercle maragda marcat com a *'Propera paret'*. Per fer la segona paret de l'habitació, només cal que toquis o arrosseguis cap a la següent cantonada: s'iniciarà automàticament des de l'extrem anterior!
+           - Quan arribis a l'inici per tancar l'habitació, l'**imant magnètic (`🟢`)** s'ajustarà a la cantonada inicial.
+           - Si vols dibuixar una paret separada en un altre lloc, prem **`⏹️ Desconnectar`**.
 
-        2. **🔲 Espai / Habitació:**
-           - Toca el botó **`🔲 Espai`**.
-           - **Arrossega en diagonal** per crear una habitació, envà o moble rectangular.
+        2. **🖐️ Moure el plànol:**
+           - Toca **`🖐️ Moure`**. Ara pots arrossegar el dit o el ratolí en qualsevol direcció per navegar còmodament pel plànol ampliat sense perill de dibuixar línies accidentals.
 
-        3. **📏 Cota (mesures en metres):**
-           - Toca el botó **`📏 Cota`**.
-           - **Arrossega d'un extrem a l'altre** del tram que vulguis mesurar.
-           - S'obrirà un selector emergent: tria una mesura ràpida (*1,00 m, 1,50 m, 2,00 m...*) o escriu la teva mida exacta (ex: *2,40 m*).
+        3. **🔲 Espai / Habitació rectangular:**
+           - Toca **`🔲 Espai`** i arrossega en diagonal per crear una estança o moble rectangular d'un sol cop.
 
-        4. **🔤 Text:**
-           - Toca el botó **`🔤 Text`** i després toca sobre l'espai del plànol.
-           - Tria una etiqueta ràpida (*Bany, Dutxa, Moble lavabo, Porta, Finestra*) o escriu el text lliure que vulguis.
+        4. **📏 Cota (mesures en metres):**
+           - Toca **`📏 Cota`** i arrossega d'un extrem a l'altre.
+           - En *Mode Planta* ofereix mides de terra; en *Mode Alçat* detecta si és alçada (sostre, sòcol) o amplada amb fons blanc d'alta visibilitat.
 
-        5. **🧹 Goma d'esborrar i ↩️ Desfer:**
-           - Toca **`🧹 Goma`** i després toca sobre qualsevol línia o element per eliminar-lo.
-           - Si t'has equivocat en l'últim traç, prem directament **`↩️ Desfer`**.
+        5. **🔤 Text:**
+           - Toca sobre qualsevol punt per col·locar noms d'habitació o anotacions d'obra de paret.
 
-        6. **📷 Foto de fons:**
-           - Prem **`📷 Foto fons`** per carregar una foto de l'estança real o d'un esbós en paper.
-           - Mou la barra d'**Opacitat** per poder calcar i afegir cotes/parets exactament per sobre.
+        6. **🧹 Goma d'esborrar i ↩️ Desfer:**
+           - Toca **`🧹 Goma`** per esborrar línies o **`↩️ Desfer`** per anul·lar l'últim moviment.
 
-        7. **💾 Desar al Projecte:**
-           - Un cop tinguis el plànol fet, prem el botó verd **`💾 Descarregar PNG`**.
-           - Tot seguit, al formulari inferior **'Desar o Actualitzar Plànol'**, carrega aquesta imatge i prem **`Guardar Plànol Oficial`** perquè quedi gravat permanentment a la fitxa del projecte.
+        7. **📷 Foto de fons:**
+           - Prem **`📷 Foto fons`** i ajusta l'**Opacitat** per calcar un plànol real o croquis en paper.
+
+        8. **💾 Desar al Projecte:**
+           - Prem **`💾 Descarregar PNG`** i guarda la imatge resultant al formulari inferior com a Plànol Oficial del projecte.
         """)
 
     # Vista prèvia actual si existeix
