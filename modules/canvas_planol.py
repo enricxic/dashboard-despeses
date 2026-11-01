@@ -211,7 +211,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   <button class="btn" id="btnDim" onclick="setTool('dim')">📏 Cota</button>
   <button class="btn" id="btnText" onclick="setTool('text')">🔤 Text</button>
   <button class="btn" id="btnEraser" onclick="setTool('eraser')">🧹 Goma</button>
-  <button class="btn" id="btnPan" onclick="setTool('pan')" title="Arrossega el dit pel plànol per moure la vista">🖐️ Moure</button>
+  <button class="btn" id="btnPan" onclick="togglePan()" title="Activa o desactiva el mode de moure la vista">🖐️ Moure</button>
   
   <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
   
@@ -274,6 +274,7 @@ const ctx = canvas.getContext('2d');
 const GRID_SIZE = 20;
 
 let currentTool = 'wall';
+let previousDrawingTool = 'wall';
 let currentViewMode = 'planta'; // 'planta' (terra) o 'paret' (alçat)
 let currentZoom = 1.0;
 let isDrawing = false;
@@ -302,6 +303,16 @@ function resetZoom() {{
   setZoom(1.0);
   canvasWrapper.scrollLeft = (canvasWrapper.scrollWidth - canvasWrapper.clientWidth) / 2;
   canvasWrapper.scrollTop = (canvasWrapper.scrollHeight - canvasWrapper.clientHeight) / 2;
+}}
+
+// Commutador ràpid de l'eina Moure
+function togglePan() {{
+  if (currentTool === 'pan') {{
+    setTool(previousDrawingTool || 'wall');
+  }} else {{
+    previousDrawingTool = currentTool;
+    setTool('pan');
+  }}
 }}
 
 // Gestió de Mode de Vista: Planta (Terra) vs Alçat (Paret)
@@ -334,15 +345,46 @@ if (preBg && preBg.length > 50) {{
 }}
 
 function setTool(tool) {{
+  // Si es torna a prémer Moure mentre ja està actiu, commuta a l'eina anterior
+  if (tool === 'pan' && currentTool === 'pan') {{
+    tool = previousDrawingTool || 'wall';
+  }}
+  
+  if (currentTool !== 'pan') {{
+    previousDrawingTool = currentTool;
+  }}
+
   currentTool = tool;
+  isPanning = false;
+  isDrawing = false;
+  canvas.classList.remove('grabbing');
+
   document.querySelectorAll('.btn').forEach(b => {{
     if (['btnWall', 'btnRect', 'btnDim', 'btnText', 'btnEraser', 'btnPan'].includes(b.id)) {{
       b.classList.remove('active');
     }}
   }});
+  
   const btn = document.getElementById('btn' + tool.charAt(0).toUpperCase() + tool.slice(1));
   if (btn) btn.classList.add('active');
   
+  const btnPan = document.getElementById('btnPan');
+  if (btnPan) {{
+    if (tool === 'pan') {{
+      btnPan.classList.add('active');
+      btnPan.innerHTML = '🖐️ Moure: ON';
+      btnPan.style.background = '#0284c7';
+      btnPan.style.borderColor = '#0369a1';
+      btnPan.style.color = '#ffffff';
+    }} else {{
+      btnPan.classList.remove('active');
+      btnPan.innerHTML = '🖐️ Moure';
+      btnPan.style.background = '';
+      btnPan.style.borderColor = '';
+      btnPan.style.color = '';
+    }}
+  }}
+
   if (tool === 'pan') {{
     canvas.classList.add('pan-mode');
   }} else {{
@@ -366,7 +408,7 @@ function setTool(tool) {{
   else if (tool === 'dim') status.innerText = esParet ? "👉 Cota: Arrossega verticalment per alçada (sostre/sòcol) o horitzontalment per amplada." : "👉 Cota: Arrossega d'un extrem a l'altre per mesurar la distància.";
   else if (tool === 'text') status.innerText = esParet ? "👉 Text: Toca per anotar rajoles, forats a tapar, calç, ciment o canonades." : "👉 Text: Toca per posar nom a l'estança o nota.";
   else if (tool === 'eraser') status.innerText = "👉 Goma: Toca sobre qualsevol línia per esborrar-la.";
-  else if (tool === 'pan') status.innerText = "👉 Moure: Arrossega el dit o el ratolí pel plànol per desplaçar la vista amb zoom.";
+  else if (tool === 'pan') status.innerText = "👉 Moure activat: Arrossega per desplaçar el plànol. Toca 'Moure: ON' o 'Paret' per tornar a dibuixar.";
 }}
 
 function snap(val) {{
@@ -712,6 +754,10 @@ canvas.addEventListener('pointerdown', (e) => {{
     return;
   }}
 
+  // Si no és eina pan, garantir que isPanning està apagat
+  isPanning = false;
+  canvas.classList.remove('grabbing');
+
   const c = getPointerCoords(e);
   
   if (currentTool === 'text') {{
@@ -761,7 +807,7 @@ canvas.addEventListener('pointerdown', (e) => {{
 }});
 
 canvas.addEventListener('pointermove', (e) => {{
-  if (isPanning) {{
+  if (isPanning && currentTool === 'pan') {{
     e.preventDefault();
     const dx = e.clientX - panStartX;
     const dy = e.clientY - panStartY;
@@ -770,7 +816,7 @@ canvas.addEventListener('pointermove', (e) => {{
     return;
   }}
 
-  if (!isDrawing) return;
+  if (currentTool === 'pan' || !isDrawing) return;
   e.preventDefault();
   const c = getPointerCoords(e);
   const currX = c.x;
@@ -837,7 +883,7 @@ canvas.addEventListener('pointermove', (e) => {{
 }});
 
 canvas.addEventListener('pointerup', (e) => {{
-  if (isPanning) {{
+  if (isPanning || currentTool === 'pan') {{
     isPanning = false;
     canvas.classList.remove('grabbing');
     try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
@@ -923,6 +969,23 @@ canvas.addEventListener('pointercancel', (e) => {{
   }}
   isDrawing = false;
   drawAll();
+}});
+
+// Seguretat global: alliberar arrossegament de moure fins i tot si el dit s'aixeca fora del canvas
+window.addEventListener('pointerup', (e) => {{
+  if (isPanning) {{
+    isPanning = false;
+    canvas.classList.remove('grabbing');
+    try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
+  }}
+}});
+
+window.addEventListener('pointercancel', (e) => {{
+  if (isPanning) {{
+    isPanning = false;
+    canvas.classList.remove('grabbing');
+    try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
+  }}
 }});
 
 function loadBgImage(e) {{
