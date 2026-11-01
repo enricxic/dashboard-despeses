@@ -355,6 +355,24 @@ def delete_fase(project_id: str, fase_id: str) -> bool:
             return save_projectes(projectes)
     return False
 
+def marcar_fase_estat(project_id: str, fase_id: str, completada: bool) -> bool:
+    """Marca directament una fase com a acabada (i totes les seves subtasques) o la reobre com a pendent."""
+    projectes = load_projectes()
+    for p in projectes:
+        if p.get("id") == project_id:
+            for f in p.get("fases", []):
+                if f.get("id") == fase_id:
+                    if completada:
+                        f["estat"] = "Completada"
+                        for t in f.get("tasques", []):
+                            t["feta"] = True
+                    else:
+                        f["estat"] = "Pendent"
+                        for t in f.get("tasques", []):
+                            t["feta"] = False
+                    return save_projectes(projectes)
+    return False
+
 def toggle_subtasca(project_id: str, fase_id: str, tasca_id: str) -> bool:
     projectes = load_projectes()
     for p in projectes:

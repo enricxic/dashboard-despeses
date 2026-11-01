@@ -30,6 +30,7 @@ from core.projectes_manager import (
     add_fase,
     update_fase,
     delete_fase,
+    marcar_fase_estat,
     toggle_subtasca,
     add_subtasca_a_fase,
     calcular_progres_projecte,
@@ -67,6 +68,24 @@ def confirm_delete_project_dialog(project_id: str, project_nom: str):
             st.rerun()
     with col_del2:
         if st.button("Cancel·lar", use_container_width=True):
+            st.rerun()
+
+@st.dialog("🏆 Finalitzar l'Obra")
+def dialog_finalitzar_obra(project_id: str, project_nom: str):
+    """Diàleg modal que pregunta si la feina està acabada un cop fetes totes les fases."""
+    st.balloons()
+    st.markdown("### 🎉 Totes les fases estan completades!")
+    st.write(f"Has enllestit el 100% de les fases i tasques de: **{project_nom}**.")
+    st.markdown("**La feina de l'obra està completament acabada?** Vols donar el projecte per finalitzat?")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🏆 Sí, marcar com a Finalitzat", type="primary", use_container_width=True):
+            update_projecte(project_id, {"estat": "Finalitzat"})
+            st.success("Projecte marcat com a Finalitzat!")
+            st.rerun()
+    with col2:
+        if st.button("Encara no, deixar en curs", use_container_width=True):
             st.rerun()
 
 @st.dialog("🧱 Fitxa i Detalls del Material")
@@ -562,8 +581,49 @@ def _render_fases_tab(projecte: Dict[str, Any]):
     project_id = projecte["id"]
     fases = projecte.get("fases", [])
 
+    # Comprovar si s'ha d'obrir el diàleg de celebració de fi d'obra
+    if st.session_state.get(f"show_celebration_dialog_{project_id}"):
+        st.session_state[f"show_celebration_dialog_{project_id}"] = False
+        dialog_finalitzar_obra(project_id, projecte.get("nom", "Projecte"))
+
+    def _is_fase_done(f: Dict[str, Any]) -> bool:
+        t_list = f.get("tasques", [])
+        if t_list:
+            return all(t.get("feta", False) for t in t_list)
+        return f.get("estat") == "Completada"
+
+    all_phases_done = len(fases) > 0 and all(_is_fase_done(f) for f in fases)
+    is_proj_finalitzat = (projecte.get("estat") == "Finalitzat")
+
     st.markdown("### ⏱️ Fases d'Execució i Checklist d'Obra")
-    st.caption("Estructura l'ordre lògic dels treballs, assigna terminis i marca les fites assolides.")
+    st.caption("Estructura l'ordre lògic dels treballs, assigna terminis i marca les fases completades a mesura que avancis.")
+
+    # Banner superior quan totes les fases estan fetes
+    if all_phases_done:
+        if not is_proj_finalitzat:
+            with st.container(border=True):
+                c_win1, c_win2 = st.columns([2.8, 1.2])
+                with c_win1:
+                    st.markdown("### 🎉 Totes les fases estan completades!")
+                    st.write("Has assolit el 100% de les fases i treballs d'aquesta obra. **La feina està acabada?**")
+                with c_win2:
+                    st.write("")
+                    if st.button("🏆 Marcar com a Finalitzat", type="primary", use_container_width=True, key=f"btn_mark_proj_done_{project_id}"):
+                        update_projecte(project_id, {"estat": "Finalitzat"})
+                        st.balloons()
+                        st.success("Projecte marcat com a Finalitzat!")
+                        st.rerun()
+        else:
+            with st.container(border=True):
+                c_fin1, c_fin2 = st.columns([3, 1])
+                with c_fin1:
+                    st.markdown("### 🏆 Obra Finalitzada amb Èxit")
+                    st.caption("Aquest projecte té l'estat 'Finalitzat' i totes les seves fases completades.")
+                with c_fin2:
+                    st.write("")
+                    if st.button("↩️ Reobrir Projecte", use_container_width=True, key=f"btn_reopen_proj_{project_id}", help="Tornar a posar l'obra en curs"):
+                        update_projecte(project_id, {"estat": "En curs"})
+                        st.rerun()
 
     col_f1, col_f2 = st.columns([3, 1])
     with col_f2:
@@ -598,21 +658,44 @@ def _render_fases_tab(projecte: Dict[str, Any]):
             tasques = f.get("tasques", [])
             f_done = sum(1 for t in tasques if t.get("feta", False))
             f_tot = len(tasques)
-            f_pct = int((f_done / f_tot) * 100) if f_tot > 0 else (100 if f.get("estat") == "Completada" else 0)
+            is_done = _is_fase_done(f)
+            f_pct = 100 if is_done else (int((f_done / f_tot) * 100) if f_tot > 0 else 0)
 
-            badge_estat = "🟢" if f_pct == 100 else ("🟡" if f_pct > 0 else "⚪")
-            
-            with st.expander(f"{badge_estat} **{f.get('nom', 'Fase')}** ({f_done}/{f_tot} tasques — {f_pct}%)", expanded=(f_pct < 100)):
-                cf_d1, cf_d2, cf_d3 = st.columns([2, 1, 1])
+            badge_estat = "🟢" if is_done else ("🟡" if f_pct > 0 else "⚪")
+            status_desc = "Completada" if is_done else ("En curs" if f_pct > 0 else "Pendent")
+
+            if f_tot == 0 and is_done:
+                label_exp = f"🟢 **{f.get('nom', 'Fase')}** (✅ Acabada — 100%)"
+            elif f_tot == 0:
+                label_exp = f"⚪ **{f.get('nom', 'Fase')}** (⏳ Pendent — 0%)"
+            else:
+                label_exp = f"{badge_estat} **{f.get('nom', 'Fase')}** ({f_done}/{f_tot} tasques — {f_pct}%)"
+
+            with st.expander(label_exp, expanded=(not is_done)):
+                cf_d1, cf_d2, cf_d3, cf_d4 = st.columns([1.8, 0.9, 1.4, 0.5])
                 with cf_d1:
                     d_in = format_date_cat(f.get("data_inici"))
                     d_out = format_date_cat(f.get("data_fi"))
                     if d_in or d_out:
-                        st.caption(f"📅 Termini previst: {d_in or '?'} → {d_out or '?'}")
+                        st.caption(f"📅 Termini: {d_in or '?'} → {d_out or '?'}")
                 with cf_d2:
-                    st.caption(f"Estat: **{f.get('estat', 'Pendent')}**")
+                    st.markdown(f"Estat: **{status_desc}**")
+                
                 with cf_d3:
-                    if st.button("🗑️ Eliminar Fase", key=f"del_fase_{project_id}_{fase_id}"):
+                    if not is_done:
+                        if st.button("✅ Marcar Fase Acabada", key=f"btn_done_f_{project_id}_{fase_id}", type="primary", use_container_width=True):
+                            marcar_fase_estat(project_id, fase_id, True)
+                            other_f = [xf for xf in fases if xf.get("id") != fase_id]
+                            if len(other_f) == 0 or all(_is_fase_done(xf) for xf in other_f):
+                                st.session_state[f"show_celebration_dialog_{project_id}"] = True
+                            st.rerun()
+                    else:
+                        if st.button("↩️ Reobrir Fase", key=f"btn_reopen_f_{project_id}_{fase_id}", use_container_width=True, help="Tornar a marcar la fase com a pendent"):
+                            marcar_fase_estat(project_id, fase_id, False)
+                            st.rerun()
+
+                with cf_d4:
+                    if st.button("🗑️", key=f"del_fase_{project_id}_{fase_id}", help="Eliminar Fase"):
                         delete_fase(project_id, fase_id)
                         st.rerun()
 
@@ -630,6 +713,9 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                         )
                         if chk_t != t_done:
                             toggle_subtasca(project_id, fase_id, t_id)
+                            up_p = get_projecte(project_id)
+                            if up_p and all(_is_fase_done(xf) for xf in up_p.get("fases", [])):
+                                st.session_state[f"show_celebration_dialog_{project_id}"] = True
                             st.rerun()
 
                 # Formulari per afegir subtasca a aquesta fase
