@@ -16,7 +16,19 @@ from typing import List, Dict, Optional, Any
 _CURR_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(_CURR_DIR, ".."))
 PROJECTES_FILE = os.path.join(PROJECT_ROOT, "data", "projectes_manteniment.json")
+PROVEIDORS_FILE = os.path.join(PROJECT_ROOT, "data", "proveidors_projectes.json")
 CONFIG_ID_PROJECTES = 11
+
+PROVEIDORS_DEFECTE = [
+    "Obramat",
+    "Leroy Merlin",
+    "Bauhaus",
+    "Brico Depôt",
+    "Ferreteria de barri",
+    "Amazon",
+    "Internet",
+    "Altre"
+]
 
 # ==========================================
 # UTILITATS DE FORMAT DE DATA (DD/MM/AAAA)
@@ -202,6 +214,66 @@ def delete_projecte(project_id: str) -> bool:
     return False
 
 # ==========================================
+# GESTIÓ DE PROVEÏDORS EN MEMÒRIA
+# ==========================================
+
+def get_llista_proveidors() -> List[str]:
+    """Retorna la llista consolidada de proveïdors (per defecte + afegits en memòria + utilitzats en materials)."""
+    provs = list(PROVEIDORS_DEFECTE)
+    # 1. Carregar des de fitxer persistent de memòria
+    if os.path.exists(PROVEIDORS_FILE):
+        try:
+            with open(PROVEIDORS_FILE, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+                if isinstance(saved, list):
+                    for sp in saved:
+                        s_clean = str(sp).strip()
+                        if s_clean and s_clean not in provs:
+                            provs.append(s_clean)
+        except Exception:
+            pass
+
+    # 2. Extreure proveïdors de tots els projectes existents
+    try:
+        projectes = load_projectes()
+        for p in projectes:
+            for m in p.get("materials", []):
+                mp = str(m.get("proveidor", "")).strip()
+                if mp and mp not in ("-", "Altre") and mp not in provs:
+                    provs.append(mp)
+    except Exception:
+        pass
+
+    return provs
+
+def add_proveidor_memoria(nou_prov: str) -> List[str]:
+    """Afegeix un nou proveïdor a la memòria persistent perquè quedi sempre disponible."""
+    clean = str(nou_prov).strip()
+    if not clean or clean in ("-", "Altre"):
+        return get_llista_proveidors()
+
+    current_saved = []
+    if os.path.exists(PROVEIDORS_FILE):
+        try:
+            with open(PROVEIDORS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    current_saved = [str(x).strip() for x in data if str(x).strip()]
+        except Exception:
+            current_saved = []
+
+    if clean not in current_saved:
+        current_saved.append(clean)
+        try:
+            os.makedirs(os.path.dirname(PROVEIDORS_FILE), exist_ok=True)
+            with open(PROVEIDORS_FILE, "w", encoding="utf-8") as f:
+                json.dump(current_saved, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    return get_llista_proveidors()
+
+# ==========================================
 # GESTIÓ DE MATERIALS
 # ==========================================
 
@@ -213,6 +285,13 @@ def add_material(project_id: str, material: Dict[str, Any]) -> bool:
             if not material.get("id"):
                 material["id"] = f"mat_{len(p['materials']) + 1}_{int(datetime.now().timestamp())}"
             material.setdefault("comprat", False)
+            material.setdefault("en_stock", False)
+            if material.get("en_stock"):
+                material["preu_real"] = 0.0
+                material["comprat"] = False
+            prov = str(material.get("proveidor", "")).strip()
+            if prov and prov not in ("-", "Altre"):
+                add_proveidor_memoria(prov)
             p["materials"].append(material)
             return save_projectes(projectes)
     return False
@@ -224,6 +303,12 @@ def update_material(project_id: str, material_id: str, fields: Dict[str, Any]) -
             for m in p.get("materials", []):
                 if m.get("id") == material_id:
                     m.update(fields)
+                    if m.get("en_stock"):
+                        m["preu_real"] = 0.0
+                        m["comprat"] = False
+                    prov = str(m.get("proveidor", "")).strip()
+                    if prov and prov not in ("-", "Altre"):
+                        add_proveidor_memoria(prov)
                     return save_projectes(projectes)
     return False
 
