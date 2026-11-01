@@ -12,6 +12,7 @@ import json
 import re
 from typing import Dict, Any, List, Tuple
 from core.llm import call_llm_api
+import urllib.parse
 from core.projectes_manager import format_date_cat
 
 SYS_PROMPT_OBRA = """Ets un arquitecte tècnic i mestre d'obres expert en reformes de la llar, paleta, lampisteria, electricitat, fusteria, pintura i bricolatge avançat a Catalunya i Espanya.
@@ -94,6 +95,10 @@ Retorna ÚNICAMENT el JSON sense text abans ni després."""
         clean_json = re.sub(r"```\s*$", "", clean_json, flags=re.MULTILINE)
         items = json.loads(clean_json)
         if isinstance(items, list):
+            for itm in items:
+                art = itm.get("article", "")
+                if art and not itm.get("imatge"):
+                    itm["imatge"] = generar_imatge_material_url(art)
             return True, items, "Materials generats correctament."
     except Exception as e:
         return False, [], f"Error parsejant JSON de materials: {e}"
@@ -148,3 +153,10 @@ Retorna ÚNICAMENT el JSON sense text abans ni després."""
         return False, [], f"Error parsejant JSON de fases: {e}"
 
     return False, [], "El format de resposta no és una llista vàlida."
+
+def generar_imatge_material_url(nom_material: str) -> str:
+    """Retorna una URL directa per generar la imatge del material amb IA."""
+    clean_name = nom_material.strip()
+    prompt = f"Product photo of {clean_name}, construction DIY material, isolated clean neutral background, 4k"
+    encoded = urllib.parse.quote(prompt)
+    return f"https://image.pollinations.ai/prompt/{encoded}?width=400&height=400&nologo=true"

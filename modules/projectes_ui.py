@@ -3,7 +3,7 @@ modules/projectes_ui.py
 Interfície d'usuari completa per a la gestió de Projectes d'Obra i Reformes de la llar.
 Subpestanyes per a cada projecte:
  1. 📐 Plànol & Fotos
- 2. 🧱 Materials & Despeses
+ 2. 🧱 Materials & Despeses (Visual amb imatges d'arxiu propi i aportades per la IA)
  3. ⏱️ Fases d'Execució i Progrés
  4. 🤖 Assistent IA d'Obra
 Totes les dates es mostren i s'introdueixen en format català/europeu DD/MM/AAAA.
@@ -11,6 +11,7 @@ Totes les dates es mostren i s'introdueixen en format català/europeu DD/MM/AAAA
 
 import streamlit as st
 import pandas as pd
+import base64
 from datetime import datetime, date, timedelta
 from typing import Dict, Any, List
 
@@ -39,10 +40,87 @@ from core.projectes_manager import (
 from core.ai_projectes import (
     consultar_assistent_obra,
     generar_recomanacions_materials,
-    generar_recomanacions_fases
+    generar_recomanacions_fases,
+    generar_imatge_material_url
 )
 from core.llm_ui import render_ai_selector
 from modules.canvas_planol import render_planol_tab
+
+# ==========================================
+# DIÀLEGS MODALS DE CONFIRMACIÓ I IMATGES
+# ==========================================
+
+@st.dialog("🗑️ Confirmar Eliminació del Projecte")
+def confirm_delete_project_dialog(project_id: str, project_nom: str):
+    """Diàleg segur i visible per confirmar l'esborrat complet d'un projecte."""
+    st.error(f"⚠️ Estàs a punt d'esborrar el projecte: **{project_nom}**")
+    st.markdown("Aquesta acció eliminarà permanentment:")
+    st.markdown("- El plànol i croquis de l'obra\n- Tota la llista de materials i costos\n- Totes les fases i tasques\n- La galeria fotogràfica de seguiment")
+    
+    col_del1, col_del2 = st.columns(2)
+    with col_del1:
+        if st.button("Sí, esborrar definitivament", type="primary", use_container_width=True):
+            delete_projecte(project_id)
+            st.success("Projecte esborrat correctament!")
+            st.rerun()
+    with col_del2:
+        if st.button("Cancel·lar", use_container_width=True):
+            st.rerun()
+
+@st.dialog("📷 Imatge del Material")
+def dialog_imatge_material(project_id: str, material: Dict[str, Any]):
+    """Permet assignar una imatge al material: per arxiu propi, generada per IA o URL."""
+    mat_id = material.get("id")
+    nom_art = material.get("article", "Material")
+    cur_img = material.get("imatge")
+
+    st.markdown(f"### 🧱 {nom_art}")
+    if cur_img:
+        st.image(cur_img, width=240, caption="Imatge actual del material")
+
+    t_ia, t_up, t_url = st.tabs(["✨ Generar amb IA", "📁 Arxiu Propi (Foto)", "🌐 Enllaç URL"])
+
+    with t_ia:
+        st.caption("La IA generarà una imatge realista i neta del producte de construcció/bricolatge.")
+        if st.button("🎨 Generar Imatge IA ara", type="primary", use_container_width=True, key=f"gen_ia_btn_{mat_id}"):
+            with st.spinner("Generant fotografia del material..."):
+                nova_url = generar_imatge_material_url(nom_art)
+                update_material(project_id, mat_id, {"imatge": nova_url})
+                st.success("Imatge generada i assignada!")
+                st.rerun()
+
+    with t_up:
+        up_file = st.file_uploader(
+            "Selecciona o fes una foto amb el mòbil (caixa, paquet o catàleg):",
+            type=["png", "jpg", "jpeg", "webp"],
+            key=f"up_mat_file_{mat_id}"
+        )
+        if st.button("Guardar foto pròpia", use_container_width=True, key=f"save_up_btn_{mat_id}"):
+            if up_file:
+                b64_data = f"data:image/jpeg;base64,{base64.b64encode(up_file.read()).decode('utf-8')}"
+                update_material(project_id, mat_id, {"imatge": b64_data})
+                st.success("Foto desada correctament!")
+                st.rerun()
+            else:
+                st.warning("Selecciona primer una imatge.")
+
+    with t_url:
+        in_url = st.text_input("Enganxa l'enllaç de la foto (Leroy Merlin, Obramat, Google...):", value=cur_img if (cur_img and cur_img.startswith("http")) else "")
+        if st.button("Guardar Enllaç", use_container_width=True, key=f"save_url_btn_{mat_id}"):
+            if in_url.strip():
+                update_material(project_id, mat_id, {"imatge": in_url.strip()})
+                st.success("Enllaç desat!")
+                st.rerun()
+
+    if cur_img:
+        st.divider()
+        if st.button("🗑️ Eliminar aquesta imatge", key=f"del_mat_img_{mat_id}", use_container_width=True):
+            update_material(project_id, mat_id, {"imatge": None})
+            st.rerun()
+
+# ==========================================
+# RENDERITZACIÓ PRINCIPAL DEL MÒDUL
+# ==========================================
 
 def render_projectes_tab(family_names: List[str] = None):
     """Pestanya principal de Projectes d'Obra i Reformes al mòdul de manteniment."""
@@ -119,7 +197,7 @@ def render_projectes_tab(family_names: List[str] = None):
 # ==========================================
 
 def _render_projecte_header(projecte: Dict[str, Any]):
-    """Mostra la informació general, estat, dates (DD/MM/AAAA) i mètriques del projecte."""
+    """Mostra la informació general, estat, dates (DD/MM/AAAA), mètriques i botó d'esborrar."""
     project_id = projecte["id"]
     progres = calcular_progres_projecte(projecte)
 
@@ -127,7 +205,6 @@ def _render_projecte_header(projecte: Dict[str, Any]):
     pressupost_est = float(projecte.get("pressupost_estimat", 0.0) or 0.0)
     materials = projecte.get("materials", [])
     cost_comprat = sum(float(m.get("preu_real", 0.0) or 0.0) for m in materials if m.get("comprat", False))
-    cost_estimat_total = sum(float(m.get("preu_estimat", 0.0) or 0.0) for m in materials)
 
     d_inici = format_date_cat(projecte.get("data_inici"))
     d_fi = format_date_cat(projecte.get("data_fi_prevista"))
@@ -150,76 +227,81 @@ def _render_projecte_header(projecte: Dict[str, Any]):
 
     # Botó per editar o eliminar projecte
     with st.expander("⚙️ Opcions del Projecte (Editar dades / Eliminar)"):
-        c_ed1, c_ed2 = st.columns([3, 1])
-        with c_ed1:
-            with st.form(f"form_edit_proj_{project_id}"):
-                f_nom = st.text_input("Nom del projecte:", value=projecte.get("nom", ""))
-                f_ubi = st.text_input("Ubicació a la casa:", value=projecte.get("ubicacio", ""))
-                f_desc = st.text_area("Descripció dels treballs:", value=projecte.get("descripcio", ""))
-                
-                col_d1, col_d2, col_d3 = st.columns(3)
-                with col_d1:
-                    estats = ["Planificació", "En curs", "En pausa", "Completat"]
-                    cur_est = projecte.get("estat", "Planificació")
-                    f_estat = st.selectbox("Estat actual:", estats, index=estats.index(cur_est) if cur_est in estats else 0)
-                with col_d2:
-                    p_inici = parse_date_cat(projecte.get("data_inici")) or date.today()
-                    f_inici = st.date_input("Data inici (DD/MM/AAAA):", value=p_inici, format="DD/MM/YYYY")
-                with col_d3:
-                    p_fi = parse_date_cat(projecte.get("data_fi_prevista")) or (date.today() + timedelta(days=30))
-                    f_fi = st.date_input("Data fi prevista (DD/MM/AAAA):", value=p_fi, format="DD/MM/YYYY")
+        # Fila superior amb acció destacada d'esborrar
+        col_hdr_op1, col_hdr_op2 = st.columns([2.5, 1.5])
+        with col_hdr_op1:
+            st.markdown("**Modificació de les dades bàsiques del projecte:**")
+        with col_hdr_op2:
+            if st.button("🗑️ Esborrar aquest Projecte", key=f"btn_open_del_{project_id}", type="secondary", use_container_width=True):
+                confirm_delete_project_dialog(project_id, projecte.get("nom", "Sense títol"))
 
-                f_press = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=pressupost_est, step=50.0)
+        st.divider()
 
-                sub_edit = st.form_submit_button("Desar Canvis del Projecte", type="primary")
-                if sub_edit:
-                    update_projecte(project_id, {
-                        "nom": f_nom,
-                        "ubicacio": f_ubi,
-                        "descripcio": f_desc,
-                        "estat": f_estat,
-                        "data_inici": to_iso_date(f_inici),
-                        "data_fi_prevista": to_iso_date(f_fi),
-                        "pressupost_estimat": f_press
-                    })
-                    st.success("Dades del projecte actualitzades!")
-                    st.rerun()
+        # Formulari d'edició
+        with st.form(f"form_edit_proj_{project_id}"):
+            f_nom = st.text_input("Nom del projecte:", value=projecte.get("nom", ""))
+            f_ubi = st.text_input("Ubicació a la casa:", value=projecte.get("ubicacio", ""))
+            f_desc = st.text_area("Descripció dels treballs:", value=projecte.get("descripcio", ""))
+            
+            col_d1, col_d2, col_d3 = st.columns(3)
+            with col_d1:
+                estats = ["Planificació", "En curs", "En pausa", "Completat"]
+                cur_est = projecte.get("estat", "Planificació")
+                f_estat = st.selectbox("Estat actual:", estats, index=estats.index(cur_est) if cur_est in estats else 0)
+            with col_d2:
+                p_inici = parse_date_cat(projecte.get("data_inici")) or date.today()
+                f_inici = st.date_input("Data inici (DD/MM/AAAA):", value=p_inici, format="DD/MM/YYYY")
+            with col_d3:
+                p_fi = parse_date_cat(projecte.get("data_fi_prevista")) or (date.today() + timedelta(days=30))
+                f_fi = st.date_input("Data fi prevista (DD/MM/AAAA):", value=p_fi, format="DD/MM/YYYY")
 
-        with c_ed2:
-            st.write("")
-            st.write("")
-            st.error("Zona de perill")
-            if st.button("🗑️ Eliminar Projecte", key=f"btn_del_proj_{project_id}", use_container_width=True):
-                delete_projecte(project_id)
-                st.success("Projecte eliminat!")
+            f_press = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=pressupost_est, step=50.0)
+
+            sub_edit = st.form_submit_button("Desar Canvis del Projecte", type="primary")
+            if sub_edit:
+                update_projecte(project_id, {
+                    "nom": f_nom,
+                    "ubicacio": f_ubi,
+                    "descripcio": f_desc,
+                    "estat": f_estat,
+                    "data_inici": to_iso_date(f_inici),
+                    "data_fi_prevista": to_iso_date(f_fi),
+                    "pressupost_estimat": f_press
+                })
+                st.success("Dades del projecte actualitzades!")
                 st.rerun()
 
 def _render_materials_tab(projecte: Dict[str, Any]):
-    """Gestió de materials, proveïdors, preus estimats vs reals i casella de compra."""
+    """Gestió visual de materials amb imatges (pròpies o IA), proveïdors, preus i casella de compra."""
     project_id = projecte["id"]
     materials = projecte.get("materials", [])
 
     st.markdown("### 🧱 Llistat de Materials i Control de Pressupost")
-    st.caption("Planifica els materials necessaris, controla els preus de mercat i marca els que ja has adquirit.")
+    st.caption("Planifica els materials necessaris amb suport fotogràfic, controla els preus de mercat i marca els que ja has adquirit.")
 
     # Accions ràpides superiors
-    col_act1, col_act2 = st.columns([3, 1])
+    col_act1, col_act2 = st.columns([2.5, 1.5])
     with col_act2:
-        if st.button("✨ Suggerir Materials amb IA", key=f"btn_ia_mat_{project_id}", use_container_width=True):
+        if st.button("✨ Suggerir Materials amb IA", key=f"btn_ia_mat_{project_id}", use_container_width=True, type="secondary"):
             st.session_state[f"show_suggest_mat_{project_id}"] = True
 
     # Si s'ha activat la petició de suggeriment amb IA
     if st.session_state.get(f"show_suggest_mat_{project_id}"):
-        with st.status("Generant llista de materials recomanada amb preus de mercat...", expanded=True) as status:
+        with st.status("Generant llista de materials recomanada amb imatges i preus de mercat...", expanded=True) as status:
             prov, mod, key = render_ai_selector(key_prefix=f"mat_ai_{project_id}")
             ok, sugg_list, msg = generar_recomanacions_materials(projecte, prov, mod, key)
             if ok and sugg_list:
-                status.update(label="Materials proposats per la IA:", state="complete")
+                status.update(label="Materials proposats per la IA (amb fotografies):", state="complete")
                 st.write(f"S'han identificat **{len(sugg_list)} materials recomanats**:")
-                for item in sugg_list:
-                    st.write(f"• **{item.get('article')}** — Qtt: {item.get('quantitat')} — Est: {item.get('preu_estimat', 0)} € ({item.get('proveidor', '')})")
+                cols_preview = st.columns(min(len(sugg_list), 4))
+                for idx, item in enumerate(sugg_list):
+                    c_prev = cols_preview[idx % len(cols_preview)]
+                    with c_prev:
+                        if item.get("imatge"):
+                            st.image(item["imatge"], use_container_width=True)
+                        st.caption(f"**{item.get('article')}**\nEst: {item.get('preu_estimat', 0)} €")
                 
-                if st.button("📥 Afegir tots aquests materials al projecte", key=f"add_all_mat_{project_id}", type="primary"):
+                if st.button("📥 Afegir tots aquests materials amb imatges al projecte", key=f"add_all_mat_{project_id}", type="primary", use_container_width=True):
                     for item in sugg_list:
                         add_material(project_id, {
                             "article": item.get("article"),
@@ -227,56 +309,77 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                             "proveidor": item.get("proveidor", "Obramat"),
                             "preu_estimat": float(item.get("preu_estimat", 0.0)),
                             "preu_real": 0.0,
-                            "comprat": False
+                            "comprat": False,
+                            "imatge": item.get("imatge")
                         })
                     st.session_state[f"show_suggest_mat_{project_id}"] = False
-                    st.success("Materials afegits al projecte!")
+                    st.success("Materials i imatges afegits al projecte!")
                     st.rerun()
             else:
                 status.update(label=f"No s'han pogut generar materials: {msg}", state="error")
 
-    # Taula interactiva de materials
+    # Llistat visual de materials
     if materials:
+        st.markdown(f"**Articles del Projecte ({len(materials)}):**")
         for i, m in enumerate(materials):
             mat_id = m.get("id", str(i))
             comprat = m.get("comprat", False)
+            img_url = m.get("imatge")
             
-            # Format visual de cada línia de material
-            with st.container():
-                c_chk, c_nom, c_qtt, c_prov, c_est, c_real, c_del = st.columns([0.5, 2.5, 1, 1.5, 1, 1, 0.5])
+            with st.container(border=True):
+                c_chk, c_img, c_info, c_preus, c_actions = st.columns([0.4, 1.2, 2.8, 1.6, 1.0])
+                
+                # 1. Casella Comprat
                 with c_chk:
-                    chk = st.checkbox("", value=comprat, key=f"chk_mat_{project_id}_{mat_id}")
+                    st.write("")
+                    chk = st.checkbox("", value=comprat, key=f"chk_mat_{project_id}_{mat_id}", help="Marcar com a comprat")
                     if chk != comprat:
                         update_material(project_id, mat_id, {"comprat": chk})
                         st.rerun()
-                with c_nom:
-                    st.markdown(f"**{m.get('article', '')}**" if not comprat else f"~~{m.get('article', '')}~~")
-                with c_qtt:
-                    st.caption(f"Qtt: {m.get('quantitat', 1)}")
-                with c_prov:
-                    st.caption(f"🏪 {m.get('proveidor', '-')}")
-                with c_est:
-                    st.caption(f"Est: {float(m.get('preu_estimat', 0.0)):.2f} €")
-                with c_real:
-                    preu_r = float(m.get("preu_real", 0.0) or 0.0)
-                    if comprat:
-                        st.markdown(f"**{preu_r:.2f} €**")
+
+                # 2. Imatge en miniatura
+                with c_img:
+                    if img_url:
+                        st.image(img_url, use_container_width=True)
                     else:
-                        st.caption("-")
-                with c_del:
-                    if st.button("🗑️", key=f"del_mat_{project_id}_{mat_id}", help="Eliminar material"):
+                        st.markdown("<div style='background:#f1f5f9; border-radius:8px; height:70px; display:flex; align-items:center; justify-content:center; font-size:26px; border:1px dashed #cbd5e1;'>🧱</div>", unsafe_allow_html=True)
+
+                # 3. Informació de l'article
+                with c_info:
+                    st.markdown(f"**{m.get('article', '')}**" if not comprat else f"~~{m.get('article', '')}~~")
+                    c_det1, c_det2 = st.columns(2)
+                    with c_det1:
+                        st.caption(f"Quantitat: **{m.get('quantitat', 1)}**")
+                    with c_det2:
+                        st.caption(f"Proveïdor: **{m.get('proveidor', '-')}**")
+
+                # 4. Preus estimat vs real
+                with c_preus:
+                    p_est = float(m.get("preu_estimat", 0.0) or 0.0)
+                    p_real = float(m.get("preu_real", 0.0) or 0.0)
+                    st.caption(f"Estimat: **{p_est:.2f} €**")
+                    if comprat:
+                        st.markdown(f"Pagat: <span style='color:#16a34a; font-weight:700;'>{p_real:.2f} €</span>", unsafe_allow_html=True)
+                    else:
+                        st.caption("Estat: *Pendent de compra*")
+
+                # 5. Botons d'acció (Imatge / Esborrar)
+                with c_actions:
+                    if st.button("📷 Foto", key=f"btn_img_{project_id}_{mat_id}", use_container_width=True, help="Canviar o generar imatge"):
+                        dialog_imatge_material(project_id, m)
+                    if st.button("🗑️", key=f"del_mat_{project_id}_{mat_id}", use_container_width=True, help="Eliminar material"):
                         delete_material(project_id, mat_id)
                         st.rerun()
-                st.divider()
-    else:
-        st.info("Encara no hi ha materials afegits. Fes servir el botó de la IA o el formulari inferior per afegir-ne.")
 
-    # Formulari d'alta manual de material
+    else:
+        st.info("Encara no hi ha materials afegits. Fes servir el botó **✨ Suggerir Materials amb IA** o el formulari inferior per afegir-ne amb imatges.")
+
+    # Formulari d'alta manual de material amb suport d'imatge
     with st.expander("➕ Afegir Material Manualment"):
         with st.form(f"form_add_mat_{project_id}"):
             ca1, ca2 = st.columns([2, 1])
             with ca1:
-                in_art = st.text_input("Nom de l'article / material:", placeholder="Ex: Sac de ciment cola C2TE 25kg")
+                in_art = st.text_input("Nom de l'article / material:", placeholder="Ex: Plat de dutxa resina 120x80 blanc")
             with ca2:
                 in_prov = st.selectbox("Proveïdor recomanat:", ["Obramat", "Leroy Merlin", "Bauhaus", "Brico Depôt", "Ferreteria de barri", "Internet", "Altre"])
             
@@ -288,17 +391,35 @@ def _render_materials_tab(projecte: Dict[str, Any]):
             with cb3:
                 in_preal = st.number_input("Preu pagat real (€, si ja s'ha comprat):", min_value=0.0, value=0.0, step=5.0)
 
+            # Opcions d'imatge
+            st.markdown("**Imatge del Material (opcional):**")
+            ci1, ci2 = st.columns(2)
+            with ci1:
+                up_art_img = st.file_uploader("📁 Pujar foto pròpia (mòbil/fitxer):", type=["png", "jpg", "jpeg", "webp"], key=f"form_img_file_{project_id}")
+            with ci2:
+                in_art_url = st.text_input("🌐 O enllaç d'imatge web:", placeholder="https://...")
+                gen_ai_opt = st.checkbox("✨ Generar automàticament amb IA si no es puja foto", value=True)
+
             in_comprat = st.checkbox("Ja comprat / a casa", value=(in_preal > 0))
 
-            sub_mat = st.form_submit_button("Afegir Material", type="primary")
+            sub_mat = st.form_submit_button("Afegir Material al Projecte", type="primary")
             if sub_mat and in_art:
+                final_img = None
+                if up_art_img:
+                    final_img = f"data:image/jpeg;base64,{base64.b64encode(up_art_img.read()).decode('utf-8')}"
+                elif in_art_url.strip():
+                    final_img = in_art_url.strip()
+                elif gen_ai_opt:
+                    final_img = generar_imatge_material_url(in_art)
+
                 add_material(project_id, {
                     "article": in_art,
                     "quantitat": in_qtt,
                     "proveidor": in_prov,
                     "preu_estimat": in_pest,
                     "preu_real": in_preal,
-                    "comprat": in_comprat
+                    "comprat": in_comprat,
+                    "imatge": final_img
                 })
                 st.success("Material afegit correctament!")
                 st.rerun()
