@@ -609,6 +609,41 @@ def render_planol_tab(projecte: Dict[str, Any]):
     st.markdown("### 📐 Plànol i Croquis de l'Obra")
     st.caption("Dibuixa parets, habitacions i cotes amb mides en metres, o carrega una foto real de l'estança per utilitzar-la com a fons.")
 
+    # Guia d'ús desplegable integrada al projecte
+    with st.expander("📖 Guia d'Ús: Com funciona l'editor de plànols?", expanded=False):
+        st.markdown("""
+        #### 📱 Com funciona l'editor de plànols pas a pas
+
+        1. **🧱 Paret / Línia:**
+           - Toca el botó **`🧱 Paret`**.
+           - Posa el dit (o ratolí) sobre la quadreta i **arrossega** fins on acabi la paret. En aixecar el dit, es traçarà la línia negra.
+
+        2. **🔲 Espai / Habitació:**
+           - Toca el botó **`🔲 Espai`**.
+           - **Arrossega en diagonal** per crear una habitació, envà o moble rectangular.
+
+        3. **📏 Cota (mesures en metres):**
+           - Toca el botó **`📏 Cota`**.
+           - **Arrossega d'un extrem a l'altre** del tram que vulguis mesurar.
+           - S'obrirà un selector emergent: tria una mesura ràpida (*1,00 m, 1,50 m, 2,00 m...*) o escriu la teva mida exacta (ex: *2,40 m*).
+
+        4. **🔤 Text:**
+           - Toca el botó **`🔤 Text`** i després toca sobre l'espai del plànol.
+           - Tria una etiqueta ràpida (*Bany, Dutxa, Moble lavabo, Porta, Finestra*) o escriu el text lliure que vulguis.
+
+        5. **🧹 Goma d'esborrar i ↩️ Desfer:**
+           - Toca **`🧹 Goma`** i després toca sobre qualsevol línia o element per eliminar-lo.
+           - Si t'has equivocat en l'últim traç, prem directament **`↩️ Desfer`**.
+
+        6. **📷 Foto de fons:**
+           - Prem **`📷 Foto fons`** per carregar una foto de l'estança real o d'un esbós en paper.
+           - Mou la barra d'**Opacitat** per poder calcar i afegir cotes/parets exactament per sobre.
+
+        7. **💾 Desar al Projecte:**
+           - Un cop tinguis el plànol fet, prem el botó verd **`💾 Descarregar PNG`**.
+           - Tot seguit, al formulari inferior **'Desar o Actualitzar Plànol'**, carrega aquesta imatge i prem **`Guardar Plànol Oficial`** perquè quedi gravat permanentment a la fitxa del projecte.
+        """)
+
     # Vista prèvia actual si existeix
     if preview_png:
         st.markdown("**Plànol oficial desat per a aquest projecte:**")
