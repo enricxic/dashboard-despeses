@@ -124,21 +124,22 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   /* Modal intern tàctil */
   .modal-overlay {{
     display: none;
-    position: absolute;
+    position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(15, 23, 42, 0.6);
-    z-index: 100;
+    background: rgba(15, 23, 42, 0.65);
+    z-index: 1000;
     justify-content: center;
     align-items: center;
     padding: 15px;
+    overflow-y: auto;
   }}
   .modal-box {{
     background: white;
     padding: 16px;
     border-radius: 12px;
     width: 100%;
-    max-width: 340px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    max-width: 360px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
     text-align: center;
   }}
   .modal-box h4 {{
@@ -170,6 +171,11 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
+  }}
+  .preset-btn.active {{
+    background: #2563eb;
+    color: white;
+    border-color: #1d4ed8;
   }}
   .modal-actions {{
     display: flex;
@@ -207,7 +213,9 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
 
   <!-- Eines de Dibuix -->
   <button class="btn active" id="btnWall" onclick="setTool('wall')">🧱 Paret</button>
+  <button class="btn" id="btnRoomPreset" onclick="openRoomPresetModal()" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;" title="Crea una habitació amb mides exactes en metres">🏠 Habitació</button>
   <button class="btn" id="btnRect" onclick="setTool('rect')">🔲 Espai</button>
+  <button class="btn" id="btnBucket" onclick="openTexturePicker()" title="Aplica textura a un espai o habitació">🪣 Textura</button>
   <button class="btn" id="btnDim" onclick="setTool('dim')">📏 Cota</button>
   <button class="btn" id="btnText" onclick="setTool('text')">🔤 Text</button>
   <button class="btn" id="btnEraser" onclick="toggleEraser()" title="Activa o desactiva la goma d'esborrar">🧹 Goma</button>
@@ -257,6 +265,71 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeModal(false)">Cancel·lar</button>
         <button class="btn-confirm" onclick="closeModal(true)">Acceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal per triar Textura (Galleda) -->
+  <div class="modal-overlay" id="textureModal">
+    <div class="modal-box" style="max-width: 330px;">
+      <h4 style="margin-bottom: 12px;">🪣 Tria la textura a aplicar</h4>
+      <div id="textureOptions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeTextureModal()">Tancar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal per Crear Habitació amb Mides Exactes -->
+  <div class="modal-overlay" id="roomPresetModal">
+    <div class="modal-box" style="max-width: 360px; text-align: left;">
+      <h4 style="text-align: center; margin-bottom: 12px; color: #1e3a8a;">🏠 Nova Habitació amb Mides</h4>
+      
+      <label style="font-size: 12px; font-weight: 600; color: #475569;">📐 Amplada (metres):</label>
+      <input type="number" id="roomWidthInput" class="modal-input" value="3.50" step="0.1" min="0.5" max="30" style="margin: 3px 0 6px 0; text-align: center;">
+      <div class="preset-btns" style="justify-content: center; margin-bottom: 8px;">
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomWidthInput').value='2.00'">2,00</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomWidthInput').value='2.50'">2,50</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomWidthInput').value='3.00'">3,00</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomWidthInput').value='3.50'">3,50</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomWidthInput').value='4.00'">4,00</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomWidthInput').value='5.00'">5,00</button>
+      </div>
+
+      <label style="font-size: 12px; font-weight: 600; color: #475569;">📐 Llargada (metres):</label>
+      <input type="number" id="roomHeightInput" class="modal-input" value="3.00" step="0.1" min="0.5" max="30" style="margin: 3px 0 6px 0; text-align: center;">
+      <div class="preset-btns" style="justify-content: center; margin-bottom: 8px;">
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomHeightInput').value='2.00'">2,00</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomHeightInput').value='2.50'">2,50</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomHeightInput').value='3.00'">3,00</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomHeightInput').value='3.50'">3,50</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomHeightInput').value='4.00'">4,00</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomHeightInput').value='5.00'">5,00</button>
+      </div>
+
+      <label style="font-size: 12px; font-weight: 600; color: #475569;">🏷️ Nom de l'Estança:</label>
+      <input type="text" id="roomNameInput" class="modal-input" value="Dormitori" style="margin: 3px 0 6px 0; text-align: center;">
+      <div class="preset-btns" style="justify-content: center; margin-bottom: 8px;">
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomNameInput').value='Dormitori'">Dormitori</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomNameInput').value='Bany'">Bany</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomNameInput').value='Cuina'">Cuina</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomNameInput').value='Menjador'">Menjador</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomNameInput').value='Rebedor'">Rebedor</button>
+        <button type="button" class="preset-btn" onclick="document.getElementById('roomNameInput').value='Terrassa'">Terrassa</button>
+      </div>
+
+      <label style="font-size: 12px; font-weight: 600; color: #475569;">🪵 Textura de Terra:</label>
+      <div class="preset-btns" id="roomTexturePresets" style="justify-content: center; margin-bottom: 14px;">
+        <button type="button" class="preset-btn active" id="texBtn_parquet" onclick="selectRoomPresetTexture('parquet', this)">🪵 Parquet</button>
+        <button type="button" class="preset-btn" id="texBtn_rajola" onclick="selectRoomPresetTexture('rajola', this)">🔲 Rajola</button>
+        <button type="button" class="preset-btn" id="texBtn_ciment" onclick="selectRoomPresetTexture('ciment', this)">⚪ Microciment</button>
+        <button type="button" class="preset-btn" id="texBtn_gespa" onclick="selectRoomPresetTexture('gespa', this)">🌿 Gespa</button>
+        <button type="button" class="preset-btn" id="texBtn_none" onclick="selectRoomPresetTexture('none', this)">❌ Sense</button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeRoomPresetModal()">Cancel·lar</button>
+        <button type="button" class="btn-confirm" onclick="createPresetRoom()" style="background: #16a34a;">✨ Crear Habitació</button>
       </div>
     </div>
   </div>
@@ -354,6 +427,237 @@ if (preBg && preBg.length > 50) {{
   img.src = preBg;
 }}
 
+let selectedTexture = 'parquet';
+let selectedTextureName = '🪵 Parquet';
+let selectedRoomTexture = 'parquet';
+const patterns = {{}};
+
+function getPattern(type) {{
+  if (!type || type === 'none') return 'rgba(241, 245, 249, 0.45)';
+  if (patterns[type]) return patterns[type];
+  const pCanvas = document.createElement('canvas');
+  const pCtx = pCanvas.getContext('2d');
+  
+  if (type === 'parquet') {{
+    pCanvas.width = 40;
+    pCanvas.height = 20;
+    pCtx.fillStyle = '#fef3c7';
+    pCtx.fillRect(0, 0, 40, 20);
+    pCtx.strokeStyle = '#d97706';
+    pCtx.lineWidth = 1;
+    pCtx.strokeRect(0, 0, 40, 10);
+    pCtx.strokeRect(20, 10, 40, 10);
+    pCtx.strokeRect(-20, 10, 40, 10);
+    pCtx.strokeStyle = 'rgba(180, 83, 9, 0.25)';
+    pCtx.beginPath();
+    pCtx.moveTo(4, 5); pCtx.lineTo(36, 5);
+    pCtx.moveTo(24, 15); pCtx.lineTo(36, 15);
+    pCtx.stroke();
+  }} else if (type === 'rajola') {{
+    pCanvas.width = 24;
+    pCanvas.height = 24;
+    pCtx.fillStyle = '#f8fafc';
+    pCtx.fillRect(0, 0, 24, 24);
+    pCtx.strokeStyle = '#94a3b8';
+    pCtx.lineWidth = 1.2;
+    pCtx.strokeRect(0, 0, 24, 24);
+  }} else if (type === 'dutxa') {{
+    pCanvas.width = 16;
+    pCanvas.height = 16;
+    pCtx.fillStyle = '#bae6fd';
+    pCtx.fillRect(0, 0, 16, 16);
+    pCtx.strokeStyle = '#0284c7';
+    pCtx.lineWidth = 1;
+    pCtx.strokeRect(0, 0, 8, 8);
+    pCtx.strokeRect(8, 0, 8, 8);
+    pCtx.strokeRect(0, 8, 8, 8);
+    pCtx.strokeRect(8, 8, 8, 8);
+  }} else if (type === 'gespa') {{
+    pCanvas.width = 24;
+    pCanvas.height = 24;
+    pCtx.fillStyle = '#dcfce7';
+    pCtx.fillRect(0, 0, 24, 24);
+    pCtx.fillStyle = '#16a34a';
+    pCtx.beginPath();
+    pCtx.arc(6, 6, 1.5, 0, Math.PI * 2);
+    pCtx.arc(18, 16, 1.5, 0, Math.PI * 2);
+    pCtx.arc(14, 5, 1.2, 0, Math.PI * 2);
+    pCtx.arc(7, 18, 1.2, 0, Math.PI * 2);
+    pCtx.fill();
+  }} else if (type === 'ciment') {{
+    pCanvas.width = 20;
+    pCanvas.height = 20;
+    pCtx.fillStyle = '#e2e8f0';
+    pCtx.fillRect(0, 0, 20, 20);
+    pCtx.fillStyle = 'rgba(100, 116, 139, 0.2)';
+    pCtx.fillRect(2, 2, 4, 3);
+    pCtx.fillRect(12, 10, 5, 2);
+  }} else if (type === 'mao') {{
+    pCanvas.width = 36;
+    pCanvas.height = 18;
+    pCtx.fillStyle = '#fca5a5';
+    pCtx.fillRect(0, 0, 36, 18);
+    pCtx.strokeStyle = '#b91c1c';
+    pCtx.lineWidth = 1.2;
+    pCtx.strokeRect(0, 0, 36, 9);
+    pCtx.strokeRect(18, 9, 36, 9);
+    pCtx.strokeRect(-18, 9, 36, 9);
+  }} else if (type === 'subway') {{
+    pCanvas.width = 30;
+    pCanvas.height = 14;
+    pCtx.fillStyle = '#ffffff';
+    pCtx.fillRect(0, 0, 30, 14);
+    pCtx.strokeStyle = '#94a3b8';
+    pCtx.lineWidth = 1;
+    pCtx.strokeRect(0, 0, 30, 7);
+    pCtx.strokeRect(15, 7, 30, 7);
+    pCtx.strokeRect(-15, 7, 30, 7);
+  }} else if (type === 'pedra') {{
+    pCanvas.width = 32;
+    pCanvas.height = 24;
+    pCtx.fillStyle = '#e5e5e5';
+    pCtx.fillRect(0, 0, 32, 24);
+    pCtx.strokeStyle = '#737373';
+    pCtx.lineWidth = 1.2;
+    pCtx.strokeRect(1, 1, 20, 10);
+    pCtx.strokeRect(22, 1, 9, 10);
+    pCtx.strokeRect(1, 12, 13, 11);
+    pCtx.strokeRect(15, 12, 16, 11);
+  }} else {{
+    return 'rgba(241, 245, 249, 0.45)';
+  }}
+  
+  const pattern = ctx.createPattern(pCanvas, 'repeat');
+  patterns[type] = pattern;
+  return pattern;
+}}
+
+function openTexturePicker() {{
+  const modal = document.getElementById('textureModal');
+  const container = document.getElementById('textureOptions');
+  container.innerHTML = '';
+  
+  const isParet = (currentViewMode === 'paret');
+  const options = isParet
+    ? [
+        {{ id: 'mao', name: '🧱 Maó vist', desc: 'Totxo rústic vermell' }},
+        {{ id: 'subway', name: '🔲 Rajola blanca', desc: 'Cuina o bany' }},
+        {{ id: 'pedra', name: '🪨 Pedra rústica', desc: 'Mur tradicional' }},
+        {{ id: 'parquet', name: '🪵 Llistons fusta', desc: 'Revestiment fusta' }},
+        {{ id: 'ciment', name: '⚪ Calç / Ciment', desc: 'Paret arrebossada' }},
+        {{ id: 'none', name: '❌ Sense textura', desc: 'Fons transparent' }}
+      ]
+    : [
+        {{ id: 'parquet', name: '🪵 Parquet', desc: 'Fusta càlida roure' }},
+        {{ id: 'rajola', name: '🔲 Rajola / Gres', desc: 'Ceràmica bany/cuina' }},
+        {{ id: 'dutxa', name: '🟦 Dutxa / Gresite', desc: 'Aigua / zona humida' }},
+        {{ id: 'gespa', name: '🌿 Gespa / Pati', desc: 'Terrassa o jardí' }},
+        {{ id: 'ciment', name: '⚪ Microciment', desc: 'Formigó modern' }},
+        {{ id: 'none', name: '❌ Sense textura', desc: 'Fons transparent' }}
+      ];
+
+  options.forEach(opt => {{
+    const b = document.createElement('button');
+    b.className = 'preset-btn' + (selectedTexture === opt.id ? ' active' : '');
+    b.style.padding = '8px 10px';
+    b.style.textAlign = 'left';
+    b.style.display = 'flex';
+    b.style.flexDirection = 'column';
+    b.innerHTML = `<span style="font-weight:600; font-size:13px;">${{opt.name}}</span><span style="font-size:10px; color:#64748b;">${{opt.desc}}</span>`;
+    b.onclick = () => {{
+      selectedTexture = opt.id;
+      selectedTextureName = opt.name;
+      closeTextureModal();
+      setTool('bucket');
+    }};
+    container.appendChild(b);
+  }});
+
+  modal.style.display = 'flex';
+}}
+
+function closeTextureModal() {{
+  document.getElementById('textureModal').style.display = 'none';
+}}
+
+function openRoomPresetModal() {{
+  document.getElementById('roomPresetModal').style.display = 'flex';
+}}
+
+function closeRoomPresetModal() {{
+  document.getElementById('roomPresetModal').style.display = 'none';
+}}
+
+function selectRoomPresetTexture(tex, btn) {{
+  selectedRoomTexture = tex;
+  document.querySelectorAll('#roomTexturePresets .preset-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}}
+
+function createPresetRoom() {{
+  const wInput = parseFloat(document.getElementById('roomWidthInput').value) || 3.5;
+  const hInput = parseFloat(document.getElementById('roomHeightInput').value) || 3.0;
+  const nameInput = document.getElementById('roomNameInput').value.trim() || 'Habitació';
+  const texInput = selectedRoomTexture || 'parquet';
+
+  // 40px = 1m
+  const wPx = Math.round((wInput * 40) / GRID_SIZE) * GRID_SIZE;
+  const hPx = Math.round((hInput * 40) / GRID_SIZE) * GRID_SIZE;
+
+  // Trobar posició centrada a l'espai visible del canvas
+  let rx = snap((canvas.width - wPx) / 2);
+  let ry = snap((canvas.height - hPx) / 2);
+
+  // Si ja hi ha un espai a la mateixa coordenada, desplaçar lleugerament
+  while (elements.some(el => el.type === 'rect' && Math.abs(el.x - rx) < 20 && Math.abs(el.y - ry) < 20)) {{
+    rx += GRID_SIZE * 2;
+    ry += GRID_SIZE * 2;
+  }}
+
+  saveHistory();
+
+  // 1. L'espai interior amb textura i etiqueta
+  elements.push({{
+    type: 'rect',
+    x: rx,
+    y: ry,
+    w: wPx,
+    h: hPx,
+    texture: texInput,
+    label: nameInput + " (" + wInput.toFixed(2) + " x " + hInput.toFixed(2) + " m)"
+  }});
+
+  // 2. Les 4 parets de contorn
+  elements.push({{ type: 'wall', x1: rx, y1: ry, x2: rx + wPx, y2: ry }});
+  elements.push({{ type: 'wall', x1: rx + wPx, y1: ry, x2: rx + wPx, y2: ry + hPx }});
+  elements.push({{ type: 'wall', x1: rx + wPx, y1: ry + hPx, x2: rx, y2: ry + hPx }});
+  elements.push({{ type: 'wall', x1: rx, y1: ry + hPx, x2: rx, y2: ry }});
+
+  // 3. Les cotes de mesura automàtiques
+  elements.push({{
+    type: 'dim',
+    x1: rx,
+    y1: ry - 16,
+    x2: rx + wPx,
+    y2: ry - 16,
+    text: wInput.toFixed(2) + " m"
+  }});
+  elements.push({{
+    type: 'dim',
+    x1: rx - 16,
+    y1: ry,
+    x2: rx - 16,
+    y2: ry + hPx,
+    text: hInput.toFixed(2) + " m"
+  }});
+
+  closeRoomPresetModal();
+  drawAll();
+  
+  const status = document.getElementById('toolStatus');
+  if (status) status.innerText = `✅ Habitació '${{nameInput}}' (${{wInput.toFixed(2)}}m x ${{hInput.toFixed(2)}}m) afegida correctament!`;
+}}
+
 function setTool(tool) {{
   // Commutador si es torna a prémer la mateixa eina especial activa
   if (tool === 'pan' && currentTool === 'pan') {{
@@ -373,7 +677,7 @@ function setTool(tool) {{
   canvas.classList.remove('grabbing');
 
   document.querySelectorAll('.btn').forEach(b => {{
-    if (['btnWall', 'btnRect', 'btnDim', 'btnText', 'btnEraser', 'btnPan'].includes(b.id)) {{
+    if (['btnWall', 'btnRect', 'btnDim', 'btnText', 'btnEraser', 'btnPan', 'btnBucket'].includes(b.id)) {{
       b.classList.remove('active');
     }}
   }});
@@ -439,6 +743,7 @@ function setTool(tool) {{
   else if (tool === 'text') status.innerText = esParet ? "👉 Text: Toca per anotar rajoles, forats a tapar, calç, ciment o canonades." : "👉 Text: Toca per posar nom a l'estança o nota.";
   else if (tool === 'eraser') status.innerText = "👉 Goma activada: Toca o passa el dit sobre qualsevol línia per esborrar-la. Toca 'Goma: ON' o 'Paret' per tornar a dibuixar.";
   else if (tool === 'pan') status.innerText = "👉 Moure activat: Arrossega per desplaçar el plànol. Toca 'Moure: ON' o 'Paret' per tornar a dibuixar.";
+  else if (tool === 'bucket') status.innerText = `👉 Galleda (${{selectedTextureName || 'Textura'}}): Toca un espai per omplir-lo o arrossega per crear una zona texturada.`;
 }}
 
 function snap(val) {{
@@ -725,11 +1030,35 @@ function drawElement(el) {{
   }} else if (el.type === 'rect') {{
     ctx.strokeStyle = '#334155';
     ctx.lineWidth = 4;
-    ctx.fillStyle = 'rgba(241, 245, 249, 0.45)';
+    
+    if (el.texture && el.texture !== 'none') {{
+      const pat = getPattern(el.texture);
+      ctx.fillStyle = pat ? pat : 'rgba(241, 245, 249, 0.45)';
+    }} else {{
+      ctx.fillStyle = 'rgba(241, 245, 249, 0.45)';
+    }}
+
     ctx.beginPath();
     ctx.rect(el.x, el.y, el.w, el.h);
     ctx.fill();
     ctx.stroke();
+
+    if (el.label) {{
+      ctx.font = 'bold 13px sans-serif';
+      const txt = el.label;
+      const tw = ctx.measureText(txt).width;
+      const cx = el.x + el.w / 2;
+      const cy = el.y + el.h / 2;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillRect(cx - tw / 2 - 6, cy - 11, tw + 12, 22);
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx - tw / 2 - 6, cy - 11, tw + 12, 22);
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(txt, cx, cy);
+    }}
   }} else if (el.type === 'dim') {{
     const isParetCota = el.isWall || false;
     ctx.strokeStyle = isParetCota ? '#0284c7' : '#2563eb';
@@ -864,6 +1193,26 @@ canvas.addEventListener('pointerdown', (e) => {{
     try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
     return;
   }}
+
+  if (currentTool === 'bucket') {{
+    const clickedRect = [...elements].reverse().find(el => el.type === 'rect' && (
+      c.rawX >= el.x && c.rawX <= el.x + el.w &&
+      c.rawY >= el.y && c.rawY <= el.y + el.h
+    ));
+    if (clickedRect) {{
+      saveHistory();
+      clickedRect.texture = selectedTexture;
+      drawAll();
+      const status = document.getElementById('toolStatus');
+      if (status) status.innerText = `✅ Textura '${{selectedTextureName || selectedTexture}}' aplicada correctament!`;
+      return;
+    }}
+    isDrawing = true;
+    startX = c.x;
+    startY = c.y;
+    try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+    return;
+  }}
   
   isDrawing = true;
 
@@ -932,8 +1281,15 @@ canvas.addEventListener('pointermove', (e) => {{
       ctx.textBaseline = 'middle';
       ctx.fillText(mLen, midX, midY - 2);
     }}
-  }} else if (currentTool === 'rect') {{
+  }} else if (currentTool === 'rect' || currentTool === 'bucket') {{
     ctx.lineWidth = 2;
+    if (currentTool === 'bucket' && selectedTexture && selectedTexture !== 'none') {{
+      const pat = getPattern(selectedTexture);
+      if (pat) {{
+        ctx.fillStyle = pat;
+        ctx.fillRect(startX, startY, currX - startX, currY - startY);
+      }}
+    }}
     ctx.strokeRect(startX, startY, currX - startX, currY - startY);
   }} else if (currentTool === 'dim') {{
     ctx.lineWidth = 2;
@@ -1006,6 +1362,20 @@ canvas.addEventListener('pointerup', (e) => {{
       h: Math.abs(endY - startY)
     }});
     drawAll();
+  }} else if (currentTool === 'bucket') {{
+    const rw = Math.abs(endX - startX);
+    const rh = Math.abs(endY - startY);
+    if (rw >= 10 && rh >= 10) {{
+      elements.push({{
+        type: 'rect',
+        x: Math.min(startX, endX),
+        y: Math.min(startY, endY),
+        w: rw,
+        h: rh,
+        texture: selectedTexture
+      }});
+      drawAll();
+    }}
   }} else if (currentTool === 'dim') {{
     const pxDist = Math.hypot(endX - startX, endY - startY);
     const mDist = (pxDist / 40).toFixed(2);
