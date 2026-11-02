@@ -1844,8 +1844,6 @@ def render():
                     get_harness_status, start_harness_suite_background, clear_harness_status
                 )
 
-            from datetime import datetime
-            import time
             
             def _format_duration_s(sec: float) -> str:
                 m = int(sec // 60)
