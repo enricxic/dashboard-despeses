@@ -3635,13 +3635,15 @@ def render(view_mode="economic"):
             st.markdown("<h3 style='color:#f39c12;'>📈 Inversions (Trade Republic / TR Cartera)</h3>", unsafe_allow_html=True)
             
             with st.expander("➕ Nou Moviment TR Cartera", expanded=True):
+                if "tr_save_success" in st.session_state:
+                    st.success(st.session_state.pop("tr_save_success"))
                 r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
                 with r1_col1:
                     data_val_tr = st.date_input("Data", value=datetime.today(), format="DD/MM/YYYY", key="tr_data_inv")
                     mes_val_tr = month_translations[CATALAN_MONTHS[data_val_tr.month - 1]]
                     any_val_tr = data_val_tr.year
                 with r1_col2:
-                    cartera_val_tr = st.selectbox("CARTERA", ["S&P500", "NVIDIA"], key="tr_cartera_inv")
+                    cartera_val_tr = st.selectbox("CARTERA", ["S&P500", "NVIDIA", "Amazon"], key="tr_cartera_inv")
                 with r1_col3:
                     tr_concepte_inv = st.selectbox("CONCEPTE", ["Compra", "Venda", "Promoció", "CashBack"], key="tr_concepte_inv")
                 with r1_col4:
@@ -3649,8 +3651,17 @@ def render(view_mode="economic"):
                     
                 tr_comentari_inv = st.text_input("COMENTARI", value="", key="tr_comentari_inv")
                 
-                if st.button("💾 Desar Moviment TR Cartera", type="primary", use_container_width=True):
-                    if tr_import_inv <= 0 and tr_concepte_inv != "CashBack":
+                col_tr_b1, col_tr_b2 = st.columns([3, 1])
+                with col_tr_b1:
+                    submitted_tr = st.button("💾 Desar Moviment TR Cartera", type="primary", use_container_width=True)
+                with col_tr_b2:
+                    if st.button("Netejar", key="clear_tr_form_btn", use_container_width=True):
+                        for k in ["tr_cartera_inv", "tr_concepte_inv", "tr_import_inv", "tr_comentari_inv"]:
+                            st.session_state.pop(k, None)
+                        st.rerun()
+
+                if submitted_tr:
+                    if tr_import_inv <= 0:
                         st.error("L'import ha de ser superior a 0 €")
                     else:
                         with st.spinner("Desant moviment d'inversió..."):
@@ -3693,7 +3704,14 @@ def render(view_mode="economic"):
                             if rows_to_insert:
                                 supabase.table("despeses").insert(rows_to_insert).execute()
                             
-                            st.success("Moviment TR Cartera desat correctament!")
+                            # Neteja de camps del formulari
+                            for k in ["tr_cartera_inv", "tr_concepte_inv", "tr_import_inv", "tr_comentari_inv"]:
+                                st.session_state.pop(k, None)
+                            
+                            st.session_state["tr_save_success"] = "✅ Moviment TR Cartera desat correctament!"
+                            st.session_state.pop("dfs_initialized", None)
+                            st.session_state.pop("df_cartera", None)
+                            st.session_state.pop("df_desp", None)
                             st.cache_data.clear()
                             st.rerun()
 
