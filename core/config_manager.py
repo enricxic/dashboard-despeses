@@ -3,6 +3,24 @@ import os
 import copy
 from datetime import datetime
 
+
+IOT_CATEGORIES = {
+    "temperatura": {"nom": "Sensor Temp. / Humitat", "icona": "🌡️"},
+    "llum": {"nom": "Il·luminació / Bombeta", "icona": "💡"},
+    "endoll": {"nom": "Endoll intel·ligent / Mesurador", "icona": "🔌"},
+    "inundacio": {"nom": "Sensor Inundació / Aigua / Pou", "icona": "🚰"},
+    "porta": {"nom": "Sensor Porta / Finestra", "icona": "🚪"},
+    "moviment": {"nom": "Sensor Moviment / Presència", "icona": "🚶"},
+    "clima": {"nom": "Climatització / Termòstat", "icona": "♨️"},
+    "persiana": {"nom": "Persiana / Motor / Cortina", "icona": "🪟"},
+    "camera": {"nom": "Càmera de vigilància", "icona": "📹"},
+    "altaveu": {"nom": "Altaveu intel·ligent", "icona": "🔊"},
+    "rele": {"nom": "Relé / Actuador / Bomba d'aigua", "icona": "⚙️"},
+    "altres": {"nom": "Altre dispositiu IoT", "icona": "📦"}
+}
+
+IOT_PROTOCOLS = ["Wi-Fi", "Zigbee", "Shelly", "Tuya", "Sonoff", "Matter", "Bluetooth", "Z-Wave", "Home Assistant", "RF 433MHz", "Altres"]
+
 DEFAULT_ESTANCES = [
     {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"},
     {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina"},
@@ -500,30 +518,62 @@ def get_inflat_occurrences(planificacions, data_ultim_inflat_str=None, avui=None
 load_config = load_app_config
 save_config = save_app_config
 
-
-
-def get_estances_casa(cfg: dict = None) -> list:
-    """Retorna la llista d'estances de la llar, garantint que com a mínim hi hagi menjador, cuina, 1 bany i 1 habitació."""
-    if cfg is None:
-        cfg = load_app_config()
-    estances = list(cfg.get("estances", []))
-    if not estances:
-        estances = copy.deepcopy(DEFAULT_ESTANCES)
-    
-    # Assegurar la presència de les estances mínimes obligatòries
-    tipus_existents = [e.get("tipus") for e in estances]
-    if "menjador" not in tipus_existents:
-        estances.insert(0, {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"})
-    if "cuina" not in tipus_existents:
-        estances.insert(1, {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina"})
-    if "bany" not in tipus_existents:
-        estances.append({"id": f"bany_{int(datetime.now().timestamp())}", "nom": "Bany principal", "icona": "🚿", "tipus": "bany"})
-    if "habitacio" not in tipus_existents:
-        estances.append({"id": f"hab_{int(datetime.now().timestamp())}", "nom": "Habitació principal", "icona": "🛏️", "tipus": "habitacio"})
-    return estances
-
-def save_estances_casa(estances: list) -> bool:
-    """Desa la configuració de les estances de la casa a la configuració global."""
-    cfg = load_app_config()
-    cfg["estances"] = estances
-    return save_app_config(cfg)
+
+
+
+
+def get_estances_casa(cfg: dict = None) -> list:
+
+    """Retorna la llista d'estances de la llar, garantint que com a mínim hi hagi menjador, cuina, 1 bany i 1 habitació."""
+
+    if cfg is None:
+
+        cfg = load_app_config()
+
+    estances = list(cfg.get("estances", []))
+
+    if not estances:
+
+        estances = copy.deepcopy(DEFAULT_ESTANCES)
+
+    
+
+    # Assegurar la presència de les estances mínimes obligatòries
+
+    tipus_existents = [e.get("tipus") for e in estances]
+
+    if "menjador" not in tipus_existents:
+
+        estances.insert(0, {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"})
+
+    if "cuina" not in tipus_existents:
+
+        estances.insert(1, {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina"})
+
+    if "bany" not in tipus_existents:
+
+        estances.append({"id": f"bany_{int(datetime.now().timestamp())}", "nom": "Bany principal", "icona": "🚿", "tipus": "bany"})
+
+    if "habitacio" not in tipus_existents:
+
+        estances.append({"id": f"hab_{int(datetime.now().timestamp())}", "nom": "Habitació principal", "icona": "🛏️", "tipus": "habitacio"})
+
+    # Assegurar que cada estança té la llista iot_elements inicialitzada
+    for e in estances:
+        if "iot_elements" not in e or not isinstance(e.get("iot_elements"), list):
+            e["iot_elements"] = []
+
+    return estances
+
+
+
+def save_estances_casa(estances: list) -> bool:
+
+    """Desa la configuració de les estances de la casa a la configuració global."""
+
+    cfg = load_app_config()
+
+    cfg["estances"] = estances
+
+    return save_app_config(cfg)
+

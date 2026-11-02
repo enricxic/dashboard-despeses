@@ -4,7 +4,7 @@ import copy
 import os
 import base64
 from datetime import datetime, date
-from core.config_manager import load_app_config, save_app_config, get_translation, get_cataleg_eines, DEFAULT_CATALEG_EINES, get_estances_casa, save_estances_casa
+from core.config_manager import load_app_config, save_app_config, get_translation, get_cataleg_eines, DEFAULT_CATALEG_EINES, get_estances_casa, save_estances_casa, IOT_CATEGORIES, IOT_PROTOCOLS
 
 def _get_eina_foto_src(foto_val, e_id=None, nom=None):
     if foto_val and (foto_val.startswith("http://") or foto_val.startswith("https://") or foto_val.startswith("data:")):
@@ -816,8 +816,8 @@ def render():
         elif active == "estances":
             st.markdown(f"""
             <div class="chrome-card">
-                <div class="chrome-card-header">🏡 Estances i Espais de la Casa</div>
-                <div class="chrome-card-desc">Configura les estances i espais de la llar. Per defecte, la casa sempre compta amb <b>Menjador</b>, <b>Cuina</b>, com a mínim <b>1 Bany</b> i com a mínim <b>1 Habitació</b>. Pots afegir tantes estances addicionals com vulguis (altres banys, habitacions, terrasses, garatge, despatx, etc.).</div>
+                <div class="chrome-card-header">🏡 Estances i Elements IoT de la Casa</div>
+                <div class="chrome-card-desc">Configura les estances de la llar i gestiona els seus elements de domòtica / IoT (sensors de temperatura i humitat, bombetes, endolls, detectors d'inundació, relés de bombes d'aigua, etc.). Per defecte, la casa sempre compta amb <b>Menjador</b>, <b>Cuina</b>, com a mínim <b>1 Bany</b> i com a mínim <b>1 Habitació</b>.</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -825,6 +825,11 @@ def render():
                 st.session_state["admin_estances_list"] = get_estances_casa(cfg)
 
             estances_list = st.session_state["admin_estances_list"]
+            
+            # Assegurar que cada estança té la llista iot_elements
+            for e in estances_list:
+                if "iot_elements" not in e or not isinstance(e.get("iot_elements"), list):
+                    e["iot_elements"] = []
 
             # Targeta: Afegir estances ràpidament
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
@@ -840,7 +845,8 @@ def render():
                         "id": f"hab_{int(datetime.now().timestamp() * 1000)}",
                         "nom": f"Habitació {hab_count}",
                         "icona": "🛏️",
-                        "tipus": "habitacio"
+                        "tipus": "habitacio",
+                        "iot_elements": []
                     })
                     st.session_state["admin_estances_list"] = estances_list
                     st.rerun()
@@ -851,7 +857,8 @@ def render():
                         "id": f"bany_{int(datetime.now().timestamp() * 1000)}",
                         "nom": f"Bany {bany_count}",
                         "icona": "🚿",
-                        "tipus": "bany"
+                        "tipus": "bany",
+                        "iot_elements": []
                     })
                     st.session_state["admin_estances_list"] = estances_list
                     st.rerun()
@@ -861,7 +868,8 @@ def render():
                         "id": f"est_{int(datetime.now().timestamp() * 1000)}",
                         "nom": "Terrassa",
                         "icona": "🌿",
-                        "tipus": "altres"
+                        "tipus": "altres",
+                        "iot_elements": []
                     })
                     st.session_state["admin_estances_list"] = estances_list
                     st.rerun()
@@ -871,7 +879,8 @@ def render():
                         "id": f"est_{int(datetime.now().timestamp() * 1000)}",
                         "nom": "Jardí / Pati exterior",
                         "icona": "🌳",
-                        "tipus": "altres"
+                        "tipus": "altres",
+                        "iot_elements": []
                     })
                     st.session_state["admin_estances_list"] = estances_list
                     st.rerun()
@@ -883,7 +892,8 @@ def render():
                         "id": f"est_{int(datetime.now().timestamp() * 1000)}",
                         "nom": "Garatge",
                         "icona": "🚗",
-                        "tipus": "altres"
+                        "tipus": "altres",
+                        "iot_elements": []
                     })
                     st.session_state["admin_estances_list"] = estances_list
                     st.rerun()
@@ -893,7 +903,8 @@ def render():
                         "id": f"est_{int(datetime.now().timestamp() * 1000)}",
                         "nom": "Traster",
                         "icona": "📦",
-                        "tipus": "altres"
+                        "tipus": "altres",
+                        "iot_elements": []
                     })
                     st.session_state["admin_estances_list"] = estances_list
                     st.rerun()
@@ -903,7 +914,8 @@ def render():
                         "id": f"est_{int(datetime.now().timestamp() * 1000)}",
                         "nom": "Despatx / Estudi",
                         "icona": "💼",
-                        "tipus": "altres"
+                        "tipus": "altres",
+                        "iot_elements": []
                     })
                     st.session_state["admin_estances_list"] = estances_list
                     st.rerun()
@@ -913,7 +925,8 @@ def render():
                         "id": f"est_{int(datetime.now().timestamp() * 1000)}",
                         "nom": "Safareig",
                         "icona": "🧺",
-                        "tipus": "altres"
+                        "tipus": "altres",
+                        "iot_elements": []
                     })
                     st.session_state["admin_estances_list"] = estances_list
                     st.rerun()
@@ -936,7 +949,8 @@ def render():
                             "id": f"est_{int(datetime.now().timestamp() * 1000)}",
                             "nom": cust_nom.strip(),
                             "icona": cust_ico,
-                            "tipus": t_val
+                            "tipus": t_val,
+                            "iot_elements": []
                         })
                         st.session_state["admin_estances_list"] = estances_list
                         st.session_state["flash_success"] = f"✅ S'ha afegit '{cust_nom.strip()}' a la llista d'estances."
@@ -945,15 +959,16 @@ def render():
                         st.warning("Escriu el nom de l'estança per poder-la afegir.")
             st.markdown("</div>", unsafe_allow_html=True)
 
-            # Targeta: Llista d'Estances
+            # Targeta: Llista d'Estances i Manteniment IoT
             num_banys = sum(1 for e in estances_list if e.get("tipus") == "bany")
             num_habs = sum(1 for e in estances_list if e.get("tipus") == "habitacio")
+            total_iot = sum(len(e.get("iot_elements", [])) for e in estances_list)
 
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             col_lh1, col_lh2 = st.columns([7, 3])
             with col_lh1:
-                st.markdown(f"<div class='chrome-card-header'>📋 Llista d'Estances de la Casa ({len(estances_list)})</div>", unsafe_allow_html=True)
-                st.markdown("<div class='chrome-card-desc'>Modifica el nom o la icona segons convingui. Els botons d'eliminar estan bloquejats si són el menjador, la cuina o l'únic bany o habitació de la llar.</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='chrome-card-header'>📋 Llista d'Estances i Elements IoT ({len(estances_list)} estances · {total_iot} dispositius)</div>", unsafe_allow_html=True)
+                st.markdown("<div class='chrome-card-desc'>Modifica el nom o la icona de cada estança. Desplega l'acordió de cada habitació per consultar, afegir, editar o eliminar els seus elements de domòtica / IoT.</div>", unsafe_allow_html=True)
             with col_lh2:
                 if st.button("🔄 Recarregar desats", type="secondary", use_container_width=True, key="btn_reload_estances", help="Descarta canvis no desats i recupera la configuració guardada"):
                     st.session_state["admin_estances_list"] = get_estances_casa()
@@ -961,19 +976,24 @@ def render():
             st.write("")
 
             pool_all_icons = ["🛋️", "🛏️", "🍳", "🚿", "🌿", "🌳", "🚗", "📦", "💼", "🧺", "🪜", "🚪", "🍷", "🏊‍♂️", "🎮", "🎨", "🐾", "🏠", "🍽️", "📺", "☀️", "❄️"]
+            pool_iot_icons = ["🌡️", "💡", "🔌", "🚰", "🚪", "🚶", "♨️", "🪟", "📹", "🔊", "⚙️", "📦", "📶", "🔔", "☀️", "💧"]
+            cat_keys = list(IOT_CATEGORIES.keys())
+            cat_labels = [f"{v['icona']} {v['nom']}" for v in IOT_CATEGORIES.values()]
 
             for i, est in enumerate(estances_list):
                 e_id = est.get("id", f"est_{i}")
                 tipus = est.get("tipus", "altres")
                 cur_ico = est.get("icona", "🏠")
                 cur_nom = est.get("nom", "")
+                iot_list = est.setdefault("iot_elements", [])
+                num_iot = len(iot_list)
 
                 opts = list(pool_all_icons)
                 if cur_ico not in opts:
                     opts.insert(0, cur_ico)
                 ico_idx = opts.index(cur_ico) if cur_ico in opts else 0
 
-                c_ico, c_nom, c_badge, c_del = st.columns([1.5, 4.5, 3.0, 1.0])
+                c_ico, c_nom, c_badge, c_del = st.columns([1.2, 4.3, 3.5, 1.0])
                 with c_ico:
                     new_ico = st.selectbox("Icona", opts, index=ico_idx, key=f"est_ico_{e_id}", label_visibility="collapsed")
                     est["icona"] = new_ico
@@ -981,22 +1001,30 @@ def render():
                     new_nom = st.text_input("Nom", value=cur_nom, key=f"est_nom_{e_id}", label_visibility="collapsed")
                     est["nom"] = new_nom
                 with c_badge:
+                    badge_html = ""
                     if tipus == "menjador":
-                        st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#64748b; font-weight:600;'>🔒 Menjador (essencial)</div>", unsafe_allow_html=True)
+                        badge_html = "<span style='font-size:0.82rem; color:#64748b; font-weight:600;'>🔒 Menjador</span>"
                     elif tipus == "cuina":
-                        st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#64748b; font-weight:600;'>🔒 Cuina (essencial)</div>", unsafe_allow_html=True)
+                        badge_html = "<span style='font-size:0.82rem; color:#64748b; font-weight:600;'>🔒 Cuina</span>"
                     elif tipus == "bany":
                         if num_banys <= 1:
-                            st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#d97706; font-weight:600;'>🔒 Únic bany (mínim 1)</div>", unsafe_allow_html=True)
+                            badge_html = "<span style='font-size:0.82rem; color:#d97706; font-weight:600;'>🔒 Mínim 1 bany</span>"
                         else:
-                            st.markdown(f"<div style='padding-top:8px; font-size:0.82rem; color:#10b981; font-weight:600;'>🚿 Bany ({num_banys} a la casa)</div>", unsafe_allow_html=True)
+                            badge_html = f"<span style='font-size:0.82rem; color:#10b981; font-weight:600;'>🚿 Bany ({num_banys})</span>"
                     elif tipus == "habitacio":
                         if num_habs <= 1:
-                            st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#d97706; font-weight:600;'>🔒 Única habitació (mínim 1)</div>", unsafe_allow_html=True)
+                            badge_html = "<span style='font-size:0.82rem; color:#d97706; font-weight:600;'>🔒 Mínim 1 hab.</span>"
                         else:
-                            st.markdown(f"<div style='padding-top:8px; font-size:0.82rem; color:#10b981; font-weight:600;'>🛏️ Habitació ({num_habs} a la casa)</div>", unsafe_allow_html=True)
+                            badge_html = f"<span style='font-size:0.82rem; color:#10b981; font-weight:600;'>🛏️ Hab. ({num_habs})</span>"
                     else:
-                        st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#64748b;'>🏡 Espai addicional</div>", unsafe_allow_html=True)
+                        badge_html = "<span style='font-size:0.82rem; color:#64748b;'>🏡 Espai</span>"
+
+                    if num_iot > 0:
+                        badge_html += f" &nbsp;<span style='background:#1e293b; border:1px solid #0284c7; color:#38bdf8; padding:2px 7px; border-radius:10px; font-size:0.75rem; font-weight:600;'>📶 {num_iot} IoT</span>"
+                    else:
+                        badge_html += " &nbsp;<span style='color:#475569; font-size:0.75rem;'>📶 Sense IoT</span>"
+
+                    st.markdown(f"<div style='padding-top:8px;'>{badge_html}</div>", unsafe_allow_html=True)
 
                 with c_del:
                     can_delete = True
@@ -1019,6 +1047,146 @@ def render():
                     else:
                         st.button("🔒", key=f"del_est_lock_{e_id}", disabled=True, help=del_help)
 
+                # Desplegable de manteniment IoT per a l'estança
+                with st.expander(f"📶 Elements IoT a {cur_nom or 'Estança'} ({num_iot} dispositius)", expanded=st.session_state.get(f"exp_iot_{e_id}", False)):
+                    st.markdown("<div style='font-size:0.78rem; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:6px;'>⚡ Afegir element IoT ràpidament:</div>", unsafe_allow_html=True)
+                    col_qiot1, col_qiot2, col_qiot3, col_qiot4, col_qiot5, col_qiot6 = st.columns(6)
+                    with col_qiot1:
+                        if st.button("🌡️ + Temp", key=f"btn_add_temp_{e_id}", help="Sensor Temperatura i Humitat", use_container_width=True):
+                            iot_list.append({
+                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                "nom": f"Sensor Temp {cur_nom}".strip(),
+                                "categoria": "temperatura",
+                                "icona": "🌡️",
+                                "protocol": "Zigbee",
+                                "entitat": "",
+                                "actiu": True,
+                                "notes": ""
+                            })
+                            st.session_state[f"exp_iot_{e_id}"] = True
+                            st.session_state["admin_estances_list"] = estances_list
+                            st.rerun()
+                    with col_qiot2:
+                        if st.button("💡 + Llum", key=f"btn_add_llum_{e_id}", help="Il·luminació / Bombeta intel·ligent", use_container_width=True):
+                            iot_list.append({
+                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                "nom": f"Llum {cur_nom}".strip(),
+                                "categoria": "llum",
+                                "icona": "💡",
+                                "protocol": "Wi-Fi",
+                                "entitat": "",
+                                "actiu": True,
+                                "notes": ""
+                            })
+                            st.session_state[f"exp_iot_{e_id}"] = True
+                            st.session_state["admin_estances_list"] = estances_list
+                            st.rerun()
+                    with col_qiot3:
+                        if st.button("🔌 + Endoll", key=f"btn_add_endoll_{e_id}", help="Endoll intel·ligent / Mesurador de consum", use_container_width=True):
+                            iot_list.append({
+                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                "nom": f"Endoll {cur_nom}".strip(),
+                                "categoria": "endoll",
+                                "icona": "🔌",
+                                "protocol": "Wi-Fi",
+                                "entitat": "",
+                                "actiu": True,
+                                "notes": ""
+                            })
+                            st.session_state[f"exp_iot_{e_id}"] = True
+                            st.session_state["admin_estances_list"] = estances_list
+                            st.rerun()
+                    with col_qiot4:
+                        if st.button("🚰 + Aigua/Pou", key=f"btn_add_inund_{e_id}", help="Sensor d'Inundació / Fuita / Nivell", use_container_width=True):
+                            iot_list.append({
+                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                "nom": f"Sensor Aigua {cur_nom}".strip(),
+                                "categoria": "inundacio",
+                                "icona": "🚰",
+                                "protocol": "Zigbee",
+                                "entitat": "",
+                                "actiu": True,
+                                "notes": ""
+                            })
+                            st.session_state[f"exp_iot_{e_id}"] = True
+                            st.session_state["admin_estances_list"] = estances_list
+                            st.rerun()
+                    with col_qiot5:
+                        if st.button("🚪 + Porta", key=f"btn_add_porta_{e_id}", help="Sensor Contacte Porta / Finestra", use_container_width=True):
+                            iot_list.append({
+                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                "nom": f"Sensor Porta {cur_nom}".strip(),
+                                "categoria": "porta",
+                                "icona": "🚪",
+                                "protocol": "Zigbee",
+                                "entitat": "",
+                                "actiu": True,
+                                "notes": ""
+                            })
+                            st.session_state[f"exp_iot_{e_id}"] = True
+                            st.session_state["admin_estances_list"] = estances_list
+                            st.rerun()
+                    with col_qiot6:
+                        if st.button("⚙️ + Bomba/Relé", key=f"btn_add_rele_{e_id}", help="Relé / Actuador / Bomba d'aigua / Interruptor", use_container_width=True):
+                            iot_list.append({
+                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                "nom": f"Bomba / Relé {cur_nom}".strip(),
+                                "categoria": "rele",
+                                "icona": "⚙️",
+                                "protocol": "Shelly",
+                                "entitat": "",
+                                "actiu": True,
+                                "notes": ""
+                            })
+                            st.session_state[f"exp_iot_{e_id}"] = True
+                            st.session_state["admin_estances_list"] = estances_list
+                            st.rerun()
+
+                    if not iot_list:
+                        st.info(f"💡 Aquesta estança encara no té cap dispositiu IoT registrat. Utilitza els botons ràpids superiors per afegir-ne.")
+                    else:
+                        st.markdown("<div style='font-size:0.75rem; color:#64748b; font-weight:600; margin-top:8px; margin-bottom:4px;'>Dispositius configurats (Icona · Nom de l'element · Categoria · Protocol/Marca · Entitat/IP/ID · Eliminar):</div>", unsafe_allow_html=True)
+                        for j, item in enumerate(iot_list):
+                            it_id = item.get("id", f"iot_{i}_{j}")
+                            cur_it_ico = item.get("icona", "📦")
+                            cur_it_nom = item.get("nom", "")
+                            cur_it_cat = item.get("categoria", "altres")
+                            cur_it_proto = item.get("protocol", "Wi-Fi")
+                            cur_it_ent = item.get("entitat", "")
+
+                            ico_choices = list(pool_iot_icons)
+                            if cur_it_ico not in ico_choices:
+                                ico_choices.insert(0, cur_it_ico)
+
+                            cat_idx = cat_keys.index(cur_it_cat) if cur_it_cat in cat_keys else len(cat_keys) - 1
+                            proto_choices = list(IOT_PROTOCOLS)
+                            if cur_it_proto not in proto_choices:
+                                proto_choices.insert(0, cur_it_proto)
+
+                            ci1, ci2, ci3, ci4, ci5, ci6 = st.columns([1.1, 3.2, 2.7, 2.0, 2.3, 0.7])
+                            with ci1:
+                                n_ico = st.selectbox("Icona", ico_choices, index=ico_choices.index(cur_it_ico), key=f"iot_ico_{e_id}_{it_id}", label_visibility="collapsed")
+                                item["icona"] = n_ico
+                            with ci2:
+                                n_nom = st.text_input("Nom", value=cur_it_nom, key=f"iot_nom_{e_id}_{it_id}", placeholder="Nom del dispositiu", label_visibility="collapsed")
+                                item["nom"] = n_nom
+                            with ci3:
+                                n_cat_label = st.selectbox("Categoria", cat_labels, index=cat_idx, key=f"iot_cat_{e_id}_{it_id}", label_visibility="collapsed")
+                                item["categoria"] = cat_keys[cat_labels.index(n_cat_label)]
+                            with ci4:
+                                n_proto = st.selectbox("Protocol", proto_choices, index=proto_choices.index(cur_it_proto), key=f"iot_proto_{e_id}_{it_id}", label_visibility="collapsed")
+                                item["protocol"] = n_proto
+                            with ci5:
+                                n_ent = st.text_input("Entitat/IP", value=cur_it_ent, key=f"iot_ent_{e_id}_{it_id}", placeholder="ex: sensor.pou, IP...", label_visibility="collapsed")
+                                item["entitat"] = n_ent
+                            with ci6:
+                                if st.button("🗑️", key=f"del_iot_{e_id}_{it_id}", help="Eliminar aquest dispositiu IoT de l'estança"):
+                                    iot_list.pop(j)
+                                    st.session_state[f"exp_iot_{e_id}"] = True
+                                    st.session_state["admin_estances_list"] = estances_list
+                                    st.rerun()
+                    st.write("")
+
             st.write("")
             _render_flash_message()
             if st.button("💾 Desar Estances de la Casa", type="primary", use_container_width=True, key="btn_save_estances_global"):
@@ -1027,27 +1195,49 @@ def render():
                     eid = e.get("id")
                     cur_n = st.session_state.get(f"est_nom_{eid}", e.get("nom", "")).strip() or e.get("nom", "Estança")
                     cur_i = st.session_state.get(f"est_ico_{eid}", e.get("icona", "🏠"))
+                    
+                    # Sincronitzar els elements IoT
+                    saved_iot = []
+                    for item in e.get("iot_elements", []):
+                        it_id = item.get("id")
+                        it_nom = st.session_state.get(f"iot_nom_{eid}_{it_id}", item.get("nom", "")).strip() or item.get("nom", "Dispositiu")
+                        it_ico = st.session_state.get(f"iot_ico_{eid}_{it_id}", item.get("icona", "📦"))
+                        it_cat = item.get("categoria", "altres")
+                        it_proto = st.session_state.get(f"iot_proto_{eid}_{it_id}", item.get("protocol", "Wi-Fi"))
+                        it_ent = st.session_state.get(f"iot_ent_{eid}_{it_id}", item.get("entitat", "")).strip()
+                        saved_iot.append({
+                            "id": it_id,
+                            "nom": it_nom,
+                            "icona": it_ico,
+                            "categoria": it_cat,
+                            "protocol": it_proto,
+                            "entitat": it_ent,
+                            "actiu": item.get("actiu", True),
+                            "notes": item.get("notes", "")
+                        })
+
                     final_list.append({
                         "id": eid,
                         "nom": cur_n,
                         "icona": cur_i,
-                        "tipus": e.get("tipus", "altres")
+                        "tipus": e.get("tipus", "altres"),
+                        "iot_elements": saved_iot
                     })
 
                 # Validació final i blindatge de regles de negoci
                 tipus_set = [x.get("tipus") for x in final_list]
                 if "menjador" not in tipus_set:
-                    final_list.insert(0, {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"})
+                    final_list.insert(0, {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador", "iot_elements": []})
                 if "cuina" not in tipus_set:
-                    final_list.insert(1, {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina"})
+                    final_list.insert(1, {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina", "iot_elements": []})
                 if sum(1 for x in final_list if x.get("tipus") == "bany") < 1:
-                    final_list.append({"id": f"bany_{int(datetime.now().timestamp())}", "nom": "Bany principal", "icona": "🚿", "tipus": "bany"})
+                    final_list.append({"id": f"bany_{int(datetime.now().timestamp())}", "nom": "Bany principal", "icona": "🚿", "tipus": "bany", "iot_elements": []})
                 if sum(1 for x in final_list if x.get("tipus") == "habitacio") < 1:
-                    final_list.append({"id": f"hab_{int(datetime.now().timestamp())}", "nom": "Habitació principal", "icona": "🛏️", "tipus": "habitacio"})
+                    final_list.append({"id": f"hab_{int(datetime.now().timestamp())}", "nom": "Habitació principal", "icona": "🛏️", "tipus": "habitacio", "iot_elements": []})
 
                 if save_estances_casa(final_list):
                     st.session_state["admin_estances_list"] = final_list
-                    st.session_state["flash_success"] = "✅ Estances de la casa desades correctament a la configuració global!"
+                    st.session_state["flash_success"] = "✅ Estances de la casa i elements IoT desats correctament a la configuració global!"
                     st.rerun()
                 else:
                     st.error("Error en desar la configuració d'estances.")

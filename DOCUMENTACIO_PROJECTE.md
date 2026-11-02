@@ -70,6 +70,7 @@ Per mantenir la màxima fluïdesa fins i tot amb taules històriques massives de
 Per assegurar la persistència completa de les dades al núvol i evitar pèrdues en reiniciar les màquines virtuals de Streamlit Cloud, totes les configuracions del sistema s'emmagatzemen a Supabase:
 | ID | Fitxer Equivalent Local | Descripció |
 |:---|:---|:---|
+| **02/11/2026** | **Configuració / Estances i Domòtica IoT** | **Manteniment d'Elements IoT per Estança (`iot_elements`) i Integració a Domòtica**: Incorporat el manteniment integral de dispositius intel·ligents dins de cada estança de la casa (`modules/admin.py`). Permet donar d'alta i modificar sensors de temperatura/humitat, il·luminació, endolls, detectors d'inundació/aigua/pou, sensors de contacte de portes i relés de bombes d'aigua amb assignació de protocols (Wi-Fi, Zigbee, Shelly, Tuya, Sonoff, Matter, etc.) i referències d'entitat/IP de Home Assistant. Actualitzat el mòdul de domòtica (`modules/domotica.py`) per reflectir l'estat dels equips instal·lats per cada espai de la llar. |
 | **1** | `categories_conceptes.json` | Categories i conceptes de despeses i ingressos |
 | **2** | `core/config.json` | Perfil familiar, al·lèrgies, vetos, eines de cuina i admin |
 | **3** | `data/events.json` | Esdeveniments del calendari familiar i estats fet/no fet |
@@ -1829,6 +1830,14 @@ flowchart TD
     - **Bany** (`bany`): Com a mínim cal 1 bany a la llar. Si només queda 1 bany actiu, el botó d'eliminar es desactiva automàticament (`🔒 Únic bany (mínim 1)`). Si se n'afegeixen més (ex: "Bany suite", "Lavabo de cortesia"), els banys addicionals es poden esborrar lliurement sempre que en quedi un.
     - **Habitació** (`habitacio`): Com a mínim cal 1 habitació a la llar. Si només queda 1 habitació activa, el botó d'eliminar es desactiva automàticament (`🔒 Única habitació (mínim 1)`). Si se n'afegeixen més (ex: "Habitació 2", "Habitació convidats"), les habitacions addicionals es poden esborrar lliurement sempre que en quedi una.
     - **Estances i Espais Addicionals lliures** (`altres`): L'usuari pot afegir qualsevol altre espai domèstic sense restriccions.
+- **Elements de Domòtica i IoT per Estança (`iot_elements`)**:
+  - Cada estança pot allotjar una llista dinàmica de dispositius intel·ligents (`iot_elements`), cadascun amb identificador únic, nom editable, categoria/tipus (`IOT_CATEGORIES`), protocol/marca (`IOT_PROTOCOLS`: Wi-Fi, Zigbee, Shelly, Tuya, Sonoff, Matter, Bluetooth, Z-Wave, etc.), entitat o IP (ex: `sensor.pou`, `switch.bomba_pou`) i icona emoji.
+  - **Manteniment en Viu (Modificació, Alta i Eliminació)**:
+    - Acordió desplegable per habitació amb botons ràpids d'1-clic: `🌡️ + Temp`, `💡 + Llum`, `🔌 + Endoll`, `🚰 + Aigua/Pou`, `🚪 + Porta/Finestra` i `⚙️ + Bomba/Relé`.
+    - Formulari editable línia a línia que permet canviar la icona, el nom, la categoria, el protocol i la referència de xarxa en qualsevol moment, o eliminar dispositius obsolets.
+    - Sincronització directa amb el botó global `💾 Desar Estances de la Casa` que preserva i consolida l'arbre complet d'habitacions i dispositius IoT tant en local (`config.json`) com al núvol (`app_config` a Supabase).
+  - **Mòdul de Domòtica (`modules/domotica.py`)**:
+    - Panell operatiu amb mètriques KPI del total de dispositius IoT instal·lats i resum d'estat organitzat per estances, amb enllaç directe per a la seva gestió.
 - **Interfície d'Administració Interactiva (`modules/admin.py`)**:
   - **Botons Ràpids 1-Clic**: Targeta d'accés directe amb botons per afegir a l'instant `🛏️ + Habitació`, `🚿 + Bany`, `🌿 + Terrassa`, `🌳 + Jardí / Pati`, `🚗 + Garatge`, `📦 + Traster`, `💼 + Despatx / Estudi` i `🧺 + Safareig`.
   - **Formulari d'Estança Personalitzada**: Desplegable per definir nom propi, categoria (Habitació, Bany o Altres espais) i icona representativa d'un catàleg d'emojis domèstics.
