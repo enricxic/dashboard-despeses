@@ -80,7 +80,7 @@ def _call_gemini(
                     if candidates:
                         content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
                         clean_content = content.strip()
-                        if clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
+                        if json_mode and clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
                             if attempt < max_attempts - 1:
                                 time.sleep(2.0)
                                 continue # Reintentar si està truncat
@@ -179,7 +179,7 @@ def _call_openai_compatible(
                 if choices:
                     content = choices[0].get("message", {}).get("content", "")
                     clean_content = content.strip()
-                    if clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
+                    if json_mode and clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
                         if attempt < max_attempts - 1:
                             time.sleep(2.0)
                             continue

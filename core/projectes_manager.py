@@ -452,6 +452,17 @@ def clear_xat_projecte(project_id: str) -> bool:
             return save_projectes(projectes)
     return False
 
+def delete_xat_missatge(project_id: str, index: int) -> bool:
+    """Elimina un missatge concret del xat pel seu índex (ex: per treure un missatge d'error)."""
+    projectes = load_projectes()
+    for p in projectes:
+        if p.get("id") == project_id:
+            xat = p.get("xat_ia", [])
+            if 0 <= index < len(xat):
+                xat.pop(index)
+                return save_projectes(projectes)
+    return False
+
 # ==========================================
 # GALERIA DE FOTOS I PLÀNOL
 # ==========================================

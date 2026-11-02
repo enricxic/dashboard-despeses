@@ -35,6 +35,7 @@ from core.projectes_manager import (
     add_subtasca_a_fase,
     calcular_progres_projecte,
     add_xat_missatge,
+    delete_xat_missatge,
     clear_xat_projecte,
     format_date_cat,
     parse_date_cat,
@@ -883,25 +884,63 @@ def _render_assistent_ia_tab(projecte: Dict[str, Any]):
             st.rerun()
 
     # Historial de missatges
-    for msg in xat:
+    for idx, msg in enumerate(xat):
         role = msg.get("role", "user")
+        text = msg.get("text", "")
+        data_str = msg.get("data", "")
+        is_error = text.startswith("⚠️ Error") or "HTTP 429" in text or "HTTP 5" in text or "truncat" in text
+
         with st.chat_message("user" if role == "user" else "assistant"):
-            st.markdown(msg.get("text", ""))
-            if msg.get("data"):
-                st.caption(f"*{msg.get('data')}*")
+            if is_error:
+                st.error(text)
+                
+                # Trobar la darrera pregunta de l'usuari associada a aquest error
+                prev_q = ""
+                for p_msg in reversed(xat[:idx]):
+                    if p_msg.get("role") == "user":
+                        prev_q = p_msg.get("text", "")
+                        break
+                
+                c_err1, c_err2 = st.columns([1.5, 1])
+                with c_err1:
+                    if prev_q and st.button("🔄 Reintentar amb motor actual", key=f"retry_err_{project_id}_{idx}", type="primary", use_container_width=True):
+                        # Esborrem el missatge d'error de l'historial i rellancem la pregunta
+                        delete_xat_missatge(project_id, idx)
+                        st.session_state[f"fast_q_{project_id}"] = prev_q
+                        st.rerun()
+                with c_err2:
+                    if st.button("🗑️ Descartar error", key=f"del_err_{project_id}_{idx}", use_container_width=True):
+                        delete_xat_missatge(project_id, idx)
+                        st.rerun()
+            else:
+                st.markdown(text)
+                if role == "user":
+                    c_u1, c_u2 = st.columns([3, 1])
+                    with c_u1:
+                        if data_str:
+                            st.caption(f"*{data_str}*")
+                    with c_u2:
+                        if st.button("🔄 Reactivar", key=f"re_ask_{project_id}_{idx}", help="Tornar a executar aquesta consulta amb el motor d'IA seleccionat"):
+                            st.session_state[f"fast_q_{project_id}"] = text
+                            st.rerun()
+                else:
+                    if data_str:
+                        st.caption(f"*{data_str}*")
 
     # Entrada de xat
     user_prompt = st.chat_input("Escriu la teva consulta sobre l'obra...")
     
-    # Si s'ha premut un botó ràpid
+    # Si s'ha premut un botó ràpid o s'ha demanat reactivar/reintentar una consulta
     if st.session_state.get(f"fast_q_{project_id}"):
         user_prompt = st.session_state.pop(f"fast_q_{project_id}")
 
     if user_prompt:
-        # 1. Desar missatge usuari
-        add_xat_missatge(project_id, role="user", text=user_prompt)
+        # Evitar duplicar la mateixa pregunta consecutivament si ja s'havia enviat com a últim missatge
+        last_msg = xat[-1] if xat else {}
+        if not (last_msg.get("role") == "user" and last_msg.get("text") == user_prompt):
+            add_xat_missatge(project_id, role="user", text=user_prompt)
         
-        # 2. Cridar la IA
+        # 2. Cridar la IA amb el motor seleccionat
         with st.spinner("L'expert en reformes està redactant el consell..."):
             ok, resposta = consultar_assistent_obra(projecte, user_prompt, prov, mod, key)
             if ok:
