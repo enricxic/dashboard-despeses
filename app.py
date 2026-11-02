@@ -347,6 +347,8 @@ if "action" in st.query_params:
         st.session_state["editing_ocr_rules"] = True
     elif act == "clean_orphans":
         st.session_state["cleaning_ocr_orphans"] = True
+    elif act in ("normalitzar_dades", "normalitzar_bd"):
+        st.session_state["normalitzant_dades"] = True
     elif act == "sync_db":
         st.cache_data.clear()
         st.session_state["db_synced_toast"] = True
@@ -837,6 +839,10 @@ def show_orphan_cleaner_dialog():
 if st.session_state.get("cleaning_ocr_orphans"):
     show_orphan_cleaner_dialog()
 
+if st.session_state.get("normalitzant_dades"):
+    from modules.normalitzador_ui import show_normalitzador_dialog
+    show_normalitzador_dialog()
+
 def render_traditional_menubar():
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""
@@ -1051,6 +1057,8 @@ div.block-container {{
 </div>
 <a href="?action=edit_rules{action_suffix}" target="_self">📝 Editar regles súper (OCR)</a>
 <a href="?action=clean_orphans{action_suffix}" target="_self">🧹 Neteja Orfes (OCR)</a>
+<div class="menu-separator"></div>
+<a href="?action=normalitzar_dades{action_suffix}" target="_self">🧹 Normalitzar Dades (BD & JSON)</a>
 </div>
 </div>
 <div class="menu-item">

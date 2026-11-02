@@ -718,6 +718,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 997;BBVA;Compte;03/06/2022;junio;2022;0.0;183.37;op_banc;op_banc;Pago VISA;;False
 6776;BBVA;Compte;03/07/2026;julio;2026;0.0;12.9;Càrrec;assegurança;Ocaso;;False
 245;LaCaixa;Compte;06/07/2021;julio;2021;0.0;100.0;op_banc;op_banc;Traspàs comptes;;False
+8225;BBVA;Compte;29/10/2026;octubre;2026;22.15;0.0;Ingrés;ingres_general;Cartera DP Petit;;False
 1060;BBVA;Compte;28/06/2022;junio;2022;0.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1062;BBVA;Compte;28/06/2022;junio;2022;600.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1065;LaCaixa;Compte;28/06/2022;junio;2022;0.0;600.0;op_banc;op_banc;Traspàs comptes;;False
@@ -743,18 +744,21 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2102;BBVA;VISA;10/04/2023;abril;2023;0.0;5.96;Càrrec;manteniment;Aliexpress;domòtica;False
 2103;BBVA;VISA;10/04/2023;abril;2023;0.0;6.97;Càrrec;manteniment;Aliexpress;domòtica;False
 2119;Efectiu;;17/04/2023;abril;2023;0.0;4.8;Càrrec;manteniment;Altres mant.;Gel farmàcia;False
+8226;BBVA;Compte;29/10/2026;octubre;2026;42.87;0.0;Ingrés;ingres_general;Cartera DP Gran;;False
 1119;BBVA;Compte;12/07/2022;julio;2022;0.0;50.0;op_banc;op_banc;Reintegre Caixer;;False
 1122;BBVA;Compte;15/07/2022;julio;2022;0.0;100.0;op_banc;op_banc;Reintegre Caixer;;False
 1129;BBVA;Compte;20/07/2022;julio;2022;0.0;50.0;op_banc;op_banc;Reintegre Caixer;;False
 6780;T.Moneder;Dèbit;25/06/2026;junio;2026;0.0;3.19;Càrrec;personal;Jordi;;False
 6856;TradeRep.;Dèbit;13/07/2026;julio;2026;0.0;41.25;Càrrec;gasolina;GasolinaAreaGuissona;;False
 1181;BBVA;Compte;03/08/2022;agosto;2022;150.0;0.0;op_banc;op_banc;Traspàs comptes;;False
+8227;TradeRep.;Dèbit;29/10/2026;octubre;2026;0.0;25.5;Càrrec;varis;Perruqueria;Isabel;False
 1173;BBVA;Compte;01/08/2022;agosto;2022;0.0;50.0;op_banc;op_banc;Reintegre Caixer;;False
 1189;BBVA;Compte;16/08/2022;agosto;2022;0.0;50.0;op_banc;op_banc;Reintegre Caixer;;False
 1191;BBVA;Compte;16/08/2022;agosto;2022;0.0;50.0;op_banc;op_banc;Reintegre Caixer;;False
 1205;BBVA;Compte;23/08/2022;agosto;2022;0.0;50.0;op_banc;op_banc;Reintegre Caixer;;False
 6783;LaCaixa;Compte;26/06/2026;junio;2026;68.25;0.0;Ingrés;ingrés_general;Complement Generalitat;;False
 6782;LaCaixa;Compte;24/06/2026;junio;2026;1257.6;0.0;Ingrés;ingrés_general;Pensió no contributiva;;False
+8228;TradeRep.;Dèbit;29/10/2026;octubre;2026;0.0;4.4;Càrrec;menjar;Fleca Arnau;;False
 6781;LaCaixa;Compte;14/06/2026;junio;2026;0.0;100.0;op_banc;op_banc;Traspàs comptes;;False
 1208;LaCaixa;Compte;27/07/2022;julio;2022;0.0;550.0;op_banc;op_banc;Traspàs comptes;;False
 1209;LaCaixa;Compte;03/08/2022;agosto;2022;0.0;150.0;op_banc;op_banc;Traspàs comptes;;False
@@ -772,6 +776,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1290;Casa;;06/09/2022;septiembre;2022;200.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1291;Casa;;06/09/2022;septiembre;2022;0.0;400.0;op_banc;op_banc;Traspàs comptes;;False
 1301;Casa;;09/09/2022;septiembre;2022;0.0;700.0;op_banc;op_banc;Traspàs comptes;;False
+8229;TradeRep.;Dèbit;28/10/2026;octubre;2026;0.0;20.2;Càrrec;menjar;BonPreu;;False
 6788;TradeRep.;Dèbit;25/06/2026;junio;2026;0.0;14.32;Càrrec;menjar;Sorli;;False
 6789;Efectiu;;24/06/2026;junio;2026;0.0;48.0;Càrrec;restaurant;Restaurant;L'Olivera. Palamós;False
 6790;Efectiu;;24/06/2026;junio;2026;0.0;13.9;Càrrec;restaurant;Bar;Gelats. Palamós;False
@@ -782,9 +787,11 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1354;Casa;;15/09/2022;septiembre;2022;0.0;1129.52;op_banc;op_banc;Traspàs comptes;Ingres Xarrup a BBVA;False
 6858;TradeRep.;Dèbit;13/07/2026;julio;2026;0.0;16.74;Càrrec;menjar;Mercadona;;False
 6861;TradeRep.;Dèbit;13/07/2026;julio;2026;0.0;13.75;Càrrec;neteja;Mercadona;;False
+8230;BBVA;VISA;29/10/2026;octubre;2026;0.0;5.49;Càrrec;varis;IA;;False
 1355;BBVA;Compte;15/09/2022;septiembre;2022;0.0;2.0;op_banc;op_banc;Gestions banc;certificat titularitat;False
 6794;TradeRep.;Dèbit;26/06/2026;junio;2026;0.0;19.59;Càrrec;menjar;Dia;;False
 6857;TradeRep.;Dèbit;12/07/2026;julio;2026;0.0;14.94;Càrrec;menjar;Dia;;False
+8231;BBVA;Compte;01/11/2026;noviembre;2026;0.0;66.59;Càrrec;despesa_general;Endesa;;False
 1386;Casa;;23/09/2022;septiembre;2022;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False
 1407;Casa;;29/09/2022;septiembre;2022;0.0;210.0;op_banc;op_banc;Traspàs comptes;;False
 6795;TradeRep.;Dèbit;26/06/2026;junio;2026;0.0;35.0;Càrrec;roba;Sports Arbúcies;samarreta Jordi+ gorra Isabel;False
@@ -793,6 +800,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1461;Casa;;13/10/2022;octubre;2022;0.0;95.0;op_banc;op_banc;Traspàs comptes;;False
 1462;Casa;;14/10/2022;octubre;2022;0.0;100.0;op_banc;op_banc;Traspàs comptes;;False
 1475;Casa;;18/10/2022;octubre;2022;0.0;170.0;op_banc;op_banc;Traspàs comptes;;False
+8232;BBVA;Compte;31/10/2026;octubre;2026;0.0;489.43;Càrrec;despesa_general;Hipoteca;;False
 6796;TradeRep.;Dèbit;26/06/2026;junio;2026;0.0;15.72;Càrrec;menjar;Novavenda;;False
 6862;TradeRep.;Dèbit;13/07/2026;julio;2026;0.0;27.55;Càrrec;menjar;AreaGuissona;;False
 6863;Efectiu;;13/07/2026;julio;2026;0.0;14.3;Càrrec;farmacia;Farmàcia;;False
@@ -800,12 +808,14 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6797;TradeRep.;Compte;26/06/2026;junio;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1508;Casa;;21/10/2022;octubre;2022;0.0;880.0;op_banc;op_banc;Traspàs comptes;;False
 1521;BBVA;Compte;31/10/2022;octubre;2022;600.0;0.0;op_banc;op_banc;Traspàs comptes;;False
+8233;BBVA;Compte;30/10/2026;octubre;2026;0.0;337.14;Càrrec;despesa_general;Crèdit Cotxe;;False
 1546;BBVA;Compte;05/08/2022;agosto;2022;0.0;167.42;op_banc;op_banc;Pago VISA;;False
 1547;BBVA;Compte;05/09/2022;septiembre;2022;0.0;187.93;op_banc;op_banc;Pago VISA;;False
 1548;BBVA;Compte;05/10/2022;octubre;2022;0.0;160.71;op_banc;op_banc;Pago VISA;;False
 6798;TradeRep.;Dèbit;04/07/2026;julio;2026;0.0;45.42;Càrrec;menjar;Aldi;;False
 6865;Casa;Efectiu;13/07/2026;julio;2026;250.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1552;BBVA;Compte;04/11/2022;noviembre;2022;0.0;246.08;op_banc;op_banc;Pago VISA;;False
+8234;Efectiu;;30/10/2026;octubre;2026;0.0;10.0;Càrrec;personal;Jordi;;False
 1549;LaCaixa;Compte;29/10/2022;octubre;2022;0.0;600.0;op_banc;op_banc;Traspàs comptes;;False
 1560;Casa;;01/11/2022;noviembre;2022;0.0;550.0;op_banc;op_banc;Traspàs comptes;;False
 1563;Casa;;05/11/2022;noviembre;2022;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
@@ -815,6 +825,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6799;Efectiu;Efectiu;27/06/2026;junio;2026;0.0;7.0;Càrrec;menjar;Vents et Marees;;False
 6866;BBVA;Compte;14/07/2026;julio;2026;0.0;35.9;Càrrec;despesa_general;Lowi;;False
 6800;Efectiu;;27/06/2026;junio;2026;0.0;36.0;Càrrec;roba;Altre roba;Fira Palafolls.;False
+8235;Efectiu;;30/10/2026;octubre;2026;0.0;50.0;Càrrec;restaurant;Restaurant;Hotel Trias. Palamós ;False
 1613;Casa;;18/11/2022;noviembre;2022;0.0;10.0;op_banc;op_banc;Traspàs comptes;;False
 1614;Casa;;18/11/2022;noviembre;2022;550.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1624;Casa;;21/11/2022;noviembre;2022;0.0;290.0;op_banc;op_banc;Traspàs comptes;;False
@@ -829,15 +840,18 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1701;Casa;;14/12/2022;diciembre;2022;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False
 1702;Casa;;14/12/2022;diciembre;2022;0.0;160.0;op_banc;op_banc;Traspàs comptes;;False
 1078;BBVA;Dèbit;04/07/2022;julio;2022;0.0;39.04;Càrrec;roba;Zara;;False
+8236;Efectiu;;30/10/2026;octubre;2026;0.0;15.0;Càrrec;varis;Llibres;Llibre Pedro Romero ;False
 6803;TradeRep.;Dèbit;29/06/2026;junio;2026;0.0;4.5;Càrrec;restaurant;Bar;Berenar Jordi. Palamós;False
 6805;TradeRep.;Dèbit;30/06/2026;junio;2026;0.0;1.4;Càrrec;restaurant;Bar;Cafè Figueres;False
 6804;TradeRep.;Dèbit;29/06/2026;junio;2026;0.0;16.9;Càrrec;farmàcia;Farmàcia;Repelent mosquits Halley;False
 6869;TradeRep.;Dèbit;16/07/2026;julio;2026;0.0;4.4;Càrrec;menjar;Fleca Arnau;;False
+8237;TradeRep.;Dèbit;30/10/2026;octubre;2026;0.0;7.6;Càrrec;restaurant;Bar;Xarel.lo Palamós ;False
 1718;Casa;;16/12/2022;diciembre;2022;0.0;150.0;op_banc;op_banc;Traspàs comptes;;False
 1755;BBVA;Compte;29/12/2022;diciembre;2022;600.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1770;BBVA;Compte;05/01/2023;enero;2023;250.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1769;BBVA;Compte;05/01/2023;enero;2023;0.0;211.75;op_banc;op_banc;Pago VISA;;False
 6806;TradeRep.;Dèbit;30/06/2026;junio;2026;0.0;5.0;Càrrec;neteja;Clarel;;False
+8238;TradeRep.;Dèbit;31/10/2026;octubre;2026;0.0;29.0;Càrrec;menjar;Novavenda;;False
 1785;Casa;Efectiu;23/12/2022;diciembre;2022;0.0;350.0;op_banc;op_banc;Traspàs comptes;;False
 1811;LaCaixa;Compte;29/12/2022;diciembre;2022;0.0;600.0;op_banc;op_banc;Traspàs comptes;;False
 1812;LaCaixa;Compte;05/01/2023;enero;2023;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
@@ -845,6 +859,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1815;BBVA;Compte;11/01/2023;enero;2023;0.0;40.0;op_banc;op_banc;Reintegre Caixer;;False
 6807;TradeRep.;Dèbit;30/06/2026;junio;2026;0.0;10.7;Càrrec;restaurant;Bar;Gelats. Palamós;False
 6871;BBVA;Compte;16/07/2026;julio;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
+8239;Efectiu;;31/10/2026;octubre;2026;0.0;1.35;Càrrec;menjar;Fruiteria Deepak;;False
 1835;LaCaixa;Compte;19/01/2023;enero;2023;0.0;360.0;op_banc;op_banc;Traspàs comptes;;False
 1851;Casa;;21/01/2023;enero;2023;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
 1882;Casa;;02/02/2023;febrero;2023;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
@@ -853,6 +868,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1884;LaCaixa;Compte;03/02/2023;febrero;2023;0.0;150.0;op_banc;op_banc;Reintegre Caixer;;False
 6808;TradeRep.;Dèbit;01/07/2026;julio;2026;0.0;53.0;Càrrec;restaurant;Restaurant;Bar La Maritima. Palamós;False
 6872;TradeRep.;Compte;16/07/2026;julio;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
+8240;TradeRep.;Compte;02/11/2026;noviembre;2026;0.0;25.0;Càrrec;despesa_general;Accions NVIDIA;;False
 1896;Casa;;06/02/2023;febrero;2023;250.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1912;Casa;;15/02/2023;febrero;2023;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
 1917;Casa;;16/02/2023;febrero;2023;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False
@@ -863,12 +879,14 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6809;Efectiu;;30/06/2026;junio;2026;0.0;62.0;Càrrec;restaurant;Restaurant;Isa.: Vostra Llar, Enric Figueres (Can Costa);False
 6870;TradeRep.;Dèbit;16/07/2026;julio;2026;0.0;15.78;Càrrec;menjar;Novavenda;;False
 6873;TradeRep.;Dèbit;16/07/2026;julio;2026;0.0;4.99;Càrrec;neteja;Novavenda;;False
+8241;TR Cartera;Compte;02/11/2026;noviembre;2026;25.0;0.0;op_banc;despesa_general;Accions NVIDIA;;False
 1950;BBVA;Compte;27/02/2023;febrero;2023;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 1953;BBVA;Compte;28/02/2023;febrero;2023;0.0;55.71;op_banc;op_banc;Pago VISA;;False
 1971;Casa;;05/03/2023;marzo;2023;0.0;100.0;op_banc;op_banc;Traspàs comptes;;False
 1990;Casa;;06/03/2023;marzo;2023;0.0;140.0;op_banc;op_banc;Traspàs comptes;;False
 1967;BBVA;Dèbit;03/03/2023;marzo;2023;0.0;20.0;op_banc;op_banc;Reintegre Caixer;;False
 6810;TradeRep.;Dèbit;01/07/2026;julio;2026;0.0;6.83;Càrrec;menjar;Fruiterra;;False
+8242;TradeRep.;Compte;02/11/2026;noviembre;2026;0.0;25.0;Càrrec;despesa_general;Accions S&P500;;False
 2013;BBVA;Compte;03/03/2023;marzo;2023;0.0;24.86;op_banc;op_banc;Pago VISA;;False
 2007;Casa;;14/03/2023;marzo;2023;0.0;20.0;op_banc;op_banc;Traspàs comptes;;False
 2014;Casa;;15/03/2023;marzo;2023;0.0;20.0;op_banc;op_banc;Traspàs comptes;;False
@@ -878,6 +896,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2062;Casa;;30/03/2023;marzo;2023;0.0;100.0;op_banc;op_banc;Traspàs comptes;;False
 6811;TradeRep.;Dèbit;02/07/2026;julio;2026;0.0;4.4;Càrrec;menjar;Fleca Arnau;;False
 6874;TradeRep.;Dèbit;17/07/2026;julio;2026;0.0;19.67;Càrrec;menjar;Dia;;False
+8243;TR Cartera;Compte;02/11/2026;noviembre;2026;25.0;0.0;op_banc;despesa_general;Accions S&P500;;False
 2072;BBVA;Compte;05/04/2023;abril;2023;0.0;324.2;op_banc;op_banc;Pago VISA;;False
 2069;BBVA;Compte;03/04/2023;abril;2023;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 2070;LaCaixa;Compte;03/04/2023;abril;2023;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
@@ -885,6 +904,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2089;Casa;;08/04/2023;abril;2023;0.0;350.0;op_banc;op_banc;Traspàs comptes;;False
 6812;Efectiu;Efectiu;04/07/2026;julio;2026;0.0;6.87;Càrrec;menjar;BonPreu;;False
 6875;TradeRep.;Dèbit;18/07/2026;julio;2026;0.0;12.38;Càrrec;neteja;Clarel;;False
+8244;TradeRep.;Compte;02/11/2026;noviembre;2026;0.35;0.0;Ingrés;ingres_general;Interessos Trade Rep.;;False
 2126;Casa;;18/04/2023;abril;2023;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
 2133;Casa;;20/04/2023;abril;2023;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
 2136;Casa;;23/04/2023;abril;2023;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
@@ -900,10 +920,12 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 2233;Casa;;18/05/2023;mayo;2023;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False
 2240;Casa;;20/05/2023;mayo;2023;0.0;60.0;op_banc;op_banc;Traspàs comptes;;False
 6877;TradeRep.;Dèbit;18/07/2026;julio;2026;0.0;11.57;Càrrec;neteja;Novavenda;;False
+8245;BBVA;Compte;02/11/2026;noviembre;2026;0.0;12.9;Càrrec;despesa_general;Ocaso;;False
 6815;TradeRep.;Dèbit;03/07/2026;julio;2026;0.0;20.68;Càrrec;menjar;Novavenda;;False
 6816;TradeRep.;Dèbit;03/07/2026;julio;2026;0.0;3.99;Càrrec;neteja;Novavenda;;False
 6878;Efectiu;;19/07/2026;julio;2026;0.0;14.0;Càrrec;restaurant;Restaurant;Pollastre a l'ast i patates. El Celler;False
 6879;Efectiu;;19/07/2026;julio;2026;0.0;20.0;Càrrec;varis;Expectacle/Teatre;La Tia d'en Carles;False
+8246;BBVA;Compte;04/11/2026;noviembre;2026;0.0;90.28;Càrrec;despesa_general;Piscina;;False
 2274;Casa;;27/05/2023;mayo;2023;0.0;90.0;op_banc;op_banc;Traspàs comptes;;False
 2284;Casa;;01/06/2023;junio;2023;0.0;150.0;op_banc;op_banc;Traspàs comptes;;False
 2288;LaCaixa;Compte;05/06/2023;junio;2023;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False

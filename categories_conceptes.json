@@ -105,7 +105,10 @@
         "El Corte Inglés",
         "Temu",
         "Bauhaus",
-        "Normal"
+        "Normal",
+        "Dia",
+        "Mercadona",
+        "Novavenda"
     ],
     "rebost": [
         "Dia",
@@ -132,22 +135,9 @@
         "Gestions Banc",
         "Pago VISA",
         "Amortització",
-        "Pago ElCorteInglés"
-    ],
-    "Parallar": [
-        "IKEA mobles",
-        "Jysk",
-        "Leroy Merlin",
-        "Altres mobles",
-        "Aldi",
-        "LIDL",
-        "MediaMarkt",
-        "Action Girona",
-        "Aliexpress",
-        "El Corte Inglés",
-        "Temu",
-        "Primark",
-        "PCComponents"
+        "Pago ElCorteInglés",
+        "CashBack",
+        "Gestions banc"
     ],
     "farmacia": [
         "Farmàcia",
@@ -210,16 +200,6 @@
         "Temu",
         "Bauhaus"
     ],
-    "assegurança": [
-        "Assegurança Cotxe",
-        "BBVA Asseg. Casa",
-        "DP Morts Enric",
-        "DP MP Mireia",
-        "Gestoria BBVA",
-        "Imp. Circulació",
-        "Seguretat Social",
-        "Ocaso"
-    ],
     "ingres_extra": [
         "Feina Foto",
         "Tiendeo",
@@ -253,39 +233,6 @@
         "Paga extra Enric",
         "Paga extra Isa"
     ],
-    "ingrés_general": [
-        "Abonament Ajuda Enric",
-        "Abonament Ajuda Isabel",
-        "Cartera DP Gran",
-        "Cartera DP Petit",
-        "Complement Generalitat",
-        "Hisenda 50 1",
-        "Hisenda 100",
-        "Hisenda 50 2",
-        "Ingrés Client",
-        "Pensió no contributiva",
-        "Paga Extra Jordi",
-        "Pensió Enric",
-        "Pensió Isabel",
-        "Paga extra Enric",
-        "Paga extra Isa"
-    ],
-    "ingrés_extra": [
-        "Feina Foto",
-        "Tiendeo",
-        "Vinted",
-        "Ingres Extra",
-        "Feina Horeca",
-        "Promos",
-        "Casament",
-        "Devolució Hisenda",
-        "Xarrup Sou",
-        "Cobro Banc",
-        "Subvenció",
-        "Crèdit",
-        "Gelt",
-        "Venda Articles"
-    ],
     "supers_tickets": [
         "AreaGuissona",
         "Clarel",
@@ -304,7 +251,9 @@
         "Ajunt. Arbúcies",
         "Oncolliga",
         "PJ Isabel",
-        "Lloguer Parking"
+        "Lloguer Parking",
+        "Accions NVIDIA",
+        "Accions S&P500"
     ],
     "articles_compres": {
         "pa": [
@@ -981,5 +930,30 @@
         "reparto cartes Palamós",
         "teatre Barcelona",
         "tornar Pilar H."
+    ],
+    "parallar": [
+        "IKEA mobles",
+        "Jysk",
+        "Leroy Merlin",
+        "Altres mobles",
+        "Aldi",
+        "LIDL",
+        "MediaMarkt",
+        "Action Girona",
+        "Aliexpress",
+        "El Corte Inglés",
+        "Temu",
+        "Primark",
+        "PCComponents"
+    ],
+    "asseguranca": [
+        "Assegurança Cotxe",
+        "BBVA Asseg. Casa",
+        "DP Morts Enric",
+        "DP MP Mireia",
+        "Gestoria BBVA",
+        "Imp. Circulació",
+        "Seguretat Social",
+        "Ocaso"
     ]
 }

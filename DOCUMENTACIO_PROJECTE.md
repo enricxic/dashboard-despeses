@@ -2259,3 +2259,26 @@ flowchart TD
 | **16/10/2026** | **Impressora** | **Impressora de Tiquets**: Integració d'impressió RAW ESC/POS de llistes de compra amb tall de paper i vista d'impressió web. |
 | **18/09/2026** | **Nucli / BBDD** | **Arquitectura Offline**: Mode desconnectat amb cua local `sync_queue.json` i mòdul de consolidació de dades. |
 | **13/09/2026** | **BBDD / Interfície** | **Gestor de Bases de Dades**: Creació de `modules/bases_dades.py` i barra de navegació superior d'escriptori amb 4 menús clàssics. |
+
+
+---
+
+## 21. Annex 8: Eina de Normalització de Dades (BD & JSON)
+
+### 21.1. Objectiu i Arquitectura
+L'eina de normalització (`core/normalitzador.py` i `modules/normalitzador_ui.py`) neix per resoldre i prevenir la coexistència de discrepàncies històriques als registres de la base de dades (Supabase i rèpliques CSV) i als fitxers JSON de taxonomia:
+1. **Categories en minúscules sense accents**: Les claus canòniques tècniques no poden tenir accents ni majúscules (`buta`, `farmacia`, `ingres_general`, `ingres_extra`, `parallar`, `manteniment`, `asseguranca`). Els registres històrics que utilitzaven `butà`, `farmàcia`, `ingrés_general`, `ingrés_extra`, `Parallar`, `mant_netej` o `assegurança` són transformats automàticament a la forma canònica.
+2. **Format estricte de dates (`DD/MM/AAAA`)**: Detecció i conversió de formats ISO (`AAAA-MM-DD`, `AAAA-MM-DDTHH:MM:SS`), formats amb guió (`DD-MM-AAAA`) i components residuals de temps cap al patró unificat català `DD/MM/AAAA`.
+3. **Harmonització de Conceptes i Formes de Pagament**: Supressió d'espais residuals, homologació de conceptes (`CashBack` a operacions bancàries, supermercats com `Dia`/`Mercadona`/`Novavenda` a neteja, `Accions NVIDIA`/`Accions S&P500` a despesa general) i unificació de text.
+
+### 21.2. Funcionament Granular i Configurable
+Accessible des de qualsevol pantalla mitjançant la barra de menú superior **Editar > 🧹 Normalitzar Dades (BD & JSON)**:
+- **Selector de Taula**: Permet escollir si es vol analitzar una taula concreta (`despeses`, `ingressos`, `pagaments`, `tr_cartera`, `compresSuper`, `kmCotxe`) o bé fer un escombrat de totes alhora, evitant processos monolítics que puguin bloquejar l'usuari.
+- **Selectors d'Àmbit (Checkboxes)**: Triar lliurement quines comprovacions realitzar:
+  - Dates (`DD/MM/AAAA`).
+  - Categories (minúscules sense accents).
+  - Conceptes (harmonització).
+  - Bancs i Formes de Pagament (espais i majúscules).
+- **Graella Interactiva (`st.data_editor`)**: Mostra el diagnòstic amb checkboxes individuals per a cada fila, indicant ID, Taula, Columna, Valor Actual, Valor Normalitzat i Motiu de la discrepància.
+- **Execució en Bloc Segura**: Botó `▶️ Aplicar Normalització als seleccionats` que actualitza en temps real Supabase i manté sincronitzats els fitxers CSV locals per a operativitat offline.
+- **Pestanya de Taxonomia JSON**: Permet visualitzar l'estat de les claus a `categories_conceptes.json` i sincronitzar-les en 1 clic amb el registre `app_config` (ID=1) de Supabase.
