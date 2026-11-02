@@ -20,15 +20,17 @@ idTRCartera;DATA;mes;any;COMPRA;VENDA;CARTERA;CONCEPTE;COMENTARI
 19;2026-06-01;junio;2026;25.0;;NVIDIA;Compra;
 20;2026-06-01;junio;2026;25.0;;S&P500;Compra;
 21;2026-06-01;junio;2026;8.17;;S&P500;CashBack;
-22;2026-05-07;julio;2026;25.0;0.0;S&P500;Compra;
-23;2026-05-07;julio;2026;25.0;0.0;NVIDIA;Compra;
-24;2026-02-07;julio;2026;6.68;0.0;S&P500;CashBack;
+22;2026-07-05;julio;2026;25.0;0.0;S&P500;Compra;
+23;2026-07-05;julio;2026;25.0;0.0;NVIDIA;Compra;
+24;2026-07-02;julio;2026;6.68;0.0;S&P500;CashBack;
 26;2026-08-02;agosto;2026;25.0;0.0;S&P500;Compra;
 27;2026-08-06;agosto;2026;12.04;0.0;S&P500;CashBack;
-25;2026-02-08;agosto;2026;25.0;0.0;NVIDIA;Compra;
+25;2026-08-02;agosto;2026;25.0;0.0;NVIDIA;Compra;
 28;2026-09-02;septiembre;2026;25.0;0.0;S&P500;Compra;Traspàs automàtic: Accions S&P500
 29;2026-09-02;septiembre;2026;25.0;0.0;NVIDIA;Compra;Traspàs automàtic: Accions NVIDIA
 31;2026-10-02;octubre;2026;25.0;0.0;NVIDIA;Compra;Traspàs automàtic: Accions NVIDIA
 32;2026-10-02;octubre;2026;25.0;0.0;S&P500;Compra;Traspàs automàtic: Accions S&P500
 33;2026-10-02;octubre;2026;8.9;0.0;S&P500;CashBack;
 30;2026-09-02;septiembre;2026;12.15;0.0;S&P500;CashBack;
+35;2026-11-02;noviembre;2026;25.0;0.0;NVIDIA;Compra;Traspàs automàtic: Accions NVIDIA
+36;2026-11-02;noviembre;2026;25.0;0.0;S&P500;Compra;Traspàs automàtic: Accions S&P500

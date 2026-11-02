@@ -61,6 +61,22 @@ def apply_import_filter(df_target, col_name, val_str):
     except Exception:
         return df_target[df_target[col_name].astype(str).str.contains(s_raw, case=False, na=False)]
 
+def robust_parse_date_series(series):
+    s_d = pd.to_datetime(series, format='%d/%m/%Y', errors='coerce')
+    mask = s_d.isna()
+    if mask.any():
+        iso_d = pd.to_datetime(series[mask], format='%Y-%m-%d', errors='coerce')
+        s_d = s_d.fillna(iso_d)
+    mask = s_d.isna()
+    if mask.any():
+        dash_d = pd.to_datetime(series[mask], format='%d-%m-%Y', errors='coerce')
+        s_d = s_d.fillna(dash_d)
+    mask = s_d.isna()
+    if mask.any():
+        gen_d = pd.to_datetime(series[mask], errors='coerce')
+        s_d = s_d.fillna(gen_d)
+    return s_d
+
 def render():
     import modules.avatar_widget as avatar
     avatar.render_header_with_avatar("<div style='font-size: 1.8rem; font-weight: bold; color:#f39c12; margin-top:0;'>🗄️ Gestor de Bases de Dades</div>", "bases_dades")
@@ -224,9 +240,7 @@ def render():
             if 'hora' in date_col.lower() or 'created_at' in date_col.lower():
                 s_dt = pd.to_datetime(df[date_col], errors='coerce')
             else:
-                s_dt = pd.to_datetime(df[date_col], format='%d/%m/%Y', errors='coerce')
-                if s_dt.isna().sum() > len(df) * 0.5:
-                    s_dt = pd.to_datetime(df[date_col], errors='coerce', dayfirst=True)
+                s_dt = robust_parse_date_series(df[date_col])
             
             df['_sort_dt'] = s_dt
             sort_cols = ['_sort_dt']
@@ -257,10 +271,8 @@ def render():
     
     col_config = {}
     for col in df.columns:
-        if col.upper() == 'DATA':
-            s_d = pd.to_datetime(df[col], format="%d/%m/%Y", errors='coerce')
-            if s_d.isna().sum() > len(df) * 0.5:
-                s_d = pd.to_datetime(df[col], errors='coerce', dayfirst=True)
+        if col.upper() == 'DATA' or col.lower() in ['data', 'data_inici']:
+            s_d = robust_parse_date_series(df[col])
             df[col] = s_d.dt.date
             col_config[col] = st.column_config.DateColumn(col, format="DD/MM/YYYY")
             
@@ -295,7 +307,10 @@ def render():
                     import datetime
                     for k, v in col_updates.items():
                         if isinstance(v, datetime.date):
-                            col_updates[k] = v.strftime("%d/%m/%Y")
+                            if selected_table == 'tr_cartera':
+                                col_updates[k] = v.strftime("%Y-%m-%d")
+                            else:
+                                col_updates[k] = v.strftime("%d/%m/%Y")
                             
                     row_idx = int(row_idx_str)
                     if row_idx < len(df):
@@ -327,7 +342,10 @@ def render():
                     import datetime
                     for k, v in new_row.items():
                         if isinstance(v, datetime.date):
-                            new_row[k] = v.strftime("%d/%m/%Y")
+                            if selected_table == 'tr_cartera':
+                                new_row[k] = v.strftime("%Y-%m-%d")
+                            else:
+                                new_row[k] = v.strftime("%d/%m/%Y")
                             
                     try:
                         insert_db_row(selected_table, new_row)
