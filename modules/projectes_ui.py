@@ -50,6 +50,30 @@ from core.llm_ui import render_ai_selector
 from modules.canvas_planol import render_planol_tab
 
 # ==========================================
+# UTILITATS D'ESTAT DELS PROJECTES
+# ==========================================
+
+def _normalize_project_estat(estat: Any) -> str:
+    """Normalitza l'estat del projecte a un dels tres grans blocs: 'Pendent', 'En curs' o 'Finalitzat'."""
+    s = str(estat or "").lower().strip()
+    if any(k in s for k in ["finalitz", "complet", "acabat"]):
+        return "Finalitzat"
+    elif any(k in s for k in ["curs", "progr", "fent"]):
+        return "En curs"
+    else:
+        # "pendent", "planificació", "en pausa", "", etc.
+        return "Pendent"
+
+def _badge_project_estat(estat: Any) -> str:
+    """Retorna la icona visual segons l'estat del projecte."""
+    norm = _normalize_project_estat(estat)
+    if norm == "Finalitzat":
+        return "✅"
+    elif norm == "En curs":
+        return "🔨"
+    return "⏳"
+
+# ==========================================
 # DIÀLEGS MODALS DE CONFIRMACIÓ I IMATGES
 # ==========================================
 
@@ -214,23 +238,96 @@ def render_projectes_tab(family_names: List[str] = None):
     """Pestanya principal de Projectes d'Obra i Reformes al mòdul de manteniment."""
     projectes = load_projectes()
 
+    if not projectes:
+        col_nou, _ = st.columns([1.2, 2.8])
+        with col_nou:
+            if st.button("➕ Nou Projecte d'Obra", use_container_width=True, type="primary"):
+                st.session_state["show_modal_nou_projecte"] = True
+        st.info("👋 Encara no hi ha cap projecte creat. Prem **➕ Nou Projecte d'Obra** per començar.")
+        if st.session_state.get("show_modal_nou_projecte"):
+            _render_modal_nou_projecte()
+        return
+
+    # Còmput de projectes per estat per als xips de filtratge
+    c_tots = len(projectes)
+    c_pend = sum(1 for p in projectes if _normalize_project_estat(p.get("estat")) == "Pendent")
+    c_curs = sum(1 for p in projectes if _normalize_project_estat(p.get("estat")) == "En curs")
+    c_fin = sum(1 for p in projectes if _normalize_project_estat(p.get("estat")) == "Finalitzat")
+
+    filtre_labels = {
+        "Tots": f"Tots ({c_tots})",
+        "Pendent": f"⏳ Pendent ({c_pend})",
+        "En curs": f"🔨 En curs ({c_curs})",
+        "Finalitzat": f"✅ Finalitzat ({c_fin})"
+    }
+
+    st.caption("🔍 Filtra els projectes per estat:")
+    if hasattr(st, "pills"):
+        filtre_estat = st.pills(
+            "Filtrar per estat:",
+            options=["Tots", "Pendent", "En curs", "Finalitzat"],
+            format_func=lambda x: filtre_labels.get(x, x),
+            default="Tots",
+            key="filtre_estat_projectes",
+            label_visibility="collapsed"
+        )
+    elif hasattr(st, "segmented_control"):
+        filtre_estat = st.segmented_control(
+            "Filtrar per estat:",
+            options=["Tots", "Pendent", "En curs", "Finalitzat"],
+            format_func=lambda x: filtre_labels.get(x, x),
+            default="Tots",
+            key="filtre_estat_projectes",
+            label_visibility="collapsed"
+        )
+    else:
+        filtre_estat = st.radio(
+            "Filtrar per estat:",
+            options=["Tots", "Pendent", "En curs", "Finalitzat"],
+            format_func=lambda x: filtre_labels.get(x, x),
+            horizontal=True,
+            key="filtre_estat_projectes",
+            label_visibility="collapsed"
+        )
+
+    filtre_actiu = filtre_estat or "Tots"
+
+    # Filtrar projectes segons l'estat seleccionat
+    if filtre_actiu != "Tots":
+        projectes_filtrats = [p for p in projectes if _normalize_project_estat(p.get("estat")) == filtre_actiu]
+    else:
+        projectes_filtrats = projectes
+
+    opcions_proj = {
+        p["id"]: f"{_badge_project_estat(p.get('estat'))} {p.get('nom', 'Sense títol')} ({p.get('ubicacio', 'Llar')}) — {p.get('estat', 'En curs')}"
+        for p in projectes_filtrats
+    }
+
     # Barra superior de selecció de projecte
     col_sel, col_nou = st.columns([3, 1])
-    
-    opcions_proj = {p["id"]: f"{p.get('nom', 'Sense títol')} ({p.get('ubicacio', 'Llar')}) — {p.get('estat', 'En curs')}" for p in projectes}
-    
-    # Comprovar si hi ha projecte seleccionat a la sessió o paràmetres URL
-    query_proj = st.query_params.get("proj_id")
-    default_proj_id = None
-    if query_proj and query_proj in opcions_proj:
-        default_proj_id = query_proj
-    elif projectes:
-        default_proj_id = projectes[0]["id"]
 
     with col_nou:
         st.write("")
         if st.button("➕ Nou Projecte d'Obra", use_container_width=True, type="primary"):
             st.session_state["show_modal_nou_projecte"] = True
+
+    # Comprovar si hi ha projecte seleccionat a la sessió o paràmetres URL
+    query_proj = st.query_params.get("proj_id")
+    cur_sel = st.session_state.get("select_projecte_actiu")
+    default_proj_id = None
+    if query_proj and query_proj in opcions_proj:
+        default_proj_id = query_proj
+    elif cur_sel and cur_sel in opcions_proj:
+        default_proj_id = cur_sel
+    elif projectes_filtrats:
+        default_proj_id = projectes_filtrats[0]["id"]
+
+    # Sanejament de session_state per canvis de filtre
+    if "select_projecte_actiu" in st.session_state and st.session_state["select_projecte_actiu"] not in opcions_proj:
+        if default_proj_id:
+            st.session_state["select_projecte_actiu"] = default_proj_id
+        else:
+            st.session_state.pop("select_projecte_actiu", None)
 
     with col_sel:
         if opcions_proj:
@@ -243,7 +340,7 @@ def render_projectes_tab(family_names: List[str] = None):
             )
         else:
             selected_proj_id = None
-            st.info("👋 Encara no hi ha cap projecte creat. Prem **➕ Nou Projecte d'Obra** per començar.")
+            st.info(f"ℹ️ No hi ha cap projecte amb l'estat **{filtre_actiu}** ({c_tots} en total). Canvia el filtre a 'Tots' per veure'ls.")
 
     # Modal d'Alta de Nou Projecte
     if st.session_state.get("show_modal_nou_projecte"):
@@ -304,7 +401,9 @@ def _render_projecte_header(projecte: Dict[str, Any]):
             if projecte.get("descripcio"):
                 st.caption(projecte.get("descripcio"))
         with c2:
-            st.metric("Estat", projecte.get("estat", "Planificació"), delta=None)
+            norm_est = _normalize_project_estat(projecte.get("estat", "Pendent"))
+            badge_icon = _badge_project_estat(norm_est)
+            st.metric("Estat", f"{badge_icon} {projecte.get('estat', norm_est)}", delta=None)
         with c3:
             st.metric("Despesa Real", f"{cost_comprat:.2f} €", delta=f"{pressupost_est - cost_comprat:.2f} € disp." if pressupost_est > 0 else None)
         with c4:
@@ -346,8 +445,8 @@ def _render_projecte_header(projecte: Dict[str, Any]):
             
             col_d1, col_d2, col_d3 = st.columns(3)
             with col_d1:
-                estats = ["Planificació", "En curs", "En pausa", "Completat"]
-                cur_est = projecte.get("estat", "Planificació")
+                estats = ["Pendent", "En curs", "Finalitzat"]
+                cur_est = _normalize_project_estat(projecte.get("estat", "Pendent"))
                 f_estat = st.selectbox("Estat actual:", estats, index=estats.index(cur_est) if cur_est in estats else 0)
             with col_d2:
                 p_inici = parse_date_cat(projecte.get("data_inici")) or date.today()
@@ -593,7 +692,7 @@ def _render_fases_tab(projecte: Dict[str, Any]):
         return f.get("estat") == "Completada"
 
     all_phases_done = len(fases) > 0 and all(_is_fase_done(f) for f in fases)
-    is_proj_finalitzat = (projecte.get("estat") == "Finalitzat")
+    is_proj_finalitzat = (_normalize_project_estat(projecte.get("estat")) == "Finalitzat")
 
     st.markdown("### ⏱️ Fases d'Execució i Checklist d'Obra")
     st.caption("Estructura l'ordre lògic dels treballs, assigna terminis i marca les fases completades a mesura que avancis.")
@@ -823,7 +922,7 @@ def _render_modal_nou_projecte():
             ubicacio = st.selectbox("Ubicació a la casa:", ["Bany", "Cuina", "Menjador / Sala", "Habitació", "Terrassa / Balcó", "Jardí / Exterior", "Façana / Teulada", "Garatge / Traster", "Tota la casa"])
         with col2:
             pressupost = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=500.0, step=50.0)
-            estat = st.selectbox("Estat inicial:", ["Planificació", "En curs"])
+            estat = st.selectbox("Estat inicial:", ["Pendent", "En curs"])
 
         desc = st.text_area("Descripció dels treballs i objectius:", placeholder="Ex: Canviar la banyera per un plat de dutxa de resina, substituir les rajoles de les parets i renovar aixetes.")
 
@@ -858,6 +957,7 @@ def _render_modal_nou_projecte():
             })
             st.session_state["show_modal_nou_projecte"] = False
             st.session_state["select_projecte_actiu"] = nou_id
+            st.session_state["filtre_estat_projectes"] = "Tots"
             st.success(f"Projecte '{nom}' creat correctament!")
             st.rerun()
         elif cancel:
