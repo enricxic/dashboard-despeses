@@ -1200,6 +1200,8 @@ def cb_clear_ticket():
     st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
+    cam_idx = int(st.session_state.get("camera_uploader_key", "ticket_cam_0").split("_")[-1]) if "_" in str(st.session_state.get("camera_uploader_key", "ticket_cam_0")) and str(st.session_state.get("camera_uploader_key", "ticket_cam_0")).split("_")[-1].isdigit() else 0
+    st.session_state["camera_uploader_key"] = f"ticket_cam_{cam_idx + 1}"
     st.rerun()
 
 def cb_finalize_ticket():
@@ -1582,6 +1584,8 @@ def cb_finalize_ticket():
     st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
     st.session_state["uploader_key"] = f"ticket_file_uploader_{current_idx + 1}"
+    cam_idx = int(st.session_state.get("camera_uploader_key", "ticket_cam_0").split("_")[-1]) if "_" in str(st.session_state.get("camera_uploader_key", "ticket_cam_0")) and str(st.session_state.get("camera_uploader_key", "ticket_cam_0")).split("_")[-1].isdigit() else 0
+    st.session_state["camera_uploader_key"] = f"ticket_cam_{cam_idx + 1}"
     st.session_state["viewing_compres_super"] = True
     st.rerun()
 
@@ -1776,81 +1780,122 @@ def render_compres_super_interface():
                         pass
             recent_scans.sort(key=lambda x: x[2], reverse=True)
 
-        col_scan_btn1, col_scan_btn2 = st.columns([0.46, 0.54], vertical_alignment="center")
-        with col_scan_btn1:
-            if st.button("🖨️ Obrir Escàner", key="btn_open_scanner_ui", use_container_width=True, help="Obre la finestra d'escaneig ràpid per adquirir el tiquet físic des de l'escàner"):
-                try:
-                    import subprocess
-                    import sys
-                    scanner_script = os.path.abspath("auto_scan_ui.py")
-                    if os.path.exists(scanner_script):
-                        creationflags = 0x08000000 if os.name == 'nt' else 0
-                        subprocess.Popen([sys.executable, scanner_script])
-                        st.toast("🖨️ Finestra d'escaneig oberta. Quan acabis, prem 'Carregar últim'.", icon="🖨️")
-                    else:
-                        st.error("No s'ha trobat auto_scan_ui.py")
-                except Exception as e_scan:
-                    st.error(f"Error obrint l'escàner: {e_scan}")
+        st.markdown("""
+        <style>
+        div[data-testid="stCameraInput"] {
+            width: 100% !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
+            margin-bottom: 8px !important;
+        }
+        div[data-testid="stCameraInput"] video {
+            border-radius: 10px !important;
+            max-height: 480px !important;
+            object-fit: contain !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
-        with col_scan_btn2:
-            if recent_scans:
-                latest_fp, latest_fn, latest_mtime = recent_scans[0]
-                now_ts = datetime.now().timestamp()
-                is_recent = (now_ts - latest_mtime) < 3600  # Última hora
-                btn_type = "primary" if is_recent else "secondary"
-                short_fn = latest_fn.replace("ticket_", "").replace(".jpg", "").replace(".png", "")
-                try:
-                    time_label = datetime.fromtimestamp(latest_mtime).strftime("%H:%M")
-                except Exception:
-                    time_label = ""
-                btn_label = f"📥 Carregar {short_fn} ({time_label})" if time_label else f"📥 Carregar {short_fn}"
-                if len(btn_label) > 28:
-                    btn_label = f"📥 Carregar {short_fn[:14]}... ({time_label})"
-                if st.button(btn_label, key="btn_load_latest_scan", type=btn_type, use_container_width=True, help=f"Carrega directament {latest_fn} per processar-lo amb OCR"):
-                    st.session_state["loaded_scanned_file"] = latest_fp
-                    st.session_state.pop("processed_file_id", None)
-                    st.session_state.pop("ocr_failed", None)
-                    st.rerun()
-            else:
-                st.caption("Cap tiquet a tickets/")
-
-        # Desplegable si hi ha múltiples tiquets a tickets/
-        if len(recent_scans) > 1:
-            with st.expander("📂 Historial de tiquets escanejats", expanded=False):
-                ticket_options = {f"{fn} ({datetime.fromtimestamp(mt).strftime('%d/%m %H:%M')})": fp for fp, fn, mt in recent_scans[:8]}
-                sel_opt = st.selectbox("Tria tiquet escanejat:", list(ticket_options.keys()), key="sel_scanned_history")
-                if st.button("📥 Carregar seleccionat", key="btn_load_selected_history"):
-                    st.session_state["loaded_scanned_file"] = ticket_options[sel_opt]
-                    st.session_state.pop("processed_file_id", None)
-                    st.session_state.pop("ocr_failed", None)
-                    st.rerun()
-
-        # 2. Selector manual de fitxer (Pujar PDF, imatge, etc.)
-        uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
-        raw_uploaded_file = st.file_uploader(
-            "📷 Llegir ticket",
-            type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "jfif", "bmp"],
-            label_visibility="collapsed",
-            key=uploader_key,
-            help="Tria un fitxer manualment des del disc o dispositiu"
+        mode_captura = st.radio(
+            "Mètode de captura del tiquet",
+            ["📸 Càmera del Mòbil (Directa)", "📁 Pujar Fitxer / Escàner físic"],
+            horizontal=True,
+            key="ticket_capture_mode_sel",
+            label_visibility="collapsed"
         )
 
+        raw_uploaded_file = None
+        camera_file = None
+        uploader_key = st.session_state.get("uploader_key", "ticket_file_uploader_0")
+        camera_key = st.session_state.get("camera_uploader_key", "ticket_cam_0")
+
+        if mode_captura == "📸 Càmera del Mòbil (Directa)":
+            camera_file = st.camera_input(
+                "📸 Enfoca el tiquet de compra i prem el botó per capturar la foto:",
+                key=camera_key,
+                help="Obre directament la càmera web o del mòbil sense sortir del navegador"
+            )
+        else:
+            col_scan_btn1, col_scan_btn2 = st.columns([0.46, 0.54], vertical_alignment="center")
+            with col_scan_btn1:
+                if st.button("🖨️ Obrir Escàner", key="btn_open_scanner_ui", use_container_width=True, help="Obre la finestra d'escaneig ràpid per adquirir el tiquet físic des de l'escàner"):
+                    try:
+                        import subprocess
+                        import sys
+                        scanner_script = os.path.abspath("auto_scan_ui.py")
+                        if os.path.exists(scanner_script):
+                            creationflags = 0x08000000 if os.name == 'nt' else 0
+                            subprocess.Popen([sys.executable, scanner_script])
+                            st.toast("🖨️ Finestra d'escaneig oberta. Quan acabis, prem 'Carregar últim'.", icon="🖨️")
+                        else:
+                            st.error("No s'ha trobat auto_scan_ui.py")
+                    except Exception as e_scan:
+                        st.error(f"Error obrint l'escàner: {e_scan}")
+
+            with col_scan_btn2:
+                if recent_scans:
+                    latest_fp, latest_fn, latest_mtime = recent_scans[0]
+                    now_ts = datetime.now().timestamp()
+                    is_recent = (now_ts - latest_mtime) < 3600  # Última hora
+                    btn_type = "primary" if is_recent else "secondary"
+                    short_fn = latest_fn.replace("ticket_", "").replace(".jpg", "").replace(".png", "")
+                    try:
+                        time_label = datetime.fromtimestamp(latest_mtime).strftime("%H:%M")
+                    except Exception:
+                        time_label = ""
+                    btn_label = f"📥 Carregar {short_fn} ({time_label})" if time_label else f"📥 Carregar {short_fn}"
+                    if len(btn_label) > 28:
+                        btn_label = f"📥 Carregar {short_fn[:14]}... ({time_label})"
+                    if st.button(btn_label, key="btn_load_latest_scan", type=btn_type, use_container_width=True, help=f"Carrega directament {latest_fn} per processar-lo amb OCR"):
+                        st.session_state["loaded_scanned_file"] = latest_fp
+                        st.session_state.pop("processed_file_id", None)
+                        st.session_state.pop("ocr_failed", None)
+                        st.rerun()
+                else:
+                    st.caption("Cap tiquet a tickets/")
+
+            # Desplegable si hi ha múltiples tiquets a tickets/
+            if len(recent_scans) > 1:
+                with st.expander("📂 Historial de tiquets escanejats", expanded=False):
+                    ticket_options = {f"{fn} ({datetime.fromtimestamp(mt).strftime('%d/%m %H:%M')})": fp for fp, fn, mt in recent_scans[:8]}
+                    sel_opt = st.selectbox("Tria tiquet escanejat:", list(ticket_options.keys()), key="sel_scanned_history")
+                    if st.button("📥 Carregar seleccionat", key="btn_load_selected_history"):
+                        st.session_state["loaded_scanned_file"] = ticket_options[sel_opt]
+                        st.session_state.pop("processed_file_id", None)
+                        st.session_state.pop("ocr_failed", None)
+                        st.rerun()
+
+            # 2. Selector manual de fitxer (Pujar PDF, imatge, etc.)
+            raw_uploaded_file = st.file_uploader(
+                "📷 Llegir ticket",
+                type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "jfif", "bmp"],
+                label_visibility="collapsed",
+                key=uploader_key,
+                help="Tria un fitxer manualment des del disc o dispositiu"
+            )
+
         uploaded_file = None
-        if raw_uploaded_file is not None:
-            uploaded_file = raw_uploaded_file
-            st.session_state.pop("loaded_scanned_file", None)
-        elif st.session_state.get("loaded_scanned_file"):
-            scanned_p = st.session_state["loaded_scanned_file"]
-            if os.path.exists(scanned_p):
-                uploaded_file = LocalFileWrapper(scanned_p)
-            else:
+        if mode_captura == "📸 Càmera del Mòbil (Directa)":
+            if camera_file is not None:
+                uploaded_file = camera_file
                 st.session_state.pop("loaded_scanned_file", None)
+        else:
+            if raw_uploaded_file is not None:
+                uploaded_file = raw_uploaded_file
+                st.session_state.pop("loaded_scanned_file", None)
+            elif st.session_state.get("loaded_scanned_file"):
+                scanned_p = st.session_state["loaded_scanned_file"]
+                if os.path.exists(scanned_p):
+                    uploaded_file = LocalFileWrapper(scanned_p)
+                else:
+                    st.session_state.pop("loaded_scanned_file", None)
 
         if uploaded_file is not None:
             col_f1, col_f2 = st.columns([0.68, 0.32], vertical_alignment="center")
             with col_f1:
                 size_kb = round(uploaded_file.size / 1024, 1) if hasattr(uploaded_file, 'size') else 0
-                st.caption(f"📁 **Fitxer:** `{uploaded_file.name}` ({size_kb} KB)")
+                nom_mostrat = "Foto Càmera Mòbil" if "camera_input" in getattr(uploaded_file, 'name', '') else getattr(uploaded_file, 'name', 'tiquet')
+                st.caption(f"📁 **Fitxer:** `{nom_mostrat}` ({size_kb} KB)")
             with col_f2:
                 file_id = f"{uploaded_file.name}_{uploaded_file.size}"
                 col_sub_re, col_sub_del = st.columns([1, 1])
@@ -1867,6 +1912,8 @@ def render_compres_super_interface():
                         st.session_state.pop("ocr_failed", None)
                         curr_uidx = int(uploader_key.split("_")[-1]) if "_" in uploader_key and uploader_key.split("_")[-1].isdigit() else 0
                         st.session_state["uploader_key"] = f"ticket_file_uploader_{curr_uidx + 1}"
+                        cam_uidx = int(camera_key.split("_")[-1]) if "_" in camera_key and camera_key.split("_")[-1].isdigit() else 0
+                        st.session_state["camera_uploader_key"] = f"ticket_cam_{cam_uidx + 1}"
                         st.rerun()
         
     # Row 1: Send to expense checkbox, Bank, Payment Method, Mètode d'Escaneig + Selector IA
