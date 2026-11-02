@@ -441,7 +441,18 @@ def _render_projecte_header(projecte: Dict[str, Any]):
         # Formulari d'edició
         with st.form(f"form_edit_proj_{project_id}"):
             f_nom = st.text_input("Nom del projecte:", value=projecte.get("nom", ""))
-            f_ubi = st.text_input("Ubicació a la casa:", value=projecte.get("ubicacio", ""))
+            try:
+                from core.config_manager import get_estances_casa
+                estances_cfg = get_estances_casa()
+                opcions_ubi_edit = [f"{e.get('icona', '🏠')} {e.get('nom', 'Estança')}" for e in estances_cfg]
+                if "🏠 Tota la casa" not in opcions_ubi_edit:
+                    opcions_ubi_edit.append("🏠 Tota la casa")
+            except Exception:
+                opcions_ubi_edit = ["🚿 Bany", "🍳 Cuina", "🛋️ Menjador / Sala", "🛏️ Habitació", "🌿 Terrassa / Balcó", "🌳 Jardí / Exterior", "🧱 Façana / Teulada", "🚗 Garatge / Traster", "🏠 Tota la casa"]
+            cur_ubi = projecte.get("ubicacio", "")
+            if cur_ubi and cur_ubi not in opcions_ubi_edit:
+                opcions_ubi_edit.insert(0, cur_ubi)
+            f_ubi = st.selectbox("Ubicació a la casa:", opcions_ubi_edit, index=opcions_ubi_edit.index(cur_ubi) if cur_ubi in opcions_ubi_edit else 0)
             f_desc = st.text_area("Descripció dels treballs:", value=projecte.get("descripcio", ""))
             
             col_d1, col_d2, col_d3 = st.columns(3)
@@ -967,7 +978,15 @@ def _render_modal_nou_projecte():
         col1, col2 = st.columns(2)
         with col1:
             nom = st.text_input("Nom del projecte:", placeholder="Ex: Reforma Bany Petit, Canvi terra terrassa")
-            ubicacio = st.selectbox("Ubicació a la casa:", ["Bany", "Cuina", "Menjador / Sala", "Habitació", "Terrassa / Balcó", "Jardí / Exterior", "Façana / Teulada", "Garatge / Traster", "Tota la casa"])
+            try:
+                from core.config_manager import get_estances_casa
+                estances_cfg = get_estances_casa()
+                opcions_ubi = [f"{e.get('icona', '🏠')} {e.get('nom', 'Estança')}" for e in estances_cfg]
+                if "🏠 Tota la casa" not in opcions_ubi:
+                    opcions_ubi.append("🏠 Tota la casa")
+            except Exception:
+                opcions_ubi = ["🚿 Bany", "🍳 Cuina", "🛋️ Menjador / Sala", "🛏️ Habitació", "🌿 Terrassa / Balcó", "🌳 Jardí / Exterior", "🧱 Façana / Teulada", "🚗 Garatge / Traster", "🏠 Tota la casa"]
+            ubicacio = st.selectbox("Ubicació a la casa:", opcions_ubi)
         with col2:
             pressupost = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=500.0, step=50.0)
             estat = st.selectbox("Estat inicial:", ["Pendent", "En curs"])

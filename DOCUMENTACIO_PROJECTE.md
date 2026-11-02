@@ -1798,7 +1798,7 @@ flowchart TD
 
 ---
 
-#### C. Detall Exhaustiu de les 12 Seccions de Configuració
+#### C. Detall Exhaustiu de les 13 Seccions de Configuració
 
 ##### 1. Secció 👤 Administrador
 - **Capçalera Dinàmica i Avatar**: Targeta corporativa d'estil Chrome Settings que reflecteix el nom complet de l'administrador, rol del sistema (`admin`), correu electrònic i avatar circular amb fons degradat.
@@ -1820,7 +1820,23 @@ flowchart TD
 - **Actualitzador de l'Accés Directe d'Escriptori de Windows (`_update_desktop_shortcut`)**:
   - Quan es modifica el títol de la casa, l'aplicació executa un script en segon pla que reanomena i reconfigura automàticament l'accés directe `.lnk` ubicat a l'escriptori de Windows de l'ordinador amfitrió per mantenir la coherència de marca del sistema.
 
-##### 3. Secció 👨‍👩‍👧‍👦 Família
+##### 3. Secció 🏡 Estances de la casa
+- **Model d'Estances i Espais Domèstics (`core/config_manager.py` / `DEFAULT_ESTANCES`)**:
+  - Centralitza la definició de les habitacions, zones i estances de la llar a `app_config` (ID 2 a Supabase i `core/config.json` local).
+  - **Regles de Negoci i Blindatge de Permanència**:
+    - **Menjador / Sala d'estar** (`menjador`): Estança obligatòria de la llar; bloquejada permanentment contra eliminació (`🔒`).
+    - **Cuina** (`cuina`): Estança essencial de la llar; bloquejada permanentment contra eliminació (`🔒`).
+    - **Bany** (`bany`): Com a mínim cal 1 bany a la llar. Si només queda 1 bany actiu, el botó d'eliminar es desactiva automàticament (`🔒 Únic bany (mínim 1)`). Si se n'afegeixen més (ex: "Bany suite", "Lavabo de cortesia"), els banys addicionals es poden esborrar lliurement sempre que en quedi un.
+    - **Habitació** (`habitacio`): Com a mínim cal 1 habitació a la llar. Si només queda 1 habitació activa, el botó d'eliminar es desactiva automàticament (`🔒 Única habitació (mínim 1)`). Si se n'afegeixen més (ex: "Habitació 2", "Habitació convidats"), les habitacions addicionals es poden esborrar lliurement sempre que en quedi una.
+    - **Estances i Espais Addicionals lliures** (`altres`): L'usuari pot afegir qualsevol altre espai domèstic sense restriccions.
+- **Interfície d'Administració Interactiva (`modules/admin.py`)**:
+  - **Botons Ràpids 1-Clic**: Targeta d'accés directe amb botons per afegir a l'instant `🛏️ + Habitació`, `🚿 + Bany`, `🌿 + Terrassa`, `🌳 + Jardí / Pati`, `🚗 + Garatge`, `📦 + Traster`, `💼 + Despatx / Estudi` i `🧺 + Safareig`.
+  - **Formulari d'Estança Personalitzada**: Desplegable per definir nom propi, categoria (Habitació, Bany o Altres espais) i icona representativa d'un catàleg d'emojis domèstics.
+  - **Llistat Dinàmic amb Edició en Línia**: Selector d'icona i camp de text per canviar el nom de qualsevol estança en viu, botó de recàrrega de valors desats (`🔄 Recarregar desats`) i botó de desat global (`💾 Desar Estances de la Casa`).
+- **Integració amb Mòduls Operatius**:
+  - **Projectes de Manteniment i Reformes (`modules/projectes_ui.py`)**: Tant el formulari d'alta de nous projectes (`_render_modal_nou_projecte`) com el formulari d'edició del projecte seleccionat (`_render_projecte_header`) obtenen dinàmicament el llistat desplegable d'ubicacions directament de `get_estances_casa()`, mantenint perfecta coherència entre la configuració global de la casa i els espais d'obra.
+
+##### 4. Secció 👨‍👩‍👧‍👦 Família
 - **Llistat de Membres Familiars**:
   - Cada membre es presenta en una targeta independent plegable (`st.expander`) o llista estructurada.
   - `Nom i Cognoms`: Identificador del familiar.
@@ -1838,7 +1854,7 @@ flowchart TD
   - `🗑️ Esborrar Membre Familiar (`show_delete_family_member_dialog`)`: Modal de seguretat de Streamlit (`@st.dialog`) que sol·licita confirmació explícita abans d'eliminar el registre per evitar pèrdues accidentals.
   - `💾 Desar Canvis de Família`: Invoca `_on_save_family_members()`, purga les claus `f_` de la sessió i reescriu el fitxer de configuració.
 
-##### 4. Secció 🍽️ Menús i Nutrició / 🍳 Eines de Cuina
+##### 5. Secció 🍽️ Menús i Nutrició / 🍳 Eines de Cuina
 - **Catàleg Visual d'Eines i Aparells de Cuina (`DEFAULT_CATALEG_EINES`)**:
   - Catàleg complet d'electrodomèstics i estris: Forn elèctric, Microones, Fregidora d'aire (*Airfryer*), Robot de cuina (Thermomix), Batedora de vas, Paella gran, Olla a pressió, Graella elèctrica, Vaporera, etc.
   - `Miniatures i Resolució d'Imatges (`_get_eina_foto_src`)`: Cerca intel·ligent a les carpetes locals del projecte (`imatges/Eines/`, `imatges/Productes/`, etc.) o fonts web remotes, convertint fitxers locals a fluxos segurs en Base64 (`data:image/png;base64,...`).
@@ -1846,14 +1862,14 @@ flowchart TD
   - `Interruptors d'Activació (`_on_eina_change`)`: Permet marcar quins aparells estan realment disponibles a la cuina de la casa. El planificador de menús IA no proposarà mai receptes que requereixin eines apagades.
   - `Pujada d'Eines Personalitzades`: Formulari amb doble pestanya (`📁 Pujar fitxer PC/Mòbil` o `🔗 Enllaç URL`) per incorporar nous estris amb foto, nom i descripció.
 
-##### 5. Secció 🔔 Alertes Globals
+##### 6. Secció 🔔 Alertes Globals
 - **Configuració de Llindars de Notificació**:
   - `Avisos de Loteria i Sorteigs`: Dies d'antelació per a la caducitat de dècims.
   - `Marge d'Avisos de Manteniment`: Dies de preavís abans del venciment de tasques domèstiques recurrents.
   - `Avisos de Caducitat de Garanties`: Llindar d'avís en dies per a aparells i electrodomèstics de la llar.
   - `Visibilitat a la Campaneta`: Selectors per activar o silenciar categories d'alertes específiques al panell superior.
 
-##### 6. Secció 🔌 Perifèrics (Impressora i Escàner)
+##### 7. Secció 🔌 Perifèrics (Impressora i Escàner)
 - **Impressora Tèrmica de Tiquets (ESC/POS)**:
   - `Llistat de Controladors Detectats`: Detecció automàtica d'impressores locals de Windows mitjançant `win32print`.
   - `Controlador Seleccionat`: Selector del dispositiu (per defecte `BIXOLON_SRP275`).
@@ -1866,24 +1882,24 @@ flowchart TD
   - `Resolució d'Escaneig (DPI)`: 150 DPI (ràpid per a OCR) o 300 DPI (alta definició).
   - `Ruta de Destí`: Carpeta local predeterminada (`tickets/`).
 
-##### 7. Secció 🧪 Laboratori IA (Harness)
+##### 8. Secció 🧪 Laboratori IA (Harness)
 - Accés directe als controls del banc de proves heurístic i informes d'avaluació de models (vegeu subapartat 7.2).
 
-##### 8. Secció 🤝 Tutelats
+##### 9. Secció 🤝 Tutelats
 - Gestió de registres de familiars sota tutela legal o gestió delegada, assignant comptes bancaris, límits de despesa i alertes administratives específiques.
 
-##### 9. Secció 🏦 Bancs
+##### 10. Secció 🏦 Bancs
 - Gestió del catàleg d'entitats financeres de la llar (CaixaBank, BBVA, Santander, Revolut, etc.), codis de color identificatius i associació amb els comptes de [`modules/economic.py`](file:///e:/Dashboard/modules/economic.py).
 
-##### 10. Secció 🎨 Aspecte i Tema
+##### 11. Secció 🎨 Aspecte i Tema
 - Selector d'estil visual de l'aplicació entre tema **Fosc** (paleta fosca d'alt contrast amb fons `#0f172a` i targetes `#1e293b`) i tema **Clar** (estil corporatiu net amb fons blanc i vores suaus `#dadce0`).
 
-##### 11. Secció 🔘 Icones pantalla d'inici (Visibilitat)
+##### 12. Secció 🔘 Icones pantalla d'inici (Visibilitat)
 - Matriu d'interruptors (*toggles*) per activar o ocultar qualsevol de les targetes del menú principal (*Landing*):
   - `Compres i Rebost`, `Econòmic`, `Llum i Aigua`, `Cotxe`, `Manteniment`, `Menús i Cuina`, `Agenda`, `Medicació`, `Seguretat`, `Domòtica`, `Jocs / Oci`.
   - Desa instantàniament a `icones_actives` i reordena la graella del tauler.
 
-##### 12. Secció 🌐 Idiomes
+##### 13. Secció 🌐 Idiomes
 - Selector d'idioma de l'aplicació (*Català* / *Castellà*) amb diccionari de cadenes transversals a [`core/config_manager.py`](file:///e:/Dashboard/core/config_manager.py).
 
 ---
@@ -2122,6 +2138,7 @@ flowchart TD
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
+| **02/11/2026** | **Configuració Global / Estances** | **Nova Secció d'Estances de la Casa (`🏡 Estances de la casa`) amb Regles de Negoci i Vinculació a Projectes**: Nova pestanya a `modules/admin.py` amb persistència a `app_config` (ID=2 a Supabase i `core/config.json`). Implementades regles de blindatge de permanència: Menjador i Cuina obligatoris no eliminables; com a mínim 1 Bany i com a mínim 1 Habitació actius (bloqueig amb cadenat 🔒 quan en queda un sol exemplar); botons d'alta ràpida per a banys/habitacions addicionals, terrasses, jardí, garatge, traster, despatx i safareig; selector d'icones emoji i formulari d'estances personalitzades; connexió immediata amb el selector d'ubicació a l'alta i edició de projectes d'obra a `modules/projectes_ui.py`. |
 | **02/11/2026** | **Manteniment / Projectes d'Obra** | **Reactivació de Consultes d'IA, Gestió d'Errors, Auto-Adaptació de Tokens (HTTP 402) i Correcció de Truncat en Text**: Incorporats botons de reactivació directa (`🔄 Reactivar`) a cada pregunta del xat i targetes d'error amb acció de reintent immediat (`🔄 Reintentar ara`) i descart (`🗑️ Descartar`) visibles al mòbil sense scroll; resolució de límit de crèdits a OpenRouter mitjançant auto-adaptació dinàmica de `max_tokens` (`can only afford X`) i fallback automàtic a Gemini (2.5 Flash); corregida la comprovació de terminació JSON a `core/llm.py` que rebutjava indegudament respostes vàlides de text pla com a "truncades" forçant cascada de models fins a la quota HTTP 429; eliminada duplicitat de renderització de selectors d'IA (`DuplicateWidgetID`); afegit selector de filtre per estat (`Pendent`, `En curs`, `Finalitzat`). |
 | **01/11/2026** | **Manteniment / Projectes i Plànols** | **Creador d'Habitacions amb Mides (`🏠 Habitació`), Galleda de Textures (`🪣 Textura`), Navegació (`🖐️ Moure`), Mode Paret Contínua (`🔗 Seguir traç`) i Snap Magnètic**: Afegit el generador d'habitacions predeterminades amb mides reals en metres (amplada $X$ i llargada $Y$, etiquetes i 4 parets amb cotes automàtiques a escala 40px=1m); incorporada la galleda de textures amb patrons vectorials natius per a terra (parquet, rajola, gresite de dutxa, gespa, microciment) i paret (maó vist, subway, pedra, llistons, calç); afegida l'eina `🖐️ Moure` per navegar còmodament pel plànol ampliat arrossegant el dit sense dibuixar; incorporat el mode d'enllaç automàtic `🔗 Seguir traç` per dibuixar habitacions completes sense haver de buscar on continuava la línia anterior (amb halo indicador de punt de partida i botó `⏹️ Desconnectar`); implementat el magnetisme automàtic (`🧲 Snap`) per ajustar exactament parets i cotes als vèrtexs existents; afegits botons de zoom i mode alçat de paret. |
 | **31/10/2026** | **Navegació / Mòduls** | **Eliminació del Rebot de Navegació a Túnels i Desglossar**: Implementat el mecanisme `nav_target_mod` / `nav_target_tab` a `app.py` per prioritzar les transicions internes de mòduls executades per botons (`st.button`), evitant que els query params desactualitzats enviats pel navegador client sobrescriguin la destinació i mantinguin l'usuari a la mateixa pantalla al prémer `Desglossar` o els botons túnel. |

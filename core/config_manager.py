@@ -1,5 +1,14 @@
 import json
 import os
+import copy
+from datetime import datetime
+
+DEFAULT_ESTANCES = [
+    {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"},
+    {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina"},
+    {"id": "bany_1", "nom": "Bany principal", "icona": "🚿", "tipus": "bany"},
+    {"id": "habitacio_1", "nom": "Habitació principal", "icona": "🛏️", "tipus": "habitacio"}
+]
 
 _CURR_DIR = os.path.abspath(os.path.dirname(__file__))
 CONFIG_FILE = os.path.abspath(os.path.join(_CURR_DIR, "config.json"))
@@ -20,6 +29,7 @@ DEFAULT_CONFIG = {
         "color2": "#73ad69",
         "tamany_lletra": 60
     },
+    "estances": copy.deepcopy(DEFAULT_ESTANCES),
     "familia": [
         {"id": 1, "nom": "Enric", "rol": "Pare", "data_naixement": "23/09/1957", "edat": "68", "actiu": True, "alergies": [], "vetos": ["fetge", "casqueria"], "comodins": ["Pit de pollastre a la planxa", "Truita francesa"], "icona": "👨", "google_calendar_ical": "", "color": "#3b82f6"},
         {"id": 2, "nom": "Isabel", "rol": "Mare", "data_naixement": "06/03/1959", "edat": "67", "actiu": True, "alergies": [], "vetos": [], "comodins": ["Amanida completa", "Salmó a la planxa"], "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"},
@@ -490,3 +500,30 @@ def get_inflat_occurrences(planificacions, data_ultim_inflat_str=None, avui=None
 load_config = load_app_config
 save_config = save_app_config
 
+
+
+def get_estances_casa(cfg: dict = None) -> list:
+    """Retorna la llista d'estances de la llar, garantint que com a mínim hi hagi menjador, cuina, 1 bany i 1 habitació."""
+    if cfg is None:
+        cfg = load_app_config()
+    estances = list(cfg.get("estances", []))
+    if not estances:
+        estances = copy.deepcopy(DEFAULT_ESTANCES)
+    
+    # Assegurar la presència de les estances mínimes obligatòries
+    tipus_existents = [e.get("tipus") for e in estances]
+    if "menjador" not in tipus_existents:
+        estances.insert(0, {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"})
+    if "cuina" not in tipus_existents:
+        estances.insert(1, {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina"})
+    if "bany" not in tipus_existents:
+        estances.append({"id": f"bany_{int(datetime.now().timestamp())}", "nom": "Bany principal", "icona": "🚿", "tipus": "bany"})
+    if "habitacio" not in tipus_existents:
+        estances.append({"id": f"hab_{int(datetime.now().timestamp())}", "nom": "Habitació principal", "icona": "🛏️", "tipus": "habitacio"})
+    return estances
+
+def save_estances_casa(estances: list) -> bool:
+    """Desa la configuració de les estances de la casa a la configuració global."""
+    cfg = load_app_config()
+    cfg["estances"] = estances
+    return save_app_config(cfg)

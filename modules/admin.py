@@ -4,7 +4,7 @@ import copy
 import os
 import base64
 from datetime import datetime, date
-from core.config_manager import load_app_config, save_app_config, get_translation, get_cataleg_eines, DEFAULT_CATALEG_EINES
+from core.config_manager import load_app_config, save_app_config, get_translation, get_cataleg_eines, DEFAULT_CATALEG_EINES, get_estances_casa, save_estances_casa
 
 def _get_eina_foto_src(foto_val, e_id=None, nom=None):
     if foto_val and (foto_val.startswith("http://") or foto_val.startswith("https://") or foto_val.startswith("data:")):
@@ -581,6 +581,7 @@ def render():
         sections = [
             ("admin", "👤 Administrador"),
             ("titol", "🏷️ Títol de la casa"),
+            ("estances", "🏡 Estances de la casa"),
             ("familia", "👨‍👩‍👧‍👦 Família"),
             ("menjar", "🍽️ Menús i Nutrició"),
             ("alertes", "🔔 Alertes Globals"),
@@ -807,6 +808,250 @@ def render():
                         st.session_state["flash_warning"] = f"S'ha desat la configuració al núvol. Recorda canviar manualment el nom de la icona del teu escriptori a '{p1}{p2}' o fer-ho estant en mode Offline."
                     st.session_state["flash_success"] = "✅ Títol de la casa desat correctament!"
                     st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 2b. SECCIÓ: ESTANCES DE LA CASA
+        # =========================================================================
+        elif active == "estances":
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🏡 Estances i Espais de la Casa</div>
+                <div class="chrome-card-desc">Configura les estances i espais de la llar. Per defecte, la casa sempre compta amb <b>Menjador</b>, <b>Cuina</b>, com a mínim <b>1 Bany</b> i com a mínim <b>1 Habitació</b>. Pots afegir tantes estances addicionals com vulguis (altres banys, habitacions, terrasses, garatge, despatx, etc.).</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if "admin_estances_list" not in st.session_state:
+                st.session_state["admin_estances_list"] = get_estances_casa(cfg)
+
+            estances_list = st.session_state["admin_estances_list"]
+
+            # Targeta: Afegir estances ràpidament
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            st.markdown("<div class='chrome-card-header'>⚡ Afegir Estances Ràpidament</div>", unsafe_allow_html=True)
+            st.markdown("<div class='chrome-card-desc'>Clica sobre qualsevol espai predefinit per afegir-lo automàticament a la teva llar:</div>", unsafe_allow_html=True)
+            st.write("")
+
+            col_q1, col_q2, col_q3, col_q4 = st.columns(4)
+            with col_q1:
+                if st.button("🛏️ + Habitació", use_container_width=True, key="btn_quick_add_hab"):
+                    hab_count = sum(1 for e in estances_list if e.get("tipus") == "habitacio") + 1
+                    estances_list.append({
+                        "id": f"hab_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": f"Habitació {hab_count}",
+                        "icona": "🛏️",
+                        "tipus": "habitacio"
+                    })
+                    st.session_state["admin_estances_list"] = estances_list
+                    st.rerun()
+            with col_q2:
+                if st.button("🚿 + Bany", use_container_width=True, key="btn_quick_add_bany"):
+                    bany_count = sum(1 for e in estances_list if e.get("tipus") == "bany") + 1
+                    estances_list.append({
+                        "id": f"bany_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": f"Bany {bany_count}",
+                        "icona": "🚿",
+                        "tipus": "bany"
+                    })
+                    st.session_state["admin_estances_list"] = estances_list
+                    st.rerun()
+            with col_q3:
+                if st.button("🌿 + Terrassa", use_container_width=True, key="btn_quick_add_terrassa"):
+                    estances_list.append({
+                        "id": f"est_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": "Terrassa",
+                        "icona": "🌿",
+                        "tipus": "altres"
+                    })
+                    st.session_state["admin_estances_list"] = estances_list
+                    st.rerun()
+            with col_q4:
+                if st.button("🌳 + Jardí / Pati", use_container_width=True, key="btn_quick_add_jardi"):
+                    estances_list.append({
+                        "id": f"est_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": "Jardí / Pati exterior",
+                        "icona": "🌳",
+                        "tipus": "altres"
+                    })
+                    st.session_state["admin_estances_list"] = estances_list
+                    st.rerun()
+
+            col_q5, col_q6, col_q7, col_q8 = st.columns(4)
+            with col_q5:
+                if st.button("🚗 + Garatge", use_container_width=True, key="btn_quick_add_garatge"):
+                    estances_list.append({
+                        "id": f"est_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": "Garatge",
+                        "icona": "🚗",
+                        "tipus": "altres"
+                    })
+                    st.session_state["admin_estances_list"] = estances_list
+                    st.rerun()
+            with col_q6:
+                if st.button("📦 + Traster", use_container_width=True, key="btn_quick_add_traster"):
+                    estances_list.append({
+                        "id": f"est_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": "Traster",
+                        "icona": "📦",
+                        "tipus": "altres"
+                    })
+                    st.session_state["admin_estances_list"] = estances_list
+                    st.rerun()
+            with col_q7:
+                if st.button("💼 + Despatx", use_container_width=True, key="btn_quick_add_despatx"):
+                    estances_list.append({
+                        "id": f"est_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": "Despatx / Estudi",
+                        "icona": "💼",
+                        "tipus": "altres"
+                    })
+                    st.session_state["admin_estances_list"] = estances_list
+                    st.rerun()
+            with col_q8:
+                if st.button("🧺 + Safareig", use_container_width=True, key="btn_quick_add_safareig"):
+                    estances_list.append({
+                        "id": f"est_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": "Safareig",
+                        "icona": "🧺",
+                        "tipus": "altres"
+                    })
+                    st.session_state["admin_estances_list"] = estances_list
+                    st.rerun()
+
+            st.write("")
+            with st.expander("➕ Afegir Estança Personalitzada", expanded=False):
+                col_c1, col_c2, col_c3 = st.columns([2, 5, 3])
+                with col_c1:
+                    pool_icones = ["🏡", "🛋️", "🛏️", "🍳", "🚿", "🌿", "🌳", "🚗", "📦", "💼", "🧺", "🪜", "🚪", "🍷", "🏊‍♂️", "🎮", "🎨", "🐾", "☀️", "❄️", "🍽️", "📺"]
+                    cust_ico = st.selectbox("Icona", pool_icones, key="cust_est_ico_sel")
+                with col_c2:
+                    cust_nom = st.text_input("Nom de l'estança", placeholder="ex: Gimnàs, Golfes, Lavabo de cortesia...", key="cust_est_nom_inp")
+                with col_c3:
+                    cust_tip = st.selectbox("Categoria", ["Altres espais", "Habitació", "Bany"], key="cust_est_tip_sel")
+
+                if st.button("➕ Afegir a la llar", type="secondary", key="btn_add_custom_est_exec"):
+                    if cust_nom.strip():
+                        t_val = "habitacio" if cust_tip == "Habitació" else ("bany" if cust_tip == "Bany" else "altres")
+                        estances_list.append({
+                            "id": f"est_{int(datetime.now().timestamp() * 1000)}",
+                            "nom": cust_nom.strip(),
+                            "icona": cust_ico,
+                            "tipus": t_val
+                        })
+                        st.session_state["admin_estances_list"] = estances_list
+                        st.session_state["flash_success"] = f"✅ S'ha afegit '{cust_nom.strip()}' a la llista d'estances."
+                        st.rerun()
+                    else:
+                        st.warning("Escriu el nom de l'estança per poder-la afegir.")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            # Targeta: Llista d'Estances
+            num_banys = sum(1 for e in estances_list if e.get("tipus") == "bany")
+            num_habs = sum(1 for e in estances_list if e.get("tipus") == "habitacio")
+
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            col_lh1, col_lh2 = st.columns([7, 3])
+            with col_lh1:
+                st.markdown(f"<div class='chrome-card-header'>📋 Llista d'Estances de la Casa ({len(estances_list)})</div>", unsafe_allow_html=True)
+                st.markdown("<div class='chrome-card-desc'>Modifica el nom o la icona segons convingui. Els botons d'eliminar estan bloquejats si són el menjador, la cuina o l'únic bany o habitació de la llar.</div>", unsafe_allow_html=True)
+            with col_lh2:
+                if st.button("🔄 Recarregar desats", type="secondary", use_container_width=True, key="btn_reload_estances", help="Descarta canvis no desats i recupera la configuració guardada"):
+                    st.session_state["admin_estances_list"] = get_estances_casa()
+                    st.rerun()
+            st.write("")
+
+            pool_all_icons = ["🛋️", "🛏️", "🍳", "🚿", "🌿", "🌳", "🚗", "📦", "💼", "🧺", "🪜", "🚪", "🍷", "🏊‍♂️", "🎮", "🎨", "🐾", "🏠", "🍽️", "📺", "☀️", "❄️"]
+
+            for i, est in enumerate(estances_list):
+                e_id = est.get("id", f"est_{i}")
+                tipus = est.get("tipus", "altres")
+                cur_ico = est.get("icona", "🏠")
+                cur_nom = est.get("nom", "")
+
+                opts = list(pool_all_icons)
+                if cur_ico not in opts:
+                    opts.insert(0, cur_ico)
+                ico_idx = opts.index(cur_ico) if cur_ico in opts else 0
+
+                c_ico, c_nom, c_badge, c_del = st.columns([1.5, 4.5, 3.0, 1.0])
+                with c_ico:
+                    new_ico = st.selectbox("Icona", opts, index=ico_idx, key=f"est_ico_{e_id}", label_visibility="collapsed")
+                    est["icona"] = new_ico
+                with c_nom:
+                    new_nom = st.text_input("Nom", value=cur_nom, key=f"est_nom_{e_id}", label_visibility="collapsed")
+                    est["nom"] = new_nom
+                with c_badge:
+                    if tipus == "menjador":
+                        st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#64748b; font-weight:600;'>🔒 Menjador (essencial)</div>", unsafe_allow_html=True)
+                    elif tipus == "cuina":
+                        st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#64748b; font-weight:600;'>🔒 Cuina (essencial)</div>", unsafe_allow_html=True)
+                    elif tipus == "bany":
+                        if num_banys <= 1:
+                            st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#d97706; font-weight:600;'>🔒 Únic bany (mínim 1)</div>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<div style='padding-top:8px; font-size:0.82rem; color:#10b981; font-weight:600;'>🚿 Bany ({num_banys} a la casa)</div>", unsafe_allow_html=True)
+                    elif tipus == "habitacio":
+                        if num_habs <= 1:
+                            st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#d97706; font-weight:600;'>🔒 Única habitació (mínim 1)</div>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<div style='padding-top:8px; font-size:0.82rem; color:#10b981; font-weight:600;'>🛏️ Habitació ({num_habs} a la casa)</div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown("<div style='padding-top:8px; font-size:0.82rem; color:#64748b;'>🏡 Espai addicional</div>", unsafe_allow_html=True)
+
+                with c_del:
+                    can_delete = True
+                    del_help = "Eliminar aquesta estança de la llar"
+                    if tipus in ["menjador", "cuina"]:
+                        can_delete = False
+                        del_help = "El menjador i la cuina són obligatoris a qualsevol llar."
+                    elif tipus == "bany" and num_banys <= 1:
+                        can_delete = False
+                        del_help = "Com a mínim cal 1 bany a la llar. No es pot eliminar l'únic bany existent."
+                    elif tipus == "habitacio" and num_habs <= 1:
+                        can_delete = False
+                        del_help = "Com a mínim cal 1 habitació a la llar. No es pot eliminar l'única habitació existent."
+
+                    if can_delete:
+                        if st.button("🗑️", key=f"del_est_{e_id}", help=del_help):
+                            st.session_state["admin_estances_list"].pop(i)
+                            st.session_state["flash_warning"] = f"S'ha eliminat l'estança '{cur_nom}'."
+                            st.rerun()
+                    else:
+                        st.button("🔒", key=f"del_est_lock_{e_id}", disabled=True, help=del_help)
+
+            st.write("")
+            _render_flash_message()
+            if st.button("💾 Desar Estances de la Casa", type="primary", use_container_width=True, key="btn_save_estances_global"):
+                final_list = []
+                for e in st.session_state["admin_estances_list"]:
+                    eid = e.get("id")
+                    cur_n = st.session_state.get(f"est_nom_{eid}", e.get("nom", "")).strip() or e.get("nom", "Estança")
+                    cur_i = st.session_state.get(f"est_ico_{eid}", e.get("icona", "🏠"))
+                    final_list.append({
+                        "id": eid,
+                        "nom": cur_n,
+                        "icona": cur_i,
+                        "tipus": e.get("tipus", "altres")
+                    })
+
+                # Validació final i blindatge de regles de negoci
+                tipus_set = [x.get("tipus") for x in final_list]
+                if "menjador" not in tipus_set:
+                    final_list.insert(0, {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"})
+                if "cuina" not in tipus_set:
+                    final_list.insert(1, {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina"})
+                if sum(1 for x in final_list if x.get("tipus") == "bany") < 1:
+                    final_list.append({"id": f"bany_{int(datetime.now().timestamp())}", "nom": "Bany principal", "icona": "🚿", "tipus": "bany"})
+                if sum(1 for x in final_list if x.get("tipus") == "habitacio") < 1:
+                    final_list.append({"id": f"hab_{int(datetime.now().timestamp())}", "nom": "Habitació principal", "icona": "🛏️", "tipus": "habitacio"})
+
+                if save_estances_casa(final_list):
+                    st.session_state["admin_estances_list"] = final_list
+                    st.session_state["flash_success"] = "✅ Estances de la casa desades correctament a la configuració global!"
+                    st.rerun()
+                else:
+                    st.error("Error en desar la configuració d'estances.")
+
             st.markdown("</div>", unsafe_allow_html=True)
 
         # =========================================================================
