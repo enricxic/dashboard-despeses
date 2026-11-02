@@ -903,7 +903,6 @@ def _render_assistent_ia_tab(projecte: Dict[str, Any]):
         
         # 2. Cridar la IA
         with st.spinner("L'expert en reformes està redactant el consell..."):
-            prov, mod, key = render_ai_selector(key_prefix=f"xat_ia_{project_id}")
             ok, resposta = consultar_assistent_obra(projecte, user_prompt, prov, mod, key)
             if ok:
                 add_xat_missatge(project_id, role="assistant", text=resposta)
