@@ -2267,7 +2267,7 @@ flowchart TD
 
 ### 21.1. Objectiu i Arquitectura
 L'eina de normalització (`core/normalitzador.py` i `modules/normalitzador_ui.py`) neix per resoldre i prevenir la coexistència de discrepàncies històriques als registres de la base de dades (Supabase i rèpliques CSV) i als fitxers JSON de taxonomia:
-1. **Categories en minúscules sense accents**: Les claus canòniques tècniques no poden tenir accents ni majúscules (`buta`, `farmacia`, `ingres_general`, `ingres_extra`, `parallar`, `manteniment`, `asseguranca`). Els registres històrics que utilitzaven `butà`, `farmàcia`, `ingrés_general`, `ingrés_extra`, `Parallar`, `mant_netej` o `assegurança` són transformats automàticament a la forma canònica.
+1. **Categories en minúscules sense accents**: Les claus canòniques tècniques no poden tenir accents ni majúscules (`buta`, `farmacia`, `ingres_general`, `ingres_extra`, `parallar`, `manteniment`, `assegurança`). Els registres històrics que utilitzaven `butà`, `farmàcia`, `ingrés_general`, `ingrés_extra`, `Parallar`, `mant_netej` són transformats automàticament a la forma canònica (preservant expressament la ce trencada a `assegurança`).
 2. **Format estricte de dates (`DD/MM/AAAA`)**: Detecció i conversió de formats ISO (`AAAA-MM-DD`, `AAAA-MM-DDTHH:MM:SS`), formats amb guió (`DD-MM-AAAA`) i components residuals de temps cap al patró unificat català `DD/MM/AAAA`.
 3. **Harmonització de Conceptes i Formes de Pagament**: Supressió d'espais residuals, homologació de conceptes (`CashBack` a operacions bancàries, supermercats com `Dia`/`Mercadona`/`Novavenda` a neteja, `Accions NVIDIA`/`Accions S&P500` a despesa general) i unificació de text.
 

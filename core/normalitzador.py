@@ -69,15 +69,22 @@ EXPLICIT_CAT_MAP = {
     "ingrés_extra": "ingres_extra",
     "Parallar": "parallar",
     "mant_netej": "manteniment",
-    "assegurança": "asseguranca",
-    "assegurana": "asseguranca"
+    "asseguranca": "assegurança",
+    "assegurana": "assegurança"
 }
 
 def remove_accents(input_str: str) -> str:
     if not isinstance(input_str, str):
         return input_str
-    nfkd = unicodedata.normalize('NFKD', input_str)
-    return "".join([c for c in nfkd if not unicodedata.combining(c)]).replace('ç', 'c').replace('Ç', 'C')
+    # Normalització NFKD per separar accents diacrítics preservant expressament la ce trencada 'ç'/'Ç'
+    res = []
+    for c in input_str:
+        if c in ('ç', 'Ç'):
+            res.append(c)
+        else:
+            nfkd = unicodedata.normalize('NFKD', c)
+            res.append("".join([ch for ch in nfkd if not unicodedata.combining(ch)]))
+    return "".join(res)
 
 def normalitzar_data_str(val: Any) -> Tuple[str, bool]:
     if val is None or pd.isna(val):
@@ -131,19 +138,17 @@ def normalitzar_categoria_str(val: Any, categories_canoniques: List[str]) -> Tup
     if not s:
         return "", False
     
+    # Si ja és una categoria canònica exacta (p. ex. 'assegurança', 'buta'), NO tocar!
+    if s in categories_canoniques:
+        return s, False
+
     # 1. Comprovació al mapa explícit
     if s in EXPLICIT_CAT_MAP:
         return EXPLICIT_CAT_MAP[s], True
 
-    # 2. Minúscula sense accent
+    # 2. Minúscula sense accent (preservant ç)
     s_clean = remove_accents(s).lower()
     if s_clean != s and s_clean in categories_canoniques:
-        return s_clean, True
-    
-    if s in categories_canoniques:
-        return s, False
-
-    if s_clean in categories_canoniques:
         return s_clean, True
 
     return s, False
@@ -182,15 +187,18 @@ def diagnosticar_taula(nom_taula: str, ambits: List[str], supabase=None) -> List
         csv_path = spec.get("csv")
         if csv_path and os.path.exists(csv_path):
             try:
-                df = pd.read_csv(csv_path)
-            except Exception as e:
-                print(f"Error llegint CSV {csv_path}: {e}")
+                df = pd.read_csv(csv_path, sep=';')
+            except Exception:
+                try:
+                    df = pd.read_csv(csv_path)
+                except Exception as e:
+                    print(f"Error llegint CSV {csv_path}: {e}")
     
     if df is None or df.empty:
         return []
 
     cats_cfg = load_categories_conceptes()
-    categories_canoniques = [remove_accents(k).lower() for k in cats_cfg.keys()]
+    categories_canoniques = list(cats_cfg.keys())
 
     discrepancies = []
 
@@ -325,13 +333,17 @@ def aplicar_discrepancies(discrepancies: List[Dict[str, Any]], supabase=None) ->
         csv_path = spec.get("csv")
         if csv_path and os.path.exists(csv_path):
             try:
-                df = pd.read_csv(csv_path)
+                try:
+                    df = pd.read_csv(csv_path, sep=';')
+                    sep_used = ';'
+                except Exception:
+                    df = pd.read_csv(csv_path)
+                    sep_used = ','
                 pk_col = spec["pk"]
                 modified = False
                 for (taula, p_col, pk_val), updates in grouped.items():
                     if taula != t:
                         continue
-                    # Match row
                     mask = (df[pk_col].astype(str) == str(pk_val))
                     if mask.any():
                         for col, new_val in updates.items():
@@ -339,7 +351,7 @@ def aplicar_discrepancies(discrepancies: List[Dict[str, Any]], supabase=None) ->
                                 df.loc[mask, col] = new_val
                                 modified = True
                 if modified:
-                    df.to_csv(csv_path, index=False)
+                    df.to_csv(csv_path, sep=sep_used, index=False)
             except Exception as e:
                 errors.append(f"Error actualitzant CSV {csv_path}: {e}")
 
