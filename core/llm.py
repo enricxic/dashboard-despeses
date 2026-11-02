@@ -187,6 +187,33 @@ def _call_openai_compatible(
                     return True, content, elapsed
                 last_error = "Resposta buida de l'API compatible"
                 break
+            elif resp.status_code == 402:
+                # OpenRouter: Balanç de crèdits inferior a max_tokens (ex: "can only afford 1447")
+                import re
+                match_tokens = re.search(r"can only afford (\d+)", resp.text)
+                if match_tokens:
+                    afford_tokens = int(match_tokens.group(1))
+                    if afford_tokens >= 120:
+                        payload["max_tokens"] = max(100, afford_tokens - 20)
+                        resp_retry = requests.post(base_url, headers=headers, json=payload, timeout=90)
+                        if resp_retry.status_code == 200:
+                            data = resp_retry.json()
+                            choices = data.get("choices", [])
+                            if choices:
+                                content = choices[0].get("message", {}).get("content", "")
+                                return True, content, round(time.time() - start_time, 2)
+                
+                # Si no hi ha crèdits suficients a OpenRouter, fallback automàtic a Gemini (gratuït)
+                try:
+                    import streamlit as st
+                    gemini_key = st.secrets.get("GEMINI_API_KEY", "")
+                    if gemini_key:
+                        return _call_gemini(prompt, gemini_key, "gemini-2.5-flash", start_time, json_mode=json_mode, image_bytes=image_bytes, mime_type=mime_type)
+                except Exception:
+                    pass
+
+                last_error = f"Balanç de crèdits esgotat a OpenRouter ({model_name}). Recomanació: Selecciona el motor 'Gemini (2.5 Flash)' gratuït a la configuració superior."
+                break
             elif resp.status_code in [503, 429]:
                 if attempt < max_attempts - 1:
                     sleep_time = 16.0 if resp.status_code == 429 else 15.0

@@ -888,12 +888,10 @@ def _render_assistent_ia_tab(projecte: Dict[str, Any]):
         role = msg.get("role", "user")
         text = msg.get("text", "")
         data_str = msg.get("data", "")
-        is_error = text.startswith("⚠️ Error") or "HTTP 429" in text or "HTTP 5" in text or "truncat" in text
+        is_error = text.startswith("⚠️ Error") or "HTTP 429" in text or "HTTP 402" in text or "HTTP 5" in text or "truncat" in text
 
         with st.chat_message("user" if role == "user" else "assistant"):
             if is_error:
-                st.error(text)
-                
                 # Trobar la darrera pregunta de l'usuari associada a aquest error
                 prev_q = ""
                 for p_msg in reversed(xat[:idx]):
@@ -901,17 +899,29 @@ def _render_assistent_ia_tab(projecte: Dict[str, Any]):
                         prev_q = p_msg.get("text", "")
                         break
                 
-                c_err1, c_err2 = st.columns([1.5, 1])
+                # Botons d'acció directes a dalt perquè siguin immediatament visibles al mòbil
+                c_err1, c_err2 = st.columns([1.6, 1])
                 with c_err1:
-                    if prev_q and st.button("🔄 Reintentar amb motor actual", key=f"retry_err_{project_id}_{idx}", type="primary", use_container_width=True):
-                        # Esborrem el missatge d'error de l'historial i rellancem la pregunta
+                    if prev_q and st.button("🔄 Reintentar ara", key=f"retry_err_{project_id}_{idx}", type="primary", use_container_width=True):
                         delete_xat_missatge(project_id, idx)
                         st.session_state[f"fast_q_{project_id}"] = prev_q
                         st.rerun()
                 with c_err2:
-                    if st.button("🗑️ Descartar error", key=f"del_err_{project_id}_{idx}", use_container_width=True):
+                    if st.button("🗑️ Descartar", key=f"del_err_{project_id}_{idx}", use_container_width=True):
                         delete_xat_missatge(project_id, idx)
                         st.rerun()
+
+                # Explicació clara i compacta segons el codi d'error
+                if "402" in text or "crèdits" in text.lower():
+                    st.warning("⚠️ **Crèdits d'OpenRouter esgotats (HTTP 402)**.")
+                    st.info("💡 **Solució 1-clic**: Pots canviar el motor d'IA a **Gemini (2.5 Flash)** a la configuració superior (és gratuït i il·limitat) i prémer **🔄 Reintentar ara**.")
+                elif "429" in text or "quota" in text.lower():
+                    st.warning("⚠️ **Límit de consultes per minut assolit (HTTP 429)**. Espera uns segons abans de reintentar.")
+                else:
+                    st.error("⚠️ La consulta no s'ha pogut completar.")
+
+                with st.expander("🔍 Veure detall tècnic de l'error"):
+                    st.code(text, language="json")
             else:
                 st.markdown(text)
                 if role == "user":
