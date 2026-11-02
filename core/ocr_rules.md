@@ -37,3 +37,21 @@ Si detectes que el tiquet és de BonPreu o Esclat:
 3. **Descomptes globals de caixa al peu del tiquet:** Al final del tiquet poden aparèixer línies de descompte global com "-3 EUR REGAL", "- EUROS BESCANVIATS" o cupons de descompte general. NO els assignis a cap producte individual; suma'ls tots al camp "descompte_global" del tiquet.
 4. **Línies no producte a ignorar:** Ignora les línies informatives de fidelització ("EUROS ACUMULATS", "SALDO TARGETA CLIENT"), les bases i quotes d'IVA, i les dades del pagament amb targeta/TPV.
 
+
+
+### REGLA SUPERMERCAT AREAGUISSONA / BONÀREA
+Si detectes que el tiquet és de bonÀrea (Corporació Alimentària Guissona S.A.):
+1. **Identificació Comercial:** El concepte a l'aplicació s'ha de normalitzar com `"AreaGuissona"`.
+2. **Columnes de la línia de producte:** Cada línia té l'estructura `Descripció [.....] [Fórmula Nx P_Unit] Import %IVA`.
+   - **MOLT IMPORTANT - Percentatge d'IVA final:** L'últim número de cada línia (ex: `4.00`, `10.00`, `4.0`, `10.0`) és el **percentatge d'IVA aplicat**. **MAI el confonguis amb el preu total ni amb el preu unitari!**
+   - **Preu Total Real:** És el valor numèric immediatament anterior al percentatge d'IVA (ex: a `BANANA BOLSA..................... 2,15 4.00`, el preu total és `2.15` i l'IVA és `4.00%`).
+3. **Quantitats múltiples en línia (`Nx P_Unit`):**
+   - Quan es compren múltiples unitats del mateix article, figura a la mateixa línia la fórmula `Nx P_Unit` (ex: `COCTEL AMANIDES 10   3x  1,10       3,30 10.00`).
+   - Extreu la quantitat del factor multiplicador (ex: `quantitat: 3`), el preu unitari (ex: `preu_unitari: 1.10`) i l'import de la línia (ex: `preu_total: 3.30`). Verifica sempre que `quantitat * preu_unitari == preu_total`.
+4. **Neteja del nom del producte:**
+   - Elimina la seqüència de punts suspensius `.....` que uneix el nom amb l'import.
+5. **Línies que cal ignorar:**
+   - Capçalera d'empresa (`Corporació Alimentària Guissona S.A.`, NIF, adreces, telèfons, codi de botiga `bonArea (T391)`).
+   - Capçalera de taula `Descripció       Import %%%%%%`.
+   - Quadre final de `Desglòs d'IVA` (`Tipus Iva`, `Base`, `Quota`, `Total`).
+   - Peu del tiquet: `Fact. Simplificada Nº ...`, codi de barres i línies de forma de pagament.

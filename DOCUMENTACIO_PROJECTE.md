@@ -536,6 +536,80 @@ Cada article comprat a Novavenda es compon sempre d'un bloc de **2, 3 o fins i t
 - Quadre de desglossament d'IVA (`Base`, `Tipus`, `Quota`, `Total`).
 - Bloc de peu de pàgina de terminal de caixa (`Factura simplificada`, `Caixa`, `PAGAMENT`).
 
+##### 3. Supermercat AreaGuissona (bonÀrea)
+
+El tiquet de bonÀrea (gestionat per la societat *Corporació Alimentària Guissona S.A.*) té una disposició compacta en una sola línia per article, caracteritzada per punts suspensius de separació, la inclusió del percentatge d'IVA a l'extrem dret i la fórmula de múltiples unitats incrustada abans del preu.
+
+```text
++-------------------------------------------------------------+
+|                        bonArea (T391)                       |
+|             Corporació Alimentària Guissona S.A.            |
+|                        NIF: A25445131                       |
+|                   C/ Traspalau,8 , Guissona                 |
+|               CL CAMPRODON 52-56 , Arbucies                 |
+|                      TEL: 972861906                         |
++-------------------------------------------------------------+
+| Descripció                         Import %%%%%%            |
+| BANANA BOLSA.....................   2,15  4.00              |
+| COCTEL AMANIDES 10   3x  1,10       3,30 10.00              |
+| TOMÀQUE UNT P BANDE..............   4,06  4.00              |
+| IOGURT CABRA 2X125...............   1,27  4.00              |
+| FINISIM PERNIL...................   1,03 10.00              |
+| TAC DE PANXETA CURADA............   1,43 10.00              |
+| FINISIM PERNIL...................   1,07 10.00              |
+| CARPACCIO DE MORRO...............   0,87 10.00              |
+| FINISSIM DE GALL.................   1,72 10.00              |
+| FARINA AMETLLA...................   3,40 10.00              |
+| PANET V AMB O BOSS 380 G.........   1,00  4.00              |
+| GORGONZ DOP BALLAR CUÑ 1.........   1,65  4.00              |
+| CREMETT FIN H PREM 150GR.........   1,75  4.00              |
+| DATILS AMB PINYOL................   1,85  4.00              |
++-------------------------------------------------------------+
+|                        Desglòs d'IVA                        |
+| Tipus Iva        Base        Quota        Total             |
+|   4.00%         13,20         0,53        13,73             |
+|  10.00%         11,65         1,17        12,82             |
+|                                                             |
+| Fact. Simplificada Nº 2627-T0391C01-133133                 |
+| ||||||||||||||||||||||||||||||||||||||||||||||||            |
+| TOTAL A PAGAR                              26,55€           |
++-------------------------------------------------------------+
+```
+
+###### A. Dades de Capçalera i Conciliació Bancària
+1. **Nom Comercial i Concepte Oficial**: S'identifica per `bonArea` o `Corporació Alimentària Guissona S.A.`. A l'aplicació (`categories_conceptes.json`) i base de dades es codifica de forma canònica sota la categoria `menjar` com a concepte **`AreaGuissona`**.
+2. **Codi d'Establiment i Factura Simplificada**: La capçalera indica el codi de botiga (ex: `bonArea (T391)`). El número de factura simplificada té l'estructura `[Sèrie]-[Botiga][Caixa]-[Número]` (ex: `2627-T0391C01-133133`).
+3. **Conciliació Financera**: L'apunt es concilia directament amb el moviment de banc/targeta `Import càrrec = 26.55` a `despeses`, canviant `ticketPendent = False`.
+
+###### B. Estructura de Línia d'Article i Parany de l'IVA
+1. **Separació per Punts Suspensius**:
+   - El nom del producte sol estar seguit d'una cadena de punts suspensius (`.....`) que uneix el text amb la zona numèrica. Aquests punts s'han de suprimir en netejar el nom estàndard de l'article per a `tb_productes`.
+2. **MOLT CRÍTIC - Parany del Percentatge d'IVA**:
+   - A l'extrem dret de cada línia figura el tipus impositiu d'IVA aplicat (`4.00` per a alimentació bàsica, `10.00` per a carns i elaborats).
+   - **Regla d'or**: El darrer número **MAI** és el preu total ni el preu unitari de l'article. El preu total facturat (`totLinea`) és sempre el valor numèric immediatament anterior al percentatge d'IVA.
+3. **Quantitats Múltiples Incrustades (`Nx P_Unit`)**:
+   - Si s'adquireix més d'una unitat, la fórmula de multiplicació s'intercala a la mateixa línia entre el nom i el total (ex: `COCTEL AMANIDES 10   3x  1,10       3,30 10.00`).
+   - S'extreu:
+     - `quantitat = 3` (nombre enter invariant).
+     - `preuUnit = 1.10`.
+     - `totLinea = 3.30` (ja que 3 x 1,10 = 3,30 €).
+     - L'IVA `10.00` s'omet del càlcul de preu.
+
+###### C. Desglòs d'IVA i Comprovació Matemàtica
+1. **Quadre de Desglòs d'IVA**:
+   - Separa les bases imponibles i quotes al 4% i 10%.
+   - La suma dels totals dels blocs d'IVA ha de quadrar amb exactitud cèntim a cèntim amb el `TOTAL A PAGAR`:
+     $$\text{Total} = \text{Total}_{4\%} + \text{Total}_{10\%} = 13{,}73\text{ €} + 12{,}82\text{ €} = 26{,}55\text{ €}$$
+2. **Descomptes Globals**:
+   - Habitualment no inclou descomptes de caixa posteriors; per tant, `descompte = 0.00` i la suma de tots els `totLinea` és idèntica al càrrec bancari final (26,55 €).
+
+###### D. Línies que Cal Ometre
+- Capçalera fiscal (`Corporació Alimentària Guissona S.A.`, NIF `A25445131`, adreça fiscal i de botiga, telèfon).
+- Capçalera de columnes `Descripció       Import %%%%%%`.
+- Quadre de `Desglòs d'IVA` (`Tipus Iva`, `Base`, `Quota`, `Total`).
+- Codi de barres del peu i cadena `Fact. Simplificada Nº ...`.
+- Dades de pagament i terminal de caixa.
+
 ---
 
 ### 4.2 Mòdul Econòmic i Dashboard (`modules/economic.py`, `modules/dashboard.py`)
@@ -2149,6 +2223,7 @@ flowchart TD
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
+| **02/11/2026** | **Compres Super / Tiquets** | **Característiques i Regles d'Extracció per a bonÀrea / AreaGuissona**: Documentat el patró complet del tiquet físic de bonÀrea (Corporació Alimentària Guissona S.A.) a la Secció 4.1.E de `DOCUMENTACIO_PROJECTE.md` i a `core/ocr_rules.md`. Especificada la regla crítica per evitar confondre el tipus d'IVA de l'extrem dret (`4.00`, `10.00`) amb el preu de l'article, la resolució de quantitats múltiples en línia (`Nx P_Unit`), la supressió de punts suspensius i la normalització del concepte a `AreaGuissona`. |
 | **02/11/2026** | **Compres Super / Mòbil** | **Captura Nativa de Tiquets amb Càmera del Mòbil (`st.camera_input`)**: Afegit selector de mètode de captura a `modules/compres.py` amb opció per defecte `📸 Càmera del Mòbil (Directa)`. Utilitza l'API web nactiva de Streamlit (`st.camera_input`) mitjançant WebRTC directe al navegador, permetent enfocar i fotografiar el tiquet de compra a l'instant sense sortir de Chrome/PWA ni activar l'aplicació externa de càmera d'Android (que provocava la suspensió en memòria de la pestanya i la pèrdua de la connexió WebSocket). Totalment integrat amb el cicle de vida del tiquet (`camera_uploader_key`), botons de reintent/descart (`🔄`/`❌`) i fallback directe a `📁 Pujar Fitxer / Escàner físic`. |
 | **02/11/2026** | **Configuració / Estances i IoT** | **Manteniment d'IoT per Estança, Acumuladors (Tuya/Wifi) i Activació de Sensors**: Ampliada la gestió d'estances a `modules/admin.py` i `modules/domotica.py` amb manteniment complet d'elements domòtics per habitació (afegir, modificar nom, eliminar); integració específica per a acumuladors de calor governats per programador Tuya i contactor Wi-Fi (`🧱 + Acumulador (Tuya)`, `⚡ + Contactor Wi-Fi`); afegits interruptors en viu (`st.toggle`) per activar/desactivar en temps real qualsevol sensor, eina o dispositiu (càmeres, detectors de presència, etc.). |
 | **02/11/2026** | **Configuració Global / Estances** | **Nova Secció d'Estances de la Casa (`🏡 Estances de la casa`) amb Regles de Negoci i Vinculació a Projectes**: Nova pestanya a `modules/admin.py` amb persistència a `app_config` (ID=2 a Supabase i `core/config.json`). Implementades regles de blindatge de permanència: Menjador i Cuina obligatoris no eliminables; com a mínim 1 Bany i com a mínim 1 Habitació actius (bloqueig amb cadenat 🔒 quan en queda un sol exemplar); botons d'alta ràpida per a banys/habitacions addicionals, terrasses, jardí, garatge, traster, despatx i safareig; selector d'icones emoji i formulari d'estances personalitzades; connexió immediata amb el selector d'ubicació a l'alta i edició de projectes d'obra a `modules/projectes_ui.py`. |
