@@ -8,6 +8,8 @@ IOT_CATEGORIES = {
     "temperatura": {"nom": "Sensor Temp. / Humitat", "icona": "🌡️"},
     "llum": {"nom": "Il·luminació / Bombeta", "icona": "💡"},
     "endoll": {"nom": "Endoll intel·ligent / Mesurador", "icona": "🔌"},
+    "acumulador": {"nom": "Acumulador de Calor (Calefacció)", "icona": "🧱"},
+    "contactor": {"nom": "Contactor Wi-Fi / Programador Tuya", "icona": "⚡"},
     "inundacio": {"nom": "Sensor Inundació / Aigua / Pou", "icona": "🚰"},
     "porta": {"nom": "Sensor Porta / Finestra", "icona": "🚪"},
     "moviment": {"nom": "Sensor Moviment / Presència", "icona": "🚶"},
@@ -19,7 +21,7 @@ IOT_CATEGORIES = {
     "altres": {"nom": "Altre dispositiu IoT", "icona": "📦"}
 }
 
-IOT_PROTOCOLS = ["Wi-Fi", "Zigbee", "Shelly", "Tuya", "Sonoff", "Matter", "Bluetooth", "Z-Wave", "Home Assistant", "RF 433MHz", "Altres"]
+IOT_PROTOCOLS = ["Tuya / Smart Life", "Wi-Fi", "Shelly", "Zigbee", "Sonoff", "Matter", "Bluetooth", "Z-Wave", "Home Assistant", "RF 433MHz", "Programador horari", "Altres"]
 
 DEFAULT_ESTANCES = [
     {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"},
