@@ -5,20 +5,20 @@ from datetime import datetime
 
 
 IOT_CATEGORIES = {
-    "temperatura": {"nom": "Sensor Temp. / Humitat", "icona": "🌡️"},
-    "llum": {"nom": "Il·luminació / Bombeta", "icona": "💡"},
-    "endoll": {"nom": "Endoll intel·ligent / Mesurador", "icona": "🔌"},
-    "acumulador": {"nom": "Acumulador de Calor (Calefacció)", "icona": "🧱"},
+    "camera": {"nom": "Càmera de seguretat / vigilància", "icona": "📹"},
+    "moviment": {"nom": "Detector de presència / moviment", "icona": "🚶"},
+    "acumulador": {"nom": "Acumulador de calor (calefacció)", "icona": "🧱"},
     "contactor": {"nom": "Contactor Wi-Fi / Programador Tuya", "icona": "⚡"},
-    "inundacio": {"nom": "Sensor Inundació / Aigua / Pou", "icona": "🚰"},
-    "porta": {"nom": "Sensor Porta / Finestra", "icona": "🚪"},
-    "moviment": {"nom": "Sensor Moviment / Presència", "icona": "🚶"},
-    "clima": {"nom": "Climatització / Termòstat", "icona": "♨️"},
-    "persiana": {"nom": "Persiana / Motor / Cortina", "icona": "🪟"},
-    "camera": {"nom": "Càmera de vigilància", "icona": "📹"},
-    "altaveu": {"nom": "Altaveu intel·ligent", "icona": "🔊"},
-    "rele": {"nom": "Relé / Actuador / Bomba d'aigua", "icona": "⚙️"},
-    "altres": {"nom": "Altre dispositiu IoT", "icona": "📦"}
+    "temperatura": {"nom": "Sensor temperatura / humitat", "icona": "🌡️"},
+    "llum": {"nom": "Il·luminació / bombeta intel·ligent", "icona": "💡"},
+    "endoll": {"nom": "Endoll intel·ligent / mesurador", "icona": "🔌"},
+    "inundacio": {"nom": "Sensor inundació / aigua / pou", "icona": "🚰"},
+    "porta": {"nom": "Sensor contacte porta / finestra", "icona": "🚪"},
+    "clima": {"nom": "Climatització / termòstat / bomba calor", "icona": "♨️"},
+    "persiana": {"nom": "Persiana / motor / cortina", "icona": "🪟"},
+    "rele": {"nom": "Relé / bomba d'aigua / actuador", "icona": "⚙️"},
+    "altaveu": {"nom": "Altaveu intel·ligent / assistent", "icona": "🔊"},
+    "altres": {"nom": "Altre dispositiu / eina IoT", "icona": "📦"}
 }
 
 IOT_PROTOCOLS = ["Tuya / Smart Life", "Wi-Fi", "Shelly", "Zigbee", "Sonoff", "Matter", "Bluetooth", "Z-Wave", "Home Assistant", "RF 433MHz", "Programador horari", "Altres"]

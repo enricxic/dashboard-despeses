@@ -976,7 +976,7 @@ def render():
             st.write("")
 
             pool_all_icons = ["🛋️", "🛏️", "🍳", "🚿", "🌿", "🌳", "🚗", "📦", "💼", "🧺", "🪜", "🚪", "🍷", "🏊‍♂️", "🎮", "🎨", "🐾", "🏠", "🍽️", "📺", "☀️", "❄️"]
-            pool_iot_icons = ["🧱", "⚡", "🌡️", "💡", "🔌", "🚰", "🚪", "🚶", "♨️", "🪟", "📹", "🔊", "⚙️", "📦", "📶", "🔔", "☀️", "💧"]
+            pool_iot_icons = ["📹", "🚶", "🧱", "⚡", "🌡️", "💡", "🔌", "🚰", "🚪", "🚶", "♨️", "🪟", "📹", "🔊", "⚙️", "📦", "📶", "🔔", "☀️", "💧"]
             cat_keys = list(IOT_CATEGORIES.keys())
             cat_labels = [f"{v['icona']} {v['nom']}" for v in IOT_CATEGORIES.values()]
 
@@ -1049,11 +1049,41 @@ def render():
 
                 # Desplegable de manteniment IoT per a l'estança
                 with st.expander(f"📶 Elements IoT a {cur_nom or 'Estança'} ({num_iot} dispositius)", expanded=st.session_state.get(f"exp_iot_{e_id}", False)):
-                    st.markdown("<div style='font-size:0.78rem; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:6px;'>⚡ Afegir element IoT ràpidament:</div>", unsafe_allow_html=True)
-                    # Fila 1 d'afegir ràpid
+                    st.markdown("<div style='font-size:0.78rem; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:6px;'>⚡ Activar eines i dispositius ràpidament a aquesta estança:</div>", unsafe_allow_html=True)
+                    # Fila 1 d'activació ràpida (Càmera, Presència, Acumulador, Contactor)
                     col_qiot1, col_qiot2, col_qiot3, col_qiot4 = st.columns(4)
                     with col_qiot1:
-                        if st.button("🧱 + Acumulador (Tuya)", key=f"btn_add_acum_{e_id}", help="Acumulador de calor elèctric controlat amb programador Tuya/Smart Life", use_container_width=True):
+                        if st.button("📹 + Càmera", key=f"btn_add_cam_{e_id}", help="Activar Càmera de seguretat / vigilància", use_container_width=True):
+                            iot_list.append({
+                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                "nom": f"Càmera {cur_nom}".strip(),
+                                "categoria": "camera",
+                                "icona": "📹",
+                                "protocol": "Wi-Fi",
+                                "entitat": "",
+                                "actiu": True,
+                                "notes": ""
+                            })
+                            st.session_state[f"exp_iot_{e_id}"] = True
+                            st.session_state["admin_estances_list"] = estances_list
+                            st.rerun()
+                    with col_qiot2:
+                        if st.button("🚶 + Presència", key=f"btn_add_mov_{e_id}", help="Activar Detector de presència / moviment (PIR / Radar)", use_container_width=True):
+                            iot_list.append({
+                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                "nom": f"Detector Presència {cur_nom}".strip(),
+                                "categoria": "moviment",
+                                "icona": "🚶",
+                                "protocol": "Zigbee",
+                                "entitat": "",
+                                "actiu": True,
+                                "notes": ""
+                            })
+                            st.session_state[f"exp_iot_{e_id}"] = True
+                            st.session_state["admin_estances_list"] = estances_list
+                            st.rerun()
+                    with col_qiot3:
+                        if st.button("🧱 + Acumulador (Tuya)", key=f"btn_add_acum_{e_id}", help="Activar Acumulador de calor elèctric controlat per Tuya", use_container_width=True):
                             iot_list.append({
                                 "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
                                 "nom": f"Acumulador {cur_nom}".strip(),
@@ -1062,13 +1092,13 @@ def render():
                                 "protocol": "Tuya / Smart Life",
                                 "entitat": "Contactor Wi-Fi (Càrrega PVPC)",
                                 "actiu": True,
-                                "notes": "Programació horària segons preus PVPC (Llum i Aigua)"
+                                "notes": "Programat segons preus PVPC (Llum i Aigua)"
                             })
                             st.session_state[f"exp_iot_{e_id}"] = True
                             st.session_state["admin_estances_list"] = estances_list
                             st.rerun()
-                    with col_qiot2:
-                        if st.button("⚡ + Contactor Wi-Fi", key=f"btn_add_contact_{e_id}", help="Contactor / Relé de potència Wi-Fi (Tuya / Smart Life)", use_container_width=True):
+                    with col_qiot4:
+                        if st.button("⚡ + Contactor Wi-Fi", key=f"btn_add_contact_{e_id}", help="Activar Contactor Wi-Fi / Relé de potència Tuya", use_container_width=True):
                             iot_list.append({
                                 "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
                                 "nom": f"Contactor Wi-Fi {cur_nom}".strip(),
@@ -1082,8 +1112,11 @@ def render():
                             st.session_state[f"exp_iot_{e_id}"] = True
                             st.session_state["admin_estances_list"] = estances_list
                             st.rerun()
-                    with col_qiot3:
-                        if st.button("🌡️ + Temp / Humitat", key=f"btn_add_temp_{e_id}", help="Sensor Temperatura i Humitat", use_container_width=True):
+
+                    # Fila 2 d'activació ràpida (Temp, Endoll, Llum, Aigua)
+                    col_qiot5, col_qiot6, col_qiot7, col_qiot8 = st.columns(4)
+                    with col_qiot5:
+                        if st.button("🌡️ + Temp / Humitat", key=f"btn_add_temp_{e_id}", help="Activar Sensor de temperatura i humitat", use_container_width=True):
                             iot_list.append({
                                 "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
                                 "nom": f"Sensor Temp {cur_nom}".strip(),
@@ -1097,8 +1130,8 @@ def render():
                             st.session_state[f"exp_iot_{e_id}"] = True
                             st.session_state["admin_estances_list"] = estances_list
                             st.rerun()
-                    with col_qiot4:
-                        if st.button("🔌 + Endoll intel·ligent", key=f"btn_add_endoll_{e_id}", help="Endoll intel·ligent / Mesurador de consum", use_container_width=True):
+                    with col_qiot6:
+                        if st.button("🔌 + Endoll intel·ligent", key=f"btn_add_endoll_{e_id}", help="Activar Endoll mesurador de consum", use_container_width=True):
                             iot_list.append({
                                 "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
                                 "nom": f"Endoll {cur_nom}".strip(),
@@ -1112,11 +1145,8 @@ def render():
                             st.session_state[f"exp_iot_{e_id}"] = True
                             st.session_state["admin_estances_list"] = estances_list
                             st.rerun()
-
-                    # Fila 2 d'afegir ràpid
-                    col_qiot5, col_qiot6, col_qiot7, col_qiot8 = st.columns(4)
-                    with col_qiot5:
-                        if st.button("💡 + Llum / Bombeta", key=f"btn_add_llum_{e_id}", help="Il·luminació / Bombeta intel·ligent", use_container_width=True):
+                    with col_qiot7:
+                        if st.button("💡 + Llum / Bombeta", key=f"btn_add_llum_{e_id}", help="Activar Il·luminació o bombeta intel·ligent", use_container_width=True):
                             iot_list.append({
                                 "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
                                 "nom": f"Llum {cur_nom}".strip(),
@@ -1130,8 +1160,8 @@ def render():
                             st.session_state[f"exp_iot_{e_id}"] = True
                             st.session_state["admin_estances_list"] = estances_list
                             st.rerun()
-                    with col_qiot6:
-                        if st.button("🚰 + Aigua / Pou", key=f"btn_add_inund_{e_id}", help="Sensor d'Inundació / Fuita / Nivell", use_container_width=True):
+                    with col_qiot8:
+                        if st.button("🚰 + Aigua / Pou", key=f"btn_add_inund_{e_id}", help="Activar Sensor d'inundació / fuita / pou", use_container_width=True):
                             iot_list.append({
                                 "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
                                 "nom": f"Sensor Aigua {cur_nom}".strip(),
@@ -1145,36 +1175,35 @@ def render():
                             st.session_state[f"exp_iot_{e_id}"] = True
                             st.session_state["admin_estances_list"] = estances_list
                             st.rerun()
-                    with col_qiot7:
-                        if st.button("🚪 + Sensor Porta", key=f"btn_add_porta_{e_id}", help="Sensor Contacte Porta / Finestra", use_container_width=True):
-                            iot_list.append({
-                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
-                                "nom": f"Sensor Porta {cur_nom}".strip(),
-                                "categoria": "porta",
-                                "icona": "🚪",
-                                "protocol": "Zigbee",
-                                "entitat": "",
-                                "actiu": True,
-                                "notes": ""
-                            })
-                            st.session_state[f"exp_iot_{e_id}"] = True
-                            st.session_state["admin_estances_list"] = estances_list
-                            st.rerun()
-                    with col_qiot8:
-                        if st.button("⚙️ + Bomba / Relé", key=f"btn_add_rele_{e_id}", help="Relé / Actuador / Bomba d'aigua / Interruptor", use_container_width=True):
-                            iot_list.append({
-                                "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
-                                "nom": f"Bomba / Relé {cur_nom}".strip(),
-                                "categoria": "rele",
-                                "icona": "⚙️",
-                                "protocol": "Shelly",
-                                "entitat": "",
-                                "actiu": True,
-                                "notes": ""
-                            })
-                            st.session_state[f"exp_iot_{e_id}"] = True
-                            st.session_state["admin_estances_list"] = estances_list
-                            st.rerun()
+
+                    # Desplegable per activar QUALSEVOL altre tipus d'eina a l'estança
+                    with st.expander("➕ Activar qualsevol altra eina a l'estança (Porta, Relé/Bomba, Climatitzador, Persiana, etc.)", expanded=False):
+                        c_cust1, c_cust2, c_cust3, c_cust4 = st.columns([3, 4, 3, 2])
+                        with c_cust1:
+                            sel_cat_txt = st.selectbox("Tipus d'eina", cat_labels, key=f"sel_custom_cat_{e_id}")
+                            sel_cat_key = cat_keys[cat_labels.index(sel_cat_txt)]
+                            def_cat_ico = IOT_CATEGORIES[sel_cat_key]["icona"]
+                        with c_cust2:
+                            custom_tool_nom = st.text_input("Nom de l'eina", placeholder=f"Ex: {sel_cat_txt} {cur_nom}", key=f"inp_custom_nom_{e_id}")
+                        with c_cust3:
+                            custom_tool_proto = st.selectbox("Protocol / Marca", IOT_PROTOCOLS, key=f"sel_custom_proto_{e_id}")
+                        with c_cust4:
+                            st.write("")
+                            if st.button("➕ Activar", key=f"btn_exec_custom_{e_id}", use_container_width=True):
+                                nom_final = custom_tool_nom.strip() or f"{sel_cat_txt} {cur_nom}"
+                                iot_list.append({
+                                    "id": f"iot_{int(datetime.now().timestamp() * 1000)}",
+                                    "nom": nom_final,
+                                    "categoria": sel_cat_key,
+                                    "icona": def_cat_ico,
+                                    "protocol": custom_tool_proto,
+                                    "entitat": "",
+                                    "actiu": True,
+                                    "notes": ""
+                                })
+                                st.session_state[f"exp_iot_{e_id}"] = True
+                                st.session_state["admin_estances_list"] = estances_list
+                                st.rerun()
 
                     # Avís integrat per a Acumuladors i Contactor Tuya
                     has_acumulador = any(x.get("categoria") in ["acumulador", "contactor"] for x in iot_list)
@@ -1186,9 +1215,9 @@ def render():
                         """, unsafe_allow_html=True)
 
                     if not iot_list:
-                        st.info(f"💡 Aquesta estança encara no té cap dispositiu IoT registrat. Utilitza els botons ràpids superiors per afegir-ne.")
+                        st.info(f"💡 Aquesta estança encara no té cap eina o dispositiu activat. Utilitza els botons ràpids superiors per activar-ne.")
                     else:
-                        st.markdown("<div style='font-size:0.75rem; color:#64748b; font-weight:600; margin-top:8px; margin-bottom:4px;'>Dispositius configurats (Icona · Nom de l'element · Categoria · Protocol/Marca · Entitat/IP/ID · Eliminar):</div>", unsafe_allow_html=True)
+                        st.markdown("<div style='font-size:0.75rem; color:#64748b; font-weight:600; margin-top:8px; margin-bottom:4px;'>Eines i dispositius configurats (Actiu/Inactiu · Icona · Nom de l'eina · Categoria · Protocol/Marca · Entitat/IP/ID · Eliminar):</div>", unsafe_allow_html=True)
                         for j, item in enumerate(iot_list):
                             it_id = item.get("id", f"iot_{i}_{j}")
                             cur_it_ico = item.get("icona", "📦")
@@ -1196,6 +1225,7 @@ def render():
                             cur_it_cat = item.get("categoria", "altres")
                             cur_it_proto = item.get("protocol", "Wi-Fi")
                             cur_it_ent = item.get("entitat", "")
+                            cur_it_act = item.get("actiu", True)
 
                             ico_choices = list(pool_iot_icons)
                             if cur_it_ico not in ico_choices:
@@ -1206,12 +1236,15 @@ def render():
                             if cur_it_proto not in proto_choices:
                                 proto_choices.insert(0, cur_it_proto)
 
-                            ci1, ci2, ci3, ci4, ci5, ci6 = st.columns([1.1, 3.2, 2.7, 2.0, 2.3, 0.7])
+                            col_act, ci1, ci2, ci3, ci4, ci5, ci6 = st.columns([1.1, 0.9, 3.2, 2.5, 1.8, 2.0, 0.5])
+                            with col_act:
+                                n_act = st.toggle("Actiu", value=cur_it_act, key=f"iot_act_{e_id}_{it_id}", help="Activar o desactivar aquesta eina", label_visibility="collapsed")
+                                item["actiu"] = n_act
                             with ci1:
                                 n_ico = st.selectbox("Icona", ico_choices, index=ico_choices.index(cur_it_ico), key=f"iot_ico_{e_id}_{it_id}", label_visibility="collapsed")
                                 item["icona"] = n_ico
                             with ci2:
-                                n_nom = st.text_input("Nom", value=cur_it_nom, key=f"iot_nom_{e_id}_{it_id}", placeholder="Nom del dispositiu", label_visibility="collapsed")
+                                n_nom = st.text_input("Nom", value=cur_it_nom, key=f"iot_nom_{e_id}_{it_id}", placeholder="Nom de l'eina", label_visibility="collapsed")
                                 item["nom"] = n_nom
                             with ci3:
                                 n_cat_label = st.selectbox("Categoria", cat_labels, index=cat_idx, key=f"iot_cat_{e_id}_{it_id}", label_visibility="collapsed")
@@ -1223,7 +1256,7 @@ def render():
                                 n_ent = st.text_input("Entitat/IP", value=cur_it_ent, key=f"iot_ent_{e_id}_{it_id}", placeholder="ex: sensor.pou, IP...", label_visibility="collapsed")
                                 item["entitat"] = n_ent
                             with ci6:
-                                if st.button("🗑️", key=f"del_iot_{e_id}_{it_id}", help="Eliminar aquest dispositiu IoT de l'estança"):
+                                if st.button("🗑️", key=f"del_iot_{e_id}_{it_id}", help="Eliminar aquesta eina de l'estança"):
                                     iot_list.pop(j)
                                     st.session_state[f"exp_iot_{e_id}"] = True
                                     st.session_state["admin_estances_list"] = estances_list
@@ -1248,6 +1281,7 @@ def render():
                         it_cat = item.get("categoria", "altres")
                         it_proto = st.session_state.get(f"iot_proto_{eid}_{it_id}", item.get("protocol", "Wi-Fi"))
                         it_ent = st.session_state.get(f"iot_ent_{eid}_{it_id}", item.get("entitat", "")).strip()
+                        it_act = st.session_state.get(f"iot_act_{eid}_{it_id}", item.get("actiu", True))
                         saved_iot.append({
                             "id": it_id,
                             "nom": it_nom,
@@ -1255,7 +1289,7 @@ def render():
                             "categoria": it_cat,
                             "protocol": it_proto,
                             "entitat": it_ent,
-                            "actiu": item.get("actiu", True),
+                            "actiu": bool(it_act),
                             "notes": item.get("notes", "")
                         })
 
