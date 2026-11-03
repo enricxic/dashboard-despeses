@@ -167,8 +167,8 @@ def dialog_detall_material(project_id: str, material: Dict[str, Any]):
         d_nom = st.text_input("Nom de l'article:", value=nom_art, key=f"d_nom_{mat_id}")
         
         # Proveïdors consolidats amb memòria
-        llista_provs = get_llista_proveidors()
-        if cur_prov and cur_prov not in llista_provs:
+        llista_provs = [p for p in get_llista_proveidors() if "Afegir un altre" not in p and not p.startswith("➕")]
+        if cur_prov and cur_prov not in llista_provs and "Afegir un altre" not in cur_prov and not cur_prov.startswith("➕"):
             llista_provs.append(cur_prov)
         
         idx_p = llista_provs.index(cur_prov) if cur_prov in llista_provs else 0
@@ -177,7 +177,8 @@ def dialog_detall_material(project_id: str, material: Dict[str, Any]):
         
         nou_prov_custom = None
         if d_prov == "➕ Afegir un altre proveïdor...":
-            nou_prov_custom = st.text_input("Escriu el nom del nou proveïdor (es guardarà en memòria):", key=f"d_nou_prov_input_{mat_id}", placeholder="Ex: Bauhaus, Obramat, Bricomart...")
+            st.info("✍️ Has seleccionat afegir un nou proveïdor. Escriu el seu nom a continuació:")
+            nou_prov_custom = st.text_input("Nom del nou proveïdor (es guardarà en memòria):", key=f"d_nou_prov_input_{mat_id}", placeholder="Ex: Bauhaus, Obramat, Bricomart...")
         
         # Estat / Stock seleccionable
         opcions_estat = ["⏳ Pendent de compra", "🛒 Comprat / Ja adquirit", "📦 Ja en stock (a casa / reaprofitat)"]
@@ -634,14 +635,15 @@ def _render_materials_tab(projecte: Dict[str, Any]):
             in_art = st.text_input("Nom de l'article / material:", placeholder="Ex: Cinta Enmascarar 50mm", key=f"mat_nom_{project_id}")
         
         with ca2:
-            prov_llista = get_llista_proveidors()
+            prov_llista = [p for p in get_llista_proveidors() if "Afegir un altre" not in p and not p.startswith("➕")]
             opts_prov = prov_llista + ["➕ Afegir un altre proveïdor..."]
             in_prov_sel = st.selectbox("Proveïdor recomanat:", opts_prov, key=f"mat_prov_{project_id}")
 
         nou_prov_custom_add = ""
         if in_prov_sel == "➕ Afegir un altre proveïdor...":
+            st.info("✍️ Has seleccionat afegir un nou proveïdor. Escriu el seu nom a continuació:")
             nou_prov_custom_add = st.text_input(
-                "Escriu el nom del nou proveïdor (es guardarà en memòria):",
+                "Nom del nou proveïdor (es guardarà en memòria):",
                 placeholder="Ex: Bricomart, Ferreteria Martínez, Pintures Soler...",
                 key=f"nou_prov_add_{project_id}"
             )

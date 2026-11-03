@@ -219,7 +219,7 @@ def delete_projecte(project_id: str) -> bool:
 
 def get_llista_proveidors() -> List[str]:
     """Retorna la llista consolidada de proveïdors (per defecte + afegits en memòria + utilitzats en materials)."""
-    provs = list(PROVEIDORS_DEFECTE)
+    provs = [p for p in PROVEIDORS_DEFECTE if "Afegir un altre" not in p and not p.startswith("➕")]
     # 1. Carregar des de fitxer persistent de memòria
     if os.path.exists(PROVEIDORS_FILE):
         try:
@@ -228,7 +228,7 @@ def get_llista_proveidors() -> List[str]:
                 if isinstance(saved, list):
                     for sp in saved:
                         s_clean = str(sp).strip()
-                        if s_clean and s_clean not in provs:
+                        if s_clean and s_clean not in provs and "Afegir un altre" not in s_clean and not s_clean.startswith("➕") and s_clean not in ("-", "Altre"):
                             provs.append(s_clean)
         except Exception:
             pass
@@ -239,7 +239,7 @@ def get_llista_proveidors() -> List[str]:
         for p in projectes:
             for m in p.get("materials", []):
                 mp = str(m.get("proveidor", "")).strip()
-                if mp and mp not in ("-", "Altre") and mp not in provs:
+                if mp and mp not in ("-", "Altre") and "Afegir un altre" not in mp and not mp.startswith("➕") and mp not in provs:
                     provs.append(mp)
     except Exception:
         pass
@@ -249,7 +249,7 @@ def get_llista_proveidors() -> List[str]:
 def add_proveidor_memoria(nou_prov: str) -> List[str]:
     """Afegeix un nou proveïdor a la memòria persistent perquè quedi sempre disponible."""
     clean = str(nou_prov).strip()
-    if not clean or clean in ("-", "Altre"):
+    if not clean or clean in ("-", "Altre") or "Afegir un altre" in clean or clean.startswith("➕"):
         return get_llista_proveidors()
 
     current_saved = []
