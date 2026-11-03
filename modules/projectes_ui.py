@@ -262,6 +262,10 @@ def render_projectes_tab(family_names: List[str] = None):
         "Finalitzat": f"✅ Finalitzat ({c_fin})"
     }
 
+    # Resoldre canvis pendents de filtre provinents d'accions posteriors
+    if "pending_filtre_estat_projectes" in st.session_state:
+        st.session_state["filtre_estat_projectes"] = st.session_state.pop("pending_filtre_estat_projectes")
+
     st.caption("🔍 Filtra els projectes per estat:")
     if hasattr(st, "pills"):
         filtre_estat = st.pills(
@@ -312,16 +316,22 @@ def render_projectes_tab(family_names: List[str] = None):
         if st.button("➕ Nou Projecte d'Obra", use_container_width=True, type="primary"):
             st.session_state["show_modal_nou_projecte"] = True
 
-    # Comprovar si hi ha projecte seleccionat a la sessió o paràmetres URL
-    query_proj = st.query_params.get("proj_id")
-    cur_sel = st.session_state.get("select_projecte_actiu")
-    default_proj_id = None
-    if query_proj and query_proj in opcions_proj:
-        default_proj_id = query_proj
-    elif cur_sel and cur_sel in opcions_proj:
-        default_proj_id = cur_sel
-    elif projectes_filtrats:
-        default_proj_id = projectes_filtrats[0]["id"]
+    # Comprovar si tenim un projecte pendent de seleccionar (e.g. creat recentment)
+    if "pending_select_projecte_actiu" in st.session_state:
+        pending_id = st.session_state.pop("pending_select_projecte_actiu")
+        default_proj_id = pending_id
+        if pending_id in opcions_proj:
+            st.session_state["select_projecte_actiu"] = pending_id
+    else:
+        query_proj = st.query_params.get("proj_id")
+        cur_sel = st.session_state.get("select_projecte_actiu")
+        default_proj_id = None
+        if query_proj and query_proj in opcions_proj:
+            default_proj_id = query_proj
+        elif cur_sel and cur_sel in opcions_proj:
+            default_proj_id = cur_sel
+        elif projectes_filtrats:
+            default_proj_id = projectes_filtrats[0]["id"]
 
     # Sanejament de session_state per canvis de filtre
     if "select_projecte_actiu" in st.session_state and st.session_state["select_projecte_actiu"] not in opcions_proj:
@@ -1023,8 +1033,9 @@ def _render_modal_nou_projecte():
                 "planol": {"preview_png": None, "canvas_data": None, "background_image": None}
             })
             st.session_state["show_modal_nou_projecte"] = False
-            st.session_state["select_projecte_actiu"] = nou_id
-            st.session_state["filtre_estat_projectes"] = "Tots"
+            st.session_state["pending_select_projecte_actiu"] = nou_id
+            st.session_state["pending_filtre_estat_projectes"] = "Tots"
+            st.query_params["proj_id"] = nou_id
             st.success(f"Projecte '{nom}' creat correctament!")
             st.rerun()
         elif cancel:
