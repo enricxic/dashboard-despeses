@@ -629,49 +629,55 @@ def _render_materials_tab(projecte: Dict[str, Any]):
 
     # Formulari d'alta manual de material amb proveïdors en memòria i opció de stock
     with st.expander("➕ Afegir Material Manualment"):
-        with st.form(f"form_add_mat_{project_id}"):
-            ca1, ca2 = st.columns([2, 1])
-            with ca1:
-                in_art = st.text_input("Nom de l'article / material:", placeholder="Ex: Cinta Enmascarar 50mm")
-            
-            with ca2:
-                prov_llista = get_llista_proveidors()
-                opts_prov = prov_llista + ["➕ Afegir un altre proveïdor..."]
-                in_prov_sel = st.selectbox("Proveïdor recomanat:", opts_prov)
+        ca1, ca2 = st.columns([2, 1])
+        with ca1:
+            in_art = st.text_input("Nom de l'article / material:", placeholder="Ex: Cinta Enmascarar 50mm", key=f"mat_nom_{project_id}")
+        
+        with ca2:
+            prov_llista = get_llista_proveidors()
+            opts_prov = prov_llista + ["➕ Afegir un altre proveïdor..."]
+            in_prov_sel = st.selectbox("Proveïdor recomanat:", opts_prov, key=f"mat_prov_{project_id}")
 
+        nou_prov_custom_add = ""
+        if in_prov_sel == "➕ Afegir un altre proveïdor...":
             nou_prov_custom_add = st.text_input(
                 "Escriu el nom del nou proveïdor (es guardarà en memòria):",
                 placeholder="Ex: Bricomart, Ferreteria Martínez, Pintures Soler...",
                 key=f"nou_prov_add_{project_id}"
-            ) if in_prov_sel == "➕ Afegir un altre proveïdor..." else ""
+            )
 
-            cb1, cb2, cb3 = st.columns(3)
-            with cb1:
-                in_qtt = st.number_input("Quantitat:", min_value=1, value=1, step=1)
-            with cb2:
-                in_pest = st.number_input("Preu total estimat (€):", min_value=0.0, value=0.0, step=5.0)
-            with cb3:
-                in_preal = st.number_input("Preu pagat real (€, si ja s'ha comprat):", min_value=0.0, value=0.0, step=5.0)
+        cb1, cb2, cb3 = st.columns(3)
+        with cb1:
+            in_qtt = st.number_input("Quantitat:", min_value=1, value=1, step=1, key=f"mat_qtt_{project_id}")
+        with cb2:
+            in_pest = st.number_input("Preu total estimat (€):", min_value=0.0, value=0.0, step=5.0, key=f"mat_pest_{project_id}")
+        with cb3:
+            in_preal = st.number_input("Preu pagat real (€, si ja s'ha comprat):", min_value=0.0, value=0.0, step=5.0, key=f"mat_preal_{project_id}")
 
-            # Estat de disponibilitat
-            st.markdown("**Disponibilitat del Material:**")
-            col_est1, col_est2 = st.columns(2)
-            with col_est1:
-                in_stock = st.checkbox("📦 Ja el tinc en stock a casa (no cal comprar-lo, cost 0 €)", value=False)
-            with col_est2:
-                in_comprat = st.checkbox("🛒 Ja comprat / pagat", value=(in_preal > 0 and not in_stock))
+        # Estat de disponibilitat
+        st.markdown("**Disponibilitat del Material:**")
+        col_est1, col_est2 = st.columns(2)
+        with col_est1:
+            in_stock = st.checkbox("📦 Ja el tinc en stock a casa (no cal comprar-lo, cost 0 €)", value=False, key=f"mat_stock_{project_id}")
+        with col_est2:
+            in_comprat = st.checkbox("🛒 Ja comprat / pagat", value=(in_preal > 0 and not in_stock), key=f"mat_comprat_{project_id}")
 
-            # Opcions d'imatge
-            st.markdown("**Imatge del Material (opcional):**")
-            ci1, ci2 = st.columns(2)
-            with ci1:
-                up_art_img = st.file_uploader("📁 Pujar foto pròpia (mòbil/fitxer):", type=["png", "jpg", "jpeg", "webp"], key=f"form_img_file_{project_id}")
-            with ci2:
-                in_art_url = st.text_input("🌐 O enllaç d'imatge web:", placeholder="https://...")
-                gen_ai_opt = st.checkbox("✨ Generar automàticament amb IA si no es puja foto", value=True)
+        # Opcions d'imatge
+        st.markdown("**Imatge del Material (opcional):**")
+        ci1, ci2 = st.columns(2)
+        with ci1:
+            up_art_img = st.file_uploader("📁 Pujar foto pròpia (mòbil/fitxer):", type=["png", "jpg", "jpeg", "webp"], key=f"form_img_file_{project_id}")
+        with ci2:
+            in_art_url = st.text_input("🌐 O enllaç d'imatge web:", placeholder="https://...", key=f"mat_url_{project_id}")
+            gen_ai_opt = st.checkbox("✨ Generar automàticament amb IA si no es puja foto", value=True, key=f"mat_ai_{project_id}")
 
-            sub_mat = st.form_submit_button("Afegir Material al Projecte", type="primary")
-            if sub_mat and in_art:
+        st.write("")
+        if st.button("➕ Afegir Material al Projecte", type="primary", use_container_width=True, key=f"btn_add_mat_{project_id}"):
+            if not in_art or not in_art.strip():
+                st.warning("⚠️ Cal indicar el nom de l'article o material.")
+            elif in_prov_sel == "➕ Afegir un altre proveïdor..." and not (nou_prov_custom_add and nou_prov_custom_add.strip()):
+                st.warning("⚠️ Si has triat afegir un altre proveïdor, escriu el seu nom al camp corresponent.")
+            else:
                 final_img = None
                 if up_art_img:
                     final_img = f"data:image/jpeg;base64,{base64.b64encode(up_art_img.read()).decode('utf-8')}"
@@ -694,7 +700,9 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                     "en_stock": in_stock,
                     "imatge": final_img
                 })
-                st.success("Material afegit correctament!")
+                for k in [f"mat_nom_{project_id}", f"nou_prov_add_{project_id}", f"mat_url_{project_id}"]:
+                    st.session_state.pop(k, None)
+                st.success(f"Material '{in_art.strip()}' afegit correctament!")
                 st.rerun()
 
 def _render_fases_tab(projecte: Dict[str, Any]):
