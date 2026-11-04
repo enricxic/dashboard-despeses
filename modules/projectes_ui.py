@@ -196,11 +196,11 @@ def dialog_detall_material(project_id: str, material: Dict[str, Any]):
     with c_q:
         d_qtt = st.number_input("Quantitat:", min_value=1, value=cur_qtt, step=1, key=f"d_qtt_{mat_id}")
     with c_pest:
-        d_pest = st.number_input("Preu total estimat (€):", min_value=0.0, value=cur_pest, step=5.0, key=f"d_pest_{mat_id}")
+        d_pest = st.number_input("Preu total estimat (€):", min_value=0.0, value=cur_pest, step=0.01, format="%.2f", key=f"d_pest_{mat_id}")
     with c_preal:
         es_comprat = (d_estat_sel == "🛒 Comprat / Ja adquirit")
         es_stock = (d_estat_sel == "📦 Ja en stock (a casa / reaprofitat)")
-        d_preal = st.number_input("Preu pagat real (€):", min_value=0.0, value=0.0 if es_stock else cur_preal, step=5.0, disabled=not es_comprat, key=f"d_preal_{mat_id}")
+        d_preal = st.number_input("Preu pagat real (€):", min_value=0.0, value=0.0 if es_stock else cur_preal, step=0.01, format="%.2f", disabled=not es_comprat, key=f"d_preal_{mat_id}")
 
     st.write("")
     col_save, col_del = st.columns([2, 1])
@@ -481,7 +481,7 @@ def _render_projecte_header(projecte: Dict[str, Any]):
                 p_fi = parse_date_cat(projecte.get("data_fi_prevista")) or (date.today() + timedelta(days=30))
                 f_fi = st.date_input("Data fi prevista (DD/MM/AAAA):", value=p_fi, format="DD/MM/YYYY")
 
-            f_press = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=pressupost_est, step=50.0)
+            f_press = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=pressupost_est, step=0.01, format="%.2f")
 
             sub_edit = st.form_submit_button("Desar Canvis del Projecte", type="primary")
             if sub_edit:
@@ -655,9 +655,9 @@ def _render_materials_tab(projecte: Dict[str, Any]):
         with cb1:
             in_qtt = st.number_input("Quantitat:", min_value=1, value=1, step=1, key=f"mat_qtt_{project_id}")
         with cb2:
-            in_pest = st.number_input("Preu total estimat (€):", min_value=0.0, value=0.0, step=5.0, key=f"mat_pest_{project_id}")
+            in_pest = st.number_input("Preu total estimat (€):", min_value=0.0, value=0.0, step=0.01, format="%.2f", key=f"mat_pest_{project_id}")
         with cb3:
-            in_preal = st.number_input("Preu pagat real (€, si ja s'ha comprat):", min_value=0.0, value=0.0, step=5.0, key=f"mat_preal_{project_id}")
+            in_preal = st.number_input("Preu pagat real (€, si ja s'ha comprat):", min_value=0.0, value=0.0, step=0.01, format="%.2f", key=f"mat_preal_{project_id}")
 
         # Estat de disponibilitat
         st.markdown("**Disponibilitat del Material:**")
@@ -1011,7 +1011,7 @@ def _render_modal_nou_projecte():
                 opcions_ubi = ["🚿 Bany", "🍳 Cuina", "🛋️ Menjador / Sala", "🛏️ Habitació", "🌿 Terrassa / Balcó", "🌳 Jardí / Exterior", "🧱 Façana / Teulada", "🚗 Garatge / Traster", "🏠 Tota la casa"]
             ubicacio = st.selectbox("Ubicació a la casa:", opcions_ubi)
         with col2:
-            pressupost = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=500.0, step=50.0)
+            pressupost = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=500.0, step=0.01, format="%.2f")
             estat = st.selectbox("Estat inicial:", ["Pendent", "En curs"])
 
         desc = st.text_area("Descripció dels treballs i objectius:", placeholder="Ex: Canviar la banyera per un plat de dutxa de resina, substituir les rajoles de les parets i renovar aixetes.")
