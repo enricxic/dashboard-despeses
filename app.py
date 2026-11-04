@@ -1270,8 +1270,8 @@ if st.session_state.current_module is None:
         cls = "hotspot" if is_active else "hotspot-disabled"
         nav_url = f"?mod=modules.{mod_key}{url_suffix}"
         if is_active:
-            onclick_js = f"try {{ if (window.top && window.top.location) {{ window.top.location.href = '{nav_url}'; return false; }} }} catch(e) {{}} window.location.href = '{nav_url}'; return false;"
-            return f'<a href="{nav_url}" target="_top" class="{cls} hs-{mod_key}" title="{title_str}" onclick="{onclick_js}"></a>'
+            onclick_js = f"window.location.replace(window.location.pathname + '{nav_url}'); setTimeout(function(){{ window.location.reload(); }}, 150);"
+            return f'<a href="{nav_url}" target="_self" class="{cls} hs-{mod_key}" title="{title_str}" onclick="{onclick_js}"></a>'
         return f'<div class="{cls} hs-{mod_key}" title="{title_str} (Desactivat)"></div>'
 
     html_content = textwrap.dedent(f"""<style>
@@ -1475,42 +1475,16 @@ if st.session_state.current_module is None:
     .hs-cotxe {{ left: 89.2%; top: 51.02%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
     .hs-compres {{ left: 88.9%; top: 61.34%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
 }}
-.bell-dropdown {{ display: none; position: absolute; top: 40px; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; min-width: 300px; max-width: 90vw; max-height: 70vh; overflow-y: auto; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100000; cursor: default; white-space: normal; text-align: left; }}
-.bell-container:hover .bell-dropdown, .bell-container.active .bell-dropdown {{ display: block; }}
-.lmenu-item {{ display: block !important; padding: 8px 14px !important; color: #cbd5e1 !important; text-decoration: none !important; font-size: 0.85rem !important; white-space: nowrap !important; transition: background 0.15s ease !important; }}
-.lmenu-item:hover, .lmenu-item:active {{ background-color: #0284c7 !important; color: #ffffff !important; }}
+.bell-dropdown {{ display: none; position: absolute; top: 40px; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; min-width: 320px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100000; cursor: default; white-space: normal; text-align: left; }}
+.bell-container:hover .bell-dropdown {{ display: block; }}
 </style>
 
-<!-- Capçalera dreta: Indicador Offline, Botó Menú Directe, Campana Notificacions i Rol d'Usuari -->
-<div style="position: fixed; top: 14px; right: 16px; z-index: 99999; display: flex; align-items: center; gap: 8px;">
+<!-- Capçalera dreta: Indicador Offline, Campana Notificacions i Rol d'Usuari -->
+<div style="position: fixed; top: 14px; right: 20px; z-index: 99999; display: flex; align-items: center; gap: 8px;">
 {f'''<a href="?action=set_online{auth_suffix}" target="_self" class="offline-icon-link" title="Mode Offline activat (Fes clic per tornar a Online)" style="font-size: 1.75rem; display: flex; align-items: center; text-decoration: none !important; text-decoration-line: none !important; text-decoration-color: transparent !important; border: none !important; border-bottom: none !important; border-bottom-width: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; background-image: none !important; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: pointer; padding: 0 4px; line-height: 1;">
     <span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>''' if st.session_state.get("is_offline") else ''}
-
-<!-- Selector Directe de Menú per a Mòbil i Escriptori -->
-<div class="landing-menu-container" style="position: relative;">
-    <button type="button" class="landing-menu-btn" onclick="const m=document.getElementById('landingMenuDropdown'); m.style.display=(m.style.display==='block'?'none':'block');" style="background: rgba(30, 41, 59, 0.85); color: #f8fafc; border: 1px solid #475569; border-radius: 6px; padding: 5px 11px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.35); backdrop-filter: blur(4px);">
-        ☰ Menú
-    </button>
-    <div id="landingMenuDropdown" style="display: none; position: absolute; top: 38px; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; min-width: 230px; max-height: 75vh; overflow-y: auto; padding: 6px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 100002;">
-        <a href="?mod=modules.dashboard{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">📊 Dashboard General</a>
-        <a href="?mod=modules.economic{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">📈 Mòdul Econòmic</a>
-        <a href="?mod=modules.compres{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">🛒 Compres Super i Stock</a>
-        <a href="?mod=modules.menjar{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">🍽️ Menjar i Rebost</a>
-        <a href="?mod=modules.cotxe{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">🚗 Cotxe i Transport</a>
-        <a href="?mod=modules.manteniment{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">🛠️ Manteniment Llar</a>
-        <a href="?mod=modules.medicacio{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">💊 Medicació</a>
-        <a href="?mod=modules.calendari{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">📅 Agenda i Calendari</a>
-        <a href="?mod=modules.llum_aigua{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">💡 Llum i Aigua</a>
-        <a href="?mod=modules.domotica{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">📶 Domòtica</a>
-        <a href="?mod=modules.seguretat{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">📹 Seguretat</a>
-        <div style="border-top: 1px solid #334155; margin: 4px 0;"></div>
-        <a href="?mod=modules.admin{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">⚙️ Configuració</a>
-        <a href="?action=normalitzar_dades{url_suffix}" target="_top" class="lmenu-item" onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{}}window.location.href=this.href;return false;">🧹 Normalitzar Dades</a>
-    </div>
-</div>
-
-<div class="bell-container" onclick="const b=this.querySelector('.bell-dropdown'); if(b) b.style.display=(b.style.display==='block'?'none':'block');" style="position: relative; cursor: pointer;">
+<div class="bell-container" style="position: relative; cursor: pointer;">
 <span style="font-size: 1.75rem; display: flex; align-items: center; position: relative; padding: 5px 6px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 <div class="bell-dropdown">{alerts_html}</div>
 </div>
