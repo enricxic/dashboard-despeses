@@ -186,6 +186,7 @@ function attachMenuTabInterceptors() {
                             if (href.includes('tab=registre')) { targetIdx = 0; targetText = 'registre'; }
                             else if (href.includes('tab=manuals')) { targetIdx = 1; targetText = 'manuals'; }
                             else if (href.includes('tab=garanties')) { targetIdx = 2; targetText = 'garanties'; }
+                            else if (href.includes('tab=projectes')) { targetIdx = 3; targetText = 'projectes'; }
                         } else if (href.includes('mod=modules.llum_aigua')) {
                             if (href.includes('tab=llum') || href.includes('tab=electricitat') || href.includes('tab=consum_llum')) { targetIdx = 0; targetText = 'llum'; }
                             else if (href.includes('tab=aigua') || href.includes('tab=consum_aigua')) { targetIdx = 1; targetText = 'aigua'; }
@@ -1165,6 +1166,7 @@ div.block-container {{
 <a href="?mod=modules.manteniment&tab=registre{url_suffix}" target="_self">📋 Registre Manteniment</a>
 <a href="?mod=modules.manteniment&tab=manuals{url_suffix}" target="_self">📖 Manuals</a>
 <a href="?mod=modules.manteniment&tab=garanties{url_suffix}" target="_self">🛡️ Garanties</a>
+<a href="?mod=modules.manteniment&tab=projectes{url_suffix}" target="_self">🏗️ Projectes</a>
 <div class="menu-separator"></div>
 <a href="?mod=modules.manteniment&action=generar_any_manteniment{url_suffix}" target="_self">📅 Generar tasques proper any</a>
 </div>
