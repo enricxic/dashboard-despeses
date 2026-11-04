@@ -232,36 +232,9 @@ function attachMenuTabInterceptors() {
     } catch(e) {}
 }
 
-function attachSpaNavInterceptors() {
-    try {
-        const doc = window.parent.document;
-        if (!doc) return;
-        const links = doc.querySelectorAll('.hotspot, a[href*="?mod="], a[href*="?action="]');
-        links.forEach(link => {
-            if (!link.dataset.hasSpaNav) {
-                link.dataset.hasSpaNav = "true";
-                link.addEventListener('click', function(e) {
-                    const href = link.getAttribute('href');
-                    if (!href || href.startsWith('http') || href.startsWith('#')) return;
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const target = window.parent.location.pathname + href;
-                    try {
-                        window.parent.history.pushState({}, '', target);
-                        window.parent.dispatchEvent(new PopStateEvent('popstate'));
-                    } catch(err) {
-                        window.parent.location.assign(target);
-                    }
-                }, true);
-            }
-        });
-    } catch(e) {}
-}
-
 function onAppDomMutated() {
     attachSelectAllToNumberInputs();
     attachMenuTabInterceptors();
-    attachSpaNavInterceptors();
 }
 
 onAppDomMutated();
@@ -1303,13 +1276,7 @@ if st.session_state.current_module is None:
         cls = "hotspot" if is_active else "hotspot-disabled"
         nav_url = f"?mod=modules.{mod_key}{url_suffix}"
         if is_active:
-            onclick_js = (
-                f"event.preventDefault(); event.stopPropagation(); "
-                f"const target = window.location.pathname + '{nav_url}'; "
-                f"try {{ window.history.pushState({{}}, '', target); window.dispatchEvent(new PopStateEvent('popstate')); }} catch(e){{}} "
-                f"setTimeout(function(){{ if (!window.location.search.includes('mod=')) {{ window.location.assign(target); }} }}, 2000);"
-            )
-            return f'<a href="{nav_url}" target="_self" class="{cls} hs-{mod_key}" title="{title_str}" onclick="{onclick_js}"></a>'
+            return f'<a href="{nav_url}" target="_self" class="{cls} hs-{mod_key}" title="{title_str}"></a>'
         return f'<div class="{cls} hs-{mod_key}" title="{title_str} (Desactivat)"></div>'
 
     html_content = textwrap.dedent(f"""<style>
