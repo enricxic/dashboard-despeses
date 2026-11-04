@@ -50,6 +50,7 @@ from core.ai_projectes import (
 )
 from core.llm_ui import render_ai_selector
 from modules.canvas_planol import render_planol_tab
+from modules.moble_disseny_ui import render_disseny_moble_tab
 
 # ==========================================
 # UTILITATS D'ESTAT DELS PROJECTES
@@ -373,11 +374,12 @@ def render_projectes_tab(family_names: List[str] = None):
     # Panell de Capçalera i KPIs del Projecte
     _render_projecte_header(projecte)
 
-    # 4 Subpestanyes del Projecte
+    # 5 Subpestanyes del Projecte
     subtabs = st.tabs([
         "📐 Plànol & Fotos",
         "🧱 Materials & Despeses",
         "⏱️ Fases d'Execució",
+        "🪚 Disseny & Despecejament MD",
         "🤖 Assistent IA d'Obra"
     ])
 
@@ -391,6 +393,9 @@ def render_projectes_tab(family_names: List[str] = None):
         _render_fases_tab(projecte)
 
     with subtabs[3]:
+        render_disseny_moble_tab(projecte)
+
+    with subtabs[4]:
         _render_assistent_ia_tab(projecte)
 
 # ==========================================

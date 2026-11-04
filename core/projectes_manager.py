@@ -525,3 +525,25 @@ def save_planol_projecte(project_id: str, preview_png: str, canvas_data: Any = N
             p["planol"]["data_actualitzacio"] = datetime.now().strftime("%d/%m/%Y %H:%M")
             return save_projectes(projectes)
     return False
+
+# ==========================================
+# DISSENY DE MOBLES I DESPECEJAMENT MD
+# ==========================================
+
+def get_moble_md(project_id: str) -> Optional[Dict[str, Any]]:
+    """Retorna les dades del disseny de moble MD guardades al projecte."""
+    projectes = load_projectes()
+    for p in projectes:
+        if p.get("id") == project_id:
+            return p.get("moble_md")
+    return None
+
+def save_moble_md(project_id: str, moble_data: Dict[str, Any]) -> bool:
+    """Guarda o actualitza el disseny de moble MD d'un projecte."""
+    projectes = load_projectes()
+    for p in projectes:
+        if p.get("id") == project_id:
+            p["moble_md"] = moble_data
+            p["moble_md"]["data_actualitzacio"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            return save_projectes(projectes)
+    return False
