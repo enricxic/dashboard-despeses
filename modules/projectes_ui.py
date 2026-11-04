@@ -257,46 +257,49 @@ def render_projectes_tab(family_names: List[str] = None):
     c_fin = sum(1 for p in projectes if _normalize_project_estat(p.get("estat")) == "Finalitzat")
 
     filtre_labels = {
-        "Tots": f"Tots ({c_tots})",
-        "Pendent": f"⏳ Pendent ({c_pend})",
         "En curs": f"🔨 En curs ({c_curs})",
-        "Finalitzat": f"✅ Finalitzat ({c_fin})"
+        "Pendent": f"⏳ Pendent ({c_pend})",
+        "Finalitzat": f"✅ Finalitzat ({c_fin})",
+        "Tots": f"Tots ({c_tots})"
     }
 
     # Resoldre canvis pendents de filtre provinents d'accions posteriors
     if "pending_filtre_estat_projectes" in st.session_state:
         st.session_state["filtre_estat_projectes"] = st.session_state.pop("pending_filtre_estat_projectes")
 
+    estat_options = ["En curs", "Pendent", "Finalitzat", "Tots"]
+
     st.caption("🔍 Filtra els projectes per estat:")
     if hasattr(st, "pills"):
         filtre_estat = st.pills(
             "Filtrar per estat:",
-            options=["Tots", "Pendent", "En curs", "Finalitzat"],
+            options=estat_options,
             format_func=lambda x: filtre_labels.get(x, x),
-            default="Tots",
+            default="En curs",
             key="filtre_estat_projectes",
             label_visibility="collapsed"
         )
     elif hasattr(st, "segmented_control"):
         filtre_estat = st.segmented_control(
             "Filtrar per estat:",
-            options=["Tots", "Pendent", "En curs", "Finalitzat"],
+            options=estat_options,
             format_func=lambda x: filtre_labels.get(x, x),
-            default="Tots",
+            default="En curs",
             key="filtre_estat_projectes",
             label_visibility="collapsed"
         )
     else:
         filtre_estat = st.radio(
             "Filtrar per estat:",
-            options=["Tots", "Pendent", "En curs", "Finalitzat"],
+            options=estat_options,
             format_func=lambda x: filtre_labels.get(x, x),
+            index=0,
             horizontal=True,
             key="filtre_estat_projectes",
             label_visibility="collapsed"
         )
 
-    filtre_actiu = filtre_estat or "Tots"
+    filtre_actiu = filtre_estat or "En curs"
 
     # Filtrar projectes segons l'estat seleccionat
     if filtre_actiu != "Tots":
@@ -352,7 +355,7 @@ def render_projectes_tab(family_names: List[str] = None):
             )
         else:
             selected_proj_id = None
-            st.info(f"ℹ️ No hi ha cap projecte amb l'estat **{filtre_actiu}** ({c_tots} en total). Canvia el filtre a 'Tots' per veure'ls.")
+            st.info(f"ℹ️ No hi ha cap projecte amb l'estat **{filtre_actiu}** ({c_tots} en total). Canvia el filtre superior a 'Pendent', 'Finalitzat' o 'Tots' per veure'ls.")
 
     # Modal d'Alta de Nou Projecte
     if st.session_state.get("show_modal_nou_projecte"):
