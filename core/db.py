@@ -576,7 +576,7 @@ def load_categories_conceptes():
             pass
     return {}
 
-cat_config = load_categories_conceptes()
+cat_config = {}  # Diferit sota demanda per no bloquejar l'arrencada amb consultes de xarxa
 
 def get_config_categories():
     cfg = load_categories_conceptes()

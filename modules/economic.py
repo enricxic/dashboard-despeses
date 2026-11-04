@@ -1,8 +1,6 @@
 import streamlit as st
-import scanner
 import io
 import pandas as pd
-import google.generativeai as genai
 import json
 from supabase import create_client, Client
 from core.db import get_config_supers
@@ -14,13 +12,8 @@ import os
 import hashlib
 import re
 from datetime import datetime
-import pytesseract
 from PIL import Image
 import difflib
-
-import platform
-if platform.system() == "Windows":
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
 
@@ -1751,6 +1744,7 @@ def render(view_mode="economic"):
     has_gemini = False
     if "GEMINI_API_KEY" in st.secrets:
         try:
+            import google.generativeai as genai
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
             # We can test the configuration or just assume it's valid
             has_gemini = True
@@ -3956,6 +3950,7 @@ def render(view_mode="economic"):
                         
                     with st.spinner("La Xiqui Administrativa està pensant..."):
                         try:
+                            import google.generativeai as genai
                             model = genai.GenerativeModel('gemini-flash-latest')
                                 
                             # Prepare context using only analisi_year to drastically reduce token usage
