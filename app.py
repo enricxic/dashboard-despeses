@@ -265,11 +265,15 @@ app_cfg = load_app_config()
 from core.alerts import get_global_alerts
 import time
 _now_ts = time.time()
-if "global_alerts_ts" not in st.session_state or (_now_ts - st.session_state.get("global_alerts_ts", 0)) > 60:
-    st.session_state["global_alerts_list"] = get_global_alerts()
-    st.session_state["global_alerts_ts"] = _now_ts
+if st.session_state.get("dfs_initialized"):
+    if "global_alerts_ts" not in st.session_state or (_now_ts - st.session_state.get("global_alerts_ts", 0)) > 60:
+        st.session_state["global_alerts_list"] = get_global_alerts()
+        st.session_state["global_alerts_ts"] = _now_ts
+    elif "global_alerts_list" not in st.session_state:
+        st.session_state["global_alerts_list"] = get_global_alerts()
+        st.session_state["global_alerts_ts"] = _now_ts
 elif "global_alerts_list" not in st.session_state:
-    st.session_state["global_alerts_list"] = get_global_alerts()
+    st.session_state["global_alerts_list"] = []
     st.session_state["global_alerts_ts"] = _now_ts
 alerts_html = ""
 for al in st.session_state["global_alerts_list"]:
@@ -1270,7 +1274,7 @@ if st.session_state.current_module is None:
         cls = "hotspot" if is_active else "hotspot-disabled"
         nav_url = f"?mod=modules.{mod_key}{url_suffix}"
         if is_active:
-            onclick_js = f"window.location.replace(window.location.pathname + '{nav_url}'); setTimeout(function(){{ window.location.reload(); }}, 150);"
+            onclick_js = f"window.location.assign(window.location.pathname + '{nav_url}');"
             return f'<a href="{nav_url}" target="_self" class="{cls} hs-{mod_key}" title="{title_str}" onclick="{onclick_js}"></a>'
         return f'<div class="{cls} hs-{mod_key}" title="{title_str} (Desactivat)"></div>'
 

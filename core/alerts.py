@@ -30,6 +30,9 @@ def get_global_alerts():
         df_limits = st.session_state.get("df_limits")
         
         if df_desp is None or df_km is None or df_limits is None or df_desp.empty:
+            if not st.session_state.get('dfs_initialized'):
+                # No bloquejar l'arrencada ni la pantalla d'inici descarregant tota la BD
+                return alerts
             data = load_dashboard_data(tables_to_load=['despeses', 'kmCotxe', 'limitsDespeses'])
             if data and len(data) >= 10:
                 d_desp, df_ing, df_super, df_gas, d_km, df_hip, df_est, d_limits, df_pag, df_cartera = data
