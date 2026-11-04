@@ -406,6 +406,26 @@ def add_subtasca_a_fase(project_id: str, fase_id: str, titol: str) -> bool:
                     return save_projectes(projectes)
     return False
 
+def delete_subtasca(project_id: str, fase_id: str, tasca_id: str) -> bool:
+    projectes = load_projectes()
+    for p in projectes:
+        if p.get("id") == project_id:
+            for f in p.get("fases", []):
+                if f.get("id") == fase_id:
+                    f["tasques"] = [t for t in f.get("tasques", []) if t.get("id") != tasca_id]
+                    # Actualitzar l'estat de la fase segons les subtasques restants
+                    if f["tasques"]:
+                        all_done = all(x.get("feta", False) for x in f["tasques"])
+                        any_done = any(x.get("feta", False) for x in f["tasques"])
+                        if all_done:
+                            f["estat"] = "Completada"
+                        elif any_done:
+                            f["estat"] = "En curs"
+                        else:
+                            f["estat"] = "Pendent"
+                    return save_projectes(projectes)
+    return False
+
 def calcular_progres_projecte(projecte: Dict[str, Any]) -> float:
     """Retorna el percentatge de progrés (0.0 a 100.0) calculat sobre les tasques de totes les fases."""
     fases = projecte.get("fases", [])

@@ -33,6 +33,7 @@ from core.projectes_manager import (
     marcar_fase_estat,
     toggle_subtasca,
     add_subtasca_a_fase,
+    delete_subtasca,
     calcular_progres_projecte,
     add_xat_missatge,
     delete_xat_missatge,
@@ -835,34 +836,57 @@ def _render_fases_tab(projecte: Dict[str, Any]):
 
                 st.progress(f_pct / 100.0)
 
+                # Missatges de feedback de subtasques
+                msg_ok_key = f"msg_ok_subt_{fase_id}"
+                if msg_ok_key in st.session_state:
+                    st.success(st.session_state.pop(msg_ok_key))
+                msg_del_key = f"msg_del_subt_{fase_id}"
+                if msg_del_key in st.session_state:
+                    st.info(st.session_state.pop(msg_del_key))
+
                 # Subtasques
                 if tasques:
                     for t in tasques:
                         t_id = t.get("id")
                         t_done = t.get("feta", False)
-                        chk_t = st.checkbox(
-                            t.get("titol", ""),
-                            value=t_done,
-                            key=f"chk_t_{project_id}_{fase_id}_{t_id}"
-                        )
-                        if chk_t != t_done:
-                            toggle_subtasca(project_id, fase_id, t_id)
-                            up_p = get_projecte(project_id)
-                            if up_p and all(_is_fase_done(xf) for xf in up_p.get("fases", [])):
-                                st.session_state[f"show_celebration_dialog_{project_id}"] = True
-                            st.rerun()
+                        t_titol = t.get("titol", "")
+                        c_t_chk, c_t_del = st.columns([0.88, 0.12], vertical_alignment="center")
+                        with c_t_chk:
+                            chk_t = st.checkbox(
+                                t_titol,
+                                value=t_done,
+                                key=f"chk_t_{project_id}_{fase_id}_{t_id}"
+                            )
+                            if chk_t != t_done:
+                                toggle_subtasca(project_id, fase_id, t_id)
+                                up_p = get_projecte(project_id)
+                                if up_p and all(_is_fase_done(xf) for xf in up_p.get("fases", [])):
+                                    st.session_state[f"show_celebration_dialog_{project_id}"] = True
+                                st.rerun()
+                        with c_t_del:
+                            if st.button("🗑️", key=f"del_t_{project_id}_{fase_id}_{t_id}", help=f"Eliminar subtasca: {t_titol}"):
+                                delete_subtasca(project_id, fase_id, t_id)
+                                st.session_state[f"msg_del_subt_{fase_id}"] = f"🗑️ Subtasca «{t_titol}» eliminada correctament."
+                                st.toast(f"🗑️ Subtasca eliminada: {t_titol}")
+                                st.rerun()
 
                 # Formulari per afegir subtasca a aquesta fase
-                with st.form(f"form_add_subt_{project_id}_{fase_id}"):
+                with st.form(f"form_add_subt_{project_id}_{fase_id}", clear_on_submit=True):
                     c_in_t, c_bt_t = st.columns([3, 1])
                     with c_in_t:
                         nova_subt = st.text_input("Nova subtasca per a aquesta etapa:", placeholder="Ex: Aplicar segona capa d'imprimació", key=f"in_subt_{project_id}_{fase_id}")
                     with c_bt_t:
                         st.write("")
-                        sub_t = st.form_submit_button("➕ Afegir Tasca", type="secondary")
-                        if sub_t and nova_subt:
-                            add_subtasca_a_fase(project_id, fase_id, nova_subt)
-                            st.rerun()
+                        sub_t = st.form_submit_button("➕ Afegir Tasca", type="secondary", use_container_width=True)
+                        if sub_t:
+                            subt_clean = (nova_subt or "").strip()
+                            if subt_clean:
+                                add_subtasca_a_fase(project_id, fase_id, subt_clean)
+                                st.session_state[f"msg_ok_subt_{fase_id}"] = f"✅ Subtasca «{subt_clean}» afegida correctament!"
+                                st.toast(f"✅ Subtasca afegida: {subt_clean}", icon="✅")
+                                st.rerun()
+                            else:
+                                st.warning("Escriu el nom de la subtasca abans d'afegir-la.")
     else:
         st.info("Encara no hi ha fases definides. Crea la primera fase de l'obra a continuació.")
 
