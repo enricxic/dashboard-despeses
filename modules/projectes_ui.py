@@ -425,6 +425,16 @@ def _render_projecte_header(projecte: Dict[str, Any]):
             norm_est = _normalize_project_estat(projecte.get("estat", "Pendent"))
             badge_icon = _badge_project_estat(norm_est)
             st.metric("Estat", f"{badge_icon} {projecte.get('estat', norm_est)}", delta=None)
+            if norm_est == "Pendent":
+                if st.button("🔨 Iniciar Projecte", key=f"quick_start_{project_id}", type="primary", use_container_width=True, help="Passar el projecte a 'En curs'"):
+                    update_projecte(project_id, {"estat": "En curs"})
+                    st.toast("🔨 Projecte passat a 'En curs'!", icon="🔨")
+                    st.rerun()
+            elif norm_est == "En curs":
+                if st.button("⏳ Pausar Projecte", key=f"quick_pause_{project_id}", use_container_width=True, help="Tornar el projecte a 'Pendent'"):
+                    update_projecte(project_id, {"estat": "Pendent"})
+                    st.toast("⏳ Projecte tornat a 'Pendent'", icon="⏳")
+                    st.rerun()
         with c3:
             st.metric("Despesa Real", f"{cost_comprat:.2f} €", delta=f"{pressupost_est - cost_comprat:.2f} € disp." if pressupost_est > 0 else None)
         with c4:
@@ -801,8 +811,10 @@ def _render_fases_tab(projecte: Dict[str, Any]):
             is_done = _is_fase_done(f)
             f_pct = 100 if is_done else (int((f_done / f_tot) * 100) if f_tot > 0 else 0)
 
-            badge_estat = "🟢" if is_done else ("🟡" if f_pct > 0 else "⚪")
-            status_desc = "Completada" if is_done else ("En curs" if f_pct > 0 else "Pendent")
+            cur_f_est = f.get("estat", "Pendent")
+            is_curs = (cur_f_est == "En curs" or f_pct > 0)
+            badge_estat = "🟢" if is_done else ("🔨" if is_curs else "⚪")
+            status_desc = "Completada" if is_done else ("En curs" if is_curs else "Pendent")
 
             if f_tot == 0 and is_done:
                 label_exp = f"🟢 **{f.get('nom', 'Fase')}** (✅ Acabada — 100%)"
@@ -812,7 +824,7 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                 label_exp = f"{badge_estat} **{f.get('nom', 'Fase')}** ({f_done}/{f_tot} tasques — {f_pct}%)"
 
             with st.expander(label_exp, expanded=(not is_done)):
-                cf_d1, cf_d2, cf_d3, cf_d4 = st.columns([1.8, 0.9, 1.4, 0.5])
+                cf_d1, cf_d2, cf_d3, cf_d4 = st.columns([1.5, 0.9, 1.8, 0.5])
                 with cf_d1:
                     d_in = format_date_cat(f.get("data_inici"))
                     d_out = format_date_cat(f.get("data_fi"))
@@ -823,15 +835,28 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                 
                 with cf_d3:
                     if not is_done:
-                        if st.button("✅ Marcar Fase Acabada", key=f"btn_done_f_{project_id}_{fase_id}", type="primary", use_container_width=True):
-                            marcar_fase_estat(project_id, fase_id, True)
-                            other_f = [xf for xf in fases if xf.get("id") != fase_id]
-                            if len(other_f) == 0 or all(_is_fase_done(xf) for xf in other_f):
-                                st.session_state[f"show_celebration_dialog_{project_id}"] = True
-                            st.rerun()
+                        c_bf1, c_bf2 = st.columns([1, 1])
+                        with c_bf1:
+                            if status_desc == "Pendent":
+                                if st.button("🔨 Iniciar", key=f"btn_start_f_{project_id}_{fase_id}", use_container_width=True, help="Posar la fase i el projecte En curs"):
+                                    marcar_fase_estat(project_id, fase_id, "En curs")
+                                    st.toast("🔨 Fase i projecte posats En curs!", icon="🔨")
+                                    st.rerun()
+                            else:
+                                if st.button("⏳ Pausar", key=f"btn_pause_f_{project_id}_{fase_id}", use_container_width=True, help="Tornar la fase a Pendent"):
+                                    marcar_fase_estat(project_id, fase_id, "Pendent")
+                                    st.toast("⏳ Fase tornada a Pendent", icon="⏳")
+                                    st.rerun()
+                        with c_bf2:
+                            if st.button("✅ Acabar", key=f"btn_done_f_{project_id}_{fase_id}", type="primary", use_container_width=True, help="Marcar fase acabada"):
+                                marcar_fase_estat(project_id, fase_id, "Completada")
+                                other_f = [xf for xf in fases if xf.get("id") != fase_id]
+                                if len(other_f) == 0 or all(_is_fase_done(xf) for xf in other_f):
+                                    st.session_state[f"show_celebration_dialog_{project_id}"] = True
+                                st.rerun()
                     else:
-                        if st.button("↩️ Reobrir Fase", key=f"btn_reopen_f_{project_id}_{fase_id}", use_container_width=True, help="Tornar a marcar la fase com a pendent"):
-                            marcar_fase_estat(project_id, fase_id, False)
+                        if st.button("↩️ Reobrir Fase", key=f"btn_reopen_f_{project_id}_{fase_id}", use_container_width=True, help="Tornar a obrir la fase"):
+                            marcar_fase_estat(project_id, fase_id, "En curs")
                             st.rerun()
 
                 with cf_d4:

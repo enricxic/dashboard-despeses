@@ -355,17 +355,22 @@ def delete_fase(project_id: str, fase_id: str) -> bool:
             return save_projectes(projectes)
     return False
 
-def marcar_fase_estat(project_id: str, fase_id: str, completada: bool) -> bool:
-    """Marca directament una fase com a acabada (i totes les seves subtasques) o la reobre com a pendent."""
+def marcar_fase_estat(project_id: str, fase_id: str, estat_o_completada: Any) -> bool:
+    """Marca directament l'estat d'una fase ('Completada', 'En curs', 'Pendent' o bool True/False)."""
     projectes = load_projectes()
     for p in projectes:
         if p.get("id") == project_id:
             for f in p.get("fases", []):
                 if f.get("id") == fase_id:
-                    if completada:
+                    if estat_o_completada is True or estat_o_completada == "Completada":
                         f["estat"] = "Completada"
                         for t in f.get("tasques", []):
                             t["feta"] = True
+                    elif estat_o_completada == "En curs":
+                        f["estat"] = "En curs"
+                        # Si el projecte està Pendent, activar-lo automàticament a En curs
+                        if p.get("estat") == "Pendent":
+                            p["estat"] = "En curs"
                     else:
                         f["estat"] = "Pendent"
                         for t in f.get("tasques", []):
