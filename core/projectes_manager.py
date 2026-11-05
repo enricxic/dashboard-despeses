@@ -8,11 +8,14 @@ Totes les dates en pantalla segueixen estrictament el format DD/MM/AAAA.
 """
 
 import os
+import io
 import json
 import copy
+import base64
 import threading
 from datetime import datetime, date
 from typing import List, Dict, Optional, Any
+from PIL import Image, ImageOps
 
 _CURR_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(_CURR_DIR, ".."))
@@ -229,13 +232,95 @@ def save_projectes(projectes: List[Dict[str, Any]]) -> bool:
 
     return True
 
+# ==========================================
+# COMPRESSIÓ D'IMATGES (PIL)
+# ==========================================
+
+def compress_image_b64(img_input: Any, max_dim: int = 1280, quality: int = 80) -> str:
+    """Comprimeix i redimensiona imatges (bytes, fitxer o string data URL base64) per estalviar espai.
+    Converteix fotos de 10-20 MB a ~100-200 KB, evitant caigudes de WebSocket o límits de càrrega."""
+    if not img_input:
+        return ""
+    try:
+        raw_bytes = None
+        if isinstance(img_input, str):
+            if img_input.startswith("data:image"):
+                if "," in img_input:
+                    _, b64_part = img_input.split(",", 1)
+                    raw_bytes = base64.b64decode(b64_part)
+                else:
+                    return img_input
+            elif img_input.startswith("http://") or img_input.startswith("https://"):
+                # URL externa, no cal comprimir
+                return img_input
+            elif os.path.exists(img_input):
+                with open(img_input, "rb") as f:
+                    raw_bytes = f.read()
+            else:
+                return img_input
+        elif hasattr(img_input, "read"):
+            img_input.seek(0)
+            raw_bytes = img_input.read()
+            try:
+                img_input.seek(0)
+            except Exception:
+                pass
+        elif isinstance(img_input, bytes):
+            raw_bytes = img_input
+
+        if not raw_bytes:
+            return img_input if isinstance(img_input, str) else ""
+
+        img = Image.open(io.BytesIO(raw_bytes))
+
+        # Respectar orientació EXIF de fotos preses amb mòbil
+        try:
+            img = ImageOps.exif_transpose(img)
+        except Exception:
+            pass
+
+        # Convertir a RGB si té canal Alpha (RGBA) o paleta (P)
+        if img.mode in ("RGBA", "P", "LA"):
+            bg = Image.new("RGB", img.size, (255, 255, 255))
+            if img.mode == "P":
+                img = img.convert("RGBA")
+            mask = img.split()[-1] if img.mode in ("RGBA", "LA") else None
+            bg.paste(img, mask=mask)
+            img = bg
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+
+        # Redimensionar si supera la mida màxima
+        w, h = img.size
+        if max(w, h) > max_dim:
+            if w > h:
+                new_w = max_dim
+                new_h = int(h * (max_dim / w))
+            else:
+                new_h = max_dim
+                new_w = int(w * (max_dim / h))
+            img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+        out_io = io.BytesIO()
+        img.save(out_io, format="JPEG", quality=quality, optimize=True)
+        comp_b64 = base64.b64encode(out_io.getvalue()).decode("utf-8")
+        return f"data:image/jpeg;base64,{comp_b64}"
+    except Exception as e:
+        print(f"⚠️ Error comprimint imatge: {e}")
+        if isinstance(img_input, str):
+            return img_input
+        return ""
+
 def _save_local(data: List[Dict[str, Any]]):
+    """Guarda al disc de forma atòmica per evitar fitxers corruptes si hi ha un tall."""
     try:
         os.makedirs(os.path.dirname(PROJECTES_FILE), exist_ok=True)
-        with open(PROJECTES_FILE, "w", encoding="utf-8") as f:
+        tmp_file = PROJECTES_FILE + ".tmp"
+        with open(tmp_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
+        os.replace(tmp_file, PROJECTES_FILE)
+    except Exception as e:
+        print(f"⚠️ Error desant fitxer local de projectes: {e}")
 
 # ==========================================
 # OPERACIONS DE GESTIÓ DE PROJECTE
@@ -360,6 +445,8 @@ def add_material(project_id: str, material: Dict[str, Any]) -> bool:
             if material.get("en_stock"):
                 material["preu_real"] = 0.0
                 material["comprat"] = False
+            if material.get("imatge"):
+                material["imatge"] = compress_image_b64(material["imatge"], max_dim=600, quality=80)
             prov = str(material.get("proveidor", "")).strip()
             if prov and prov not in ("-", "Altre"):
                 add_proveidor_memoria(prov)
@@ -373,6 +460,8 @@ def update_material(project_id: str, material_id: str, fields: Dict[str, Any]) -
         if p.get("id") == project_id:
             for m in p.get("materials", []):
                 if m.get("id") == material_id:
+                    if "imatge" in fields and fields["imatge"]:
+                        fields["imatge"] = compress_image_b64(fields["imatge"], max_dim=600, quality=80)
                     m.update(fields)
                     if m.get("en_stock"):
                         m["preu_real"] = 0.0
@@ -565,6 +654,7 @@ def delete_xat_missatge(project_id: str, index: int) -> bool:
 
 def add_projecte_foto(project_id: str, tipus: str, data_url_or_path: str, descripcio: str = "") -> bool:
     projectes = load_projectes()
+    comp_path = compress_image_b64(data_url_or_path, max_dim=1280, quality=80)
     for p in projectes:
         if p.get("id") == project_id:
             p.setdefault("fotos", [])
@@ -573,7 +663,7 @@ def add_projecte_foto(project_id: str, tipus: str, data_url_or_path: str, descri
                 "id": f_id,
                 "tipus": tipus,  # "abans", "durant", "despres", "altre"
                 "data": datetime.now().strftime("%d/%m/%Y"),
-                "path": data_url_or_path,
+                "path": comp_path,
                 "descripcio": descripcio
             })
             return save_projectes(projectes)
@@ -593,11 +683,11 @@ def save_planol_projecte(project_id: str, preview_png: str, canvas_data: Any = N
         if p.get("id") == project_id:
             p.setdefault("planol", {})
             if preview_png:
-                p["planol"]["preview_png"] = preview_png
+                p["planol"]["preview_png"] = compress_image_b64(preview_png, max_dim=1280, quality=80)
             if canvas_data is not None:
                 p["planol"]["canvas_data"] = canvas_data
             if background_image is not None:
-                p["planol"]["background_image"] = background_image
+                p["planol"]["background_image"] = compress_image_b64(background_image, max_dim=1280, quality=80)
             p["planol"]["data_actualitzacio"] = datetime.now().strftime("%d/%m/%Y %H:%M")
             return save_projectes(projectes)
     return False
