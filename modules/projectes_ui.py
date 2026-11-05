@@ -429,11 +429,15 @@ def _render_projecte_header(projecte: Dict[str, Any]):
             if norm_est == "Pendent":
                 if st.button("🔨 Iniciar Projecte", key=f"quick_start_{project_id}", type="primary", use_container_width=True, help="Passar el projecte a 'En curs'"):
                     update_projecte(project_id, {"estat": "En curs"})
+                    st.session_state["pending_filtre_estat_projectes"] = "En curs"
+                    st.session_state["pending_select_projecte_actiu"] = project_id
                     st.toast("🔨 Projecte passat a 'En curs'!", icon="🔨")
                     st.rerun()
             elif norm_est == "En curs":
                 if st.button("⏳ Pausar Projecte", key=f"quick_pause_{project_id}", use_container_width=True, help="Tornar el projecte a 'Pendent'"):
                     update_projecte(project_id, {"estat": "Pendent"})
+                    st.session_state["pending_filtre_estat_projectes"] = "Pendent"
+                    st.session_state["pending_select_projecte_actiu"] = project_id
                     st.toast("⏳ Projecte tornat a 'Pendent'", icon="⏳")
                     st.rerun()
         with c3:
@@ -511,6 +515,8 @@ def _render_projecte_header(projecte: Dict[str, Any]):
                     "data_fi_prevista": to_iso_date(f_fi),
                     "pressupost_estimat": f_press
                 })
+                st.session_state["pending_filtre_estat_projectes"] = f_estat
+                st.session_state["pending_select_projecte_actiu"] = project_id
                 st.success("Dades del projecte actualitzades!")
                 st.rerun()
 
@@ -771,6 +777,8 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                     st.write("")
                     if st.button("🏆 Marcar com a Finalitzat", type="primary", use_container_width=True, key=f"btn_mark_proj_done_{project_id}"):
                         update_projecte(project_id, {"estat": "Finalitzat"})
+                        st.session_state["pending_filtre_estat_projectes"] = "Finalitzat"
+                        st.session_state["pending_select_projecte_actiu"] = project_id
                         st.balloons()
                         st.success("Projecte marcat com a Finalitzat!")
                         st.rerun()
@@ -784,6 +792,8 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                     st.write("")
                     if st.button("↩️ Reobrir Projecte", use_container_width=True, key=f"btn_reopen_proj_{project_id}", help="Tornar a posar l'obra en curs"):
                         update_projecte(project_id, {"estat": "En curs"})
+                        st.session_state["pending_filtre_estat_projectes"] = "En curs"
+                        st.session_state["pending_select_projecte_actiu"] = project_id
                         st.rerun()
 
     col_f1, col_f2 = st.columns([3, 1])

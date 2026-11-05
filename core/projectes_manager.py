@@ -526,6 +526,8 @@ def marcar_fase_estat(project_id: str, fase_id: str, estat_o_completada: Any) ->
                         f["estat"] = "Completada"
                         for t in f.get("tasques", []):
                             t["feta"] = True
+                        if p.get("estat") == "Pendent":
+                            p["estat"] = "En curs"
                     elif estat_o_completada == "En curs":
                         f["estat"] = "En curs"
                         # Si el projecte està Pendent, activar-lo automàticament a En curs
@@ -552,8 +554,12 @@ def toggle_subtasca(project_id: str, fase_id: str, tasca_id: str) -> bool:
                             any_done = any(x.get("feta", False) for x in f.get("tasques", []))
                             if all_done and len(f.get("tasques", [])) > 0:
                                 f["estat"] = "Completada"
+                                if p.get("estat") == "Pendent":
+                                    p["estat"] = "En curs"
                             elif any_done:
                                 f["estat"] = "En curs"
+                                if p.get("estat") == "Pendent":
+                                    p["estat"] = "En curs"
                             else:
                                 f["estat"] = "Pendent"
                             return save_projectes(projectes)
