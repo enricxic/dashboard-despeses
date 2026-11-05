@@ -1,6 +1,6 @@
 # Documentació del Projecte: Dashboard Despeses i Gestió de la Llar - XiquiHouse
 > **Versió Generalitzada i Modular**  
-> *Data d'actualització: 25 d'octubre de 2026*  
+> *Data d'actualització: 5 de novembre de 2026*  
 > *Fitxer mestre de referència per a desenvolupament, noves sessions d'IA i desplegament del sistema.*
 
 ---
@@ -80,6 +80,7 @@ Per assegurar la persistència completa de les dades al núvol i evitar pèrdues
 | **8** | `data/registre_manteniment.json` / `csv/manteniment.csv` | Registre de tasques, reparacions i periodicitats de la llar |
 | **9** | `data/consum_llum.json` / `csv/consum_llum.csv` | Factures elèctriques, potències i consums per tram (històric) |
 | **10** | `data/consum_aigua.json` / `csv/consum_aigua.csv` | Factures d'aigua, lectures de comptador i consums en m³ |
+| **11** | `data/projectes_manteniment.json` | Projectes d'obra, reformes i manteniment major de la llar |
 
 ---
 
@@ -95,20 +96,25 @@ Dashboard/
 ├── scanner.py                     # Controlador d'escaneig (WinRT prioritari + WIA fallback)
 ├── core/
 │   ├── aigua_manager.py           # Gestor de factures i lectures d'aigua (Supabase ID 10)
+│   ├── ai_projectes.py            # Assistent IA d'obra (materials, tutorials pas a pas, preus de mercat)
 │   ├── alerts.py                  # Motor centralitzat d'alertes i campaneta de notificacions
 │   ├── auth.py                    # Autenticació, sessions i tokens
 │   ├── calendar_manager.py        # Gestor de calendari, sincronització iCal i desduplicació
 │   ├── config_manager.py          # Gestor de configuració JSON i perfil familiar
+│   ├── cut_optimizer.py           # Algorisme Guillotine 2D i generador SVG de talls per a mobles i taulers
 │   ├── db.py                      # Connexions CRUD a Supabase, gestió híbrida i offline
 │   ├── harness.py                 # Motor de tests IA asíncron en segon pla i informes .txt
 │   ├── llm.py / llm_ui.py         # Connectors d'intel·ligència artificial (Gemini, DeepSeek, etc.)
 │   ├── llum_manager.py            # Preus PVPC directe, optimitzador d'acumuladors i estudi solar PVGIS
 │   ├── manteniment_manager.py     # Gestor de manuals, garanties i tasques de manteniment periòdiques
+│   ├── normalitzador.py           # Motor d'harmonització de dades (dates, categories sense accents, conceptes)
+│   ├── projectes_manager.py       # Gestor de dades i persistència híbrida de projectes d'obra (id=11)
 │   └── ocr_rules.md               # Regles d'extracció de tiquets per supermercat
 ├── modules/
 │   ├── admin.py                   # ⚙️ Configuració global i laboratori IA (Harness)
 │   ├── bases_dades.py             # 🗄️ Gestor de taules Supabase en temps real
 │   ├── calendari.py               # 📅 Agenda familiar (Graella, Dia, Fet/No fet, mòbil 1 línia)
+│   ├── canvas_planol.py           # 📐 Editor gràfic HTML5 Canvas tàctil per a mòbil/PC i galeria d'obra
 │   ├── compres.py                 # 🛒 Compres Super (OCR, tiquets, desglossament, rebost, estalvi)
 │   ├── cotxe.py                   # 🚗 Km, repostatge, consum i manteniment col·lapsable
 │   ├── dashboard.py               # 📊 Dashboard general i KPIs financers
@@ -116,9 +122,12 @@ Dashboard/
 │   ├── economic.py                # 📈 Previsió despeses/ingressos, nou any, pagues extres, inversions
 │   ├── impressora.py              # 🖨️ Controlador d'impressora de tiquets de compra
 │   ├── llum_aigua.py              # 💡 Preus PVPC, acumuladors, factures PDF i simulador solar
-│   ├── manteniment.py             # 🛠️ Tasques periòdiques, subtasques, manuals i garanties PDF
+│   ├── manteniment.py             # 🛠️ Tasques periòdiques, subtasques, manuals, garanties i projectes
 │   ├── medicacio.py               # 💊 Control de medicació, pautes i tutelats
 │   ├── menjar.py                  # 🍽️ Receptari, recomanador IA, calories i mise en place
+│   ├── moble_disseny_ui.py        # 🪚 Disseny paramètric 3D de mobles i CutList Optimizer
+│   ├── normalitzador_ui.py        # 🧹 Interfície visual d'auditoria i normalització de dades
+│   ├── projectes_ui.py            # 🏗️ Interfície completa de la pestanya de projectes i reformes
 │   ├── seguretat.py               # 📹 Estat de càmeres, accessos i alarmes
 │   └── sincronitzacio.py          # 🔄 Consolidació de dades offline retingudes
 ├── PDF/                           # Magatzem centralitzat de documents en PDF
@@ -268,6 +277,17 @@ $$PF = B \times (1 - d) \implies B = \frac{PF}{1 - d}$$
 - **Seguiment semafòric de garanties**: Càlcul de dies de cobertura restants (🟢 Vigents, ⚠️ Venciment en menys de 60 dies, 🔴 Caducades).
 - **Auto-detecció de fitxers**: Si s'afegeix un PDF directament a les carpetes del disc, el motor l'adhereix automàticament al registre JSON sense sobreescriure les dades existents.
 
+#### C. Projectes d'Obra, Reformes i Fusteria MD (`modules/projectes_ui.py`, `core/projectes_manager.py`)
+- **Arquitectura i Persistència Híbrida**: Taula Supabase `app_config` (ID=11) amb sincronització asíncrona en fil secundari (daemon thread) i memòria cau de sessió, combinat amb fallback local a `data/projectes_manteniment.json` mitjançant desat atòmic (`.tmp` + `os.replace`). Dates en format estricte català/europeu `DD/MM/AAAA`.
+- **Filtres i Canvi d'Estat Reactiu a 1 Clic**: Botons de capçalera `🔨 Iniciar Projecte` i `⏳ Pausar Projecte` amb vinculació immediata al filtre de visualització (`pending_filtre_estat_projectes` i `pending_select_projecte_actiu`) perquè el projecte es mantingui sempre actiu i visible. Promoció automàtica a «En curs» quan s'activa qualsevol fase o subtasca.
+- **Plànol Canvas Tàctil i Galeria amb Compressió**:
+  - Editor Canvas autònom (`modules/canvas_planol.py`) amb zoom (0.75x-2.50x), eina de navegació `🖐️ Moure`, mode paret contínua `🔗 Seguir traç`, magnetisme `🧲 Snap` (radi 26px), selector Planta/Alçat de paret, creador d'habitacions (`🏠 Habitació`) i galleda de textures vectorials nàtives (`🪣 Textura`).
+  - Compressió automàtica d'imatges amb Pillow (`compress_image_b64`) a 1280px / 80% JPEG (~150 KB, reducció del 90%), eliminant caigudes de WebSocket i errors de límit de dades a Supabase.
+  - Renderització nativa mitjançant `st.image` sobre graella tant a la galeria de fotos com a les fitxes de materials per evitar bolcats de text en Base64.
+- **Fases i Checklist a 1 Clic**: 3 botons d'acció directa per fase (`[ ⏳ Pendent ]`, `[ 🔨 En curs ]`, `[ ✅ Acabada ]`) amb ressaltat visual segons l'estat actual, sense modals atenuadors de pantalla. Neteja reactiva del camp de subtasques (`clear_on_submit=True`) i botó d'eliminació ràpida `🗑️`.
+- **Dissenyador Paramètric de Mobles i CutList Optimizer (`modules/moble_disseny_ui.py`, `core/cut_optimizer.py`)**: Subpestanya *🪚 Disseny & Despecejament MD* amb modelat 3D Three.js (vista explosionada), plantilles (prestatgeria, armari, taula), optimitzador de tall Guillotine Bin Packing 2D per planxes de fusta amb compensació de disc de serra (kerf 3-4 mm), respecte o gir per a la veta de la fusta i diagrames visuals SVG.
+- **Assistent IA d'Obra (`core/ai_projectes.py`)**: Xat integrat al context de l'obra, botons de reactivació de consultes (`🔄 Reactivar`), targetes d'error de quota amb reintent i auto-adaptació de tokens a OpenRouter/Gemini.
+
 ---
 
 ### 5.3 Cotxe i Mobilitat (`modules/cotxe.py`)
@@ -409,6 +429,21 @@ Totes les seccions estan organitzades en blocs desplegables independents (`st.ex
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
+| **05/11/2026** | **Projectes / Persistència & Filtres** | **Canvi d'Estat a «En curs», Persistència Híbrida i Vinculació Reactiva de Filtres**: Resolt el desajust pel qual el projecte «Connexió Acumulador 2000w» tornava a sortir com a «Pendent». S'ha actualitzat directament i permanentment a «En curs» tant al fitxer local com a Supabase ID=11 (`app_config`), i s'han vinculat els botons ràpids de capçalera (`🔨 Iniciar Projecte` / `⏳ Pausar Projecte`) i el formulari d'edició amb `pending_filtre_estat_projectes` i `pending_select_projecte_actiu` perquè la interfície canviï de filtre a l'instant i mantingui el projecte actiu i visible sense que desaparegui de la pantalla. A més, en iniciar o completar qualsevol fase o subtasca, el projecte passa automàticament a «En curs». |
+| **05/11/2026** | **Projectes / Renderització d'Imatges** | **Miniatures Natives amb `st.image` i Eliminació de Bolcats Base64**: Substituït el renderitzat antic `st.markdown('<img src="...">')` per `st.image(..., use_container_width=True)` tant a la galeria de fotografies del projecte com a les miniatures de la graella de materials (`modules/canvas_planol.py` i `modules/projectes_ui.py`). Això resol definitivament el bolcat de text pla amb cadenes llargues de Base64 que es produïa quan el parser de Markdown de Streamlit fallava amb imatges pesades. |
+| **05/11/2026** | **Projectes / Galeria Fotogràfica** | **Compressió Automàtica d'Imatges (PIL) i Escriptura Atòmica**: Resolt el reinici sobtat de l'aplicació i pèrdua de fotos en carregar imatges en cru de 10-15 MB des del mòbil. Implementada la funció `compress_image_b64` a `core/projectes_manager.py` (Pillow + `ImageOps.exif_transpose`) per redimensionar a màxim 1280px i qualitat 80% JPEG (~150 KB, reducció del 90%), eliminant caigudes del WebSocket de Tornado i respectant el límit de Supabase. Les dades es desen de forma atòmica mitjançant fitxer temporal `.tmp` i `os.replace`. |
+| **05/11/2026** | **Projectes / Fases & Rendiment** | **Desat Asíncron i Selector Directe d'Estat en 3 Botons**: Resolt el bloqueig visual («pantalla atenuada de la meitat inferior») causat per càrregues síncrones pesades a Supabase i pel diàleg modal de celebració. S'ha integrat persistència asíncrona en fil secundari (daemon thread) i memòria cau de sessió a `core/projectes_manager.py` (latència 0ms). Substituït el selector desplegable per 3 botons d'acció directa per fase: `[ ⏳ Pendent ]`, `[ 🔨 En curs ]`, `[ ✅ Acabada ]` amb ressaltat visual segons l'estat actual. |
+| **05/11/2026** | **Receptari / Fotografia Gastronòmica** | **Renovació Fotogràfica Gastronòmica en Alta Resolució (4:3)**: Incorporades noves fotografies gastronòmiques professionals generades amb IA culinària per a receptes clau del receptari familiar ("Daus de sípia a la planxa", "Pinxos de pollastre adobats", "Palpís de gall d'indi", "Pastís de truites amb formatge blau", "Salmó al forn amb verdures"), amb enquadrament centrat a 45° i proporció 4:3. |
+| **04/11/2026** | **Projectes / Fusteria MD** | **Dissenyador Paramètric de Mobles i CutList Optimizer 2D/3D**: Nova subpestanya *🪚 Disseny & Despecejament MD* (`modules/moble_disseny_ui.py` i `core/cut_optimizer.py`) amb visor 3D interactiu (Three.js), plantilles de mobles (prestatgeria, armari, taula), optimitzador de tall Guillotine Bin Packing 2D per planxes de fusta amb compensació de disc de serra (kerf 3-4 mm), respecte o gir per a la veta de la fusta, agrupació per gruixos de tauler (3mm a 30mm) i diagrames visuals SVG d'aprofitament per a compres. |
+| **04/11/2026** | **Projectes / Fases** | **Buidat de Formulari de Subtasques, Missatge d'Èxit i Botó d'Eliminació**: En afegir una subtasca a una fase d'obra, es buida automàticament el camp de text (`clear_on_submit=True`), es mostra confirmació d'alta (`st.toast` i `st.success`) per evitar duplicats involuntaris, i s'incorpora el botó d'eliminació `🗑️` al costat de cada subtasca per poder suprimir-les amb un sol clic. |
+| **04/11/2026** | **Projectes / UI** | **Filtres de Projectes Reordenats i Estat per Defecte**: Reordenació dels botons de filtre a `En curs`, `Pendent`, `Finalitzat`, `Tots` i establiment de `En curs` com a filtre inicial per defecte. Avís contextual si no hi ha projectes en curs. |
+| **04/11/2026** | **Menú Superior / Resolució de Doble Clic** | **Restauració de la Navegació Canònica Directa a 1 Clic**: Resolt el comportament on calia fer clic dues vegades a les opcions del menú superior per obrir un mòdul. S'ha suprimit l'interceptor experimental `attachSpaNavInterceptors` que cancel·lava indegudament els esdeveniments de clic natius (`e.preventDefault()`), restaurant els enllaços directes canònics de navegador (`<a href="?mod=..." target="_self">`). Ara qualsevol mòdul i hotspot respon immediatament al primer clic. |
+| **04/11/2026** | **Menú Superior / Manteniment** | **Integració Directa de la Pestanya Projectes (`🏗️ Projectes`) al Menú de Manteniment**: Afegit l'accés directe `🏗️ Projectes` al submenú desplegable `Mòduls > Manteniment de la llar` (`?mod=modules.manteniment&tab=projectes`). S'ha actualitzat també l'interceptor de pestanyes a `app.py` per commutar directament a la pestanya 3 (`targetIdx = 3`) sense recarregar la pàgina quan el mòdul ja és actiu. |
+| **04/11/2026** | **Navegació / Rendiment i Transició SPA** | **Eliminació de la Càrrega de Més d'un Minut i Navegació Instantània SPA sense Recàrrega**: Resolt el retard superior a un minut en obrir qualsevol mòdul des de la pantalla inicial. S'han resolt dues causes arrel: 1) S'ha eliminat la recàrrega sencera del navegador (`window.location.assign`), que forçava la descàrrega de 30 MB d'assets JS i la reinicialització del WebSocket; ara la navegació dels hotspots utilitza `history.pushState` + `popstate` natiu de Streamlit (amb interceptor SPA global a `components.html`), fent la transició de mòdul instantània (mil·lisegons) sense mostrar mai el *skeleton loader*. 2) Optimització dels mòduls lents: a `modules/economic.py` s'han eliminat imports immensos de nivell superior (`google.generativeai` que trigava 20s en importar-se, `scanner`, `pytesseract`) convertint-los en imports diferits (*lazy*) exclusius del xat IA, i a `core/db.py` s'ha eliminat la consulta síncrona a Supabase a l'arrencada (`cat_config`), reduint el temps d'importació de 85 segons a 3.1 segons (acceleració de 27x). |
+| **03/11/2026** | **Manteniment / Projectes d'Obra** | **Reactivitat per a Nous Proveïdors a l'Alta de Materials**: Desacoblat el formulari d'afegir material manualment (`modules/projectes_ui.py`) eliminant l'embolcall rígid `st.form`. En Streamlit, els widgets dins d'un `st.form` no desencadenen rerun en canviar de valor; per aquest motiu, quan l'usuari seleccionava `➕ Afegir un altre proveïdor...` al desplegable, el camp de text per introduir el nom del nou proveïdor no s'arribava a mostrar mai abans de desar. Ara és completament reactiu: en seleccionar l'opció apareix immediatament el camp per escriure el proveïdor, es valida que no quedi buit, s'enregistra automàticament a la memòria de proveïdors i s'assigna al material. |
+| **03/11/2026** | **Manteniment / Projectes d'Obra** | **Resolució de Conflicte de Cicle de Vida de Streamlit a l'Alta de Nous Projectes**: Solucionat l'error fatal `st.session_state['select_projecte_actiu'] cannot be modified after the widget with that key is instantiated` a `modules/projectes_ui.py`. El formulari modal de nou projecte s'executa després de la instanciació del selector `st.selectbox` i del filtre `st.pills`/`st.radio`, per la qual cosa modificar directament les claus de sessió vinculades als widgets abans de `st.rerun()` bloquejava l'aplicació. S'ha desacoblat el patró mitjançant variables pendents d'assignació (`pending_select_projecte_actiu` i `pending_filtre_estat_projectes`) que s'injecten i es consumeixen just abans que els widgets es renderitzin, garantint la creació i selecció immediata del nou projecte en qualsevol dispositiu sense interrupcions. |
+| **02/11/2026** | **Bases de Dades / Formats de Data** | **Correcció Integral del Format de Data a `DD/MM/AAAA` i Resolució d'Inversió Mes/Dia**: Auditades totes les taules de la base de dades. Corregit el parser de dates a `modules/bases_dades.py` (`robust_parse_date_series`), que utilitzava indegudament `dayfirst=True` sobre cadenes ISO a `tr_cartera`, intercanviant mes i dia (mostrant p. ex. `11/02/2026` en lloc de `02/11/2026`). Corregits a Supabase i als CSVs locals els 4 registres històrics desalineats de `tr_cartera` (IDs 22, 23, 24 i 25) i el registre aïllat de `kmCotxe` (ID 629 de `2026-10-13` a `13/10/2026`). Blindat el format d'actualització i inserció de `bases_dades.py` perquè respecti el format ISO natiu per a taules de tipus `DATE` i `DD/MM/AAAA` per a taules de text. |
+| **02/11/2026** | **Econòmic / Inversions TR Cartera** | **Neteja Automàtica del Formulari de TR Cartera, Botó Netejar i Eliminació de Duplicats**: Resolt el problema pel qual el formulari de nou moviment de TR Cartera (`modules/economic.py`) mantenia els valors als camps després de desar, provocant entrades duplicades involuntàries de CashBack o compres. Ara s'eliminen automàticament de `st.session_state` les claus del formulari (`tr_cartera_inv`, `tr_concepte_inv`, `tr_import_inv`, `tr_comentari_inv`), es mostra un banner d'èxit persistent (`st.success`), s'afegeix el botó `Netejar`, s'incorpora la cartera `Amazon` al desplegable, es bloqueja el desat amb imports $\le 0$ fins i tot a CashBack, i s'han purgat de Supabase els registres duplicats (ID 38 a `tr_cartera` i moviment buit ID 8250 a `despeses`). |
 | **25/10/2026** | **Escaneig Tiquets** | **Restauració escaneig directe 1-clic**: Nou motor natiu WinRT ([`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1)), superant l'antiga fallada de bloqueig temporal WIA (`ERROR_SHARING_VIOLATION` / `0x80030070`). Eliminats botons secundaris a [`auto_scan_ui.py`](file:///e:/Dashboard/auto_scan_ui.py) deixant només `🖨️ Escanejar Tiquet`. |
 | **25/10/2026** | **Cotxe / Manteniment** | **Seccions Col·lapsables**: Totes les seccions de la pestanya *Manteniment* transformades en blocs plegables independents (`st.expander`) amb badges informatius en temps real als encapçalaments i control de desplegament global. |
 | **24/10/2026** | **Rendiment Core** | **Pla d'optimització de 30 dies**: Finestra activa de 30 dies a Supabase + arxiu històric en CSV amb memòria cau de 24h per a taules massives. Eliminats els buidats massius de cau, passant de bloquejos de 20s a càrregues en menys d'1s. |
