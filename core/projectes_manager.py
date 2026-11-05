@@ -10,6 +10,7 @@ Totes les dates en pantalla segueixen estrictament el format DD/MM/AAAA.
 import os
 import json
 import copy
+import threading
 from datetime import datetime, date
 from typing import List, Dict, Optional, Any
 
@@ -18,6 +19,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(_CURR_DIR, ".."))
 PROJECTES_FILE = os.path.join(PROJECT_ROOT, "data", "projectes_manteniment.json")
 PROVEIDORS_FILE = os.path.join(PROJECT_ROOT, "data", "proveidors_projectes.json")
 CONFIG_ID_PROJECTES = 11
+
+_IN_MEMORY_PROJECTES: Optional[List[Dict[str, Any]]] = None
 
 PROVEIDORS_DEFECTE = [
     "Obramat",
@@ -97,9 +100,62 @@ def _is_valid_project(p: Any) -> bool:
         return True
     return False
 
-def load_projectes() -> List[Dict[str, Any]]:
-    """Carrega la llista de projectes des de Supabase (id=9) o fallback local."""
-    # 1. Intentar carregar de Supabase
+def _async_supabase_upsert(data: List[Dict[str, Any]], role: str = "authenticated"):
+    """Sincronitza els canvis a Supabase en segon pla per no bloquejar mai la interfície d'usuari."""
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client(role)
+        supabase.table("app_config").upsert({
+            "id": CONFIG_ID_PROJECTES,
+            "config_json": data
+        }).execute()
+    except Exception as e:
+        print(f"⚠️ [ProjectesManager] Sincronització asíncrona a Supabase: {e}")
+
+def load_projectes(force_reload: bool = False) -> List[Dict[str, Any]]:
+    """Carrega la llista de projectes prioritzant la memòria/sessió i el disc local (0ms de latència)."""
+    global _IN_MEMORY_PROJECTES
+
+    # 1. Comprovar si tenim els projectes en memòria de sessió (Streamlit session_state)
+    if not force_reload:
+        try:
+            import streamlit as st
+            if hasattr(st, "session_state") and "cached_projectes_list" in st.session_state:
+                cached = st.session_state["cached_projectes_list"]
+                if isinstance(cached, list) and len(cached) > 0:
+                    return cached
+        except Exception:
+            pass
+
+        # 2. Comprovar memòria de procés
+        if _IN_MEMORY_PROJECTES is not None and len(_IN_MEMORY_PROJECTES) > 0:
+            try:
+                import streamlit as st
+                if hasattr(st, "session_state"):
+                    st.session_state["cached_projectes_list"] = _IN_MEMORY_PROJECTES
+            except Exception:
+                pass
+            return _IN_MEMORY_PROJECTES
+
+        # 3. Llegir fitxer JSON local (immediat, < 5ms)
+        if os.path.exists(PROJECTES_FILE):
+            try:
+                with open(PROJECTES_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        valid = [p for p in data if _is_valid_project(p)]
+                        _IN_MEMORY_PROJECTES = valid
+                        try:
+                            import streamlit as st
+                            if hasattr(st, "session_state"):
+                                st.session_state["cached_projectes_list"] = valid
+                        except Exception:
+                            pass
+                        return valid
+            except Exception:
+                pass
+
+    # 4. Si no hi ha dades locals o s'ha forçat la recàrrega, consultar Supabase
     try:
         from core.db import get_supabase_client
         role = "guest"
@@ -115,12 +171,19 @@ def load_projectes() -> List[Dict[str, Any]]:
             cfg = res.data[0]["config_json"]
             if isinstance(cfg, list):
                 valid_projs = [p for p in cfg if _is_valid_project(p)]
+                _IN_MEMORY_PROJECTES = valid_projs
                 _save_local(valid_projs)
+                try:
+                    import streamlit as st
+                    if hasattr(st, "session_state"):
+                        st.session_state["cached_projectes_list"] = valid_projs
+                except Exception:
+                    pass
                 return valid_projs
     except Exception:
         pass
 
-    # 2. Fallback local: fitxer JSON
+    # Fallback final si tot falla
     if os.path.exists(PROJECTES_FILE):
         try:
             with open(PROJECTES_FILE, "r", encoding="utf-8") as f:
@@ -133,30 +196,38 @@ def load_projectes() -> List[Dict[str, Any]]:
     return []
 
 def save_projectes(projectes: List[Dict[str, Any]]) -> bool:
-    """Desa la llista de projectes tant a local com a Supabase."""
+    """Desa la llista de projectes instantàniament en local/sessió i replica a Supabase en segon pla."""
+    global _IN_MEMORY_PROJECTES
     valid_projs = [p for p in projectes if _is_valid_project(p)]
-    # 1. Sempre desar a fitxer local
+    
+    # 1. Actualitzar immediatament la memòria
+    _IN_MEMORY_PROJECTES = valid_projs
+    try:
+        import streamlit as st
+        if hasattr(st, "session_state"):
+            st.session_state["cached_projectes_list"] = valid_projs
+    except Exception:
+        pass
+
+    # 2. Guardar a fitxer local al disc (immediat)
     _save_local(valid_projs)
 
-    # 2. Replicar a Supabase
+    # 3. Replicar a Supabase en segon pla (asíncron, no bloqueja mai la UI)
+    role = "authenticated"
     try:
-        from core.db import get_supabase_client
-        role = "authenticated"
-        try:
-            import streamlit as st
-            if hasattr(st, "session_state") and "role" in st.session_state:
-                role = st.session_state.get("role", "authenticated")
-        except Exception:
-            role = "authenticated"
-        supabase = get_supabase_client(role)
-        supabase.table("app_config").upsert({
-            "id": CONFIG_ID_PROJECTES,
-            "config_json": [p for p in projectes if _is_valid_project(p)]
-            
-        }).execute()
-        return True
+        import streamlit as st
+        if hasattr(st, "session_state") and "role" in st.session_state:
+            role = st.session_state.get("role", "authenticated")
     except Exception:
-        return False
+        role = "authenticated"
+
+    try:
+        t = threading.Thread(target=_async_supabase_upsert, args=(valid_projs, role), daemon=True)
+        t.start()
+    except Exception as e:
+        print(f"⚠️ Error iniciant thread de desat a Supabase: {e}")
+
+    return True
 
 def _save_local(data: List[Dict[str, Any]]):
     try:
