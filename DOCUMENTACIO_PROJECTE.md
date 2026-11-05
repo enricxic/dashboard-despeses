@@ -36,7 +36,7 @@
 > [!IMPORTANT]
 > **Instrucció d'Arrencada per a Noves Sessions d'IA**  
 > Si inicies una conversa nova amb un assistent d'IA, cal indicar-li:  
-> **"Llegeix `DOCUMENTACIO_GENERALITZADA.md` per entendre l'arquitectura modular, les prioritats i el funcionament de l'aplicació abans de tocar cap codi."**
+> **"Llegeix `DOCUMENTACIO_PROJECTE.md` per entendre l'arquitectura modular, les prioritats i el funcionament de l'aplicació abans de tocar cap codi."**
 
 ### 1.1 Directriu Obligatòria de Desplegament a GitHub (`git push`)
 - L'aplicació s'executa tant en entorn local com des del núvol (**Streamlit Community Cloud** sincronitzat amb el repositori GitHub del projecte).
@@ -144,7 +144,7 @@ Dashboard/
 │   ├── Eines/                     # Miniatures dels aparells i eines de cuina
 │   ├── Productes/                 # Imatges d'articles de compra i rebost
 │   └── Receptes/                  # Imatges gastronòmiques oficials 4:3
-└── DOCUMENTACIO_GENERALITZADA.md  # Aquest document
+└── DOCUMENTACIO_PROJECTE.md       # Document mestre de referència integral del projecte
 ```
 
 ---
