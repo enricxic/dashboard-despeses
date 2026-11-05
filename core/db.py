@@ -834,6 +834,10 @@ def get_article_family(article_name):
 def save_to_csv(df, filename):
     import numpy as np
     table_name = filename.replace('.csv', '')
+    try:
+        save_to_csv_local(df, table_name)
+    except Exception:
+        pass
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     try:
         df_clean = df.replace({np.nan: None})

@@ -8,7 +8,8 @@ from core.db import (
     get_config_supers, get_config_banks, get_config_payment_methods, get_config_families, get_config_articles,
     get_article_family, get_tb_productes_cached, load_categories_conceptes,
     get_config_categories, get_config_concepts, get_config_routes, add_concept_to_config, add_route_to_config,
-    load_dashboard_data, get_csv_mtimes, BANK_MAPPING, MONTHS_MAP, clean_numeric, parse_excel_date, fix_mojibake_df, get_next_id, load_ofertes, save_ofertes
+    load_dashboard_data, get_csv_mtimes, BANK_MAPPING, MONTHS_MAP, clean_numeric, parse_excel_date, fix_mojibake_df, get_next_id, load_ofertes, save_ofertes,
+    save_to_csv
 )
 import re
 import urllib.parse
