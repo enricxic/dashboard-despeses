@@ -731,6 +731,28 @@ def _render_fases_tab(projecte: Dict[str, Any]):
     project_id = projecte["id"]
     fases = projecte.get("fases", [])
 
+    st.markdown("""
+    <style>
+    /* Mantenir casella i paperera de subtasques en 1 sola línia horitzontal a mòbil */
+    div[data-testid="stHorizontalBlock"]:has(button[key*="del_t_"]) {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(button[key*="del_t_"]) > div[data-testid="column"]:first-child {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(button[key*="del_t_"]) > div[data-testid="column"]:last-child {
+        flex: 0 0 45px !important;
+        width: 45px !important;
+        min-width: 45px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Comprovar si s'ha d'obrir el diàleg de celebració de fi d'obra
     if st.session_state.get(f"show_celebration_dialog_{project_id}"):
         st.session_state[f"show_celebration_dialog_{project_id}"] = False
@@ -813,49 +835,50 @@ def _render_fases_tab(projecte: Dict[str, Any]):
 
             cur_f_est = f.get("estat", "Pendent")
             is_curs = (cur_f_est == "En curs" or f_pct > 0)
-            badge_estat = "🟢" if is_done else ("🔨" if is_curs else "⚪")
             status_desc = "Completada" if is_done else ("En curs" if is_curs else "Pendent")
 
-            if f_tot == 0 and is_done:
+            if is_done:
                 label_exp = f"🟢 **{f.get('nom', 'Fase')}** (✅ Acabada — 100%)"
-            elif f_tot == 0:
-                label_exp = f"⚪ **{f.get('nom', 'Fase')}** (⏳ Pendent — 0%)"
+            elif is_curs:
+                pct_txt = f"{f_pct}%" if f_tot > 0 else "iniciada"
+                label_exp = f"🔨 **{f.get('nom', 'Fase')}** (🔨 En curs — {pct_txt})"
             else:
-                label_exp = f"{badge_estat} **{f.get('nom', 'Fase')}** ({f_done}/{f_tot} tasques — {f_pct}%)"
+                label_exp = f"⚪ **{f.get('nom', 'Fase')}** (⏳ Pendent — 0%)"
 
             with st.expander(label_exp, expanded=(not is_done)):
-                cf_d1, cf_d2, cf_d3, cf_d4 = st.columns([1.5, 0.9, 1.8, 0.5])
+                cf_d1, cf_d2, cf_d3, cf_d4 = st.columns([1.4, 1.2, 1.1, 0.4])
                 with cf_d1:
                     d_in = format_date_cat(f.get("data_inici"))
                     d_out = format_date_cat(f.get("data_fi"))
                     if d_in or d_out:
                         st.caption(f"📅 Termini: {d_in or '?'} → {d_out or '?'}")
                 with cf_d2:
-                    st.markdown(f"Estat: **{status_desc}**")
+                    opcions_est = ["⏳ Pendent", "🔨 En curs", "✅ Completada"]
+                    map_est = {"Pendent": 0, "En curs": 1, "Completada": 2}
+                    idx_est = map_est.get(status_desc, 0)
+                    nou_est_sel = st.selectbox(
+                        "Estat de la fase:",
+                        options=opcions_est,
+                        index=idx_est,
+                        key=f"sel_est_fase_{project_id}_{fase_id}",
+                        label_visibility="collapsed"
+                    )
+                    clean_est = "Pendent" if "Pendent" in nou_est_sel else ("En curs" if "En curs" in nou_est_sel else "Completada")
+                    if clean_est != status_desc:
+                        marcar_fase_estat(project_id, fase_id, clean_est)
+                        st.toast(f"Estat de la fase canviat a {clean_est}", icon="🔨" if clean_est == "En curs" else "✅")
+                        st.rerun()
                 
                 with cf_d3:
                     if not is_done:
-                        c_bf1, c_bf2 = st.columns([1, 1])
-                        with c_bf1:
-                            if status_desc == "Pendent":
-                                if st.button("🔨 Iniciar", key=f"btn_start_f_{project_id}_{fase_id}", use_container_width=True, help="Posar la fase i el projecte En curs"):
-                                    marcar_fase_estat(project_id, fase_id, "En curs")
-                                    st.toast("🔨 Fase i projecte posats En curs!", icon="🔨")
-                                    st.rerun()
-                            else:
-                                if st.button("⏳ Pausar", key=f"btn_pause_f_{project_id}_{fase_id}", use_container_width=True, help="Tornar la fase a Pendent"):
-                                    marcar_fase_estat(project_id, fase_id, "Pendent")
-                                    st.toast("⏳ Fase tornada a Pendent", icon="⏳")
-                                    st.rerun()
-                        with c_bf2:
-                            if st.button("✅ Acabar", key=f"btn_done_f_{project_id}_{fase_id}", type="primary", use_container_width=True, help="Marcar fase acabada"):
-                                marcar_fase_estat(project_id, fase_id, "Completada")
-                                other_f = [xf for xf in fases if xf.get("id") != fase_id]
-                                if len(other_f) == 0 or all(_is_fase_done(xf) for xf in other_f):
-                                    st.session_state[f"show_celebration_dialog_{project_id}"] = True
-                                st.rerun()
+                        if st.button("✅ Acabar", key=f"btn_done_f_{project_id}_{fase_id}", type="primary", use_container_width=True, help="Marcar fase com a completada"):
+                            marcar_fase_estat(project_id, fase_id, "Completada")
+                            other_f = [xf for xf in fases if xf.get("id") != fase_id]
+                            if len(other_f) == 0 or all(_is_fase_done(xf) for xf in other_f):
+                                st.session_state[f"show_celebration_dialog_{project_id}"] = True
+                            st.rerun()
                     else:
-                        if st.button("↩️ Reobrir Fase", key=f"btn_reopen_f_{project_id}_{fase_id}", use_container_width=True, help="Tornar a obrir la fase"):
+                        if st.button("↩️ Reobrir", key=f"btn_reopen_f_{project_id}_{fase_id}", use_container_width=True, help="Tornar a obrir la fase"):
                             marcar_fase_estat(project_id, fase_id, "En curs")
                             st.rerun()
 
