@@ -981,6 +981,7 @@ def cb_edit_ticket_item(idx):
         st.session_state["manual_pct_num"] = 0.0
     st.session_state["manual_reb_chk"] = (item['rebost'] == 'rebost')
     st.session_state["editing_ticket_item_idx"] = idx
+    st.session_state["scroll_to_add_line"] = True
 
 def cb_del_ticket_item(idx):
     if "finalize_error" in st.session_state:
@@ -1091,6 +1092,7 @@ def cb_add_ticket_line():
     st.session_state["manual_reb_chk"] = False
     st.session_state["manual_fam_selectbox"] = ""
     st.session_state["manual_art_selectbox"] = ""
+    st.session_state["scroll_to_add_line"] = True
 
 def cb_recalculate_manual_pct():
     pct = st.session_state.get("manual_pct_num", 0.0)
@@ -2592,12 +2594,161 @@ Retorna ÚNICAMENT l'objecte JSON.
     with col_reb:
         reb_val = st.checkbox("Reb.", key="manual_reb_chk")
     with col_add:
-        st.button("Intro línia", key="btn_add_line", type="secondary", on_click=cb_add_ticket_line)
+        st.button("Entrar línia", key="btn_add_line", type="secondary", on_click=cb_add_ticket_line, use_container_width=True)
 
     # Render error if validation failed in callback
     if "manual_input_error" in st.session_state:
         st.error(st.session_state["manual_input_error"])
         del st.session_state["manual_input_error"]
+
+    should_scroll_js = "true" if st.session_state.pop("scroll_to_add_line", False) else "false"
+    st.components.v1.html(
+        f"""
+        <script>
+        (function() {{
+            try {{
+                const doc = window.parent.document;
+                if (!doc) return;
+
+                const shouldScroll = {should_scroll_js};
+
+                function getAddBtn() {{
+                    return Array.from(doc.querySelectorAll('button')).find(b => 
+                        b.textContent && (
+                            b.textContent.trim().toLowerCase() === 'entrar línia' ||
+                            b.textContent.trim().toLowerCase() === 'entrar linia' ||
+                            b.textContent.trim().toLowerCase() === 'intro línia' ||
+                            b.textContent.trim().toLowerCase() === 'intro linia'
+                        )
+                    );
+                }}
+
+                if (shouldScroll) {{
+                    setTimeout(() => {{
+                        const addBtn = getAddBtn();
+                        if (addBtn) {{
+                            addBtn.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+                            addBtn.focus();
+                        }}
+                    }}, 60);
+                }}
+
+                if (window.parent.__compres_enter_handler) {{
+                    doc.removeEventListener('keydown', window.parent.__compres_enter_handler, true);
+                }}
+
+                window.parent.__compres_enter_handler = function(e) {{
+                    if (e.key !== 'Enter') return;
+
+                    const target = e.target;
+                    if (!target) return;
+
+                    const addBtn = getAddBtn();
+                    if (!addBtn) return;
+
+                    // Si el focus ja està al mateix botó 'Entrar línia', deixar que Enter l'activi
+                    if (target === addBtn) return;
+
+                    if (target.tagName !== 'INPUT') return;
+
+                    const isCompres = Array.from(doc.querySelectorAll('h2, span, p')).some(el => 
+                        el.textContent && (
+                            el.textContent.includes('Compres Super') || 
+                            el.textContent.includes('Llista de la Compra') ||
+                            el.textContent.includes('Introduir línia manualment')
+                        )
+                    );
+                    if (!isCompres) return;
+
+                    // El contenidor de la fila manual és el bloc de columnes que conté el botó
+                    const manualRow = addBtn.closest('[data-testid="stHorizontalBlock"]') || 
+                                      addBtn.closest('[data-testid="stColumns"]') || 
+                                      (addBtn.parentElement ? addBtn.parentElement.closest('[data-testid="stHorizontalBlock"]') : null);
+                    if (!manualRow) return;
+
+                    // Comprovar si l'input pertany exclusivament a la fila manual
+                    if (!manualRow.contains(target)) return;
+
+                    // Si prem Shift + Enter a qualsevol camp, afegir la línia directament
+                    if (e.shiftKey) {{
+                        e.preventDefault();
+                        e.stopPropagation();
+                        target.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        target.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        setTimeout(() => {{ addBtn.click(); }}, 30);
+                        return;
+                    }}
+
+                    // Si hi ha un desplegable de selecció obert (BaseWeb listbox), deixar que Enter seleccioni l'opció
+                    const listbox = doc.querySelector('ul[role="listbox"], [role="listbox"][id*="popover"]');
+                    if (listbox && listbox.offsetParent !== null) {{
+                        return;
+                    }}
+
+                    // Obtenir els inputs de text i numèrics visibles i editables DE LA FILA MANUAL (mai els de fora)
+                    const inputs = Array.from(manualRow.querySelectorAll('input:not([type="hidden"]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not([type="file"])'))
+                        .filter(el => {{
+                            const style = window.parent.getComputedStyle(el);
+                            return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+                        }});
+
+                    const index = inputs.indexOf(target);
+                    if (index === -1) return;
+
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    target.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    target.dispatchEvent(new Event('change', {{ bubbles: true }}));
+
+                    const container = target.closest('[data-testid="stNumberInputContainer"]') || 
+                                      target.closest('[data-testid="stTextInputContainer"]') || 
+                                      target.closest('[data-testid="stSelectbox"]');
+                    const parentWidget = container ? container.parentElement : null;
+                    const labelElem = parentWidget ? (parentWidget.querySelector('label') || parentWidget.querySelector('[data-testid="stWidgetLabel"]')) : null;
+                    const labelText = labelElem ? (labelElem.textContent || '').toUpperCase() : '';
+
+                    // Si és PREU UNIT., %, PROMOCIÓ o l'últim input de la línia: ENVIAR AL BOTÓ 'Entrar línia'
+                    const isPreu = labelText.includes('PREU') || labelText.includes('PREU UNIT');
+                    const isPct = labelText.includes('%');
+                    const isProm = labelText.includes('PROMOC') || labelText.includes('PROMOCI');
+                    const isLastInput = (index >= inputs.length - 1);
+
+                    if (isPreu || isPct || isProm || isLastInput) {{
+                        setTimeout(() => {{
+                            addBtn.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
+                            addBtn.focus();
+                        }}, 30);
+                        return;
+                    }}
+
+                    // En cas contrari (Família, Article, Pes, Quantitat), avançar al següent input de la línia
+                    if (index < inputs.length - 1) {{
+                        const nextInput = inputs[index + 1];
+                        setTimeout(() => {{
+                            nextInput.focus();
+                            if (typeof nextInput.select === 'function') {{
+                                nextInput.select();
+                            }}
+                        }}, 25);
+                    }} else {{
+                        setTimeout(() => {{
+                            addBtn.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
+                            addBtn.focus();
+                        }}, 30);
+                    }}
+                }};
+
+                doc.addEventListener('keydown', window.parent.__compres_enter_handler, true);
+            }} catch(e) {{
+                console.error("Error a compres_enter_handler:", e);
+            }}
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0
+    )
 
     # Table Grid
     if items:
@@ -2680,108 +2831,6 @@ Retorna ÚNICAMENT l'objecte JSON.
                 
     with col_b2:
         st.button("Netejar Tiquet", key="btn_clear_ticket", on_click=cb_clear_ticket)
-
-    st.components.v1.html(
-        """
-        <script>
-        (function() {
-            try {
-                const doc = window.parent.document;
-                if (!doc) return;
-
-                // Netejar listener previ si ja existia per evitar duplicats
-                if (window.parent.__compres_enter_handler) {
-                    doc.removeEventListener('keydown', window.parent.__compres_enter_handler, true);
-                }
-
-                window.parent.__compres_enter_handler = function(e) {
-                    if (e.key !== 'Enter') return;
-
-                    const target = e.target;
-                    if (!target || target.tagName !== 'INPUT') return;
-
-                    // Comprovar si estem al mòdul de Compres Super
-                    const isCompres = Array.from(doc.querySelectorAll('h2, span')).some(el => 
-                        el.textContent && (el.textContent.includes('Compres Super') || el.textContent.includes('Llista de la Compra'))
-                    );
-                    if (!isCompres) return;
-
-                    // Botó 'Intro línia'
-                    const addBtn = Array.from(doc.querySelectorAll('button')).find(b => 
-                        b.textContent && (b.textContent.includes('Intro línia') || b.textContent.includes('Intro linia'))
-                    );
-
-                    // Si l'usuari prem Shift + Enter a qualsevol camp, afegir la línia directament
-                    if (e.shiftKey && addBtn) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        target.dispatchEvent(new Event('input', { bubbles: true }));
-                        target.dispatchEvent(new Event('change', { bubbles: true }));
-                        setTimeout(() => { addBtn.click(); }, 30);
-                        return;
-                    }
-
-                    // Si hi ha un menú desplegable de selecció obert (BaseWeb listbox), deixar que Enter seleccioni l'opció
-                    const listbox = doc.querySelector('ul[role="listbox"], [role="listbox"][id*="popover"]');
-                    if (listbox && listbox.offsetParent !== null) {
-                        return;
-                    }
-
-                    // Obtenir tots els inputs de text i numèrics visibles i editables
-                    const inputs = Array.from(doc.querySelectorAll('input:not([type="hidden"]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not([type="file"])'))
-                        .filter(el => {
-                            const style = window.parent.getComputedStyle(el);
-                            return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-                        });
-
-                    const index = inputs.indexOf(target);
-                    if (index === -1) return;
-
-                    // Aturar comportament per defecte abans que React / Streamlit intercepti l'Enter
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    // Forçar que Streamlit actualitzi el valor escrit
-                    target.dispatchEvent(new Event('input', { bubbles: true }));
-                    target.dispatchEvent(new Event('change', { bubbles: true }));
-
-                    // Comprovar si estem al camp de PROMOCIÓ (últim camp editable de la línia)
-                    const container = target.closest('[data-testid="stNumberInputContainer"]') || target.closest('[data-testid="stTextInputContainer"]');
-                    const labelElem = container ? (container.parentElement ? container.parentElement.querySelector('label') : null) : null;
-                    const labelText = labelElem ? labelElem.textContent.toUpperCase() : '';
-
-                    if (labelText.includes('PROMOCIÓ') && addBtn) {
-                        setTimeout(() => {
-                            addBtn.click();
-                        }, 40);
-                        return;
-                    }
-
-                    // Passar al següent input de la línia
-                    if (index < inputs.length - 1) {
-                        const nextInput = inputs[index + 1];
-                        setTimeout(() => {
-                            nextInput.focus();
-                            if (typeof nextInput.select === 'function') {
-                                nextInput.select();
-                            }
-                        }, 25);
-                    } else if (addBtn) {
-                        setTimeout(() => {
-                            addBtn.click();
-                        }, 40);
-                    }
-                };
-
-                // Registrar en fase de captura (true) per avançar-se a React i Streamlit
-                doc.addEventListener('keydown', window.parent.__compres_enter_handler, true);
-            } catch(e) {}
-        })();
-        </script>
-        """,
-        height=0,
-        width=0
-    )
 
 # ----------------- HEADER AREA -----------------
 
