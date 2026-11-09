@@ -2086,6 +2086,7 @@ Extreu i neteja els productes en un format JSON estricte:
 {{
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
     "data": "DD/MM/YYYY (si la trobes)",
+    "total_tiquet": 0.0,
     "descompte_global": 0.0,
     "articles": [
     {{
@@ -2096,7 +2097,10 @@ Extreu i neteja els productes en un format JSON estricte:
     }}
     ]
 }}
-Si hi ha un descompte global o cupó al final del tiquet (en negatiu o deduït del total), posa el seu valor positiu a "descompte_global". Ignora IVA, Targetes i subtotals. Extreu només productes reals a "articles". Retorna ÚNICAMENT l'objecte JSON.
+IMPORTANT SOBRE TOTALS I DESCOMPTES:
+- 'total_tiquet': Posa el total final a pagar imprès al tiquet (ex: 'TOTAL COMPRA', 'TOTAL A PAGAR EUROS', 'TARGET.TEF').
+- 'descompte_global': Només per a cupons o descomptes que NO s'hagin deduït ja dels articles. Si al tiquet hi ha una secció de 'TOTAL ESTALVI' o cupons ja reflectits en el preu final de cada article, posa 0.0 a 'descompte_global'.
+Ignora IVA, Targetes i subtotals. Extreu només productes reals a "articles". Retorna ÚNICAMENT l'objecte JSON.
 """
                             ok_call, response_text, latency = call_llm_api(
                                 prompt=prompt,
@@ -2143,6 +2147,7 @@ L'estructura del JSON ha de ser EXACTAMENT aquesta:
 {
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
     "data": "DD/MM/YYYY (si la trobes)",
+    "total_tiquet": 0.0,
     "descompte_global": 0.0,
     "articles": [
     {
@@ -2155,9 +2160,10 @@ L'estructura del JSON ha de ser EXACTAMENT aquesta:
 }
 Notes importants:
 1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal).
-2. Si hi ha un descompte global o cupó al final del tiquet (en negatiu o deduït del total), posa el seu valor positiu a "descompte_global".
-3. Assegura't de capturar bé el 'preu_total' de la línia.
-4. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
+2. 'total_tiquet': Posa el total final a pagar imprès al tiquet (ex: 'TOTAL COMPRA', 'TOTAL A PAGAR EUROS', 'TARGET.TEF').
+3. 'descompte_global': Només per a cupons o descomptes que NO s'hagin deduït ja dels articles. Si al tiquet hi ha una secció de 'TOTAL ESTALVI' o cupons ja reflectits en el preu final de cada article, posa 0.0 a 'descompte_global'.
+4. Assegura't de capturar bé el 'preu_total' de la línia.
+5. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 Retorna ÚNICAMENT l'objecte JSON.
 """
                             ok_call, response_text, latency = call_llm_api(
@@ -2227,14 +2233,6 @@ Retorna ÚNICAMENT l'objecte JSON.
                             st.session_state["ticket_date"] = cand
                             st.session_state["ticket_date_widget"] = cand
 
-                    # 3. Descompte global si es detecta al tiquet
-                    try:
-                        descompte_trobat = float(data.get("descompte_global", 0.0) or 0.0)
-                        if descompte_trobat > 0:
-                            st.session_state["ticket_discount"] = round(abs(descompte_trobat), 2)
-                    except Exception:
-                        pass
-
                     # Fallback intel·ligent des del nom de fitxer d'escàner (ticket_<super>_<date>)
                     if not st.session_state.get("ticket_super_val") or not data.get("data"):
                         import re
@@ -2298,6 +2296,35 @@ Retorna ÚNICAMENT l'objecte JSON.
 
                     parsed = group_duplicate_ticket_items(parsed)
                     st.session_state["ticket_items"] = parsed
+
+                    # 4. Conciliació intel·ligent del Descompte Global vs Total Tiquet
+                    try:
+                        total_tiquet_trobat = float(data.get("total_tiquet", 0.0) or 0.0)
+                        descompte_trobat = float(data.get("descompte_global", 0.0) or 0.0)
+                        sum_items = round(sum(item['totLinea'] for item in parsed), 2)
+                        
+                        if total_tiquet_trobat > 0:
+                            diff = round(sum_items - total_tiquet_trobat, 2)
+                            if abs(diff) <= 0.05:
+                                # Els articles ja sumen exactament el total del tiquet!
+                                st.session_state["ticket_discount"] = 0.0
+                            elif diff > 0.05:
+                                # Els articles sumen més: la diferència és el descompte global real
+                                st.session_state["ticket_discount"] = diff
+                            else:
+                                st.session_state["ticket_discount"] = 0.0
+                        elif descompte_trobat > 0:
+                            # Si no tenim total_tiquet explícit:
+                            # Comprovar si les promocions de les línies ja sumen aquest descompte (ex. Total Estalvi de Dia)
+                            sum_proms = round(sum(item.get('prom', 0.0) for item in parsed), 2)
+                            if abs(sum_proms - descompte_trobat) <= 0.10:
+                                st.session_state["ticket_discount"] = 0.0
+                            else:
+                                st.session_state["ticket_discount"] = round(abs(descompte_trobat), 2)
+                        else:
+                            st.session_state["ticket_discount"] = 0.0
+                    except Exception as e_disc:
+                        st.session_state["ticket_discount"] = 0.0
                     save_unknown_products(parsed, current_super)
                     st.session_state["ocr_failed"] = False
                     st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA ({mod})! S'han detectat {len(parsed)} articles."

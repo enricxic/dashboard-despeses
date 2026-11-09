@@ -1017,7 +1017,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6240;TR Cartera;Compte;03/03/2026;marzo;2026;6.45;0.0;op_banc;op_banc;TR Cashback;;False
 6104;TR Cartera;Compte;01/01/2026;enero;2026;10.0;0.0;op_banc;op_banc;TR Cashback;Promoció Amazon;False
 6888;TradeRep.;Dèbit;22/07/2026;julio;2026;0.0;3.15;Càrrec;restaurant;Bar;Santa Caterina ;False
-8252;Efectiu;nan;03/11/2026;noviembre;2026;0.0;55.0;Càrrec;despesa_general;Lloguer Parking;;False
+8252;Efectiu;;03/11/2026;noviembre;2026;0.0;55.0;Càrrec;despesa_general;Lloguer Parking;;False
 2557;LaCaixa;Compte;11/08/2023;agosto;2023;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
 2560;Casa;;17/08/2023;agosto;2023;0.0;60.0;op_banc;op_banc;Traspàs comptes;;False
 2575;Casa;;22/08/2023;agosto;2023;0.0;20.0;op_banc;op_banc;Traspàs comptes;;False
@@ -3092,6 +3092,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6977;TradeRep.;Dèbit;05/08/2026;agosto;2026;0.0;17.0;Càrrec;varis;Perruqueria;Isabel;False
 6978;TradeRep.;Dèbit;05/08/2026;agosto;2026;0.0;23.45;Càrrec;restaurant;Bar;Gelats Galan;False
 7068;T.Moneder;Dèbit;25/08/2026;agosto;2026;0.0;11.05;Càrrec;menjar;Mercadona;;False
+8263;BBVA;VISA;05/11/2026;noviembre;2026;0.0;177.02;Càrrec;proveidor;Exaprint;Estovalles Xarrup 3000;False
 5803;Efectiu;;30/11/2025;noviembre;2025;0.0;6.0;op_banc;varis;Curs;Unguents i tintures;False
 5326;BBVA;Dèbit;01/08/2025;agosto;2025;0.0;-15.99;Càrrec;roba;Decatlon;devolució traje bany;False
 5354;BBVA;Dèbit;06/08/2025;agosto;2025;0.0;8.22;Càrrec;manteniment;Xino Sta.Coloma;Arbúcies. Water+ adapatador;False
@@ -3145,6 +3146,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5391;BBVA;Dèbit;18/08/2025;agosto;2025;0.0;30.57;Càrrec;menjar;Alcampo;;False
 7070;Efectiu;Efectiu;25/08/2026;agosto;2026;0.0;15.0;Càrrec;menjar;Ous casolans;;False
 7071;Efectiu;Efectiu;23/08/2026;agosto;2026;0.0;8.0;Càrrec;menjar;Plaça;;False
+8264;BBVA;Compte;05/11/2026;noviembre;2026;0.0;35.53;op_banc;op_banc;Pago VISA;;False
 73;BBVA;Compte;09/04/2021;abril;2021;0.0;11.85;Càrrec;assegurança;DP Morts Enric;;False
 5410;BBVA;Dèbit;25/08/2025;agosto;2025;0.0;10.5;Càrrec;restaurant;Bar;Trànsit. Figueres;False
 5415;BBVA;Dèbit;26/08/2025;agosto;2025;0.0;13.0;Càrrec;restaurant;Bar;Barrilet. Palamós;False
@@ -3197,6 +3199,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5492;BBVA;Dèbit;05/09/2025;septiembre;2025;0.0;33.91;Càrrec;menjar;Dia;;False
 5493;BBVA;Dèbit;05/09/2025;septiembre;2025;0.0;9.23;Càrrec;neteja;Dia;;False
 7072;Efectiu;Efectiu;23/08/2026;agosto;2026;0.0;3.82;Càrrec;menjar;Fruiterra;;False
+8265;BBVA;Compte;05/11/2026;noviembre;2026;0.0;66.35;Càrrec;despesa_general;Aigua;;False
 5557;BBVA;Dèbit;23/09/2025;septiembre;2025;0.0;65.4;Càrrec;restaurant;Restaurant;Castell Buffet de Besalú;False
 5623;BBVA;Dèbit;13/10/2025;octubre;2025;0.0;14.99;Càrrec;roba;LIDL;Pantaló trekking Jordi;False
 6981;TradeRep.;Dèbit;07/08/2026;agosto;2026;0.0;8.3;Càrrec;menjar;Peixeteria;[VACANCES];False
@@ -3249,6 +3252,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5632;BBVA;Dèbit;15/10/2025;octubre;2025;0.0;9.74;Càrrec;menjar;Novavenda;;False
 5633;BBVA;Dèbit;15/10/2025;octubre;2025;0.0;3.35;Càrrec;neteja;Novavenda;;False
 7073;Efectiu;;26/08/2026;agosto;2026;0.0;19.0;Càrrec;buta;Butà reparto;;False
+8266;TradeRep.;Dèbit;05/11/2026;noviembre;2026;0.0;4.4;Càrrec;menjar;Fleca Arnau;;False
 5593;BBVA;Dèbit;04/10/2025;octubre;2025;0.0;18.3;Càrrec;butà;Butà Gasolinera;;False
 5587;BBVA;Dèbit;02/10/2025;octubre;2025;0.0;25.58;Càrrec;farmàcia;Farmàcia;;False
 5942;LaCaixa;Compte;23/12/2025;diciembre;2025;119.67;0.0;Ingrés;ingrés_general;Complement Generalitat;;False
@@ -3296,6 +3300,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 5768;BBVA;Dèbit;20/11/2025;noviembre;2025;0.0;8.09;Càrrec;menjar;Dia;;False
 5769;BBVA;Dèbit;20/11/2025;noviembre;2025;0.0;4.8;Càrrec;menjar;Pa i pastisseria;;False
 5770;BBVA;Dèbit;21/11/2025;noviembre;2025;0.0;25.0;Càrrec;menjar;AreaGuissona;;False
+8267;Efectiu;;05/11/2026;noviembre;2026;0.0;20.0;Càrrec;buta;Butà reparto;;False
 5841;BBVA;Dèbit;07/12/2025;diciembre;2025;0.0;5.0;Càrrec;varis;Expectacles/Teatre;fira tió;False
 5861;BBVA;Dèbit;12/12/2025;diciembre;2025;0.0;10.1;Càrrec;restaurant;Bar;Al Grano .Palamós;False
 5862;BBVA;Dèbit;12/12/2025;diciembre;2025;0.0;65.0;Càrrec;restaurant;Restaurant;Can Quel. Palamós;False
@@ -3347,9 +3352,12 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 7076;TradeRep.;Dèbit;26/08/2026;agosto;2026;0.0;9.25;Càrrec;menjar;Dia;;False
 7077;TradeRep.;Dèbit;26/08/2026;agosto;2026;0.0;20.39;Càrrec;menjar;Can Rinsa;;False
 7078;LaCaixa;Compte;24/08/2026;agosto;2026;628.8;0.0;Ingrés;ingres_general;Pensió no contributiva;;False
+8268;Efectiu;;04/11/2026;noviembre;2026;0.0;10.0;Càrrec;personal;Jordi;;False
 5895;BBVA;Dèbit;19/12/2025;diciembre;2025;0.0;32.45;Càrrec;roba;Sports Arbúcies;Pantaló Berna;False
 6986;TradeRep.;Dèbit;07/08/2026;agosto;2026;0.0;17.98;Càrrec;roba;Woman Secret;Bermudes Isa;False
 7079;TradeRep.;Dèbit;26/08/2026;agosto;2026;0.0;10.07;Càrrec;menjar;Novavenda;;False
+8269;TradeRep.;Dèbit;05/11/2026;noviembre;2026;0.0;28.39;Càrrec;menjar;Novavenda;;False
+8270;TradeRep.;Dèbit;05/11/2026;noviembre;2026;0.0;6.06;Càrrec;neteja;Novavenda;;False
 6057;TradeRep.;Compte;24/01/2026;enero;2026;200.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 6059;BBVA;Compte;24/01/2026;enero;2026;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False
 6069;LaCaixa;Compte;26/01/2026;enero;2026;0.0;50.0;op_banc;op_banc;Traspàs comptes;;False
@@ -3444,11 +3452,13 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6073;TradeRep.;Dèbit;27/01/2026;enero;2026;0.0;19.99;Càrrec;Parallar;LIDL;Eina multifunció;False
 6987;LaCaixa;Compte;07/08/2026;agosto;2026;0.0;700.0;op_banc;op_banc;Traspàs comptes;;False
 7080;TradeRep.;Dèbit;27/08/2026;agosto;2026;0.0;10.58;Càrrec;menjar;Dia;;False
+8271;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;1.35;Càrrec;varis;Parking;Sta. Caterina ;False
 6141;TradeRep.;Dèbit;09/02/2026;febrero;2026;0.0;15.98;Càrrec;roba;Action Girona;pantaló Isa+ guants;False
 6145;TradeRep.;Dèbit;10/02/2026;febrero;2026;0.0;-6.99;Càrrec;roba;Woman Secret;Devolució;False
 6156;TradeRep.;Dèbit;12/02/2026;febrero;2026;0.0;-11.99;Càrrec;roba;Action Girona;Devolució Pantaló Isa;False
 6988;BBVA;Compte;07/08/2026;agosto;2026;600.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 7081;BBVA;Compte;28/08/2026;agosto;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
+8272;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;1.77;Càrrec;manteniment;Leroy Merlin;Latiguillos + endoll - 5€ descompte ;False
 6157;LaCaixa;Compte;11/02/2026;febrero;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
 6158;BBVA;Compte;11/02/2026;febrero;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 6159;BBVA;Compte;11/02/2026;febrero;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
@@ -3535,12 +3545,14 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6257;TradeRep.;Dèbit;07/03/2026;marzo;2026;0.0;22.01;Càrrec;menjar;LIDL;;False
 6258;BBVA;Dèbit;06/03/2026;marzo;2026;0.0;80.4;Càrrec;restaurant;Restaurant;Local Social Campllong;False
 6259;BBVA;Dèbit;07/03/2026;marzo;2026;0.0;30.85;Càrrec;gasolina;GasolinaAreaGuissona;;False
+8273;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;17.4;Càrrec;restaurant;Restaurant;McDonald's Girona ;False
 6260;BBVA;Dèbit;08/03/2026;marzo;2026;0.0;19.21;Càrrec;menjar;AreaGuissona;;False
 6261;BBVA;Dèbit;08/03/2026;marzo;2026;0.0;9.27;Càrrec;menjar;Dia;;False
 6276;BBVA;Compte;28/02/2026;febrero;2026;100.0;0.0;Ingrés;ingrés_general;Hisenda 100;;False
 6301;TradeRep.;Dèbit;17/03/2026;marzo;2026;0.0;6.36;Càrrec;manteniment;LeroyMerlin;perfils làmina calefac.;False
 6991;TradeRep.;Dèbit;07/08/2026;agosto;2026;0.0;12.91;Càrrec;menjar;Mercadona;[VACANCES];False
 7083;TradeRep.;Dèbit;28/08/2026;agosto;2026;0.0;6.0;Càrrec;restaurant;Bar;Tramuntana ;False
+8274;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;12.25;Càrrec;varis;Transport;Targeta autobús 10 viatges;False
 6271;BBVA;Compte;10/03/2026;marzo;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 6272;BBVA;Compte;10/03/2026;marzo;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
 6273;TradeRep.;Compte;10/03/2026;marzo;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
@@ -3580,6 +3592,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6337;TradeRep.;Dèbit;22/03/2026;marzo;2026;0.0;19.3;Càrrec;restaurant;Bar;Vermut Can Torres;False
 6992;TradeRep.;Dèbit;07/08/2026;agosto;2026;0.0;26.0;Càrrec;restaurant;Restaurant;Hamburguesa Castillo ;False
 7084;TradeRep.;Dèbit;28/08/2026;agosto;2026;0.0;5.85;Càrrec;restaurant;Bar;La Fleca. Diversiones;False
+8275;Efectiu;;06/11/2026;noviembre;2026;0.0;10.0;Càrrec;personal;Jordi;Excursió Sant Miquel del Fai;False
 6332;BBVA;Compte;24/03/2026;marzo;2026;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False
 6333;TradeRep.;Compte;24/03/2026;marzo;2026;200.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 6351;BBVA;Compte;27/03/2026;marzo;2026;0.0;1500.0;op_banc;op_banc;Traspàs comptes;;False
@@ -3659,6 +3672,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6470;TradeRep.;Dèbit;20/04/2026;abril;2026;0.0;1.2;Càrrec;menjar;Pa i pastisseria;;False
 6471;TradeRep.;Dèbit;16/04/2026;abril;2026;0.0;4.4;Càrrec;menjar;Pa i pastisseria;;False
 6472;TradeRep.;Dèbit;16/04/2026;abril;2026;0.0;42.41;Càrrec;gasolina;GasolinaAreaGuissona;;False
+8276;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;5.51;Càrrec;menjar;AreaGuissona;;False
 6491;BBVA;Compte;23/04/2026;abril;2026;100.0;0.0;op_banc;ingrés_general;Hisenda 100;;False
 6477;Efectiu;;16/04/2026;abril;2026;365.0;0.0;Ingrés;ingrés_extra;Feina Horeca;estovalles xarrup;False
 6474;TradeRep.;Dèbit;17/04/2026;abril;2026;0.0;30.0;Càrrec;roba;Sports Arbúcies;jaqueta Jordi + pantaló Isa;False
@@ -3666,6 +3680,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6994;TradeRep.;Dèbit;08/08/2026;agosto;2026;0.0;49.98;Càrrec;roba;Altre roba;Springfield ;False
 7087;TradeRep.;Dèbit;28/08/2026;agosto;2026;0.0;22.0;Càrrec;restaurant;Restaurant;Pizza Diversiones;False
 7088;TradeRep.;Dèbit;30/08/2026;agosto;2026;0.0;19.9;Càrrec;restaurant;Restaurant;Pollastres BonPreu;False
+8277;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;6.68;Càrrec;menjar;LIDL;;False
 6451;Casa;;08/04/2026;abril;2026;0.0;80.0;op_banc;op_banc;Traspàs comptes;;False
 6456;LaCaixa;Compte;14/04/2026;abril;2026;0.0;200.0;op_banc;op_banc;Traspàs comptes;;False
 6461;BBVA;Compte;16/04/2026;abril;2026;100.0;0.0;op_banc;op_banc;Traspàs comptes;;False
@@ -3708,6 +3723,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6996;Efectiu;;08/08/2026;agosto;2026;0.0;5.5;Càrrec;restaurant;Bar;Tartas de Julita;False
 6997;TradeRep.;Dèbit;08/08/2026;agosto;2026;0.0;4.7;Càrrec;restaurant;Bar;Cafè Habaneras;False
 7089;TradeRep.;Dèbit;30/08/2026;agosto;2026;0.0;10.69;Càrrec;menjar;Novavenda;;False
+8278;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;8.48;Càrrec;roba;LIDL;Malles Isabel ;False
 6507;TradeRep.;Compte;25/04/2026;abril;2026;300.0;0.0;op_banc;op_banc;Traspàs comptes;;False
 6519;BBVA;Compte;27/04/2026;abril;2026;0.0;300.0;op_banc;op_banc;Traspàs comptes;;False
 6528;LaCaixa;Compte;29/04/2026;abril;2026;0.0;100.0;op_banc;op_banc;Traspàs comptes;;False
@@ -3751,6 +3767,8 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6580;TradeRep.;Dèbit;10/05/2026;mayo;2026;0.0;85.8;Càrrec;roba;Sports Arbúcies;Sabates Jordi i Enric;False
 6662;TradeRep.;Dèbit;29/05/2026;mayo;2026;0.0;43.8;Càrrec;gasolina;GasolinaAreaGuissona;;False
 7090;Efectiu;Efectiu;30/08/2026;agosto;2026;0.0;9.4;Càrrec;menjar;Plaça;;False
+8279;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;25.83;Càrrec;menjar;LIDL;;False
+8280;TradeRep.;Dèbit;06/11/2026;noviembre;2026;0.0;4.26;Càrrec;rebost;LIDL;;False
 507;LaCaixa;Compte;24/11/2021;noviembre;2021;805.6;0.0;Ingrés;ingrés_general;Pensió no contributiva;;False
 509;LaCaixa;Compte;24/11/2021;noviembre;2021;0.0;0.0;Ingrés;ingrés_general;Pensió no contributiva;;False
 512;LaCaixa;Compte;25/11/2021;noviembre;2021;0.0;0.0;Ingrés;ingrés_general;Pensió no contributiva;;False
@@ -3832,6 +3850,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 199;Efectiu;;15/06/2021;junio;2021;50.0;0.0;Ingrés;ingrés_extra;Ingres Extra;Donació Pepe;False
 6999;TradeRep.;Dèbit;08/08/2026;agosto;2026;0.0;59.09;Càrrec;gasolina;Gasolina altres;Plenergy La Zenia;False
 7091;LaCaixa;Compte;28/08/2026;agosto;2026;68.25;0.0;Ingrés;ingres_general;Complement Generalitat;;False
+8281;Efectiu;;08/11/2026;noviembre;2026;0.0;9.4;Càrrec;menjar;Plaça;;False
 6681;BBVA;Compte;05/06/2026;junio;2026;0.0;97.39;op_banc;op_banc;Pago VISA;;False
 6711;Efectiu;;08/06/2026;junio;2026;0.0;3.5;op_banc;varis;Papereria;revista;False
 247;BBVA;Compte;07/07/2021;julio;2021;451.92;0.0;Ingrés;ingrés_general;Abonament Ajuda Enric;;False
@@ -4884,7 +4903,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 1435;BBVA;Compte;03/10/2022;octubre;2022;0.0;12.0;Càrrec;personal;Jordi; ;False
 1382;BBVA;Dèbit;23/09/2022;septiembre;2022;0.0;1.4;Càrrec;restaurant;Bar;Cafè Arbúcies;False
 1437;BBVA;VISA;01/10/2022;octubre;2022;0.0;5.98;Càrrec;manteniment;Aliexpress;oferta;False
-8125;Efectiu;nan;04/10/2026;octubre;2026;0.0;55.0;Càrrec;despesa_general;Lloguer Parking;;False
+8125;Efectiu;;04/10/2026;octubre;2026;0.0;55.0;Càrrec;despesa_general;Lloguer Parking;;False
 1443;BBVA;VISA;05/10/2022;octubre;2022;0.0;55.8;Càrrec;varis;Viatges;Ryanair a Mallorca;False
 1444;BBVA;VISA;05/10/2022;octubre;2022;0.0;35.52;Càrrec;varis;Viatges;Vueling Tornada Mallorca;False
 1445;BBVA;VISA;05/10/2022;octubre;2022;0.0;136.67;Càrrec;varis;Viatges;Lloguer cotxe Mallorca;False
@@ -7380,3 +7399,4 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 6215;LaCaixa;Compte;10/02/2026;febrero;2026;0.0;68.46;Càrrec;despesa_general;Ajunt. Arbúcies;;False
 6004;LaCaixa;Compte;09/01/2026;enero;2026;0.0;68.46;Càrrec;despesa_general;Ajunt. Arbúcies;;False
 5857;LaCaixa;Compte;04/12/2025;diciembre;2025;0.0;29.23;Càrrec;despesa_general;Ajunt. Arbúcies;;False
+8282;TradeRep.;Dèbit;07/11/2026;noviembre;2026;0.0;25.14;Càrrec;menjar;Dia;;False
