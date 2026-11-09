@@ -1801,7 +1801,7 @@ def render_compres_super_interface():
 
         mode_captura = st.radio(
             "Mètode de captura del tiquet",
-            ["📁 Pujar Fitxer / Escàner físic", "📸 Càmera del Mòbil (Directa)"],
+            ["📁 Pujar Fitxer", "📸 Càmera del Mòbil (Directa)"],
             horizontal=True,
             key="ticket_capture_mode_sel",
             label_visibility="collapsed"
@@ -1819,54 +1819,34 @@ def render_compres_super_interface():
                 help="Obre directament la càmera web o del mòbil sense sortir del navegador"
             )
         else:
-            col_scan_btn1, col_scan_btn2 = st.columns([0.46, 0.54], vertical_alignment="center")
-            with col_scan_btn1:
-                if st.button("🖨️ Obrir Escàner", key="btn_open_scanner_ui", use_container_width=True, help="Obre la finestra d'escaneig ràpid per adquirir el tiquet físic des de l'escàner"):
-                    try:
-                        import subprocess
-                        import sys
-                        scanner_script = os.path.abspath("auto_scan_ui.py")
-                        if os.path.exists(scanner_script):
-                            creationflags = 0x08000000 if os.name == 'nt' else 0
-                            subprocess.Popen([sys.executable, scanner_script])
-                            st.toast("🖨️ Finestra d'escaneig oberta. Quan acabis, prem 'Carregar últim'.", icon="🖨️")
-                        else:
-                            st.error("No s'ha trobat auto_scan_ui.py")
-                    except Exception as e_scan:
-                        st.error(f"Error obrint l'escàner: {e_scan}")
+            if recent_scans:
+                latest_fp, latest_fn, latest_mtime = recent_scans[0]
+                now_ts = datetime.now().timestamp()
+                is_recent = (now_ts - latest_mtime) < 3600  # Última hora
+                btn_type = "primary" if is_recent else "secondary"
+                short_fn = latest_fn.replace("ticket_", "").replace(".jpg", "").replace(".png", "")
+                try:
+                    time_label = datetime.fromtimestamp(latest_mtime).strftime("%H:%M")
+                except Exception:
+                    time_label = ""
+                btn_label = f"📥 Carregar {short_fn} ({time_label})" if time_label else f"📥 Carregar {short_fn}"
+                if len(btn_label) > 35:
+                    btn_label = f"📥 Carregar {short_fn[:20]}... ({time_label})"
+                if st.button(btn_label, key="btn_load_latest_scan", type=btn_type, use_container_width=True, help=f"Carrega directament {latest_fn} per processar-lo amb OCR"):
+                    st.session_state["loaded_scanned_file"] = latest_fp
+                    st.session_state.pop("processed_file_id", None)
+                    st.session_state.pop("ocr_failed", None)
+                    st.rerun()
 
-            with col_scan_btn2:
-                if recent_scans:
-                    latest_fp, latest_fn, latest_mtime = recent_scans[0]
-                    now_ts = datetime.now().timestamp()
-                    is_recent = (now_ts - latest_mtime) < 3600  # Última hora
-                    btn_type = "primary" if is_recent else "secondary"
-                    short_fn = latest_fn.replace("ticket_", "").replace(".jpg", "").replace(".png", "")
-                    try:
-                        time_label = datetime.fromtimestamp(latest_mtime).strftime("%H:%M")
-                    except Exception:
-                        time_label = ""
-                    btn_label = f"📥 Carregar {short_fn} ({time_label})" if time_label else f"📥 Carregar {short_fn}"
-                    if len(btn_label) > 28:
-                        btn_label = f"📥 Carregar {short_fn[:14]}... ({time_label})"
-                    if st.button(btn_label, key="btn_load_latest_scan", type=btn_type, use_container_width=True, help=f"Carrega directament {latest_fn} per processar-lo amb OCR"):
-                        st.session_state["loaded_scanned_file"] = latest_fp
-                        st.session_state.pop("processed_file_id", None)
-                        st.session_state.pop("ocr_failed", None)
-                        st.rerun()
-                else:
-                    st.caption("Cap tiquet a tickets/")
-
-            # Desplegable si hi ha múltiples tiquets a tickets/
-            if len(recent_scans) > 1:
-                with st.expander("📂 Historial de tiquets escanejats", expanded=False):
-                    ticket_options = {f"{fn} ({datetime.fromtimestamp(mt).strftime('%d/%m %H:%M')})": fp for fp, fn, mt in recent_scans[:8]}
-                    sel_opt = st.selectbox("Tria tiquet escanejat:", list(ticket_options.keys()), key="sel_scanned_history")
-                    if st.button("📥 Carregar seleccionat", key="btn_load_selected_history"):
-                        st.session_state["loaded_scanned_file"] = ticket_options[sel_opt]
-                        st.session_state.pop("processed_file_id", None)
-                        st.session_state.pop("ocr_failed", None)
-                        st.rerun()
+                if len(recent_scans) > 1:
+                    with st.expander("📂 Historial de tiquets a tickets/", expanded=False):
+                        ticket_options = {f"{fn} ({datetime.fromtimestamp(mt).strftime('%d/%m %H:%M')})": fp for fp, fn, mt in recent_scans[:8]}
+                        sel_opt = st.selectbox("Tria tiquet:", list(ticket_options.keys()), key="sel_scanned_history")
+                        if st.button("📥 Carregar seleccionat", key="btn_load_selected_history"):
+                            st.session_state["loaded_scanned_file"] = ticket_options[sel_opt]
+                            st.session_state.pop("processed_file_id", None)
+                            st.session_state.pop("ocr_failed", None)
+                            st.rerun()
 
             # 2. Selector manual de fitxer (Pujar PDF, imatge, etc.)
             raw_uploaded_file = st.file_uploader(
