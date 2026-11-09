@@ -1514,29 +1514,40 @@ def ensure_session_dfs():
         'tr_cartera': 'df_cartera'
     }
     
-    required_keys = [key_mapping[t] for t in tables_to_load]
+    # Comprovar quines taules requerides encara no s'han carregat a memòria o estan buides
+    missing_tables = [
+        t for t in tables_to_load 
+        if key_mapping[t] not in st.session_state 
+        or (st.session_state[key_mapping[t]] is None or (isinstance(st.session_state[key_mapping[t]], pd.DataFrame) and st.session_state[key_mapping[t]].empty))
+    ]
     
     tracker = get_db_tracker()
-    needs_init = (
+    force_update = (
         "dfs_initialized" not in st.session_state 
         or not st.session_state.get("dfs_initialized", False)
-        or any(k not in st.session_state for k in required_keys)
         or "last_synced_time" not in st.session_state 
         or not isinstance(st.session_state.get("last_synced_time"), datetime) 
         or st.session_state.get("last_synced_time") < tracker.last_update
     )
-    if needs_init:
-        dfs = load_dashboard_data(tables_to_load=tables_to_load, mtimes=tracker.last_update)
-        st.session_state["df_desp"] = dfs[0]
-        st.session_state["df_ing"] = dfs[1]
-        st.session_state["df_super"] = dfs[2]
-        st.session_state["df_gas"] = dfs[3]
-        st.session_state["df_km"] = dfs[4]
-        st.session_state["df_hip"] = dfs[5]
-        st.session_state["df_est"] = dfs[6]
-        st.session_state["df_limits"] = dfs[7]
-        st.session_state["df_pag"] = dfs[8]
-        st.session_state["df_cartera"] = dfs[9]
+    if force_update or missing_tables:
+        to_fetch = tables_to_load if force_update else tuple(missing_tables)
+        dfs = load_dashboard_data(tables_to_load=to_fetch, mtimes=tracker.last_update)
+        
+        ordered_tables = [
+            ('despeses', 'df_desp', 0),
+            ('ingressos', 'df_ing', 1),
+            ('compresSuper', 'df_super', 2),
+            ('gasolina', 'df_gas', 3),
+            ('kmCotxe', 'df_km', 4),
+            ('hipoteca', 'df_hip', 5),
+            ('estalviDP', 'df_est', 6),
+            ('limitsDespeses', 'df_limits', 7),
+            ('pagaments', 'df_pag', 8),
+            ('tr_cartera', 'df_cartera', 9),
+        ]
+        for tbl, key, idx in ordered_tables:
+            if tbl in to_fetch:
+                st.session_state[key] = dfs[idx]
         
         st.session_state["dfs_initialized"] = True
         st.session_state["last_synced_time"] = tracker.last_update

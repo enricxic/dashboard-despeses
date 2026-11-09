@@ -1801,7 +1801,7 @@ def render_compres_super_interface():
 
         mode_captura = st.radio(
             "Mètode de captura del tiquet",
-            ["📸 Càmera del Mòbil (Directa)", "📁 Pujar Fitxer / Escàner físic"],
+            ["📁 Pujar Fitxer / Escàner físic", "📸 Càmera del Mòbil (Directa)"],
             horizontal=True,
             key="ticket_capture_mode_sel",
             label_visibility="collapsed"

@@ -321,219 +321,19 @@ def render(view_mode="economic"):
     
     
     
-    class DBTracker:
-        def __init__(self):
-            self.last_update = datetime.now()
-        def update(self):
-            self.last_update = datetime.now()
-    
-    @st.cache_resource
-    @st.cache_resource
-    def get_db_engine():
-        if "connection_string" in st.secrets:
-            try:
-                import sqlalchemy
-                return sqlalchemy.create_engine(
-                    st.secrets["connection_string"],
-                    pool_pre_ping=True,
-                    pool_size=10,
-                    max_overflow=5
-                )
-            except Exception:
-                return None
-        return None
-
-    def fetch_table_fast(table_name):
-        engine = get_db_engine()
-        if engine:
-            try:
-                with engine.connect() as conn:
-                    return table_name, pd.read_sql(f'SELECT * FROM "{table_name}"', conn)
-            except Exception:
-                pass
-        supabase = get_supabase_client(st.session_state.get("role", "guest"))
-        return table_name, fetch_all_supabase(supabase, table_name)
-
-    def get_db_tracker():
-        return DBTracker()
-    
-    @st.cache_resource
-    def get_supabase_client(role: str) -> Client:
-        url = st.secrets["SUPABASE_URL"]
-        if role == "admin":
-            key = st.secrets["SUPABASE_KEY_SECRET"]
-        else:
-            key = st.secrets["SUPABASE_KEY_PUBLISHABLE"]
-        return create_client(url, key)
-    
-    def fetch_all_supabase(client, table_name):
-        data = []
-        count = 250
-        start = 0
-        max_retries = 3
-        while True:
-            success = False
-            for attempt in range(max_retries):
-                try:
-                    response = client.table(table_name).select("*").range(start, start + count - 1).execute()
-                    if response and hasattr(response, 'data') and response.data is not None:
-                        data.extend(response.data)
-                        if len(response.data) < count:
-                            return pd.DataFrame(data)
-                        start += count
-                        success = True
-                        break
-                except Exception as e:
-                    import time
-                    print(f"⚠️ Reintent fetch_all_supabase ({attempt+1}/{max_retries}) per a '{table_name}': {e}")
-                    time.sleep(0.4 * (attempt + 1))
-            if not success:
-                break
-        return pd.DataFrame(data)
-    
-    def get_csv_mtimes():
-        # With Supabase, we don't need local file modified times.
-        # Return a dummy dict to preserve compatibility with existing signatures.
-        return {"db": 1.0}
-    
-    def fix_mojibake(val):
-        if isinstance(val, str):
-            try:
-                return val.encode('cp850').decode('utf-8')
-            except:
-                pass
-            try:
-                return val.encode('latin1').decode('utf-8')
-            except:
-                pass
-        return val
-    
-    def fix_mojibake_df(df):
-        for col in df.select_dtypes(include=['object']).columns:
-            df[col] = df[col].apply(fix_mojibake)
-        return df
-    
-    # No cache here, relies on core.db global cached functions to prevent Streamlit inner-function cache crash
-    def load_dashboard_data(mtimes=None):
-        from core.db import _fetch_fast_tables, _fetch_slow_tables
-        fetched = {}
-        fetched.update(_fetch_fast_tables())
-        fetched.update(_fetch_slow_tables())
-        
-        # Load tables from PostgreSQL
-        df_desp = fix_mojibake_df(fetched['despeses'])
-        df_desp['ID_mov'] = pd.to_numeric(df_desp['ID_mov'], errors='coerce')
-        df_desp = df_desp.dropna(subset=['ID_mov']).sort_values(by='ID_mov', ascending=False).reset_index(drop=True)
-        df_desp['import ingrés'] = clean_numeric(df_desp['import ingrés'])
-        df_desp['Import càrrec'] = clean_numeric(df_desp['Import càrrec'])
-        df_desp['any'] = pd.to_numeric(df_desp['any'], errors='coerce').fillna(2026).astype(int)
-        df_desp['parsed_date'] = df_desp['Data'].apply(parse_excel_date)
-        if 'mes' in df_desp.columns:
-            df_desp['clean_mes'] = df_desp['mes'].astype(str).str.strip().str.lower()
-        else:
-            df_desp['clean_mes'] = ''
-        df_desp['date_score'] = df_desp['any'] * 12 + df_desp['clean_mes'].map(MONTHS_MAP).fillna(12).astype(int)
-        
-        df_ing = fix_mojibake_df(fetched['ingressos'])
-        df_ing['idIngres'] = pd.to_numeric(df_ing['idIngres'], errors='coerce')
-        df_ing = df_ing.dropna(subset=['idIngres']).sort_values(by='idIngres', ascending=False).reset_index(drop=True)
-        df_ing['Import'] = clean_numeric(df_ing['Import'])
-        df_ing['parsed_date'] = df_ing['Data'].apply(parse_excel_date)
-        if 'mes' in df_ing.columns:
-            df_ing['clean_mes'] = df_ing['mes'].astype(str).str.strip().str.lower()
-        else:
-            df_ing['clean_mes'] = ''
-        
-        df_super = fix_mojibake_df(fetched['compresSuper'])
-        df_super['IdCompra'] = pd.to_numeric(df_super['IdCompra'], errors='coerce')
-        df_super = df_super.dropna(subset=['IdCompra']).sort_values(by='IdCompra', ascending=False).reset_index(drop=True)
-        df_super['totLinea'] = clean_numeric(df_super['totLinea'])
-        df_super['parsed_date'] = df_super['data'].apply(parse_excel_date)
-        
-        df_gas = fix_mojibake_df(fetched['gasolina'])
-        df_gas = df_gas.rename(columns={'?/l': 'euros/litre', '€/l': 'euros/litre'})
-        df_gas['idGasolina'] = pd.to_numeric(df_gas['idGasolina'], errors='coerce')
-        df_gas = df_gas.dropna(subset=['idGasolina']).sort_values(by='idGasolina', ascending=False).reset_index(drop=True)
-        df_gas['import'] = clean_numeric(df_gas['import'])
-        df_gas['litres'] = clean_numeric(df_gas['litres'])
-        df_gas['euros/litre'] = clean_numeric(df_gas.get('euros/litre', 0))
-        df_gas['parsed_date'] = df_gas['data'].apply(parse_excel_date)
-        
-        df_km = fix_mojibake_df(fetched['kmCotxe'])
-        df_km['idRuta'] = pd.to_numeric(df_km['idRuta'], errors='coerce')
-        df_km = df_km.dropna(subset=['idRuta']).sort_values(by='idRuta', ascending=False).reset_index(drop=True)
-        df_km['contador'] = clean_numeric(df_km['contador'])
-        df_km['km'] = clean_numeric(df_km['km'])
-        df_km['parsed_date'] = df_km['data'].apply(parse_excel_date)
-        
-        df_hip = fetched['hipoteca'].dropna(how='all')
-        if 'Quota fixa' in df_hip.columns:
-            df_hip = df_hip.dropna(subset=['Quota fixa'])
-        df_hip['Quota fixa'] = clean_numeric(df_hip['Quota fixa'])
-        
-        df_cartera = fix_mojibake_df(fetched['tr_cartera'])
-        df_cartera['idTRCartera'] = pd.to_numeric(df_cartera.get('idTRCartera', df_cartera.index), errors='coerce')
-        df_cartera = df_cartera.dropna(subset=['idTRCartera']).sort_values(by='idTRCartera', ascending=False).reset_index(drop=True)
-        df_cartera['COMPRA'] = clean_numeric(df_cartera.get('COMPRA', 0))
-        df_cartera['VENDA'] = clean_numeric(df_cartera.get('VENDA', 0))
-        df_cartera['parsed_date'] = df_cartera.get('DATA', pd.Series(dtype=object)).apply(parse_excel_date)
-        
-        df_est = fetched['estalviDP']
-        df_est = df_est.dropna(subset=['mes', 'any'])
-        df_est['any'] = pd.to_numeric(df_est['any'], errors='coerce')
-        df_est['quota'] = clean_numeric(df_est['quota'])
-        if 'aportació' in df_est.columns:
-            df_est['aportació'] = clean_numeric(df_est['aportació'])
-        if 'rescat' in df_est.columns:
-            df_est['rescat'] = clean_numeric(df_est['rescat'])
-        if 'pérdua' in df_est.columns:
-            df_est['pérdua'] = clean_numeric(df_est['pérdua'])
-        
-        df_limits = fetched['limitsDespeses'].dropna(subset=['data_inici'])
-        df_limits['parsed_date'] = df_limits['data_inici'].apply(parse_excel_date)
-        
-        df_pag = fetched['pagaments']
-        df_pag = df_pag.dropna(subset=['idPago'])
-        df_pag['Import'] = clean_numeric(df_pag['Import'])
-        df_pag['parsed_date'] = df_pag['Data'].apply(parse_excel_date)
-        if 'mes' in df_pag.columns:
-            df_pag['clean_mes'] = df_pag['mes'].astype(str).str.strip().str.lower()
-        else:
-            df_pag['clean_mes'] = ''
-        
-        return df_desp, df_ing, df_super, df_gas, df_km, df_hip, df_est, df_limits, df_pag, df_cartera
-        
-    # Monkey-patch clear method so existing code calling load_dashboard_data.clear() still works
-    def _clear_dashboard_cache():
-        from core.db import _fetch_fast_tables, _fetch_slow_tables
-        _fetch_fast_tables.clear()
-        _fetch_slow_tables.clear()
-    load_dashboard_data.clear = _clear_dashboard_cache
-    
-    # Load categories_conceptes.json if exists
+    from core.db import (
+        get_db_tracker,
+        get_db_engine,
+        get_supabase_client,
+        fetch_all_supabase,
+        fetch_table_fast,
+        load_dashboard_data,
+        get_csv_mtimes,
+        fix_mojibake,
+        fix_mojibake_df,
+        load_categories_conceptes
+    )
     import json
-    
-    @st.cache_data(ttl=600, show_spinner=False)
-    def load_categories_conceptes():
-        try:
-            supabase = get_supabase_client("guest")
-            res = supabase.table("app_config").select("config_json").eq("id", 1).execute()
-            if res.data and len(res.data) > 0:
-                return res.data[0]["config_json"]
-        except Exception as e:
-            print("Supabase config load failed:", e)
-            pass
-    
-        # Fallback to local
-        filepath = "categories_conceptes.json"
-        if os.path.exists(filepath):
-            try:
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception:
-                pass
-        return {}
-    
     cat_config = load_categories_conceptes()
     
     def get_config_categories():
@@ -1085,36 +885,9 @@ def render(view_mode="economic"):
             print(f"FAILED PAYLOAD FOR {table_name}:", update_payload)
             st.error(f"❌ Error a l'actualitzar Supabase ({table_name}): {str(e)}")
     
-    required_keys = ["df_desp", "df_ing", "df_super", "df_gas", "df_km", "df_hip", "df_est", "df_limits", "df_pag", "df_cartera"]
-    tracker = get_db_tracker()
-    needs_init = (
-        "dfs_initialized" not in st.session_state 
-        or not st.session_state.get("dfs_initialized", False)
-        or any(k not in st.session_state for k in required_keys)
-        or "last_synced_time" not in st.session_state 
-        or not isinstance(st.session_state.get("last_synced_time"), datetime) 
-        or st.session_state.get("last_synced_time") < tracker.last_update
-        or 'date_score' not in st.session_state.get("df_desp", pd.DataFrame()).columns
-    )
-    
-    if needs_init:
-        dfs = load_dashboard_data(get_csv_mtimes())
-        st.session_state["df_desp"] = dfs[0]
-        st.session_state["df_ing"] = dfs[1]
-        st.session_state["df_super"] = dfs[2]
-        st.session_state["df_gas"] = dfs[3]
-        st.session_state["df_km"] = dfs[4]
-        st.session_state["df_hip"] = dfs[5]
-        st.session_state["df_est"] = dfs[6]
-        st.session_state["df_limits"] = dfs[7]
-        st.session_state["df_pag"] = dfs[8]
-        if len(dfs) > 9:
-            st.session_state["df_cartera"] = dfs[9]
-        else:
-            st.session_state["df_cartera"] = pd.DataFrame()
-        st.session_state["dfs_initialized"] = True
-        st.session_state["last_synced_time"] = tracker.last_update
-    
+    from core.db import ensure_session_dfs
+    ensure_session_dfs()
+
     df_desp = st.session_state.get("df_desp", pd.DataFrame())
     df_ing = st.session_state.get("df_ing", pd.DataFrame())
     df_super = st.session_state.get("df_super", pd.DataFrame())
@@ -1125,6 +898,9 @@ def render(view_mode="economic"):
     df_limits = st.session_state.get("df_limits", pd.DataFrame())
     df_pag = st.session_state.get("df_pag", pd.DataFrame())
     df_cartera = st.session_state.get("df_cartera", pd.DataFrame())
+
+    if not df_desp.empty and 'date_score' not in df_desp.columns and 'any' in df_desp.columns and 'mes' in df_desp.columns:
+        df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes'].astype(str).str.strip().str.lower().map(MONTHS_MAP).fillna(12).astype(int)
     
     if 'clean_mes' not in df_desp.columns and 'mes' in df_desp.columns:
         df_desp['clean_mes'] = df_desp['mes'].astype(str).str.strip().str.lower()
