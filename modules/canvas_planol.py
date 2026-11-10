@@ -1561,8 +1561,8 @@ def render_planol_tab(projecte: Dict[str, Any]):
         if data_act:
             st.caption(f"Darrera actualització del plànol: {data_act}")
 
-    # Editor interactiu Canvas
-    with st.expander("✏️ Obrir Editor Gràfic de Plànol (Canvas)", expanded=(preview_png is None)):
+    # Editor interactiu Canvas (sempre col·lapsat per defecte)
+    with st.expander("✏️ Obrir Editor Gràfic de Plànol (Canvas)", expanded=False):
         html_code = get_canvas_html(project_id, existing_bg_b64=bg_b64)
         components.html(html_code, height=650, scrolling=False)
 
