@@ -1813,10 +1813,43 @@ def render_compres_super_interface():
         camera_key = st.session_state.get("camera_uploader_key", "ticket_cam_0")
 
         if mode_captura == "📸 Càmera del Mòbil (Directa)":
+            st.caption("ℹ️ **Consell:** La càmera principal (del darrere) s'activa automàticament. Si cal, pots alternar entre càmeres amb el botó **[ 📷 ⇄ ]** de dalt a la dreta.")
             camera_file = st.camera_input(
                 "📸 Enfoca el tiquet de compra i prem el botó per capturar la foto:",
                 key=camera_key,
                 help="Obre directament la càmera web o del mòbil sense sortir del navegador"
+            )
+            # Script automàtic per commutar a la càmera posterior (principal) a dispositius mòbils
+            st.components.v1.html(
+                f"""
+                <script>
+                (function() {{
+                    try {{
+                        const doc = window.parent.document;
+                        if (!doc) return;
+                        const currentCamKey = "{camera_key}";
+                        if (window.parent.__auto_switched_cam_key === currentCamKey) return;
+
+                        let tries = 0;
+                        const maxTries = 40;
+                        const timer = setInterval(() => {{
+                            tries++;
+                            const switchBtn = doc.querySelector('[data-testid="stCameraInputSwitchButton"] button, [data-testid="stCameraInputSwitchButton"]');
+                            if (switchBtn) {{
+                                switchBtn.click();
+                                window.parent.__auto_switched_cam_key = currentCamKey;
+                                clearInterval(timer);
+                            }}
+                            if (tries >= maxTries) {{
+                                clearInterval(timer);
+                            }}
+                        }}, 150);
+                    }} catch(e) {{}}
+                }})();
+                </script>
+                """,
+                height=0,
+                width=0
             )
         else:
             if recent_scans:
