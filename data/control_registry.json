@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "11/11/2026 15:23:27",
+  "updated_at": "11/11/2026 17:14:58",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -166,14 +166,14 @@
       ],
       "verified_hashes": {
         "modules/manteniment.py": "da50c298d4b504dacab516afbc2ba46a030bb766f941149fa4250194c68b0462",
-        "modules/projectes_ui.py": "68bdf77e96a60f6a9b2568b8d69dfb5fee4f03387667854be9b700491759da60",
+        "modules/projectes_ui.py": "d7cd8fa1cb3d602c33fd3041c65d75f2c02ce34918ba1f4eb0d7b27345f07294",
         "modules/canvas_planol.py": "39691261f2fe466365ee49adc18e4d2fac724fe5223fc9db01cf7351075c39ea",
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
         "core/projectes_manager.py": "8aca6b47096d52ba74c01b694bac069fcfe2768b866845f09a7e6330b1ac33c8",
         "core/ai_projectes.py": "c80ec038cad481d5e96ae02a2ddc8be787624f0101ba5c1b34245fbbc4be9002"
       },
-      "verified_at": "11/11/2026 15:23:27",
-      "verified_commit": "25a0427",
+      "verified_at": "11/11/2026 17:14:58",
+      "verified_commit": "dfe4de6",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -350,6 +350,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "11/11/2026 17:14:58",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Miniatures materials 48x48px)",
+      "user": "admin",
+      "git_head": "dfe4de6"
+    },
     {
       "timestamp": "11/11/2026 15:23:27",
       "action": "INIT",

@@ -133,9 +133,9 @@ def dialog_detall_material(project_id: str, material: Dict[str, Any]):
     col_img_v, col_dat_v = st.columns([1.2, 1.8])
     with col_img_v:
         if cur_img:
-            st.image(decode_image_for_st(cur_img), width="stretch")
+            st.image(decode_image_for_st(cur_img), width=150)
         else:
-            st.markdown("<div style='background:#1e293b; height:180px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:48px; border:2px dashed #475569;'>🧱</div>", unsafe_allow_html=True)
+            st.markdown("<div style='background:#1e293b; width:150px; height:150px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:40px; border:2px dashed #475569;'>🧱</div>", unsafe_allow_html=True)
         
         with st.expander("📷 Gestionar Foto", expanded=False):
             t_ia, t_up, t_url = st.tabs(["✨ IA", "📁 Arxiu", "🌐 URL"])
@@ -548,7 +548,7 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                     c_prev = cols_preview[idx % len(cols_preview)]
                     with c_prev:
                         if item.get("imatge"):
-                            st.image(decode_image_for_st(item["imatge"]), width="stretch")
+                            st.image(decode_image_for_st(item["imatge"]), width=56)
                         st.caption(f"**{item.get('article')}**\nEst: {item.get('preu_estimat', 0)} €")
                 
                 if st.button("📥 Afegir tots aquests materials amb imatges al projecte", key=f"add_all_mat_{project_id}", type="primary", use_container_width=True):
@@ -577,7 +577,28 @@ def _render_materials_tab(projecte: Dict[str, Any]):
 
         st.caption(f"📦 **{n_stock}** en stock &nbsp;|&nbsp; ✅ **{n_comprat}** comprats &nbsp;|&nbsp; ⏳ **{n_pendent}** pendents de compra &nbsp;*(Total: {len(materials)} materials)*")
 
-        # Columnes per fila: 6 miniatures per fila per un format compacte i normalitzat
+        st.markdown(
+            """
+            <style>
+            [class*="st-key-mat_card_"] [data-testid="stImage"] {
+                display: flex !important;
+                justify-content: center !important;
+                margin-bottom: 2px !important;
+            }
+            [class*="st-key-mat_card_"] [data-testid="stImage"] img {
+                width: 48px !important;
+                height: 48px !important;
+                max-width: 48px !important;
+                max-height: 48px !important;
+                object-fit: cover !important;
+                border-radius: 6px !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Columnes per fila: 6 miniatures per fila per un format molt compacte i normalitzat
         num_cols = 6
         rows = [materials[i:i + num_cols] for i in range(0, len(materials), num_cols)]
         for row_idx, row in enumerate(rows):
@@ -590,15 +611,14 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                 nom_m = m.get("article", "Material")
 
                 with cols[idx]:
-                    with st.container(border=True):
-                        # 1. Caixa normalitzada de mida fixa (105px d'alçada)
-                        # object-fit: contain respecta la proporció vertical/horitzontal original sense deformar-la mai
+                    with st.container(border=True, key=f"mat_card_{project_id}_{row_idx}_{idx}_{mat_id}"):
+                        # 1. Miniatura molt petita normalitzada (48x48 px)
                         if img_url:
-                            st.image(decode_image_for_st(img_url), width="stretch")
+                            st.image(decode_image_for_st(img_url), width=48)
                         else:
                             st.markdown(
                                 """
-                                <div class="thumb-img-box" style="width: 100%; height: 105px; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; border: 1px dashed #475569; font-size: 28px; margin-bottom: 2px;">
+                                <div class="thumb-img-box" style="width: 48px; height: 48px; margin: 0 auto 2px auto; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; border: 1px dashed #475569; font-size: 18px;">
                                     🧱
                                 </div>
                                 """,
