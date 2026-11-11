@@ -2629,8 +2629,9 @@ Retorna ÚNICAMENT l'objecte JSON.
         prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num", on_change=cb_manual_prom_changed)
         
     tot_linea_val = ((qty_val or 1.0) * (preu_val or 0.0)) - (prom_val or 0.0)
+    st.session_state["manual_tot_linea_disp"] = f"{tot_linea_val:,.2f} €"
     with col_tot:
-        st.text_input("TOTAL LÍNIA", value=f"{tot_linea_val:,.2f} €", disabled=True)
+        st.text_input("TOTAL LÍNIA", key="manual_tot_linea_disp", disabled=True)
     with col_reb:
         reb_val = st.checkbox("Reb.", key="manual_reb_chk")
     with col_add:
@@ -2663,7 +2664,87 @@ Retorna ÚNICAMENT l'objecte JSON.
                     );
                 }}
 
+                function getManualRow(addBtn) {{
+                    if (!addBtn) return null;
+                    return addBtn.closest('[data-testid="stHorizontalBlock"]') || 
+                           addBtn.closest('[data-testid="stColumns"]') || 
+                           (addBtn.parentElement ? addBtn.parentElement.closest('[data-testid="stHorizontalBlock"]') : null);
+                }}
+
+                function getEditableInputs(manualRow) {{
+                    if (!manualRow) return [];
+                    return Array.from(manualRow.querySelectorAll('input:not([type="hidden"]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not([type="file"])'))
+                        .filter(el => {{
+                            const style = window.parent.getComputedStyle(el);
+                            return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+                        }});
+                }}
+
+                function getWidgetLabel(el) {{
+                    const container = el.closest('[data-testid="stNumberInputContainer"]') || 
+                                      el.closest('[data-testid="stTextInputContainer"]') || 
+                                      el.closest('[data-testid="stSelectbox"]');
+                    const parentWidget = container ? container.parentElement : null;
+                    const labelElem = parentWidget ? (parentWidget.querySelector('label') || parentWidget.querySelector('[data-testid="stWidgetLabel"]')) : null;
+                    return labelElem ? (labelElem.textContent || '').toUpperCase() : '';
+                }}
+
+                function parseLocaleNum(raw, fallback) {{
+                    if (raw === undefined || raw === null) return fallback;
+                    const cleaned = String(raw).trim().replace(',', '.').replace(/[^0-9.-]/g, '');
+                    if (!cleaned) return fallback;
+                    const num = parseFloat(cleaned);
+                    return Number.isFinite(num) ? num : fallback;
+                }}
+
+                function updateLiveTotal(manualRow) {{
+                    if (!manualRow) return;
+                    const allInputs = Array.from(manualRow.querySelectorAll('input:not([type="hidden"])'));
+                    let qtyInput = null, preuInput = null, promInput = null, totInput = null;
+                    for (const inp of allInputs) {{
+                        const lbl = getWidgetLabel(inp);
+                        if (lbl.includes('QUANTITAT')) qtyInput = inp;
+                        else if (lbl.includes('PREU')) preuInput = inp;
+                        else if (lbl.includes('PROMOC')) promInput = inp;
+                        else if (lbl.includes('TOTAL L') && inp.disabled) totInput = inp;
+                    }}
+                    if (!totInput) return;
+                    const qtyRaw = qtyInput ? parseLocaleNum(qtyInput.value, 1.0) : 1.0;
+                    const qty = qtyRaw > 0 ? qtyRaw : 1.0;
+                    const preu = preuInput ? parseLocaleNum(preuInput.value, 0.0) : 0.0;
+                    const prom = promInput ? parseLocaleNum(promInput.value, 0.0) : 0.0;
+                    const tot = (qty * preu) - prom;
+                    totInput.value = tot.toFixed(2) + ' €';
+                }}
+
+                function applyPendingFocus() {{
+                    const nf = window.parent.__compres_next_focus;
+                    if (!nf || (Date.now() - nf.ts) > 2000) {{
+                        window.parent.__compres_next_focus = null;
+                        return;
+                    }}
+                    const addBtn = getAddBtn();
+                    const manualRow = getManualRow(addBtn);
+                    if (!addBtn || !manualRow) return;
+                    window.parent.__compres_next_focus = null;
+
+                    if (nf.type === 'addBtn') {{
+                        addBtn.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
+                        addBtn.focus();
+                    }} else if (nf.type === 'index') {{
+                        const inputs = getEditableInputs(manualRow);
+                        if (nf.index >= 0 && nf.index < inputs.length) {{
+                            const nextInput = inputs[nf.index];
+                            nextInput.focus();
+                            if (typeof nextInput.select === 'function') {{
+                                try {{ nextInput.select(); }} catch(_) {{}}
+                            }}
+                        }}
+                    }}
+                }}
+
                 if (shouldScroll) {{
+                    window.parent.__compres_next_focus = null;
                     setTimeout(() => {{
                         const addBtn = getAddBtn();
                         if (addBtn) {{
@@ -2671,11 +2752,25 @@ Retorna ÚNICAMENT l'objecte JSON.
                             addBtn.focus();
                         }}
                     }}, 60);
+                }} else if (window.parent.__compres_next_focus) {{
+                    setTimeout(applyPendingFocus, 60);
                 }}
 
                 if (window.parent.__compres_enter_handler) {{
                     doc.removeEventListener('keydown', window.parent.__compres_enter_handler, true);
                 }}
+                if (window.parent.__compres_input_handler) {{
+                    doc.removeEventListener('input', window.parent.__compres_input_handler, true);
+                }}
+
+                window.parent.__compres_input_handler = function(e) {{
+                    const target = e.target;
+                    if (!target || target.tagName !== 'INPUT') return;
+                    const addBtn = getAddBtn();
+                    const manualRow = getManualRow(addBtn);
+                    if (!manualRow || !manualRow.contains(target)) return;
+                    updateLiveTotal(manualRow);
+                }};
 
                 window.parent.__compres_enter_handler = function(e) {{
                     if (e.key !== 'Enter') return;
@@ -2687,7 +2782,7 @@ Retorna ÚNICAMENT l'objecte JSON.
                     if (!addBtn) return;
 
                     // Si el focus ja està al mateix botó 'Entrar línia', deixar que Enter l'activi
-                    if (target === addBtn) return;
+                    if (target === addBtn || addBtn.contains(target)) return;
 
                     if (target.tagName !== 'INPUT') return;
 
@@ -2701,21 +2796,24 @@ Retorna ÚNICAMENT l'objecte JSON.
                     if (!isCompres) return;
 
                     // El contenidor de la fila manual és el bloc de columnes que conté el botó
-                    const manualRow = addBtn.closest('[data-testid="stHorizontalBlock"]') || 
-                                      addBtn.closest('[data-testid="stColumns"]') || 
-                                      (addBtn.parentElement ? addBtn.parentElement.closest('[data-testid="stHorizontalBlock"]') : null);
+                    const manualRow = getManualRow(addBtn);
                     if (!manualRow) return;
 
                     // Comprovar si l'input pertany exclusivament a la fila manual
                     if (!manualRow.contains(target)) return;
 
-                    // Si prem Shift + Enter a qualsevol camp, afegir la línia directament
+                    // Si prem Shift + Enter a qualsevol camp, fer blur perquè React confirmi el valor i després clicar
                     if (e.shiftKey) {{
                         e.preventDefault();
                         e.stopPropagation();
-                        target.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                        target.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                        setTimeout(() => {{ addBtn.click(); }}, 30);
+                        window.parent.__compres_next_focus = null;
+                        if (typeof target.blur === 'function') {{
+                            target.blur();
+                        }}
+                        setTimeout(() => {{
+                            const btn = getAddBtn();
+                            if (btn) btn.click();
+                        }}, 140);
                         return;
                     }}
 
@@ -2726,27 +2824,26 @@ Retorna ÚNICAMENT l'objecte JSON.
                     }}
 
                     // Obtenir els inputs de text i numèrics visibles i editables DE LA FILA MANUAL (mai els de fora)
-                    const inputs = Array.from(manualRow.querySelectorAll('input:not([type="hidden"]):not([disabled]):not([type="checkbox"]):not([type="radio"]):not([type="file"])'))
-                        .filter(el => {{
-                            const style = window.parent.getComputedStyle(el);
-                            return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-                        }});
-
+                    const inputs = getEditableInputs(manualRow);
                     const index = inputs.indexOf(target);
                     if (index === -1) return;
 
-                    e.preventDefault();
-                    e.stopPropagation();
+                    const isSelectboxInput = Boolean(
+                        target.closest('[data-testid="stSelectbox"]') ||
+                        target.getAttribute('role') === 'combobox'
+                    );
 
-                    target.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                    target.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    // Només evitem el comportament per defecte als selectbox (per no reobrir el desplegable).
+                    // Als camps numèrics/text (PES, QUANTITAT, PREU UNIT., %, PROMOCIÓ) deixem passar Enter
+                    // perquè Streamlit NumberInput/TextInput confirmi el valor via onKeyPress abans del rerun.
+                    if (isSelectboxInput) {{
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
 
-                    const container = target.closest('[data-testid="stNumberInputContainer"]') || 
-                                      target.closest('[data-testid="stTextInputContainer"]') || 
-                                      target.closest('[data-testid="stSelectbox"]');
-                    const parentWidget = container ? container.parentElement : null;
-                    const labelElem = parentWidget ? (parentWidget.querySelector('label') || parentWidget.querySelector('[data-testid="stWidgetLabel"]')) : null;
-                    const labelText = labelElem ? (labelElem.textContent || '').toUpperCase() : '';
+                    updateLiveTotal(manualRow);
+
+                    const labelText = getWidgetLabel(target);
 
                     // Si és PREU UNIT., %, PROMOCIÓ o l'últim input de la línia: ENVIAR AL BOTÓ 'Entrar línia'
                     const isPreu = labelText.includes('PREU') || labelText.includes('PREU UNIT');
@@ -2755,30 +2852,15 @@ Retorna ÚNICAMENT l'objecte JSON.
                     const isLastInput = (index >= inputs.length - 1);
 
                     if (isPreu || isPct || isProm || isLastInput) {{
-                        setTimeout(() => {{
-                            addBtn.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
-                            addBtn.focus();
-                        }}, 30);
-                        return;
+                        window.parent.__compres_next_focus = {{ type: 'addBtn', ts: Date.now() }};
+                    }} else {{
+                        window.parent.__compres_next_focus = {{ type: 'index', index: index + 1, ts: Date.now() }};
                     }}
 
-                    // En cas contrari (Família, Article, Pes, Quantitat), avançar al següent input de la línia
-                    if (index < inputs.length - 1) {{
-                        const nextInput = inputs[index + 1];
-                        setTimeout(() => {{
-                            nextInput.focus();
-                            if (typeof nextInput.select === 'function') {{
-                                nextInput.select();
-                            }}
-                        }}, 25);
-                    }} else {{
-                        setTimeout(() => {{
-                            addBtn.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
-                            addBtn.focus();
-                        }}, 30);
-                    }}
+                    setTimeout(applyPendingFocus, 90);
                 }};
 
+                doc.addEventListener('input', window.parent.__compres_input_handler, true);
                 doc.addEventListener('keydown', window.parent.__compres_enter_handler, true);
             }} catch(e) {{
                 console.error("Error a compres_enter_handler:", e);
