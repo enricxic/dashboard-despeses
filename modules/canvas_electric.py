@@ -215,7 +215,7 @@ def get_electric_canvas_html(project_id: str) -> str:
 
     <div class="sep"></div>
 
-    <button class="btn" id="btnMoveEl" onclick="setTool('move_el')" title="Moure elements, cables o redimensionar Caixa/Quadre">✋ Moure element</button>
+    <button class="btn" id="btnSelect" onclick="setTool('select')" title="Seleccionar, moure o transformar la mida de qualsevol element"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-1px;"><path d="M3 1.5l10 6.5-4.3 1.2L11.5 14l-1.8.8-2.8-4.8L3 13V1.5z"/></svg> Seleccionar</button>
     <button class="btn" id="btnText" onclick="setTool('text')">🔤 Text</button>
     <button class="btn" id="btnEraser" onclick="setTool('eraser')">🧹 Goma</button>
     <button class="btn" id="btnPan" onclick="setTool('pan')" title="Desplaçar tota la vista del llenç">🖐️ Vista</button>
@@ -387,18 +387,54 @@ const BOX_DEFAULTS = {{
 
 function getBoxDims(el) {{
   const cfg = BOX_DEFAULTS[el.symType];
-  if (!cfg) return {{ w: 48, h: 48 }};
+  if (!cfg) return {{ w: Math.max(28, el.w || 48), h: Math.max(28, el.h || 48) }};
   return {{ w: Math.max(cfg.minW, el.w || cfg.w), h: Math.max(cfg.minH, el.h || cfg.h) }};
 }}
 
-function getResizeHandlePos(el) {{
-  const d = getBoxDims(el);
-  return {{ x: el.x + d.w / 2, y: el.y + d.h / 2 }};
+function getElementBounds(el) {{
+  if (el.kind === "symbol") {{
+    const d = getBoxDims(el);
+    return {{ left: el.x - d.w / 2, top: el.y - d.h / 2, w: d.w, h: d.h }};
+  }}
+  if (el.kind === "text") {{
+    const sc = el.scale || 1.0;
+    const w = Math.max(36, ((el.text || "").length * 8 + 12) * sc);
+    const h = 22 * sc;
+    return {{ left: el.x - 4, top: el.y - 15 * sc, w: w, h: h }};
+  }}
+  if (el.kind === "wire" && el.points && el.points.length > 0) {{
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of el.points) {{
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    }}
+    return {{ left: minX - 6, top: minY - 6, w: Math.max(16, maxX - minX + 12), h: Math.max(16, maxY - minY + 12) }};
+  }}
+  return {{ left: 0, top: 0, w: 40, h: 40 }};
+}}
+
+function getBoundsHandles(bounds) {{
+  const {{ left, top, w, h }} = bounds;
+  const cx = left + w / 2, cy = top + h / 2;
+  const right = left + w, bottom = top + h;
+  return [
+    {{ id: "nw",   x: left,  y: top,    cursor: "nwse-resize" }},
+    {{ id: "n",    x: cx,    y: top,    cursor: "ns-resize"   }},
+    {{ id: "ne",   x: right, y: top,    cursor: "nesw-resize" }},
+    {{ id: "e",    x: right, y: cy,     cursor: "ew-resize"   }},
+    {{ id: "se",   x: right, y: bottom, cursor: "nwse-resize" }},
+    {{ id: "s",    x: cx,    y: bottom, cursor: "ns-resize"   }},
+    {{ id: "sw",   x: left,  y: bottom, cursor: "nesw-resize" }},
+    {{ id: "w",    x: left,  y: cy,     cursor: "ew-resize"   }},
+    {{ id: "move", x: cx,    y: cy,     cursor: "move"        }}
+  ];
 }}
 
 function getSymbolPorts(el) {{
+  const d = getBoxDims(el);
   if (isResizableBox(el.symType)) {{
-    const d = getBoxDims(el);
     const hw = d.w / 2, hh = d.h / 2;
     return [
       {{ x: el.x - hw, y: el.y }},
@@ -411,14 +447,18 @@ function getSymbolPorts(el) {{
       {{ x: el.x + hw, y: el.y + hh }}
     ];
   }}
+  const sx = d.w / 48, sy = d.h / 48;
   const r = (el.rot || 0) * Math.PI / 180;
   const pts = el.symType === "thermostat"
     ? [{{ dx: -14, dy: -22 }}, {{ dx: 14, dy: -22 }}, {{ dx: -14, dy: 22 }}, {{ dx: 14, dy: 22 }}]
     : [{{ dx: -28, dy: 0 }}, {{ dx: 28, dy: 0 }}, {{ dx: 0, dy: -28 }}, {{ dx: 0, dy: 28 }}];
-  return pts.map(p => ({{
-    x: el.x + p.dx * Math.cos(r) - p.dy * Math.sin(r),
-    y: el.y + p.dx * Math.sin(r) + p.dy * Math.cos(r)
-  }}));
+  return pts.map(p => {{
+    const rx = p.dx * sx, ry = p.dy * sy;
+    return {{
+      x: el.x + rx * Math.cos(r) - ry * Math.sin(r),
+      y: el.y + rx * Math.sin(r) + ry * Math.cos(r)
+    }};
+  }});
 }}
 
 function findSnapPoint(wx, wy) {{
@@ -493,10 +533,10 @@ function selectSymbol(symType) {{
 function setTool(mode) {{
   toolMode = mode;
   clearActiveToolbar();
-  const ids = {{ move_el: "btnMoveEl", text: "btnText", eraser: "btnEraser", pan: "btnPan" }};
+  const ids = {{ select: "btnSelect", text: "btnText", eraser: "btnEraser", pan: "btnPan" }};
   if (ids[mode]) document.getElementById(ids[mode]).classList.add("active");
   const msgs = {{
-    move_el: "Moure / Redimensionar: arrossega qualsevol element, cable o la cantonada blava ↘ d'una Caixa/Quadre",
+    select: "Seleccionar: toca un element per veure els quadrets a les cantonades/mig i moure o canviar la mida",
     text: "Eina Text: toca al plànol per escriure una nota o etiqueta",
     eraser: "Eina Goma: toca un cable o element per esborrar-lo",
     pan: "Moure vista: arrossega per desplaçar tot el llenç"
@@ -662,12 +702,17 @@ function drawWire(targetCtx, wireType, pts, alpha = 1.0) {{
   targetCtx.restore();
 }}
 
-function drawElectricalSymbol(targetCtx, el, showHandles = false) {{
+function drawElectricalSymbol(targetCtx, el) {{
   targetCtx.save();
   targetCtx.translate(el.x, el.y);
   const isBox = isResizableBox(el.symType);
+  const d = getBoxDims(el);
   const rad = isBox ? 0 : (((el.rot || 0) * Math.PI) / 180);
   targetCtx.rotate(rad);
+
+  if (!isBox) {{
+    targetCtx.scale(d.w / 48, d.h / 48);
+  }}
 
   targetCtx.strokeStyle = "#0f172a";
   targetCtx.fillStyle = "#ffffff";
@@ -824,49 +869,65 @@ function drawElectricalSymbol(targetCtx, el, showHandles = false) {{
     targetCtx.fillText("⚙️ " + (el.label || "Càrrega"), 0, 4);
   }}
 
+  if (!isBox) {{
+    targetCtx.scale(48 / d.w, 48 / d.h);
+  }}
   targetCtx.rotate(-rad);
   if (!isBox && el.label) {{
     targetCtx.font = "bold 11px sans-serif";
     targetCtx.textAlign = "center";
     const tw = targetCtx.measureText(el.label).width + 8;
+    const ly = Math.round(d.h / 2) + 2;
     targetCtx.fillStyle = "rgba(255,255,255,0.9)";
-    targetCtx.fillRect(-tw/2, 23, tw, 15);
+    targetCtx.fillRect(-tw/2, ly, tw, 15);
     targetCtx.fillStyle = "#0f172a";
-    targetCtx.fillText(el.label, 0, 34);
-  }}
-
-  if (showHandles) {{
-    if (el === selectedEl) {{
-      const d = isBox ? getBoxDims(el) : {{ w: 54, h: 54 }};
-      targetCtx.strokeStyle = "#2563eb";
-      targetCtx.lineWidth = 1.6;
-      targetCtx.setLineDash([4, 3]);
-      targetCtx.strokeRect(-d.w / 2 - 4, -d.h / 2 - 4, d.w + 8, d.h + 8);
-      targetCtx.setLineDash([]);
-    }}
-    if (isBox) {{
-      const d = getBoxDims(el);
-      targetCtx.fillStyle = "#2563eb";
-      targetCtx.strokeStyle = "#ffffff";
-      targetCtx.lineWidth = 1.5;
-      targetCtx.fillRect(d.w / 2 - 6, d.h / 2 - 6, 12, 12);
-      targetCtx.strokeRect(d.w / 2 - 6, d.h / 2 - 6, 12, 12);
-    }}
+    targetCtx.fillText(el.label, 0, ly + 11);
   }}
   targetCtx.restore();
 }}
 
 function drawTextEl(targetCtx, el) {{
   targetCtx.save();
-  targetCtx.font = "bold 13px sans-serif";
-  const w = targetCtx.measureText(el.text).width + 10;
+  const sc = el.scale || 1.0;
+  const fSize = Math.round(13 * sc);
+  targetCtx.font = "bold " + fSize + "px sans-serif";
+  const w = targetCtx.measureText(el.text).width + 10 * sc;
+  const h = 20 * sc;
   targetCtx.fillStyle = "rgba(255,255,255,0.92)";
   targetCtx.strokeStyle = "#cbd5e1";
   targetCtx.lineWidth = 1;
-  targetCtx.fillRect(el.x - 4, el.y - 14, w, 20);
-  targetCtx.strokeRect(el.x - 4, el.y - 14, w, 20);
+  targetCtx.fillRect(el.x - 4, el.y - 14 * sc, w, h);
+  targetCtx.strokeRect(el.x - 4, el.y - 14 * sc, w, h);
   targetCtx.fillStyle = "#0f172a";
   targetCtx.fillText(el.text, el.x + 1, el.y);
+  targetCtx.restore();
+}}
+
+function drawSelectionHandles(targetCtx, el) {{
+  if (!el) return;
+  const b = getElementBounds(el);
+  targetCtx.save();
+  targetCtx.strokeStyle = "#2563eb";
+  targetCtx.lineWidth = 1.5;
+  targetCtx.setLineDash([4, 3]);
+  targetCtx.strokeRect(b.left, b.top, b.w, b.h);
+  targetCtx.setLineDash([]);
+
+  for (const h of getBoundsHandles(b)) {{
+    if (h.id === "move") {{
+      targetCtx.fillStyle = "#2563eb";
+      targetCtx.strokeStyle = "#ffffff";
+      targetCtx.lineWidth = 1.5;
+      targetCtx.fillRect(h.x - 4.5, h.y - 4.5, 9, 9);
+      targetCtx.strokeRect(h.x - 4.5, h.y - 4.5, 9, 9);
+    }} else {{
+      targetCtx.fillStyle = "#ffffff";
+      targetCtx.strokeStyle = "#2563eb";
+      targetCtx.lineWidth = 1.6;
+      targetCtx.fillRect(h.x - 4, h.y - 4, 8, 8);
+      targetCtx.strokeRect(h.x - 4, h.y - 4, 8, 8);
+    }}
+  }}
   targetCtx.restore();
 }}
 
@@ -913,7 +974,7 @@ function renderTo(targetCtx, w, h, withBgGrid, isExport = false) {{
 
   // 1. Caixes i Quadres al fons perquè s'hi puguin posar cables i components a dins
   for (const el of elements) {{
-    if (el.kind === "symbol" && isResizableBox(el.symType)) drawElectricalSymbol(targetCtx, el, showH);
+    if (el.kind === "symbol" && isResizableBox(el.symType)) drawElectricalSymbol(targetCtx, el);
   }}
   // 2. Cables al damunt
   for (const el of elements) {{
@@ -921,8 +982,12 @@ function renderTo(targetCtx, w, h, withBgGrid, isExport = false) {{
   }}
   // 3. Elements elèctrics i textos al primer pla
   for (const el of elements) {{
-    if (el.kind === "symbol" && !isResizableBox(el.symType)) drawElectricalSymbol(targetCtx, el, showH);
+    if (el.kind === "symbol" && !isResizableBox(el.symType)) drawElectricalSymbol(targetCtx, el);
     else if (el.kind === "text") drawTextEl(targetCtx, el);
+  }}
+
+  if (showH && selectedEl && elements.includes(selectedEl)) {{
+    drawSelectionHandles(targetCtx, selectedEl);
   }}
 
   if (boxDrawStart && boxDrawCur && toolMode === "symbol" && isResizableBox(activeSymbol)) {{
@@ -1018,16 +1083,35 @@ function findTopElementAt(wx, wy) {{
   return -1;
 }}
 
-function findResizeHandleAt(wx, wy) {{
-  const thresh = 20 / zoom;
-  for (let i = elements.length - 1; i >= 0; i--) {{
-    const el = elements[i];
-    if (el.kind === "symbol" && isResizableBox(el.symType)) {{
-      const hp = getResizeHandlePos(el);
-      if (Math.hypot(wx - hp.x, wy - hp.y) <= thresh) return el;
-    }}
+function findSelectionHandleAt(wx, wy) {{
+  if (!selectedEl || !elements.includes(selectedEl)) return null;
+  const thresh = 14 / zoom;
+  const handles = getBoundsHandles(getElementBounds(selectedEl));
+  for (const h of handles) {{
+    if (Math.hypot(wx - h.x, wy - h.y) <= thresh) return h;
   }}
   return null;
+}}
+
+function snapStep(val, step = 10) {{
+  return Math.round(val / step) * step;
+}}
+
+function startTransformDrag(el, handleId, wx, wy) {{
+  const b = getElementBounds(el);
+  if (handleId === "move") {{
+    if (el.kind === "wire") {{
+      return {{ type: "move_wire", el, lastX: snapGrid(wx), lastY: snapGrid(wy) }};
+    }}
+    return {{ type: "move_el", el, offsetX: wx - el.x, offsetY: wy - el.y }};
+  }}
+  return {{
+    type: "transform_handle",
+    el,
+    handleId,
+    origBounds: {{ left: b.left, top: b.top, right: b.left + b.w, bottom: b.top + b.h, w: b.w, h: b.h }},
+    origPoints: (el.kind === "wire" && el.points) ? el.points.map(p => ({{ x: p.x, y: p.y }})) : null
+  }};
 }}
 
 function eraseNearest(wx, wy) {{
@@ -1063,33 +1147,22 @@ canvas.addEventListener("pointerdown", e => {{
     return;
   }}
 
-  // Permetre redimensionar qualsevol Caixa o Quadre des de la cantonada blava ↘ tant en Moure element com dibuixant caixes
-  if (toolMode === "move_el" || (toolMode === "symbol" && isResizableBox(activeSymbol))) {{
-    const rTarget = findResizeHandleAt(w.x, w.y);
-    if (rTarget) {{
-      selectedEl = rTarget;
-      const d = getBoxDims(rTarget);
-      dragAction = {{
-        type: "resize_box",
-        el: rTarget,
-        left: rTarget.x - d.w / 2,
-        top: rTarget.y - d.h / 2
-      }};
+  // En mode Seleccionar (o si cliquem un tirador d'un element seleccionat): comprovar els 9 quadrets primer
+  if (toolMode === "select" || (selectedEl && elements.includes(selectedEl))) {{
+    const hitH = findSelectionHandleAt(w.x, w.y);
+    if (hitH && (toolMode === "select" || hitH.id !== "move")) {{
+      dragAction = startTransformDrag(selectedEl, hitH.id, w.x, w.y);
       redraw();
       return;
     }}
   }}
 
-  if (toolMode === "move_el") {{
+  if (toolMode === "select") {{
     const idx = findTopElementAt(w.x, w.y);
     if (idx !== -1) {{
       const el = elements[idx];
       selectedEl = el;
-      if (el.kind === "wire") {{
-        dragAction = {{ type: "move_wire", el, lastX: snapGrid(w.x), lastY: snapGrid(w.y) }};
-      }} else {{
-        dragAction = {{ type: "move_el", el, offsetX: w.x - el.x, offsetY: w.y - el.y }};
-      }}
+      dragAction = startTransformDrag(el, "move", w.x, w.y);
     }} else {{
       selectedEl = null;
       dragAction = null;
@@ -1146,14 +1219,43 @@ canvas.addEventListener("pointermove", e => {{
   const w = screenToWorld(cx, cy);
   if (dragAction) {{
     const el = dragAction.el;
-    if (dragAction.type === "resize_box") {{
-      const cfg = BOX_DEFAULTS[el.symType] || {{ minW: 60, minH: 40 }};
-      const nw = Math.max(cfg.minW, snapGrid(w.x - dragAction.left));
-      const nh = Math.max(cfg.minH, snapGrid(w.y - dragAction.top));
-      el.w = nw;
-      el.h = nh;
-      el.x = dragAction.left + nw / 2;
-      el.y = dragAction.top + nh / 2;
+    if (dragAction.type === "transform_handle") {{
+      const ob = dragAction.origBounds;
+      const hId = dragAction.handleId;
+      let minW = 28, minH = 28;
+      if (el.kind === "symbol" && isResizableBox(el.symType)) {{
+        const cfg = BOX_DEFAULTS[el.symType] || {{ minW: 60, minH: 40 }};
+        minW = cfg.minW; minH = cfg.minH;
+      }} else if (el.kind === "text") {{
+        minW = 30; minH = 14;
+      }} else if (el.kind === "wire") {{
+        minW = 16; minH = 16;
+      }}
+      let nL = ob.left, nR = ob.right, nT = ob.top, nB = ob.bottom;
+      if (hId.includes("w")) nL = Math.min(ob.right - minW, snapStep(w.x, 10));
+      if (hId.includes("e")) nR = Math.max(ob.left + minW, snapStep(w.x, 10));
+      if (hId.includes("n")) nT = Math.min(ob.bottom - minH, snapStep(w.y, 10));
+      if (hId.includes("s")) nB = Math.max(ob.top + minH, snapStep(w.y, 10));
+      const newW = nR - nL, newH = nB - nT;
+
+      if (el.kind === "symbol") {{
+        el.w = newW;
+        el.h = newH;
+        el.x = (nL + nR) / 2;
+        el.y = (nT + nB) / 2;
+      }} else if (el.kind === "text") {{
+        el.scale = Math.max(0.6, Math.min(3.5, newH / 22));
+        el.x = nL + 4;
+        el.y = nT + 15 * el.scale;
+      }} else if (el.kind === "wire" && dragAction.origPoints && el.points) {{
+        for (let idx = 0; idx < el.points.length; idx++) {{
+          const op = dragAction.origPoints[idx];
+          const rx = ob.w > 0 ? (op.x - ob.left) / ob.w : 0;
+          const ry = ob.h > 0 ? (op.y - ob.top) / ob.h : 0;
+          el.points[idx].x = snapStep(nL + rx * newW, 10);
+          el.points[idx].y = snapStep(nT + ry * newH, 10);
+        }}
+      }}
       redraw();
     }} else if (dragAction.type === "move_el") {{
       el.x = snapGrid(w.x - dragAction.offsetX);
@@ -1173,6 +1275,14 @@ canvas.addEventListener("pointermove", e => {{
     }}
     return;
   }}
+  if (toolMode === "select") {{
+    const hitH = findSelectionHandleAt(w.x, w.y);
+    if (hitH) canvas.style.cursor = hitH.cursor;
+    else if (findTopElementAt(w.x, w.y) !== -1) canvas.style.cursor = "move";
+    else canvas.style.cursor = "default";
+    return;
+  }}
+  canvas.style.cursor = toolMode === "pan" ? "grab" : "crosshair";
   if (boxDrawStart && toolMode === "symbol" && isResizableBox(activeSymbol)) {{
     boxDrawCur = {{ x: snapGrid(w.x), y: snapGrid(w.y) }};
     redraw();
@@ -1280,7 +1390,7 @@ def render_esquema_electric_tab(projecte: Dict[str, Any]) -> None:
         st.markdown("""
 - **Cables**: Escull **⚫ Fase (Negre)**, **🔵 Neutre (Blau)** o **🟡 Terra (Groc)** i arrossega pel llenç. Amb **`📐 90°: SÍ`** els trams fan colzes rectes automàticament.
 - **Elements elèctrics**: Prem qualsevol botó (**💡 Bombeta**, **🔌 Endoll**, **⚡ Magnetotèrmic**, **🔘 Interruptor**, **🔀 Commutador**, **🛡️ Diferencial**, **🧲 Contactor**, **🌡️ Termòstat** de 4 contactes `L/N/C/NO`, **⏰ Programador**, **📦 Caixa**, **🔋 Quadre**, **⚙️ Càrrega**) i toca on el vulguis situar.
-- **Redimensionar Caixa / Quadre / Càrrega i Moure elements**: Amb **📦 Caixa**, **🔋 Quadre** o **⚙️ Càrrega** pots **arrossegar** per donar-li la mida que vulguis des de zero, o arrossegar la **cantonada blava ↘** per redimensionar-lo en qualsevol moment. Activa **`✋ Moure element`** per recol·locar qualsevol element, cable o text dins l'esquema.
+- **Redimensionar i Moure elements**: Prem el botó **`↖ Seleccionar`** i toca qualsevol element, requadre, text o cable. Sortiran **8 quadrets petits** a les cantonades i punts mitjans (per transformar amplada/alçada) i un **quadret central** (o arrossegament intern) per moure'l. Amb **📦 Caixa**, **🔋 Quadre** o **⚙️ Càrrega** també pots **arrossegar** directament en crear-los per donar-los la mida desitjada.
 - **Editar etiqueta / Girar**: Fes **doble clic** sobre un element per canviar-ne l'etiqueta (ex. *PIA 16A*, *Termo*) o prem **🔄 Girar** per rotar-lo 90°.
 - **Desar**: Prem **💾 PNG** a la barra de l'editor i puja el fitxer al formulari inferior per deixar l'esquema desat al projecte.
 """)

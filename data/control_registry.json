@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "11/11/2026 20:29:21",
+  "updated_at": "11/11/2026 20:35:02",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -172,10 +172,10 @@
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
         "core/projectes_manager.py": "839a6a57ec14fb3da3d245fbc40f5f2df7b4a75b68f9bcd50cc27bd87985dbf1",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
-        "modules/canvas_electric.py": "8dcfa10b7166b88006a517250c5f6d445b74d42f3bc5e5a8d3f48210a4bfd607"
+        "modules/canvas_electric.py": "3665a5755161b8bd59f382a8b2503d3b5c78d89703c553535a8245f0d2e33073"
       },
-      "verified_at": "11/11/2026 20:29:21",
-      "verified_commit": "25343c3",
+      "verified_at": "11/11/2026 20:35:01",
+      "verified_commit": "dcc3778",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "11/11/2026 20:35:02",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Boto fletxa Seleccionar amb 8 quadrets cantonades/mig i centre)",
+      "user": "admin",
+      "git_head": "dcc3778"
+    },
     {
       "timestamp": "11/11/2026 20:29:21",
       "action": "SEAL",
