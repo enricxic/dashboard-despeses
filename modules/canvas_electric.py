@@ -334,6 +334,7 @@ let panY = 0;
 let bgImage = null;
 
 let isDrawing = false;
+let isErasing = false;
 let isPanning = false;
 let panStart = null;
 let startPt = null;
@@ -398,9 +399,14 @@ function getElementBounds(el) {{
   }}
   if (el.kind === "text") {{
     const sc = el.scale || 1.0;
-    const w = Math.max(36, ((el.text || "").length * 8 + 12) * sc);
-    const h = 22 * sc;
-    return {{ left: el.x - 4, top: el.y - 15 * sc, w: w, h: h }};
+    const fSize = Math.round(13 * sc);
+    ctx.save();
+    ctx.font = "bold " + fSize + "px sans-serif";
+    const measuredW = ctx.measureText(el.text || "").width;
+    ctx.restore();
+    const w = Math.max(28, measuredW + 10 * sc);
+    const h = Math.max(18, 20 * sc);
+    return {{ left: el.x - 4, top: el.y - 14 * sc, w: w, h: h }};
   }}
   if (el.kind === "wire" && el.points && el.points.length > 0) {{
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -1059,17 +1065,23 @@ function hitTestBox(el, wx, wy, borderOnly = false) {{
   return onLeft || onRight || onTop || onBot;
 }}
 
+function hitTestBounds(el, wx, wy, pad = 10) {{
+  const b = getElementBounds(el);
+  return (wx >= b.left - pad && wx <= b.left + b.w + pad && wy >= b.top - pad && wy <= b.top + b.h + pad);
+}}
+
 function findTopElementAt(wx, wy) {{
-  const hitThresh = 26 / zoom;
-  // 1. Textos
+  const hitThresh = 24 / zoom;
+  const pad = 10 / zoom;
+  // 1. Textos (tota la caixa del text, no només l'origen esquerre)
   for (let i = elements.length - 1; i >= 0; i--) {{
     const el = elements[i];
-    if (el.kind === "text" && Math.hypot(wx - el.x, wy - el.y) <= hitThresh) return i;
+    if (el.kind === "text" && hitTestBounds(el, wx, wy, pad)) return i;
   }}
   // 2. Símbols en primer pla (no caixes)
   for (let i = elements.length - 1; i >= 0; i--) {{
     const el = elements[i];
-    if (el.kind === "symbol" && !isResizableBox(el.symType) && Math.hypot(wx - el.x, wy - el.y) <= hitThresh) return i;
+    if (el.kind === "symbol" && !isResizableBox(el.symType) && hitTestBounds(el, wx, wy, pad)) return i;
   }}
   // 3. Cables
   for (let i = elements.length - 1; i >= 0; i--) {{
@@ -1143,6 +1155,7 @@ canvas.addEventListener("pointerdown", e => {{
   }}
   const w = screenToWorld(cx, cy);
   if (toolMode === "eraser") {{
+    isErasing = true;
     eraseNearest(w.x, w.y);
     return;
   }}
@@ -1174,7 +1187,9 @@ canvas.addEventListener("pointerdown", e => {{
   if (toolMode === "text") {{
     openModal("Text / Nota de l'esquema:", "", txt => {{
       if (txt) {{
-        elements.push({{ kind: "text", x: snapGrid(w.x), y: snapGrid(w.y), text: txt }});
+        const newTxt = {{ kind: "text", x: snapGrid(w.x), y: snapGrid(w.y), text: txt, scale: 1.0 }};
+        elements.push(newTxt);
+        selectedEl = newTxt;
         saveLocal(); redraw();
       }}
     }});
@@ -1283,6 +1298,10 @@ canvas.addEventListener("pointermove", e => {{
     return;
   }}
   canvas.style.cursor = toolMode === "pan" ? "grab" : "crosshair";
+  if (isErasing && toolMode === "eraser") {{
+    eraseNearest(w.x, w.y);
+    return;
+  }}
   if (boxDrawStart && toolMode === "symbol" && isResizableBox(activeSymbol)) {{
     boxDrawCur = {{ x: snapGrid(w.x), y: snapGrid(w.y) }};
     redraw();
@@ -1295,6 +1314,7 @@ canvas.addEventListener("pointermove", e => {{
 
 canvas.addEventListener("pointerup", e => {{
   if (isPanning) {{ isPanning = false; panStart = null; return; }}
+  if (isErasing) {{ isErasing = false; return; }}
   if (dragAction) {{
     dragAction = null;
     saveLocal();

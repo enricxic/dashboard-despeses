@@ -780,6 +780,9 @@ function hitTestElement(el, px, py) {{
     return false;
   }}
   if (el.type === 'text') {{
+    const txt = el.text || '';
+    const estW = Math.max(40, txt.length * 9 + 16);
+    if (px >= el.x - estW / 2 - 14 && px <= el.x + estW / 2 + 14 && py >= el.y - 24 && py <= el.y + 24) return true;
     return Math.hypot(el.x - px, el.y - py) <= 30;
   }}
   return false;

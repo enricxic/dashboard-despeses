@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "11/11/2026 20:35:02",
+  "updated_at": "11/11/2026 20:42:25",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -168,14 +168,14 @@
       "verified_hashes": {
         "modules/manteniment.py": "da50c298d4b504dacab516afbc2ba46a030bb766f941149fa4250194c68b0462",
         "modules/projectes_ui.py": "4c3aafe5317c5f7fed593712ee33f37c23439b4f21d2788bab01596c98744ef6",
-        "modules/canvas_planol.py": "efa132d2a60c9ffc408c5e4e002dac38a6be126e9d9a11d0d9c7c8e4f004ed8d",
+        "modules/canvas_planol.py": "4ffaebcb84a2d5d5c48bc9ea215db8af859a823482d6fc60dbd6fc551fa7c5e5",
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
         "core/projectes_manager.py": "839a6a57ec14fb3da3d245fbc40f5f2df7b4a75b68f9bcd50cc27bd87985dbf1",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
-        "modules/canvas_electric.py": "3665a5755161b8bd59f382a8b2503d3b5c78d89703c553535a8245f0d2e33073"
+        "modules/canvas_electric.py": "0c1450c8d8c166945de0c581ad1f0a55f02c0e9dc7531e4bd5f91e6ce763c9ca"
       },
-      "verified_at": "11/11/2026 20:35:01",
-      "verified_commit": "dcc3778",
+      "verified_at": "11/11/2026 20:42:24",
+      "verified_commit": "5d96dbd",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "11/11/2026 20:42:24",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Seleccio, moviment i goma sobre tota la caixa de text)",
+      "user": "admin",
+      "git_head": "5d96dbd"
+    },
     {
       "timestamp": "11/11/2026 20:35:02",
       "action": "SEAL",
