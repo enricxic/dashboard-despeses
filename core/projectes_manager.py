@@ -186,6 +186,7 @@ def save_projectes(projectes: List[Dict[str, Any]]) -> bool:
         if hasattr(st, "session_state"):
             st.session_state["cached_projectes_list"] = valid_projs
             st.session_state["projectes_loaded_from_cloud"] = True
+            st.session_state.pop("global_alerts_ts", None)
     except Exception:
         pass
 

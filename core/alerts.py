@@ -337,11 +337,93 @@ def get_global_alerts():
                             })
         except Exception as e_mant:
             pass
+
+        # 7. Alerta de Fases d'Execució pendents en Projectes En Curs
+        try:
+            alerts.extend(get_projectes_fases_alerts())
+        except Exception as e_proj:
+            print(f"Error alerta fases projectes: {e_proj}")
                         
     except Exception as e:
         print(f"Error generant alertes globals: {e}")
         
     return alerts
+
+
+def get_projectes_fases_alerts(avui=None):
+    """
+    Genera alertes per a fases no completades d'aquells projectes que estan estrictament 'En curs',
+    avisant amb tants dies d'antelació com indiqui 'dies_avis_fases' a cada projecte.
+    """
+    from core.projectes_manager import load_projectes, parse_date_cat
+
+    if avui is None:
+        avui = datetime.today().date()
+
+    proj_alerts = []
+    projectes = load_projectes() or []
+    for p in projectes:
+        estat_p = str(p.get("estat", "")).strip().lower()
+        if estat_p not in ("en curs", "en_curs", "en marxa", "actiu"):
+            continue
+
+        try:
+            raw_dies = p.get("dies_avis_fases", 3)
+            dies_avis = max(0, int(3 if raw_dies is None else raw_dies))
+        except (ValueError, TypeError):
+            dies_avis = 3
+
+        proj_nom = str(p.get("nom", "Projecte")).strip() or "Projecte"
+
+        for f in p.get("fases", []):
+            estat_f = str(f.get("estat", "Pendent")).strip().lower()
+            if estat_f == "completada":
+                continue
+
+            tasques = f.get("tasques", [])
+            if tasques and all(bool(t.get("feta", False)) for t in tasques):
+                continue
+
+            f_nom = str(f.get("nom", "Fase")).strip() or "Fase"
+            is_pending = (estat_f == "pendent") and not any(bool(t.get("feta", False)) for t in tasques)
+
+            d_inici = parse_date_cat(f.get("data_inici"))
+            d_fi = parse_date_cat(f.get("data_fi"))
+            delta_inici = (d_inici - avui).days if d_inici else None
+            delta_fi = (d_fi - avui).days if d_fi else None
+
+            if delta_fi is not None and delta_fi < 0:
+                proj_alerts.append({
+                    "type": "error",
+                    "icon": "🏗️",
+                    "title": f"Fase vençuda ({proj_nom})",
+                    "message": f"La fase «{f_nom}» tenia termini el {d_fi.strftime('%d/%m/%Y')} (vençuda fa {abs(delta_fi)} dies).",
+                })
+            elif is_pending and delta_inici is not None and delta_inici < 0:
+                proj_alerts.append({
+                    "type": "error",
+                    "icon": "🏗️",
+                    "title": f"Fase pendent d'iniciar ({proj_nom})",
+                    "message": f"La fase «{f_nom}» havia de començar el {d_inici.strftime('%d/%m/%Y')} (fa {abs(delta_inici)} dies) i encara està pendent.",
+                })
+            elif is_pending and delta_inici is not None and delta_inici <= dies_avis:
+                quan = "avui!" if delta_inici == 0 else f"en {delta_inici} dies"
+                proj_alerts.append({
+                    "type": "warning",
+                    "icon": "🏗️",
+                    "title": f"Inici de fase proper ({proj_nom})",
+                    "message": f"La fase «{f_nom}» comença el {d_inici.strftime('%d/%m/%Y')} ({quan}).",
+                })
+            elif delta_fi is not None and delta_fi <= dies_avis:
+                quan = "avui!" if delta_fi == 0 else f"en {delta_fi} dies"
+                proj_alerts.append({
+                    "type": "warning",
+                    "icon": "🏗️",
+                    "title": f"Termini de fase proper ({proj_nom})",
+                    "message": f"La fase «{f_nom}» finalitza el {d_fi.strftime('%d/%m/%Y')} ({quan}).",
+                })
+
+    return proj_alerts
 
 def _clear_alerts_cache():
     try:

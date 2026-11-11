@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "11/11/2026 17:45:58",
+  "updated_at": "11/11/2026 20:00:27",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -166,14 +166,14 @@
       ],
       "verified_hashes": {
         "modules/manteniment.py": "da50c298d4b504dacab516afbc2ba46a030bb766f941149fa4250194c68b0462",
-        "modules/projectes_ui.py": "e449d7781aeeda1233656b6e0a325134f05503af3bef9e06c0975d2ca9c6397d",
+        "modules/projectes_ui.py": "95ff4e6c61509e20efeb84dc6a317d2770bae0fabf40f4a25de744bea64be10e",
         "modules/canvas_planol.py": "88a44f7965aced9d0c9a2c295b5cceef69b35f87b3a3162531506b395a9dd10f",
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
-        "core/projectes_manager.py": "55dd45b9e019dd2be9dc8119bb2c89d246fc216e0c99227daacc4aad2ace2630",
+        "core/projectes_manager.py": "f0aece0d3b468c4625d8b8cade240d9e2874c1fd721d285f104c5f3fe4482ab3",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6"
       },
-      "verified_at": "11/11/2026 17:45:57",
-      "verified_commit": "7381e7e",
+      "verified_at": "11/11/2026 20:00:05",
+      "verified_commit": "29196f1",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -222,10 +222,10 @@
         "app.py": "8a7823a3ef6e98c312a34c100fb25a63515ea49649d25674b767d9ea51bea181",
         "core/db.py": "6548d64d715ab60404896516dc4be469bf2be8bf1054fc454cdcaabc899cbf6e",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
-        "core/alerts.py": "44ae0aa80986118548d876f96273ad9e691c87fab19feec683d785349729728f"
+        "core/alerts.py": "af555130e332c7bbc017938fbef39621d97eafa4861dafef04e664fd6fa6833f"
       },
-      "verified_at": "11/11/2026 15:23:27",
-      "verified_commit": "25a0427",
+      "verified_at": "11/11/2026 20:00:27",
+      "verified_commit": "29196f1",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -350,6 +350,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "11/11/2026 20:00:27",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Alertes fases projectes En curs)",
+      "user": "admin",
+      "git_head": "29196f1"
+    },
+    {
+      "timestamp": "11/11/2026 20:00:05",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Dies avis fases pendents i popover dates)",
+      "user": "admin",
+      "git_head": "29196f1"
+    },
     {
       "timestamp": "11/11/2026 17:45:58",
       "action": "SEAL",

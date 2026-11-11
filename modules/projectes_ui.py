@@ -512,7 +512,19 @@ def _render_projecte_header(projecte: Dict[str, Any]):
                 p_fi = parse_date_cat(projecte.get("data_fi_prevista")) or (date.today() + timedelta(days=30))
                 f_fi = st.date_input("Data fi prevista (DD/MM/AAAA):", value=p_fi, format="DD/MM/YYYY")
 
-            f_press = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=pressupost_est, step=0.01, format="%.2f")
+            col_pr1, col_pr2 = st.columns(2)
+            with col_pr1:
+                f_press = st.number_input("Pressupost màxim estimat (€):", min_value=0.0, value=pressupost_est, step=0.01, format="%.2f")
+            with col_pr2:
+                cur_dies_avis = int(projecte.get("dies_avis_fases", 3) if projecte.get("dies_avis_fases") is not None else 3)
+                f_dies_avis = st.number_input(
+                    "🔔 Avisar fases pendents (dies abans):",
+                    min_value=0,
+                    max_value=90,
+                    value=cur_dies_avis,
+                    step=1,
+                    help="Quants dies abans de la data d'inici/fi de cada fase pendent s'enviarà alerta a 🔔 Alertes (només si el projecte està En curs).",
+                )
 
             sub_edit = st.form_submit_button("Desar Canvis del Projecte", type="primary")
             if sub_edit:
@@ -523,7 +535,8 @@ def _render_projecte_header(projecte: Dict[str, Any]):
                     "estat": f_estat,
                     "data_inici": to_iso_date(f_inici),
                     "data_fi_prevista": to_iso_date(f_fi),
-                    "pressupost_estimat": f_press
+                    "pressupost_estimat": f_press,
+                    "dies_avis_fases": int(f_dies_avis),
                 })
                 st.session_state["pending_filtre_estat_projectes"] = f_estat
                 st.session_state["pending_select_projecte_actiu"] = project_id
@@ -829,6 +842,31 @@ def _render_fases_tab(projecte: Dict[str, Any]):
     st.markdown("### ⏱️ Fases d'Execució i Checklist d'Obra")
     st.caption("Estructura l'ordre lògic dels treballs, assigna terminis i marca les fases completades a mesura que avancis.")
 
+    # Configuració ràpida d'alertes de fases per a aquest projecte
+    norm_est_proj = _normalize_project_estat(projecte.get("estat", "Pendent"))
+    cur_dies_avis_tab = int(projecte.get("dies_avis_fases", 3) if projecte.get("dies_avis_fases") is not None else 3)
+    with st.container(border=True):
+        ca_1, ca_2, ca_3 = st.columns([2.1, 1.1, 0.9], vertical_alignment="bottom")
+        with ca_1:
+            if norm_est_proj == "En curs":
+                st.markdown(f"🔔 **Alertes de fases actives** (projecte *En curs*): avisa **{cur_dies_avis_tab} dies** abans de cada fase pendent.")
+            else:
+                st.markdown(f"🔕 **Alertes en pausa** (projecte *{norm_est_proj}*): només alerten els projectes **En curs**.")
+        with ca_2:
+            new_dies_avis_tab = st.number_input(
+                "Dies d'avís abans:",
+                min_value=0,
+                max_value=90,
+                value=cur_dies_avis_tab,
+                step=1,
+                key=f"fases_dies_avis_{project_id}",
+            )
+        with ca_3:
+            if st.button("💾 Desar avís", key=f"btn_save_avis_{project_id}", use_container_width=True):
+                update_projecte(project_id, {"dies_avis_fases": int(new_dies_avis_tab)})
+                st.toast(f"🔔 Avís de fases actualitzat a {int(new_dies_avis_tab)} dies!", icon="🔔")
+                st.rerun()
+
     # Banner superior quan totes les fases estan fetes
     if all_phases_done:
         if not is_proj_finalitzat:
@@ -916,7 +954,19 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                     if d_in or d_out:
                         st.caption(f"📅 Termini: {d_in or '?'} → {d_out or '?'}")
                     else:
-                        st.caption(f"Estat: **{status_desc}**")
+                        st.caption(f"Estat: **{status_desc}** (sense dates d'avís)")
+                    with st.popover("📅 Termini"):
+                        cur_fd_in = parse_date_cat(f.get("data_inici")) or date.today()
+                        cur_fd_out = parse_date_cat(f.get("data_fi")) or (cur_fd_in + timedelta(days=7))
+                        ed_fd_in = st.date_input("Inici fase:", value=cur_fd_in, format="DD/MM/YYYY", key=f"ed_fd_in_{project_id}_{fase_id}")
+                        ed_fd_out = st.date_input("Fi fase:", value=cur_fd_out, format="DD/MM/YYYY", key=f"ed_fd_out_{project_id}_{fase_id}")
+                        if st.button("Desar dates", key=f"save_fd_{project_id}_{fase_id}", type="primary", use_container_width=True):
+                            update_fase(project_id, fase_id, {
+                                "data_inici": to_iso_date(ed_fd_in),
+                                "data_fi": to_iso_date(ed_fd_out),
+                            })
+                            st.toast("📅 Dates de fase actualitzades!", icon="📅")
+                            st.rerun()
                 
                 with cf_b_pend:
                     is_active_pend = (status_desc == "Pendent")
@@ -1157,11 +1207,13 @@ def _render_modal_nou_projecte():
 
         desc = st.text_area("Descripció dels treballs i objectius:", placeholder="Ex: Canviar la banyera per un plat de dutxa de resina, substituir les rajoles de les parets i renovar aixetes.")
 
-        col_d1, col_d2 = st.columns(2)
+        col_d1, col_d2, col_d3 = st.columns(3)
         with col_d1:
             d_in = st.date_input("Data prevista d'inici (DD/MM/AAAA):", value=date.today(), format="DD/MM/YYYY")
         with col_d2:
             d_out = st.date_input("Data prevista de finalització (DD/MM/AAAA):", value=date.today() + timedelta(days=30), format="DD/MM/YYYY")
+        with col_d3:
+            dies_avis = st.number_input("🔔 Avisar fases pendents (dies abans):", min_value=0, max_value=90, value=3, step=1)
 
         col_sub1, col_sub2 = st.columns([1, 1])
         with col_sub1:
@@ -1180,6 +1232,7 @@ def _render_modal_nou_projecte():
                 "data_inici": to_iso_date(d_in),
                 "data_fi_prevista": to_iso_date(d_out),
                 "pressupost_estimat": pressupost,
+                "dies_avis_fases": int(dies_avis),
                 "materials": [],
                 "fases": [],
                 "fotos": [],
