@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "11/11/2026 20:42:25",
+  "updated_at": "11/11/2026 20:59:11",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -172,10 +172,10 @@
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
         "core/projectes_manager.py": "839a6a57ec14fb3da3d245fbc40f5f2df7b4a75b68f9bcd50cc27bd87985dbf1",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
-        "modules/canvas_electric.py": "0c1450c8d8c166945de0c581ad1f0a55f02c0e9dc7531e4bd5f91e6ce763c9ca"
+        "modules/canvas_electric.py": "75c2bf01f379db233dbee1d384dd04463a79c4b880faeedeb9781e616be035dc"
       },
-      "verified_at": "11/11/2026 20:42:24",
-      "verified_commit": "5d96dbd",
+      "verified_at": "11/11/2026 20:59:11",
+      "verified_commit": "96bafd6",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "11/11/2026 20:59:11",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Afegida carrega i exportacio d'esquemes electrics guardats (JSON i nuvol))",
+      "user": "admin",
+      "git_head": "96bafd6"
+    },
     {
       "timestamp": "11/11/2026 20:42:24",
       "action": "SEAL",

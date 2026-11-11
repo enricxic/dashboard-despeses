@@ -8,19 +8,36 @@ Editor interactiu d'Esquemes Elèctrics per a projectes de la llar:
   textos, foto de fons, desfer i exportació a PNG.
 """
 
+import json
 import streamlit as st
 import streamlit.components.v1 as components
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from core.projectes_manager import (
     compress_image_b64,
     decode_image_for_st,
+    load_projectes,
     save_esquema_electric_projecte,
 )
 
 
-def get_electric_canvas_html(project_id: str) -> str:
+def get_electric_canvas_html(
+    project_id: str,
+    initial_schema_json: Optional[Any] = None,
+    initial_bg_b64: str = "",
+    force_load_token: str = "",
+) -> str:
     """Genera el component HTML5 Canvas + JS per dibuixar esquemes elèctrics en PC i mòbil."""
+    if isinstance(initial_schema_json, dict) and isinstance(initial_schema_json.get("elements"), list):
+        schema_payload = initial_schema_json["elements"]
+    elif isinstance(initial_schema_json, list):
+        schema_payload = initial_schema_json
+    else:
+        schema_payload = []
+
+    schema_js = json.dumps(schema_payload, ensure_ascii=False)
+    bg_js = json.dumps(initial_bg_b64 or "", ensure_ascii=False)
+    token_js = json.dumps(force_load_token or "", ensure_ascii=False)
     return f"""<!DOCTYPE html>
 <html lang="ca">
 <head>
@@ -251,6 +268,11 @@ def get_electric_canvas_html(project_id: str) -> str:
     </label>
     <input type="range" id="bgOpacity" min="0.1" max="1" step="0.1" value="0.35" style="width:45px;" onchange="redraw()" title="Opacitat foto fons">
     <button class="btn btn-danger" onclick="clearAll()">🗑️ Netejar</button>
+    <label class="btn" style="cursor:pointer; background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;" title="Carregar un arxiu d'esquema (.json) guardat">
+      📂 Carregar JSON
+      <input type="file" id="fileSchema" accept=".json,application/json" style="display:none;" onchange="loadSchemaFile(event)">
+    </label>
+    <button class="btn" onclick="downloadJSON()" style="background:#f8fafc; color:#0f172a;" title="Exportar esquema editable (.json)">💾 JSON</button>
     <button class="btn btn-save" onclick="downloadPNG()">💾 PNG</button>
   </div>
 </div>
@@ -291,6 +313,9 @@ def get_electric_canvas_html(project_id: str) -> str:
 <script>
 const PROJECT_ID = "{project_id}";
 const STORAGE_KEY = "esquema_electric_" + PROJECT_ID;
+const INITIAL_SCHEMA = {schema_js};
+const INITIAL_BG = {bg_js};
+const FORCE_LOAD_TOKEN = {token_js};
 
 const canvas = document.getElementById("elecCanvas");
 const ctx = canvas.getContext("2d");
@@ -1386,7 +1411,74 @@ function downloadPNG() {{
   link.click();
 }}
 
-loadLocal();
+function downloadJSON() {{
+  const payload = JSON.stringify({{
+    version: 1,
+    project_id: PROJECT_ID,
+    elements: elements
+  }}, null, 2);
+  const blob = new Blob([payload], {{ type: "application/json" }});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.download = "esquema_electric_" + PROJECT_ID + ".json";
+  link.href = url;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}}
+
+function loadSchemaFile(ev) {{
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {{
+    try {{
+      const parsed = JSON.parse(e.target.result);
+      const list = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.elements) ? parsed.elements : null);
+      if (list) {{
+        elements = list;
+        selectedEl = null;
+        lastWirePoint = null;
+        saveLocal();
+        redraw();
+        statusText.textContent = "✅ Esquema carregat (" + elements.length + " elements)";
+      }} else {{
+        statusText.textContent = "⚠️ El fitxer JSON no té un format d'esquema vàlid.";
+      }}
+    }} catch(err) {{
+      statusText.textContent = "⚠️ Error llegint el JSON: " + err.message;
+    }} finally {{
+      ev.target.value = "";
+    }}
+  }};
+  reader.readAsText(file, "utf-8");
+}}
+
+function applyInitialData() {{
+  let loadedToken = "";
+  try {{ loadedToken = localStorage.getItem(STORAGE_KEY + "_load_token") || ""; }} catch(e) {{}}
+  if (FORCE_LOAD_TOKEN && FORCE_LOAD_TOKEN !== loadedToken) {{
+    try {{ localStorage.setItem(STORAGE_KEY + "_load_token", FORCE_LOAD_TOKEN); }} catch(e) {{}}
+    if (Array.isArray(INITIAL_SCHEMA) && INITIAL_SCHEMA.length > 0) {{
+      elements = INITIAL_SCHEMA;
+      selectedEl = null;
+      lastWirePoint = null;
+      saveLocal();
+    }}
+    if (INITIAL_BG) {{
+      const img = new Image();
+      img.onload = function() {{ bgImage = img; redraw(); }};
+      img.src = INITIAL_BG;
+    }}
+    return;
+  }}
+  loadLocal();
+  if ((!elements || elements.length === 0) && Array.isArray(INITIAL_SCHEMA) && INITIAL_SCHEMA.length > 0) {{
+    elements = INITIAL_SCHEMA;
+    saveLocal();
+  }}
+}}
+
+applyInitialData();
 resizeCanvas();
 setTimeout(resizeCanvas, 120);
 </script>
@@ -1399,6 +1491,7 @@ def render_esquema_electric_tab(projecte: Dict[str, Any]) -> None:
     project_id = projecte.get("id", "nou")
     esq_info = projecte.get("esquema_electric", {}) or {}
     preview_png = esq_info.get("preview_png")
+    saved_schema = esq_info.get("schema_data")
 
     st.markdown("#### ⚡ Editor d'Esquemes Elèctrics")
     st.caption(
@@ -1412,7 +1505,7 @@ def render_esquema_electric_tab(projecte: Dict[str, Any]) -> None:
 - **Elements elèctrics**: Prem qualsevol botó (**💡 Bombeta**, **🔌 Endoll**, **⚡ Magnetotèrmic**, **🔘 Interruptor**, **🔀 Commutador**, **🛡️ Diferencial**, **🧲 Contactor**, **🌡️ Termòstat** de 4 contactes `L/N/C/NO`, **⏰ Programador**, **📦 Caixa**, **🔋 Quadre**, **⚙️ Càrrega**) i toca on el vulguis situar.
 - **Redimensionar i Moure elements**: Prem el botó **`↖ Seleccionar`** i toca qualsevol element, requadre, text o cable. Sortiran **8 quadrets petits** a les cantonades i punts mitjans (per transformar amplada/alçada) i un **quadret central** (o arrossegament intern) per moure'l. Amb **📦 Caixa**, **🔋 Quadre** o **⚙️ Càrrega** també pots **arrossegar** directament en crear-los per donar-los la mida desitjada.
 - **Editar etiqueta / Girar**: Fes **doble clic** sobre un element per canviar-ne l'etiqueta (ex. *PIA 16A*, *Termo*) o prem **🔄 Girar** per rotar-lo 90°.
-- **Desar**: Prem **💾 PNG** a la barra de l'editor i puja el fitxer al formulari inferior per deixar l'esquema desat al projecte.
+- **Desar i Carregar**: Prem **💾 JSON** per desar l'esquema editable o **💾 PNG** per obtenir la imatge; pots tornar-lo a obrir amb **📂 Carregar JSON** o carregar un esquema guardat al núvol des de la llista inferior.
 """)
 
     if preview_png:
@@ -1422,20 +1515,77 @@ def render_esquema_electric_tab(projecte: Dict[str, Any]) -> None:
         if data_act:
             st.caption(f"Darrera actualització de l'esquema elèctric: {data_act}")
 
-    with st.expander("⚡ Obrir Editor d'Esquemes Elèctrics (Canvas)", expanded=False):
-        html_code = get_electric_canvas_html(project_id)
+    # Carregar un esquema guardat al núvol (del mateix projecte o de qualsevol altre projecte)
+    all_projs = load_projectes() or []
+    saved_options = {}
+    for pr in all_projs:
+        pr_esq = pr.get("esquema_electric") or {}
+        if pr_esq.get("schema_data") or pr_esq.get("preview_png"):
+            has_json = "✅ Editable (JSON)" if pr_esq.get("schema_data") else "🖼️ Imatge de fons"
+            tag = " [Actual]" if pr.get("id") == project_id else ""
+            dt = pr_esq.get("data_actualitzacio", "")
+            saved_options[pr["id"]] = f"{pr.get('nom', 'Projecte')}{tag} — {has_json} ({dt})"
+
+    if saved_options:
+        with st.container(border=True):
+            c_load1, c_load2 = st.columns([2.6, 1.4], vertical_alignment="bottom")
+            with c_load1:
+                sel_src_id = st.selectbox(
+                    "📂 Carregar un esquema guardat al núvol:",
+                    options=list(saved_options.keys()),
+                    format_func=lambda x: saved_options[x],
+                    key=f"sel_load_esq_{project_id}",
+                )
+            with c_load2:
+                if st.button("📥 Carregar a l'Editor", key=f"btn_load_esq_{project_id}", use_container_width=True):
+                    src_proj = next((p for p in all_projs if p.get("id") == sel_src_id), None)
+                    src_esq = (src_proj or {}).get("esquema_electric") or {}
+                    st.session_state[f"pending_load_esq_json_{project_id}"] = src_esq.get("schema_data") or []
+                    st.session_state[f"pending_load_esq_bg_{project_id}"] = (
+                        src_esq.get("preview_png") if not src_esq.get("schema_data") else ""
+                    )
+                    import time
+                    st.session_state[f"pending_load_esq_tok_{project_id}"] = f"load_{int(time.time() * 1000)}"
+                    st.session_state[f"expand_elec_canvas_{project_id}"] = True
+                    st.toast("📥 Esquema carregat a l'editor!", icon="⚡")
+                    st.rerun()
+
+    init_schema = st.session_state.get(f"pending_load_esq_json_{project_id}", saved_schema)
+    init_bg = st.session_state.get(f"pending_load_esq_bg_{project_id}", "")
+    load_tok = st.session_state.get(f"pending_load_esq_tok_{project_id}", "")
+    is_expanded = bool(st.session_state.pop(f"expand_elec_canvas_{project_id}", False))
+
+    with st.expander("⚡ Obrir Editor d'Esquemes Elèctrics (Canvas)", expanded=is_expanded):
+        html_code = get_electric_canvas_html(
+            project_id,
+            initial_schema_json=init_schema,
+            initial_bg_b64=init_bg,
+            force_load_token=load_tok,
+        )
         components.html(html_code, height=660, scrolling=False)
 
     with st.form(f"form_save_esq_elec_{project_id}", clear_on_submit=True):
         st.markdown("**💾 Desar o Actualitzar Esquema Elèctric al Projecte**")
-        up_esq = st.file_uploader(
-            "Carrega el PNG generat o una foto d'esquema elèctric:",
-            type=["png", "jpg", "jpeg", "webp"],
+        up_files = st.file_uploader(
+            "Carrega la imatge PNG i/o el fitxer editable JSON generat per l'editor:",
+            type=["png", "jpg", "jpeg", "webp", "json"],
+            accept_multiple_files=True,
             key=f"up_esq_elec_{project_id}",
         )
         sub_esq = st.form_submit_button("Guardar Esquema Elèctric", type="primary")
-        if sub_esq and up_esq:
-            b64_data = compress_image_b64(up_esq, max_dim=1280, quality=85)
-            if save_esquema_electric_projecte(project_id, preview_png=b64_data):
-                st.session_state["foto_toast_msg"] = "Esquema elèctric desat correctament!"
-                st.rerun()
+        if sub_esq and up_files:
+            b64_data = ""
+            parsed_schema = None
+            for uf in up_files:
+                fname = (uf.name or "").lower()
+                if fname.endswith(".json"):
+                    try:
+                        parsed_schema = json.loads(uf.getvalue().decode("utf-8"))
+                    except Exception as e_json:
+                        st.error(f"El fitxer JSON no és vàlid: {e_json}")
+                else:
+                    b64_data = compress_image_b64(uf, max_dim=1280, quality=85)
+            if b64_data or parsed_schema is not None:
+                if save_esquema_electric_projecte(project_id, preview_png=b64_data, schema_data=parsed_schema):
+                    st.session_state["foto_toast_msg"] = "Esquema elèctric desat correctament!"
+                    st.rerun()
