@@ -137,22 +137,31 @@ def dialog_detall_material(project_id: str, material: Dict[str, Any]):
         else:
             st.markdown("<div style='background:#1e293b; width:150px; height:150px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:40px; border:2px dashed #475569;'>🧱</div>", unsafe_allow_html=True)
         
-        with st.expander("📷 Gestionar Foto", expanded=False):
-            t_ia, t_up, t_url = st.tabs(["✨ IA", "📁 Arxiu", "🌐 URL"])
-            with t_ia:
-                if st.button("🎨 Generar amb IA", type="primary", use_container_width=True, key=f"d_gen_ia_{mat_id}"):
-                    with st.spinner("Generant fotografia..."):
-                        nova_url = generar_imatge_material_url(nom_art)
-                        update_material(project_id, mat_id, {"imatge": nova_url})
-                        st.success("Foto IA assignada!")
-                        st.rerun()
+        with st.expander("📷 Canviar / Gestionar Foto", expanded=True):
+            t_up, t_ia, t_url = st.tabs(["📁 Pujar / Càmera", "✨ IA Millorada", "🌐 URL"])
             with t_up:
-                up_f = st.file_uploader("Pujar foto (mòbil/fitxer):", type=["png", "jpg", "jpeg", "webp"], key=f"d_up_f_{mat_id}")
-                if st.button("Guardar Foto", use_container_width=True, key=f"d_save_f_{mat_id}"):
+                up_f = st.file_uploader("Substituir per una foto nova (mòbil/fitxer):", type=["png", "jpg", "jpeg", "webp"], key=f"d_up_f_{mat_id}")
+                if st.button("Guardar Foto Nova", type="primary", use_container_width=True, key=f"d_save_f_{mat_id}"):
                     if up_f:
                         b64 = compress_image_b64(up_f, max_dim=600, quality=80)
                         update_material(project_id, mat_id, {"imatge": b64})
-                        st.success("Foto desada!")
+                        st.success("Foto actualitzada!")
+                        st.rerun()
+            with t_ia:
+                desc_ia = st.text_input(
+                    "Detall visual opcional (ex: PVC blanca per paret):",
+                    value="",
+                    key=f"d_ia_desc_{mat_id}",
+                )
+                if st.button("🎨 Generar / Regenerar Foto amb IA", use_container_width=True, key=f"d_gen_ia_{mat_id}"):
+                    with st.spinner("Traduint descripció i generant fotografia..."):
+                        nova_url = generar_imatge_material_url(
+                            nom_art,
+                            extra_desc=desc_ia,
+                            force_refresh=True,
+                        )
+                        update_material(project_id, mat_id, {"imatge": nova_url})
+                        st.success("Foto IA assignada!")
                         st.rerun()
             with t_url:
                 in_u = st.text_input("Enllaç imatge:", value=cur_img if (cur_img and cur_img.startswith("http")) else "", key=f"d_url_{mat_id}")
@@ -580,63 +589,89 @@ def _render_materials_tab(projecte: Dict[str, Any]):
         st.markdown(
             """
             <style>
-            [class*="st-key-mat_card_"] [data-testid="stImage"] {
+            [class*="st-key-mat_gallery_"] {
                 display: flex !important;
-                justify-content: center !important;
-                margin-bottom: 2px !important;
+                flex-wrap: wrap !important;
+                gap: 6px !important;
+                align-items: stretch !important;
             }
+            [class*="st-key-mat_card_"] {
+                width: 106px !important;
+                min-width: 102px !important;
+                max-width: 118px !important;
+                flex: 0 0 auto !important;
+                padding: 6px !important;
+            }
+            [class*="st-key-mat_card_"] [data-testid="stImage"],
+            [class*="st-key-mat_card_"] [data-testid="stImageContainer"],
+            [class*="st-key-mat_card_"] [data-testid="stFullScreenFrame"],
+            [class*="st-key-mat_card_"] [data-testid="stImage"] > div,
             [class*="st-key-mat_card_"] [data-testid="stImage"] img {
-                width: 48px !important;
-                height: 48px !important;
-                max-width: 48px !important;
-                max-height: 48px !important;
+                width: 44px !important;
+                min-width: 44px !important;
+                max-width: 44px !important;
+                height: 44px !important;
+                min-height: 44px !important;
+                max-height: 44px !important;
                 object-fit: cover !important;
                 border-radius: 6px !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                display: block !important;
+            }
+            [class*="st-key-mat_card_"] button {
+                padding: 2px 5px !important;
+                min-height: 28px !important;
+                font-size: 0.72rem !important;
+                line-height: 1.15 !important;
+            }
+            @media (max-width: 640px) {
+                [class*="st-key-mat_card_"] {
+                    width: calc(33.33% - 6px) !important;
+                    min-width: 92px !important;
+                    max-width: none !important;
+                }
             }
             </style>
             """,
             unsafe_allow_html=True
         )
 
-        # Columnes per fila: 6 miniatures per fila per un format molt compacte i normalitzat
-        num_cols = 6
-        rows = [materials[i:i + num_cols] for i in range(0, len(materials), num_cols)]
-        for row_idx, row in enumerate(rows):
-            cols = st.columns(num_cols)
-            for idx, m in enumerate(row):
-                mat_id = m.get("id", f"m_{row_idx}_{idx}")
+        # Contenidor flex horitzontal natiu: es manté en graella de miniatures tant en mòbil vertical com horitzontal
+        with st.container(horizontal=True, gap="small", key=f"mat_gallery_{project_id}"):
+            for idx, m in enumerate(materials):
+                mat_id = m.get("id", f"m_{idx}")
                 img_url = m.get("imatge")
                 es_stock = m.get("en_stock", False)
                 es_comprat = m.get("comprat", False) and not es_stock
                 nom_m = m.get("article", "Material")
 
-                with cols[idx]:
-                    with st.container(border=True, key=f"mat_card_{project_id}_{row_idx}_{idx}_{mat_id}"):
-                        # 1. Miniatura molt petita normalitzada (48x48 px)
-                        if img_url:
-                            st.image(decode_image_for_st(img_url), width=48)
-                        else:
-                            st.markdown(
-                                """
-                                <div class="thumb-img-box" style="width: 48px; height: 48px; margin: 0 auto 2px auto; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; border: 1px dashed #475569; font-size: 18px;">
-                                    🧱
-                                </div>
-                                """,
-                                unsafe_allow_html=True
-                            )
+                with st.container(border=True, width=106, key=f"mat_card_{project_id}_{idx}_{mat_id}"):
+                    # 1. Miniatura molt petita normalitzada (44x44 px) en totes les orientacions
+                    if img_url:
+                        st.image(decode_image_for_st(img_url), width=44)
+                    else:
+                        st.markdown(
+                            """
+                            <div class="thumb-img-box" style="width: 44px; height: 44px; margin: 0 auto 2px auto; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; border: 1px dashed #475569; font-size: 16px;">
+                                🧱
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
 
-                        # 2. Etiqueta d'estat
-                        if es_stock:
-                            badge = "📦 Stock"
-                        elif es_comprat:
-                            badge = "✅ Comprat"
-                        else:
-                            badge = "⏳ Pendent"
+                    # 2. Etiqueta d'estat
+                    if es_stock:
+                        badge = "📦"
+                    elif es_comprat:
+                        badge = "✅"
+                    else:
+                        badge = "⏳"
 
-                        # 3. Botó d'obertura que respon al clic o al doble clic
-                        lbl = f"{badge} · {nom_m}" if len(nom_m) <= 13 else f"{badge} · {nom_m[:11]}…"
-                        if st.button(lbl, key=f"btn_card_{project_id}_{mat_id}", use_container_width=True, help=f"Fes clic o doble clic per obrir la fitxa de: {nom_m}"):
-                            dialog_detall_material(project_id, m)
+                    # 3. Botó d'obertura que respon al clic o al doble clic
+                    lbl = f"{badge} {nom_m}" if len(nom_m) <= 11 else f"{badge} {nom_m[:9]}…"
+                    if st.button(lbl, key=f"btn_card_{project_id}_{mat_id}_{idx}", use_container_width=True, help=f"Fes clic per veure detalls o canviar foto: {nom_m}"):
+                        dialog_detall_material(project_id, m)
 
         # Suport de doble clic directe a les imatges de la graella
         st.markdown(

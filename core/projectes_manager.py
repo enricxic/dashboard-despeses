@@ -684,6 +684,35 @@ def delete_projecte_foto(project_id: str, foto_id: str) -> bool:
             return save_projectes(projectes)
     return False
 
+def update_projecte_foto(
+    project_id: str,
+    foto_id: str,
+    tipus: Optional[str] = None,
+    descripcio: Optional[str] = None,
+    new_data_url_or_path: Any = None
+) -> bool:
+    """Actualitza la imatge, el tipus (fase) o la descripció d'una fotografia ja pujada."""
+    new_comp_path = None
+    if new_data_url_or_path is not None:
+        new_comp_path = compress_image_b64(new_data_url_or_path, max_dim=1280, quality=80)
+        if not new_comp_path:
+            return False
+
+    projectes = load_projectes()
+    for p in projectes:
+        if p.get("id") == project_id:
+            for f in p.get("fotos", []):
+                if f.get("id") == foto_id:
+                    if tipus is not None:
+                        f["tipus"] = tipus
+                    if descripcio is not None:
+                        f["descripcio"] = descripcio
+                    if new_comp_path:
+                        f["path"] = new_comp_path
+                        f["data"] = datetime.now().strftime("%d/%m/%Y")
+                    return save_projectes(projectes)
+    return False
+
 def save_planol_projecte(project_id: str, preview_png: str, canvas_data: Any = None, background_image: Optional[str] = None) -> bool:
     projectes = load_projectes()
     for p in projectes:

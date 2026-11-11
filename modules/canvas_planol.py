@@ -13,6 +13,7 @@ from typing import Dict, Any
 from core.projectes_manager import (
     save_planol_projecte,
     add_projecte_foto,
+    update_projecte_foto,
     delete_projecte_foto,
     format_date_cat,
     compress_image_b64,
@@ -1609,6 +1610,57 @@ def render_planol_tab(projecte: Dict[str, Any]):
                 st.info(active_zoom["desc"])
 
     fotos = projecte.get("fotos", [])
+    edit_foto_key = f"editing_foto_{project_id}"
+    active_edit_id = st.session_state.get(edit_foto_key)
+    if active_edit_id and fotos:
+        foto_obj = next((x for x in fotos if x.get("id") == active_edit_id), None)
+        if foto_obj:
+            with st.container(border=True):
+                st.markdown("#### ✏️ Canviar / Editar Fotografia Pujada")
+                with st.form(f"form_edit_foto_{project_id}_{active_edit_id}"):
+                    ef_c1, ef_c2 = st.columns([1, 2])
+                    tipus_opts = ["abans", "durant", "despres", "altre"]
+                    cur_tip = foto_obj.get("tipus", "altre")
+                    with ef_c1:
+                        new_tipus = st.selectbox(
+                            "Fase:",
+                            tipus_opts,
+                            index=tipus_opts.index(cur_tip) if cur_tip in tipus_opts else 3,
+                            format_func=lambda x: {"abans": "🔴 Abans", "durant": "🟡 Durant", "despres": "🟢 Resultat", "altre": "⚪ Altre"}[x],
+                        )
+                    with ef_c2:
+                        new_desc = st.text_input("Descripció:", value=foto_obj.get("descripcio", ""))
+                    new_file = st.file_uploader(
+                        "Substituir per una nova foto (opcional):",
+                        type=["jpg", "jpeg", "png", "webp", "jfif", "bmp"],
+                        key=f"replace_foto_file_{project_id}_{active_edit_id}",
+                    )
+                    sb1, sb2 = st.columns(2)
+                    with sb1:
+                        save_ed = st.form_submit_button("💾 Desar canvis", type="primary", use_container_width=True)
+                    with sb2:
+                        cancel_ed = st.form_submit_button("Cancel·lar", use_container_width=True)
+
+                    if cancel_ed:
+                        st.session_state.pop(edit_foto_key, None)
+                        st.rerun()
+                    if save_ed:
+                        payload_img = new_file.getvalue() if new_file is not None else None
+                        if update_projecte_foto(
+                            project_id,
+                            active_edit_id,
+                            tipus=new_tipus,
+                            descripcio=new_desc.strip(),
+                            new_data_url_or_path=payload_img,
+                        ):
+                            st.session_state.pop(edit_foto_key, None)
+                            if active_zoom and active_zoom.get("path") == foto_obj.get("path"):
+                                st.session_state.pop(zoom_key, None)
+                            st.success("Fotografia actualitzada!")
+                            st.rerun()
+                        else:
+                            st.error("No s'ha pogut actualitzar la fotografia.")
+
     if fotos:
         num_cols = 4  # 4 columnes per fila per una mida compacta i equilibrada
         rows = [fotos[i:i + num_cols] for i in range(0, len(fotos), num_cols)]
@@ -1648,7 +1700,7 @@ def render_planol_tab(projecte: Dict[str, Any]):
                         if f_desc:
                             st.caption(f_desc[:40] + ("…" if len(f_desc) > 40 else ""))
 
-                        col_b1, col_b2 = st.columns([1.2, 0.8])
+                        col_b1, col_b2, col_b3 = st.columns([1.2, 0.7, 0.7])
                         with col_b1:
                             if st.button("🔍 Veure", key=f"zoom_foto_{project_id}_{f_id}_{r_idx}_{idx}", use_container_width=True, help="Veure foto a pantalla gran"):
                                 st.session_state[zoom_key] = {
@@ -1658,10 +1710,16 @@ def render_planol_tab(projecte: Dict[str, Any]):
                                 }
                                 st.rerun()
                         with col_b2:
+                            if st.button("✏️", key=f"edit_foto_{project_id}_{f_id}_{r_idx}_{idx}", use_container_width=True, help="Canviar foto, fase o descripció"):
+                                st.session_state[edit_foto_key] = f.get("id")
+                                st.rerun()
+                        with col_b3:
                             if st.button("🗑️", key=f"del_foto_{project_id}_{f_id}_{r_idx}_{idx}", use_container_width=True, help="Eliminar aquesta foto"):
                                 delete_projecte_foto(project_id, f.get("id"))
                                 if active_zoom and active_zoom.get("path") == f_path:
                                     st.session_state.pop(zoom_key, None)
+                                if active_edit_id == f.get("id"):
+                                    st.session_state.pop(edit_foto_key, None)
                                 st.rerun()
     else:
         st.info("Encara no s'ha afegit cap fotografia a aquest projecte.")
