@@ -15,7 +15,8 @@ from core.projectes_manager import (
     add_projecte_foto,
     delete_projecte_foto,
     format_date_cat,
-    compress_image_b64
+    compress_image_b64,
+    decode_image_for_st
 )
 
 def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
@@ -1495,12 +1496,15 @@ def dialog_veure_foto_gran(foto_path: str, titol: str, descripcio: str = ""):
     """Finestra modal per veure la fotografia a mida completa."""
     st.markdown(f"### {titol}")
     if foto_path:
-        st.image(foto_path, use_container_width=True)
+        st.image(decode_image_for_st(foto_path), width="stretch")
     if descripcio:
         st.info(descripcio)
 
 def render_planol_tab(projecte: Dict[str, Any]):
     """Renderitza la subpestanya de Plànol i Galeria de Fotos del projecte."""
+    if st.session_state.get("foto_toast_msg"):
+        st.toast(st.session_state.pop("foto_toast_msg"), icon="✅")
+
     project_id = projecte.get("id", "nou")
     planol_info = projecte.get("planol", {})
     preview_png = planol_info.get("preview_png")
@@ -1556,7 +1560,7 @@ def render_planol_tab(projecte: Dict[str, Any]):
     # Vista prèvia actual si existeix
     if preview_png:
         st.markdown("**Plànol oficial desat per a aquest projecte:**")
-        st.image(preview_png, use_container_width=True)
+        st.image(decode_image_for_st(preview_png), width="stretch")
         data_act = planol_info.get("data_actualitzacio", "")
         if data_act:
             st.caption(f"Darrera actualització del plànol: {data_act}")
@@ -1567,7 +1571,7 @@ def render_planol_tab(projecte: Dict[str, Any]):
         components.html(html_code, height=650, scrolling=False)
 
     # Selector per desar el plànol oficial
-    with st.form(f"form_save_planol_{project_id}"):
+    with st.form(f"form_save_planol_{project_id}", clear_on_submit=True):
         st.markdown("**💾 Desar o Actualitzar Plànol al Projecte**")
         up_file = st.file_uploader(
             "Selecciona la imatge del plànol (PNG generat per l'editor o foto d'un croquis físic):",
@@ -1577,9 +1581,9 @@ def render_planol_tab(projecte: Dict[str, Any]):
         sub_planol = st.form_submit_button("Guardar Plànol Oficial", type="primary")
         if sub_planol and up_file:
             b64_data = compress_image_b64(up_file, max_dim=1280, quality=80)
-            save_planol_projecte(project_id, preview_png=b64_data)
-            st.success("Plànol oficial desat correctament!")
-            st.rerun()
+            if save_planol_projecte(project_id, preview_png=b64_data):
+                st.session_state["foto_toast_msg"] = "Plànol oficial desat correctament!"
+                st.rerun()
 
     st.markdown("---")
 
@@ -1600,7 +1604,7 @@ def render_planol_tab(projecte: Dict[str, Any]):
                     st.session_state.pop(zoom_key, None)
                     st.rerun()
             if active_zoom.get("path"):
-                st.image(active_zoom["path"], use_container_width=True)
+                st.image(decode_image_for_st(active_zoom["path"]), width="stretch")
             if active_zoom.get("desc"):
                 st.info(active_zoom["desc"])
 
@@ -1626,9 +1630,10 @@ def render_planol_tab(projecte: Dict[str, Any]):
                         f_desc = f.get("descripcio", "")
                         f_id = f.get("id", f"{r_idx}_{idx}")
 
-                        # Miniatura de la fotografia de l'obra
-                        if f_path:
-                            st.image(f_path, use_container_width=True)
+                        # Miniatura de la fotografia de l'obra (descodificada a bytes reals per st.image)
+                        img_obj = decode_image_for_st(f_path)
+                        if img_obj:
+                            st.image(img_obj, width="stretch")
                         else:
                             st.markdown(
                                 """
@@ -1645,7 +1650,7 @@ def render_planol_tab(projecte: Dict[str, Any]):
 
                         col_b1, col_b2 = st.columns([1.2, 0.8])
                         with col_b1:
-                            if st.button("🔍 Veure", key=f"zoom_foto_{project_id}_{f_id}", use_container_width=True, help="Veure foto a pantalla gran"):
+                            if st.button("🔍 Veure", key=f"zoom_foto_{project_id}_{f_id}_{r_idx}_{idx}", use_container_width=True, help="Veure foto a pantalla gran"):
                                 st.session_state[zoom_key] = {
                                     "path": f_path,
                                     "titol": f"{tipus_badge} — {f_data}",
@@ -1653,7 +1658,7 @@ def render_planol_tab(projecte: Dict[str, Any]):
                                 }
                                 st.rerun()
                         with col_b2:
-                            if st.button("🗑️", key=f"del_foto_{project_id}_{f_id}", use_container_width=True, help="Eliminar aquesta foto"):
+                            if st.button("🗑️", key=f"del_foto_{project_id}_{f_id}_{r_idx}_{idx}", use_container_width=True, help="Eliminar aquesta foto"):
                                 delete_projecte_foto(project_id, f.get("id"))
                                 if active_zoom and active_zoom.get("path") == f_path:
                                     st.session_state.pop(zoom_key, None)
@@ -1662,7 +1667,7 @@ def render_planol_tab(projecte: Dict[str, Any]):
         st.info("Encara no s'ha afegit cap fotografia a aquest projecte.")
 
     with st.expander("➕ Afegir Nova Fotografia de l'Obra"):
-        with st.form(f"form_add_foto_{project_id}"):
+        with st.form(f"form_add_foto_{project_id}", clear_on_submit=True):
             c1, c2 = st.columns([1, 2])
             with c1:
                 tipus_foto = st.selectbox(
@@ -1674,10 +1679,25 @@ def render_planol_tab(projecte: Dict[str, Any]):
             with c2:
                 desc_foto = st.text_input("Descripció o comentari:", placeholder="Ex: Estat inicial de les canonades abans d'enderrocar", key=f"desc_foto_{project_id}")
             
-            foto_file = st.file_uploader("Carrega la foto (mòbil o càmera):", type=["jpg", "jpeg", "png", "webp"], key=f"file_foto_{project_id}")
+            foto_files = st.file_uploader(
+                "Carrega una o més fotos (mòbil o PC):",
+                type=["jpg", "jpeg", "png", "webp", "jfif", "bmp"],
+                accept_multiple_files=True,
+                key=f"file_foto_{project_id}"
+            )
             sub_foto = st.form_submit_button("Pujar Fotografia", type="primary")
-            if sub_foto and foto_file:
-                b64_foto = compress_image_b64(foto_file, max_dim=1280, quality=80)
-                add_projecte_foto(project_id, tipus=tipus_foto, data_url_or_path=b64_foto, descripcio=desc_foto)
-                st.success("Fotografia afegida a la galeria!")
-                st.rerun()
+            if sub_foto:
+                if not foto_files:
+                    st.warning("⚠️ Selecciona primer almenys una fotografia.")
+                else:
+                    saved_count = 0
+                    with st.spinner("Comprimint i desant fotografia..."):
+                        for ff in foto_files:
+                            b64_foto = compress_image_b64(ff, max_dim=1280, quality=80)
+                            if b64_foto and add_projecte_foto(project_id, tipus=tipus_foto, data_url_or_path=b64_foto, descripcio=desc_foto):
+                                saved_count += 1
+                    if saved_count > 0:
+                        st.session_state["foto_toast_msg"] = f"S'ha{'n' if saved_count > 1 else ''} afegit {saved_count} fotografia{'es' if saved_count > 1 else ''} correctament!"
+                        st.rerun()
+                    else:
+                        st.error("❌ No s'ha pogut processar o desar la fotografia al núvol.")

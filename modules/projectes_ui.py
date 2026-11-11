@@ -41,7 +41,8 @@ from core.projectes_manager import (
     format_date_cat,
     parse_date_cat,
     to_iso_date,
-    compress_image_b64
+    compress_image_b64,
+    decode_image_for_st
 )
 from core.ai_projectes import (
     consultar_assistent_obra,
@@ -132,7 +133,7 @@ def dialog_detall_material(project_id: str, material: Dict[str, Any]):
     col_img_v, col_dat_v = st.columns([1.2, 1.8])
     with col_img_v:
         if cur_img:
-            st.image(cur_img, use_container_width=True)
+            st.image(decode_image_for_st(cur_img), width="stretch")
         else:
             st.markdown("<div style='background:#1e293b; height:180px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:48px; border:2px dashed #475569;'>🧱</div>", unsafe_allow_html=True)
         
@@ -547,7 +548,7 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                     c_prev = cols_preview[idx % len(cols_preview)]
                     with c_prev:
                         if item.get("imatge"):
-                            st.image(item["imatge"], use_container_width=True)
+                            st.image(decode_image_for_st(item["imatge"]), width="stretch")
                         st.caption(f"**{item.get('article')}**\nEst: {item.get('preu_estimat', 0)} €")
                 
                 if st.button("📥 Afegir tots aquests materials amb imatges al projecte", key=f"add_all_mat_{project_id}", type="primary", use_container_width=True):
@@ -593,7 +594,7 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                         # 1. Caixa normalitzada de mida fixa (105px d'alçada)
                         # object-fit: contain respecta la proporció vertical/horitzontal original sense deformar-la mai
                         if img_url:
-                            st.image(img_url, use_container_width=True)
+                            st.image(decode_image_for_st(img_url), width="stretch")
                         else:
                             st.markdown(
                                 """

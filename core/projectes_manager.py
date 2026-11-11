@@ -297,6 +297,19 @@ def compress_image_b64(img_input: Any, max_dim: int = 1280, quality: int = 80) -
             return img_input
         return ""
 
+def decode_image_for_st(img_src: Any) -> Any:
+    """Converteix una cadena 'data:image/...;base64,...' a bytes reals per a st.image()
+    per garantir la visualització fiable via MediaFileManager tant en mòbil com al núvol."""
+    if not img_src:
+        return None
+    if isinstance(img_src, str) and img_src.startswith("data:image") and "," in img_src:
+        try:
+            _, b64_part = img_src.split(",", 1)
+            return base64.b64decode(b64_part)
+        except Exception:
+            return img_src
+    return img_src
+
 def _save_local(data: List[Dict[str, Any]]):
     """Guarda al disc de forma atòmica per evitar fitxers corruptes si hi ha un tall."""
     try:
@@ -645,12 +658,14 @@ def delete_xat_missatge(project_id: str, index: int) -> bool:
 # ==========================================
 
 def add_projecte_foto(project_id: str, tipus: str, data_url_or_path: str, descripcio: str = "") -> bool:
-    projectes = load_projectes()
     comp_path = compress_image_b64(data_url_or_path, max_dim=1280, quality=80)
+    if not comp_path:
+        return False
+    projectes = load_projectes()
     for p in projectes:
         if p.get("id") == project_id:
             p.setdefault("fotos", [])
-            f_id = f"f_{len(p['fotos']) + 1}_{int(datetime.now().timestamp())}"
+            f_id = f"f_{len(p['fotos']) + 1}_{int(datetime.now().timestamp() * 1000)}"
             p["fotos"].append({
                 "id": f_id,
                 "tipus": tipus,  # "abans", "durant", "despres", "altre"
