@@ -22,3 +22,5 @@ data/feeds_cache.json
 
 
 data/events.json
+
+data/control_backups/

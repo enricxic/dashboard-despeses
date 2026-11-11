@@ -1078,6 +1078,7 @@ div.block-container {{
 <a href="?action=clean_orphans{action_suffix}" target="_self">🧹 Neteja Orfes (OCR)</a>
 <div class="menu-separator"></div>
 <a href="?action=normalitzar_dades{action_suffix}" target="_self">🧹 Normalitzar Dades (BD & JSON)</a>
+{f'<div class="menu-separator"></div><a href="?mod=modules.control{url_suffix}" target="_self" style="color: #fbbf24 !important;">🛡️ Control de Mòduls</a>' if st.session_state.get("role") == "admin" else ''}
 </div>
 </div>
 <div class="menu-item">

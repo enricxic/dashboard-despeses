@@ -1,0 +1,362 @@
+{
+  "version": 1,
+  "updated_at": "11/11/2026 15:23:27",
+  "modules": {
+    "compres": {
+      "name": "Compres Super",
+      "icon": "🛒",
+      "level": "blindat",
+      "files": [
+        "modules/compres.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Entrada manual amb càlcul en viu de TOTAL LÍNIA (manual_tot_linea_disp)",
+        "Commit natiu d'inputs numèrics amb Enter i botó Entrar línia (cb_add_ticket_line)",
+        "Pujada de fitxer i càmera posterior al mòbil"
+      ],
+      "verified_hashes": {
+        "modules/compres.py": "dc54208ac74df0503842fea41db98b39f6748b5be16cf4eddd63697393b54455"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "economic": {
+      "name": "Econòmic",
+      "icon": "📈",
+      "level": "blindat",
+      "files": [
+        "modules/economic.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Càrrega ràpida reutilitzant cau central de core/db.py (sense DBTracker local)",
+        "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
+      ],
+      "verified_hashes": {
+        "modules/economic.py": "d6221b56a297ece4ddf91913fcd2b9197d3f2a5a7c70c0ee6ab04e4286b15cce"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "cotxe": {
+      "name": "Cotxe",
+      "icon": "🚗",
+      "level": "blindat",
+      "files": [
+        "modules/cotxe.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Validació estricta d'odòmetre (contador_val > last_km)",
+        "Km i rutes, repostatge, manteniment i consum"
+      ],
+      "verified_hashes": {
+        "modules/cotxe.py": "5338a70e8d9101eda4bbd8c7af1f696bb41a0849681a994625fe186c7880aad8"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "dashboard": {
+      "name": "Dashboard",
+      "icon": "📊",
+      "level": "blindat",
+      "files": [
+        "modules/dashboard.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Resum general KPI i gràfiques sense excepcions"
+      ],
+      "verified_hashes": {
+        "modules/dashboard.py": "f11540dd3c669f11fca48d04c94cf12b7f71a34ca3121252f0c2ff41c6a22f7f"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "llum_aigua": {
+      "name": "Llum i Aigua",
+      "icon": "💡",
+      "level": "vigilat",
+      "files": [
+        "modules/llum_aigua.py",
+        "core/llum_manager.py",
+        "core/aigua_manager.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Preus PVPC horaris, estudi solar PVGIS, factures llum (id=9) i aigua (id=10)"
+      ],
+      "verified_hashes": {
+        "modules/llum_aigua.py": "8266ab4d4406234dd18738f475795301eeda049a399e133a1fcb34d1190f3d11",
+        "core/llum_manager.py": "e6f2e287970e9eda9720caa6447c52c4c5009e39cc6aede0ae7f48f4121c296c",
+        "core/aigua_manager.py": "6c932b202573c4261cb19559f04f763a291fb3e0fab2d5e186c994df365b7c37"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "admin": {
+      "name": "Configuració",
+      "icon": "⚙️",
+      "level": "vigilat",
+      "files": [
+        "modules/admin.py",
+        "core/config_manager.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Persistència de configuració global a Supabase (app_config id=2)"
+      ],
+      "verified_hashes": {
+        "modules/admin.py": "2f16c995f7649dde0a84e76bfe8eac502890b9879894a90e53cd6b6afce4ceff",
+        "core/config_manager.py": "9304e153eab368985a3dfdbd6a1a8715b37b4d4f79ebd150635abde8db770c4e"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "manteniment": {
+      "name": "Manteniment",
+      "icon": "🛠️",
+      "level": "vigilat",
+      "files": [
+        "modules/manteniment.py",
+        "modules/projectes_ui.py",
+        "modules/canvas_planol.py",
+        "core/manteniment_manager.py",
+        "core/projectes_manager.py",
+        "core/ai_projectes.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Projectes: Supabase prioritari sobre JSON i desat síncron (id=11)",
+        "Visualització de fotos via bytes (decode_image_for_st)",
+        "Editor gràfic de plànol col·lapsat per defecte (expanded=False)"
+      ],
+      "verified_hashes": {
+        "modules/manteniment.py": "da50c298d4b504dacab516afbc2ba46a030bb766f941149fa4250194c68b0462",
+        "modules/projectes_ui.py": "68bdf77e96a60f6a9b2568b8d69dfb5fee4f03387667854be9b700491759da60",
+        "modules/canvas_planol.py": "39691261f2fe466365ee49adc18e4d2fac724fe5223fc9db01cf7351075c39ea",
+        "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
+        "core/projectes_manager.py": "8aca6b47096d52ba74c01b694bac069fcfe2768b866845f09a7e6330b1ac33c8",
+        "core/ai_projectes.py": "c80ec038cad481d5e96ae02a2ddc8be787624f0101ba5c1b34245fbbc4be9002"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "menjar": {
+      "name": "Menjar",
+      "icon": "🍽️",
+      "level": "vigilat",
+      "files": [
+        "modules/menjar.py",
+        "core/harness.py",
+        "core/validator.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Menú setmanal, receptes, mise en place i validador nutricional"
+      ],
+      "verified_hashes": {
+        "modules/menjar.py": "d0b28cb8bf29e3375350438a625d038e12dbb64c79593402a6bf9e3ace6f668b",
+        "core/harness.py": "3aa99de57fc8f828fb19453fb8547154b28cc3186078a273fa6187024bf72ca2",
+        "core/validator.py": "88518d01c4a96482c4c5c2322b8555cd57a10e6a487e6903657f81cf9acfab3d"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "core_compartit": {
+      "name": "Nucli Compartit (App & BD)",
+      "icon": "🧱",
+      "level": "vigilat",
+      "files": [
+        "app.py",
+        "core/db.py",
+        "core/auth.py",
+        "core/alerts.py"
+      ],
+      "depends_on": [],
+      "contracts": [
+        "Canvis aquí afecten els mòduls Blindats: requereixen còpia i proves transversals"
+      ],
+      "verified_hashes": {
+        "app.py": "8a7823a3ef6e98c312a34c100fb25a63515ea49649d25674b767d9ea51bea181",
+        "core/db.py": "6548d64d715ab60404896516dc4be469bf2be8bf1054fc454cdcaabc899cbf6e",
+        "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
+        "core/alerts.py": "44ae0aa80986118548d876f96273ad9e691c87fab19feec683d785349729728f"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "control": {
+      "name": "Control i Protecció",
+      "icon": "🛡️",
+      "level": "vigilat",
+      "files": [
+        "modules/control.py",
+        "core/control_manager.py",
+        "scripts/check_control.py"
+      ],
+      "depends_on": [],
+      "contracts": [
+        "Protecció de mòduls per nivells, backups i proves de regressió"
+      ],
+      "verified_hashes": {
+        "modules/control.py": "3901317f8edc7aa34b11ae791f156ede5230ecc3d8f64c185bbf599c1e7d92af",
+        "core/control_manager.py": "e9b4eb2321a0bfdf493d03b57d57cdb6bec34b405e71a504953c4c7673d21444",
+        "scripts/check_control.py": "de3899ca6b9ae5e61a7033f6a3220eb00139960af4f8df6366f1d63591eca28e"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "calendari": {
+      "name": "Calendari",
+      "icon": "📅",
+      "level": "obert",
+      "files": [
+        "modules/calendari.py",
+        "core/calendar_manager.py",
+        "core/google_calendar_api.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Agenda, esdeveniments i sincronització Google Calendar"
+      ],
+      "verified_hashes": {
+        "modules/calendari.py": "721ac32269fa96cb54eb85f8e59feaf5b4313042c506dee8afc83b6b0571b82e",
+        "core/calendar_manager.py": "2f3111279622c462b0fe5fe320fecfc3ab8e2bf8e4cf63fd1c6c0182a8e6a919",
+        "core/google_calendar_api.py": "41a462d8db6d5d1778457d2f37c443b449129c9eb15845603ac44898b9d86daa"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "medicacio": {
+      "name": "Medicació",
+      "icon": "💊",
+      "level": "obert",
+      "files": [
+        "modules/medicacio.py",
+        "core/medication_manager.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Preses d'avui, plans de medicació i notificacions"
+      ],
+      "verified_hashes": {
+        "modules/medicacio.py": "01f9d7502547c1b8239410ef872e6a4e469805ff570e3b4b862cf551956db5d2",
+        "core/medication_manager.py": "6e7055786fd63f2da70fa53544539ea8e4abd068354baee33b368a740602ac52"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "seguretat": {
+      "name": "Seguretat",
+      "icon": "📹",
+      "level": "obert",
+      "files": [
+        "modules/seguretat.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Càmeres i alertes de seguretat"
+      ],
+      "verified_hashes": {
+        "modules/seguretat.py": "59943f37583c9e9dadf35333e6b262453e92eb43f089f975adfe19645db6ed61"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    },
+    "domotica": {
+      "name": "Domòtica",
+      "icon": "📶",
+      "level": "obert",
+      "files": [
+        "modules/domotica.py"
+      ],
+      "depends_on": [
+        "core_compartit"
+      ],
+      "contracts": [
+        "Integració Home Assistant"
+      ],
+      "verified_hashes": {
+        "modules/domotica.py": "9f3378d370f63a6af1d81438b515d38d0f270b4ad6f9a0699c34de48c3cf1937"
+      },
+      "verified_at": "11/11/2026 15:23:27",
+      "verified_commit": "25a0427",
+      "verified_by": "admin",
+      "unlocked_until": null,
+      "unlock_reason": ""
+    }
+  },
+  "audit_log": [
+    {
+      "timestamp": "11/11/2026 15:23:27",
+      "action": "INIT",
+      "module": "global",
+      "detail": "Registre inicial creat amb els 3 nivells (Blindat / Vigilat / Obert)",
+      "user": "admin",
+      "git_head": "25a0427"
+    }
+  ]
+}
