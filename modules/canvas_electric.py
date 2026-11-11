@@ -264,6 +264,18 @@ def get_electric_canvas_html(project_id: str) -> str:
   <span class="badge-snap" id="snapBadge">🧲 SNAP BORN</span>
 </div>
 
+<!-- Modal confirmació Netejar -->
+<div class="modal-overlay" id="confirmClearModal">
+  <div class="modal-box">
+    <h4>⚠️ Esborrar tot l'esquema?</h4>
+    <p style="font-size:13px; color:#475569; margin:0 0 14px 0;">Aquesta acció eliminarà tots els cables, elements i textos dibuixats al llenç actual.</p>
+    <div class="modal-actions">
+      <button style="background:#e2e8f0; color:#334155;" onclick="closeClearConfirm()">Cancel·lar</button>
+      <button style="background:#dc2626; color:white;" onclick="executeClearAll()">Sí, netejar tot</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal intern segur sense window.prompt() -->
 <div class="modal-overlay" id="textModal">
   <div class="modal-box">
@@ -554,8 +566,18 @@ function undo() {{
 }}
 
 function clearAll() {{
+  if (elements.length === 0 && !bgImage) return;
+  document.getElementById("confirmClearModal").style.display = "flex";
+}}
+function closeClearConfirm() {{
+  document.getElementById("confirmClearModal").style.display = "none";
+}}
+function executeClearAll() {{
+  closeClearConfirm();
   elements = [];
+  selectedEl = null;
   lastWirePoint = null;
+  bgImage = null;
   document.getElementById("btnNewTrace").style.display = "none";
   saveLocal();
   redraw();
