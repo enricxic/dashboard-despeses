@@ -729,6 +729,20 @@ def save_planol_projecte(project_id: str, preview_png: str, canvas_data: Any = N
             return save_projectes(projectes)
     return False
 
+def save_esquema_electric_projecte(project_id: str, preview_png: str, schema_data: Any = None) -> bool:
+    """Guarda l'esquema elèctric oficial (imatge i metadades) dins el projecte."""
+    projectes = load_projectes()
+    for p in projectes:
+        if p.get("id") == project_id:
+            p.setdefault("esquema_electric", {})
+            if preview_png:
+                p["esquema_electric"]["preview_png"] = compress_image_b64(preview_png, max_dim=1280, quality=85)
+            if schema_data is not None:
+                p["esquema_electric"]["schema_data"] = schema_data
+            p["esquema_electric"]["data_actualitzacio"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            return save_projectes(projectes)
+    return False
+
 # ==========================================
 # DISSENY DE MOBLES I DESPECEJAMENT MD
 # ==========================================

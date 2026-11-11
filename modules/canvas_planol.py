@@ -1502,7 +1502,7 @@ def dialog_veure_foto_gran(foto_path: str, titol: str, descripcio: str = ""):
         st.info(descripcio)
 
 def render_planol_tab(projecte: Dict[str, Any]):
-    """Renderitza la subpestanya de Plànol i Galeria de Fotos del projecte."""
+    """Renderitza les 3 pestanyes de l'Editor Gràfic (Plànol, Disseny MD, Esquemes Elèctrics) i la Galeria de Fotos."""
     if st.session_state.get("foto_toast_msg"):
         st.toast(st.session_state.pop("foto_toast_msg"), icon="✅")
 
@@ -1511,12 +1511,20 @@ def render_planol_tab(projecte: Dict[str, Any]):
     preview_png = planol_info.get("preview_png")
     bg_b64 = planol_info.get("background_image", "")
 
-    st.markdown("### 📐 Plànol i Croquis de l'Obra")
-    st.caption("Dibuixa parets, habitacions i cotes amb mides en metres, o carrega una foto real de l'estança per utilitzar-la com a fons.")
+    st.markdown("### 📐 Editors Gràfics, Disseny i Fotos de l'Obra")
+    ed_tab_planol, ed_tab_moble, ed_tab_elec = st.tabs([
+        "📐 Editor Gràfic de Plànol",
+        "🪚 Disseny & Despecejament MD",
+        "⚡ Esquemes Elèctrics",
+    ])
 
-    # Guia d'ús desplegable integrada al projecte
-    with st.expander("📖 Guia d'Ús: Com funciona l'editor de plànols?", expanded=False):
-        st.info("""📱 **Com utilitzar-lo al mòbil (tacte directe):**
+    with ed_tab_planol:
+        st.markdown("#### 📐 Plànol i Croquis de l'Obra")
+        st.caption("Dibuixa parets, habitacions i cotes amb mides en metres, o carrega una foto real de l'estança per utilitzar-la com a fons.")
+
+        # Guia d'ús desplegable integrada al projecte
+        with st.expander("📖 Guia d'Ús: Com funciona l'editor de plànols?", expanded=False):
+            st.info("""📱 **Com utilitzar-lo al mòbil (tacte directe):**
 - **🧱 Paret / 🔗 Seguir traç:** Arrossega el dit per fer la primera paret. Les següents s'enllaçaran automàticament des de l'última cantonada (ideal per dibuixar habitacions senceres sense buscar on continua).
 - **🧲 Snap Magnètic:** En acostar el dit a qualsevol cantonada o extrem, s'activa un imant verd (`🟢`) que fixa la posició exacta i permet tancar l'habitació a la perfecció.
 - **🖐️ Moure:** Activa aquesta eina per desplaçar el plànol lliurement amb el dit quan hagis ampliat la vista amb zoom.
@@ -1526,65 +1534,73 @@ def render_planol_tab(projecte: Dict[str, Any]):
 - **📷 Foto de fons:** Carrega una foto real per calcar-hi o afegir-hi cotes al damunt.
 - **↩️ Desfer:** Elimina el darrer traç si t'has equivocat.
 """)
-        st.markdown("""
-        #### 📋 Guia d'eines pas a pas
+            st.markdown("""
+            #### 📋 Guia d'eines pas a pas
 
-        1. **🧱 Paret i 🔗 Mode Continu (Habitacions fàcils):**
-           - Amb el botó **`🔗 Seguir: SÍ`** actiu, traça la primera paret.
-           - Veuràs un cercle maragda marcat com a *'Propera paret'*. Per fer la segona paret de l'habitació, només cal que toquis o arrosseguis cap a la següent cantonada: s'iniciarà automàticament des de l'extrem anterior!
-           - Quan arribis a l'inici per tancar l'habitació, l'**imant magnètic (`🟢`)** s'ajustarà a la cantonada inicial.
-           - Si vols dibuixar una paret separada en un altre lloc, prem **`⏹️ Desconnectar`**.
+            1. **🧱 Paret i 🔗 Mode Continu (Habitacions fàcils):**
+               - Amb el botó **`🔗 Seguir: SÍ`** actiu, traça la primera paret.
+               - Veuràs un cercle maragda marcat com a *'Propera paret'*. Per fer la segona paret de l'habitació, només cal que toquis o arrosseguis cap a la següent cantonada: s'iniciarà automàticament des de l'extrem anterior!
+               - Quan arribis a l'inici per tancar l'habitació, l'**imant magnètic (`🟢`)** s'ajustarà a la cantonada inicial.
+               - Si vols dibuixar una paret separada en un altre lloc, prem **`⏹️ Desconnectar`**.
 
-        2. **🖐️ Moure el plànol:**
-           - Toca **`🖐️ Moure`**. Ara pots arrossegar el dit o el ratolí en qualsevol direcció per navegar còmodament pel plànol ampliat sense perill de dibuixar línies accidentals.
+            2. **🖐️ Moure el plànol:**
+               - Toca **`🖐️ Moure`**. Ara pots arrossegar el dit o el ratolí en qualsevol direcció per navegar còmodament pel plànol ampliat sense perill de dibuixar línies accidentals.
 
-        3. **🔲 Espai / Habitació rectangular:**
-           - Toca **`🔲 Espai`** i arrossega en diagonal per crear una estança o moble rectangular d'un sol cop.
+            3. **🔲 Espai / Habitació rectangular:**
+               - Toca **`🔲 Espai`** i arrossega en diagonal per crear una estança o moble rectangular d'un sol cop.
 
-        4. **📏 Cota (mesures en metres):**
-           - Toca **`📏 Cota`** i arrossega d'un extrem a l'altre.
-           - En *Mode Planta* ofereix mides de terra; en *Mode Alçat* detecta si és alçada (sostre, sòcol) o amplada amb fons blanc d'alta visibilitat.
+            4. **📏 Cota (mesures en metres):**
+               - Toca **`📏 Cota`** i arrossega d'un extrem a l'altre.
+               - En *Mode Planta* ofereix mides de terra; en *Mode Alçat* detecta si és alçada (sostre, sòcol) o amplada amb fons blanc d'alta visibilitat.
 
-        5. **🔤 Text:**
-           - Toca sobre qualsevol punt per col·locar noms d'habitació o anotacions d'obra de paret.
+            5. **🔤 Text:**
+               - Toca sobre qualsevol punt per col·locar noms d'habitació o anotacions d'obra de paret.
 
-        6. **🧹 Goma d'esborrar i ↩️ Desfer:**
-           - Toca **`🧹 Goma`** per esborrar línies o **`↩️ Desfer`** per anul·lar l'últim moviment.
+            6. **🧹 Goma d'esborrar i ↩️ Desfer:**
+               - Toca **`🧹 Goma`** per esborrar línies o **`↩️ Desfer`** per anul·lar l'últim moviment.
 
-        7. **📷 Foto de fons:**
-           - Prem **`📷 Foto fons`** i ajusta l'**Opacitat** per calcar un plànol real o croquis en paper.
+            7. **📷 Foto de fons:**
+               - Prem **`📷 Foto fons`** i ajusta l'**Opacitat** per calcar un plànol real o croquis en paper.
 
-        8. **💾 Desar al Projecte:**
-           - Prem **`💾 Descarregar PNG`** i guarda la imatge resultant al formulari inferior com a Plànol Oficial del projecte.
-        """)
+            8. **💾 Desar al Projecte:**
+               - Prem **`💾 Descarregar PNG`** i guarda la imatge resultant al formulari inferior com a Plànol Oficial del projecte.
+            """)
 
-    # Vista prèvia actual si existeix
-    if preview_png:
-        st.markdown("**Plànol oficial desat per a aquest projecte:**")
-        st.image(decode_image_for_st(preview_png), width="stretch")
-        data_act = planol_info.get("data_actualitzacio", "")
-        if data_act:
-            st.caption(f"Darrera actualització del plànol: {data_act}")
+        # Vista prèvia actual si existeix
+        if preview_png:
+            st.markdown("**Plànol oficial desat per a aquest projecte:**")
+            st.image(decode_image_for_st(preview_png), width="stretch")
+            data_act = planol_info.get("data_actualitzacio", "")
+            if data_act:
+                st.caption(f"Darrera actualització del plànol: {data_act}")
 
-    # Editor interactiu Canvas (sempre col·lapsat per defecte)
-    with st.expander("✏️ Obrir Editor Gràfic de Plànol (Canvas)", expanded=False):
-        html_code = get_canvas_html(project_id, existing_bg_b64=bg_b64)
-        components.html(html_code, height=650, scrolling=False)
+        # Editor interactiu Canvas (sempre col·lapsat per defecte)
+        with st.expander("✏️ Obrir Editor Gràfic de Plànol (Canvas)", expanded=False):
+            html_code = get_canvas_html(project_id, existing_bg_b64=bg_b64)
+            components.html(html_code, height=650, scrolling=False)
 
-    # Selector per desar el plànol oficial
-    with st.form(f"form_save_planol_{project_id}", clear_on_submit=True):
-        st.markdown("**💾 Desar o Actualitzar Plànol al Projecte**")
-        up_file = st.file_uploader(
-            "Selecciona la imatge del plànol (PNG generat per l'editor o foto d'un croquis físic):",
-            type=["png", "jpg", "jpeg", "webp"],
-            key=f"up_planol_{project_id}"
-        )
-        sub_planol = st.form_submit_button("Guardar Plànol Oficial", type="primary")
-        if sub_planol and up_file:
-            b64_data = compress_image_b64(up_file, max_dim=1280, quality=80)
-            if save_planol_projecte(project_id, preview_png=b64_data):
-                st.session_state["foto_toast_msg"] = "Plànol oficial desat correctament!"
-                st.rerun()
+        # Selector per desar el plànol oficial
+        with st.form(f"form_save_planol_{project_id}", clear_on_submit=True):
+            st.markdown("**💾 Desar o Actualitzar Plànol al Projecte**")
+            up_file = st.file_uploader(
+                "Selecciona la imatge del plànol (PNG generat per l'editor o foto d'un croquis físic):",
+                type=["png", "jpg", "jpeg", "webp"],
+                key=f"up_planol_{project_id}"
+            )
+            sub_planol = st.form_submit_button("Guardar Plànol Oficial", type="primary")
+            if sub_planol and up_file:
+                b64_data = compress_image_b64(up_file, max_dim=1280, quality=80)
+                if save_planol_projecte(project_id, preview_png=b64_data):
+                    st.session_state["foto_toast_msg"] = "Plànol oficial desat correctament!"
+                    st.rerun()
+
+    with ed_tab_moble:
+        from modules.moble_disseny_ui import render_disseny_moble_tab
+        render_disseny_moble_tab(projecte)
+
+    with ed_tab_elec:
+        from modules.canvas_electric import render_esquema_electric_tab
+        render_esquema_electric_tab(projecte)
 
     st.markdown("---")
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "11/11/2026 20:00:27",
+  "updated_at": "11/11/2026 20:12:44",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -154,7 +154,8 @@
         "modules/canvas_planol.py",
         "core/manteniment_manager.py",
         "core/projectes_manager.py",
-        "core/ai_projectes.py"
+        "core/ai_projectes.py",
+        "modules/canvas_electric.py"
       ],
       "depends_on": [
         "core_compartit"
@@ -166,14 +167,15 @@
       ],
       "verified_hashes": {
         "modules/manteniment.py": "da50c298d4b504dacab516afbc2ba46a030bb766f941149fa4250194c68b0462",
-        "modules/projectes_ui.py": "95ff4e6c61509e20efeb84dc6a317d2770bae0fabf40f4a25de744bea64be10e",
-        "modules/canvas_planol.py": "88a44f7965aced9d0c9a2c295b5cceef69b35f87b3a3162531506b395a9dd10f",
+        "modules/projectes_ui.py": "4c3aafe5317c5f7fed593712ee33f37c23439b4f21d2788bab01596c98744ef6",
+        "modules/canvas_planol.py": "efa132d2a60c9ffc408c5e4e002dac38a6be126e9d9a11d0d9c7c8e4f004ed8d",
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
-        "core/projectes_manager.py": "f0aece0d3b468c4625d8b8cade240d9e2874c1fd721d285f104c5f3fe4482ab3",
-        "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6"
+        "core/projectes_manager.py": "839a6a57ec14fb3da3d245fbc40f5f2df7b4a75b68f9bcd50cc27bd87985dbf1",
+        "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
+        "modules/canvas_electric.py": "5c344fb3b9643b716089d935a68864083d0540da1478078579de66dcfc2fc360"
       },
-      "verified_at": "11/11/2026 20:00:05",
-      "verified_commit": "29196f1",
+      "verified_at": "11/11/2026 20:12:21",
+      "verified_commit": "dc8bf80",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -245,11 +247,11 @@
       ],
       "verified_hashes": {
         "modules/control.py": "3901317f8edc7aa34b11ae791f156ede5230ecc3d8f64c185bbf599c1e7d92af",
-        "core/control_manager.py": "e9b4eb2321a0bfdf493d03b57d57cdb6bec34b405e71a504953c4c7673d21444",
+        "core/control_manager.py": "aa261a9243d2565d2e4d35519228a6c1d980a35454c7802a498eb312bccf8033",
         "scripts/check_control.py": "de3899ca6b9ae5e61a7033f6a3220eb00139960af4f8df6366f1d63591eca28e"
       },
-      "verified_at": "11/11/2026 15:23:27",
-      "verified_commit": "25a0427",
+      "verified_at": "11/11/2026 20:12:43",
+      "verified_commit": "dc8bf80",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -350,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "11/11/2026 20:12:44",
+      "action": "SEAL",
+      "module": "control",
+      "detail": "Versió verificada i segellada (Registre actualitzat amb canvas_electric.py)",
+      "user": "admin",
+      "git_head": "dc8bf80"
+    },
+    {
+      "timestamp": "11/11/2026 20:12:21",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Editor grafic 3 pestanyes + esquemes electrics)",
+      "user": "admin",
+      "git_head": "dc8bf80"
+    },
     {
       "timestamp": "11/11/2026 20:00:27",
       "action": "SEAL",

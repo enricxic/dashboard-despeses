@@ -144,6 +144,7 @@ DEFAULT_MODULES: Dict[str, Dict[str, Any]] = {
             "modules/manteniment.py",
             "modules/projectes_ui.py",
             "modules/canvas_planol.py",
+            "modules/canvas_electric.py",
             "core/manteniment_manager.py",
             "core/projectes_manager.py",
             "core/ai_projectes.py",
