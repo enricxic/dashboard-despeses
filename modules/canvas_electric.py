@@ -232,6 +232,7 @@ def get_electric_canvas_html(project_id: str) -> str:
     <button class="btn" id="el_rcd" onclick="selectSymbol('rcd')">🛡️ Diferencial</button>
     <button class="btn" id="el_contactor" onclick="selectSymbol('contactor')">🧲 Contactor</button>
     <button class="btn" id="el_thermostat" onclick="selectSymbol('thermostat')">🌡️ Termòstat</button>
+    <button class="btn" id="el_timer" onclick="selectSymbol('timer')">⏰ Programador</button>
     <button class="btn" id="el_junction" onclick="selectSymbol('junction')">📦 Caixa</button>
     <button class="btn" id="el_panel" onclick="selectSymbol('panel')">🔋 Quadre</button>
 
@@ -298,6 +299,7 @@ const SYMBOL_DEFAULTS = {{
   rcd:        {{ name: "Diferencial",   defLabel: "ID 40A" }},
   contactor:  {{ name: "Contactor",     defLabel: "Contactor" }},
   thermostat: {{ name: "Termòstat",     defLabel: "Termòstat" }},
+  timer:      {{ name: "Programador",   defLabel: "Programador" }},
   junction:   {{ name: "Caixa registre",defLabel: "Caixa" }},
   panel:      {{ name: "Quadre / IGA",  defLabel: "Quadre" }}
 }};
@@ -670,6 +672,20 @@ function drawElectricalSymbol(targetCtx, el) {{
     targetCtx.font = "bold 12px sans-serif";
     targetCtx.textAlign = "center";
     targetCtx.fillText("°C", 0, 4);
+  }} else if (t === "timer") {{
+    targetCtx.fillStyle = "#f5f3ff";
+    targetCtx.fillRect(-18, -20, 36, 40);
+    targetCtx.strokeRect(-18, -20, 36, 40);
+    targetCtx.fillStyle = "#ffffff";
+    targetCtx.beginPath(); targetCtx.arc(0, -1, 11, 0, Math.PI * 2); targetCtx.fill(); targetCtx.stroke();
+    targetCtx.beginPath();
+    targetCtx.moveTo(0, -1); targetCtx.lineTo(0, -8);
+    targetCtx.moveTo(0, -1); targetCtx.lineTo(6, 2);
+    targetCtx.stroke();
+    targetCtx.fillStyle = "#6d28d9";
+    targetCtx.font = "bold 7px sans-serif";
+    targetCtx.textAlign = "center";
+    targetCtx.fillText("TIMER", 0, 16);
   }} else if (t === "junction") {{
     targetCtx.fillStyle = "#f1f5f9";
     targetCtx.fillRect(-20, -16, 40, 32);
@@ -929,6 +945,7 @@ function downloadPNG() {{
 
 loadLocal();
 resizeCanvas();
+setTimeout(resizeCanvas, 120);
 </script>
 </body>
 </html>"""
@@ -943,13 +960,13 @@ def render_esquema_electric_tab(projecte: Dict[str, Any]) -> None:
     st.markdown("#### ⚡ Editor d'Esquemes Elèctrics")
     st.caption(
         "Dibuixa esquemes amb **3 colors de cable** (⚫ Fase, 🔵 Neutre, 🟡 Terra) "
-        "i col·loca elements elèctrics comuns (💡 Bombeta, 🔌 Endoll, ⚡ Magnetotèrmic, 🔘 Interruptor, 🛡️ Diferencial, 🧲 Contactor, 🌡️ Termòstat...)."
+        "i col·loca elements elèctrics comuns (💡 Bombeta, 🔌 Endoll, ⚡ Magnetotèrmic, 🔘 Interruptor, 🛡️ Diferencial, 🧲 Contactor, 🌡️ Termòstat, ⏰ Programador...)."
     )
 
     with st.expander("📖 Guia ràpida: Esquemes Elèctrics", expanded=False):
         st.markdown("""
 - **Cables**: Escull **⚫ Fase (Negre)**, **🔵 Neutre (Blau)** o **🟡 Terra (Groc)** i arrossega pel llenç. Amb **`📐 90°: SÍ`** els trams fan colzes rectes automàticament.
-- **Elements elèctrics**: Prem qualsevol botó (**💡 Bombeta**, **🔌 Endoll**, **⚡ Magnetotèrmic**, **🔘 Interruptor**, **🔀 Commutador**, **🛡️ Diferencial**, **🧲 Contactor**, **🌡️ Termòstat**, **📦 Caixa**, **🔋 Quadre**) i toca on el vulguis situar.
+- **Elements elèctrics**: Prem qualsevol botó (**💡 Bombeta**, **🔌 Endoll**, **⚡ Magnetotèrmic**, **🔘 Interruptor**, **🔀 Commutador**, **🛡️ Diferencial**, **🧲 Contactor**, **🌡️ Termòstat**, **⏰ Programador**, **📦 Caixa**, **🔋 Quadre**) i toca on el vulguis situar.
 - **Editar etiqueta / Girar**: Fes **doble clic** sobre un element per canviar-ne l'etiqueta (ex. *PIA 16A*, *Termo*) o prem **🔄 Girar** per rotar-lo 90°.
 - **Desar**: Prem **💾 PNG** a la barra de l'editor i puja el fitxer al formulari inferior per deixar l'esquema desat al projecte.
 """)
