@@ -590,16 +590,26 @@ def _render_materials_tab(projecte: Dict[str, Any]):
             """
             <style>
             [class*="st-key-mat_gallery_"] {
-                display: flex !important;
-                flex-wrap: wrap !important;
-                gap: 6px !important;
-                align-items: stretch !important;
+                display: grid !important;
+                grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+                width: 100% !important;
+            }
+            @media (max-width: 960px) {
+                [class*="st-key-mat_gallery_"] {
+                    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                }
+            }
+            @media (max-width: 640px) {
+                [class*="st-key-mat_gallery_"] {
+                    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                    gap: 6px !important;
+                }
             }
             [class*="st-key-mat_card_"] {
-                width: 106px !important;
-                min-width: 102px !important;
-                max-width: 118px !important;
-                flex: 0 0 auto !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
                 padding: 6px !important;
             }
             [class*="st-key-mat_card_"] [data-testid="stImage"],
@@ -607,12 +617,12 @@ def _render_materials_tab(projecte: Dict[str, Any]):
             [class*="st-key-mat_card_"] [data-testid="stFullScreenFrame"],
             [class*="st-key-mat_card_"] [data-testid="stImage"] > div,
             [class*="st-key-mat_card_"] [data-testid="stImage"] img {
-                width: 44px !important;
-                min-width: 44px !important;
-                max-width: 44px !important;
-                height: 44px !important;
-                min-height: 44px !important;
-                max-height: 44px !important;
+                width: 68px !important;
+                min-width: 68px !important;
+                max-width: 100% !important;
+                height: 68px !important;
+                min-height: 68px !important;
+                max-height: 68px !important;
                 object-fit: cover !important;
                 border-radius: 6px !important;
                 margin-left: auto !important;
@@ -620,24 +630,22 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                 display: block !important;
             }
             [class*="st-key-mat_card_"] button {
-                padding: 2px 5px !important;
+                padding: 4px 5px !important;
                 min-height: 28px !important;
                 font-size: 0.72rem !important;
                 line-height: 1.15 !important;
             }
-            @media (max-width: 640px) {
-                [class*="st-key-mat_card_"] {
-                    width: calc(33.33% - 6px) !important;
-                    min-width: 92px !important;
-                    max-width: none !important;
-                }
+            [class*="st-key-mat_card_"] button p {
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
             </style>
             """,
             unsafe_allow_html=True
         )
 
-        # Contenidor flex horitzontal natiu: es manté en graella de miniatures tant en mòbil vertical com horitzontal
+        # Contenidor CSS Grid responsiu: omple el 100% de l'amplada en vertical (3 col.), horitzontal (4 col.) i PC (6 col.)
         with st.container(horizontal=True, gap="small", key=f"mat_gallery_{project_id}"):
             for idx, m in enumerate(materials):
                 mat_id = m.get("id", f"m_{idx}")
@@ -646,14 +654,14 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                 es_comprat = m.get("comprat", False) and not es_stock
                 nom_m = m.get("article", "Material")
 
-                with st.container(border=True, width=106, key=f"mat_card_{project_id}_{idx}_{mat_id}"):
-                    # 1. Miniatura molt petita normalitzada (44x44 px) en totes les orientacions
+                with st.container(border=True, key=f"mat_card_{project_id}_{idx}_{mat_id}"):
+                    # 1. Miniatura equilibrada (68x68 px) omplint tota la fila sense buits laterals
                     if img_url:
-                        st.image(decode_image_for_st(img_url), width=44)
+                        st.image(decode_image_for_st(img_url), width=68)
                     else:
                         st.markdown(
                             """
-                            <div class="thumb-img-box" style="width: 44px; height: 44px; margin: 0 auto 2px auto; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; border: 1px dashed #475569; font-size: 16px;">
+                            <div class="thumb-img-box" style="width: 68px; height: 68px; margin: 0 auto 2px auto; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; border: 1px dashed #475569; font-size: 24px;">
                                 🧱
                             </div>
                             """,
@@ -669,7 +677,7 @@ def _render_materials_tab(projecte: Dict[str, Any]):
                         badge = "⏳"
 
                     # 3. Botó d'obertura que respon al clic o al doble clic
-                    lbl = f"{badge} {nom_m}" if len(nom_m) <= 11 else f"{badge} {nom_m[:9]}…"
+                    lbl = f"{badge} {nom_m}" if len(nom_m) <= 13 else f"{badge} {nom_m[:11]}…"
                     if st.button(lbl, key=f"btn_card_{project_id}_{mat_id}_{idx}", use_container_width=True, help=f"Fes clic per veure detalls o canviar foto: {nom_m}"):
                         dialog_detall_material(project_id, m)
 

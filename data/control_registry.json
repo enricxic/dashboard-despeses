@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "11/11/2026 17:27:25",
+  "updated_at": "11/11/2026 17:45:58",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -166,14 +166,14 @@
       ],
       "verified_hashes": {
         "modules/manteniment.py": "da50c298d4b504dacab516afbc2ba46a030bb766f941149fa4250194c68b0462",
-        "modules/projectes_ui.py": "d0ea756bedc09f5bea8664935239dd8e64cb7172d7875447e7101d1b23c81b73",
+        "modules/projectes_ui.py": "e449d7781aeeda1233656b6e0a325134f05503af3bef9e06c0975d2ca9c6397d",
         "modules/canvas_planol.py": "88a44f7965aced9d0c9a2c295b5cceef69b35f87b3a3162531506b395a9dd10f",
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
         "core/projectes_manager.py": "55dd45b9e019dd2be9dc8119bb2c89d246fc216e0c99227daacc4aad2ace2630",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6"
       },
-      "verified_at": "11/11/2026 17:27:24",
-      "verified_commit": "93cecab",
+      "verified_at": "11/11/2026 17:45:57",
+      "verified_commit": "7381e7e",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -350,6 +350,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "11/11/2026 17:45:58",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Graella Grid 100% amplada i miniatures 68x68px)",
+      "user": "admin",
+      "git_head": "7381e7e"
+    },
     {
       "timestamp": "11/11/2026 17:27:25",
       "action": "SEAL",
