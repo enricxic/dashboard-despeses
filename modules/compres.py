@@ -82,21 +82,172 @@ def normalitzar_text(text):
     return re.sub(r'\s+', ' ', text_sense_diacritics.lower()).strip()
 
 def translate_spanish_to_catalan_for_matching(text):
-    text_lower = text.lower()
+    text_lower = normalitzar_text(text)
     translations = {
         'chocolate': 'xocolata',
+        'choco': 'xoco',
+        'choc': 'xoco',
+        'ocolate': 'xocolata',
+        'leche': 'llet',
+        'queso': 'formatge',
+        'ques': 'formatge',
+        'mezcla': 'mescla',
         'maiz': 'blat de moro',
-        'maíz': 'blat de moro',
         'lavavaj': 'rentavaixella',
         'pistacho': 'festuc',
         'conservas': 'sardina',
         'pasta': 'helixs',
-        'ocolate': 'xocolata',
+        'regalo': 'regal',
+        'galleta': 'galeta',
+        'jamon': 'pernil',
+        'pavo': 'gall dindi',
+        'pollo': 'pollastre',
+        'aceite': 'oli',
+        'agua': 'aigua',
+        'cerveza': 'cervesa',
+        'atun': 'tonyina',
+        'tomate': 'tomaquet',
+        'manzana': 'poma',
+        'platano': 'platan',
+        'zanahoria': 'pastanaga',
+        'papel': 'paper',
+        'higienico': 'higienic',
+        'yogur': 'iogurt',
+        'mantequilla': 'mantega',
+        'arroz': 'arros',
+        'harina': 'farina',
+        'azucar': 'sucre',
+        'huevos': 'ous',
+        'helado': 'gelat',
+        'zumo': 'suc',
+        'naranja': 'taronja',
+        'limon': 'llimona',
+        'cebolla': 'ceba',
     }
     for es, ca in translations.items():
         if es in text_lower:
-            text_lower = text_lower.replace(es, ca)
+            text_lower = re.sub(r'\b' + re.escape(es), ca, text_lower)
     return text_lower
+
+
+def match_discount_to_product(disc_text, disc_val, products_list, hint_article=""):
+    """Emparella una línia de descompte/oferta/cupó (ex: Dia OFERTES I CUPONS) amb el millor producte."""
+    if not products_list:
+        return -1, 0.0
+
+    raw_clean = re.sub(r'^(?:[OCoc]\s+|OFERTA\s+|CUPON\s+|CUPÓ\s+|DTO\.?\s+|DESCOMPTE\s+|DESCUENTO\s+)', '', str(disc_text or '').strip(), flags=re.IGNORECASE).strip()
+    disc_norm = normalitzar_text(raw_clean)
+    disc_ca = translate_spanish_to_catalan_for_matching(raw_clean)
+    hint_norm = normalitzar_text(hint_article) if hint_article else ""
+    is_regalo = ('regalo' in disc_norm or 'regal' in disc_norm)
+
+    stop_words = {'dia', 'oferta', 'cupon', 'cupo', 'regal', 'regalo', 'con', 'amb', 'del', 'los', 'las', 'els', 'les', 'por', 'per', 'ext', 'extr'}
+    disc_tokens = [w for w in disc_ca.split() if len(w) >= 2 and w not in stop_words]
+
+    best_idx = -1
+    best_ratio = 0.0
+
+    for idx, item in enumerate(products_list):
+        art_norm = normalitzar_text(item.get('article', ''))
+        orig_norm = normalitzar_text(item.get('nom_brut', ''))
+        super_norm = normalitzar_text(item.get('nom_super', ''))
+        candidates = [c for c in (art_norm, orig_norm, super_norm) if c and c != 'pendent']
+
+        if hint_norm:
+            for c in candidates:
+                if hint_norm == c or hint_norm in c or c in hint_norm:
+                    return idx, 1.0
+
+        ratio = 0.0
+        for c in candidates:
+            r = max(
+                difflib.SequenceMatcher(None, disc_norm, c).ratio(),
+                difflib.SequenceMatcher(None, disc_ca, c).ratio(),
+            )
+            ratio = max(ratio, r)
+            if len(disc_norm) >= 4 and (disc_norm in c or disc_ca in c):
+                ratio = max(ratio, 0.95)
+
+        # Coincidència per tokens i prefixos (ex: 'xoco' <-> 'xocolata', 'mi' <-> 'milka')
+        if disc_tokens and candidates:
+            cand_tokens = set()
+            for c in candidates:
+                cand_tokens.update(w for w in c.split() if len(w) >= 2)
+            matched_tokens = 0
+            for dt in disc_tokens:
+                if any(
+                    dt == ct
+                    or (len(dt) >= 3 and len(ct) >= 3 and (dt in ct or ct in dt))
+                    or (len(dt) == 2 and ct.startswith(dt))
+                    or (len(ct) == 2 and dt.startswith(ct))
+                    for ct in cand_tokens
+                ):
+                    matched_tokens += 1
+            if matched_tokens > 0:
+                token_score = 0.45 + 0.45 * (matched_tokens / len(disc_tokens))
+                if matched_tokens >= 2:
+                    token_score = max(token_score, 0.88)
+                ratio = max(ratio, token_score)
+
+        # Bonus per import exacte en regals/cupons 100% (ex: C REGALO EL MOLINO DE DI -2,65 <-> MAGDALENA 2,65)
+        item_gross = round(float(item.get('quantitat', 1)) * float(item.get('preuUnit', 0.0)), 2)
+        if disc_val > 0 and item_gross > 0 and abs(item_gross - disc_val) <= 0.02:
+            if is_regalo:
+                ratio = max(ratio, 0.93)
+            else:
+                ratio = max(ratio, min(0.95, ratio + 0.15))
+
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_idx = idx
+
+    return best_idx, best_ratio
+
+
+def apply_dia_discounts_to_items(items, extra_discounts=None):
+    """Separa línies negatives de descompte/cupó (Dia OFERTES I CUPONS), agrupa duplicats i aplica els descomptes com a promoció."""
+    products = []
+    pending_discounts = []
+
+    for it in items:
+        tot = float(it.get('totLinea', 0.0) or 0.0)
+        punit = float(it.get('preuUnit', 0.0) or 0.0)
+        nom = str(it.get('nom_brut', '') or '')
+        if tot < 0 or punit < 0:
+            val = abs(tot if tot < 0 else punit * float(it.get('quantitat', 1) or 1))
+            if val > 0:
+                pending_discounts.append({'text': nom, 'val': round(val, 2), 'hint': ''})
+        else:
+            products.append(it)
+
+    for ed in (extra_discounts or []):
+        try:
+            val = abs(float(ed.get('import', 0.0) or 0.0))
+            if val > 0:
+                pending_discounts.append({
+                    'text': str(ed.get('descripcio', '') or ''),
+                    'val': round(val, 2),
+                    'hint': str(ed.get('article_relacionat', '') or '')
+                })
+        except Exception:
+            pass
+
+    products = group_duplicate_ticket_items(products)
+    unmatched_discount = 0.0
+
+    for disc in pending_discounts:
+        best_idx, best_ratio = match_discount_to_product(
+            disc['text'], disc['val'], products, hint_article=disc.get('hint', '')
+        )
+        if best_idx != -1 and best_ratio >= 0.40:
+            target = products[best_idx]
+            target['prom'] = round(float(target.get('prom', 0.0) or 0.0) + disc['val'], 2)
+            gross = round(float(target.get('quantitat', 1)) * float(target.get('preuUnit', 0.0)), 2)
+            target['totLinea'] = round(max(0.0, gross - target['prom']), 2)
+        else:
+            unmatched_discount = round(unmatched_discount + disc['val'], 2)
+
+    return products, unmatched_discount
 
 def map_product_to_category(product_name):
     best_family = "extres"
@@ -612,61 +763,15 @@ def parse_default_ticket(text_content):
             desc_text = re.sub(r'^[\s\-\+\|0OCoO%0-9\.]+', '', desc_text).strip()
             discounts.append({'text': desc_text, 'val': val})
             
-    # Apply discounts to parsed products
-    for disc in discounts:
-        disc_text = disc['text'].lower()
-        disc_text_ca = translate_spanish_to_catalan_for_matching(disc_text)
-        best_match_idx = -1
-        best_ratio = 0.0
-        
-        for idx, item in enumerate(raw_products):
-            art_lower = item['article'].lower()
-            orig_lower = item['nom_brut'].lower()
-            super_lower = item.get('nom_super', '').lower()
-            
-            ratio_std = max(
-                difflib.SequenceMatcher(None, disc_text, art_lower).ratio(),
-                difflib.SequenceMatcher(None, disc_text_ca, art_lower).ratio()
-            )
-            ratio_orig = max(
-                difflib.SequenceMatcher(None, disc_text, orig_lower).ratio(),
-                difflib.SequenceMatcher(None, disc_text_ca, orig_lower).ratio()
-            )
-            ratio_super = 0.0
-            if super_lower:
-                ratio_super = max(
-                    difflib.SequenceMatcher(None, disc_text, super_lower).ratio(),
-                    difflib.SequenceMatcher(None, disc_text_ca, super_lower).ratio()
-                )
-            
-            ratio = max(ratio_std, ratio_orig, ratio_super)
-            
-            # Substring bonus for words >= 4 characters
-            if len(disc_text) >= 4:
-                if (disc_text in art_lower or disc_text_ca in art_lower or 
-                    disc_text in orig_lower or disc_text_ca in orig_lower or
-                    (super_lower and (disc_text in super_lower or disc_text_ca in super_lower))):
-                    ratio = max(ratio, 0.95)
-                    
-            # Substring bonus for clean keywords of discount (e.g. split and check)
-            clean_words = [w for w in re.split(r'[^a-zA-Z0-9]', disc_text_ca) if len(w) >= 4]
-            for w in clean_words:
-                if w in art_lower or w in orig_lower or (super_lower and w in super_lower):
-                    ratio = max(ratio, 0.90)
-            
-            if ratio > best_ratio:
-                best_ratio = ratio
-                best_match_idx = idx
-                
-        if best_ratio >= 0.4:
-            raw_products[best_match_idx]['prom'] += disc['val']
-            raw_products[best_match_idx]['totLinea'] = max(0.0, (raw_products[best_match_idx]['quantitat'] * raw_products[best_match_idx]['preuUnit']) - raw_products[best_match_idx]['prom'])
-            
-    # Keep recognized items even with 0.0 price, but discard 'pendent' with 0.0 or negative price (typically garbage lines)
-    raw_products = [item for item in raw_products if item['article'] != 'pendent' or item['totLinea'] > 0.0]
-    
-    # 5. Sum duplicate products
+    # 5. Sum duplicate products first (so multi-unit discounts apply to combined line) and apply discounts
+    raw_products = [item for item in raw_products if item['article'] != 'pendent' or item['preuUnit'] > 0.0 or item['totLinea'] > 0.0]
     res = group_duplicate_ticket_items(raw_products)
+    for disc in discounts:
+        best_match_idx, best_ratio = match_discount_to_product(disc['text'], disc['val'], res)
+        if best_match_idx != -1 and best_ratio >= 0.40:
+            res[best_match_idx]['prom'] = round(res[best_match_idx]['prom'] + disc['val'], 2)
+            gross = round(res[best_match_idx]['quantitat'] * res[best_match_idx]['preuUnit'], 2)
+            res[best_match_idx]['totLinea'] = round(max(0.0, gross - res[best_match_idx]['prom']), 2)
     res = [item for item in res if item['quantitat'] > 0]
     try:
         with open("C:/Users/Usuari/.gemini/antigravity/brain/98896f4c-68da-443a-b920-acd856bccd79/scratch/debug_ocr.log", "a", encoding="utf-8") as f_log:
@@ -2106,13 +2211,22 @@ Extreu i neteja els productes en un format JSON estricte:
         "nom_brut": "Nom exacte del producte, corregint errors d'OCR",
         "quantitat": 1,
         "preu_unitari": 0.0,
-        "preu_total": 0.0
+        "preu_total": 0.0,
+        "promocio": 0.0
+    }}
+    ],
+    "descomptes_linies": [
+    {{
+        "descripcio": "Text de l'oferta o cupó (si n'hi ha)",
+        "import": 0.0,
+        "article_relacionat": "nom_brut de l'article al qual s'aplica"
     }}
     ]
 }}
 IMPORTANT SOBRE TOTALS I DESCOMPTES:
 - 'total_tiquet': Posa el total final a pagar imprès al tiquet (ex: 'TOTAL COMPRA', 'TOTAL A PAGAR EUROS', 'TARGET.TEF').
-- 'descompte_global': Només per a cupons o descomptes que NO s'hagin deduït ja dels articles. Si al tiquet hi ha una secció de 'TOTAL ESTALVI' o cupons ja reflectits en el preu final de cada article, posa 0.0 a 'descompte_global'.
+- 'descompte_global': Només per a cupons globals sobre tota la compra que NO s'apliquin a un producte concret. Si al tiquet hi ha una secció de 'TOTAL ESTALVI' o cupons ja aplicats als articles, posa 0.0 a 'descompte_global'.
+- OFERTES(O) I CUPONS ClubDia(C) (supermercat Dia): MAI afegeixis línies de descompte, oferta ('O ...'), cupó ('C ...') o regal amb import negatiu com a articles nous dins "articles". Aplica el seu import positiu al camp "promocio" de l'article corresponent (mantenint preu_unitari i preu_total bruts o nets coherents, tenint en compte que els articles poden estar en català i els cupons en castellà, ex: 'FORMATGE SEMI RODANX' <-> 'O QUES.MEZCLA SEMI DIA'), o bé posa'ls a "descomptes_linies".
 Ignora IVA, Targetes i subtotals. Extreu només productes reals a "articles". Retorna ÚNICAMENT l'objecte JSON.
 """
                             ok_call, response_text, latency = call_llm_api(
@@ -2167,16 +2281,25 @@ L'estructura del JSON ha de ser EXACTAMENT aquesta:
         "nom_brut": "Nom exacte del producte que surt al tiquet, respectant lletres",
         "quantitat": 1,
         "preu_unitari": 0.0,
-        "preu_total": 0.0
+        "preu_total": 0.0,
+        "promocio": 0.0
+    }
+    ],
+    "descomptes_linies": [
+    {
+        "descripcio": "Text de l'oferta o cupó (si n'hi ha)",
+        "import": 0.0,
+        "article_relacionat": "nom_brut de l'article al qual s'aplica"
     }
     ]
 }
 Notes importants:
 1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal).
 2. 'total_tiquet': Posa el total final a pagar imprès al tiquet (ex: 'TOTAL COMPRA', 'TOTAL A PAGAR EUROS', 'TARGET.TEF').
-3. 'descompte_global': Només per a cupons o descomptes que NO s'hagin deduït ja dels articles. Si al tiquet hi ha una secció de 'TOTAL ESTALVI' o cupons ja reflectits en el preu final de cada article, posa 0.0 a 'descompte_global'.
-4. Assegura't de capturar bé el 'preu_total' de la línia.
-5. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
+3. 'descompte_global': Només per a cupons globals que NO s'apliquin a un producte concret. Si al tiquet hi ha una secció de 'TOTAL ESTALVI' o cupons ja reflectits als articles, posa 0.0 a 'descompte_global'.
+4. OFERTES(O) I CUPONS ClubDia(C) (supermercat Dia): MAI afegeixis línies de descompte, oferta ('O ...'), cupó ('C ...') o regal amb import negatiu com a articles nous dins "articles". Posa l'import positiu del descompte al camp "promocio" de l'article corresponent (tenint en compte que els articles poden estar en català i els descomptes en castellà, ex: 'FORMATGE SEMI RODANX' <-> 'O QUES.MEZCLA SEMI DIA', 'XOCO LLET EXTR FI MI' <-> 'O CHOC.CON LECHE MILKA'), o bé llista'ls dins "descomptes_linies".
+5. Assegura't de capturar bé el 'preu_total' de la línia.
+6. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 Retorna ÚNICAMENT l'objecte JSON.
 """
                             ok_call, response_text, latency = call_llm_api(
@@ -2282,9 +2405,19 @@ Retorna ÚNICAMENT l'objecte JSON.
                         q_val = float(art.get("quantitat", 1))
                         p_unit = float(art.get("preu_unitari", 0.0))
                         p_tot = float(art.get("preu_total", 0.0))
+                        prom_val = abs(float(art.get("promocio", 0.0) or 0.0))
                         
                         if p_tot == 0.0 and p_unit > 0.0:
                             p_tot = p_unit * q_val
+
+                        gross_val = round(q_val * p_unit, 2) if p_unit > 0 else round(p_tot, 2)
+                        if prom_val > 0 and p_tot >= 0:
+                            if abs(p_tot - (gross_val - prom_val)) <= 0.03:
+                                final_tot = round(p_tot, 2)
+                            else:
+                                final_tot = round(max(0.0, gross_val - prom_val), 2)
+                        else:
+                            final_tot = round(p_tot, 2)
                             
                         curr_item = {
                             'familia': 'Pendent',
@@ -2292,8 +2425,8 @@ Retorna ÚNICAMENT l'objecte JSON.
                             'pes': 0,
                             'quantitat': q_val,
                             'preuUnit': p_unit,
-                            'prom': 0.0,
-                            'totLinea': p_tot,
+                            'prom': round(prom_val, 2),
+                            'totLinea': final_tot,
                             'rebost': None,
                             'nom_brut': nom_brut,
                             'nom_super': current_super
@@ -2307,7 +2440,9 @@ Retorna ÚNICAMENT l'objecte JSON.
                             
                         parsed.append(curr_item)
 
-                    parsed = group_duplicate_ticket_items(parsed)
+                    parsed, unmatched_disc_sum = apply_dia_discounts_to_items(
+                        parsed, extra_discounts=data.get("descomptes_linies", [])
+                    )
                     st.session_state["ticket_items"] = parsed
 
                     # 4. Conciliació intel·ligent del Descompte Global vs Total Tiquet
