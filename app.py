@@ -266,15 +266,12 @@ app_cfg = load_app_config()
 from core.alerts import get_global_alerts
 import time
 _now_ts = time.time()
-if st.session_state.get("dfs_initialized"):
-    if "global_alerts_ts" not in st.session_state or (_now_ts - st.session_state.get("global_alerts_ts", 0)) > 60:
-        st.session_state["global_alerts_list"] = get_global_alerts()
-        st.session_state["global_alerts_ts"] = _now_ts
-    elif "global_alerts_list" not in st.session_state:
-        st.session_state["global_alerts_list"] = get_global_alerts()
-        st.session_state["global_alerts_ts"] = _now_ts
-elif "global_alerts_list" not in st.session_state:
-    st.session_state["global_alerts_list"] = []
+if (
+    "global_alerts_list" not in st.session_state
+    or "global_alerts_ts" not in st.session_state
+    or (_now_ts - st.session_state.get("global_alerts_ts", 0)) > 60
+):
+    st.session_state["global_alerts_list"] = get_global_alerts()
     st.session_state["global_alerts_ts"] = _now_ts
 alerts_html = ""
 for al in st.session_state["global_alerts_list"]:

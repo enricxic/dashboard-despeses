@@ -1079,6 +1079,11 @@ def _invalidate_dashboard_cache_for(table_name: str):
         st.session_state["last_synced_time"] = tracker.last_update
     except Exception:
         pass
+    try:
+        st.session_state.pop("global_alerts_ts", None)
+        st.session_state.pop("global_alerts_list", None)
+    except Exception:
+        pass
 
 def insert_db_row(table_name, new_row_dict):
     is_offline = st.session_state.get("is_offline", False)
