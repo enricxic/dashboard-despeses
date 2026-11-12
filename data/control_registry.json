@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "12/11/2026 13:24:26",
+  "updated_at": "12/11/2026 13:27:28",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -41,13 +41,13 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "d6221b56a297ece4ddf91913fcd2b9197d3f2a5a7c70c0ee6ab04e4286b15cce"
+        "modules/economic.py": "3c28cefd92f73897e24de96a8d04283211e041b3e84e6815073bbf46cf550e31"
       },
-      "verified_at": "11/11/2026 15:23:27",
-      "verified_commit": "25a0427",
+      "verified_at": "12/11/2026 13:27:28",
+      "verified_commit": "0df16fb",
       "verified_by": "admin",
-      "unlocked_until": "13/11/2026 13:24:26",
-      "unlock_reason": "Protegir df_hip, df_pag, df_ing i df_desp buits contra KeyError: any al Dashboard"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "12/11/2026 13:27:28",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada (Protegir df_hip, df_pag, df_ing i df_desp buits contra KeyError: any)",
+      "user": "admin",
+      "git_head": "0df16fb"
+    },
     {
       "timestamp": "12/11/2026 13:24:26",
       "action": "UNLOCK",
