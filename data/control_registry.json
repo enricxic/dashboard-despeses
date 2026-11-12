@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "12/11/2026 13:27:28",
+  "updated_at": "12/11/2026 13:37:57",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -222,12 +222,12 @@
       ],
       "verified_hashes": {
         "app.py": "8a7823a3ef6e98c312a34c100fb25a63515ea49649d25674b767d9ea51bea181",
-        "core/db.py": "6548d64d715ab60404896516dc4be469bf2be8bf1054fc454cdcaabc899cbf6e",
+        "core/db.py": "c999e1f14a0d3fb163773e97bedaffa911f6d71934ed8e37c55e4fb26a6bd281",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
         "core/alerts.py": "af555130e332c7bbc017938fbef39621d97eafa4861dafef04e664fd6fa6833f"
       },
-      "verified_at": "11/11/2026 20:00:27",
-      "verified_commit": "29196f1",
+      "verified_at": "12/11/2026 13:37:57",
+      "verified_commit": "ac193c6",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "12/11/2026 13:37:57",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Invalidar cache load_dashboard_data i actualitzar tracker en insert/update/delete de core/db.py)",
+      "user": "admin",
+      "git_head": "ac193c6"
+    },
     {
       "timestamp": "12/11/2026 13:27:28",
       "action": "SEAL",

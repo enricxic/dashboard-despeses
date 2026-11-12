@@ -1062,6 +1062,24 @@ def save_to_csv_local(df, table_name):
     except Exception as e:
         print(f"Error saving {csv_path} locally: {e}")
 
+def _invalidate_dashboard_cache_for(table_name: str):
+    """Invalida la memòria cau i actualitza el tracker global per reflectir canvis immediatament al Dashboard."""
+    if table_name in ['despeses', 'compresSuper']:
+        try:
+            _fetch_table_recent.clear()
+        except Exception:
+            pass
+    try:
+        load_dashboard_data.clear()
+    except Exception:
+        pass
+    try:
+        tracker = get_db_tracker()
+        tracker.update()
+        st.session_state["last_synced_time"] = tracker.last_update
+    except Exception:
+        pass
+
 def insert_db_row(table_name, new_row_dict):
     is_offline = st.session_state.get("is_offline", False)
     if is_offline:
@@ -1077,6 +1095,7 @@ def insert_db_row(table_name, new_row_dict):
         }
         if table_name in table_map and table_map[table_name] in st.session_state:
             save_to_csv_local(st.session_state[table_map[table_name]], table_name)
+        _invalidate_dashboard_cache_for(table_name)
         return True
 
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -1097,11 +1116,7 @@ def insert_db_row(table_name, new_row_dict):
         log_action(table_name, 'INSERT', inserted_data)
         
         update_session_state_insert(table_name, inserted_data)
-        if table_name in ['despeses', 'compresSuper']:
-            try:
-                _fetch_table_recent.clear()
-            except Exception:
-                pass
+        _invalidate_dashboard_cache_for(table_name)
         csv_table_map = {
             'despeses': 'df_desp', 'ingressos': 'df_ing',
             'compresSuper': 'df_super', 'gasolina': 'df_gas',
@@ -1334,6 +1349,7 @@ def delete_db_row(table_name, id_col, id_val):
         }
         if table_name in csv_table_map and csv_table_map[table_name] in st.session_state:
             save_to_csv_local(st.session_state[csv_table_map[table_name]], table_name)
+        _invalidate_dashboard_cache_for(table_name)
         return True
 
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -1372,6 +1388,7 @@ def delete_db_row(table_name, id_col, id_val):
         log_action(table_name, 'DELETE', detalls)
         
         update_session_state_delete(table_name, id_col, id_val)
+        _invalidate_dashboard_cache_for(table_name)
         return True
     except Exception as e:
         st.error(f"❌ Error a l'esborrar de Supabase ({table_name}): {str(e)}")
@@ -1420,6 +1437,7 @@ def update_db_row(table_name, id_col, id_val, new_data):
         }
         if table_name in csv_table_map and csv_table_map[table_name] in st.session_state:
             save_to_csv_local(st.session_state[csv_table_map[table_name]], table_name)
+        _invalidate_dashboard_cache_for(table_name)
         return True
 
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
@@ -1474,14 +1492,7 @@ def update_db_row(table_name, id_col, id_val, new_data):
         }
         if table_name in csv_table_map and csv_table_map[table_name] in st.session_state:
             save_to_csv_local(st.session_state[csv_table_map[table_name]], table_name)
-        # Invalidem només la finestra activa de la taula afectada, MAI tota la memòria cau
-        if table_name in ['despeses', 'compresSuper']:
-            try:
-                _fetch_table_recent.clear()
-            except Exception:
-                pass
-        get_db_tracker().update()
-        st.session_state["last_synced_time"] = get_db_tracker().last_update
+        _invalidate_dashboard_cache_for(table_name)
         return True
     except Exception as e:
         print(f"FAILED PAYLOAD FOR {table_name}:", update_payload)
