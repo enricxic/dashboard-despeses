@@ -216,6 +216,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
 
   <!-- Eines de Dibuix -->
   <button class="btn active" id="btnWall" onclick="setTool('wall')">🧱 Paret</button>
+  <button class="btn" id="btnLine" onclick="setTool('line')" title="Dibuixa una línia recta fina">╱ Línia</button>
   <button class="btn" id="btnCurve" onclick="setTool('curve')" title="Dibuixa una línia corba en 2 passos">〰️ Corba</button>
   <button class="btn" id="btnRoomPreset" onclick="openRoomPresetModal()" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;" title="Crea una habitació amb mides exactes en metres">🏠 Habitació</button>
   <button class="btn" id="btnRect" onclick="setTool('rect')">🔲 Espai</button>
@@ -224,6 +225,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   <button class="btn" id="btnText" onclick="setTool('text')">🔤 Text</button>
   <button class="btn" id="btnEraser" onclick="toggleEraser()" title="Activa o desactiva la goma d'esborrar">🧹 Goma</button>
   <button class="btn" id="btnPan" onclick="togglePan()" title="Activa o desactiva el mode de moure la vista">🖐️ Moure</button>
+  <button class="btn active" id="btnToggleDrawing" onclick="toggleDrawingVisibility()" style="background: #0f766e; color: white; border-color: #115e59;" title="Amaga o mostra el dibuix fet per veure només les fotos">👁️ Dibuix: SÍ</button>
   
   <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
   
@@ -244,15 +246,17 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
 
   <button class="btn btn-undo" onclick="undo()">↩️ Desfer</button>
   
-  <label class="btn" style="cursor: pointer;">
-    📷 Foto fons
-    <input type="file" id="fileBg" accept="image/*" style="display:none;" onchange="loadBgImage(event)">
+  <label class="btn" style="cursor: pointer;" title="Afegeix una o més fotos de fons">
+    📷 + Foto
+    <input type="file" id="fileBg" accept="image/*" multiple style="display:none;" onchange="loadBgImage(event)">
   </label>
   
-  <span style="font-size: 11px; color: #64748b; margin-left: 2px;">Opacitat:</span>
-  <input type="range" id="bgOpacity" min="10" max="100" value="60" style="width: 50px;" oninput="drawAll()">
-  <button class="btn" id="btnBgEdit" onclick="toggleBgEdit()" style="display:none; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;" title="Mou, redimensiona o deforma les 4 cantonades de la foto de fons">🖼️ Ajustar Foto</button>
-  <button class="btn" id="btnBgReset" onclick="resetBgQuad()" style="display:none; padding: 5px 8px; font-size: 11px;" title="Restablir la forma original de la foto">↺ Foto</button>
+  <select id="bgPhotoSelect" onchange="selectBgPhoto(this.value)" style="display:none; padding: 6px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 600; background: #f8fafc; color: #1e293b;" title="Selecciona quina foto de fons vols ajustar"></select>
+  <span id="bgOpacityLabel" style="font-size: 11px; color: #64748b; margin-left: 2px;">Opacitat:</span>
+  <input type="range" id="bgOpacity" min="10" max="100" value="60" style="width: 50px;" oninput="onBgOpacityChange(this.value)">
+  <button class="btn" id="btnBgEdit" onclick="toggleBgEdit()" style="display:none; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;" title="Mou, redimensiona o deforma les 4 cantonades de la foto activa">🖼️ Ajustar Foto</button>
+  <button class="btn" id="btnBgReset" onclick="resetBgQuad()" style="display:none; padding: 5px 8px; font-size: 11px;" title="Restablir la forma original de la foto activa">↺ Foto</button>
+  <button class="btn" id="btnBgDelete" onclick="deleteActiveBgPhoto()" style="display:none; padding: 5px 8px; font-size: 11px; color:#dc2626; border-color:#fca5a5; background:#fef2f2;" title="Elimina la foto de fons activa">✖ Foto</button>
   
   <button class="btn" style="color:#ef4444;" onclick="clearCanvas()">🗑️</button>
   <button class="btn btn-success" onclick="downloadImage()">💾 Descarregar PNG</button>
@@ -365,10 +369,11 @@ let lastWallEnd = null; // Últim extrem de paret per continuar traç automàtic
 let startX = 0, startY = 0;
 let elements = [];
 let history = [];
-let bgImage = null;
-let bgQuad = null; // {{ tl: {{x,y}}, tr: {{x,y}}, br: {{x,y}}, bl: {{x,y}} }}
+let bgPhotos = []; // [{{ id, name, img, quad, opacity }}]
+let activeBgIdx = -1;
 let bgDragState = null;
 let pendingCurve = null;
+let showDrawing = true;
 let isExporting = false;
 let bgOpacityInput = document.getElementById('bgOpacity');
 let pendingModalCallback = null;
@@ -426,17 +431,18 @@ function setViewMode(mode) {{
   drawAll();
 }}
 
-// Inicialització i gestió de deformació de la foto de fons
-function initBgQuad(img) {{
-  if (!img) return;
+// Inicialització i gestió de deformació de múltiples fotos de fons
+function createBgQuad(img, offsetIdx = 0) {{
+  if (!img) return null;
   const hRatio = canvas.width / img.width;
   const vRatio = canvas.height / img.height;
-  const ratio = Math.min(hRatio, vRatio);
+  const ratio = Math.min(hRatio, vRatio) * (offsetIdx > 0 ? 0.65 : 1.0);
   const w = img.width * ratio;
   const h = img.height * ratio;
-  const x = (canvas.width - w) / 2;
-  const y = (canvas.height - h) / 2;
-  bgQuad = {{
+  const shift = (offsetIdx % 4) * 24;
+  const x = Math.max(0, Math.min(canvas.width - w, (canvas.width - w) / 2 + shift));
+  const y = Math.max(0, Math.min(canvas.height - h, (canvas.height - h) / 2 + shift));
+  return {{
     tl: {{ x: x, y: y }},
     tr: {{ x: x + w, y: y }},
     br: {{ x: x + w, y: y + h }},
@@ -444,24 +450,90 @@ function initBgQuad(img) {{
   }};
 }}
 
+function getActiveBgPhoto() {{
+  if (activeBgIdx >= 0 && activeBgIdx < bgPhotos.length) {{
+    return bgPhotos[activeBgIdx];
+  }}
+  return null;
+}}
+
 function updateBgControlsUI() {{
-  const hasImg = !!bgImage;
+  const hasImg = bgPhotos.length > 0;
+  if (hasImg && (activeBgIdx < 0 || activeBgIdx >= bgPhotos.length)) {{
+    activeBgIdx = bgPhotos.length - 1;
+  }} else if (!hasImg) {{
+    activeBgIdx = -1;
+  }}
+
+  const sel = document.getElementById('bgPhotoSelect');
+  if (sel) {{
+    sel.style.display = hasImg ? 'inline-block' : 'none';
+    sel.innerHTML = '';
+    bgPhotos.forEach((p, idx) => {{
+      const opt = document.createElement('option');
+      opt.value = String(idx);
+      opt.text = p.name || `Foto ${{idx + 1}}`;
+      if (idx === activeBgIdx) opt.selected = true;
+      sel.appendChild(opt);
+    }});
+  }}
+
+  const active = getActiveBgPhoto();
+  if (active && bgOpacityInput) {{
+    bgOpacityInput.value = String(active.opacity ?? 60);
+  }}
+
   const btnE = document.getElementById('btnBgEdit');
   const btnR = document.getElementById('btnBgReset');
+  const btnD = document.getElementById('btnBgDelete');
   if (btnE) btnE.style.display = hasImg ? 'inline-flex' : 'none';
   if (btnR) btnR.style.display = hasImg ? 'inline-flex' : 'none';
+  if (btnD) btnD.style.display = hasImg ? 'inline-flex' : 'none';
+}}
+
+function selectBgPhoto(val) {{
+  const idx = parseInt(val, 10);
+  if (!isNaN(idx) && idx >= 0 && idx < bgPhotos.length) {{
+    activeBgIdx = idx;
+    updateBgControlsUI();
+    drawAll();
+  }}
+}}
+
+function onBgOpacityChange(val) {{
+  const active = getActiveBgPhoto();
+  if (active) {{
+    active.opacity = parseInt(val, 10) || 60;
+  }}
+  drawAll();
 }}
 
 function resetBgQuad() {{
-  if (!bgImage) return;
-  initBgQuad(bgImage);
+  const active = getActiveBgPhoto();
+  if (!active) return;
+  active.quad = createBgQuad(active.img, 0);
   drawAll();
   const status = document.getElementById('toolStatus');
   if (status) status.innerText = "↺ Foto restablerta a la posició i proporció originals.";
 }}
 
+function deleteActiveBgPhoto() {{
+  if (activeBgIdx < 0 || activeBgIdx >= bgPhotos.length) return;
+  bgPhotos.splice(activeBgIdx, 1);
+  if (bgPhotos.length === 0) {{
+    activeBgIdx = -1;
+    if (currentTool === 'bg_edit') setTool(previousDrawingTool || 'wall');
+  }} else {{
+    activeBgIdx = Math.min(activeBgIdx, bgPhotos.length - 1);
+  }}
+  updateBgControlsUI();
+  drawAll();
+  const status = document.getElementById('toolStatus');
+  if (status) status.innerText = bgPhotos.length ? "🗑️ Foto eliminada." : "🗑️ Totes les fotos de fons eliminades.";
+}}
+
 function toggleBgEdit() {{
-  if (!bgImage) return;
+  if (bgPhotos.length === 0) return;
   if (currentTool === 'bg_edit') {{
     setTool(previousDrawingTool || 'wall');
   }} else {{
@@ -472,13 +544,46 @@ function toggleBgEdit() {{
   }}
 }}
 
+function toggleDrawingVisibility() {{
+  showDrawing = !showDrawing;
+  const btn = document.getElementById('btnToggleDrawing');
+  if (btn) {{
+    if (showDrawing) {{
+      btn.classList.add('active');
+      btn.innerHTML = '👁️ Dibuix: SÍ';
+      btn.style.background = '#0f766e';
+      btn.style.borderColor = '#115e59';
+      btn.style.color = '#ffffff';
+    }} else {{
+      btn.classList.remove('active');
+      btn.innerHTML = '🙈 Dibuix: NO';
+      btn.style.background = '#f1f5f9';
+      btn.style.borderColor = '#cbd5e1';
+      btn.style.color = '#475569';
+    }}
+  }}
+  drawAll();
+  const status = document.getElementById('toolStatus');
+  if (status) {{
+    status.innerText = showDrawing
+      ? "👁️ Dibuix visible sobre el plànol."
+      : "🙈 Dibuix amagat: només es veuen les fotos de fons i la graella.";
+  }}
+}}
+
 // Si hi ha imatge de fons preexistent
 const preBg = "{existing_bg_b64}";
 if (preBg && preBg.length > 50) {{
   const img = new Image();
   img.onload = () => {{
-    bgImage = img;
-    initBgQuad(img);
+    bgPhotos.push({{
+      id: Date.now(),
+      name: 'Foto 1',
+      img: img,
+      quad: createBgQuad(img, 0),
+      opacity: parseInt(bgOpacityInput.value, 10) || 60
+    }});
+    activeBgIdx = 0;
     updateBgControlsUI();
     drawAll();
   }};
@@ -740,7 +845,7 @@ function setTool(tool) {{
   canvas.classList.remove('grabbing');
 
   document.querySelectorAll('.btn').forEach(b => {{
-    if (['btnWall', 'btnCurve', 'btnRect', 'btnDim', 'btnText', 'btnEraser', 'btnPan', 'btnBucket', 'btnBgEdit'].includes(b.id)) {{
+    if (['btnWall', 'btnLine', 'btnCurve', 'btnRect', 'btnDim', 'btnText', 'btnEraser', 'btnPan', 'btnBucket', 'btnBgEdit'].includes(b.id)) {{
       b.classList.remove('active');
     }}
   }});
@@ -818,6 +923,7 @@ function setTool(tool) {{
       ? "👉 Paret contínua: Arrossega o toca la propera cantonada per seguir l'habitació des del punt marcat."
       : (esParet ? "👉 Paret: Arrossega per traçar els límits o seccions de la paret." : "👉 Paret: Arrossega el dit per traçar una paret recta al terra.");
   }}
+  else if (tool === 'line') status.innerText = "👉 Línia: Arrossega d'un extrem a l'altre per traçar una línia recta fina.";
   else if (tool === 'curve') status.innerText = "👉 Corba (Pas 1/2): Arrossega d'un extrem a l'altre i després estira el punt central per corbar.";
   else if (tool === 'bg_edit') status.innerText = "🖼️ Ajustar Foto: Arrossega les 4 cantonades blaves per deformar en perspectiva, els punts mitjans per estirar o el centre per moure.";
   else if (tool === 'rect') status.innerText = esParet ? "👉 Espai: Arrossega per dibuixar una finestra, porta o moble suspès a la paret." : "👉 Espai: Arrossega per crear una habitació o moble.";
@@ -846,7 +952,7 @@ function distToSegment(px, py, x1, y1, x2, y2) {{
 // Detecció intel·ligent si el toc cau sobre qualsevol element dibuixat (amb tolerància tàctil)
 function hitTestElement(el, px, py) {{
   const HIT_RADIUS = 26; // 26px de tolerància per al dit al mòbil
-  if (el.type === 'wall' || el.type === 'dim') {{
+  if (el.type === 'wall' || el.type === 'line' || el.type === 'dim') {{
     return distToSegment(px, py, el.x1, el.y1, el.x2, el.y2) <= HIT_RADIUS;
   }}
   if (el.type === 'curve') {{
@@ -901,7 +1007,7 @@ function findSnapPoint(rawX, rawY) {{
   let minDist = SNAP_THRESHOLD;
   
   for (const el of elements) {{
-    if (el.type === 'wall' || el.type === 'dim' || el.type === 'curve') {{
+    if (el.type === 'wall' || el.type === 'line' || el.type === 'dim' || el.type === 'curve') {{
       const pts = [{{ x: el.x1, y: el.y1 }}, {{ x: el.x2, y: el.y2 }}];
       for (const p of pts) {{
         const d = Math.hypot(p.x - rawX, p.y - rawY);
@@ -1145,8 +1251,29 @@ function getBgEdgeMidpoints(q) {{
 }}
 
 function drawBgEditOverlay() {{
-  if (isExporting || currentTool !== 'bg_edit' || !bgImage || !bgQuad) return;
-  const q = bgQuad;
+  if (isExporting || currentTool !== 'bg_edit') return;
+  const active = getActiveBgPhoto();
+  if (!active || !active.quad) return;
+
+  // Marc subtil per a la resta de fotos inactives (per poder-les tocar i seleccionar)
+  bgPhotos.forEach((p, idx) => {{
+    if (idx === activeBgIdx || !p.quad) return;
+    const pq = p.quad;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pq.tl.x, pq.tl.y);
+    ctx.lineTo(pq.tr.x, pq.tr.y);
+    ctx.lineTo(pq.br.x, pq.br.y);
+    ctx.lineTo(pq.bl.x, pq.bl.y);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }});
+
+  const q = active.quad;
   ctx.save();
   ctx.strokeStyle = '#2563eb';
   ctx.lineWidth = 2;
@@ -1188,28 +1315,32 @@ function drawBgEditOverlay() {{
 function drawAll() {{
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // 1. Dibuixar foto de fons si existeix (amb deformació lliure 4 cantonades)
-  if (bgImage) {{
-    if (!bgQuad) initBgQuad(bgImage);
+  // 1. Dibuixar totes les fotos de fons (amb deformació lliure 4 cantonades)
+  for (let i = 0; i < bgPhotos.length; i++) {{
+    const p = bgPhotos[i];
+    if (!p || !p.img) continue;
+    if (!p.quad) p.quad = createBgQuad(p.img, i);
     ctx.save();
-    ctx.globalAlpha = parseInt(bgOpacityInput.value) / 100;
-    drawWarpedImage(bgImage, bgQuad, 8);
+    ctx.globalAlpha = (p.opacity ?? 60) / 100;
+    drawWarpedImage(p.img, p.quad, 8);
     ctx.restore();
   }}
   
   // 2. Graella
   drawGrid();
   
-  // 3. Elements
-  for (const el of elements) {{
-    drawElement(el);
+  // 3. Elements (només si el dibuix és visible)
+  if (showDrawing) {{
+    for (const el of elements) {{
+      drawElement(el);
+    }}
   }}
 
   // 4. Overlay d'edició/deformació de foto de fons
   drawBgEditOverlay();
 
   // 5. Overlay de corba pendent (Pas 2: ajustar curvatura)
-  if (pendingCurve) {{
+  if (showDrawing && pendingCurve) {{
     ctx.save();
     ctx.strokeStyle = '#2563eb';
     ctx.lineWidth = 6;
@@ -1240,7 +1371,7 @@ function drawAll() {{
   }}
 
   // 4. Indicador visual del punt d'ancoratge per a la propera paret (Mode continu)
-  if (isContinuous && currentTool === 'wall' && lastWallEnd && !isDrawing) {{
+  if (showDrawing && isContinuous && currentTool === 'wall' && lastWallEnd && !isDrawing) {{
     ctx.save();
     // Halo verd maragda
     ctx.strokeStyle = '#10b981';
@@ -1270,6 +1401,14 @@ function drawElement(el) {{
   if (el.type === 'wall') {{
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(el.x1, el.y1);
+    ctx.lineTo(el.x2, el.y2);
+    ctx.stroke();
+  }} else if (el.type === 'line') {{
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(el.x1, el.y1);
@@ -1416,29 +1555,46 @@ function pointInQuad(px, py, q) {{
 canvas.addEventListener('pointerdown', (e) => {{
   e.preventDefault();
 
-  // Eina Ajustar / Deformar Foto de fons
-  if (currentTool === 'bg_edit' && bgImage && bgQuad) {{
+  // Eina Ajustar / Deformar Foto de fons (suporta múltiples fotos)
+  if (currentTool === 'bg_edit' && bgPhotos.length > 0) {{
     const c = getPointerCoords(e);
     const rx = c.rawX, ry = c.rawY;
-    for (const k of ['tl', 'tr', 'br', 'bl']) {{
-      if (Math.hypot(bgQuad[k].x - rx, bgQuad[k].y - ry) <= 24) {{
-        bgDragState = {{ mode: k, lastX: rx, lastY: ry }};
+    const active = getActiveBgPhoto();
+    if (active && active.quad) {{
+      const q = active.quad;
+      for (const k of ['tl', 'tr', 'br', 'bl']) {{
+        if (Math.hypot(q[k].x - rx, q[k].y - ry) <= 24) {{
+          bgDragState = {{ mode: k, lastX: rx, lastY: ry }};
+          try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+          return;
+        }}
+      }}
+      const mids = getBgEdgeMidpoints(q);
+      for (const k of ['t', 'r', 'b', 'l']) {{
+        if (Math.hypot(mids[k].x - rx, mids[k].y - ry) <= 22) {{
+          bgDragState = {{ mode: k, lastX: rx, lastY: ry }};
+          try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+          return;
+        }}
+      }}
+      if (pointInQuad(rx, ry, q)) {{
+        bgDragState = {{ mode: 'move', lastX: rx, lastY: ry }};
         try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
         return;
       }}
     }}
-    const mids = getBgEdgeMidpoints(bgQuad);
-    for (const k of ['t', 'r', 'b', 'l']) {{
-      if (Math.hypot(mids[k].x - rx, mids[k].y - ry) <= 22) {{
-        bgDragState = {{ mode: k, lastX: rx, lastY: ry }};
+    // Si toquem dins d'una altra foto de fons, la seleccionem automàticament
+    for (let i = bgPhotos.length - 1; i >= 0; i--) {{
+      if (i === activeBgIdx) continue;
+      const p = bgPhotos[i];
+      if (p && p.quad && pointInQuad(rx, ry, p.quad)) {{
+        activeBgIdx = i;
+        updateBgControlsUI();
+        drawAll();
+        bgDragState = {{ mode: 'move', lastX: rx, lastY: ry }};
         try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
         return;
       }}
-    }}
-    if (pointInQuad(rx, ry, bgQuad)) {{
-      bgDragState = {{ mode: 'move', lastX: rx, lastY: ry }};
-      try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
-      return;
     }}
     return;
   }}
@@ -1551,8 +1707,10 @@ canvas.addEventListener('pointerdown', (e) => {{
 }});
 
 canvas.addEventListener('pointermove', (e) => {{
-  if (currentTool === 'bg_edit' && bgDragState && bgQuad) {{
+  const activeBg = getActiveBgPhoto();
+  if (currentTool === 'bg_edit' && bgDragState && activeBg && activeBg.quad) {{
     e.preventDefault();
+    const q = activeBg.quad;
     const c = getPointerCoords(e);
     const rx = c.rawX, ry = c.rawY;
     const dx = rx - bgDragState.lastX;
@@ -1561,24 +1719,24 @@ canvas.addEventListener('pointermove', (e) => {{
     bgDragState.lastY = ry;
     const m = bgDragState.mode;
     if (['tl', 'tr', 'br', 'bl'].includes(m)) {{
-      bgQuad[m].x = rx;
-      bgQuad[m].y = ry;
+      q[m].x = rx;
+      q[m].y = ry;
     }} else if (m === 't') {{
-      bgQuad.tl.x += dx; bgQuad.tl.y += dy;
-      bgQuad.tr.x += dx; bgQuad.tr.y += dy;
+      q.tl.x += dx; q.tl.y += dy;
+      q.tr.x += dx; q.tr.y += dy;
     }} else if (m === 'b') {{
-      bgQuad.bl.x += dx; bgQuad.bl.y += dy;
-      bgQuad.br.x += dx; bgQuad.br.y += dy;
+      q.bl.x += dx; q.bl.y += dy;
+      q.br.x += dx; q.br.y += dy;
     }} else if (m === 'l') {{
-      bgQuad.tl.x += dx; bgQuad.tl.y += dy;
-      bgQuad.bl.x += dx; bgQuad.bl.y += dy;
+      q.tl.x += dx; q.tl.y += dy;
+      q.bl.x += dx; q.bl.y += dy;
     }} else if (m === 'r') {{
-      bgQuad.tr.x += dx; bgQuad.tr.y += dy;
-      bgQuad.br.x += dx; bgQuad.br.y += dy;
+      q.tr.x += dx; q.tr.y += dy;
+      q.br.x += dx; q.br.y += dy;
     }} else if (m === 'move') {{
       for (const k of ['tl', 'tr', 'br', 'bl']) {{
-        bgQuad[k].x += dx;
-        bgQuad[k].y += dy;
+        q[k].x += dx;
+        q[k].y += dy;
       }}
     }}
     drawAll();
@@ -1621,8 +1779,8 @@ canvas.addEventListener('pointermove', (e) => {{
   ctx.save();
   ctx.strokeStyle = '#94a3b8';
   ctx.setLineDash([4, 4]);
-  if (currentTool === 'wall' || currentTool === 'curve') {{
-    ctx.lineWidth = 6;
+  if (currentTool === 'wall' || currentTool === 'line' || currentTool === 'curve') {{
+    ctx.lineWidth = currentTool === 'line' ? 2.5 : 6;
     ctx.strokeStyle = currentTool === 'curve' ? '#2563eb' : '#0f172a';
     ctx.beginPath();
     ctx.moveTo(startX, startY);
@@ -1757,6 +1915,9 @@ canvas.addEventListener('pointerup', (e) => {{
       updateContinuousUI();
     }}
     drawAll();
+  }} else if (currentTool === 'line') {{
+    elements.push({{ type: 'line', x1: startX, y1: startY, x2: endX, y2: endY }});
+    drawAll();
   }} else if (currentTool === 'rect') {{
     elements.push({{
       type: 'rect',
@@ -1852,21 +2013,32 @@ window.addEventListener('pointercancel', (e) => {{
 }});
 
 function loadBgImage(e) {{
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (event) => {{
-    const img = new Image();
-    img.onload = () => {{
-      bgImage = img;
-      initBgQuad(img);
-      updateBgControlsUI();
-      setTool('bg_edit');
-      drawAll();
+  const files = Array.from(e.target.files || []);
+  if (files.length === 0) return;
+  const defaultOpacity = parseInt(bgOpacityInput.value, 10) || 60;
+  files.forEach((file) => {{
+    const reader = new FileReader();
+    reader.onload = (event) => {{
+      const img = new Image();
+      img.onload = () => {{
+        const idx = bgPhotos.length;
+        bgPhotos.push({{
+          id: Date.now() + idx,
+          name: `Foto ${{idx + 1}}`,
+          img: img,
+          quad: createBgQuad(img, idx),
+          opacity: defaultOpacity
+        }});
+        activeBgIdx = bgPhotos.length - 1;
+        updateBgControlsUI();
+        setTool('bg_edit');
+        drawAll();
+      }};
+      img.src = event.target.result;
     }};
-    img.src = event.target.result;
-  }};
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  }});
+  e.target.value = '';
 }}
 
 function clearCanvas() {{
