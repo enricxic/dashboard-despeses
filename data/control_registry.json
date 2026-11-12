@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "12/11/2026 13:17:44",
+  "updated_at": "12/11/2026 13:18:34",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -20,11 +20,11 @@
       "verified_hashes": {
         "modules/compres.py": "6c5b25e63e007406561439d95648659dba0ce572421966bfcbd1bf88292a140f"
       },
-      "verified_at": "12/11/2026 13:16:09",
-      "verified_commit": "69788e5",
+      "verified_at": "12/11/2026 13:18:33",
+      "verified_commit": "55990e7",
       "verified_by": "admin",
-      "unlocked_until": "13/11/2026 13:17:44",
-      "unlock_reason": "Aplicar descomptes OFERTES I CUPONS de Dia com a promocio a la linia del producte"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "12/11/2026 13:18:33",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Descomptes OFERTES I CUPONS Dia com a promocio a la linia del producte)",
+      "user": "admin",
+      "git_head": "55990e7"
+    },
     {
       "timestamp": "12/11/2026 13:17:44",
       "action": "UNLOCK",
