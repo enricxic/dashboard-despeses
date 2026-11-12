@@ -30,16 +30,26 @@ def get_global_alerts():
         df_limits = st.session_state.get("df_limits")
         df_super = st.session_state.get("df_super")
         
-        if df_desp is None or df_km is None or df_limits is None or df_desp.empty:
-            data = load_dashboard_data(tables_to_load=['despeses', 'kmCotxe', 'limitsDespeses', 'compresSuper'])
+        needed_tables = []
+        if df_desp is None or (isinstance(df_desp, pd.DataFrame) and df_desp.empty):
+            needed_tables.append('despeses')
+        if df_km is None or (isinstance(df_km, pd.DataFrame) and df_km.empty):
+            needed_tables.append('kmCotxe')
+        if df_limits is None or (isinstance(df_limits, pd.DataFrame) and df_limits.empty):
+            needed_tables.append('limitsDespeses')
+        if needed_tables:
+            data = load_dashboard_data(tables_to_load=tuple(needed_tables))
             if data and len(data) >= 10:
-                d_desp, df_ing, d_super, df_gas, d_km, df_hip, df_est, d_limits, df_pag, df_cartera = data
-                if df_desp is None or df_desp.empty: df_desp = d_desp
-                if df_km is None or df_km.empty: df_km = d_km
-                if df_limits is None or df_limits.empty: df_limits = d_limits
-                if df_super is None or df_super.empty: df_super = d_super
-                if df_limits is not None and not df_limits.empty and (st.session_state.get("df_limits") is None or st.session_state.get("df_limits").empty):
-                    st.session_state["df_limits"] = df_limits
+                d_desp, _ing, _sup, _gas, d_km, _hip, _est, d_limits, _pag, _cart = data
+                if (df_desp is None or df_desp.empty) and d_desp is not None and not d_desp.empty:
+                    df_desp = d_desp
+                    st.session_state["df_desp"] = d_desp
+                if (df_km is None or df_km.empty) and d_km is not None and not d_km.empty:
+                    df_km = d_km
+                    st.session_state["df_km"] = d_km
+                if (df_limits is None or df_limits.empty) and d_limits is not None and not d_limits.empty:
+                    df_limits = d_limits
+                    st.session_state["df_limits"] = d_limits
             
         # 1. Alerta de canvi d'oli (Cotxe)
         if df_km is not None and not df_km.empty:
@@ -268,6 +278,11 @@ def get_global_alerts():
                     
                 if df_target is not None and not df_target.empty and 'ticketPendent' in df_target.columns:
                     pendents = df_target[df_target['ticketPendent'].astype(str).str.lower().str.strip().isin(['true', '1'])].copy()
+                    if not pendents.empty and (df_sup_check is None or df_sup_check.empty):
+                        sup_data = load_dashboard_data(tables_to_load=('compresSuper',))
+                        if sup_data and len(sup_data) >= 3 and sup_data[2] is not None:
+                            df_sup_check = sup_data[2]
+                            st.session_state["df_super"] = df_sup_check
                     if df_sup_check is not None and not df_sup_check.empty and 'IdDespesa' in df_sup_check.columns and not pendents.empty:
                         desglossats_ids = set(pd.to_numeric(df_sup_check['IdDespesa'], errors='coerce').dropna().astype(int).unique())
                         pendents = pendents[~pendents['ID_mov'].isin(desglossats_ids)]
