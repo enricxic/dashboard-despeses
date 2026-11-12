@@ -912,6 +912,14 @@ def render(view_mode="economic"):
     def get_limits_for(year, month_name):
         from core.db import get_limits_for as _core_get_limits_for
         return _core_get_limits_for(year, month_name)
+
+    def _filter_by_year_month(df, year, month_name_lower, use_clean_mes=False):
+        if df is None or df.empty or 'any' not in df.columns:
+            return pd.DataFrame()
+        col_m = 'clean_mes' if (use_clean_mes and 'clean_mes' in df.columns) else 'mes'
+        if col_m not in df.columns:
+            return pd.DataFrame()
+        return df[(df['any'] == year) & (df[col_m].astype(str).str.lower().str.strip() == str(month_name_lower).lower().strip())]
     
     
     # ----------------- HEADER AREA -----------------
@@ -2457,7 +2465,7 @@ def render(view_mode="economic"):
                 pagaments_a_processar = []
             
                 # 1. Hipoteca status
-                sub_hip = df_hip[(df_hip['any'] == selected_year) & (df_hip['mes'].str.lower() == selected_month_data)]
+                sub_hip = _filter_by_year_month(df_hip, selected_year, selected_month_data)
                 if not sub_hip.empty:
                     hip_row = sub_hip.iloc[0]
                     amt_hip = float(clean_numeric(pd.Series([hip_row.get('Quota fixa', 0.0)])).iloc[0])
@@ -2479,10 +2487,7 @@ def render(view_mode="economic"):
                     seen_concepts.add('hipoteca')
 
                 # 2. Pagaments de la taula Previsió de Pagaments
-                sub_pag_all = df_pag[
-                    (df_pag['any'] == selected_year) & 
-                    (df_pag['mes'].astype(str).str.lower().str.strip() == selected_month_data.lower().strip())
-                ]
+                sub_pag_all = _filter_by_year_month(df_pag, selected_year, selected_month_data)
             
                 if not sub_pag_all.empty:
                     sub_pag_work = sub_pag_all.copy()
@@ -2592,7 +2597,7 @@ def render(view_mode="economic"):
             with col_mid:
                 st.markdown("<h4 style='color:#f39c12;'>📥 Ingressos del Mes</h4>", unsafe_allow_html=True)
                 # Load ingressos list for selected month
-                month_ing = df_ing[(df_ing['any'] == selected_year) & (df_ing['clean_mes'] == selected_month_data)]
+                month_ing = _filter_by_year_month(df_ing, selected_year, selected_month_data, use_clean_mes=True)
                 if not month_ing.empty:
                     ingressos_a_processar = []
                     mask_pendent = month_ing['cobrat'].astype(str).str.strip().str.lower() == 'pendent'
@@ -2656,7 +2661,7 @@ def render(view_mode="economic"):
                 
             with col_right:
                 st.markdown("<h4 style='color:#f39c12;'>📤 Càrrecs per Categoria</h4>", unsafe_allow_html=True)
-                month_desp = df_desp[(df_desp['any'] == selected_year) & (df_desp['clean_mes'] == selected_month_data)]
+                month_desp = _filter_by_year_month(df_desp, selected_year, selected_month_data, use_clean_mes=True)
                 if not month_desp.empty:
                     # Exclude op_banc!
                     month_desp_filtered = month_desp[(month_desp['Idcategoria'] != 'op_banc') & (month_desp['grup'] != 'op_banc')]

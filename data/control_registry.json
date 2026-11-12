@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "12/11/2026 13:18:34",
+  "updated_at": "12/11/2026 13:24:26",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -46,8 +46,8 @@
       "verified_at": "11/11/2026 15:23:27",
       "verified_commit": "25a0427",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "13/11/2026 13:24:26",
+      "unlock_reason": "Protegir df_hip, df_pag, df_ing i df_desp buits contra KeyError: any al Dashboard"
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "12/11/2026 13:24:26",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 13/11/2026 13:24:26. Motiu: Protegir df_hip, df_pag, df_ing i df_desp buits contra KeyError: any al Dashboard",
+      "user": "admin",
+      "git_head": "872e643"
+    },
     {
       "timestamp": "12/11/2026 13:18:33",
       "action": "SEAL",
