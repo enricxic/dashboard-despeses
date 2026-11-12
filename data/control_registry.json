@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "11/11/2026 20:59:11",
+  "updated_at": "12/11/2026 12:35:16",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -172,10 +172,10 @@
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
         "core/projectes_manager.py": "839a6a57ec14fb3da3d245fbc40f5f2df7b4a75b68f9bcd50cc27bd87985dbf1",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
-        "modules/canvas_electric.py": "75c2bf01f379db233dbee1d384dd04463a79c4b880faeedeb9781e616be035dc"
+        "modules/canvas_electric.py": "2104e2ed36c179930b18563f054e582731fb45a70162c31c3c9599dcf7aca789"
       },
-      "verified_at": "11/11/2026 20:59:11",
-      "verified_commit": "96bafd6",
+      "verified_at": "12/11/2026 12:35:15",
+      "verified_commit": "1fc5dbc",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "12/11/2026 12:35:15",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Esborrar element seleccionat amb tecla Supr)",
+      "user": "admin",
+      "git_head": "1fc5dbc"
+    },
     {
       "timestamp": "11/11/2026 20:59:11",
       "action": "SEAL",

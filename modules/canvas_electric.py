@@ -147,6 +147,7 @@ def get_electric_canvas_html(
     width: 100%;
     height: 100%;
     touch-action: none;
+    outline: none;
   }}
   .status-bar {{
     padding: 5px 12px;
@@ -278,7 +279,7 @@ def get_electric_canvas_html(
 </div>
 
 <div class="canvas-container" id="canvasWrapper">
-  <canvas id="elecCanvas"></canvas>
+  <canvas id="elecCanvas" tabindex="0"></canvas>
 </div>
 
 <div class="status-bar">
@@ -1172,6 +1173,7 @@ function getPointerCoords(e) {{
 
 canvas.addEventListener("pointerdown", e => {{
   canvas.setPointerCapture(e.pointerId);
+  try {{ canvas.focus({{ preventScroll: true }}); }} catch (_) {{}}
   const {{ cx, cy }} = getPointerCoords(e);
   if (toolMode === "pan") {{
     isPanning = true;
@@ -1396,6 +1398,38 @@ canvas.addEventListener("dblclick", e => {{
     openModal("Editar text:", el.text || "", newTxt => {{
       if (newTxt) {{ el.text = newTxt; saveLocal(); redraw(); }}
     }});
+  }}
+}});
+
+function deleteSelectedElement() {{
+  if (!selectedEl) return false;
+  const idx = elements.indexOf(selectedEl);
+  if (idx === -1) {{
+    selectedEl = null;
+    return false;
+  }}
+  const removed = elements.splice(idx, 1)[0];
+  if (removed.kind === "wire") {{
+    lastWirePoint = null;
+    document.getElementById("btnNewTrace").style.display = "none";
+  }}
+  selectedEl = null;
+  saveLocal();
+  redraw();
+  statusText.textContent = "Element eliminat · Selecciona o dibuixa un altre element";
+  return true;
+}}
+
+window.addEventListener("keydown", e => {{
+  if (e.key !== "Delete" && e.key !== "Supr" && e.key !== "Backspace") return;
+  const activeTag = document.activeElement ? document.activeElement.tagName : "";
+  if (activeTag === "INPUT" || activeTag === "TEXTAREA") return;
+  const txtModal = document.getElementById("textModal");
+  const clrModal = document.getElementById("confirmClearModal");
+  if ((txtModal && txtModal.style.display === "flex") || (clrModal && clrModal.style.display === "flex")) return;
+  if (selectedEl && elements.includes(selectedEl)) {{
+    e.preventDefault();
+    deleteSelectedElement();
   }}
 }});
 
