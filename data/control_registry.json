@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "12/11/2026 13:42:45",
+  "updated_at": "12/11/2026 13:50:07",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -224,10 +224,10 @@
         "app.py": "cad9882a95d5cdb5a4a5fcd687e22309b5c266b84d770ea9f2b21e9688a694d4",
         "core/db.py": "337bdbe62d4228582fd726453dafba2f48809c4f3fd3f4b4849bb4fe571f7c3b",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
-        "core/alerts.py": "65387b791f30be1e5f5b40d3519a99ed87f53f0c8c9aac73d2f2eb2501108deb"
+        "core/alerts.py": "09d1cb5dc53014e7a9749676e4a4298c7a8eb7d794ff4ed8f5ab1d5979194d9f"
       },
-      "verified_at": "12/11/2026 13:42:45",
-      "verified_commit": "43791d0",
+      "verified_at": "12/11/2026 13:50:07",
+      "verified_commit": "4cbc885",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "12/11/2026 13:50:07",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Alinear sum_varis i categories de Valor superat a core/alerts.py)",
+      "user": "admin",
+      "git_head": "4cbc885"
+    },
     {
       "timestamp": "12/11/2026 13:42:45",
       "action": "SEAL",

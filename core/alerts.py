@@ -216,12 +216,16 @@ def get_global_alerts():
                         if cat_col and imp_col:
                             df_curr[cat_col] = df_curr[cat_col].astype(str).str.strip().str.lower()
                             df_curr[imp_col] = pd.to_numeric(df_curr[imp_col], errors='coerce').fillna(0.0)
-                            sum_menjar = df_curr[df_curr[cat_col] == 'menjar'][imp_col].sum()
-                            sum_gasolina = df_curr[df_curr[cat_col] == 'gasolina'][imp_col].sum()
-                            sum_restaurant = df_curr[df_curr[cat_col] == 'restaurant'][imp_col].sum()
-                            sum_farmacia = df_curr[df_curr[cat_col].isin(['farmàcia', 'farmacia'])][imp_col].sum()
-                            sum_neteja = df_curr[df_curr[cat_col] == 'neteja'][imp_col].sum()
-                            sum_varis = df_curr[df_curr[cat_col] == 'varis'][imp_col].sum()
+                            cat_s = df_curr[cat_col]
+                            sum_menjar = df_curr[cat_s.str.contains('menjar', case=False, na=False)][imp_col].sum()
+                            sum_gasolina = df_curr[cat_s.str.contains('gasolina', case=False, na=False)][imp_col].sum()
+                            sum_restaurant = df_curr[cat_s.str.contains('restaurant', case=False, na=False)][imp_col].sum()
+                            sum_farmacia = df_curr[cat_s.str.contains('farmacia|farm?cia', case=False, na=False)][imp_col].sum()
+                            sum_neteja = df_curr[cat_s.str.contains('neteja', case=False, na=False)][imp_col].sum()
+                            sum_varis = df_curr[~cat_s.str.contains(
+                                'despesa_general|asseguran|menjar|rebost|gasolina|restaurant|farmacia|farm?cia|neteja|proveidor|op_banc|ingres_general|ingr?s_general|ingres_extra|ingr?s_extra',
+                                case=False, na=False
+                            )][imp_col].sum()
                             
                             curr_limits = get_limits_for(avui.year, curr_month_str)
                             
