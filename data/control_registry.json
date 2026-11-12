@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "12/11/2026 12:35:16",
+  "updated_at": "12/11/2026 13:05:43",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -168,14 +168,14 @@
       "verified_hashes": {
         "modules/manteniment.py": "da50c298d4b504dacab516afbc2ba46a030bb766f941149fa4250194c68b0462",
         "modules/projectes_ui.py": "4c3aafe5317c5f7fed593712ee33f37c23439b4f21d2788bab01596c98744ef6",
-        "modules/canvas_planol.py": "4ffaebcb84a2d5d5c48bc9ea215db8af859a823482d6fc60dbd6fc551fa7c5e5",
+        "modules/canvas_planol.py": "496ebd79d2e2daa5cb9615c26240052f64a4ae3ca19fb4f5224317fc058342dc",
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
         "core/projectes_manager.py": "839a6a57ec14fb3da3d245fbc40f5f2df7b4a75b68f9bcd50cc27bd87985dbf1",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
         "modules/canvas_electric.py": "2104e2ed36c179930b18563f054e582731fb45a70162c31c3c9599dcf7aca789"
       },
-      "verified_at": "12/11/2026 12:35:15",
-      "verified_commit": "1fc5dbc",
+      "verified_at": "12/11/2026 13:05:43",
+      "verified_commit": "a792ad9",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "12/11/2026 13:05:43",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Deformacio foto fons i linies corbes al planol)",
+      "user": "admin",
+      "git_head": "a792ad9"
+    },
     {
       "timestamp": "12/11/2026 12:35:15",
       "action": "SEAL",

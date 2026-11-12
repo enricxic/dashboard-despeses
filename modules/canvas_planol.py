@@ -216,6 +216,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
 
   <!-- Eines de Dibuix -->
   <button class="btn active" id="btnWall" onclick="setTool('wall')">🧱 Paret</button>
+  <button class="btn" id="btnCurve" onclick="setTool('curve')" title="Dibuixa una línia corba en 2 passos">〰️ Corba</button>
   <button class="btn" id="btnRoomPreset" onclick="openRoomPresetModal()" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;" title="Crea una habitació amb mides exactes en metres">🏠 Habitació</button>
   <button class="btn" id="btnRect" onclick="setTool('rect')">🔲 Espai</button>
   <button class="btn" id="btnBucket" onclick="openTexturePicker()" title="Aplica textura a un espai o habitació">🪣 Textura</button>
@@ -250,6 +251,8 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   
   <span style="font-size: 11px; color: #64748b; margin-left: 2px;">Opacitat:</span>
   <input type="range" id="bgOpacity" min="10" max="100" value="60" style="width: 50px;" oninput="drawAll()">
+  <button class="btn" id="btnBgEdit" onclick="toggleBgEdit()" style="display:none; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;" title="Mou, redimensiona o deforma les 4 cantonades de la foto de fons">🖼️ Ajustar Foto</button>
+  <button class="btn" id="btnBgReset" onclick="resetBgQuad()" style="display:none; padding: 5px 8px; font-size: 11px;" title="Restablir la forma original de la foto">↺ Foto</button>
   
   <button class="btn" style="color:#ef4444;" onclick="clearCanvas()">🗑️</button>
   <button class="btn btn-success" onclick="downloadImage()">💾 Descarregar PNG</button>
@@ -363,6 +366,10 @@ let startX = 0, startY = 0;
 let elements = [];
 let history = [];
 let bgImage = null;
+let bgQuad = null; // {{ tl: {{x,y}}, tr: {{x,y}}, br: {{x,y}}, bl: {{x,y}} }}
+let bgDragState = null;
+let pendingCurve = null;
+let isExporting = false;
 let bgOpacityInput = document.getElementById('bgOpacity');
 let pendingModalCallback = null;
 
@@ -419,12 +426,60 @@ function setViewMode(mode) {{
   drawAll();
 }}
 
+// Inicialització i gestió de deformació de la foto de fons
+function initBgQuad(img) {{
+  if (!img) return;
+  const hRatio = canvas.width / img.width;
+  const vRatio = canvas.height / img.height;
+  const ratio = Math.min(hRatio, vRatio);
+  const w = img.width * ratio;
+  const h = img.height * ratio;
+  const x = (canvas.width - w) / 2;
+  const y = (canvas.height - h) / 2;
+  bgQuad = {{
+    tl: {{ x: x, y: y }},
+    tr: {{ x: x + w, y: y }},
+    br: {{ x: x + w, y: y + h }},
+    bl: {{ x: x, y: y + h }}
+  }};
+}}
+
+function updateBgControlsUI() {{
+  const hasImg = !!bgImage;
+  const btnE = document.getElementById('btnBgEdit');
+  const btnR = document.getElementById('btnBgReset');
+  if (btnE) btnE.style.display = hasImg ? 'inline-flex' : 'none';
+  if (btnR) btnR.style.display = hasImg ? 'inline-flex' : 'none';
+}}
+
+function resetBgQuad() {{
+  if (!bgImage) return;
+  initBgQuad(bgImage);
+  drawAll();
+  const status = document.getElementById('toolStatus');
+  if (status) status.innerText = "↺ Foto restablerta a la posició i proporció originals.";
+}}
+
+function toggleBgEdit() {{
+  if (!bgImage) return;
+  if (currentTool === 'bg_edit') {{
+    setTool(previousDrawingTool || 'wall');
+  }} else {{
+    if (currentTool !== 'pan' && currentTool !== 'eraser' && currentTool !== 'bg_edit') {{
+      previousDrawingTool = currentTool;
+    }}
+    setTool('bg_edit');
+  }}
+}}
+
 // Si hi ha imatge de fons preexistent
 const preBg = "{existing_bg_b64}";
 if (preBg && preBg.length > 50) {{
   const img = new Image();
   img.onload = () => {{
     bgImage = img;
+    initBgQuad(img);
+    updateBgControlsUI();
     drawAll();
   }};
   img.src = preBg;
@@ -670,23 +725,45 @@ function setTool(tool) {{
     tool = previousDrawingTool || 'wall';
   }}
   
-  if (currentTool !== 'pan' && currentTool !== 'eraser') {{
+  if (tool !== 'curve' && pendingCurve) {{
+    pendingCurve = null;
+  }}
+
+  if (currentTool !== 'pan' && currentTool !== 'eraser' && currentTool !== 'bg_edit') {{
     previousDrawingTool = currentTool;
   }}
 
   currentTool = tool;
   isPanning = false;
   isDrawing = false;
+  bgDragState = null;
   canvas.classList.remove('grabbing');
 
   document.querySelectorAll('.btn').forEach(b => {{
-    if (['btnWall', 'btnRect', 'btnDim', 'btnText', 'btnEraser', 'btnPan', 'btnBucket'].includes(b.id)) {{
+    if (['btnWall', 'btnCurve', 'btnRect', 'btnDim', 'btnText', 'btnEraser', 'btnPan', 'btnBucket', 'btnBgEdit'].includes(b.id)) {{
       b.classList.remove('active');
     }}
   }});
   
   const btn = document.getElementById('btn' + tool.charAt(0).toUpperCase() + tool.slice(1));
   if (btn) btn.classList.add('active');
+
+  const btnBgEdit = document.getElementById('btnBgEdit');
+  if (btnBgEdit) {{
+    if (tool === 'bg_edit') {{
+      btnBgEdit.classList.add('active');
+      btnBgEdit.innerHTML = '🖼️ Ajustar Foto: ON';
+      btnBgEdit.style.background = '#2563eb';
+      btnBgEdit.style.borderColor = '#1d4ed8';
+      btnBgEdit.style.color = '#ffffff';
+    }} else {{
+      btnBgEdit.classList.remove('active');
+      btnBgEdit.innerHTML = '🖼️ Ajustar Foto';
+      btnBgEdit.style.background = '#eff6ff';
+      btnBgEdit.style.borderColor = '#93c5fd';
+      btnBgEdit.style.color = '#1d4ed8';
+    }}
+  }}
   
   const btnPan = document.getElementById('btnPan');
   if (btnPan) {{
@@ -741,6 +818,8 @@ function setTool(tool) {{
       ? "👉 Paret contínua: Arrossega o toca la propera cantonada per seguir l'habitació des del punt marcat."
       : (esParet ? "👉 Paret: Arrossega per traçar els límits o seccions de la paret." : "👉 Paret: Arrossega el dit per traçar una paret recta al terra.");
   }}
+  else if (tool === 'curve') status.innerText = "👉 Corba (Pas 1/2): Arrossega d'un extrem a l'altre i després estira el punt central per corbar.";
+  else if (tool === 'bg_edit') status.innerText = "🖼️ Ajustar Foto: Arrossega les 4 cantonades blaves per deformar en perspectiva, els punts mitjans per estirar o el centre per moure.";
   else if (tool === 'rect') status.innerText = esParet ? "👉 Espai: Arrossega per dibuixar una finestra, porta o moble suspès a la paret." : "👉 Espai: Arrossega per crear una habitació o moble.";
   else if (tool === 'dim') status.innerText = esParet ? "👉 Cota: Arrossega verticalment per alçada (sostre/sòcol) o horitzontalment per amplada." : "👉 Cota: Arrossega d'un extrem a l'altre per mesurar la distància.";
   else if (tool === 'text') status.innerText = esParet ? "👉 Text: Toca per anotar rajoles, forats a tapar, calç, ciment o canonades." : "👉 Text: Toca per posar nom a l'estança o nota.";
@@ -769,6 +848,19 @@ function hitTestElement(el, px, py) {{
   const HIT_RADIUS = 26; // 26px de tolerància per al dit al mòbil
   if (el.type === 'wall' || el.type === 'dim') {{
     return distToSegment(px, py, el.x1, el.y1, el.x2, el.y2) <= HIT_RADIUS;
+  }}
+  if (el.type === 'curve') {{
+    const STEPS = 16;
+    let prevX = el.x1, prevY = el.y1;
+    for (let i = 1; i <= STEPS; i++) {{
+      const t = i / STEPS;
+      const mt = 1 - t;
+      const bx = mt * mt * el.x1 + 2 * mt * t * el.cx + t * t * el.x2;
+      const by = mt * mt * el.y1 + 2 * mt * t * el.cy + t * t * el.y2;
+      if (distToSegment(px, py, prevX, prevY, bx, by) <= HIT_RADIUS) return true;
+      prevX = bx; prevY = by;
+    }}
+    return false;
   }}
   if (el.type === 'rect') {{
     const dTop = distToSegment(px, py, el.x, el.y, el.x + el.w, el.y);
@@ -809,7 +901,7 @@ function findSnapPoint(rawX, rawY) {{
   let minDist = SNAP_THRESHOLD;
   
   for (const el of elements) {{
-    if (el.type === 'wall' || el.type === 'dim') {{
+    if (el.type === 'wall' || el.type === 'dim' || el.type === 'curve') {{
       const pts = [{{ x: el.x1, y: el.y1 }}, {{ x: el.x2, y: el.y2 }}];
       for (const p of pts) {{
         const d = Math.hypot(p.x - rawX, p.y - rawY);
@@ -912,6 +1004,13 @@ function saveHistory() {{
 }}
 
 function undo() {{
+  if (pendingCurve) {{
+    pendingCurve = null;
+    drawAll();
+    const status = document.getElementById('toolStatus');
+    if (status) status.innerText = "👉 Corba (Pas 1/2): Arrossega d'un extrem a l'altre i després estira el punt central per corbar.";
+    return;
+  }}
   if (history.length > 0) {{
     elements = JSON.parse(history.pop());
   }} else if (elements.length > 0) {{
@@ -972,20 +1071,129 @@ function drawGrid() {{
   }}
 }}
 
+function drawTexturedTriangle(img, sx0, sy0, sx1, sy1, sx2, sy2, dx0, dy0, dx1, dy1, dx2, dy2) {{
+  const denom = sx0 * (sy2 - sy1) - sx1 * sy2 + sx2 * sy1 + (sx1 - sx2) * sy0;
+  if (Math.abs(denom) < 1e-6) return;
+  const m11 = -(sy0 * (dx2 - dx1) - sy1 * dx2 + sy2 * dx1 + (sy1 - sy2) * dx0) / denom;
+  const m12 = (sy1 * dy2 + sy0 * (dy1 - dy2) - sy2 * dy1 + (sy2 - sy1) * dy0) / denom;
+  const m21 = (sx0 * (dx2 - dx1) - sx1 * dx2 + sx2 * dx1 + (sx1 - sx2) * dx0) / denom;
+  const m22 = -(sx1 * dy2 + sx0 * (dy1 - dy2) - sx2 * dy1 + (sx2 - sx1) * dy0) / denom;
+  const dx = (sx0 * (sy2 * dx1 - sy1 * dx2) + sy0 * (sx1 * dx2 - sx2 * dx1) + (sx2 * sy1 - sx1 * sy2) * dx0) / denom;
+  const dy = (sx0 * (sy2 * dy1 - sy1 * dy2) + sy0 * (sx1 * dy2 - sx2 * dy1) + (sx2 * sy1 - sx1 * sy2) * dy0) / denom;
+
+  // Lleugera expansió de 0.45px des del centroide per evitar micro-fissures entre triangles
+  const cx = (dx0 + dx1 + dx2) / 3;
+  const cy = (dy0 + dy1 + dy2) / 3;
+  const expand = (x, y) => {{
+    const vx = x - cx, vy = y - cy;
+    const len = Math.hypot(vx, vy) || 1;
+    return [x + (vx / len) * 0.45, y + (vy / len) * 0.45];
+  }};
+  const [ex0, ey0] = expand(dx0, dy0);
+  const [ex1, ey1] = expand(dx1, dy1);
+  const [ex2, ey2] = expand(dx2, dy2);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(ex0, ey0);
+  ctx.lineTo(ex1, ey1);
+  ctx.lineTo(ex2, ey2);
+  ctx.closePath();
+  ctx.clip();
+  ctx.transform(m11, m12, m21, m22, dx, dy);
+  ctx.drawImage(img, 0, 0);
+  ctx.restore();
+}}
+
+function drawWarpedImage(img, quad, subdivisions) {{
+  const N = subdivisions || 8;
+  const iw = img.width;
+  const ih = img.height;
+  const bilerp = (u, v) => {{
+    const topX = quad.tl.x + (quad.tr.x - quad.tl.x) * u;
+    const topY = quad.tl.y + (quad.tr.y - quad.tl.y) * u;
+    const botX = quad.bl.x + (quad.br.x - quad.bl.x) * u;
+    const botY = quad.bl.y + (quad.br.y - quad.bl.y) * u;
+    return {{
+      x: topX + (botX - topX) * v,
+      y: topY + (botY - topY) * v
+    }};
+  }};
+  for (let i = 0; i < N; i++) {{
+    const u0 = i / N, u1 = (i + 1) / N;
+    const su0 = u0 * iw, su1 = u1 * iw;
+    for (let j = 0; j < N; j++) {{
+      const v0 = j / N, v1 = (j + 1) / N;
+      const sv0 = v0 * ih, sv1 = v1 * ih;
+      const p00 = bilerp(u0, v0);
+      const p10 = bilerp(u1, v0);
+      const p11 = bilerp(u1, v1);
+      const p01 = bilerp(u0, v1);
+      drawTexturedTriangle(img, su0, sv0, su1, sv0, su1, sv1, p00.x, p00.y, p10.x, p10.y, p11.x, p11.y);
+      drawTexturedTriangle(img, su0, sv0, su1, sv1, su0, sv1, p00.x, p00.y, p11.x, p11.y, p01.x, p01.y);
+    }}
+  }}
+}}
+
+function getBgEdgeMidpoints(q) {{
+  return {{
+    t: {{ x: (q.tl.x + q.tr.x) / 2, y: (q.tl.y + q.tr.y) / 2 }},
+    r: {{ x: (q.tr.x + q.br.x) / 2, y: (q.tr.y + q.br.y) / 2 }},
+    b: {{ x: (q.bl.x + q.br.x) / 2, y: (q.bl.y + q.br.y) / 2 }},
+    l: {{ x: (q.tl.x + q.bl.x) / 2, y: (q.tl.y + q.bl.y) / 2 }}
+  }};
+}}
+
+function drawBgEditOverlay() {{
+  if (isExporting || currentTool !== 'bg_edit' || !bgImage || !bgQuad) return;
+  const q = bgQuad;
+  ctx.save();
+  ctx.strokeStyle = '#2563eb';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(q.tl.x, q.tl.y);
+  ctx.lineTo(q.tr.x, q.tr.y);
+  ctx.lineTo(q.br.x, q.br.y);
+  ctx.lineTo(q.bl.x, q.bl.y);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Punts mitjans de costats (per estirar costats)
+  const mids = getBgEdgeMidpoints(q);
+  for (const k of ['t', 'r', 'b', 'l']) {{
+    const p = mids[k];
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2;
+    ctx.fillRect(p.x - 6, p.y - 6, 12, 12);
+    ctx.strokeRect(p.x - 6, p.y - 6, 12, 12);
+  }}
+
+  // 4 cantonades (per deformar lliurement)
+  for (const k of ['tl', 'tr', 'br', 'bl']) {{
+    const p = q[k];
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#2563eb';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+  }}
+  ctx.restore();
+}}
+
 function drawAll() {{
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // 1. Dibuixar foto de fons si existeix
+  // 1. Dibuixar foto de fons si existeix (amb deformació lliure 4 cantonades)
   if (bgImage) {{
+    if (!bgQuad) initBgQuad(bgImage);
     ctx.save();
     ctx.globalAlpha = parseInt(bgOpacityInput.value) / 100;
-    const hRatio = canvas.width / bgImage.width;
-    const vRatio = canvas.height / bgImage.height;
-    const ratio = Math.min(hRatio, vRatio);
-    const centerShiftX = (canvas.width - bgImage.width * ratio) / 2;
-    const centerShiftY = (canvas.height - bgImage.height * ratio) / 2;
-    ctx.drawImage(bgImage, 0, 0, bgImage.width, bgImage.height,
-                  centerShiftX, centerShiftY, bgImage.width * ratio, bgImage.height * ratio);
+    drawWarpedImage(bgImage, bgQuad, 8);
     ctx.restore();
   }}
   
@@ -995,6 +1203,40 @@ function drawAll() {{
   // 3. Elements
   for (const el of elements) {{
     drawElement(el);
+  }}
+
+  // 4. Overlay d'edició/deformació de foto de fons
+  drawBgEditOverlay();
+
+  // 5. Overlay de corba pendent (Pas 2: ajustar curvatura)
+  if (pendingCurve) {{
+    ctx.save();
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(pendingCurve.x1, pendingCurve.y1);
+    ctx.quadraticCurveTo(pendingCurve.cx, pendingCurve.cy, pendingCurve.x2, pendingCurve.y2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pendingCurve.x1, pendingCurve.y1);
+    ctx.lineTo(pendingCurve.cx, pendingCurve.cy);
+    ctx.lineTo(pendingCurve.x2, pendingCurve.y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(pendingCurve.cx, pendingCurve.cy, 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#10b981';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+    ctx.restore();
   }}
 
   // 4. Indicador visual del punt d'ancoratge per a la propera paret (Mode continu)
@@ -1032,6 +1274,14 @@ function drawElement(el) {{
     ctx.beginPath();
     ctx.moveTo(el.x1, el.y1);
     ctx.lineTo(el.x2, el.y2);
+    ctx.stroke();
+  }} else if (el.type === 'curve') {{
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(el.x1, el.y1);
+    ctx.quadraticCurveTo(el.cx, el.cy, el.x2, el.y2);
     ctx.stroke();
   }} else if (el.type === 'rect') {{
     ctx.strokeStyle = '#334155';
@@ -1150,9 +1400,48 @@ function closeModal(confirm) {{
   pendingModalCallback = null;
 }}
 
+function pointInQuad(px, py, q) {{
+  const pts = [q.tl, q.tr, q.br, q.bl];
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {{
+    const xi = pts[i].x, yi = pts[i].y;
+    const xj = pts[j].x, yj = pts[j].y;
+    const intersect = ((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / ((yj - yi) || 1e-6) + xi);
+    if (intersect) inside = !inside;
+  }}
+  return inside;
+}}
+
 // ESDEVENIMENTS TÀCTILS I RATOLÍ UNIFICATS (Pointer Events)
 canvas.addEventListener('pointerdown', (e) => {{
   e.preventDefault();
+
+  // Eina Ajustar / Deformar Foto de fons
+  if (currentTool === 'bg_edit' && bgImage && bgQuad) {{
+    const c = getPointerCoords(e);
+    const rx = c.rawX, ry = c.rawY;
+    for (const k of ['tl', 'tr', 'br', 'bl']) {{
+      if (Math.hypot(bgQuad[k].x - rx, bgQuad[k].y - ry) <= 24) {{
+        bgDragState = {{ mode: k, lastX: rx, lastY: ry }};
+        try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+        return;
+      }}
+    }}
+    const mids = getBgEdgeMidpoints(bgQuad);
+    for (const k of ['t', 'r', 'b', 'l']) {{
+      if (Math.hypot(mids[k].x - rx, mids[k].y - ry) <= 22) {{
+        bgDragState = {{ mode: k, lastX: rx, lastY: ry }};
+        try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+        return;
+      }}
+    }}
+    if (pointInQuad(rx, ry, bgQuad)) {{
+      bgDragState = {{ mode: 'move', lastX: rx, lastY: ry }};
+      try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+      return;
+    }}
+    return;
+  }}
 
   // Eina Pan / Moure plànol
   if (currentTool === 'pan') {{
@@ -1194,7 +1483,16 @@ canvas.addEventListener('pointerdown', (e) => {{
   }}
   
   if (currentTool === 'eraser') {{
+    if (currentTool === 'curve' && pendingCurve) {{
     isDrawing = true;
+    pendingCurve.cx = c.rawX;
+    pendingCurve.cy = c.rawY;
+    drawAll();
+    try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+    return;
+  }}
+
+  isDrawing = true;
     eraseAt(c.rawX, c.rawY);
     try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
     return;
@@ -1213,13 +1511,31 @@ canvas.addEventListener('pointerdown', (e) => {{
       if (status) status.innerText = `✅ Textura '${{selectedTextureName || selectedTexture}}' aplicada correctament!`;
       return;
     }}
+    if (currentTool === 'curve' && pendingCurve) {{
     isDrawing = true;
+    pendingCurve.cx = c.rawX;
+    pendingCurve.cy = c.rawY;
+    drawAll();
+    try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+    return;
+  }}
+
+  isDrawing = true;
     startX = c.x;
     startY = c.y;
     try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
     return;
   }}
   
+  if (currentTool === 'curve' && pendingCurve) {{
+    isDrawing = true;
+    pendingCurve.cx = c.rawX;
+    pendingCurve.cy = c.rawY;
+    drawAll();
+    try {{ canvas.setPointerCapture(e.pointerId); }} catch(err) {{}}
+    return;
+  }}
+
   isDrawing = true;
 
   // Si estem traçant paret contínua i tenim un extrem anterior guardat
@@ -1235,6 +1551,40 @@ canvas.addEventListener('pointerdown', (e) => {{
 }});
 
 canvas.addEventListener('pointermove', (e) => {{
+  if (currentTool === 'bg_edit' && bgDragState && bgQuad) {{
+    e.preventDefault();
+    const c = getPointerCoords(e);
+    const rx = c.rawX, ry = c.rawY;
+    const dx = rx - bgDragState.lastX;
+    const dy = ry - bgDragState.lastY;
+    bgDragState.lastX = rx;
+    bgDragState.lastY = ry;
+    const m = bgDragState.mode;
+    if (['tl', 'tr', 'br', 'bl'].includes(m)) {{
+      bgQuad[m].x = rx;
+      bgQuad[m].y = ry;
+    }} else if (m === 't') {{
+      bgQuad.tl.x += dx; bgQuad.tl.y += dy;
+      bgQuad.tr.x += dx; bgQuad.tr.y += dy;
+    }} else if (m === 'b') {{
+      bgQuad.bl.x += dx; bgQuad.bl.y += dy;
+      bgQuad.br.x += dx; bgQuad.br.y += dy;
+    }} else if (m === 'l') {{
+      bgQuad.tl.x += dx; bgQuad.tl.y += dy;
+      bgQuad.bl.x += dx; bgQuad.bl.y += dy;
+    }} else if (m === 'r') {{
+      bgQuad.tr.x += dx; bgQuad.tr.y += dy;
+      bgQuad.br.x += dx; bgQuad.br.y += dy;
+    }} else if (m === 'move') {{
+      for (const k of ['tl', 'tr', 'br', 'bl']) {{
+        bgQuad[k].x += dx;
+        bgQuad[k].y += dy;
+      }}
+    }}
+    drawAll();
+    return;
+  }}
+
   if (isPanning && currentTool === 'pan') {{
     e.preventDefault();
     const dx = e.clientX - panStartX;
@@ -1258,15 +1608,22 @@ canvas.addEventListener('pointermove', (e) => {{
   const currX = c.x;
   const currY = c.y;
   
+  if (currentTool === 'curve' && pendingCurve) {{
+    pendingCurve.cx = c.rawX;
+    pendingCurve.cy = c.rawY;
+    drawAll();
+    return;
+  }}
+
   drawAll();
   
   // Previsualització en curs
   ctx.save();
   ctx.strokeStyle = '#94a3b8';
   ctx.setLineDash([4, 4]);
-  if (currentTool === 'wall') {{
+  if (currentTool === 'wall' || currentTool === 'curve') {{
     ctx.lineWidth = 6;
-    ctx.strokeStyle = '#0f172a';
+    ctx.strokeStyle = currentTool === 'curve' ? '#2563eb' : '#0f172a';
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(currX, currY);
@@ -1326,6 +1683,12 @@ canvas.addEventListener('pointermove', (e) => {{
 }});
 
 canvas.addEventListener('pointerup', (e) => {{
+  if (currentTool === 'bg_edit' && bgDragState) {{
+    bgDragState = null;
+    try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
+    return;
+  }}
+
   if (isPanning || currentTool === 'pan') {{
     isPanning = false;
     canvas.classList.remove('grabbing');
@@ -1347,9 +1710,44 @@ canvas.addEventListener('pointerup', (e) => {{
   const c = getPointerCoords(e);
   const endX = c.x;
   const endY = c.y;
+
+  if (currentTool === 'curve' && pendingCurve) {{
+    pendingCurve.cx = c.rawX;
+    pendingCurve.cy = c.rawY;
+    saveHistory();
+    elements.push({{
+      type: 'curve',
+      x1: pendingCurve.x1,
+      y1: pendingCurve.y1,
+      cx: pendingCurve.cx,
+      cy: pendingCurve.cy,
+      x2: pendingCurve.x2,
+      y2: pendingCurve.y2
+    }});
+    pendingCurve = null;
+    drawAll();
+    const status = document.getElementById('toolStatus');
+    if (status) status.innerText = "👉 Corba afegida! Arrossega per traçar una altra corba.";
+    return;
+  }}
   
   if (startX === endX && startY === endY) return;
   
+  if (currentTool === 'curve') {{
+    pendingCurve = {{
+      x1: startX,
+      y1: startY,
+      x2: endX,
+      y2: endY,
+      cx: (startX + endX) / 2,
+      cy: (startY + endY) / 2
+    }};
+    drawAll();
+    const status = document.getElementById('toolStatus');
+    if (status) status.innerText = "👉 Corba (Pas 2/2): Toca o arrossega on vulguis corbar la línia!";
+    return;
+  }}
+
   saveHistory();
   
   if (currentTool === 'wall') {{
@@ -1461,6 +1859,9 @@ function loadBgImage(e) {{
     const img = new Image();
     img.onload = () => {{
       bgImage = img;
+      initBgQuad(img);
+      updateBgControlsUI();
+      setTool('bg_edit');
       drawAll();
     }};
     img.src = event.target.result;
@@ -1479,7 +1880,11 @@ function clearCanvas() {{
 }}
 
 function downloadImage() {{
+  isExporting = true;
+  drawAll();
   const dataURL = canvas.toDataURL('image/png');
+  isExporting = false;
+  drawAll();
   const a = document.createElement('a');
   a.href = dataURL;
   a.download = 'planol_{project_id}.png';
@@ -1534,7 +1939,8 @@ def render_planol_tab(projecte: Dict[str, Any]):
 - **🔍 Controls de Zoom:** Prem `🔍+`, `🔍-` o `100%` per apropar detalls o veure tota l'estança.
 - **📏 Cota:** Arrossega d'un extrem a l'altre per indicar mides en metres (a paret detecta alçades com sostre, dutxa o sòcols).
 - **🔤 Text:** Toca sobre l'estança o paret per posar etiquetes d'obra (*Bany, Forat, Ciment cola, Sòcol*).
-- **📷 Foto de fons:** Carrega una foto real per calcar-hi o afegir-hi cotes al damunt.
+- **📷 Foto de fons i 🖼️ Ajustar Foto:** Carrega una foto real, ajusta'n l'opacitat i activa **🖼️ Ajustar Foto** per moure-la, estirar-la o deformar-ne lliurement les 4 cantonades en perspectiva.
+- **〰️ Corba:** Arrossega d'un extrem a l'altre i després toca o arrossega el punt verd central per donar-li la curvatura desitjada.
 - **↩️ Desfer:** Elimina el darrer traç si t'has equivocat.
 """)
             st.markdown("""
