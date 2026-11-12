@@ -257,6 +257,7 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
   <button class="btn" id="btnBgEdit" onclick="toggleBgEdit()" style="display:none; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;" title="Mou, redimensiona o deforma les 4 cantonades de la foto activa">🖼️ Ajustar Foto</button>
   <button class="btn" id="btnBgReset" onclick="resetBgQuad()" style="display:none; padding: 5px 8px; font-size: 11px;" title="Restablir la forma original de la foto activa">↺ Foto</button>
   <button class="btn" id="btnBgDelete" onclick="deleteActiveBgPhoto()" style="display:none; padding: 5px 8px; font-size: 11px; color:#dc2626; border-color:#fca5a5; background:#fef2f2;" title="Elimina la foto de fons activa">✖ Foto</button>
+  <button class="btn active" id="btnToggleBg" onclick="toggleBgVisibility()" style="display:none; background: #0f766e; color: white; border-color: #115e59;" title="Amaga o mostra les fotos de fons">👁️ Fons: SÍ</button>
   
   <button class="btn" style="color:#ef4444;" onclick="clearCanvas()">🗑️</button>
   <button class="btn btn-success" onclick="downloadImage()">💾 Descarregar PNG</button>
@@ -374,6 +375,7 @@ let activeBgIdx = -1;
 let bgDragState = null;
 let pendingCurve = null;
 let showDrawing = true;
+let showBgPhotos = true;
 let isExporting = false;
 let bgOpacityInput = document.getElementById('bgOpacity');
 let pendingModalCallback = null;
@@ -486,9 +488,11 @@ function updateBgControlsUI() {{
   const btnE = document.getElementById('btnBgEdit');
   const btnR = document.getElementById('btnBgReset');
   const btnD = document.getElementById('btnBgDelete');
+  const btnT = document.getElementById('btnToggleBg');
   if (btnE) btnE.style.display = hasImg ? 'inline-flex' : 'none';
   if (btnR) btnR.style.display = hasImg ? 'inline-flex' : 'none';
   if (btnD) btnD.style.display = hasImg ? 'inline-flex' : 'none';
+  if (btnT) btnT.style.display = hasImg ? 'inline-flex' : 'none';
 }}
 
 function selectBgPhoto(val) {{
@@ -568,6 +572,33 @@ function toggleDrawingVisibility() {{
     status.innerText = showDrawing
       ? "👁️ Dibuix visible sobre el plànol."
       : "🙈 Dibuix amagat: només es veuen les fotos de fons i la graella.";
+  }}
+}}
+
+function toggleBgVisibility() {{
+  showBgPhotos = !showBgPhotos;
+  const btn = document.getElementById('btnToggleBg');
+  if (btn) {{
+    if (showBgPhotos) {{
+      btn.classList.add('active');
+      btn.innerHTML = '👁️ Fons: SÍ';
+      btn.style.background = '#0f766e';
+      btn.style.borderColor = '#115e59';
+      btn.style.color = '#ffffff';
+    }} else {{
+      btn.classList.remove('active');
+      btn.innerHTML = '🙈 Fons: NO';
+      btn.style.background = '#f1f5f9';
+      btn.style.borderColor = '#cbd5e1';
+      btn.style.color = '#475569';
+    }}
+  }}
+  drawAll();
+  const status = document.getElementById('toolStatus');
+  if (status) {{
+    status.innerText = showBgPhotos
+      ? "👁️ Fotos de fons visibles."
+      : "🙈 Fotos de fons amagades: només es veu el dibuix i la graella.";
   }}
 }}
 
@@ -1251,7 +1282,7 @@ function getBgEdgeMidpoints(q) {{
 }}
 
 function drawBgEditOverlay() {{
-  if (isExporting || currentTool !== 'bg_edit') return;
+  if (isExporting || currentTool !== 'bg_edit' || !showBgPhotos) return;
   const active = getActiveBgPhoto();
   if (!active || !active.quad) return;
 
@@ -1315,15 +1346,17 @@ function drawBgEditOverlay() {{
 function drawAll() {{
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // 1. Dibuixar totes les fotos de fons (amb deformació lliure 4 cantonades)
-  for (let i = 0; i < bgPhotos.length; i++) {{
-    const p = bgPhotos[i];
-    if (!p || !p.img) continue;
-    if (!p.quad) p.quad = createBgQuad(p.img, i);
-    ctx.save();
-    ctx.globalAlpha = (p.opacity ?? 60) / 100;
-    drawWarpedImage(p.img, p.quad, 8);
-    ctx.restore();
+  // 1. Dibuixar totes les fotos de fons (només si el fons és visible)
+  if (showBgPhotos) {{
+    for (let i = 0; i < bgPhotos.length; i++) {{
+      const p = bgPhotos[i];
+      if (!p || !p.img) continue;
+      if (!p.quad) p.quad = createBgQuad(p.img, i);
+      ctx.save();
+      ctx.globalAlpha = (p.opacity ?? 60) / 100;
+      drawWarpedImage(p.img, p.quad, 8);
+      ctx.restore();
+    }}
   }}
   
   // 2. Graella
