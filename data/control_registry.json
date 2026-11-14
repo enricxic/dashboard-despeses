@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "14/11/2026 16:27:02",
+  "updated_at": "14/11/2026 16:43:26",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -221,13 +221,13 @@
         "Canvis aquí afecten els mòduls Blindats: requereixen còpia i proves transversals"
       ],
       "verified_hashes": {
-        "app.py": "2bd78aa31ded43fc80fd22732c215cde73d912149b5fe32b08857a69869fea73",
+        "app.py": "bffa31f787ed23bb1ec352542cc96cb9e4f16f3f3469c30511e61d87de003539",
         "core/db.py": "337bdbe62d4228582fd726453dafba2f48809c4f3fd3f4b4849bb4fe571f7c3b",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
         "core/alerts.py": "7148dc905e5abf3840f889be76bf0714d0ef0d90f1fd2ce5489961038582fc32"
       },
-      "verified_at": "14/11/2026 16:27:02",
-      "verified_commit": "2cc7306",
+      "verified_at": "14/11/2026 16:43:25",
+      "verified_commit": "9315e59",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "14/11/2026 16:43:26",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Obertura directa instantania del dialeg d alertes sense parpelleig de desplegable hover)",
+      "user": "admin",
+      "git_head": "9315e59"
+    },
+    {
+      "timestamp": "14/11/2026 16:40:17",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 15/11/2026 16:40:17. Motiu: Eliminar duplicitat de desplegable hover i obertura directa neta del dialeg d alertes",
+      "user": "admin",
+      "git_head": "9315e59"
+    },
     {
       "timestamp": "14/11/2026 16:27:02",
       "action": "SEAL",

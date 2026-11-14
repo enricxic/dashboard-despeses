@@ -433,13 +433,18 @@ if "action" in st.query_params:
         st.session_state["db_backup_toast"] = os.path.basename(zip_path)
     elif act == "notifications":
         st.session_state["show_notifications"] = True
-    try:
-        del st.query_params["action"]
-        if "file" in st.query_params:
-            del st.query_params["file"]
-    except Exception:
-        pass
-    st.rerun()
+        try:
+            del st.query_params["action"]
+        except Exception:
+            pass
+    else:
+        try:
+            del st.query_params["action"]
+            if "file" in st.query_params:
+                del st.query_params["file"]
+        except Exception:
+            pass
+        st.rerun()
 
 if st.session_state.get("db_synced_toast"):
     st.toast("🔄 Memòria cau alliberada i dades sincronitzades!", icon="⚡")
@@ -457,7 +462,7 @@ if st.session_state.get("show_notifications"):
     @st.dialog("🔔 Notificacions i Alertes", width="large")
     def notifications_dialog():
         from core.alerts import get_global_alerts
-        alerts = get_global_alerts()
+        alerts = st.session_state.get("global_alerts_list") or get_global_alerts()
         if not alerts:
             st.info("No tens cap notificació o alerta activa.")
         else:
@@ -1276,13 +1281,10 @@ div.block-container {{
 <!-- Capçalera dreta: Indicador Offline, Campana Notificacions i Avatar Rol -->
 <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
 {offline_badge_html}
-<div class="menu-item" style="position: relative;">
-<a href="?action=notifications{url_suffix}" target="_self" style="text-decoration: none; color: inherit;">
-<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer; padding: 0 4px;">🔔<span style="background: {'red' if len(current_alerts) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(current_alerts)}</span></span>
+<div style="position: relative; display: flex; align-items: center;">
+<a href="?action=notifications{url_suffix}" target="_self" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+<span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer; padding: 0 4px; position: relative;">🔔<span style="background: {'red' if len(current_alerts) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(current_alerts)}</span></span>
 </a>
-<div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
-{current_alerts_html}
-</div>
 </div>
 <!-- Avatar Administrador -->
 <div class="role-badge-menubar" title="Rol actual" style="font-size: 1.5rem; display: flex; align-items: center; cursor: default; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
@@ -1579,10 +1581,9 @@ if st.session_state.current_module is None:
     <span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>''' if st.session_state.get("is_offline") else ''}
 <div class="bell-container" style="position: relative; cursor: pointer;">
-<a href="?action=notifications{url_suffix}" target="_self" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+<a href="?action=notifications{url_suffix}" target="_self" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
 <span style="font-size: 1.75rem; display: flex; align-items: center; position: relative; padding: 5px 6px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 </a>
-<div class="bell-dropdown">{alerts_html}</div>
 </div>
 <div class="role-badge" title="{role_title}" style="position: static; font-size: 1.75rem; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: default; padding: 0 4px;">
     <span>{role_icon}</span>
