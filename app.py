@@ -263,7 +263,22 @@ elif st.query_params.get("offline") == "1" and not st.session_state["is_offline"
 
 app_cfg = load_app_config()
 
-from core.alerts import get_global_alerts
+import sys
+import importlib
+try:
+    from core.alerts import get_global_alerts, render_alerts_dropdown_html
+except ImportError:
+    if "core.alerts" in sys.modules:
+        try:
+            importlib.reload(sys.modules["core.alerts"])
+            from core.alerts import get_global_alerts, render_alerts_dropdown_html
+        except Exception:
+            from core.alerts import get_global_alerts
+            render_alerts_dropdown_html = None
+    else:
+        from core.alerts import get_global_alerts
+        render_alerts_dropdown_html = None
+
 import time
 _now_ts = time.time()
 if (
@@ -273,12 +288,21 @@ if (
 ):
     st.session_state["global_alerts_list"] = get_global_alerts()
     st.session_state["global_alerts_ts"] = _now_ts
-from core.alerts import render_alerts_dropdown_html
+
 _auth_tok_init = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
 _auth_sfx_init = f"&auth={_auth_tok_init}" if _auth_tok_init else ""
 _off_sfx_init = "&offline=1" if st.session_state.get("is_offline") else ""
 _url_sfx_init = f"{_auth_sfx_init}{_off_sfx_init}"
-alerts_html = render_alerts_dropdown_html(st.session_state["global_alerts_list"], _url_sfx_init)
+
+if callable(render_alerts_dropdown_html):
+    alerts_html = render_alerts_dropdown_html(st.session_state["global_alerts_list"], _url_sfx_init)
+else:
+    alerts_html = ""
+    for al in st.session_state.get("global_alerts_list", []):
+        color = "#fecaca" if al.get('type') == 'error' else "#fef08a"
+        alerts_html += f'<div style="padding: 8px; margin-bottom: 5px; background: {color}; color: #1e293b; border-radius: 4px; font-size: 0.8rem; line-height: 1.2;"><strong>{al.get("icon", "🔔")} {al.get("title", "")}</strong><br>{al.get("message", "")}</div>'
+    if not alerts_html:
+        alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
 
 # Navegació interna programàtica prioritària (evita rebots per query params desactualitzats al client)
 if st.session_state.get("nav_target_mod"):
@@ -928,10 +952,22 @@ def render_traditional_menubar():
     
     icones_actives = app_cfg.get("icones_actives", {})
     
-    from core.alerts import get_global_alerts, render_alerts_dropdown_html
+    try:
+        from core.alerts import get_global_alerts, render_alerts_dropdown_html
+    except Exception:
+        from core.alerts import get_global_alerts
+        render_alerts_dropdown_html = None
     current_alerts = get_global_alerts()
     st.session_state["global_alerts_list"] = current_alerts
-    current_alerts_html = render_alerts_dropdown_html(current_alerts, url_suffix)
+    if callable(render_alerts_dropdown_html):
+        current_alerts_html = render_alerts_dropdown_html(current_alerts, url_suffix)
+    else:
+        current_alerts_html = ""
+        for al in current_alerts:
+            color = "#fecaca" if al.get('type') == 'error' else "#fef08a"
+            current_alerts_html += f'<div style="padding: 8px; margin-bottom: 5px; background: {color}; color: #1e293b; border-radius: 4px; font-size: 0.8rem; line-height: 1.2;"><strong>{al.get("icon", "🔔")} {al.get("title", "")}</strong><br>{al.get("message", "")}</div>'
+        if not current_alerts_html:
+            current_alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
     
     json_files = get_project_json_files()
     json_items_html = ""
