@@ -1185,6 +1185,18 @@ def render():
     if default_tab not in tabs_list:
         default_tab = "📋 Registre Manteniment"
 
+    # Si venim d'una alerta amb cerca o tasca concreta
+    focus_task_id = st.query_params.get("task_id")
+    if focus_task_id and st.session_state.get("_last_focused_task_id") != str(focus_task_id):
+        st.session_state["_last_focused_task_id"] = str(focus_task_id)
+        for t_chk in tasks:
+            if str(t_chk.get("idManteniment", "")) == str(focus_task_id):
+                f_name = str(t_chk.get("feina", "")).strip() or str(t_chk.get("observacions", "")).strip()
+                if f_name:
+                    st.session_state["search_reg_manteniment"] = f_name
+                st.session_state["filtre_estat_mant"] = "Tots"
+                break
+
     tab_registre, tab_manuals, tab_garanties, tab_projectes = st.tabs(tabs_list, default=default_tab, key=f"tabs_manteniment_{tab_param or 'main'}")
 
     # =========================================================================

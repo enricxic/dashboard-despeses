@@ -71,11 +71,17 @@ def get_global_alerts():
                 oli_next = float(oli.get("ultim_canvi_km", 30000)) + float(oli.get("interval_km", 16000))
                 kms_left = oli_next - car_kms_actuals
                 if kms_left <= 0:
-                    alerts.append({"type": "error", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
-                                   "message": f"Cal fer el canvi d'oli (previst als {int(oli_next):,} km). Superat per {int(abs(kms_left)):,} km."})
+                    alerts.append({
+                        "type": "error", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
+                        "message": f"Cal fer el canvi d'oli (previst als {int(oli_next):,} km). Superat per {int(abs(kms_left)):,} km.",
+                        "mod": "modules.cotxe", "tab": "manteniment"
+                    })
                 elif kms_left <= avis_km:
-                    alerts.append({"type": "warning", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
-                                   "message": f"Queden {int(kms_left):,} km per al canvi d'oli (als {int(oli_next):,} km)."})
+                    alerts.append({
+                        "type": "warning", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
+                        "message": f"Queden {int(kms_left):,} km per al canvi d'oli (als {int(oli_next):,} km).",
+                        "mod": "modules.cotxe", "tab": "manteniment"
+                    })
                 previst = rodes.get("previst") or {}
                 if previst.get("km"):
                     rodes_next = float(previst["km"])
@@ -85,8 +91,11 @@ def get_global_alerts():
                     rodes_next = None
                 rodes_left = (rodes_next - car_kms_actuals) if rodes_next else None
                 if rodes_left is not None and rodes_left <= avis_km:
-                    alerts.append({"type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": "Pneumàtics (Tivoli)",
-                                   "message": f"Revisar/canviar rodes: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants)."})
+                    alerts.append({
+                        "type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": "Pneumàtics (Tivoli)",
+                        "message": f"Revisar/canviar rodes: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants).",
+                        "mod": "modules.cotxe", "tab": "manteniment"
+                    })
 
                 # Inflat de rodes (per dates planificades o propera data)
                 inflat = mant.get("inflat_rodes", {})
@@ -110,14 +119,18 @@ def get_global_alerts():
                                 "type": "error",
                                 "icon": "🛞",
                                 "title": f"Inflat de Rodes ({titol})",
-                                "message": f"Inflat de rodes pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies)."
+                                "message": f"Inflat de rodes pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies).",
+                                "mod": "modules.cotxe",
+                                "tab": "manteniment"
                             })
                         elif dies <= avis_dies and status == "pendent":
                             alerts.append({
                                 "type": "warning",
                                 "icon": "🛞",
                                 "title": f"Inflat de Rodes ({titol})",
-                                "message": f"Toca revisar pressió/inflar rodes el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies)."
+                                "message": f"Toca revisar pressió/inflar rodes el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies).",
+                                "mod": "modules.cotxe",
+                                "tab": "manteniment"
                             })
                 except Exception as e_inf_alert:
                     print(f"Error alerta inflat: {e_inf_alert}")
@@ -144,14 +157,18 @@ def get_global_alerts():
                                 "type": "error",
                                 "icon": "🧪",
                                 "title": f"Control de Nivells ({titol})",
-                                "message": f"Control de nivells pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies)."
+                                "message": f"Control de nivells pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies).",
+                                "mod": "modules.cotxe",
+                                "tab": "manteniment"
                             })
                         elif dies <= avis_dies and status == "pendent":
                             alerts.append({
                                 "type": "warning",
                                 "icon": "🧪",
                                 "title": f"Control de Nivells ({titol})",
-                                "message": f"Toca revisar els nivells del cotxe el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies)."
+                                "message": f"Toca revisar els nivells del cotxe el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies).",
+                                "mod": "modules.cotxe",
+                                "tab": "manteniment"
                             })
                 except Exception as e_niv_alert:
                     print(f"Error alerta nivells: {e_niv_alert}")
@@ -194,14 +211,18 @@ def get_global_alerts():
                                         "type": "error",
                                         "icon": "🍀",
                                         "title": f"Loteria a punt de caducar ({tipus_str})",
-                                        "message": f"Núm. {num_str} - Caduca el {caduca_str} ({dies_restants} dies restants)."
+                                        "message": f"Núm. {num_str} - Caduca el {caduca_str} ({dies_restants} dies restants).",
+                                        "mod": "modules.economic",
+                                        "tab": "ingres_despesa"
                                     })
                                 elif is_draw_day:
                                     alerts.append({
                                         "type": "warning",
                                         "icon": "🍀",
                                         "title": f"Sorteig Avui! ({tipus_str})",
-                                        "message": f"Avui és el sorteig del núm. {num_str}!"
+                                        "message": f"Avui és el sorteig del núm. {num_str}!",
+                                        "mod": "modules.economic",
+                                        "tab": "ingres_despesa"
                                     })
                         except Exception as e:
                             pass
@@ -259,7 +280,9 @@ def get_global_alerts():
                                     "type": "error",
                                     "icon": "⚠️",
                                     "title": "Valor superat",
-                                    "message": ", ".join(exceeded)
+                                    "message": ", ".join(exceeded),
+                                    "mod": "modules.economic",
+                                    "tab": "ingres_despesa"
                                 })
         except Exception as e_limits:
             print(f"Error alerta limits: {e_limits}")
@@ -305,7 +328,9 @@ def get_global_alerts():
                             "type": "warning",
                             "icon": "🛒",
                             "title": f"Tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} de desglossar ({n_pend})",
-                            "message": f"Tens {n_pend} tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} a Compres Súper: {', '.join(t_details)}."
+                            "message": f"Tens {n_pend} tiquet{'s' if n_pend > 1 else ''} pendent{'s' if n_pend > 1 else ''} a Compres Súper: {', '.join(t_details)}.",
+                            "mod": "modules.compres",
+                            "tab": "compres_super"
                         })
         except Exception as e_tiquets:
             print(f"Error alerta tiquets pendents: {e_tiquets}")
@@ -343,14 +368,20 @@ def get_global_alerts():
                                 "type": "error",
                                 "icon": "🛠️",
                                 "title": f"Manteniment vençut ({alerta_a})",
-                                "message": f"{tit}: prevista per al {d_prev.strftime('%d/%m/%Y')} (vençuda fa {abs(delta)} dies)."
+                                "message": f"{tit}: prevista per al {d_prev.strftime('%d/%m/%Y')} (vençuda fa {abs(delta)} dies).",
+                                "mod": "modules.manteniment",
+                                "tab": "registre",
+                                "task_id": t.get("idManteniment")
                             })
                         elif delta <= dies_avis:
                             alerts.append({
                                 "type": "warning",
                                 "icon": "🛠️",
                                 "title": f"Manteniment pendent ({alerta_a})",
-                                "message": f"{tit}: prevista per al {d_prev.strftime('%d/%m/%Y')} ({'avui!' if delta==0 else f'en {delta} dies'})."
+                                "message": f"{tit}: prevista per al {d_prev.strftime('%d/%m/%Y')} ({'avui!' if delta==0 else f'en {delta} dies'}).",
+                                "mod": "modules.manteniment",
+                                "tab": "registre",
+                                "task_id": t.get("idManteniment")
                             })
         except Exception as e_mant:
             pass
@@ -415,6 +446,10 @@ def get_projectes_fases_alerts(avui=None):
                     "icon": "🏗️",
                     "title": f"Fase vençuda ({proj_nom})",
                     "message": f"La fase «{f_nom}» tenia termini el {d_fi.strftime('%d/%m/%Y')} (vençuda fa {abs(delta_fi)} dies).",
+                    "mod": "modules.manteniment",
+                    "tab": "projectes",
+                    "proj_id": p.get("id"),
+                    "fase_id": f.get("id")
                 })
             elif is_pending and delta_inici is not None and delta_inici < 0:
                 proj_alerts.append({
@@ -422,6 +457,10 @@ def get_projectes_fases_alerts(avui=None):
                     "icon": "🏗️",
                     "title": f"Fase pendent d'iniciar ({proj_nom})",
                     "message": f"La fase «{f_nom}» havia de començar el {d_inici.strftime('%d/%m/%Y')} (fa {abs(delta_inici)} dies) i encara està pendent.",
+                    "mod": "modules.manteniment",
+                    "tab": "projectes",
+                    "proj_id": p.get("id"),
+                    "fase_id": f.get("id")
                 })
             elif is_pending and delta_inici is not None and delta_inici <= dies_avis:
                 quan = "avui!" if delta_inici == 0 else f"en {delta_inici} dies"
@@ -430,6 +469,10 @@ def get_projectes_fases_alerts(avui=None):
                     "icon": "🏗️",
                     "title": f"Inici de fase proper ({proj_nom})",
                     "message": f"La fase «{f_nom}» comença el {d_inici.strftime('%d/%m/%Y')} ({quan}).",
+                    "mod": "modules.manteniment",
+                    "tab": "projectes",
+                    "proj_id": p.get("id"),
+                    "fase_id": f.get("id")
                 })
             elif delta_fi is not None and delta_fi <= dies_avis:
                 quan = "avui!" if delta_fi == 0 else f"en {delta_fi} dies"
@@ -438,6 +481,10 @@ def get_projectes_fases_alerts(avui=None):
                     "icon": "🏗️",
                     "title": f"Termini de fase proper ({proj_nom})",
                     "message": f"La fase «{f_nom}» finalitza el {d_fi.strftime('%d/%m/%Y')} ({quan}).",
+                    "mod": "modules.manteniment",
+                    "tab": "projectes",
+                    "proj_id": p.get("id"),
+                    "fase_id": f.get("id")
                 })
 
     return proj_alerts
@@ -450,3 +497,63 @@ def _clear_alerts_cache():
         pass
 
 get_global_alerts.clear = _clear_alerts_cache
+
+
+def build_alert_href(al: dict, url_suffix: str = "") -> str:
+    """Genera l'enllaç URL per navegar directament a l'origen de l'alerta."""
+    mod = al.get("mod")
+    if not mod:
+        base = "?action=notifications"
+        if url_suffix:
+            base += url_suffix if url_suffix.startswith("&") else f"&{url_suffix}"
+        return base
+
+    params = [f"mod={mod}"]
+    if al.get("tab"):
+        params.append(f"tab={al['tab']}")
+    if al.get("task_id"):
+        params.append(f"task_id={al['task_id']}")
+    if al.get("proj_id"):
+        params.append(f"proj_id={al['proj_id']}")
+    if al.get("fase_id"):
+        params.append(f"fase_id={al['fase_id']}")
+
+    base = "?" + "&".join(params)
+    if url_suffix:
+        base += url_suffix if url_suffix.startswith("&") else f"&{url_suffix}"
+    return base
+
+
+def render_alerts_dropdown_html(alerts_list: list, url_suffix: str = "") -> str:
+    """Genera el contingut HTML del desplegable de la campaneta amb enllaços interactius."""
+    if not alerts_list:
+        return '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
+
+    html = ""
+    for al in alerts_list:
+        bg_color = "#fee2e2" if al.get("type") == "error" else "#fef9c3"
+        border_color = "#ef4444" if al.get("type") == "error" else "#eab308"
+        text_title = "#991b1b" if al.get("type") == "error" else "#854d0e"
+        href = build_alert_href(al, url_suffix)
+        icon = al.get("icon", "🔔")
+        title = al.get("title", "")
+        message = al.get("message", "")
+
+        html += (
+            f'<a href="{href}" target="_self" style="text-decoration: none; color: inherit; display: block; margin-bottom: 6px;">'
+            f'<div style="padding: 8px 10px; background: {bg_color}; border-left: 4px solid {border_color}; border-radius: 4px; font-size: 0.8rem; line-height: 1.25; cursor: pointer;">'
+            f'<strong style="color: {text_title}; display: flex; align-items: center; gap: 4px;">{icon} {title}</strong>'
+            f'<div style="color: #1e293b; margin-top: 3px; font-size: 0.76rem;">{message}</div>'
+            f'<div style="text-align: right; margin-top: 4px; font-size: 0.72rem; color: #0284c7; font-weight: 600;">👉 Anar & marcar ↗</div>'
+            f'</div>'
+            f'</a>'
+        )
+
+    sfx = url_suffix if url_suffix.startswith("&") else (("&" + url_suffix) if url_suffix else "")
+    modal_href = f"?action=notifications{sfx}"
+    html += (
+        f'<div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #334155; text-align: center;">'
+        f'<a href="{modal_href}" target="_self" style="font-size: 0.78rem; color: #38bdf8; text-decoration: none; font-weight: 600; display: block; padding: 2px 4px;">⚡ Veure totes i marcar com a fetes</a>'
+        f'</div>'
+    )
+    return html

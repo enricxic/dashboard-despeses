@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "12/11/2026 15:09:28",
+  "updated_at": "14/11/2026 16:11:40",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -166,16 +166,16 @@
         "Editor gràfic de plànol col·lapsat per defecte (expanded=False)"
       ],
       "verified_hashes": {
-        "modules/manteniment.py": "da50c298d4b504dacab516afbc2ba46a030bb766f941149fa4250194c68b0462",
-        "modules/projectes_ui.py": "4c3aafe5317c5f7fed593712ee33f37c23439b4f21d2788bab01596c98744ef6",
+        "modules/manteniment.py": "c304f48d849ba7541b93eb5783f1be499de5912d41fe8658ff6dbabfff6313d7",
+        "modules/projectes_ui.py": "bf3c3342faf61eccaec04608eaac1482b8c97447e7771b17163deba7f944f665",
         "modules/canvas_planol.py": "11c7c308d1ddba75ebc9f1b1c4af3482ccaa4414d9d080addc6130d43959dbfd",
         "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
         "core/projectes_manager.py": "839a6a57ec14fb3da3d245fbc40f5f2df7b4a75b68f9bcd50cc27bd87985dbf1",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
         "modules/canvas_electric.py": "2104e2ed36c179930b18563f054e582731fb45a70162c31c3c9599dcf7aca789"
       },
-      "verified_at": "12/11/2026 15:09:27",
-      "verified_commit": "3ca9686",
+      "verified_at": "14/11/2026 16:11:14",
+      "verified_commit": "90e90dc",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -221,13 +221,13 @@
         "Canvis aquí afecten els mòduls Blindats: requereixen còpia i proves transversals"
       ],
       "verified_hashes": {
-        "app.py": "cad9882a95d5cdb5a4a5fcd687e22309b5c266b84d770ea9f2b21e9688a694d4",
+        "app.py": "fec6bc37504b6d345d934e0eeb81c7888e63aa7e2a2a269a9d6a59cd6e1015a4",
         "core/db.py": "337bdbe62d4228582fd726453dafba2f48809c4f3fd3f4b4849bb4fe571f7c3b",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
-        "core/alerts.py": "224697262a0b64e4b3f0830a3967bcdf564494b1611fde89343ab9e5412504a7"
+        "core/alerts.py": "7148dc905e5abf3840f889be76bf0714d0ef0d90f1fd2ce5489961038582fc32"
       },
-      "verified_at": "12/11/2026 13:57:51",
-      "verified_commit": "6dac26c",
+      "verified_at": "14/11/2026 16:11:39",
+      "verified_commit": "90e90dc",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,38 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "14/11/2026 16:11:39",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Navegacio interactiva d alertes i accions per marcar com a fet)",
+      "user": "admin",
+      "git_head": "90e90dc"
+    },
+    {
+      "timestamp": "14/11/2026 16:11:14",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Navegacio directa a tasques i fases des d alertes i marcar com a fet)",
+      "user": "admin",
+      "git_head": "90e90dc"
+    },
+    {
+      "timestamp": "14/11/2026 16:05:05",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 15/11/2026 16:05:05. Motiu: Enllacos interactius a alertes i accio directa per marcar fet",
+      "user": "admin",
+      "git_head": "90e90dc"
+    },
+    {
+      "timestamp": "14/11/2026 15:37:37",
+      "action": "UNLOCK",
+      "module": "manteniment",
+      "detail": "Autoritzat fins 15/11/2026 15:37:37. Motiu: Suport per navegar a tasques i fases des d alertes",
+      "user": "admin",
+      "git_head": "90e90dc"
+    },
     {
       "timestamp": "12/11/2026 15:09:27",
       "action": "SEAL",

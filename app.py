@@ -273,12 +273,12 @@ if (
 ):
     st.session_state["global_alerts_list"] = get_global_alerts()
     st.session_state["global_alerts_ts"] = _now_ts
-alerts_html = ""
-for al in st.session_state["global_alerts_list"]:
-    color = "#fecaca" if al['type'] == 'error' else "#fef08a"
-    alerts_html += f'<div style="padding: 8px; margin-bottom: 5px; background: {color}; color: #1e293b; border-radius: 4px; font-size: 0.8rem; line-height: 1.2;"><strong>{al["icon"]} {al["title"]}</strong><br>{al["message"]}</div>'
-if not alerts_html:
-    alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
+from core.alerts import render_alerts_dropdown_html
+_auth_tok_init = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
+_auth_sfx_init = f"&auth={_auth_tok_init}" if _auth_tok_init else ""
+_off_sfx_init = "&offline=1" if st.session_state.get("is_offline") else ""
+_url_sfx_init = f"{_auth_sfx_init}{_off_sfx_init}"
+alerts_html = render_alerts_dropdown_html(st.session_state["global_alerts_list"], _url_sfx_init)
 
 # Navegació interna programàtica prioritària (evita rebots per query params desactualitzats al client)
 if st.session_state.get("nav_target_mod"):
@@ -430,18 +430,76 @@ if st.session_state.get("offline_toast"):
 
 if st.session_state.get("show_notifications"):
     del st.session_state["show_notifications"]
-    @st.dialog("🔔 Notificacions i Alertes")
+    @st.dialog("🔔 Notificacions i Alertes", width="large")
     def notifications_dialog():
         from core.alerts import get_global_alerts
         alerts = get_global_alerts()
         if not alerts:
             st.info("No tens cap notificació o alerta activa.")
         else:
-            for al in alerts:
-                if al['type'] == 'error':
-                    st.error(f"**{al['icon']} {al['title']}**: {al['message']}")
-                else:
-                    st.warning(f"**{al['icon']} {al['title']}**: {al['message']}")
+            for idx, al in enumerate(alerts):
+                icon = al.get("icon", "⚠️")
+                title = al.get("title", "Alerta")
+                msg = al.get("message", "")
+                is_err = (al.get("type") == "error")
+                bg_col = "rgba(239, 68, 68, 0.12)" if is_err else "rgba(234, 179, 8, 0.12)"
+                border_col = "#ef4444" if is_err else "#eab308"
+                txt_col = "#f87171" if is_err else "#fde047"
+                
+                with st.container(border=True):
+                    c_txt, c_acts = st.columns([2.8, 1.2], vertical_alignment="center")
+                    with c_txt:
+                        st.markdown(f"<div style='font-weight:700; font-size:1.0rem; color:{txt_col}; margin-bottom:3px;'>{icon} {title}</div>"
+                                    f"<div style='font-size:0.88rem; color:#cbd5e1; line-height:1.3;'>{msg}</div>", unsafe_allow_html=True)
+                    with c_acts:
+                        t_mod = al.get("mod")
+                        t_tab = al.get("tab")
+                        t_task_id = al.get("task_id")
+                        t_proj_id = al.get("proj_id")
+                        t_fase_id = al.get("fase_id")
+                        
+                        # Botó per anar directe a l'origen
+                        if t_mod:
+                            if st.button("👉 Anar a l'origen", key=f"btn_go_orig_{idx}", use_container_width=True):
+                                st.session_state["nav_target_mod"] = t_mod
+                                if t_tab:
+                                    st.session_state["nav_target_tab"] = t_tab
+                                if t_proj_id:
+                                    st.session_state["pending_select_projecte_actiu"] = t_proj_id
+                                    st.session_state["select_projecte_actiu"] = t_proj_id
+                                if t_task_id:
+                                    st.query_params["task_id"] = str(t_task_id)
+                                if t_fase_id:
+                                    st.query_params["fase_id"] = str(t_fase_id)
+                                st.rerun()
+
+                        # Botó d'acció ràpida per marcar com a fet si s'escau
+                        if t_task_id:
+                            if st.button("✅ Marcar Fet", key=f"btn_mark_task_done_{idx}", type="primary", use_container_width=True):
+                                try:
+                                    from core.manteniment_manager import toggle_manteniment_acompliment
+                                    toggle_manteniment_acompliment(t_task_id)
+                                    from core.alerts import get_global_alerts
+                                    get_global_alerts.clear()
+                                    st.session_state["global_alerts_list"] = get_global_alerts()
+                                    st.session_state["global_alerts_ts"] = time.time()
+                                    st.toast("✅ Tasca de manteniment marcada com a feta!", icon="✅")
+                                    st.rerun()
+                                except Exception as e_done:
+                                    st.error(f"Error: {e_done}")
+                        elif t_proj_id and t_fase_id:
+                            if st.button("✅ Fase Feta", key=f"btn_mark_fase_done_{idx}", type="primary", use_container_width=True):
+                                try:
+                                    from core.projectes_manager import marcar_fase_estat
+                                    marcar_fase_estat(t_proj_id, t_fase_id, "Completada")
+                                    from core.alerts import get_global_alerts
+                                    get_global_alerts.clear()
+                                    st.session_state["global_alerts_list"] = get_global_alerts()
+                                    st.session_state["global_alerts_ts"] = time.time()
+                                    st.toast("✅ Fase completada!", icon="✅")
+                                    st.rerun()
+                                except Exception as e_done:
+                                    st.error(f"Error: {e_done}")
     notifications_dialog()
 
 # Mostra una franja temporal de mode offline durant uns 12 segons abans de retirar-se a la icona superior
@@ -870,15 +928,10 @@ def render_traditional_menubar():
     
     icones_actives = app_cfg.get("icones_actives", {})
     
-    from core.alerts import get_global_alerts
+    from core.alerts import get_global_alerts, render_alerts_dropdown_html
     current_alerts = get_global_alerts()
     st.session_state["global_alerts_list"] = current_alerts
-    current_alerts_html = ""
-    for al in current_alerts:
-        color = "#fecaca" if al['type'] == 'error' else "#fef08a"
-        current_alerts_html += f'<div style="padding: 8px; margin-bottom: 5px; background: {color}; color: #1e293b; border-radius: 4px; font-size: 0.8rem; line-height: 1.2;"><strong>{al["icon"]} {al["title"]}</strong><br>{al["message"]}</div>'
-    if not current_alerts_html:
-        current_alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
+    current_alerts_html = render_alerts_dropdown_html(current_alerts, url_suffix)
     
     json_files = get_project_json_files()
     json_items_html = ""
@@ -1188,7 +1241,9 @@ div.block-container {{
 <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
 {offline_badge_html}
 <div class="menu-item" style="position: relative;">
+<a href="?action=notifications{url_suffix}" target="_self" style="text-decoration: none; color: inherit;">
 <span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer; padding: 0 4px;">🔔<span style="background: {'red' if len(current_alerts) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(current_alerts)}</span></span>
+</a>
 <div class="menu-dropdown" style="right: 0; left: auto; min-width: 320px; padding: 10px; white-space: normal; cursor: default;">
 {current_alerts_html}
 </div>
@@ -1488,7 +1543,9 @@ if st.session_state.current_module is None:
     <span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>''' if st.session_state.get("is_offline") else ''}
 <div class="bell-container" style="position: relative; cursor: pointer;">
+<a href="?action=notifications{url_suffix}" target="_self" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
 <span style="font-size: 1.75rem; display: flex; align-items: center; position: relative; padding: 5px 6px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
+</a>
 <div class="bell-dropdown">{alerts_html}</div>
 </div>
 <div class="role-badge" title="{role_title}" style="position: static; font-size: 1.75rem; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); cursor: default; padding: 0 4px;">

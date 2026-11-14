@@ -281,6 +281,16 @@ def render_projectes_tab(family_names: List[str] = None):
 
     estat_options = ["En curs", "Pendent", "Finalitzat", "Tots"]
 
+    query_proj_param = st.query_params.get("proj_id")
+    if query_proj_param and st.session_state.get("_last_focused_proj_id") != str(query_proj_param):
+        st.session_state["_last_focused_proj_id"] = str(query_proj_param)
+        for p in projectes:
+            if str(p.get("id")) == str(query_proj_param):
+                p_norm = _normalize_project_estat(p.get("estat"))
+                st.session_state["pending_filtre_estat_projectes"] = p_norm if p_norm in estat_options else "Tots"
+                st.session_state["pending_select_projecte_actiu"] = str(query_proj_param)
+                break
+
     st.caption("🔍 Filtra els projectes per estat:")
     if hasattr(st, "pills"):
         filtre_estat = st.pills(
@@ -385,12 +395,30 @@ def render_projectes_tab(family_names: List[str] = None):
     _render_projecte_header(projecte)
 
     # 4 Subpestanyes del Projecte (els 3 editors gràfics viuen dins la primera)
-    subtabs = st.tabs([
+    subtabs_list = [
         "📐 Editors Gràfics & Fotos",
         "🧱 Materials & Despeses",
         "⏱️ Fases d'Execució",
         "🤖 Assistent IA d'Obra"
-    ])
+    ]
+    subtab_mapping = {
+        "planol": "📐 Editors Gràfics & Fotos",
+        "editors": "📐 Editors Gràfics & Fotos",
+        "materials": "🧱 Materials & Despeses",
+        "despeses": "🧱 Materials & Despeses",
+        "fases": "⏱️ Fases d'Execució",
+        "execucio": "⏱️ Fases d'Execució",
+        "ia": "🤖 Assistent IA d'Obra",
+        "assistent": "🤖 Assistent IA d'Obra"
+    }
+    subtab_param = st.query_params.get("subtab")
+    if not subtab_param and st.query_params.get("fase_id"):
+        subtab_param = "fases"
+    default_subtab = subtab_mapping.get(subtab_param)
+    if default_subtab not in subtabs_list:
+        default_subtab = None
+
+    subtabs = st.tabs(subtabs_list, default=default_subtab, key=f"subtabs_proj_{project_id}_{subtab_param or 'main'}")
 
     with subtabs[0]:
         render_planol_tab(projecte)
@@ -941,7 +969,13 @@ def _render_fases_tab(projecte: Dict[str, Any]):
             else:
                 label_exp = f"⚪ **{f.get('nom', 'Fase')}** (⏳ Pendent — 0%)"
 
+            is_target_fase = (st.query_params.get("fase_id") == str(fase_id))
+            if is_target_fase:
+                label_exp = f"👉 {label_exp} ⭐"
+
             with st.expander(label_exp, expanded=True):
+                if is_target_fase:
+                    st.info("⭐ **Aquesta és la fase d'alerta seleccionada.** Pots revisar-la o marcar-la com a Acabada a continuació.")
                 cf_info, cf_b_pend, cf_b_curs, cf_b_done, cf_b_del = st.columns([1.5, 0.9, 0.9, 1.1, 0.3], vertical_alignment="center")
                 with cf_info:
                     d_in = format_date_cat(f.get("data_inici"))
