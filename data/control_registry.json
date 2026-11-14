@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "14/11/2026 16:43:26",
+  "updated_at": "14/11/2026 17:04:45",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -224,10 +224,10 @@
         "app.py": "bffa31f787ed23bb1ec352542cc96cb9e4f16f3f3469c30511e61d87de003539",
         "core/db.py": "337bdbe62d4228582fd726453dafba2f48809c4f3fd3f4b4849bb4fe571f7c3b",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
-        "core/alerts.py": "7148dc905e5abf3840f889be76bf0714d0ef0d90f1fd2ce5489961038582fc32"
+        "core/alerts.py": "70bd978b10e8e35ff24455e86a3ac6f5d07b22260d1400fdb0f32715ed46f7cd"
       },
-      "verified_at": "14/11/2026 16:43:25",
-      "verified_commit": "9315e59",
+      "verified_at": "14/11/2026 17:04:45",
+      "verified_commit": "f15fd28",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "14/11/2026 17:04:45",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Mostrar conceptes a l alerta de valor superat)",
+      "user": "admin",
+      "git_head": "f15fd28"
+    },
+    {
+      "timestamp": "14/11/2026 16:58:48",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 15/11/2026 16:58:48. Motiu: Mostrar conceptes a l alerta de valor superat",
+      "user": "admin",
+      "git_head": "f15fd28"
+    },
     {
       "timestamp": "14/11/2026 16:43:26",
       "action": "SEAL",

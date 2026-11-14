@@ -269,20 +269,40 @@ def get_global_alerts():
                                 'varis': ('varis', sum_varis)
                             }
                             
+                            concepte_col = 'Idconcepte' if 'Idconcepte' in df_curr.columns else ('Concepte' if 'Concepte' in df_curr.columns else ('concepte' if 'concepte' in df_curr.columns else None))
                             exceeded = []
                             for limit_key, (display_lbl, val) in col_mapping_alert.items():
                                 lim = curr_limits.get(limit_key, float('inf'))
                                 if val > lim:
-                                    exceeded.append(f"{display_lbl} ({val:,.2f} € > {lim:,.2f} €)")
-                            
+                                    if limit_key == 'varis':
+                                        df_sub_cat = df_curr[~cat_s.str.contains('despesa_general|asseguran|menjar|rebost|gasolina|restaurant|farmacia|farmàcia|neteja|proveidor|op_banc|ingres_general|ingrès_general|ingres_extra|ingrès_extra', case=False, na=False)]
+                                    else:
+                                        cat_pat = 'farmacia|farmàcia' if limit_key == 'farmacia' else limit_key
+                                        df_sub_cat = df_curr[cat_s.str.contains(cat_pat, case=False, na=False)]
+
+                                    top_concepts_str = ""
+                                    if not df_sub_cat.empty and concepte_col and imp_col:
+                                        pos_sub = df_sub_cat[df_sub_cat[imp_col] > 0].copy()
+                                        if not pos_sub.empty:
+                                            pos_sub['clean_concept'] = pos_sub[concepte_col].astype(str).str.strip()
+                                            grp = pos_sub.groupby('clean_concept')[imp_col].sum().sort_values(ascending=False)
+                                            c_list = [f"{c} ({v:,.2f} €)" for c, v in grp.head(3).items() if str(c).strip() and str(c).lower() not in ('none', 'nan', '')]
+                                            if c_list:
+                                                top_concepts_str = ", ".join(c_list)
+
+                                    msg_part = f"{display_lbl} ({val:,.2f} € > límit {lim:,.2f} €)"
+                                    if top_concepts_str:
+                                        msg_part += f"<br><span style='color: #cbd5e1; font-size: 0.82rem;'>📌 <b>Conceptes:</b> {top_concepts_str}</span>"
+                                    exceeded.append(msg_part)
+
                             if exceeded:
                                 alerts.append({
                                     "type": "error",
                                     "icon": "⚠️",
                                     "title": "Valor superat",
-                                    "message": ", ".join(exceeded),
+                                    "message": "<br>".join(exceeded),
                                     "mod": "modules.economic",
-                                    "tab": "ingres_despesa"
+                                    "tab": ""
                                 })
         except Exception as e_limits:
             print(f"Error alerta limits: {e_limits}")
