@@ -10,6 +10,18 @@ from datetime import datetime
 from core.auth import check_password
 from core.config_manager import load_app_config
 
+_STATIC_B64_CACHE = {}
+def _get_static_b64(path: str) -> str:
+    if not path or not os.path.exists(path):
+        return ""
+    if path not in _STATIC_B64_CACHE:
+        try:
+            with open(path, "rb") as f_img:
+                _STATIC_B64_CACHE[path] = base64.b64encode(f_img.read()).decode()
+        except Exception:
+            return ""
+    return _STATIC_B64_CACHE[path]
+
 st.set_page_config(
     page_title="XiquiHouse Dashboard",
     page_icon="🏡",
@@ -22,9 +34,7 @@ st.markdown('''
     #MainMenu {visibility: hidden;}
     header[data-testid="stHeader"] {visibility: hidden; height: 0px !important;}
     footer {visibility: hidden;}
-    body, .stApp { background-color: #9fb5c2; }
     .block-container {padding-top: 1rem !important; margin-top: 0rem !important;}
-    #notif_btn_wrapper, div:has(> button[data-testid*="_open_notifications_btn"]) { display: none !important; }
     
     /* Top back button smaller */
     .back-button .stButton > button {
@@ -234,32 +244,9 @@ function attachMenuTabInterceptors() {
     } catch(e) {}
 }
 
-function attachNotificationInterceptors() {
-    try {
-        const doc = window.parent.document;
-        if (!doc) return;
-        const bellLinks = doc.querySelectorAll('a[href*="action=notifications"]');
-        bellLinks.forEach(link => {
-            if (!link.dataset.hasNotifInterceptor) {
-                link.dataset.hasNotifInterceptor = "true";
-                link.addEventListener('click', function(e) {
-                    const btn = doc.querySelector('button[key="_open_notifications_btn"], div[data-testid*="_open_notifications_btn"] button');
-                    if (btn) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        btn.click();
-                        return;
-                    }
-                }, true);
-            }
-        });
-    } catch(e) {}
-}
-
 function onAppDomMutated() {
     attachSelectAllToNumberInputs();
     attachMenuTabInterceptors();
-    attachNotificationInterceptors();
 }
 
 onAppDomMutated();
@@ -269,21 +256,13 @@ if (!window.parent._xiquihouse_observer_registered) {
     let debounceTimer = null;
     const observer = new MutationObserver(() => {
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(onAppDomMutated, 250);
+        debounceTimer = setTimeout(onAppDomMutated, 300);
     });
     observer.observe(window.parent.document.body, { childList: true, subtree: true });
 }
 } catch(e) {}
 </script>
 ''', height=0, width=0)
-
-# Hidden button triggered via WebSocket when clicking bell
-with st.container():
-    st.markdown('<div style="display:none;" id="notif_btn_wrapper">', unsafe_allow_html=True)
-    if st.button("🔔", key="_open_notifications_btn"):
-        st.session_state["show_notifications"] = True
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
 if not check_password():
     st.stop()
@@ -1349,18 +1328,11 @@ div.block-container {{
 
 if st.session_state.current_module is None:
     # ------------------ PANTALLA PRINCIPAL (LOGO INTERACTIU) ------------------
-    @st.cache_data
-    def _load_asset_b64(path: str) -> str:
-        if os.path.exists(path):
-            with open(path, "rb") as f_img:
-                return base64.b64encode(f_img.read()).decode()
-        return ""
-
     # Carregar el fons de pantalla completa
     fons_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "fons xiquiHouse.jpg")
     if not os.path.exists(fons_path):
         fons_path = os.path.join(os.path.dirname(__file__), "imatges", "fons xiquiHouse.jpg")
-    b64_fons = _load_asset_b64(fons_path)
+    b64_fons = _get_static_b64(fons_path)
 
     # Carregar el logotip horitzontal
     logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse ampliat.png")
@@ -1370,7 +1342,7 @@ if st.session_state.current_module is None:
         logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse ampliat.png")
     if not os.path.exists(logo_h_path):
         logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
-    b64_logo_h = _load_asset_b64(logo_h_path)
+    b64_logo_h = _get_static_b64(logo_h_path)
 
     # Carregar el logotip vertical
     logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse vertical.png")
@@ -1378,7 +1350,7 @@ if st.session_state.current_module is None:
         logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse vertical.png")
     if not os.path.exists(logo_v_path):
         logo_v_path = logo_h_path
-    b64_logo_v = _load_asset_b64(logo_v_path)
+    b64_logo_v = _get_static_b64(logo_v_path)
 
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""

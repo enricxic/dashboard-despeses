@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "14/11/2026 17:59:52",
+  "updated_at": "14/11/2026 18:16:04",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -221,13 +221,13 @@
         "Canvis aquí afecten els mòduls Blindats: requereixen còpia i proves transversals"
       ],
       "verified_hashes": {
-        "app.py": "4f5b9dd50086d31f8f2cfa403b366bc5f54ea35171c95b8de2b18d547ff79bd4",
+        "app.py": "b98dcd2e3b8c8ccd5482ee996abae53ccc8e8b3fbd9ed0d0cd27785eb644acdb",
         "core/db.py": "337bdbe62d4228582fd726453dafba2f48809c4f3fd3f4b4849bb4fe571f7c3b",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
         "core/alerts.py": "10982d93246862b17cbf2b2003e5c7558559c293a54548e85c3700f965e78b55"
       },
-      "verified_at": "14/11/2026 17:59:52",
-      "verified_commit": "fddead0",
+      "verified_at": "14/11/2026 18:16:04",
+      "verified_commit": "b129fab",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "14/11/2026 18:16:04",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Restaurar renderitzacio canonica de l inici i navegacio directa a fases)",
+      "user": "admin",
+      "git_head": "b129fab"
+    },
+    {
+      "timestamp": "14/11/2026 18:12:12",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 15/11/2026 18:12:12. Motiu: Restaurar renderitzacio canonica de l inici",
+      "user": "admin",
+      "git_head": "b129fab"
+    },
     {
       "timestamp": "14/11/2026 17:59:52",
       "action": "SEAL",
