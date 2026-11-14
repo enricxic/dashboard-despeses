@@ -275,21 +275,21 @@ def render_projectes_tab(family_names: List[str] = None):
         "Tots": f"Tots ({c_tots})"
     }
 
-    # Resoldre canvis pendents de filtre provinents d'accions posteriors
-    if "pending_filtre_estat_projectes" in st.session_state:
-        st.session_state["filtre_estat_projectes"] = st.session_state.pop("pending_filtre_estat_projectes")
-
     estat_options = ["En curs", "Pendent", "Finalitzat", "Tots"]
 
-    query_proj_param = st.query_params.get("proj_id")
+    query_proj_param = st.query_params.get("proj_id") or st.session_state.get("pending_select_projecte_actiu")
     if query_proj_param and st.session_state.get("_last_focused_proj_id") != str(query_proj_param):
         st.session_state["_last_focused_proj_id"] = str(query_proj_param)
         for p in projectes:
             if str(p.get("id")) == str(query_proj_param):
                 p_norm = _normalize_project_estat(p.get("estat"))
-                st.session_state["pending_filtre_estat_projectes"] = p_norm if p_norm in estat_options else "Tots"
-                st.session_state["pending_select_projecte_actiu"] = str(query_proj_param)
+                st.session_state["filtre_estat_projectes"] = p_norm if p_norm in estat_options else "Tots"
+                st.session_state["select_projecte_actiu"] = str(query_proj_param)
                 break
+
+    # Resoldre canvis pendents de filtre provinents d'accions posteriors
+    if "pending_filtre_estat_projectes" in st.session_state:
+        st.session_state["filtre_estat_projectes"] = st.session_state.pop("pending_filtre_estat_projectes")
 
     st.caption("🔍 Filtra els projectes per estat:")
     if hasattr(st, "pills"):
@@ -391,6 +391,8 @@ def render_projectes_tab(family_names: List[str] = None):
         st.warning("No s'ha trobat el projecte seleccionat.")
         return
 
+    project_id = projecte["id"]
+
     # Panell de Capçalera i KPIs del Projecte
     _render_projecte_header(projecte)
 
@@ -411,12 +413,12 @@ def render_projectes_tab(family_names: List[str] = None):
         "ia": "🤖 Assistent IA d'Obra",
         "assistent": "🤖 Assistent IA d'Obra"
     }
-    subtab_param = st.query_params.get("subtab")
-    if not subtab_param and st.query_params.get("fase_id"):
+    subtab_param = st.query_params.get("subtab") or st.session_state.pop("nav_target_subtab", None)
+    if not subtab_param and (st.query_params.get("fase_id") or st.session_state.get("nav_target_fase_id")):
         subtab_param = "fases"
     default_subtab = subtab_mapping.get(subtab_param)
     if default_subtab not in subtabs_list:
-        default_subtab = None
+        default_subtab = "⏱️ Fases d'Execució" if (st.query_params.get("fase_id") or st.session_state.get("nav_target_fase_id")) else None
 
     subtabs = st.tabs(subtabs_list, default=default_subtab, key=f"subtabs_proj_{project_id}_{subtab_param or 'main'}")
 

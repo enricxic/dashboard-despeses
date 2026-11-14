@@ -448,6 +448,7 @@ def get_projectes_fases_alerts(avui=None):
                     "message": f"La fase «{f_nom}» tenia termini el {d_fi.strftime('%d/%m/%Y')} (vençuda fa {abs(delta_fi)} dies).",
                     "mod": "modules.manteniment",
                     "tab": "projectes",
+                    "subtab": "fases",
                     "proj_id": p.get("id"),
                     "fase_id": f.get("id")
                 })
@@ -459,6 +460,7 @@ def get_projectes_fases_alerts(avui=None):
                     "message": f"La fase «{f_nom}» havia de començar el {d_inici.strftime('%d/%m/%Y')} (fa {abs(delta_inici)} dies) i encara està pendent.",
                     "mod": "modules.manteniment",
                     "tab": "projectes",
+                    "subtab": "fases",
                     "proj_id": p.get("id"),
                     "fase_id": f.get("id")
                 })
@@ -471,6 +473,7 @@ def get_projectes_fases_alerts(avui=None):
                     "message": f"La fase «{f_nom}» comença el {d_inici.strftime('%d/%m/%Y')} ({quan}).",
                     "mod": "modules.manteniment",
                     "tab": "projectes",
+                    "subtab": "fases",
                     "proj_id": p.get("id"),
                     "fase_id": f.get("id")
                 })
@@ -483,6 +486,7 @@ def get_projectes_fases_alerts(avui=None):
                     "message": f"La fase «{f_nom}» finalitza el {d_fi.strftime('%d/%m/%Y')} ({quan}).",
                     "mod": "modules.manteniment",
                     "tab": "projectes",
+                    "subtab": "fases",
                     "proj_id": p.get("id"),
                     "fase_id": f.get("id")
                 })
@@ -511,6 +515,8 @@ def build_alert_href(al: dict, url_suffix: str = "") -> str:
     params = [f"mod={mod}"]
     if al.get("tab"):
         params.append(f"tab={al['tab']}")
+    if al.get("subtab"):
+        params.append(f"subtab={al['subtab']}")
     if al.get("task_id"):
         params.append(f"task_id={al['task_id']}")
     if al.get("proj_id"):

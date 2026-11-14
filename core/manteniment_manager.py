@@ -274,13 +274,31 @@ def calculate_warranty_status(doc: dict) -> dict:
 
 REGISTRE_FILE = os.path.join(PROJECT_ROOT, "data", "registre_manteniment.json")
 REGISTRE_CSV = os.path.join(PROJECT_ROOT, "csv", "manteniment.csv")
+_IN_MEMORY_MANTENIMENT = None
+_LAST_MANTENIMENT_FETCH_TS = 0.0
 
-def load_registre_manteniment() -> list:
+def load_registre_manteniment(force_reload: bool = False) -> list:
     """
-    Carrega la llista de tasques de manteniment des de Supabase (id=8 a app_config).
+    Carrega la llista de tasques de manteniment des de Supabase (id=8 a app_config),
+    amb memòria cau a la sessió i memòria per optimitzar velocitat.
     Fallback 1: data/registre_manteniment.json
     Fallback 2: csv/manteniment.csv
     """
+    global _IN_MEMORY_MANTENIMENT, _LAST_MANTENIMENT_FETCH_TS
+    import time
+
+    if not force_reload:
+        try:
+            import streamlit as st
+            if hasattr(st, "session_state") and "cached_registre_manteniment" in st.session_state:
+                cached = st.session_state["cached_registre_manteniment"]
+                if isinstance(cached, list) and len(cached) > 0:
+                    return cached
+        except Exception:
+            pass
+        if _IN_MEMORY_MANTENIMENT is not None and (time.time() - _LAST_MANTENIMENT_FETCH_TS) < 60:
+            return _IN_MEMORY_MANTENIMENT
+
     # 1. Intentar carregar de Supabase
     try:
         from core.db import get_supabase_client
@@ -291,6 +309,13 @@ def load_registre_manteniment() -> list:
         if res.data and len(res.data) > 0 and res.data[0].get("config_json"):
             cfg = res.data[0]["config_json"]
             if isinstance(cfg, list):
+                _IN_MEMORY_MANTENIMENT = cfg
+                _LAST_MANTENIMENT_FETCH_TS = time.time()
+                try:
+                    if hasattr(st, "session_state"):
+                        st.session_state["cached_registre_manteniment"] = cfg
+                except Exception:
+                    pass
                 return cfg
     except Exception:
         pass
@@ -333,6 +358,16 @@ def save_registre_manteniment(records: list) -> bool:
     Desa les tasques de manteniment a Supabase (id=8 a app_config),
     al fitxer JSON local data/registre_manteniment.json i al fitxer CSV csv/manteniment.csv.
     """
+    global _IN_MEMORY_MANTENIMENT, _LAST_MANTENIMENT_FETCH_TS
+    import time
+    _IN_MEMORY_MANTENIMENT = records
+    _LAST_MANTENIMENT_FETCH_TS = time.time()
+    try:
+        import streamlit as st
+        if hasattr(st, "session_state"):
+            st.session_state["cached_registre_manteniment"] = records
+    except Exception:
+        pass
     # 1. Desar a Supabase
     try:
         from core.db import get_supabase_client

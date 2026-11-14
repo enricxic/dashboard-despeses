@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "14/11/2026 17:14:52",
+  "updated_at": "14/11/2026 17:59:52",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -167,15 +167,15 @@
       ],
       "verified_hashes": {
         "modules/manteniment.py": "c304f48d849ba7541b93eb5783f1be499de5912d41fe8658ff6dbabfff6313d7",
-        "modules/projectes_ui.py": "bf3c3342faf61eccaec04608eaac1482b8c97447e7771b17163deba7f944f665",
+        "modules/projectes_ui.py": "81a5e5c253405eb511eb8ebcdc1df07eeb19cd72582849dcfd642a6c4195aaea",
         "modules/canvas_planol.py": "11c7c308d1ddba75ebc9f1b1c4af3482ccaa4414d9d080addc6130d43959dbfd",
-        "core/manteniment_manager.py": "664727a2331f993b60c23ed75bb76ac530e90a77f3ded57e1594e9e4dae096a2",
+        "core/manteniment_manager.py": "ebddacce39dda5508c771e2e4d7fc21c8b12538604f2377a521ca7ff11a17227",
         "core/projectes_manager.py": "839a6a57ec14fb3da3d245fbc40f5f2df7b4a75b68f9bcd50cc27bd87985dbf1",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
         "modules/canvas_electric.py": "2104e2ed36c179930b18563f054e582731fb45a70162c31c3c9599dcf7aca789"
       },
-      "verified_at": "14/11/2026 16:11:14",
-      "verified_commit": "90e90dc",
+      "verified_at": "14/11/2026 17:59:24",
+      "verified_commit": "fddead0",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -221,13 +221,13 @@
         "Canvis aquí afecten els mòduls Blindats: requereixen còpia i proves transversals"
       ],
       "verified_hashes": {
-        "app.py": "bffa31f787ed23bb1ec352542cc96cb9e4f16f3f3469c30511e61d87de003539",
+        "app.py": "4f5b9dd50086d31f8f2cfa403b366bc5f54ea35171c95b8de2b18d547ff79bd4",
         "core/db.py": "337bdbe62d4228582fd726453dafba2f48809c4f3fd3f4b4849bb4fe571f7c3b",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
-        "core/alerts.py": "319b636b1581e68572b71315cb75153d6144190bb5182562600c01e367fd5df3"
+        "core/alerts.py": "10982d93246862b17cbf2b2003e5c7558559c293a54548e85c3700f965e78b55"
       },
-      "verified_at": "14/11/2026 17:14:52",
-      "verified_commit": "a445f27",
+      "verified_at": "14/11/2026 17:59:52",
+      "verified_commit": "fddead0",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,38 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "14/11/2026 17:59:52",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Optimitzar alertes, navegacio i transicions d app)",
+      "user": "admin",
+      "git_head": "fddead0"
+    },
+    {
+      "timestamp": "14/11/2026 17:59:24",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Corregir subtabs projectes i optimitzar cache manteniment)",
+      "user": "admin",
+      "git_head": "fddead0"
+    },
+    {
+      "timestamp": "14/11/2026 17:53:04",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 15/11/2026 17:53:04. Motiu: Optimitzar velocitat alertes i navegacio sense recarrega de pantalla",
+      "user": "admin",
+      "git_head": "fddead0"
+    },
+    {
+      "timestamp": "14/11/2026 17:52:00",
+      "action": "UNLOCK",
+      "module": "manteniment",
+      "detail": "Autoritzat fins 15/11/2026 17:52:00. Motiu: Corregir navegacio alertes fases i optimitzar velocitat",
+      "user": "admin",
+      "git_head": "fddead0"
+    },
     {
       "timestamp": "14/11/2026 17:14:52",
       "action": "SEAL",

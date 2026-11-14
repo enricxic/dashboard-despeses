@@ -22,7 +22,9 @@ st.markdown('''
     #MainMenu {visibility: hidden;}
     header[data-testid="stHeader"] {visibility: hidden; height: 0px !important;}
     footer {visibility: hidden;}
+    body, .stApp { background-color: #9fb5c2; }
     .block-container {padding-top: 1rem !important; margin-top: 0rem !important;}
+    #notif_btn_wrapper, div:has(> button[data-testid*="_open_notifications_btn"]) { display: none !important; }
     
     /* Top back button smaller */
     .back-button .stButton > button {
@@ -232,22 +234,56 @@ function attachMenuTabInterceptors() {
     } catch(e) {}
 }
 
+function attachNotificationInterceptors() {
+    try {
+        const doc = window.parent.document;
+        if (!doc) return;
+        const bellLinks = doc.querySelectorAll('a[href*="action=notifications"]');
+        bellLinks.forEach(link => {
+            if (!link.dataset.hasNotifInterceptor) {
+                link.dataset.hasNotifInterceptor = "true";
+                link.addEventListener('click', function(e) {
+                    const btn = doc.querySelector('button[key="_open_notifications_btn"], div[data-testid*="_open_notifications_btn"] button');
+                    if (btn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        btn.click();
+                        return;
+                    }
+                }, true);
+            }
+        });
+    } catch(e) {}
+}
+
 function onAppDomMutated() {
     attachSelectAllToNumberInputs();
     attachMenuTabInterceptors();
+    attachNotificationInterceptors();
 }
 
 onAppDomMutated();
 try {
-let debounceTimer = null;
-const observer = new MutationObserver(() => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(onAppDomMutated, 300);
-});
-observer.observe(window.parent.document.body, { childList: true, subtree: true });
+if (!window.parent._xiquihouse_observer_registered) {
+    window.parent._xiquihouse_observer_registered = true;
+    let debounceTimer = null;
+    const observer = new MutationObserver(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(onAppDomMutated, 250);
+    });
+    observer.observe(window.parent.document.body, { childList: true, subtree: true });
+}
 } catch(e) {}
 </script>
 ''', height=0, width=0)
+
+# Hidden button triggered via WebSocket when clicking bell
+with st.container():
+    st.markdown('<div style="display:none;" id="notif_btn_wrapper">', unsafe_allow_html=True)
+    if st.button("🔔", key="_open_notifications_btn"):
+        st.session_state["show_notifications"] = True
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 if not check_password():
     st.stop()
@@ -316,6 +352,14 @@ if st.session_state.get("nav_target_mod"):
     elif "tab" in st.query_params:
         try:
             del st.query_params["tab"]
+        except Exception:
+            pass
+    target_subtab = st.session_state.pop("nav_target_subtab", None)
+    if target_subtab:
+        st.query_params["subtab"] = target_subtab
+    elif "subtab" in st.query_params and not st.query_params.get("fase_id"):
+        try:
+            del st.query_params["subtab"]
         except Exception:
             pass
     for k in ["editing_json_file", "editing_routes", "editing_ocr_rules", "cleaning_ocr_orphans", "show_faq_economic", "show_faq_menjar", "show_afegir_any_comptable"]:
@@ -493,13 +537,21 @@ if st.session_state.get("show_notifications"):
                                 st.session_state["nav_target_mod"] = t_mod
                                 if t_tab:
                                     st.session_state["nav_target_tab"] = t_tab
+                                t_subtab = al.get("subtab")
+                                if not t_subtab and t_fase_id:
+                                    t_subtab = "fases"
+                                if t_subtab:
+                                    st.session_state["nav_target_subtab"] = t_subtab
+                                    st.query_params["subtab"] = str(t_subtab)
                                 if t_proj_id:
-                                    st.session_state["pending_select_projecte_actiu"] = t_proj_id
-                                    st.session_state["select_projecte_actiu"] = t_proj_id
+                                    st.session_state["pending_select_projecte_actiu"] = str(t_proj_id)
+                                    st.session_state["select_projecte_actiu"] = str(t_proj_id)
+                                    st.query_params["proj_id"] = str(t_proj_id)
                                 if t_task_id:
                                     st.query_params["task_id"] = str(t_task_id)
                                 if t_fase_id:
                                     st.query_params["fase_id"] = str(t_fase_id)
+                                    st.session_state["nav_target_fase_id"] = str(t_fase_id)
                                 st.rerun()
 
                         # Botó d'acció ràpida per marcar com a fet si s'escau
@@ -1297,14 +1349,18 @@ div.block-container {{
 
 if st.session_state.current_module is None:
     # ------------------ PANTALLA PRINCIPAL (LOGO INTERACTIU) ------------------
+    @st.cache_data
+    def _load_asset_b64(path: str) -> str:
+        if os.path.exists(path):
+            with open(path, "rb") as f_img:
+                return base64.b64encode(f_img.read()).decode()
+        return ""
+
     # Carregar el fons de pantalla completa
     fons_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "fons xiquiHouse.jpg")
     if not os.path.exists(fons_path):
         fons_path = os.path.join(os.path.dirname(__file__), "imatges", "fons xiquiHouse.jpg")
-    b64_fons = ""
-    if os.path.exists(fons_path):
-        with open(fons_path, "rb") as f_img:
-            b64_fons = base64.b64encode(f_img.read()).decode()
+    b64_fons = _load_asset_b64(fons_path)
 
     # Carregar el logotip horitzontal
     logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse ampliat.png")
@@ -1314,10 +1370,7 @@ if st.session_state.current_module is None:
         logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse ampliat.png")
     if not os.path.exists(logo_h_path):
         logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
-    b64_logo_h = ""
-    if os.path.exists(logo_h_path):
-        with open(logo_h_path, "rb") as img_file:
-            b64_logo_h = base64.b64encode(img_file.read()).decode()
+    b64_logo_h = _load_asset_b64(logo_h_path)
 
     # Carregar el logotip vertical
     logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse vertical.png")
@@ -1325,10 +1378,7 @@ if st.session_state.current_module is None:
         logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse vertical.png")
     if not os.path.exists(logo_v_path):
         logo_v_path = logo_h_path
-    b64_logo_v = ""
-    if os.path.exists(logo_v_path):
-        with open(logo_v_path, "rb") as img_file:
-            b64_logo_v = base64.b64encode(img_file.read()).decode()
+    b64_logo_v = _load_asset_b64(logo_v_path)
 
     auth_token = st.query_params.get("auth", "") or st.session_state.get("auth_token", "")
     auth_suffix = f"&auth={auth_token}" if auth_token else ""

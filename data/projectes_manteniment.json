@@ -196,7 +196,7 @@
       {
         "id": "fase_1_1794235849",
         "nom": "Fer tractament antihumitat",
-        "estat": "Pendent",
+        "estat": "Completada",
         "data_fi": "2026-11-15",
         "tasques": [],
         "data_inici": "2026-11-15"
@@ -234,7 +234,7 @@
       {
         "id": "fase_6_1794602059",
         "nom": "Medir rajoles",
-        "estat": "Pendent",
+        "estat": "Completada",
         "data_fi": "2026-11-14",
         "tasques": [],
         "data_inici": "2026-11-13"
