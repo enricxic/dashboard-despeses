@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "14/11/2026 17:04:45",
+  "updated_at": "14/11/2026 17:14:52",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -224,10 +224,10 @@
         "app.py": "bffa31f787ed23bb1ec352542cc96cb9e4f16f3f3469c30511e61d87de003539",
         "core/db.py": "337bdbe62d4228582fd726453dafba2f48809c4f3fd3f4b4849bb4fe571f7c3b",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
-        "core/alerts.py": "70bd978b10e8e35ff24455e86a3ac6f5d07b22260d1400fdb0f32715ed46f7cd"
+        "core/alerts.py": "319b636b1581e68572b71315cb75153d6144190bb5182562600c01e367fd5df3"
       },
-      "verified_at": "14/11/2026 17:04:45",
-      "verified_commit": "f15fd28",
+      "verified_at": "14/11/2026 17:14:52",
+      "verified_commit": "a445f27",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "14/11/2026 17:14:52",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Mostrar nomes categoria i import a l alerta de valor superat)",
+      "user": "admin",
+      "git_head": "a445f27"
+    },
+    {
+      "timestamp": "14/11/2026 17:09:28",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 15/11/2026 17:09:28. Motiu: Treure conceptes de l alerta de valor superat, deixar nomes categoria i import",
+      "user": "admin",
+      "git_head": "a445f27"
+    },
     {
       "timestamp": "14/11/2026 17:04:45",
       "action": "SEAL",
