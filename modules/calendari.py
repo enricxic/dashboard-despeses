@@ -359,18 +359,53 @@ def render():
         width: 100% !important;
     }}
 
-    /* Header superior: botons d'acció en 1 sola línia horitzontal */
-    div[data-testid="stHorizontalBlock"]:has(.cal-top-btns-marker) {{
+    /* Header superior: fila única de títol i botons d'acció (+ Nou, Sincro, Inici) */
+    div[data-testid="stHorizontalBlock"]:has(.cal-main-header-marker),
+    .stHorizontalBlock:has(.cal-main-header-marker) {{
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        width: 100% !important;
+        margin-bottom: 6px !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-main-header-marker) > div[data-testid="stColumn"]:first-child,
+    div[data-testid="stHorizontalBlock"]:has(.cal-main-header-marker) > .stColumn:first-child,
+    div[data-testid="stHorizontalBlock"]:has(.cal-main-header-marker) > div:first-child {{
+        min-width: 0 !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-main-header-marker) > div[data-testid="stColumn"]:last-child,
+    div[data-testid="stHorizontalBlock"]:has(.cal-main-header-marker) > .stColumn:last-child,
+    div[data-testid="stHorizontalBlock"]:has(.cal-main-header-marker) > div:last-child {{
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        width: auto !important;
+    }}
+
+    /* Botons d'acció superior (+ Nou, Sincro, Inici) en 1 sola línia */
+    div[data-testid="stHorizontalBlock"]:has(.cal-top-btns-marker),
+    .stHorizontalBlock:has(.cal-top-btns-marker) {{
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
         justify-content: flex-end !important;
-        gap: 6px !important;
+        gap: 4px !important;
         width: 100% !important;
     }}
 
-    div[data-testid="stHorizontalBlock"]:has(.cal-top-btns-marker) > div[data-testid="column"] {{
+    div[data-testid="stHorizontalBlock"]:has(.cal-top-btns-marker) > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.cal-top-btns-marker) > .stColumn,
+    div[data-testid="stHorizontalBlock"]:has(.cal-top-btns-marker) > div,
+    .stHorizontalBlock:has(.cal-top-btns-marker) > div[data-testid="stColumn"],
+    .stHorizontalBlock:has(.cal-top-btns-marker) > .stColumn,
+    .stHorizontalBlock:has(.cal-top-btns-marker) > div {{
         min-width: 0 !important;
         flex: 1 1 0px !important;
         width: auto !important;
@@ -378,41 +413,65 @@ def render():
         margin: 0 !important;
     }}
 
-    div[data-testid="column"]:has(.cal-btn-nou-wrap) button {{
-        padding: 3px 8px !important;
-        font-size: 0.82rem !important;
+    div[data-testid="stColumn"]:has(.cal-btn-nou-wrap) button,
+    .stColumn:has(.cal-btn-nou-wrap) button {{
+        padding: 3px 6px !important;
+        font-size: 0.80rem !important;
         font-weight: 700 !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        min-height: 30px !important;
+        height: 30px !important;
         line-height: 1 !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
+        width: 100% !important;
     }}
 
-    /* Botons Sincro i Inici MÉS PETITS */
-    div[data-testid="column"]:has(.cal-btn-sync-wrap) button,
-    div[data-testid="column"]:has(.cal-btn-inici-wrap) button {{
-        padding: 2px 6px !important;
-        font-size: 0.76rem !important;
+    /* Botons Sincro i Inici MÉS PETITS tal com demana l'usuari */
+    div[data-testid="stColumn"]:has(.cal-btn-sync-wrap) button,
+    .stColumn:has(.cal-btn-sync-wrap) button,
+    div[data-testid="stColumn"]:has(.cal-btn-inici-wrap) button,
+    .stColumn:has(.cal-btn-inici-wrap) button {{
+        padding: 2px 4px !important;
+        font-size: 0.74rem !important;
         font-weight: 600 !important;
         min-height: 28px !important;
         height: 28px !important;
         line-height: 1 !important;
         border-radius: 6px !important;
         opacity: 0.9 !important;
+        width: 100% !important;
     }}
 
-    /* Fila de botons de navegació mensual (◀ Avui ▶) en 1 sola línia horitzontal */
-    div[data-testid="stHorizontalBlock"]:has(.cal-nav-arrows-marker) {{
+    /* Barra de navegació mensual (◀ Avui ▶ + Mes + Vista) */
+    div[data-testid="stHorizontalBlock"]:has(.cal-navbar-marker),
+    .stHorizontalBlock:has(.cal-navbar-marker) {{
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 4px !important;
+        width: 100% !important;
+        margin-bottom: 6px !important;
+    }}
+
+    /* Fila de botons de navegació mensual (◀ Avui ▶) en 1 sola línia */
+    div[data-testid="stHorizontalBlock"]:has(.cal-nav-arrows-marker),
+    .stHorizontalBlock:has(.cal-nav-arrows-marker) {{
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        justify-content: flex-start !important;
+        justify-content: center !important;
         gap: 4px !important;
         width: 100% !important;
     }}
 
-    div[data-testid="stHorizontalBlock"]:has(.cal-nav-arrows-marker) > div[data-testid="column"] {{
+    div[data-testid="stHorizontalBlock"]:has(.cal-nav-arrows-marker) > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.cal-nav-arrows-marker) > .stColumn,
+    div[data-testid="stHorizontalBlock"]:has(.cal-nav-arrows-marker) > div,
+    .stHorizontalBlock:has(.cal-nav-arrows-marker) > div[data-testid="stColumn"],
+    .stHorizontalBlock:has(.cal-nav-arrows-marker) > .stColumn,
+    .stHorizontalBlock:has(.cal-nav-arrows-marker) > div {{
         min-width: 0 !important;
         flex: 1 1 0px !important;
         width: auto !important;
@@ -421,7 +480,8 @@ def render():
     }}
 
     /* Botons fletxa ◀ ▶ MÉS PETITS */
-    div[data-testid="column"]:has(.cal-btn-arrow-wrap) button {{
+    div[data-testid="stColumn"]:has(.cal-btn-arrow-wrap) button,
+    .stColumn:has(.cal-btn-arrow-wrap) button {{
         padding: 2px 4px !important;
         font-size: 0.8rem !important;
         font-weight: 700 !important;
@@ -429,62 +489,90 @@ def render():
         height: 28px !important;
         line-height: 1 !important;
         border-radius: 6px !important;
+        width: 100% !important;
     }}
 
     /* Botó Avui MÉS PETIT */
-    div[data-testid="column"]:has(.cal-btn-today-wrap) button {{
-        padding: 2px 8px !important;
-        font-size: 0.78rem !important;
+    div[data-testid="stColumn"]:has(.cal-btn-today-wrap) button,
+    .stColumn:has(.cal-btn-today-wrap) button {{
+        padding: 2px 6px !important;
+        font-size: 0.76rem !important;
         font-weight: 600 !important;
         min-height: 28px !important;
         height: 28px !important;
         line-height: 1 !important;
         border-radius: 6px !important;
+        width: 100% !important;
     }}
 
-    /* GRAELLA DEL CALENDARI: forçar 7 columnes SEMPRE (tant escriptori com mòbil) */
-    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) {{
+    /* GRAELLA DEL CALENDARI: Forçar 7 columnes EXACTES tant a escriptori com a mòbil */
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker),
+    .stHorizontalBlock:has(.cal-grid-col-marker) {{
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: stretch !important;
-        gap: 3px !important;
+        gap: 2px !important;
         width: 100% !important;
         margin-bottom: 2px !important;
     }}
 
-    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) > div[data-testid="column"] {{
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) > .stColumn,
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) > div,
+    .stHorizontalBlock:has(.cal-grid-col-marker) > div[data-testid="stColumn"],
+    .stHorizontalBlock:has(.cal-grid-col-marker) > .stColumn,
+    .stHorizontalBlock:has(.cal-grid-col-marker) > div {{
         min-width: 0 !important;
+        width: calc(100% / 7) !important;
+        max-width: calc(100% / 7) !important;
         flex: 1 1 0px !important;
-        width: 14.28% !important;
-        max-width: 14.28% !important;
         padding: 0 !important;
         margin: 0 !important;
+        overflow: hidden !important;
+    }}
+
+    /* Capçalera dels dies de la setmana DLL-DMG */
+    .cal-grid-th {{
+        text-align: center;
+        padding: 4px 1px !important;
+        font-size: 0.72rem !important;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: {bg_card_sub};
+        border-radius: 6px;
+        border: 1px solid {border_color};
+        width: 100% !important;
+        box-sizing: border-box;
     }}
 
     /* Botons dels dies dins la graella */
-    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) button {{
-        padding: 2px 1px !important;
-        font-size: 0.85rem !important;
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) button,
+    .stHorizontalBlock:has(.cal-grid-col-marker) button {{
+        padding: 2px 0px !important;
+        font-size: 0.82rem !important;
         font-weight: 700 !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        min-height: 28px !important;
+        height: 30px !important;
         line-height: 1 !important;
         border-radius: 6px !important;
         width: 100% !important;
         margin: 0 !important;
     }}
 
-    div[data-testid="column"]:has(.cal-day-other-month) button {{
-        opacity: 0.4 !important;
+    div[data-testid="stColumn"]:has(.cal-day-other-month) button,
+    .stColumn:has(.cal-day-other-month) button {{
+        opacity: 0.35 !important;
     }}
 
-    div[data-testid="column"]:has(.cal-day-is-today) button {{
+    div[data-testid="stColumn"]:has(.cal-day-is-today) button,
+    .stColumn:has(.cal-day-is-today) button {{
         border: 2px solid #f59e0b !important;
         box-shadow: 0 0 6px rgba(245, 158, 11, 0.4) !important;
     }}
 
-    div[data-testid="column"]:has(.cal-day-is-selected) button {{
+    div[data-testid="stColumn"]:has(.cal-day-is-selected) button,
+    .stColumn:has(.cal-day-is-selected) button {{
         border: 2px solid #38bdf8 !important;
         box-shadow: 0 0 8px rgba(56, 189, 248, 0.5) !important;
     }}
@@ -512,12 +600,13 @@ def render():
             display: inline-block !important;
         }}
         .cal-grid-th {{
-            font-size: 0.70rem !important;
-            padding: 4px 1px !important;
+            font-size: 0.68rem !important;
+            padding: 3px 0px !important;
         }}
-        div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) button {{
-            font-size: 0.78rem !important;
-            min-height: 28px !important;
+        div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) button,
+        .stHorizontalBlock:has(.cal-grid-col-marker) button {{
+            font-size: 0.76rem !important;
+            min-height: 26px !important;
             height: 28px !important;
         }}
     }}
@@ -525,19 +614,18 @@ def render():
     """, unsafe_allow_html=True)
 
     # Capçalera compacta d'Agenda amb logo/títol a l'esquerra i botons nets a la dreta (+ Nou, Sincro, Inici)
-    c_hdr_l, c_hdr_r = st.columns([5.2, 4.8], vertical_alignment="center")
+    c_hdr_l, c_hdr_r = st.columns([4.2, 5.8], vertical_alignment="center")
     with c_hdr_l:
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:2rem; line-height:1;">📅</span>
-            <div style="font-size:1.85rem; font-weight:800; color:{text_primary}; line-height:1;">Agenda</div>
+        st.markdown(f"""<span class='cal-main-header-marker'></span>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.8rem; line-height:1;">📅</span>
+            <div style="font-size:1.6rem; font-weight:800; color:{text_primary}; line-height:1;">Agenda</div>
         </div>
         """, unsafe_allow_html=True)
     with c_hdr_r:
-        st.markdown("<span class='cal-top-btns-marker'></span>", unsafe_allow_html=True)
-        c_b1, c_b2, c_b3 = st.columns([1.5, 1.1, 1.1], vertical_alignment="center")
+        c_b1, c_b2, c_b3 = st.columns([1.4, 1.0, 1.0], vertical_alignment="center")
         with c_b1:
-            st.markdown("<div class='cal-btn-nou-wrap'></div>", unsafe_allow_html=True)
+            st.markdown("<span class='cal-top-btns-marker'></span><div class='cal-btn-nou-wrap'></div>", unsafe_allow_html=True)
             if st.button("➕ Nou", type="primary", use_container_width=True, key="btn_open_new_ev"):
                 st.session_state.show_event_modal = not st.session_state.show_event_modal
                 st.session_state.edit_event_data = None
@@ -701,13 +789,13 @@ def render():
     cur_month = st.session_state.cal_month
     month_name = mesos_cat[cur_month]
     
-    c_nav1, c_nav2, c_nav3 = st.columns([3.2, 4.4, 2.4], vertical_alignment="center")
+    c_nav1, c_nav2, c_nav3 = st.columns([3.0, 4.4, 2.6], vertical_alignment="center")
     
     with c_nav1:
-        st.markdown("<span class='cal-nav-arrows-marker'></span>", unsafe_allow_html=True)
-        c_prev, c_today, c_next = st.columns([1, 1.5, 1], vertical_alignment="center")
+        st.markdown("<span class='cal-navbar-marker'></span>", unsafe_allow_html=True)
+        c_prev, c_today, c_next = st.columns([1, 1.4, 1], vertical_alignment="center")
         with c_prev:
-            st.markdown("<div class='cal-btn-arrow-wrap'></div>", unsafe_allow_html=True)
+            st.markdown("<span class='cal-nav-arrows-marker'></span><div class='cal-btn-arrow-wrap'></div>", unsafe_allow_html=True)
             if st.button("◀", key="cal_prev_month", use_container_width=True, help="Mes anterior"):
                 if cur_month == 1:
                     st.session_state.cal_month = 12
@@ -785,7 +873,7 @@ def render():
             is_weekend = (idx_th >= 5)
             th_color = "#38bdf8" if is_weekend else text_secondary
             hdr_cols[idx_th].markdown(
-                f"<div class='cal-grid-col-marker cal-grid-th' style='color:{th_color};'>{d_nom}</div>",
+                f"<span class='cal-grid-col-marker'></span><div class='cal-grid-th' style='color:{th_color};'>{d_nom}</div>",
                 unsafe_allow_html=True
             )
             
@@ -804,7 +892,7 @@ def render():
                     sel_cls = "cal-day-is-selected" if is_selected else ""
                     other_m_cls = "" if is_current_month else "cal-day-other-month"
                     
-                    st.markdown(f"<div class='cal-grid-col-marker {today_cls} {sel_cls} {other_m_cls}' style='display:none;'></div>", unsafe_allow_html=True)
+                    st.markdown(f"<span class='cal-grid-col-marker {today_cls} {sel_cls} {other_m_cls}'></span>", unsafe_allow_html=True)
                     
                     btn_label = str(d_obj.day)
                     btn_type = "primary" if is_selected else "secondary"
