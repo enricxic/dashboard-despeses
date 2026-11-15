@@ -223,60 +223,75 @@ def render():
         padding: 14px 20px;
         margin-bottom: 16px;
     }}
+    /* Amagar el pont de selecció de dia per WebSocket */
+    div[data-testid="stTextInput"]:has(input[aria-label="cal_bridge"]) {{
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+
     .cal-grid-container {{
         width: 100%;
         margin-bottom: 20px;
         user-select: none;
     }}
     .cal-grid-header {{
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 6px;
-        margin-bottom: 6px;
+        display: grid !important;
+        grid-template-columns: repeat(7, 1fr) !important;
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+        width: 100% !important;
     }}
     .cal-grid-th {{
         text-align: center;
-        padding: 8px 2px;
-        font-size: 0.82rem;
+        padding: 6px 1px !important;
+        font-size: 0.76rem !important;
         font-weight: 700;
         text-transform: uppercase;
         background: {bg_card_sub};
-        border-radius: 8px;
+        border-radius: 6px;
         border: 1px solid {border_color};
+        width: 100% !important;
+        box-sizing: border-box;
     }}
     .cal-grid-body {{
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 6px;
+        display: grid !important;
+        grid-template-columns: repeat(7, 1fr) !important;
+        gap: 4px !important;
+        width: 100% !important;
     }}
     .cal-grid-cell {{
         background: {bg_card};
         border: 1px solid {border_color};
-        border-radius: 12px;
-        padding: 6px;
+        border-radius: 10px;
+        padding: 5px;
         min-height: 95px;
         display: flex;
         flex-direction: column;
-        transition: all 0.2s ease;
-        overflow: hidden;
-        cursor: pointer;
+        transition: all 0.15s ease;
         text-decoration: none !important;
         color: inherit !important;
+        box-sizing: border-box;
+        cursor: pointer;
+        overflow: hidden;
     }}
     .cal-grid-cell:hover {{
         border-color: #38bdf8 !important;
         background: {bg_card_sub} !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
     }}
     .cal-grid-cell.selected-day {{
         border: 2px solid #38bdf8 !important;
         background: rgba(56, 189, 248, 0.15) !important;
-        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.45) !important;
     }}
     .cal-grid-cell.today {{
         border: 2px solid #f59e0b !important;
-        box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+    }}
+    .cal-grid-cell.other-month {{
+        opacity: 0.4;
     }}
     .cal-grid-cell.today.selected-day {{
         border: 2px solid #38bdf8 !important;
@@ -904,93 +919,135 @@ def render():
     st.write("")
 
     # =========================================================================
-    # VISTA 1: CALENDARI (REQUADRES GRANS I ELEMENTS EN CADA DIA, SENSE RECARREGA)
+    # VISTA 1: CALENDARI (GRAELLA HTML CSS GRID ROBUSTA AMB WEBSOCKET INSTANTANI)
     # =========================================================================
+    # Pont de comunicació WebSocket per a la selecció interactiva de dies (zero pantalla blanca)
+    bridge_val = st.text_input("cal_bridge", value="", key="cal_day_bridge_hidden", label_visibility="collapsed")
+    if bridge_val:
+        try:
+            d_clean = bridge_val.split("@")[0].strip()
+            clicked_date = datetime.strptime(d_clean, "%Y-%m-%d").date()
+            st.session_state.selected_day_for_new = clicked_date
+            st.session_state.picker_sel_day = clicked_date
+            if clicked_date.month != st.session_state.cal_month or clicked_date.year != st.session_state.cal_year:
+                st.session_state.cal_month = clicked_date.month
+                st.session_state.cal_year = clicked_date.year
+        except Exception:
+            pass
+
     if st.session_state.cal_view_mode == "grid":
         setmana_dies = ["Dll", "Dmt", "Dmc", "Djs", "Dvd", "Dss", "Dmg"]
         cal = calendar.Calendar(firstweekday=0)
         month_days = cal.monthdatescalendar(cur_year, cur_month)
         
+        # Script client per enviar el clic de dia directament per WebSocket sense recàrrega de navegador
+        st.markdown("""
+        <script>
+        function setCalDay(dStr) {
+            let el = null;
+            try {
+                el = window.parent.document.querySelector('input[aria-label="cal_bridge"]') || document.querySelector('input[aria-label="cal_bridge"]');
+            } catch(e) {}
+            if (el) {
+                try {
+                    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                    setter.call(el, dStr + '@' + Date.now());
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+                    el.blur();
+                    const target = document.getElementById('gestio-dia') || (window.parent && window.parent.document.getElementById('gestio-dia'));
+                    if (target) target.scrollIntoView({ behavior: 'smooth' });
+                    return;
+                } catch(e) {}
+            }
+            window.location.href = '?mod=modules.calendari&cal_day=' + dStr + '#gestio-dia';
+        }
+        </script>
+        """, unsafe_allow_html=True)
+        
+        # Construir tot el HTML de la graella en un únic bloc continu i segur
+        html_grid = []
+        html_grid.append('<div class="cal-grid-container">')
+        
         # Capçalera dels 7 dies
-        st.markdown('<div class="cal-grid-header-wrap"></div>', unsafe_allow_html=True)
-        cols_hdr = st.columns(7)
+        html_grid.append('<div class="cal-grid-header">')
         for idx_th, d_nom in enumerate(setmana_dies):
             is_weekend = (idx_th >= 5)
             th_color = "#38bdf8" if is_weekend else text_secondary
-            with cols_hdr[idx_th]:
-                st.markdown(f'<div class="cal-grid-th" style="color:{th_color};">{d_nom}</div>', unsafe_allow_html=True)
-
-        # Fila per a cada setmana amb 7 requadres grans i elements interactius
+            html_grid.append(f'<div class="cal-grid-th" style="color:{th_color};">{d_nom}</div>')
+        html_grid.append('</div>')
+        
+        # Cos de les setmanes (7 columnes exactes CSS Grid)
+        html_grid.append('<div class="cal-grid-body">')
         for week in month_days:
-            st.markdown('<div class="cal-week-row-marker"></div>', unsafe_allow_html=True)
-            cols_w = st.columns(7)
-            for idx_d, d_obj in enumerate(week):
+            for d_obj in week:
                 d_str = d_obj.strftime("%Y-%m-%d")
                 is_current_month = (d_obj.month == cur_month)
                 is_today = (d_obj == today)
                 is_selected = (d_obj == st.session_state.selected_day_for_new)
-                day_evs = sort_events_by_time(events_by_date.get(d_str, []))
                 
-                with cols_w[idx_d]:
-                    col_classes = ["cal-day-cell-wrap"]
-                    if is_selected:
-                        col_classes.append("is-selected")
-                    if is_today:
-                        col_classes.append("is-today")
-                    if not is_current_month:
-                        col_classes.append("other-month")
-                    st.markdown(f'<span class="{" ".join(col_classes)}"></span>', unsafe_allow_html=True)
+                cell_classes = ["cal-grid-cell"]
+                if not is_current_month:
+                    cell_classes.append("other-month")
+                if is_today:
+                    cell_classes.append("today")
+                if is_selected:
+                    cell_classes.append("selected-day")
                     
-                    btn_label = f"{d_obj.day}"
-                    if is_today:
-                        btn_label = f"⭐ {d_obj.day} (Avui)"
-                    elif day_evs:
-                        btn_label = f"{d_obj.day} · {len(day_evs)}"
-                        
-                    btn_type = "primary" if is_selected else "secondary"
-                    if st.button(btn_label, key=f"btn_d_{d_str}", type=btn_type, use_container_width=True):
-                        st.session_state.selected_day_for_new = d_obj
-                        st.session_state.picker_sel_day = d_obj
-                        if d_obj.month != cur_month or d_obj.year != cur_year:
-                            st.session_state.cal_month = d_obj.month
-                            st.session_state.cal_year = d_obj.year
-                        st.rerun()
-                        
-                    chips_html = ['<div class="cal-cell-events">']
-                    for ev in day_evs[:3]:
-                        cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
-                        ev_color = ev.get("color", cat_info["color"])
-                        ev_status = ev.get("status", "pending")
-                        ev_time = ev.get("start_time", "")
-                        time_pfx = f"<b>{ev_time}</b> " if ev_time else ""
-                        ev_icon = cat_info["icon"]
-                        ev_title = ev.get("title", "Esdeveniment")
-                        
-                        chip_border = f"border:1px solid {ev_color}55;"
-                        chip_bg = f"background:{ev_color}22;"
-                        chip_text_color = ev_color
-                        status_prefix = ""
-                        if ev_status == "done":
-                            chip_border = "border:1px solid #10b981;"
-                            chip_bg = "background:rgba(16,185,129,0.25);"
-                            chip_text_color = "#10b981"
-                            status_prefix = "✅ "
-                        elif ev_status == "cancelled":
-                            chip_border = "border:1px dashed #ef4444;"
-                            chip_bg = "background:rgba(239,68,68,0.2);"
-                            chip_text_color = "#ef4444"
-                            status_prefix = "❌ "
+                day_evs = sort_events_by_time(events_by_date.get(d_str, []))
+                num_class = "cal-day-num today-num" if is_today else "cal-day-num"
+                
+                classes_str = " ".join(cell_classes)
+                html_grid.append(f'<div class="{classes_str}" onclick="setCalDay(&#39;{d_str}&#39;)" title="Veure gestió del dia {d_obj.day}/{d_obj.month}/{d_obj.year}">')
+                html_grid.append('<div class="cal-cell-head">')
+                html_grid.append(f'<span class="{num_class}">{d_obj.day}</span>')
+                if is_today:
+                    html_grid.append('<span class="today-badge">AVUI</span>')
+                elif len(day_evs) > 0:
+                    html_grid.append(f'<span class="ev-count-badge">{len(day_evs)}</span>')
+                html_grid.append('</div>')
+                
+                # Xips dels esdeveniments
+                html_grid.append('<div class="cal-cell-events">')
+                for ev in day_evs[:3]:
+                    cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
+                    ev_color = ev.get("color", cat_info["color"])
+                    ev_status = ev.get("status", "pending")
+                    ev_time = ev.get("start_time", "")
+                    time_pfx = f"<b>{ev_time}</b> " if ev_time else ""
+                    ev_icon = cat_info["icon"]
+                    ev_title = ev.get("title", "Esdeveniment")
+                    
+                    chip_border = f"border:1px solid {ev_color}55;"
+                    chip_bg = f"background:{ev_color}22;"
+                    chip_text_color = ev_color
+                    status_prefix = ""
+                    if ev_status == "done":
+                        chip_border = "border:1px solid #10b981;"
+                        chip_bg = "background:rgba(16,185,129,0.25);"
+                        chip_text_color = "#10b981"
+                        status_prefix = "✅ "
+                    elif ev_status == "cancelled":
+                        chip_border = "border:1px dashed #ef4444;"
+                        chip_bg = "background:rgba(239,68,68,0.2);"
+                        chip_text_color = "#ef4444"
+                        status_prefix = "❌ "
 
-                        chips_html.append(
-                            f'<div class="cal-ev-chip" style="{chip_bg} color:{chip_text_color}; {chip_border}" title="{ev_title} ({ev.get("member", "Família")})">'
-                            f'<span>{ev_icon}</span> <span class="ev-chip-txt">{status_prefix}{time_pfx}{ev_title}</span>'
-                            f'</div>'
-                        )
-                    if len(day_evs) > 3:
-                        chips_html.append(f'<div class="cal-ev-more">+{len(day_evs) - 3} més</div>')
-                    chips_html.append('</div>')
-                    st.markdown("".join(chips_html), unsafe_allow_html=True)
-                    
+                    html_grid.append(
+                        f'<div class="cal-ev-chip" style="{chip_bg} color:{chip_text_color}; {chip_border}" title="{ev_title} ({ev.get("member", "Família")})">'
+                        f'<span>{ev_icon}</span> <span class="ev-chip-txt">{status_prefix}{time_pfx}{ev_title}</span>'
+                        f'</div>'
+                    )
+                if len(day_evs) > 3:
+                    html_grid.append(f'<div class="cal-ev-more">+{len(day_evs) - 3} més</div>')
+                html_grid.append('</div>')
+                html_grid.append('</div>')
+                
+        html_grid.append('</div>') # end cal-grid-body
+        html_grid.append('</div>') # end cal-grid-container
+        
+        st.markdown("".join(html_grid), unsafe_allow_html=True)
+        
         # Secció interactiva de Detalls del Dia i Creació Ràpida
         st.markdown('<div id="gestio-dia" style="margin-top:20px;"></div>', unsafe_allow_html=True)
         c_sel_d1, c_sel_d2 = st.columns([6, 4], vertical_alignment="center")
