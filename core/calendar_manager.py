@@ -191,7 +191,7 @@ def add_event(event_data):
     save_local_events(events)
     return event_data
 
-def update_event(event_id, updated_data):
+def update_event(event_id, updated_data, original_event=None):
     events = load_local_events()
     found = False
     for i, e in enumerate(events):
@@ -205,7 +205,9 @@ def update_event(event_id, updated_data):
             
     # If not found in local events, it is an external event (e.g. from Google Calendar)
     # We exclude the original external event and save the modified version locally!
-    delete_event(event_id, uid=updated_data.get("uid"), start_date=updated_data.get("start_date"))
+    orig_uid = (original_event or {}).get("uid") or updated_data.get("uid")
+    orig_date = (original_event or {}).get("start_date") or updated_data.get("start_date")
+    delete_event(event_id, uid=orig_uid, start_date=orig_date)
     next_id = max([e.get("id", 0) for e in events if isinstance(e.get("id"), int)] + [0]) + 1
     updated_data["id"] = next_id
     updated_data["is_external"] = False

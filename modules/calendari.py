@@ -40,12 +40,122 @@ def get_current_user_name(app_cfg):
         return admin_first
     return membres_noms[0] if membres_noms else "Enric"
 
-def render():
-    def invalidate_cal_cache():
-        for k in list(st.session_state.keys()):
-            if k.startswith("cal_events_"):
-                del st.session_state[k]
+def invalidate_cal_cache():
+    for k in list(st.session_state.keys()):
+        if k.startswith("cal_events_"):
+            del st.session_state[k]
 
+@st.dialog("📅 Gestió d'Esdeveniment", width="large")
+def event_modal_dialog(active_user, edit_ev=None, preselected_date=None):
+    is_editing = (edit_ev is not None)
+    today = date.today()
+    
+    tab_manual, tab_quick = st.tabs(["📝 Formulari complet", "⚡ Creació ràpida"])
+    
+    with tab_quick:
+        st.markdown("<div style='font-size:0.85rem; color:#94a3b8; margin-bottom:6px;'>Escriu en llenguatge natural (ex: <i>'Demà dinar familiar 14h'</i>, <i>'Divendres sopar 21h'</i>, <i>'Demà 18:30 metge Enric'</i>)</div>", unsafe_allow_html=True)
+        c_q1, c_q2 = st.columns([7.5, 2.5])
+        with c_q1:
+            quick_txt = st.text_input("Descripció de l'esdeveniment", placeholder="Escriu aquí el que vols agendar...", label_visibility="collapsed", key="dialog_quick_txt")
+        with c_q2:
+            if st.button("⚡ Crear", type="primary", use_container_width=True, key="dialog_btn_quick"):
+                if quick_txt.strip():
+                    parsed = cm.parse_natural_language_event(quick_txt, default_member=active_user)
+                    if parsed:
+                        invalidate_cal_cache()
+                        cm.add_event(parsed)
+                        st.session_state.show_event_modal = False
+                        st.session_state.edit_event_data = None
+                        st.rerun()
+                        
+    with tab_manual:
+        default_title = edit_ev.get("title", "") if is_editing else ""
+        default_member = edit_ev.get("member", active_user) if is_editing else active_user
+        default_cat = edit_ev.get("category", "Altres") if is_editing else "Altres"
+        
+        init_date = today
+        if is_editing and edit_ev.get("start_date"):
+            try:
+                init_date = datetime.strptime(edit_ev.get("start_date"), "%Y-%m-%d").date()
+            except Exception:
+                pass
+        elif preselected_date:
+            init_date = preselected_date
+            
+        default_start_time = "10:00"
+        if is_editing and edit_ev.get("start_time"):
+            default_start_time = edit_ev.get("start_time")
+            
+        default_all_day = edit_ev.get("all_day", False) if is_editing else False
+        default_loc = edit_ev.get("location", "") if is_editing else ""
+        default_desc = edit_ev.get("description", "") if is_editing else ""
+        default_rep = edit_ev.get("repeat", "Cap") if is_editing else "Cap"
+        
+        c_f1, c_f2 = st.columns([6, 4])
+        with c_f1:
+            f_title = st.text_input("Títol de l'esdeveniment *", value=default_title, key="dia_ev_title", placeholder="Ex: Cita dentista, Dinar familiar, Sopar amb amics...")
+        with c_f2:
+            all_member_options = [active_user, "Tota la família"]
+            idx_m = all_member_options.index(default_member) if default_member in all_member_options else 0
+            f_member = st.selectbox("Membre assignat", all_member_options, index=idx_m, key="dia_ev_member")
+            
+        c_f3, c_f4, c_f5 = st.columns([3.5, 3.5, 3])
+        with c_f3:
+            cat_keys = list(cm.CATEGORIES.keys())
+            cat_idx = cat_keys.index(default_cat) if default_cat in cat_keys else len(cat_keys)-1
+            f_cat = st.selectbox("Categoria", cat_keys, index=cat_idx, format_func=lambda k: f"{cm.CATEGORIES[k]['icon']} {cm.CATEGORIES[k]['label']}", key="dia_ev_cat")
+        with c_f4:
+            f_date = st.date_input("Data de l'esdeveniment", value=init_date, format="DD/MM/YYYY", key="dia_ev_date")
+        with c_f5:
+            f_allday = st.checkbox("Tot el dia", value=default_all_day, key="dia_ev_allday")
+            if not f_allday:
+                f_time = st.text_input("Hora (HH:MM)", value=default_start_time, key="dia_ev_time")
+            else:
+                f_time = ""
+                
+        c_f6, c_f7 = st.columns([6, 4])
+        with c_f6:
+            f_loc = st.text_input("📍 Ubicació / Adreça", value=default_loc, placeholder="Ex: Restaurant Can Xic, Hospital de Terrassa...", key="dia_ev_loc")
+        with c_f7:
+            rep_opts = ["Cap", "Setmanal", "Mensual", "Anual"]
+            idx_rep = rep_opts.index(default_rep) if default_rep in rep_opts else 0
+            f_rep = st.selectbox("🔁 Repetició", rep_opts, index=idx_rep, key="dia_ev_rep")
+            
+        f_desc = st.text_area("📝 Notes i detalls", value=default_desc, placeholder="Indicacions, reserves, menú, etc.", key="dia_ev_desc", height=70)
+        
+        c_act1, c_act2 = st.columns([5, 5])
+        with c_act1:
+            if st.button("❌ Cancel·lar", use_container_width=True, key="dia_btn_cancel"):
+                st.session_state.show_event_modal = False
+                st.session_state.edit_event_data = None
+                st.rerun()
+        with c_act2:
+            if st.button("💾 Desar Esdeveniment", type="primary", use_container_width=True, key="dia_btn_save"):
+                if not f_title.strip():
+                    st.error("El títol és obligatori.")
+                else:
+                    new_data = {
+                        "title": f_title.strip(),
+                        "member": f_member,
+                        "category": f_cat,
+                        "start_date": f_date.strftime("%Y-%m-%d"),
+                        "start_time": f_time.strip() if not f_allday else "",
+                        "all_day": f_allday,
+                        "location": f_loc.strip(),
+                        "repeat": f_rep,
+                        "description": f_desc.strip()
+                    }
+                    invalidate_cal_cache()
+                    if is_editing and "id" in edit_ev:
+                        cm.update_event(edit_ev["id"], new_data, original_event=edit_ev)
+                    else:
+                        cm.add_event(new_data)
+                    st.session_state.show_event_modal = False
+                    st.session_state.edit_event_data = None
+                    st.rerun()
+
+
+def render():
     app_cfg = load_app_config()
     is_dark = (app_cfg.get("tema", "Fosc") == "Fosc")
     active_user = get_current_user_name(app_cfg)
@@ -297,51 +407,63 @@ def render():
         border: 1px solid #ef4444;
     }}
 
-    /* Colorejar els botons actius de Fet (verd) i No Fet (vermell) */
-    div[data-testid="column"]:has(.cal-btn-done) button {{
+    /* Colorejar els botons actius de Fet (verd) i No Fet (vermell) - suport complet stColumn */
+    div[data-testid="stColumn"]:has(.cal-btn-done) button,
+    .stColumn:has(.cal-btn-done) button {{
         background-color: #10b981 !important;
         border-color: #10b981 !important;
         color: #ffffff !important;
         box-shadow: 0 0 8px rgba(16, 185, 129, 0.45) !important;
     }}
-    div[data-testid="column"]:has(.cal-btn-done) button:hover {{
+    div[data-testid="stColumn"]:has(.cal-btn-done) button:hover,
+    .stColumn:has(.cal-btn-done) button:hover {{
         background-color: #059669 !important;
         border-color: #059669 !important;
     }}
 
-    div[data-testid="column"]:has(.cal-btn-cancelled) button {{
+    div[data-testid="stColumn"]:has(.cal-btn-cancelled) button,
+    .stColumn:has(.cal-btn-cancelled) button {{
         background-color: #ef4444 !important;
         border-color: #ef4444 !important;
         color: #ffffff !important;
         box-shadow: 0 0 8px rgba(239, 68, 68, 0.45) !important;
     }}
-    div[data-testid="column"]:has(.cal-btn-cancelled) button:hover {{
+    div[data-testid="stColumn"]:has(.cal-btn-cancelled) button:hover,
+    .stColumn:has(.cal-btn-cancelled) button:hover {{
         background-color: #dc2626 !important;
         border-color: #dc2626 !important;
     }}
 
-    div[data-testid="column"]:has(.cal-btn-pending-chk) button:hover {{
+    div[data-testid="stColumn"]:has(.cal-btn-pending-chk) button:hover,
+    .stColumn:has(.cal-btn-pending-chk) button:hover {{
         border-color: #10b981 !important;
         color: #10b981 !important;
     }}
 
-    div[data-testid="column"]:has(.cal-btn-pending-cross) button:hover {{
+    div[data-testid="stColumn"]:has(.cal-btn-pending-cross) button:hover,
+    .stColumn:has(.cal-btn-pending-cross) button:hover {{
         border-color: #ef4444 !important;
         color: #ef4444 !important;
     }}
 
-    /* Assegurar que els botons d'acció es mantinguin SEMPRE en 1 sola línia horitzontal a totes les mides (inclòs mòbils) */
-    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) {{
+    /* Assegurar que els botons d'acció es mantinguin SEMPRE en 1 sola línia horitzontal compacta */
+    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn),
+    .stHorizontalBlock:has(.cal-action-btn) {{
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        justify-content: flex-start !important;
-        gap: 4px !important;
+        justify-content: flex-end !important;
+        gap: 3px !important;
         width: 100% !important;
     }}
 
-    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) > div[data-testid="column"] {{
+    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) > .stColumn,
+    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) > div,
+    .stHorizontalBlock:has(.cal-action-btn) > div[data-testid="stColumn"],
+    .stHorizontalBlock:has(.cal-action-btn) > .stColumn,
+    .stHorizontalBlock:has(.cal-action-btn) > div {{
         min-width: 0 !important;
         flex: 1 1 0px !important;
         width: auto !important;
@@ -349,16 +471,17 @@ def render():
         padding: 0 !important;
     }}
 
-    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) button {{
+    div[data-testid="stHorizontalBlock"]:has(.cal-action-btn) button,
+    .stHorizontalBlock:has(.cal-action-btn) button {{
         padding: 2px 2px !important;
-        font-size: 0.85rem !important;
-        min-height: 38px !important;
-        height: 38px !important;
+        font-size: 0.82rem !important;
+        min-height: 30px !important;
+        height: 30px !important;
         line-height: 1 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         margin: 0 !important;
         width: 100% !important;
     }}
@@ -518,38 +641,32 @@ def render():
         width: 100% !important;
     }}
 
-    /* GRAELLA DEL CALENDARI: Forçar 7 columnes EXACTES tant a escriptori com a mòbil */
-    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker),
-    .stHorizontalBlock:has(.cal-grid-col-marker) {{
+    /* GRAELLA DEL CALENDARI: Capçalera dels 7 dies DLL-DMG */
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-header-wrap),
+    .stHorizontalBlock:has(.cal-grid-header-wrap) {{
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        align-items: stretch !important;
-        gap: 2px !important;
+        align-items: center !important;
+        gap: 4px !important;
         width: 100% !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 4px !important;
     }}
-
-    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) > div[data-testid="stColumn"],
-    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) > .stColumn,
-    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) > div,
-    .stHorizontalBlock:has(.cal-grid-col-marker) > div[data-testid="stColumn"],
-    .stHorizontalBlock:has(.cal-grid-col-marker) > .stColumn,
-    .stHorizontalBlock:has(.cal-grid-col-marker) > div {{
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-header-wrap) > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-header-wrap) > .stColumn,
+    .stHorizontalBlock:has(.cal-grid-header-wrap) > div[data-testid="stColumn"],
+    .stHorizontalBlock:has(.cal-grid-header-wrap) > .stColumn {{
         min-width: 0 !important;
         width: calc(100% / 7) !important;
         max-width: calc(100% / 7) !important;
         flex: 1 1 0px !important;
         padding: 0 !important;
         margin: 0 !important;
-        overflow: hidden !important;
     }}
-
-    /* Capçalera dels dies de la setmana DLL-DMG */
     .cal-grid-th {{
         text-align: center;
-        padding: 4px 1px !important;
-        font-size: 0.72rem !important;
+        padding: 6px 1px !important;
+        font-size: 0.74rem !important;
         font-weight: 700;
         text-transform: uppercase;
         background: {bg_card_sub};
@@ -559,35 +676,66 @@ def render():
         box-sizing: border-box;
     }}
 
-    /* Botons dels dies dins la graella */
-    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) button,
-    .stHorizontalBlock:has(.cal-grid-col-marker) button {{
-        padding: 2px 0px !important;
-        font-size: 0.82rem !important;
+    /* Fila de les setmanes: 7 columnes espaioses amb requadres i elements visuals */
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker),
+    .stHorizontalBlock:has(.cal-week-row-marker) {{
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        gap: 4px !important;
+        width: 100% !important;
+        margin-bottom: 4px !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > .stColumn,
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > div,
+    .stHorizontalBlock:has(.cal-week-row-marker) > div[data-testid="stColumn"],
+    .stHorizontalBlock:has(.cal-week-row-marker) > .stColumn,
+    .stHorizontalBlock:has(.cal-week-row-marker) > div {{
+        min-width: 0 !important;
+        width: calc(100% / 7) !important;
+        max-width: calc(100% / 7) !important;
+        flex: 1 1 0px !important;
+        padding: 4px !important;
+        margin: 0 !important;
+        background: {bg_card};
+        border: 1px solid {border_color};
+        border-radius: 10px;
+        min-height: 100px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > div[data-testid="stColumn"]:has(.is-selected),
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > .stColumn:has(.is-selected) {{
+        border: 2px solid #38bdf8 !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.45) !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > div[data-testid="stColumn"]:has(.is-today),
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > .stColumn:has(.is-today) {{
+        border: 2px solid #f59e0b !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > div[data-testid="stColumn"]:has(.other-month),
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) > .stColumn:has(.other-month) {{
+        opacity: 0.4 !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-week-row-marker) button,
+    .stHorizontalBlock:has(.cal-week-row-marker) button {{
+        padding: 2px 2px !important;
+        font-size: 0.78rem !important;
         font-weight: 700 !important;
-        min-height: 28px !important;
-        height: 30px !important;
+        min-height: 26px !important;
+        height: 26px !important;
         line-height: 1 !important;
         border-radius: 6px !important;
+        margin-bottom: 3px !important;
         width: 100% !important;
-        margin: 0 !important;
-    }}
-
-    div[data-testid="stColumn"]:has(.cal-day-other-month) button,
-    .stColumn:has(.cal-day-other-month) button {{
-        opacity: 0.35 !important;
-    }}
-
-    div[data-testid="stColumn"]:has(.cal-day-is-today) button,
-    .stColumn:has(.cal-day-is-today) button {{
-        border: 2px solid #f59e0b !important;
-        box-shadow: 0 0 6px rgba(245, 158, 11, 0.4) !important;
-    }}
-
-    div[data-testid="stColumn"]:has(.cal-day-is-selected) button,
-    .stColumn:has(.cal-day-is-selected) button {{
-        border: 2px solid #38bdf8 !important;
-        box-shadow: 0 0 8px rgba(56, 189, 248, 0.5) !important;
     }}
 
     .cal-mobile-dots {{
@@ -672,140 +820,13 @@ def render():
     st.write("")
 
     # =========================================================================
-    # GENERADOR / FORMULARI D'ESDEVENIMENTS (MODAL / EXPANDER)
+    # DIÀLEG MODAL D'ESDEVENIMENTS (CENTRAT I NADIU ST.DIALOG)
     # =========================================================================
-    if st.session_state.show_event_modal or st.session_state.edit_event_data:
-        edit_ev = st.session_state.edit_event_data
-        is_editing = (edit_ev is not None)
-        title_form = "✏️ Modificar Esdeveniment" if is_editing else "➕ Crear Nou Esdeveniment"
-        
-        with st.container():
-            st.markdown(f"""
-            <div style="background:{bg_card}; border:2px solid #38bdf8; border-radius:16px; padding:20px; margin-bottom:20px;">
-                <h3 style="margin-top:0; color:#38bdf8;">{title_form}</h3>
-            """, unsafe_allow_html=True)
-            
-            tab_manual, tab_quick = st.tabs(["📝 Formulari complet", "⚡ Creació ràpida intel·ligent"])
-            
-            with tab_quick:
-                st.markdown("<div style='font-size:0.85rem; color:#94a3b8; margin-bottom:6px;'>Escriu en llenguatge natural (ex: <i>'Demà dinar familiar 14h'</i>, <i>'Divendres sopar 21h'</i>, <i>'Demà 18:30 metge Enric'</i>)</div>", unsafe_allow_html=True)
-                c_q1, c_q2 = st.columns([8, 2])
-                with c_q1:
-                    quick_txt = st.text_input("Descripció de l'esdeveniment", placeholder="Escriu aquí el que vols agendar...", label_visibility="collapsed", key="quick_input_txt")
-                with c_q2:
-                    if st.button("⚡ Crear ràpidament", type="primary", use_container_width=True, key="btn_apply_quick"):
-                        if quick_txt.strip():
-                            parsed = cm.parse_natural_language_event(quick_txt, default_member=active_user)
-                            if parsed:
-                                invalidate_cal_cache(); cm.add_event(parsed)
-                                st.session_state.show_event_modal = False
-                                st.success(f"✅ Esdeveniment creat per al {parsed['start_date']}!")
-                                st.rerun()
-                                
-            with tab_manual:
-                default_title = edit_ev.get("title", "") if is_editing else ""
-                default_member = edit_ev.get("member", active_user) if is_editing else active_user
-                default_cat = edit_ev.get("category", "Altres") if is_editing else "Altres"
-                
-                init_date = today
-                if is_editing and edit_ev.get("start_date"):
-                    try:
-                        init_date = datetime.strptime(edit_ev.get("start_date"), "%Y-%m-%d").date()
-                    except Exception:
-                        pass
-                elif st.session_state.selected_day_for_new:
-                    init_date = st.session_state.selected_day_for_new
-                    
-                default_start_time = "10:00"
-                if is_editing and edit_ev.get("start_time"):
-                    default_start_time = edit_ev.get("start_time")
-                    
-                default_all_day = edit_ev.get("all_day", False) if is_editing else False
-                default_loc = edit_ev.get("location", "") if is_editing else ""
-                default_desc = edit_ev.get("description", "") if is_editing else ""
-                default_rep = edit_ev.get("repeat", "Cap") if is_editing else "Cap"
-                
-                c_f1, c_f2 = st.columns([6, 4])
-                with c_f1:
-                    f_title = st.text_input("Títol de l'esdeveniment *", value=default_title, key="f_ev_title", placeholder="Ex: Cita dentista, Dinar familiar, Sopar amb amics...")
-                with c_f2:
-                    all_member_options = [active_user, "Tota la família"]
-                    idx_m = all_member_options.index(default_member) if default_member in all_member_options else 0
-                    f_member = st.selectbox("Membre assignat", all_member_options, index=idx_m, key="f_ev_member")
-                    
-                c_f3, c_f4, c_f5 = st.columns([3.5, 3.5, 3])
-                with c_f3:
-                    cat_keys = list(cm.CATEGORIES.keys())
-                    cat_idx = cat_keys.index(default_cat) if default_cat in cat_keys else len(cat_keys)-1
-                    f_cat = st.selectbox("Categoria", cat_keys, index=cat_idx, format_func=lambda k: f"{cm.CATEGORIES[k]['icon']} {cm.CATEGORIES[k]['label']}", key="f_ev_cat")
-                with c_f4:
-                    f_date = st.date_input("Data de l'esdeveniment", value=init_date, format="DD/MM/YYYY", key="f_ev_date")
-                with c_f5:
-                    f_allday = st.checkbox("Tot el dia", value=default_all_day, key="f_ev_allday")
-                    if not f_allday:
-                        f_time = st.text_input("Hora (HH:MM)", value=default_start_time, key="f_ev_time")
-                    else:
-                        f_time = ""
-                        
-                c_f6, c_f7 = st.columns([6, 4])
-                with c_f6:
-                    f_loc = st.text_input("📍 Ubicació / Adreça", value=default_loc, placeholder="Ex: Restaurant Can Xic, Hospital de Terrassa...", key="f_ev_loc")
-                with c_f7:
-                    rep_opts = ["Cap", "Setmanal", "Mensual", "Anual"]
-                    idx_rep = rep_opts.index(default_rep) if default_rep in rep_opts else 0
-                    f_rep = st.selectbox("🔁 Repetició", rep_opts, index=idx_rep, key="f_ev_rep")
-                    
-                f_desc = st.text_area("📝 Notes i detalls", value=default_desc, placeholder="Indicacions, reserves, menú, etc.", key="f_ev_desc", height=70)
-                
-                c_act1, c_act2, c_act3 = st.columns([3, 4, 3])
-                with c_act1:
-                    if st.button("❌ Cancel·lar", use_container_width=True, key="btn_cancel_ev"):
-                        st.session_state.show_event_modal = False
-                        st.session_state.edit_event_data = None
-                        st.rerun()
-                with c_act2:
-                    if st.button("💾 Desar Esdeveniment", type="primary", use_container_width=True, key="btn_save_ev"):
-                        if not f_title.strip():
-                            st.error("El títol és obligatori.")
-                        else:
-                            new_data = {
-                                "title": f_title.strip(),
-                                "member": f_member,
-                                "category": f_cat,
-                                "start_date": f_date.strftime("%Y-%m-%d"),
-                                "start_time": f_time.strip() if not f_allday else "",
-                                "all_day": f_allday,
-                                "location": f_loc.strip(),
-                                "repeat": f_rep,
-                                "description": f_desc.strip()
-                            }
-                            if is_editing and "id" in edit_ev:
-                                invalidate_cal_cache(); cm.update_event(edit_ev["id"], new_data)
-                                st.success("✅ Esdeveniment actualitzat!")
-                            else:
-                                invalidate_cal_cache(); cm.add_event(new_data)
-                                st.success("✅ Esdeveniment creat correctament!")
-                                
-                            st.session_state.show_event_modal = False
-                            st.session_state.edit_event_data = None
-                            st.rerun()
-                with c_act3:
-                    # Enllaç ràpid a Google Calendar
-                    gcal_temp_ev = {
-                        "title": f_title if f_title else "Esdeveniment",
-                        "start_date": f_date.strftime("%Y-%m-%d"),
-                        "start_time": f_time if not f_allday else "10:00",
-                        "all_day": f_allday,
-                        "location": f_loc,
-                        "description": f_desc
-                    }
-                    gcal_url = cm.generate_google_calendar_url(gcal_temp_ev)
-                    st.markdown(f'<a href="{gcal_url}" target="_blank" style="text-decoration:none;"><button style="width:100%; height:38px; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-weight:600; cursor:pointer;">📅 Google Calendar</button></a>', unsafe_allow_html=True)
-            
-            st.markdown("</div>", unsafe_allow_html=True)
+    if st.session_state.get("show_event_modal") or st.session_state.get("edit_event_data"):
+        event_modal_dialog(active_user, edit_ev=st.session_state.get("edit_event_data"), preselected_date=st.session_state.get("selected_day_for_new"))
 
     # =========================================================================
-    # BARRA DE FILTRES I NAVEGACIÓ TEMPORAL
+    # BARRA DE FILTRES I NAVEGACIÓ TEMPORAL    # BARRA DE FILTRES I NAVEGACIÓ TEMPORAL
     # =========================================================================
     cur_year = st.session_state.cal_year
     cur_month = st.session_state.cal_month
@@ -883,108 +904,93 @@ def render():
     st.write("")
 
     # =========================================================================
-    # VISTA 1: CALENDARI (GOOGLE CALENDAR STYLE CSS GRID)
+    # VISTA 1: CALENDARI (REQUADRES GRANS I ELEMENTS EN CADA DIA, SENSE RECARREGA)
     # =========================================================================
     if st.session_state.cal_view_mode == "grid":
         setmana_dies = ["Dll", "Dmt", "Dmc", "Djs", "Dvd", "Dss", "Dmg"]
         cal = calendar.Calendar(firstweekday=0)
         month_days = cal.monthdatescalendar(cur_year, cur_month)
         
-        # Construir tot el HTML de la graella en un únic bloc continu i segur
-        html_grid = []
-        html_grid.append('<div class="cal-grid-container">')
-        
         # Capçalera dels 7 dies
-        html_grid.append('<div class="cal-grid-header">')
+        st.markdown('<div class="cal-grid-header-wrap"></div>', unsafe_allow_html=True)
+        cols_hdr = st.columns(7)
         for idx_th, d_nom in enumerate(setmana_dies):
             is_weekend = (idx_th >= 5)
             th_color = "#38bdf8" if is_weekend else text_secondary
-            html_grid.append(f'<div class="cal-grid-th" style="color:{th_color};">{d_nom}</div>')
-        html_grid.append('</div>')
-        
-        # Preparar paràmetres de la URL conservant sessió i autenticació
-        qp_base = dict(st.query_params)
-        auth_tok = qp_base.get("auth", "") or st.session_state.get("auth_token", "")
-        if auth_tok:
-            qp_base["auth"] = auth_tok
-        qp_base["mod"] = "modules.calendari"
+            with cols_hdr[idx_th]:
+                st.markdown(f'<div class="cal-grid-th" style="color:{th_color};">{d_nom}</div>', unsafe_allow_html=True)
 
-        # Cos de les setmanes
-        html_grid.append('<div class="cal-grid-body">')
+        # Fila per a cada setmana amb 7 requadres grans i elements interactius
         for week in month_days:
-            for d_obj in week:
+            st.markdown('<div class="cal-week-row-marker"></div>', unsafe_allow_html=True)
+            cols_w = st.columns(7)
+            for idx_d, d_obj in enumerate(week):
                 d_str = d_obj.strftime("%Y-%m-%d")
                 is_current_month = (d_obj.month == cur_month)
                 is_today = (d_obj == today)
                 is_selected = (d_obj == st.session_state.selected_day_for_new)
-                
-                cell_classes = ["cal-grid-cell"]
-                if not is_current_month:
-                    cell_classes.append("other-month")
-                if is_today:
-                    cell_classes.append("today")
-                if is_selected:
-                    cell_classes.append("selected-day")
-                    
                 day_evs = sort_events_by_time(events_by_date.get(d_str, []))
-                num_class = "cal-day-num today-num" if is_today else "cal-day-num"
                 
-                qp = dict(qp_base)
-                qp["cal_day"] = d_str
-                cell_href = f"?{urllib.parse.urlencode(qp)}#gestio-dia"
-                
-                html_grid.append(f'<a href="{cell_href}" target="_self" class="{" ".join(cell_classes)}" title="Veure gestió del dia {d_obj.day}/{d_obj.month}/{d_obj.year}">')
-                html_grid.append('<div class="cal-cell-head">')
-                html_grid.append(f'<span class="{num_class}">{d_obj.day}</span>')
-                if is_today:
-                    html_grid.append('<span class="today-badge">AVUI</span>')
-                elif len(day_evs) > 0:
-                    html_grid.append(f'<span class="ev-count-badge">{len(day_evs)}</span>')
-                html_grid.append('</div>')
-                
-                # Xips dels esdeveniments
-                html_grid.append('<div class="cal-cell-events">')
-                for ev in day_evs[:3]:
-                    cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
-                    ev_color = ev.get("color", cat_info["color"])
-                    ev_status = ev.get("status", "pending")
-                    ev_time = ev.get("start_time", "")
-                    time_pfx = f"<b>{ev_time}</b> " if ev_time else ""
-                    ev_icon = cat_info["icon"]
-                    ev_title = ev.get("title", "Esdeveniment")
+                with cols_w[idx_d]:
+                    col_classes = ["cal-day-cell-wrap"]
+                    if is_selected:
+                        col_classes.append("is-selected")
+                    if is_today:
+                        col_classes.append("is-today")
+                    if not is_current_month:
+                        col_classes.append("other-month")
+                    st.markdown(f'<span class="{" ".join(col_classes)}"></span>', unsafe_allow_html=True)
                     
-                    chip_border = f"border:1px solid {ev_color}55;"
-                    chip_bg = f"background:{ev_color}22;"
-                    chip_text_color = ev_color
-                    status_prefix = ""
-                    if ev_status == "done":
-                        chip_border = "border:1px solid #10b981;"
-                        chip_bg = "background:rgba(16,185,129,0.25);"
-                        chip_text_color = "#10b981"
-                        status_prefix = "✅ "
-                    elif ev_status == "cancelled":
-                        chip_border = "border:1px dashed #ef4444;"
-                        chip_bg = "background:rgba(239,68,68,0.2);"
-                        chip_text_color = "#ef4444"
-                        status_prefix = "❌ "
+                    btn_label = f"{d_obj.day}"
+                    if is_today:
+                        btn_label = f"⭐ {d_obj.day} (Avui)"
+                    elif day_evs:
+                        btn_label = f"{d_obj.day} · {len(day_evs)}"
+                        
+                    btn_type = "primary" if is_selected else "secondary"
+                    if st.button(btn_label, key=f"btn_d_{d_str}", type=btn_type, use_container_width=True):
+                        st.session_state.selected_day_for_new = d_obj
+                        st.session_state.picker_sel_day = d_obj
+                        if d_obj.month != cur_month or d_obj.year != cur_year:
+                            st.session_state.cal_month = d_obj.month
+                            st.session_state.cal_year = d_obj.year
+                        st.rerun()
+                        
+                    chips_html = ['<div class="cal-cell-events">']
+                    for ev in day_evs[:3]:
+                        cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
+                        ev_color = ev.get("color", cat_info["color"])
+                        ev_status = ev.get("status", "pending")
+                        ev_time = ev.get("start_time", "")
+                        time_pfx = f"<b>{ev_time}</b> " if ev_time else ""
+                        ev_icon = cat_info["icon"]
+                        ev_title = ev.get("title", "Esdeveniment")
+                        
+                        chip_border = f"border:1px solid {ev_color}55;"
+                        chip_bg = f"background:{ev_color}22;"
+                        chip_text_color = ev_color
+                        status_prefix = ""
+                        if ev_status == "done":
+                            chip_border = "border:1px solid #10b981;"
+                            chip_bg = "background:rgba(16,185,129,0.25);"
+                            chip_text_color = "#10b981"
+                            status_prefix = "✅ "
+                        elif ev_status == "cancelled":
+                            chip_border = "border:1px dashed #ef4444;"
+                            chip_bg = "background:rgba(239,68,68,0.2);"
+                            chip_text_color = "#ef4444"
+                            status_prefix = "❌ "
 
-                    html_grid.append(
-                        f'<div class="cal-ev-chip" style="{chip_bg} color:{chip_text_color}; {chip_border}" title="{ev_title} ({ev.get("member", "Família")})">'
-                        f'<span>{ev_icon}</span> <span class="ev-chip-txt">{status_prefix}{time_pfx}{ev_title}</span>'
-                        f'</div>'
-                    )
-                if len(day_evs) > 3:
-                    html_grid.append(f'<div class="cal-ev-more">+{len(day_evs) - 3} més</div>')
-                html_grid.append('</div>') # end cal-cell-events
-                
-                html_grid.append('</a>') # end cal-grid-cell link
-                
-        html_grid.append('</div>') # end cal-grid-body
-        html_grid.append('</div>') # end cal-grid-container
-        
-        # Renderitzar graella HTML pura
-        st.markdown("".join(html_grid), unsafe_allow_html=True)
-        
+                        chips_html.append(
+                            f'<div class="cal-ev-chip" style="{chip_bg} color:{chip_text_color}; {chip_border}" title="{ev_title} ({ev.get("member", "Família")})">'
+                            f'<span>{ev_icon}</span> <span class="ev-chip-txt">{status_prefix}{time_pfx}{ev_title}</span>'
+                            f'</div>'
+                        )
+                    if len(day_evs) > 3:
+                        chips_html.append(f'<div class="cal-ev-more">+{len(day_evs) - 3} més</div>')
+                    chips_html.append('</div>')
+                    st.markdown("".join(chips_html), unsafe_allow_html=True)
+                    
         # Secció interactiva de Detalls del Dia i Creació Ràpida
         st.markdown('<div id="gestio-dia" style="margin-top:20px;"></div>', unsafe_allow_html=True)
         c_sel_d1, c_sel_d2 = st.columns([6, 4], vertical_alignment="center")
@@ -1087,7 +1093,7 @@ def render():
                         with b_gcal:
                             st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             g_url = cm.generate_google_calendar_url(ev)
-                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; white-space:nowrap; box-sizing:border-box;" title="Obrir a Google Calendar">📅 GCal</a>', unsafe_allow_html=True)
+                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:100%; border-radius:6px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.75rem; font-weight:700; height:30px; min-height:30px; padding:0 2px; cursor:pointer; white-space:nowrap; box-sizing:border-box;" title="Obrir a Google Calendar">📅 GCal</a>', unsafe_allow_html=True)
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:6px 0;'></div>", unsafe_allow_html=True)
             
             if more_evs:
@@ -1138,7 +1144,7 @@ def render():
                                         st.rerun()
                                 with b_gcal:
                                     g_url = cm.generate_google_calendar_url(ev)
-                                    st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; white-space:nowrap; box-sizing:border-box;" title="Obrir a Google Calendar">📅 GCal</a>', unsafe_allow_html=True)
+                                    st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:100%; border-radius:6px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.75rem; font-weight:700; height:30px; min-height:30px; padding:0 2px; cursor:pointer; white-space:nowrap; box-sizing:border-box;" title="Obrir a Google Calendar">📅 GCal</a>', unsafe_allow_html=True)
                             st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:6px 0;'></div>", unsafe_allow_html=True)
 
     # =========================================================================
@@ -1274,7 +1280,7 @@ def render():
                         with b_gcal:
                             st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             g_url = cm.generate_google_calendar_url(ev)
-                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; white-space:nowrap; box-sizing:border-box;" title="Obrir a Google Calendar">📅 GCal</a>', unsafe_allow_html=True)
+                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:100%; border-radius:6px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.75rem; font-weight:700; height:30px; min-height:30px; padding:0 2px; cursor:pointer; white-space:nowrap; box-sizing:border-box;" title="Obrir a Google Calendar">📅 GCal</a>', unsafe_allow_html=True)
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:10px 0;'></div>", unsafe_allow_html=True)
                     
     # =========================================================================
