@@ -425,12 +425,12 @@ def render():
         width: 100% !important;
     }}
 
-    /* Botons Sincro i Inici MÉS PETITS tal com demana l'usuari */
+    /* Botons Sincro i Inici MÉS PETITS tal com demana l'usuari i sense truncament */
     div[data-testid="stColumn"]:has(.cal-btn-sync-wrap) button,
     .stColumn:has(.cal-btn-sync-wrap) button,
     div[data-testid="stColumn"]:has(.cal-btn-inici-wrap) button,
     .stColumn:has(.cal-btn-inici-wrap) button {{
-        padding: 2px 4px !important;
+        padding: 2px 3px !important;
         font-size: 0.74rem !important;
         font-weight: 600 !important;
         min-height: 28px !important;
@@ -439,6 +439,15 @@ def render():
         border-radius: 6px !important;
         opacity: 0.9 !important;
         width: 100% !important;
+    }}
+
+    div[data-testid="stColumn"]:has(.cal-btn-sync-wrap) button p,
+    .stColumn:has(.cal-btn-sync-wrap) button p,
+    div[data-testid="stColumn"]:has(.cal-btn-today-wrap) button p,
+    .stColumn:has(.cal-btn-today-wrap) button p {{
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
     }}
 
     /* Barra de navegació mensual (◀ Avui ▶ + Mes + Vista) */
@@ -614,16 +623,16 @@ def render():
     """, unsafe_allow_html=True)
 
     # Capçalera compacta d'Agenda amb logo/títol a l'esquerra i botons nets a la dreta (+ Nou, Sincro, Inici)
-    c_hdr_l, c_hdr_r = st.columns([4.2, 5.8], vertical_alignment="center")
+    c_hdr_l, c_hdr_r = st.columns([3.2, 6.8], vertical_alignment="center")
     with c_hdr_l:
         st.markdown(f"""<span class='cal-main-header-marker'></span>
-        <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:1.8rem; line-height:1;">📅</span>
-            <div style="font-size:1.6rem; font-weight:800; color:{text_primary}; line-height:1;">Agenda</div>
+        <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:1.7rem; line-height:1;">📅</span>
+            <div style="font-size:1.55rem; font-weight:800; color:{text_primary}; line-height:1;">Agenda</div>
         </div>
         """, unsafe_allow_html=True)
     with c_hdr_r:
-        c_b1, c_b2, c_b3 = st.columns([1.4, 1.0, 1.0], vertical_alignment="center")
+        c_b1, c_b2, c_b3 = st.columns([1.1, 1.2, 1.1], vertical_alignment="center")
         with c_b1:
             st.markdown("<span class='cal-top-btns-marker'></span><div class='cal-btn-nou-wrap'></div>", unsafe_allow_html=True)
             if st.button("➕ Nou", type="primary", use_container_width=True, key="btn_open_new_ev"):
@@ -789,11 +798,20 @@ def render():
     cur_month = st.session_state.cal_month
     month_name = mesos_cat[cur_month]
     
-    c_nav1, c_nav2, c_nav3 = st.columns([3.0, 4.4, 2.6], vertical_alignment="center")
+    # Capçalera de navegació temporal centrada i espaiosa
+    st.markdown(f"""
+    <div style='text-align:center; margin-bottom:6px;'>
+        <div style='font-size:1.35rem; font-weight:800; color:{text_primary}; line-height:1.2;'>{month_name} {cur_year}</div>
+        <div style='font-size:0.84rem; font-weight:600; color:{text_secondary}; margin-top:2px;'>
+            👤 Agenda de: <span style='color:#38bdf8; font-weight:700;'>{active_user}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with c_nav1:
-        st.markdown("<span class='cal-navbar-marker'></span>", unsafe_allow_html=True)
-        c_prev, c_today, c_next = st.columns([1, 1.4, 1], vertical_alignment="center")
+    c_nav_left, c_nav_right = st.columns([5.2, 4.8], vertical_alignment="center")
+    
+    with c_nav_left:
+        c_prev, c_today, c_next = st.columns([1, 1.8, 1], vertical_alignment="center")
         with c_prev:
             st.markdown("<span class='cal-nav-arrows-marker'></span><div class='cal-btn-arrow-wrap'></div>", unsafe_allow_html=True)
             if st.button("◀", key="cal_prev_month", use_container_width=True, help="Mes anterior"):
@@ -819,18 +837,7 @@ def render():
                     st.session_state.cal_month += 1
                 st.rerun()
                 
-    with c_nav2:
-        st.markdown(f"""
-        <div style='text-align:center;'>
-            <div style='font-size:1.25rem; font-weight:800; color:{text_primary}; line-height:1.2;'>{month_name} {cur_year}</div>
-            <div style='font-size:0.82rem; font-weight:600; color:{text_secondary}; margin-top:1px;'>
-                👤 Agenda de: <span style='color:#38bdf8; font-weight:700;'>{active_user}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-            
-    with c_nav3:
-        # Commutador de Vista (Calendari vs Agenda)
+    with c_nav_right:
         mode_idx = 0 if st.session_state.cal_view_mode == "grid" else 1
         sel_view = st.radio("Vista", ["📅 Calendari", "📋 Agenda / Llista"], index=mode_idx, horizontal=True, label_visibility="collapsed", key="radio_cal_view")
         new_mode = "grid" if "Calendari" in sel_view else "agenda"
