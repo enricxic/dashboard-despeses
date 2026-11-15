@@ -408,7 +408,7 @@ def render():
     title_cal_html = f"""
     <div style="display:flex; align-items:center; gap:12px;">
         <span style="font-size:2.2rem;">📅</span>
-        <h2 style="margin:0; font-weight:800; color:{text_primary};">Agenda i Calendari Familiar</h2>
+        <h2 style="margin:0; font-weight:800; color:{text_primary};">Agenda</h2>
     </div>
     """
     render_header_with_avatar(title_cal_html, "calendari", extra_button_fn=_render_extra_cal_btns)
@@ -586,7 +586,7 @@ def render():
         <div style='text-align:center;'>
             <div style='font-size:1.35rem; font-weight:800; color:{text_primary};'>{month_name} {cur_year}</div>
             <div style='font-size:0.85rem; font-weight:600; color:{text_secondary}; margin-top:2px;'>
-                👤 Calendari de: <span style='color:#38bdf8; font-weight:700;'>{active_user}</span>
+                👤 Agenda de: <span style='color:#38bdf8; font-weight:700;'>{active_user}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)

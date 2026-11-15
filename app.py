@@ -1266,7 +1266,7 @@ div.block-container {{
 </div>''' if icones_actives.get('manteniment', True) else ''}
 {f'<a href="?mod=modules.domotica{url_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
 {f'<a href="?mod=modules.seguretat{url_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
-{f'<a href="?mod=modules.calendari{url_suffix}" target="_self">📅 Agenda i esdeveniments</a>' if icones_actives.get('agenda', True) else ''}
+{f'<a href="?mod=modules.calendari{url_suffix}" target="_self">📅 Agenda</a>' if icones_actives.get('agenda', True) else ''}
 {f'''<div class="submenu-item">
 <a href="?mod=modules.medicacio{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>💊 Control de medicació</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
@@ -1636,7 +1636,7 @@ if st.session_state.current_module is None:
 {render_hotspot('llum_aigua', '💡 Llum i Aigua')}
 
 <!-- ================= AMB RODONA PART DRETA (5 NODES) ================= -->
-{render_hotspot('calendari', '📅 Agenda i Calendari')}
+{render_hotspot('calendari', '📅 Agenda')}
 {render_hotspot('medicacio', '💊 Control de Medicació')}
 {render_hotspot('menjar', '🍽️ Menjar, Menús i Rebost')}
 {render_hotspot('cotxe', '🚗 Cotxe i Transport')}
