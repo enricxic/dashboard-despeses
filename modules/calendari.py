@@ -359,59 +359,205 @@ def render():
         width: 100% !important;
     }}
 
+    /* Header superior: botons d'acció en 1 sola línia horitzontal */
+    div[data-testid="stHorizontalBlock"]:has(.cal-top-btns-marker) {{
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-top-btns-marker) > div[data-testid="column"] {{
+        min-width: 0 !important;
+        flex: 1 1 0px !important;
+        width: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+
+    div[data-testid="column"]:has(.cal-btn-nou-wrap) button {{
+        padding: 3px 8px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        line-height: 1 !important;
+        border-radius: 8px !important;
+    }}
+
+    /* Botons Sincro i Inici MÉS PETITS */
+    div[data-testid="column"]:has(.cal-btn-sync-wrap) button,
+    div[data-testid="column"]:has(.cal-btn-inici-wrap) button {{
+        padding: 2px 6px !important;
+        font-size: 0.76rem !important;
+        font-weight: 600 !important;
+        min-height: 28px !important;
+        height: 28px !important;
+        line-height: 1 !important;
+        border-radius: 6px !important;
+        opacity: 0.9 !important;
+    }}
+
+    /* Fila de botons de navegació mensual (◀ Avui ▶) en 1 sola línia horitzontal */
+    div[data-testid="stHorizontalBlock"]:has(.cal-nav-arrows-marker) {{
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-nav-arrows-marker) > div[data-testid="column"] {{
+        min-width: 0 !important;
+        flex: 1 1 0px !important;
+        width: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+
+    /* Botons fletxa ◀ ▶ MÉS PETITS */
+    div[data-testid="column"]:has(.cal-btn-arrow-wrap) button {{
+        padding: 2px 4px !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        min-height: 28px !important;
+        height: 28px !important;
+        line-height: 1 !important;
+        border-radius: 6px !important;
+    }}
+
+    /* Botó Avui MÉS PETIT */
+    div[data-testid="column"]:has(.cal-btn-today-wrap) button {{
+        padding: 2px 8px !important;
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        min-height: 28px !important;
+        height: 28px !important;
+        line-height: 1 !important;
+        border-radius: 6px !important;
+    }}
+
+    /* GRAELLA DEL CALENDARI: forçar 7 columnes SEMPRE (tant escriptori com mòbil) */
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) {{
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        gap: 3px !important;
+        width: 100% !important;
+        margin-bottom: 2px !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) > div[data-testid="column"] {{
+        min-width: 0 !important;
+        flex: 1 1 0px !important;
+        width: 14.28% !important;
+        max-width: 14.28% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+
+    /* Botons dels dies dins la graella */
+    div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) button {{
+        padding: 2px 1px !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        line-height: 1 !important;
+        border-radius: 6px !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }}
+
+    div[data-testid="column"]:has(.cal-day-other-month) button {{
+        opacity: 0.4 !important;
+    }}
+
+    div[data-testid="column"]:has(.cal-day-is-today) button {{
+        border: 2px solid #f59e0b !important;
+        box-shadow: 0 0 6px rgba(245, 158, 11, 0.4) !important;
+    }}
+
+    div[data-testid="column"]:has(.cal-day-is-selected) button {{
+        border: 2px solid #38bdf8 !important;
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.5) !important;
+    }}
+
+    .cal-mobile-dots {{
+        display: none;
+    }}
+
     @media (max-width: 768px) {{
-        .cal-grid-header {{
-            gap: 2px !important;
-        }}
-        .cal-grid-body {{
-            gap: 2px !important;
-        }}
-        .cal-grid-cell {{
-            min-height: 52px !important;
-            padding: 3px !important;
-            border-radius: 6px !important;
-        }}
-        .cal-day-num {{
-            font-size: 0.75rem !important;
-            width: 18px !important;
-            height: 18px !important;
-            line-height: 18px !important;
-        }}
-        .cal-ev-chip {{
-            padding: 1px 2px !important;
-        }}
-        .ev-chip-txt {{
+        .cal-desktop-chips {{
             display: none !important;
         }}
-        .today-badge {{
-            display: none !important;
+        .cal-mobile-dots {{
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 2px !important;
+            margin-top: 2px !important;
+            min-height: 8px !important;
+        }}
+        .cal-dot {{
+            width: 5px !important;
+            height: 5px !important;
+            border-radius: 50% !important;
+            display: inline-block !important;
+        }}
+        .cal-grid-th {{
+            font-size: 0.70rem !important;
+            padding: 4px 1px !important;
+        }}
+        div[data-testid="stHorizontalBlock"]:has(.cal-grid-col-marker) button {{
+            font-size: 0.78rem !important;
+            min-height: 28px !important;
+            height: 28px !important;
         }}
     }}
     </style>
     """, unsafe_allow_html=True)
 
-    from modules.avatar_widget import render_header_with_avatar
-    
-    def _render_extra_cal_btns():
-        c_b1, c_b2 = st.columns(2)
+    # Capçalera compacta d'Agenda amb logo/títol a l'esquerra i botons nets a la dreta (+ Nou, Sincro, Inici)
+    c_hdr_l, c_hdr_r = st.columns([5.2, 4.8], vertical_alignment="center")
+    with c_hdr_l:
+        st.markdown(f"""
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:2rem; line-height:1;">📅</span>
+            <div style="font-size:1.85rem; font-weight:800; color:{text_primary}; line-height:1;">Agenda</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with c_hdr_r:
+        st.markdown("<span class='cal-top-btns-marker'></span>", unsafe_allow_html=True)
+        c_b1, c_b2, c_b3 = st.columns([1.5, 1.1, 1.1], vertical_alignment="center")
         with c_b1:
+            st.markdown("<div class='cal-btn-nou-wrap'></div>", unsafe_allow_html=True)
             if st.button("➕ Nou", type="primary", use_container_width=True, key="btn_open_new_ev"):
                 st.session_state.show_event_modal = not st.session_state.show_event_modal
                 st.session_state.edit_event_data = None
                 st.rerun()
         with c_b2:
-            if st.button("🔄 Sincro", use_container_width=True, key="btn_sync_feeds", help="Actualitzar calendaris de Google"):
+            st.markdown("<div class='cal-btn-sync-wrap'></div>", unsafe_allow_html=True)
+            if st.button("🔄 Sincro", use_container_width=True, key="btn_sync_feeds", help="Actualitzar calendaris"):
                 cm.clear_feeds_cache()
-                st.success("✅ Memòria cau alliberada i calendaris sincronitzats!")
+                st.success("✅ Memòria cau alliberada!")
                 st.rerun()
-
-    title_cal_html = f"""
-    <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:2.2rem;">📅</span>
-        <h2 style="margin:0; font-weight:800; color:{text_primary};">Agenda</h2>
-    </div>
-    """
-    render_header_with_avatar(title_cal_html, "calendari", extra_button_fn=_render_extra_cal_btns)
+        with c_b3:
+            st.markdown("<div class='cal-btn-inici-wrap'></div>", unsafe_allow_html=True)
+            if st.button("🔙 Inici", use_container_width=True, key="btn_nav_inici_cal", help="Tornar a l'inici"):
+                st.session_state.current_module = None
+                if "mod" in st.query_params:
+                    try:
+                        del st.query_params["mod"]
+                    except Exception:
+                        pass
+                st.rerun()
 
     st.write("")
 
@@ -555,11 +701,13 @@ def render():
     cur_month = st.session_state.cal_month
     month_name = mesos_cat[cur_month]
     
-    c_nav1, c_nav2, c_nav3 = st.columns([3.5, 4.5, 3.0], vertical_alignment="center")
+    c_nav1, c_nav2, c_nav3 = st.columns([3.2, 4.4, 2.4], vertical_alignment="center")
     
     with c_nav1:
-        c_prev, c_today, c_next = st.columns([1, 1.2, 1])
+        st.markdown("<span class='cal-nav-arrows-marker'></span>", unsafe_allow_html=True)
+        c_prev, c_today, c_next = st.columns([1, 1.5, 1], vertical_alignment="center")
         with c_prev:
+            st.markdown("<div class='cal-btn-arrow-wrap'></div>", unsafe_allow_html=True)
             if st.button("◀", key="cal_prev_month", use_container_width=True, help="Mes anterior"):
                 if cur_month == 1:
                     st.session_state.cal_month = 12
@@ -568,11 +716,13 @@ def render():
                     st.session_state.cal_month -= 1
                 st.rerun()
         with c_today:
+            st.markdown("<div class='cal-btn-today-wrap'></div>", unsafe_allow_html=True)
             if st.button("Avui", key="cal_btn_today", use_container_width=True, help="Tornar al mes actual"):
                 st.session_state.cal_month = today.month
                 st.session_state.cal_year = today.year
                 st.rerun()
         with c_next:
+            st.markdown("<div class='cal-btn-arrow-wrap'></div>", unsafe_allow_html=True)
             if st.button("▶", key="cal_next_month", use_container_width=True, help="Mes següent"):
                 if cur_month == 12:
                     st.session_state.cal_month = 1
@@ -584,8 +734,8 @@ def render():
     with c_nav2:
         st.markdown(f"""
         <div style='text-align:center;'>
-            <div style='font-size:1.35rem; font-weight:800; color:{text_primary};'>{month_name} {cur_year}</div>
-            <div style='font-size:0.85rem; font-weight:600; color:{text_secondary}; margin-top:2px;'>
+            <div style='font-size:1.25rem; font-weight:800; color:{text_primary}; line-height:1.2;'>{month_name} {cur_year}</div>
+            <div style='font-size:0.82rem; font-weight:600; color:{text_secondary}; margin-top:1px;'>
                 👤 Agenda de: <span style='color:#38bdf8; font-weight:700;'>{active_user}</span>
             </div>
         </div>
@@ -634,7 +784,10 @@ def render():
         for idx_th, d_nom in enumerate(setmana_dies):
             is_weekend = (idx_th >= 5)
             th_color = "#38bdf8" if is_weekend else text_secondary
-            hdr_cols[idx_th].markdown(f"<div class='cal-grid-th' style='color:{th_color};'>{d_nom}</div>", unsafe_allow_html=True)
+            hdr_cols[idx_th].markdown(
+                f"<div class='cal-grid-col-marker cal-grid-th' style='color:{th_color};'>{d_nom}</div>",
+                unsafe_allow_html=True
+            )
             
         # Graella interactiva per setmanes
         for week in month_days:
@@ -647,14 +800,13 @@ def render():
                 day_evs = sort_events_by_time(events_by_date.get(d_str, []))
                 
                 with w_cols[c_idx]:
-                    # Botó natiu de Streamlit per seleccionar el dia immediatament sense recarregar la pàgina
-                    badge_txt = ""
-                    if is_today:
-                        badge_txt = " · AVUI"
-                    elif len(day_evs) > 0:
-                        badge_txt = f" ({len(day_evs)})"
-                        
-                    btn_label = f"{d_obj.day}{badge_txt}"
+                    today_cls = "cal-day-is-today" if is_today else ""
+                    sel_cls = "cal-day-is-selected" if is_selected else ""
+                    other_m_cls = "" if is_current_month else "cal-day-other-month"
+                    
+                    st.markdown(f"<div class='cal-grid-col-marker {today_cls} {sel_cls} {other_m_cls}' style='display:none;'></div>", unsafe_allow_html=True)
+                    
+                    btn_label = str(d_obj.day)
                     btn_type = "primary" if is_selected else "secondary"
                     btn_key = f"cal_btn_d_{d_str}"
                     
@@ -668,9 +820,11 @@ def render():
                         
                     # Previsualització dels xips d'esdeveniments sota el botó
                     chips_html = []
-                    dim_style = "opacity:0.45;" if not is_current_month else ""
-                    chips_html.append(f"<div style='min-height:55px; margin-bottom:8px; {dim_style}'>")
-                    for ev in day_evs[:3]:
+                    dim_style = "opacity:0.35;" if not is_current_month else ""
+                    
+                    # Versió escriptori: xips complets
+                    chips_html.append(f"<div class='cal-desktop-chips' style='min-height:48px; margin-bottom:4px; {dim_style}'>")
+                    for ev in day_evs[:2]:
                         cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
                         ev_color = ev.get("color", cat_info["color"])
                         ev_status = ev.get("status", "pending")
@@ -699,9 +853,18 @@ def render():
                             f'<span>{ev_icon}</span> <span class="ev-chip-txt">{status_prefix}{time_pfx}{ev_title}</span>'
                             f'</div>'
                         )
-                    if len(day_evs) > 3:
-                        chips_html.append(f'<div class="cal-ev-more">+{len(day_evs) - 3} més</div>')
+                    if len(day_evs) > 2:
+                        chips_html.append(f'<div class="cal-ev-more">+{len(day_evs) - 2}</div>')
                     chips_html.append("</div>")
+
+                    # Versió mòbil: punts indicadors (dots) centrats sota el número de dia
+                    chips_html.append(f"<div class='cal-mobile-dots' style='{dim_style}'>")
+                    for ev in day_evs[:4]:
+                        cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
+                        ev_color = ev.get("color", cat_info["color"])
+                        chips_html.append(f"<span class='cal-dot' style='background-color:{ev_color};' title='{ev.get('title')}'></span>")
+                    chips_html.append("</div>")
+
                     st.markdown("".join(chips_html), unsafe_allow_html=True)
         
         # Secció interactiva de Detalls del Dia i Creació Ràpida
