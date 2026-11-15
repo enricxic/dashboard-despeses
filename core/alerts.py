@@ -284,7 +284,7 @@ def get_global_alerts(force_reload: bool = False):
                                     "icon": "⚠️",
                                     "title": "Valor superat",
                                     "message": ", ".join(exceeded),
-                                    "mod": "modules.economic",
+                                    "mod": "modules.dashboard",
                                     "tab": ""
                                 })
         except Exception as e_limits:

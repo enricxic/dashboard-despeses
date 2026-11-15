@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "15/11/2026 18:00:06",
+  "updated_at": "15/11/2026 18:29:02",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -224,10 +224,10 @@
         "app.py": "3943e32724479139de7884962feec9e47ab5a72592a3e5522db1db83c02ac00c",
         "core/db.py": "537544db9d34c1941cfa3c21d2a1b89693bcd18bf420361f2e9a9a9084789747",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
-        "core/alerts.py": "f98bd3284353e5165fb7fcfd0f39dce2dc7275d9232c0140151ebdb63534c7e0"
+        "core/alerts.py": "ed17eb13d2e0bfbebb21f6e7f9c39cf32c0e56dcecc0a30611f87b94bf0e6369"
       },
-      "verified_at": "15/11/2026 18:00:06",
-      "verified_commit": "a77c277",
+      "verified_at": "15/11/2026 18:29:01",
+      "verified_commit": "3ba5796",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "15/11/2026 18:29:01",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Canviar desti d alerta Valor superat cap a modules.dashboard)",
+      "user": "admin",
+      "git_head": "3ba5796"
+    },
+    {
+      "timestamp": "15/11/2026 18:26:30",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 16/11/2026 18:26:30. Motiu: Canviar desti d alerta Valor superat a modules.dashboard",
+      "user": "admin",
+      "git_head": "3ba5796"
+    },
     {
       "timestamp": "15/11/2026 18:00:06",
       "action": "SEAL",
