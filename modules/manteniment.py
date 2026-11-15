@@ -1168,22 +1168,21 @@ def render():
 
     tabs_list = ["📋 Registre Manteniment", "📖 Manuals", "🛡️ Garanties", "🏗️ Projectes"]
     tab_mapping = {
-        "registre": "📋 Registre Manteniment",
-        "registre_manteniment": "📋 Registre Manteniment",
-        "tasques": "📋 Registre Manteniment",
-        "manuals": "📖 Manuals",
-        "manual": "📖 Manuals",
-        "garanties": "🛡️ Garanties",
-        "garantia": "🛡️ Garanties",
-        "projectes": "🏗️ Projectes",
-        "projecte": "🏗️ Projectes",
-        "reformes": "🏗️ Projectes",
-        "obres": "🏗️ Projectes"
+        "registre": (0, "registre", "📋 Registre Manteniment"),
+        "registre_manteniment": (0, "registre", "📋 Registre Manteniment"),
+        "tasques": (0, "registre", "📋 Registre Manteniment"),
+        "manuals": (1, "manuals", "📖 Manuals"),
+        "manual": (1, "manuals", "📖 Manuals"),
+        "garanties": (2, "garanties", "🛡️ Garanties"),
+        "garantia": (2, "garanties", "🛡️ Garanties"),
+        "projectes": (3, "projectes", "🏗️ Projectes"),
+        "projecte": (3, "projectes", "🏗️ Projectes"),
+        "reformes": (3, "projectes", "🏗️ Projectes"),
+        "obres": (3, "projectes", "🏗️ Projectes")
     }
-    tab_param = st.query_params.get("tab")
-    default_tab = tab_mapping.get(tab_param)
-    if default_tab not in tabs_list:
-        default_tab = "📋 Registre Manteniment"
+    tab_param = st.query_params.get("tab") or st.session_state.get("active_nav_tab") or st.session_state.get("nav_target_tab")
+    target_info = tab_mapping.get(tab_param)
+    default_tab = target_info[2] if target_info else "📋 Registre Manteniment"
 
     # Si venim d'una alerta amb cerca o tasca concreta
     focus_task_id = st.query_params.get("task_id")
@@ -1198,6 +1197,91 @@ def render():
                 break
 
     tab_registre, tab_manuals, tab_garanties, tab_projectes = st.tabs(tabs_list, default=default_tab, key=f"tabs_manteniment_{tab_param or 'main'}")
+
+    if target_info:
+        target_tab_idx, target_tab_text, _ = target_info
+        import streamlit.components.v1 as components
+        import time
+        script_id = f"tab_switch_mant_{tab_param}_{int(time.time() * 1000)}"
+        components.html(f"""
+        <script id="{script_id}">
+        (function() {{
+            try {{
+                const doc = window.parent.document;
+                if (!doc) return;
+
+                const targetText = "{target_tab_text.lower()}";
+                const targetIdx = {target_tab_idx};
+                let tabFound = false;
+
+                function clickTab(el) {{
+                    try {{
+                        el.focus();
+                        el.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window.parent }}));
+                        el.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window.parent }}));
+                        el.click();
+                    }} catch(e) {{
+                        el.click();
+                    }}
+                }}
+
+                function trySelect() {{
+                    if (tabFound) return true;
+                    const tabs = Array.from(doc.querySelectorAll(
+                        '[data-testid="stTabs"] button, div[role="tablist"] button, button[data-baseweb="tab"], button[role="tab"], [data-testid="stTab"]'
+                    ));
+
+                    if (tabs && tabs.length > 0) {{
+                        for (let i = 0; i < tabs.length; i++) {{
+                            const btn = tabs[i];
+                            const txt = (btn.innerText || btn.textContent || "").toLowerCase();
+                            if (targetText && txt.includes(targetText)) {{
+                                clickTab(btn);
+                                tabFound = true;
+                                return true;
+                            }}
+                        }}
+
+                        if (targetIdx >= 0 && targetIdx < tabs.length) {{
+                            clickTab(tabs[targetIdx]);
+                            tabFound = true;
+                            return true;
+                        }}
+                    }}
+                    return false;
+                }}
+
+                if (trySelect()) return;
+
+                const observer = new MutationObserver(() => {{
+                    if (trySelect()) {{
+                        observer.disconnect();
+                    }}
+                }});
+                if (doc.body) {{
+                    observer.observe(doc.body, {{ childList: true, subtree: true }});
+                }}
+
+                let attempts = 0;
+                const interval = setInterval(() => {{
+                    attempts++;
+                    if (trySelect() || attempts >= 75) {{
+                        clearInterval(interval);
+                        observer.disconnect();
+                    }}
+                }}, 60);
+
+                setTimeout(() => {{
+                    clearInterval(interval);
+                    observer.disconnect();
+                }}, 4500);
+
+            }} catch(err) {{
+                console.error("Error canviant pestanya manteniment:", err);
+            }}
+        }})();
+        </script>
+        """, height=0, width=0)
 
     # =========================================================================
     # PESTANYA 1: REGISTRE DE MANTENIMENT

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "15/11/2026 18:29:02",
+  "updated_at": "15/11/2026 18:55:53",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -166,16 +166,16 @@
         "Editor gràfic de plànol col·lapsat per defecte (expanded=False)"
       ],
       "verified_hashes": {
-        "modules/manteniment.py": "c304f48d849ba7541b93eb5783f1be499de5912d41fe8658ff6dbabfff6313d7",
-        "modules/projectes_ui.py": "81a5e5c253405eb511eb8ebcdc1df07eeb19cd72582849dcfd642a6c4195aaea",
+        "modules/manteniment.py": "fbedc9033c332877fecd4a39580056116a0382918d69e73c62b61efa6c6c2c49",
+        "modules/projectes_ui.py": "0999935ab678cacecc121571d422a6a580d2ecef994017f3044f18ff260e3612",
         "modules/canvas_planol.py": "11c7c308d1ddba75ebc9f1b1c4af3482ccaa4414d9d080addc6130d43959dbfd",
         "core/manteniment_manager.py": "cfdffd4b106dc41c8bec5a393b3fae00f2e9dd08d688ad19a5facd732619c2b4",
         "core/projectes_manager.py": "1d88e10e20d80972db1b23daf1944759689abb99802b8c99b3086acc0395a276",
         "core/ai_projectes.py": "a8a53a26e1a16021b20b3947590f356cfb5b90201590375e27419295b8cc49b6",
         "modules/canvas_electric.py": "2104e2ed36c179930b18563f054e582731fb45a70162c31c3c9599dcf7aca789"
       },
-      "verified_at": "15/11/2026 17:38:14",
-      "verified_commit": "123a30e",
+      "verified_at": "15/11/2026 18:55:12",
+      "verified_commit": "1030f71",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -221,13 +221,13 @@
         "Canvis aquí afecten els mòduls Blindats: requereixen còpia i proves transversals"
       ],
       "verified_hashes": {
-        "app.py": "3943e32724479139de7884962feec9e47ab5a72592a3e5522db1db83c02ac00c",
+        "app.py": "8d300d5b684c82d22485b7744eeab095be8c17843b70f282dc24d97cba3c33a7",
         "core/db.py": "537544db9d34c1941cfa3c21d2a1b89693bcd18bf420361f2e9a9a9084789747",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
         "core/alerts.py": "ed17eb13d2e0bfbebb21f6e7f9c39cf32c0e56dcecc0a30611f87b94bf0e6369"
       },
-      "verified_at": "15/11/2026 18:29:01",
-      "verified_commit": "3ba5796",
+      "verified_at": "15/11/2026 18:55:53",
+      "verified_commit": "1030f71",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,38 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "15/11/2026 18:55:53",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Sincronitzacio alertes i neteja estats de navegacio a app.py)",
+      "user": "admin",
+      "git_head": "1030f71"
+    },
+    {
+      "timestamp": "15/11/2026 18:55:12",
+      "action": "SEAL",
+      "module": "manteniment",
+      "detail": "Versió verificada i segellada (Activacio immediata de pestanya projectes i subpestanya fases des d alertes)",
+      "user": "admin",
+      "git_head": "1030f71"
+    },
+    {
+      "timestamp": "15/11/2026 18:50:31",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 16/11/2026 18:50:31. Motiu: Sincronitzacio alertes i neteja estats de navegacio",
+      "user": "admin",
+      "git_head": "1030f71"
+    },
+    {
+      "timestamp": "15/11/2026 18:50:05",
+      "action": "UNLOCK",
+      "module": "manteniment",
+      "detail": "Autoritzat fins 16/11/2026 18:50:05. Motiu: Navegacio directa a projectes i fases des d alertes",
+      "user": "admin",
+      "git_head": "1030f71"
+    },
     {
       "timestamp": "15/11/2026 18:29:01",
       "action": "SEAL",

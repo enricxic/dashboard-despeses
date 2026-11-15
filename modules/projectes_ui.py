@@ -278,8 +278,7 @@ def render_projectes_tab(family_names: List[str] = None):
     estat_options = ["En curs", "Pendent", "Finalitzat", "Tots"]
 
     query_proj_param = st.query_params.get("proj_id") or st.session_state.get("pending_select_projecte_actiu")
-    if query_proj_param and st.session_state.get("_last_focused_proj_id") != str(query_proj_param):
-        st.session_state["_last_focused_proj_id"] = str(query_proj_param)
+    if query_proj_param:
         for p in projectes:
             if str(p.get("id")) == str(query_proj_param):
                 p_norm = _normalize_project_estat(p.get("estat"))
@@ -404,23 +403,103 @@ def render_projectes_tab(family_names: List[str] = None):
         "🤖 Assistent IA d'Obra"
     ]
     subtab_mapping = {
-        "planol": "📐 Editors Gràfics & Fotos",
-        "editors": "📐 Editors Gràfics & Fotos",
-        "materials": "🧱 Materials & Despeses",
-        "despeses": "🧱 Materials & Despeses",
-        "fases": "⏱️ Fases d'Execució",
-        "execucio": "⏱️ Fases d'Execució",
-        "ia": "🤖 Assistent IA d'Obra",
-        "assistent": "🤖 Assistent IA d'Obra"
+        "planol": (0, "editors", "📐 Editors Gràfics & Fotos"),
+        "editors": (0, "editors", "📐 Editors Gràfics & Fotos"),
+        "materials": (1, "materials", "🧱 Materials & Despeses"),
+        "despeses": (1, "materials", "🧱 Materials & Despeses"),
+        "fases": (2, "fases", "⏱️ Fases d'Execució"),
+        "execucio": (2, "fases", "⏱️ Fases d'Execució"),
+        "ia": (3, "assistent", "🤖 Assistent IA d'Obra"),
+        "assistent": (3, "assistent", "🤖 Assistent IA d'Obra")
     }
-    subtab_param = st.query_params.get("subtab") or st.session_state.pop("nav_target_subtab", None)
+    subtab_param = st.query_params.get("subtab") or st.session_state.get("active_nav_subtab") or st.session_state.pop("nav_target_subtab", None)
     if not subtab_param and (st.query_params.get("fase_id") or st.session_state.get("nav_target_fase_id")):
         subtab_param = "fases"
-    default_subtab = subtab_mapping.get(subtab_param)
-    if default_subtab not in subtabs_list:
-        default_subtab = "⏱️ Fases d'Execució" if (st.query_params.get("fase_id") or st.session_state.get("nav_target_fase_id")) else None
+    
+    target_subtab_info = subtab_mapping.get(subtab_param)
+    default_subtab = target_subtab_info[2] if target_subtab_info else (
+        "⏱️ Fases d'Execució" if (st.query_params.get("fase_id") or st.session_state.get("nav_target_fase_id")) else None
+    )
 
     subtabs = st.tabs(subtabs_list, default=default_subtab, key=f"subtabs_proj_{project_id}_{subtab_param or 'main'}")
+
+    if target_subtab_info:
+        target_subtab_idx, target_subtab_text, _ = target_subtab_info
+        import streamlit.components.v1 as components
+        import time
+        sub_script_id = f"subtab_switch_proj_{subtab_param}_{int(time.time() * 1000)}"
+        components.html(f"""
+        <script id="{sub_script_id}">
+        (function() {{
+            try {{
+                const doc = window.parent.document;
+                if (!doc) return;
+
+                const targetText = "{target_subtab_text.lower()}";
+                let tabFound = false;
+
+                function clickTab(el) {{
+                    try {{
+                        el.focus();
+                        el.dispatchEvent(new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window.parent }}));
+                        el.dispatchEvent(new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window.parent }}));
+                        el.click();
+                    }} catch(e) {{
+                        el.click();
+                    }}
+                }}
+
+                function trySelect() {{
+                    if (tabFound) return true;
+                    const tabs = Array.from(doc.querySelectorAll(
+                        '[data-testid="stTabs"] button, div[role="tablist"] button, button[data-baseweb="tab"], button[role="tab"], [data-testid="stTab"]'
+                    ));
+
+                    if (tabs && tabs.length > 0) {{
+                        for (let i = 0; i < tabs.length; i++) {{
+                            const btn = tabs[i];
+                            const txt = (btn.innerText || btn.textContent || "").toLowerCase();
+                            if (targetText && txt.includes(targetText)) {{
+                                clickTab(btn);
+                                tabFound = true;
+                                return true;
+                            }}
+                        }}
+                    }}
+                    return false;
+                }}
+
+                if (trySelect()) return;
+
+                const observer = new MutationObserver(() => {{
+                    if (trySelect()) {{
+                        observer.disconnect();
+                    }}
+                }});
+                if (doc.body) {{
+                    observer.observe(doc.body, {{ childList: true, subtree: true }});
+                }}
+
+                let attempts = 0;
+                const interval = setInterval(() => {{
+                    attempts++;
+                    if (trySelect() || attempts >= 75) {{
+                        clearInterval(interval);
+                        observer.disconnect();
+                    }}
+                }}, 60);
+
+                setTimeout(() => {{
+                    clearInterval(interval);
+                    observer.disconnect();
+                }}, 4500);
+
+            }} catch(err) {{
+                console.error("Error canviant subpestanya projecte:", err);
+            }}
+        }})();
+        </script>
+        """, height=0, width=0)
 
     with subtabs[0]:
         render_planol_tab(projecte)

@@ -318,6 +318,7 @@ if st.session_state.get("nav_target_mod"):
     target_tab = st.session_state.pop("nav_target_tab", None)
     if target_tab:
         st.query_params["tab"] = target_tab
+        st.session_state["active_nav_tab"] = target_tab
     elif "tab" in st.query_params:
         try:
             del st.query_params["tab"]
@@ -326,6 +327,7 @@ if st.session_state.get("nav_target_mod"):
     target_subtab = st.session_state.pop("nav_target_subtab", None)
     if target_subtab:
         st.query_params["subtab"] = target_subtab
+        st.session_state["active_nav_subtab"] = target_subtab
     elif "subtab" in st.query_params and not st.query_params.get("fase_id"):
         try:
             del st.query_params["subtab"]
@@ -506,17 +508,22 @@ if st.session_state.get("show_notifications"):
                                 st.session_state["nav_target_mod"] = t_mod
                                 if t_tab:
                                     st.session_state["nav_target_tab"] = t_tab
+                                    st.session_state["active_nav_tab"] = t_tab
+                                    st.query_params["tab"] = str(t_tab)
                                 t_subtab = al.get("subtab")
                                 if not t_subtab and t_fase_id:
                                     t_subtab = "fases"
                                 if t_subtab:
                                     st.session_state["nav_target_subtab"] = t_subtab
+                                    st.session_state["active_nav_subtab"] = t_subtab
                                     st.query_params["subtab"] = str(t_subtab)
                                 if t_proj_id:
                                     st.session_state["pending_select_projecte_actiu"] = str(t_proj_id)
                                     st.session_state["select_projecte_actiu"] = str(t_proj_id)
+                                    st.session_state.pop("_last_focused_proj_id", None)
                                     st.query_params["proj_id"] = str(t_proj_id)
                                 if t_task_id:
+                                    st.session_state.pop("_last_focused_task_id", None)
                                     st.query_params["task_id"] = str(t_task_id)
                                 if t_fase_id:
                                     st.query_params["fase_id"] = str(t_fase_id)
