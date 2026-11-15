@@ -744,11 +744,12 @@ def render():
         if not sel_day_evs:
             st.info(f"No hi ha cap esdeveniment agendat per a {w_name}, **{sel_day.strftime('%d/%m/%Y')}**.")
         else:
-            for ev in sel_day_evs:
+            for idx_d, ev in enumerate(sel_day_evs):
                 cat_info = cm.CATEGORIES.get(ev.get("category", "Altres"), cm.CATEGORIES["Altres"])
                 time_disp = "Tot el dia" if ev.get("all_day", False) else (ev.get("start_time", "") or "Sense hora")
                 loc_disp = f" · 📍 {ev.get('location')}" if ev.get("location") else ""
-                ev_id = ev.get("id", f"ev_{sel_day_str}_{ev.get('title')}")
+                raw_ev_id = ev.get("id", f"ev_{sel_day_str}_{ev.get('title')}")
+                ev_id = f"{raw_ev_id}_{sel_day_str}_{idx_d}"
                 ev_status = ev.get("status", "pending")
                 
                 title_prefix = ""
@@ -782,23 +783,23 @@ def render():
                             if ev_status == "done":
                                 st.markdown('<div class="cal-action-btn cal-btn-done"></div>', unsafe_allow_html=True)
                                 if st.button("✅", key=f"btn_chk_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
+                                    cm.set_event_status(ev.get("id", raw_ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                             else:
                                 st.markdown('<div class="cal-action-btn cal-btn-pending-chk"></div>', unsafe_allow_html=True)
                                 if st.button("✔️", key=f"btn_chk_{ev_id}", help="Marcar com a fet / completat (verd)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "done", uid=ev.get("uid"), title=ev.get("title"))
+                                    cm.set_event_status(ev.get("id", raw_ev_id), ev.get("start_date"), "done", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                         with b_cross:
                             if ev_status == "cancelled":
                                 st.markdown('<div class="cal-action-btn cal-btn-cancelled"></div>', unsafe_allow_html=True)
                                 if st.button("❌", key=f"btn_cross_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
+                                    cm.set_event_status(ev.get("id", raw_ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                             else:
                                 st.markdown('<div class="cal-action-btn cal-btn-pending-cross"></div>', unsafe_allow_html=True)
                                 if st.button("✖️", key=f"btn_cross_{ev_id}", help="Marcar com a no fet / cancel·lat (vermell)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "cancelled", uid=ev.get("uid"), title=ev.get("title"))
+                                    cm.set_event_status(ev.get("id", raw_ev_id), ev.get("start_date"), "cancelled", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                         with b_edit:
                             st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
@@ -851,7 +852,7 @@ def render():
         if not sorted_events:
             st.info(f"No hi ha cap esdeveniment registrat per a {month_name} de {cur_year} amb el filtre seleccionat.")
         else:
-            for ev in sorted_events:
+            for idx, ev in enumerate(sorted_events):
                 d_str = ev.get("start_date", "")
                 try:
                     ev_date_obj = datetime.strptime(d_str, "%Y-%m-%d").date()
@@ -912,28 +913,29 @@ def render():
                             st.markdown(f"<div style='font-size:0.8rem; color:{text_secondary}; margin-top:4px;'>{ev.get('description')}</div>", unsafe_allow_html=True)
                     with c_ag_btns:
                         b_chk, b_cross, b_edit, b_del, b_gcal = st.columns([1, 1, 1, 1, 1.4])
-                        ev_id = ev.get("id", f"ev_{d_str}_{ev.get('title')}")
+                        raw_ev_id = ev.get("id", f"ev_{d_str}_{ev.get('title')}")
+                        ev_id = f"{raw_ev_id}_{d_str}_{idx}"
                         with b_chk:
                             if ev_status == "done":
                                 st.markdown('<div class="cal-action-btn cal-btn-done"></div>', unsafe_allow_html=True)
                                 if st.button("✅", key=f"btn_chk_list_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
+                                    cm.set_event_status(ev.get("id", raw_ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                             else:
                                 st.markdown('<div class="cal-action-btn cal-btn-pending-chk"></div>', unsafe_allow_html=True)
                                 if st.button("✔️", key=f"btn_chk_list_{ev_id}", help="Marcar com a fet / completat (verd)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "done", uid=ev.get("uid"), title=ev.get("title"))
+                                    cm.set_event_status(ev.get("id", raw_ev_id), ev.get("start_date"), "done", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                         with b_cross:
                             if ev_status == "cancelled":
                                 st.markdown('<div class="cal-action-btn cal-btn-cancelled"></div>', unsafe_allow_html=True)
                                 if st.button("❌", key=f"btn_cross_list_{ev_id}", help="Desmarcar (tornar a pendent)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
+                                    cm.set_event_status(ev.get("id", raw_ev_id), ev.get("start_date"), "pending", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                             else:
                                 st.markdown('<div class="cal-action-btn cal-btn-pending-cross"></div>', unsafe_allow_html=True)
                                 if st.button("✖️", key=f"btn_cross_list_{ev_id}", help="Marcar com a no fet / cancel·lat (vermell)", use_container_width=True):
-                                    cm.set_event_status(ev.get("id", ev_id), ev.get("start_date"), "cancelled", uid=ev.get("uid"), title=ev.get("title"))
+                                    cm.set_event_status(ev.get("id", raw_ev_id), ev.get("start_date"), "cancelled", uid=ev.get("uid"), title=ev.get("title"))
                                     st.rerun()
                         with b_edit:
                             st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
