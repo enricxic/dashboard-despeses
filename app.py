@@ -309,16 +309,6 @@ _auth_sfx_init = f"&auth={_auth_tok_init}" if _auth_tok_init else ""
 _off_sfx_init = "&offline=1" if st.session_state.get("is_offline") else ""
 _url_sfx_init = f"{_auth_sfx_init}{_off_sfx_init}"
 
-if callable(render_alerts_dropdown_html):
-    alerts_html = render_alerts_dropdown_html(st.session_state["global_alerts_list"], _url_sfx_init)
-else:
-    alerts_html = ""
-    for al in st.session_state.get("global_alerts_list", []):
-        color = "#fecaca" if al.get('type') == 'error' else "#fef08a"
-        alerts_html += f'<div style="padding: 8px; margin-bottom: 5px; background: {color}; color: #1e293b; border-radius: 4px; font-size: 0.8rem; line-height: 1.2;"><strong>{al.get("icon", "🔔")} {al.get("title", "")}</strong><br>{al.get("message", "")}</div>'
-    if not alerts_html:
-        alerts_html = '<div style="padding: 10px; color: #94a3b8; font-size: 0.9rem; text-align: center;">Sense alertes</div>'
-
 # Navegació interna programàtica prioritària (evita rebots per query params desactualitzats al client)
 if st.session_state.get("nav_target_mod"):
     target_mod = st.session_state.pop("nav_target_mod")

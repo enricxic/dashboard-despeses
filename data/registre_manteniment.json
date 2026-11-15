@@ -1,1 +1,74 @@
-[]
+[
+  {
+    "feina": "Canvi llençols",
+    "tipus": "Feina casa",
+    "alertaA": [
+      "Enric"
+    ],
+    "dataAlta": "19/10/2026",
+    "diesAvis": 1,
+    "serie_id": "ser_1792588321",
+    "subtasques": [],
+    "acompliment": "Sí",
+    "recurrencia": "Cada 2 setmanes (quinzenal) (1/5)",
+    "observacions": "",
+    "idManteniment": 1,
+    "dataManteniment": "31/10/2026",
+    "calendar_event_id": 2,
+    "subtasques_template": []
+  },
+  {
+    "feina": "Canvi llençols",
+    "tipus": "Feina casa",
+    "alertaA": [
+      "Enric"
+    ],
+    "dataAlta": "21/10/2026",
+    "diesAvis": 1,
+    "serie_id": "ser_1792588321",
+    "subtasques": [],
+    "acompliment": "Sí",
+    "recurrencia": "Cada 2 setmanes (quinzenal) (2/5)",
+    "observacions": "",
+    "idManteniment": 2,
+    "dataManteniment": "14/11/2026",
+    "calendar_event_id": 4,
+    "subtasques_template": []
+  },
+  {
+    "feina": "Canvi llençols",
+    "tipus": "Feina casa",
+    "alertaA": [
+      "Enric"
+    ],
+    "dataAlta": "21/10/2026",
+    "diesAvis": 1,
+    "serie_id": "ser_1792588321",
+    "subtasques": [],
+    "acompliment": "No",
+    "recurrencia": "Cada 2 setmanes (quinzenal) (3/5)",
+    "observacions": "",
+    "idManteniment": 3,
+    "dataManteniment": "28/11/2026",
+    "calendar_event_id": 5,
+    "subtasques_template": []
+  },
+  {
+    "feina": "Canvi llençols",
+    "tipus": "Feina casa",
+    "alertaA": [
+      "Enric"
+    ],
+    "dataAlta": "21/10/2026",
+    "diesAvis": 1,
+    "serie_id": "ser_1792588321",
+    "subtasques": [],
+    "acompliment": "No",
+    "recurrencia": "Cada 2 setmanes (quinzenal) (4/5)",
+    "observacions": "",
+    "idManteniment": 4,
+    "dataManteniment": "12/12/2026",
+    "calendar_event_id": 6,
+    "subtasques_template": []
+  }
+]

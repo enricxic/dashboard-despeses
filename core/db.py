@@ -486,6 +486,12 @@ def _process_tables(fetched):
     return out
 
 @st.cache_data(ttl=600, show_spinner=False)
+def _fetch_single_table_cached(table_name: str):
+    name, df = fetch_table_fast(table_name)
+    processed = _process_tables({name: df})
+    return processed.get(name, pd.DataFrame())
+
+@st.cache_data(ttl=600, show_spinner=False)
 def _fetch_fast_tables():
     from concurrent.futures import ThreadPoolExecutor
     tables = ['despeses', 'compresSuper']
@@ -508,22 +514,17 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         fetched.update(_fetch_fast_tables())
         fetched.update(_fetch_slow_tables())
     else:
-        fast_needed = [t for t in tables_to_load if t in ['despeses', 'compresSuper']]
-        slow_needed = [t for t in tables_to_load if t not in ['despeses', 'compresSuper']]
-        
-        if fast_needed:
-            # Utilitzem directament la memòria cau per no bloquejar.
-            # _fetch_fast_tables retorna totes dues taules, només agafem les sol·licitades.
-            fast_cached = _fetch_fast_tables()
-            for t in fast_needed:
-                if t in fast_cached:
-                    fetched[t] = fast_cached[t]
-                
-        if slow_needed:
-            slow_cached = _fetch_slow_tables()
-            for t in slow_needed:
-                if t in slow_cached:
-                    fetched[t] = slow_cached[t]
+        # Carregar ÚNICAMENT les taules demanades, evitant descarregar les 8 taules lentes
+        # quan només es demanen taules específiques com 'despeses' o 'kmCotxe'
+        from concurrent.futures import ThreadPoolExecutor
+        needed = list(tables_to_load)
+        if len(needed) == 1:
+            t = needed[0]
+            fetched[t] = _fetch_single_table_cached(t)
+        else:
+            with ThreadPoolExecutor(max_workers=min(len(needed), 4)) as executor:
+                results = dict(zip(needed, executor.map(_fetch_single_table_cached, needed)))
+                fetched.update(results)
 
     df_desp = fetched.get('despeses', pd.DataFrame())
     df_ing = fetched.get('ingressos', pd.DataFrame())
@@ -540,6 +541,7 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
 
 # Monkey-patch clear method so existing code calling load_dashboard_data.clear() still works
 def _clear_dashboard_cache():
+    _fetch_single_table_cached.clear()
     _fetch_fast_tables.clear()
     _fetch_slow_tables.clear()
 load_dashboard_data.clear = _clear_dashboard_cache

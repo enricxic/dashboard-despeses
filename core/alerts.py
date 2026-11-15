@@ -6,6 +6,9 @@ import json
 import os
 from core.db import load_dashboard_data
 
+_IN_MEMORY_ALERTS = None
+_LAST_ALERTS_TS = 0.0
+
 def load_alerts_config():
     config_path = os.path.join(os.path.dirname(__file__), '..', 'alerts_config.json')
     try:
@@ -19,15 +22,20 @@ def load_alerts_config():
             }
         }
 
-def get_global_alerts():
+def get_global_alerts(force_reload: bool = False):
+    global _IN_MEMORY_ALERTS, _LAST_ALERTS_TS
+    import time
+    now = time.time()
+    if not force_reload and _IN_MEMORY_ALERTS is not None and (now - _LAST_ALERTS_TS) < 60:
+        return copy.deepcopy(_IN_MEMORY_ALERTS)
+
     alerts = []
     config = load_alerts_config()
     
     try:
-        # Prioritzar DataFrames ja carregats a la sessi? activa per evitar consultes innecess?ries
+        # Prioritzar DataFrames ja carregats a la sessió activa per evitar consultes innecessàries
         df_desp = st.session_state.get("df_desp")
         df_km = st.session_state.get("df_km")
-        df_limits = st.session_state.get("df_limits")
         df_super = st.session_state.get("df_super")
         
         needed_tables = []
@@ -35,21 +43,16 @@ def get_global_alerts():
             needed_tables.append('despeses')
         if df_km is None or (isinstance(df_km, pd.DataFrame) and df_km.empty):
             needed_tables.append('kmCotxe')
-        if df_limits is None or (isinstance(df_limits, pd.DataFrame) and df_limits.empty):
-            needed_tables.append('limitsDespeses')
         if needed_tables:
             data = load_dashboard_data(tables_to_load=tuple(needed_tables))
             if data and len(data) >= 10:
-                d_desp, _ing, _sup, _gas, d_km, _hip, _est, d_limits, _pag, _cart = data
+                d_desp, _ing, _sup, _gas, d_km, _hip, _est, _limits, _pag, _cart = data
                 if (df_desp is None or df_desp.empty) and d_desp is not None and not d_desp.empty:
                     df_desp = d_desp
                     st.session_state["df_desp"] = d_desp
                 if (df_km is None or df_km.empty) and d_km is not None and not d_km.empty:
                     df_km = d_km
                     st.session_state["df_km"] = d_km
-                if (df_limits is None or df_limits.empty) and d_limits is not None and not d_limits.empty:
-                    df_limits = d_limits
-                    st.session_state["df_limits"] = d_limits
             
         # 1. Alerta de canvi d'oli (Cotxe)
         if df_km is not None and not df_km.empty:
@@ -395,6 +398,8 @@ def get_global_alerts():
     except Exception as e:
         print(f"Error generant alertes globals: {e}")
         
+    _IN_MEMORY_ALERTS = copy.deepcopy(alerts)
+    _LAST_ALERTS_TS = time.time()
     return alerts
 
 
@@ -494,6 +499,9 @@ def get_projectes_fases_alerts(avui=None):
     return proj_alerts
 
 def _clear_alerts_cache():
+    global _IN_MEMORY_ALERTS, _LAST_ALERTS_TS
+    _IN_MEMORY_ALERTS = None
+    _LAST_ALERTS_TS = 0.0
     try:
         from core.db import load_dashboard_data
         load_dashboard_data.clear()

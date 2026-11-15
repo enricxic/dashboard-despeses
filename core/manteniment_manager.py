@@ -299,6 +299,23 @@ def load_registre_manteniment(force_reload: bool = False) -> list:
         if _IN_MEMORY_MANTENIMENT is not None and (time.time() - _LAST_MANTENIMENT_FETCH_TS) < 60:
             return _IN_MEMORY_MANTENIMENT
 
+    # Arrencada inicial ràpida (0.01s) des del disc local per no congelar el login ni la pantalla d'inici
+    if _IN_MEMORY_MANTENIMENT is None and os.path.exists(REGISTRE_FILE) and not force_reload:
+        try:
+            with open(REGISTRE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    _IN_MEMORY_MANTENIMENT = data
+                    _LAST_MANTENIMENT_FETCH_TS = time.time()
+                    try:
+                        if hasattr(st, "session_state"):
+                            st.session_state["cached_registre_manteniment"] = data
+                    except Exception:
+                        pass
+                    return data
+        except Exception:
+            pass
+
     # 1. Intentar carregar de Supabase
     try:
         from core.db import get_supabase_client

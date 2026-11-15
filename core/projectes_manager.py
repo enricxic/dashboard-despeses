@@ -24,6 +24,7 @@ PROVEIDORS_FILE = os.path.join(PROJECT_ROOT, "data", "proveidors_projectes.json"
 CONFIG_ID_PROJECTES = 11
 
 _IN_MEMORY_PROJECTES: Optional[List[Dict[str, Any]]] = None
+_LAST_PROJECTES_FETCH_TS: float = 0.0
 
 PROVEIDORS_DEFECTE = [
     "Obramat",
@@ -105,7 +106,8 @@ def _is_valid_project(p: Any) -> bool:
 
 def load_projectes(force_reload: bool = False) -> List[Dict[str, Any]]:
     """Carrega la llista de projectes prioritzant la sessió actual i Supabase (font de veritat al núvol), amb fallback local."""
-    global _IN_MEMORY_PROJECTES
+    global _IN_MEMORY_PROJECTES, _LAST_PROJECTES_FETCH_TS
+    import time
 
     # 1. Comprovar si ja s'han carregat els projectes en aquesta sessió de Streamlit
     if not force_reload:
@@ -122,7 +124,31 @@ def load_projectes(force_reload: bool = False) -> List[Dict[str, Any]]:
         except Exception:
             pass
 
-    # 2. Consultar Supabase directament (font de veritat persistent entre reinicis, PC i mòbil/núvol)
+        if _IN_MEMORY_PROJECTES is not None and (time.time() - _LAST_PROJECTES_FETCH_TS) < 60:
+            return _IN_MEMORY_PROJECTES
+
+    # 2. Si _IN_MEMORY_PROJECTES és buit (arrencada inicial en fred o nou procés), carregar del fitxer local
+    # per respondre immediatament (0.04s) sense bloquejar l'inici de l'app ni el login
+    if _IN_MEMORY_PROJECTES is None and os.path.exists(PROJECTES_FILE):
+        try:
+            with open(PROJECTES_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    valid = [p for p in data if _is_valid_project(p)]
+                    _IN_MEMORY_PROJECTES = valid
+                    _LAST_PROJECTES_FETCH_TS = time.time()
+                    try:
+                        import streamlit as st
+                        if hasattr(st, "session_state"):
+                            st.session_state["cached_projectes_list"] = valid
+                    except Exception:
+                        pass
+                    if not force_reload:
+                        return valid
+        except Exception:
+            pass
+
+    # 3. Consultar Supabase directament (font de veritat persistent entre reinicis, PC i mòbil/núvol)
     try:
         from core.db import get_supabase_client
         role = "guest"
@@ -139,6 +165,7 @@ def load_projectes(force_reload: bool = False) -> List[Dict[str, Any]]:
             if isinstance(cfg, list):
                 valid_projs = [p for p in cfg if _is_valid_project(p)]
                 _IN_MEMORY_PROJECTES = valid_projs
+                _LAST_PROJECTES_FETCH_TS = time.time()
                 _save_local(valid_projs)
                 try:
                     import streamlit as st
@@ -151,7 +178,7 @@ def load_projectes(force_reload: bool = False) -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"⚠️ [ProjectesManager] Error carregant de Supabase, utilitzant fallback local: {e}")
 
-    # 3. Fallback: memòria de procés o fitxer JSON local (només si no hi ha connexió amb el núvol)
+    # 4. Fallback: memòria de procés o fitxer JSON local
     if _IN_MEMORY_PROJECTES is not None and len(_IN_MEMORY_PROJECTES) > 0:
         return _IN_MEMORY_PROJECTES
 
@@ -162,6 +189,7 @@ def load_projectes(force_reload: bool = False) -> List[Dict[str, Any]]:
                 if isinstance(data, list):
                     valid = [p for p in data if _is_valid_project(p)]
                     _IN_MEMORY_PROJECTES = valid
+                    _LAST_PROJECTES_FETCH_TS = time.time()
                     try:
                         import streamlit as st
                         if hasattr(st, "session_state"):
@@ -176,11 +204,13 @@ def load_projectes(force_reload: bool = False) -> List[Dict[str, Any]]:
 
 def save_projectes(projectes: List[Dict[str, Any]]) -> bool:
     """Desa la llista de projectes de manera síncrona a Supabase (núvol) i actualitza la sessió i còpia local."""
-    global _IN_MEMORY_PROJECTES
+    global _IN_MEMORY_PROJECTES, _LAST_PROJECTES_FETCH_TS
+    import time
     valid_projs = [p for p in projectes if _is_valid_project(p)]
     
     # 1. Actualitzar immediatament la memòria de sessió
     _IN_MEMORY_PROJECTES = valid_projs
+    _LAST_PROJECTES_FETCH_TS = time.time()
     try:
         import streamlit as st
         if hasattr(st, "session_state"):
