@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "15/11/2026 17:38:14",
+  "updated_at": "15/11/2026 18:00:06",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -222,12 +222,12 @@
       ],
       "verified_hashes": {
         "app.py": "3943e32724479139de7884962feec9e47ab5a72592a3e5522db1db83c02ac00c",
-        "core/db.py": "0bb03a5b2c05f3536869a9ed82d48330df995424ef788f7ec8b904662cff35d7",
+        "core/db.py": "537544db9d34c1941cfa3c21d2a1b89693bcd18bf420361f2e9a9a9084789747",
         "core/auth.py": "96ce03cb1f227aa8544afe45a0061a010f611deccdce8adfa30351f687b1aeb7",
         "core/alerts.py": "f98bd3284353e5165fb7fcfd0f39dce2dc7275d9232c0140151ebdb63534c7e0"
       },
-      "verified_at": "15/11/2026 17:37:45",
-      "verified_commit": "123a30e",
+      "verified_at": "15/11/2026 18:00:06",
+      "verified_commit": "a77c277",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "15/11/2026 18:00:06",
+      "action": "SEAL",
+      "module": "core_compartit",
+      "detail": "Versió verificada i segellada (Fix ValueError max_workers must be greater than 0 quan tables_to_load es buit)",
+      "user": "admin",
+      "git_head": "a77c277"
+    },
+    {
+      "timestamp": "15/11/2026 17:57:06",
+      "action": "UNLOCK",
+      "module": "core_compartit",
+      "detail": "Autoritzat fins 16/11/2026 17:57:06. Motiu: Corregir max_workers a load_dashboard_data quan needed es buit",
+      "user": "admin",
+      "git_head": "a77c277"
+    },
     {
       "timestamp": "15/11/2026 17:38:14",
       "action": "SEAL",

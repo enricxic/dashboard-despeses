@@ -517,8 +517,10 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
         # Carregar ÚNICAMENT les taules demanades, evitant descarregar les 8 taules lentes
         # quan només es demanen taules específiques com 'despeses' o 'kmCotxe'
         from concurrent.futures import ThreadPoolExecutor
-        needed = list(tables_to_load)
-        if len(needed) == 1:
+        needed = [t for t in tables_to_load if t]
+        if len(needed) == 0:
+            pass
+        elif len(needed) == 1:
             t = needed[0]
             fetched[t] = _fetch_single_table_cached(t)
         else:
