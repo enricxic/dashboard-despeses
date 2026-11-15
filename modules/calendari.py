@@ -65,6 +65,7 @@ def render():
             if clicked_date.month != st.session_state.cal_month or clicked_date.year != st.session_state.cal_year:
                 st.session_state.cal_month = clicked_date.month
                 st.session_state.cal_year = clicked_date.year
+            del st.query_params["cal_day"]
         except Exception:
             pass
 
@@ -384,13 +385,8 @@ def render():
                 st.rerun()
         with c_b2:
             if st.button("🔄 Sincro", use_container_width=True, key="btn_sync_feeds", help="Actualitzar calendaris de Google"):
-                import os
-                if os.path.exists("data/feeds_cache.json"):
-                    try:
-                        os.remove("data/feeds_cache.json")
-                    except Exception:
-                        pass
-                st.success("✅ Sincronitzat!")
+                cm.clear_feeds_cache()
+                st.success("✅ Memòria cau alliberada i calendaris sincronitzats!")
                 st.rerun()
 
     title_cal_html = f"""
@@ -816,7 +812,7 @@ def render():
                         with b_gcal:
                             st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             g_url = cm.generate_google_calendar_url(ev)
-                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none;"><button style="width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; display:flex; align-items:center; justify-content:center; white-space:nowrap;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
+                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; white-space:nowrap; box-sizing:border-box;" title="Obrir a Google Calendar">📅 GCal</a>', unsafe_allow_html=True)
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:6px 0;'></div>", unsafe_allow_html=True)
 
     # =========================================================================
@@ -952,7 +948,7 @@ def render():
                         with b_gcal:
                             st.markdown('<div class="cal-action-btn"></div>', unsafe_allow_html=True)
                             g_url = cm.generate_google_calendar_url(ev)
-                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none;"><button style="width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; display:flex; align-items:center; justify-content:center; white-space:nowrap;" title="Obrir a Google Calendar">📅 GCal</button></a>', unsafe_allow_html=True)
+                            st.markdown(f'<a href="{g_url}" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:100%; border-radius:8px; border:1px solid #4285F4; background:#4285F4; color:#fff; font-size:0.8rem; font-weight:700; height:38px; padding:0 4px; cursor:pointer; white-space:nowrap; box-sizing:border-box;" title="Obrir a Google Calendar">📅 GCal</a>', unsafe_allow_html=True)
                     st.markdown(f"<div style='border-bottom:1px solid {border_color}; margin:10px 0;'></div>", unsafe_allow_html=True)
                     
     # =========================================================================

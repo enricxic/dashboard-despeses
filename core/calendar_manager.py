@@ -344,6 +344,24 @@ def parse_ics_content(ics_text, source_name="Google Calendar", default_member="T
                     
     return events
 
+def clear_feeds_cache():
+    """Clears both local and cloud cache for Google Calendar feeds."""
+    ensure_data_dir()
+    if os.path.exists(CACHE_FEEDS_FILE):
+        try:
+            os.remove(CACHE_FEEDS_FILE)
+        except Exception:
+            pass
+    try:
+        from core.db import get_supabase_client
+        supabase = get_supabase_client("admin")
+        supabase.table("app_config").upsert({
+            "id": 4,
+            "config_json": {}
+        }).execute()
+    except Exception as e:
+        print("Error clearing feeds cache in Supabase:", e)
+
 def fetch_feed_cached(feed_url, member_name="Enric", member_color="#407faf", max_age_seconds=600):
     """Fetches iCal feed with caching."""
     cache = {}
@@ -575,6 +593,24 @@ def expand_recurring_events(events, target_year, target_month=None):
                 curr = first_d
                 while curr <= last_d:
                     if curr.weekday() == ev_date.weekday() and curr >= ev_date:
+                        if not (until_date and curr > until_date):
+                            ev_copy = dict(ev)
+                            ev_copy["start_date"] = curr.strftime("%Y-%m-%d")
+                            ev_copy["is_recurrence_instance"] = True
+                            expanded.append(ev_copy)
+                    curr += timedelta(days=1)
+            else:
+                expanded.append(ev)
+                
+        elif recurrence == "Diari":
+            if target_month:
+                first_d = date(target_year, target_month, 1)
+                last_d = date(target_year, target_month, 28) + timedelta(days=4)
+                last_d = last_d.replace(day=1) - timedelta(days=1)
+                
+                curr = first_d
+                while curr <= last_d:
+                    if curr >= ev_date:
                         if not (until_date and curr > until_date):
                             ev_copy = dict(ev)
                             ev_copy["start_date"] = curr.strftime("%Y-%m-%d")
