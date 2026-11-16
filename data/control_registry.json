@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 20:33:28",
+  "updated_at": "16/11/2026 21:56:41",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,10 +18,10 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "f9462e44f8056fdcaa6fb1e8e8004c3da1a43f9e0c8ebc5841fb872d7eb271be"
+        "modules/compres.py": "631cd1f76cd8680200b359b8f5a663f77d5869134e0e4bf9063442d90dffc451"
       },
-      "verified_at": "16/11/2026 20:33:28",
-      "verified_commit": "e157fa3",
+      "verified_at": "16/11/2026 21:56:41",
+      "verified_commit": "4c7cff4",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 21:56:41",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Ignorar anotacions a ma i conciliar total tiquet)",
+      "user": "admin",
+      "git_head": "4c7cff4"
+    },
+    {
+      "timestamp": "16/11/2026 20:48:58",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 17/11/2026 20:48:58. Motiu: Alinear suma d'articles amb el total del tiquet",
+      "user": "admin",
+      "git_head": "c6737c1"
+    },
     {
       "timestamp": "16/11/2026 20:33:28",
       "action": "SEAL",
