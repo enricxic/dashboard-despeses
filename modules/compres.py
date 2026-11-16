@@ -1752,6 +1752,13 @@ def render_compres_super_interface():
     if "ticket_msg_error" in st.session_state:
         st.error(st.session_state["ticket_msg_error"])
         del st.session_state["ticket_msg_error"]
+        if st.session_state.get("ocr_last_error_is_429"):
+            if st.button("⚡ Canviar immediatament a DeepSeek i Reintentar", key="btn_switch_deepseek_429", type="primary"):
+                st.session_state["compres_ocr_ai_selector"] = "DeepSeek (deepseek-chat)"
+                st.session_state.pop("ocr_failed", None)
+                st.session_state.pop("ocr_last_error_is_429", None)
+                st.session_state.pop("processed_file_id", None)
+                st.rerun()
     if "finalize_error" in st.session_state:
         st.error(st.session_state["finalize_error"])
         del st.session_state["finalize_error"]
@@ -2087,6 +2094,7 @@ def render_compres_super_interface():
     if last_mod and last_mod != mod and st.session_state.get("ocr_failed", False):
         if "processed_file_id" in st.session_state:
             del st.session_state["processed_file_id"]
+        st.session_state.pop("ocr_last_error_is_429", None)
 
     if uploaded_file is not None:
         file_id = f"{uploaded_file.name}_{uploaded_file.size}"
@@ -2475,12 +2483,19 @@ Retorna ÚNICAMENT l'objecte JSON.
                         st.session_state["ticket_discount"] = 0.0
                     save_unknown_products(parsed, current_super)
                     st.session_state["ocr_failed"] = False
+                    st.session_state.pop("ocr_last_error_is_429", None)
                     st.session_state["ticket_msg_success"] = f"Tiquet processat amb èxit per IA ({mod})! S'han detectat {len(parsed)} articles."
                     st.rerun()
                 except Exception as e:
                     st.session_state["ocr_failed"] = True
                     st.session_state.pop("processed_file_id", None)
-                    st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {str(e)}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior o prémer Reintentar."
+                    err_str = str(e)
+                    if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "quota" in err_str.lower():
+                        st.session_state["ocr_last_error_is_429"] = True
+                        st.session_state["ticket_msg_error"] = f"⚠️ Quota de Gemini esgotada (HTTP 429). Pots prémer el botó inferior per canviar immediatament a DeepSeek o triar un altre model al desplegable."
+                    else:
+                        st.session_state["ocr_last_error_is_429"] = False
+                        st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {err_str}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior o prémer Reintentar."
                     st.rerun()
     
 

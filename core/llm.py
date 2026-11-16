@@ -39,8 +39,11 @@ def _call_gemini(
         if alt not in models_to_try:
             models_to_try.append(alt)
         
-    last_error = ""
+    quota_exhausted = False
     for current_model in models_to_try:
+        if quota_exhausted:
+            break
+
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent?key={api_key}"
         parts = [{"text": prompt}]
         if image_bytes:
@@ -82,20 +85,39 @@ def _call_gemini(
                         clean_content = content.strip()
                         if json_mode and clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
                             if attempt < max_attempts - 1:
-                                time.sleep(2.0)
+                                time.sleep(1.5)
                                 continue # Reintentar si està truncat
                             last_error = f"La IA ha tallat la resposta prematurament (truncat). Resposta crua:\n{content}"
-                            break # Try the next model
+                            break # Provar següent model
                         return True, content, elapsed
                     last_error = "Resposta buida de Gemini"
-                    break # Try the next model
-                elif resp.status_code in [503, 429]:
+                    break # Provar següent model
+                elif resp.status_code == 429:
+                    resp_txt = resp.text
+                    is_quota = (
+                        "RESOURCE_EXHAUSTED" in resp_txt
+                        or "QuotaFailure" in resp_txt
+                        or "GenerateContentRequests" in resp_txt
+                        or "quota" in resp_txt.lower()
+                    )
+                    if is_quota:
+                        # Error de quota global per clau/projecte: aturar immediatament (fail-fast)
+                        # No té sentit esperar 16s ni provar altres models Gemini que comparteixen la mateixa quota
+                        quota_exhausted = True
+                        last_error = f"HTTP 429 ({current_model}): Quota de Gemini esgotada (RESOURCE_EXHAUSTED)."
+                        break
+                    else:
+                        if attempt < max_attempts - 1:
+                            time.sleep(1.5)
+                            continue
+                        last_error = f"HTTP 429 ({current_model}): Límit de peticions temporal assolit."
+                        break
+                elif resp.status_code == 503:
                     if attempt < max_attempts - 1:
-                        sleep_time = 16.0 if resp.status_code == 429 else 15.0
-                        time.sleep(sleep_time)
+                        time.sleep(2.0)
                         continue
-                    last_error = f"HTTP {resp.status_code} ({current_model}): {resp.text}"
-                    break # Try the next model
+                    last_error = f"HTTP 503 ({current_model}): Servei temporalment no disponible."
+                    break
                 else:
                     last_error = f"Error HTTP {resp.status_code} ({current_model}): {resp.text}"
                     break
@@ -107,6 +129,33 @@ def _call_gemini(
                 break
                 
     elapsed = round(time.time() - start_time, 2)
+    
+    # Si la quota de Gemini està esgotada o ha fallat amb 429, provem fallback automàtic transparent a OpenRouter
+    if quota_exhausted or "429" in last_error:
+        try:
+            import streamlit as st
+            openrouter_key = st.secrets.get("OPENROUTER_API_KEY", "")
+            if openrouter_key:
+                fallback_model = "deepseek/deepseek-chat" if not image_bytes else "google/gemini-2.5-flash"
+                fb_ok, fb_content, fb_elapsed = _call_openai_compatible(
+                    prompt=prompt,
+                    api_key=openrouter_key,
+                    model_name=fallback_model,
+                    provider="openrouter",
+                    start_time=start_time,
+                    json_mode=json_mode,
+                    image_bytes=image_bytes,
+                    mime_type=mime_type
+                )
+                if fb_ok:
+                    try:
+                        st.toast(f"⚡ Quota de Gemini esgotada (429). S'ha utilitzat automàticament {fallback_model} via OpenRouter!", icon="ℹ️")
+                    except Exception:
+                        pass
+                    return True, fb_content, fb_elapsed
+        except Exception:
+            pass
+
     return False, last_error, elapsed
 
 def _call_openai_compatible(
@@ -216,7 +265,7 @@ def _call_openai_compatible(
                 break
             elif resp.status_code in [503, 429]:
                 if attempt < max_attempts - 1:
-                    sleep_time = 16.0 if resp.status_code == 429 else 15.0
+                    sleep_time = 1.5 if resp.status_code == 429 else 2.0
                     time.sleep(sleep_time)
                     continue
                 last_error = f"HTTP {resp.status_code} ({model_name}): {resp.text}"

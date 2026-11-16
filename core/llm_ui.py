@@ -6,21 +6,15 @@ def render_ai_selector(key_prefix="global", default_model="Gemini (2.5 Flash)", 
     Retorna: provider, model_name, api_key
     Si vision_only=True, només mostra models amb suport de visió multimodal (Gemini).
     """
-    if vision_only:
-        options = [
-            "Gemini (2.5 Flash)",
-            "Gemini (3.8 Flash)",
-            "Gemini (2.5 Pro)"
-        ]
-    else:
-        options = [
-            "Gemini (2.5 Flash)",
-            "Gemini (3.8 Flash)",
-            "Gemini (2.5 Pro)",
-            "DeepSeek (deepseek-chat)",
-            "Llama 3.1 70B",
-            "Qwen 2.5 72B"
-        ]
+    # Opcions de models d'IA disponibles
+    options = [
+        "Gemini (2.5 Flash)",
+        "Gemini (3.8 Flash)",
+        "Gemini (2.5 Pro)",
+        "DeepSeek (deepseek-chat)",
+        "Llama 3.1 70B",
+        "Qwen 2.5 72B"
+    ]
     
     # Si el valor actual de sessió no està a les opcions (ex: canvi a Visió Pura des de DeepSeek), corregir
     cur_val = st.session_state.get(f"{key_prefix}_ai_selector")

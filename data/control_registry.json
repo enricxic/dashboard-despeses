@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "15/11/2026 21:14:48",
+  "updated_at": "16/11/2026 11:54:56",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,13 +18,13 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "6c5b25e63e007406561439d95648659dba0ce572421966bfcbd1bf88292a140f"
+        "modules/compres.py": "c6d1fcee472627816e129dc95de4dad1a727e823fd5a3cd25a7792e3fb1f519f"
       },
-      "verified_at": "12/11/2026 13:18:33",
-      "verified_commit": "55990e7",
+      "verified_at": "16/11/2026 11:46:17",
+      "verified_commit": "e1ea8d3",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "17/11/2026 11:54:56",
+      "unlock_reason": "Optimitzacio fail-fast 429 i canvi rapid a DeepSeek"
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,30 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 11:54:56",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 17/11/2026 11:54:56. Motiu: Optimitzacio fail-fast 429 i canvi rapid a DeepSeek",
+      "user": "admin",
+      "git_head": "e1ea8d3"
+    },
+    {
+      "timestamp": "16/11/2026 11:46:18",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "e1ea8d3"
+    },
+    {
+      "timestamp": "16/11/2026 11:40:11",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 17/11/2026 11:40:11. Motiu: Optimitzar gestio 429 i canvi rapid a DeepSeek",
+      "user": "admin",
+      "git_head": "e1ea8d3"
+    },
     {
       "timestamp": "15/11/2026 21:14:48",
       "action": "SEAL",
