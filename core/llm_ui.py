@@ -10,7 +10,7 @@ def render_ai_selector(key_prefix="global", default_model="Gemini (2.5 Flash)", 
     options = [
         "Gemini (2.5 Flash)",
         "Gemini (3.8 Flash)",
-        "Gemini (2.5 Pro)",
+        "Nemotron Vision (Gratuït)",
         "DeepSeek (deepseek-chat)",
         "Llama 3.1 70B",
         "Qwen 2.5 72B"
@@ -30,7 +30,11 @@ def render_ai_selector(key_prefix="global", default_model="Gemini (2.5 Flash)", 
             
     selected = st.selectbox("🤖 Motor d'IA", options, index=default_idx, key=f"{key_prefix}_ai_selector")
     
-    if "DeepSeek" in selected:
+    if "Nemotron" in selected:
+        prov = "openrouter"
+        mod = "nvidia/nemotron-3.5-super-vl:free"
+        ai_key = st.secrets.get("OPENROUTER_API_KEY", "")
+    elif "DeepSeek" in selected:
         prov = "openrouter"
         mod = "deepseek/deepseek-chat"
         ai_key = st.secrets.get("OPENROUTER_API_KEY", "")

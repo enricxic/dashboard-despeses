@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 13:43:45",
+  "updated_at": "16/11/2026 19:34:51",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -23,8 +23,8 @@
       "verified_at": "16/11/2026 13:43:45",
       "verified_commit": "97a36db",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "17/11/2026 19:34:50",
+      "unlock_reason": "Integrar Nemotron Vision gratuit i encaminament segur"
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 19:34:50",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 17/11/2026 19:34:50. Motiu: Integrar Nemotron Vision gratuit i encaminament segur",
+      "user": "admin",
+      "git_head": "10438bb"
+    },
     {
       "timestamp": "16/11/2026 13:43:45",
       "action": "SEAL",

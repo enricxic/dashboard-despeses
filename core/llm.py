@@ -136,7 +136,7 @@ def _call_gemini(
             import streamlit as st
             openrouter_key = st.secrets.get("OPENROUTER_API_KEY", "")
             if openrouter_key:
-                fallback_model = "deepseek/deepseek-chat" if not image_bytes else "google/gemini-2.5-flash"
+                fallback_model = "deepseek/deepseek-chat" if not image_bytes else "nvidia/nemotron-3.5-super-vl:free"
                 fb_ok, fb_content, fb_elapsed = _call_openai_compatible(
                     prompt=prompt,
                     api_key=openrouter_key,

@@ -1753,8 +1753,8 @@ def render_compres_super_interface():
         st.error(st.session_state["ticket_msg_error"])
         del st.session_state["ticket_msg_error"]
         if st.session_state.get("ocr_last_error_is_429"):
-            if st.button("⚡ Canviar immediatament a DeepSeek i Reintentar", key="btn_switch_deepseek_429", type="primary"):
-                st.session_state["compres_ocr_ai_selector"] = "DeepSeek (deepseek-chat)"
+            if st.button("⚡ Canviar a Nemotron Vision (Gratuït) i Reintentar", key="btn_switch_nemotron_429", type="primary"):
+                st.session_state["compres_ocr_ai_selector"] = "Nemotron Vision (Gratuït)"
                 st.session_state.pop("ocr_failed", None)
                 st.session_state.pop("ocr_last_error_is_429", None)
                 st.session_state.pop("processed_file_id", None)
@@ -2174,45 +2174,17 @@ def render_compres_super_interface():
                         else:
                             mime_type = "image/jpeg"
 
-                        # Si l'usuari tria Visió Pura però el model no té visió (ex. DeepSeek, Llama, Qwen),
-                        # fem fallback automàtic a Híbrid amb OCR per evitar errors de 404 a l'API.
-                        if not use_hybrid and prov != "gemini":
-                            use_hybrid = True
-                            st.toast(f"ℹ️ El model {mod} no té visió d'imatges; s'utilitza OCR local per extreure el text primer.", icon="ℹ️")
+                        # Models amb suport de visió multimodal directa
+                        vision_models = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.5-pro", "nvidia/nemotron-3.5-super-vl:free"]
+                        if mod not in vision_models:
+                            # Si l'usuari ha triat un model exclusivament de text (DeepSeek, Llama, Qwen),
+                            # encaminem automàticament a un model de visió gratuït per evitar fallades d'API.
+                            st.toast(f"ℹ️ El model {mod} només admet text. S'utilitza Nemotron Vision (Gratuït) per llegir la foto directament.", icon="👁️")
+                            mod = "nvidia/nemotron-3.5-super-vl:free"
+                            prov = "openrouter"
+                            ai_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
-                        if use_hybrid:
-                            with st.spinner("1/2 - Llegint tiquet amb OCR..."):
-                                # 1. Intentem primer RapidOCR (motor ONNX local integrat, molt ràpid i sense dependències de sistema)
-                                try:
-                                    from rapidocr_onnxruntime import RapidOCR
-                                    import numpy as np
-                                    uploaded_file.seek(0)
-                                    img_pil = Image.open(io.BytesIO(uploaded_file.read()))
-                                    if img_pil.mode in ("RGBA", "P"):
-                                        img_pil = img_pil.convert("RGB")
-                                    engine = RapidOCR()
-                                    ocr_res, _ = engine(np.array(img_pil))
-                                    if ocr_res:
-                                        raw_text = "\n".join([line[1] for line in ocr_res if line[1].strip()])
-                                except Exception as e_rapid:
-                                    print(f"RapidOCR no disponible: {e_rapid}")
-
-                                # 2. Fallback a Tesseract si RapidOCR no ha trobat text
-                                if not raw_text.strip():
-                                    try:
-                                        uploaded_file.seek(0)
-                                        img = Image.open(io.BytesIO(uploaded_file.read()))
-                                        try:
-                                            raw_text = pytesseract.image_to_string(img, lang='cat+spa')
-                                        except Exception:
-                                            raw_text = pytesseract.image_to_string(img)
-                                    except Exception as e_tess:
-                                        print(f"Tesseract OCR no disponible: {e_tess}")
-
-                                if not raw_text.strip():
-                                    if prov != "gemini":
-                                        raise Exception(f"No s'ha pogut extreure text de la imatge per al model {mod} (que requereix text pur). Prova amb el motor Gemini (2.5 Flash) que suporta visió directa.")
-                                    use_hybrid = False
+                        use_hybrid = False
                             
                     if use_hybrid and raw_text.strip():
                         with st.spinner(f"2/2 - Endreçant i estructurant dades amb IA ({mod})..."):
@@ -2512,7 +2484,7 @@ Retorna ÚNICAMENT l'objecte JSON.
                     err_str = str(e)
                     if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "quota" in err_str.lower():
                         st.session_state["ocr_last_error_is_429"] = True
-                        st.session_state["ticket_msg_error"] = f"⚠️ Quota de Gemini esgotada (HTTP 429). Pots prémer el botó inferior per canviar immediatament a DeepSeek o triar un altre model al desplegable."
+                        st.session_state["ticket_msg_error"] = f"⚠️ Quota de Gemini esgotada (HTTP 429). Pots prémer el botó inferior per canviar a Nemotron Vision (Gratuït) o triar un altre model al desplegable."
                     else:
                         st.session_state["ocr_last_error_is_429"] = False
                         st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {err_str}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior o prémer Reintentar."
