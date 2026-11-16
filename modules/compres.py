@@ -1280,6 +1280,7 @@ def cb_clear_ticket():
     st.session_state["manual_pct_num"] = 0.0
     st.session_state["manual_target_tot"] = None
     st.session_state["editing_ticket_item_idx"] = None
+    st.session_state["ticket_target_total"] = 0.0
     st.session_state["ticket_date"] = datetime.today().date()
     st.session_state["ticket_date_widget"] = datetime.today().date()
     if "last_ocr_text" in st.session_state:
@@ -2217,6 +2218,8 @@ RUTINA PES/FRUITA: Si un producte es ven a pes (ex: 0.915 kg x 1.50 €/kg = 1.3
 
 RUTINA DATA: L'any actual és 2026. Els tiquets de compra NUNCA són del futur. En tiquets matricials, l'any '26' sovint és confós per l'OCR com '76' o '28' (ex: 18/08/76 o 03/09/28). Interpreta SEMPRE '26' com l'any 2026. MAI retornis un any futur (com 2027, 2028 o 2076).
 
+RUTINA ANOTACIONS MANUALS / BOLÍGRAF: MAI interpretis anotacions fetes a mà amb bolígraf o llapis (com percentatges '20%', '30%', '40%' o ratlles al marge) per inventar preus bruts o descomptes que no existeixen en el tiquet imprès. Els preus i descomptes vàlids són ÚNICAMENT els que estan impresos per la impressora del supermercat.
+
 Extreu i neteja els productes en un format JSON estricte:
 {{
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
@@ -2241,9 +2244,9 @@ Extreu i neteja els productes en un format JSON estricte:
     ]
 }}
 IMPORTANT SOBRE TOTALS I DESCOMPTES:
-- 'total_tiquet': Posa el total final a pagar imprès al tiquet (ex: 'TOTAL COMPRA', 'TOTAL A PAGAR EUROS', 'TARGET.TEF').
+- 'total_tiquet': Posa el total final a pagar imprès al tiquet (ex: 'TOTAL COMPRA', 'TOTAL A PAGAR EUROS', 'TARGET.TEF'). Verifica atentament que coincideixi amb la xifra impresa al peu del tiquet.
 - 'descompte_global': Només per a cupons globals sobre tota la compra que NO s'apliquin a un producte concret. Si al tiquet hi ha una secció de 'TOTAL ESTALVI' o cupons ja aplicats als articles, posa 0.0 a 'descompte_global'.
-- OFERTES(O) I CUPONS ClubDia(C) (supermercat Dia): MAI afegeixis línies de descompte, oferta ('O ...'), cupó ('C ...') o regal amb import negatiu com a articles nous dins "articles". Aplica el seu import positiu al camp "promocio" de l'article corresponent (mantenint preu_unitari i preu_total bruts o nets coherents, tenint en compte que els articles poden estar en català i els cupons en castellà, ex: 'FORMATGE SEMI RODANX' <-> 'O QUES.MEZCLA SEMI DIA'), o bé posa'ls a "descomptes_linies".
+- OFERTES(O) I CUPONS ClubDia(C) (supermercat Dia): Els preus impresos a la columna dreta de cada línia d'article són el preu imprès original. MAI afegeixis línies de descompte, oferta ('O ...'), cupó ('C ...') o regal amb import negatiu com a articles nous dins "articles". Aplica el seu import positiu al camp "promocio" de l'article corresponent (mantenint preu_unitari i preu_total bruts o nets coherents, tenint en compte que els articles poden estar en català i els cupons en castellà, ex: 'FORMATGE SEMI RODANX' <-> 'O QUES.MEZCLA SEMI DIA'), o bé posa'ls a "descomptes_linies".
 Ignora IVA, Targetes i subtotals. Extreu només productes reals a "articles". Retorna ÚNICAMENT l'objecte JSON.
 """
                             ok_call, response_text, latency = call_llm_api(
@@ -2287,6 +2290,8 @@ RUTINA PES/FRUITA: Si un producte es ven a pes (ex: 0.915 kg x 1.50 €/kg = 1.3
 
 RUTINA DATA: L'any actual és 2026. Els tiquets de compra NUNCA són del futur. En tiquets matricials, l'any '26' sovint sembla '76' o '28' (ex: 18/08/76 o 03/09/28). Interpreta SEMPRE '26' com l'any 2026. MAI retornis un any futur (com 2027, 2028 o 2076).
 
+RUTINA ANOTACIONS MANUALS / BOLÍGRAF: MAI interpretis anotacions fetes a mà amb bolígraf o llapis (com percentatges '20%', '30%', '40%' o ratlles al marge) per inventar preus bruts o descomptes que no existeixen en el tiquet imprès. Els preus i descomptes vàlids són ÚNICAMENT els que estan impresos per la màquina del supermercat.
+
 L'estructura del JSON ha de ser EXACTAMENT aquesta:
 {
     "supermercat": "Nom del supermercat (ex: bonArea, Mercadona, Dia, Novavenda, Caprabo, etc.)",
@@ -2312,9 +2317,9 @@ L'estructura del JSON ha de ser EXACTAMENT aquesta:
 }
 Notes importants:
 1. Ignora totalment les línies que no siguin productes (IVA, Base Imposable, Canvi, Targeta, Subtotal).
-2. 'total_tiquet': Posa el total final a pagar imprès al tiquet (ex: 'TOTAL COMPRA', 'TOTAL A PAGAR EUROS', 'TARGET.TEF').
+2. 'total_tiquet': Posa el total final a pagar imprès al tiquet (ex: 'TOTAL COMPRA', 'TOTAL A PAGAR EUROS', 'TARGET.TEF'). Verifica atentament que coincideixi amb la xifra impresa al peu del tiquet.
 3. 'descompte_global': Només per a cupons globals que NO s'apliquin a un producte concret. Si al tiquet hi ha una secció de 'TOTAL ESTALVI' o cupons ja reflectits als articles, posa 0.0 a 'descompte_global'.
-4. OFERTES(O) I CUPONS ClubDia(C) (supermercat Dia): MAI afegeixis línies de descompte, oferta ('O ...'), cupó ('C ...') o regal amb import negatiu com a articles nous dins "articles". Posa l'import positiu del descompte al camp "promocio" de l'article corresponent (tenint en compte que els articles poden estar en català i els descomptes en castellà, ex: 'FORMATGE SEMI RODANX' <-> 'O QUES.MEZCLA SEMI DIA', 'XOCO LLET EXTR FI MI' <-> 'O CHOC.CON LECHE MILKA'), o bé llista'ls dins "descomptes_linies".
+4. OFERTES(O) I CUPONS ClubDia(C) (supermercat Dia): Els preus impresos a la columna dreta de cada línia d'article són el preu imprès pel supermercat. MAI afegeixis línies de descompte, oferta ('O ...'), cupó ('C ...') o regal amb import negatiu com a articles nous dins "articles". Posa l'import positiu del descompte al camp "promocio" de l'article corresponent (tenint en compte que els articles poden estar en català i els descomptes en castellà, ex: 'FORMATGE SEMI RODANX' <-> 'O QUES.MEZCLA SEMI DIA', 'XOCO LLET EXTR FI MI' <-> 'O CHOC.CON LECHE MILKA'), o bé llista'ls dins "descomptes_linies".
 5. Assegura't de capturar bé el 'preu_total' de la línia.
 6. Si el preu unitari no surt clar, calcula'l dividint preu_total / quantitat.
 Retorna ÚNICAMENT l'objecte JSON.
@@ -2467,6 +2472,7 @@ Retorna ÚNICAMENT l'objecte JSON.
                         total_tiquet_trobat = float(data.get("total_tiquet", 0.0) or 0.0)
                         descompte_trobat = float(data.get("descompte_global", 0.0) or 0.0)
                         sum_items = round(sum(item['totLinea'] for item in parsed), 2)
+                        st.session_state["ticket_target_total"] = total_tiquet_trobat
                         
                         if total_tiquet_trobat > 0:
                             diff = round(sum_items - total_tiquet_trobat, 2)
@@ -2585,12 +2591,29 @@ Retorna ÚNICAMENT l'objecte JSON.
                     st.rerun()
  
     items = st.session_state["ticket_items"]
-    discount = st.session_state["ticket_discount"]
-    total_import = sum(item['totLinea'] for item in items) - discount
+    discount = float(st.session_state.get("ticket_discount", 0.0) or 0.0)
+    target_tot = float(st.session_state.get("ticket_target_total", 0.0) or 0.0)
+    sum_items_now = round(sum(item['totLinea'] for item in items), 2)
+    
+    # Si els articles actuals ja sumen exactament el total del tiquet, anul·lar descompte residual
+    if target_tot > 0 and abs(sum_items_now - target_tot) <= 0.05 and discount > 0:
+        st.session_state["ticket_discount"] = 0.0
+        discount = 0.0
+
+    total_import = round(sum_items_now - discount, 2)
  
     with col_row2_3:
         st.markdown("**IMPORT TOTAL TICKET**")
-        st.markdown(f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{total_import:,.2f} €</div>", unsafe_allow_html=True)
+        if discount > 0:
+            st.markdown(
+                f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:6px; border-radius:4px; font-size:1.1rem; font-weight:bold; text-align:center;'>"
+                f"{total_import:,.2f} €"
+                f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:normal;'>(Articles: {sum_items_now:.2f} € - Dto: {discount:.2f} €)</div>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center;'>{total_import:,.2f} €</div>", unsafe_allow_html=True)
         
     with col_row2_4:
         if pending_ticket_id:
