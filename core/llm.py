@@ -81,8 +81,11 @@ def _call_gemini(
                     data = resp.json()
                     candidates = data.get("candidates", [])
                     if candidates:
-                        content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                        clean_content = content.strip()
+                        parts = candidates[0].get("content", {}).get("parts", [{}])
+                        content = parts[0].get("text", "") if parts else ""
+                        if content is None:
+                            content = ""
+                        clean_content = content.strip() if isinstance(content, str) else ""
                         if json_mode and clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
                             if attempt < max_attempts - 1:
                                 time.sleep(1.5)
@@ -200,15 +203,18 @@ def _call_openai_compatible(
     else:
         messages = [{"role": "user", "content": prompt}]
 
-    # Per OpenRouter, 3000 tokens evita errors 402 si el balanç de crèdits és reduït
+    # Per OpenRouter, 4000 tokens evita errors 402 si el balanç és reduït
     payload: Dict[str, Any] = {
         "model": model_name,
         "messages": messages,
         "temperature": 0.1,
-        "max_tokens": 3000
+        "max_tokens": 4000
     }
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
+    if provider == "openrouter":
+        # Desactivar raonament intern (effort: none) per no malgastar el pressupost de tokens en OCR/JSON
+        payload["reasoning"] = {"effort": "none"}
     
     max_attempts = 2
     last_error = ""
@@ -217,17 +223,39 @@ def _call_openai_compatible(
             resp = requests.post(base_url, headers=headers, json=payload, timeout=90)
             elapsed = round(time.time() - start_time, 2)
             
-            # Si el model no suporta response_format json_object (error 400), reintentem sense response_format
-            if resp.status_code == 400 and json_mode and "response_format" in payload:
-                del payload["response_format"]
-                resp = requests.post(base_url, headers=headers, json=payload, timeout=90)
+            # Si el model no suporta response_format o reasoning (error 400), retirem el paràmetre no compatible
+            if resp.status_code == 400:
+                modified = False
+                if json_mode and "response_format" in payload:
+                    del payload["response_format"]
+                    modified = True
+                if "reasoning" in payload:
+                    del payload["reasoning"]
+                    modified = True
+                if modified:
+                    resp = requests.post(base_url, headers=headers, json=payload, timeout=90)
             
             if resp.status_code == 200:
                 data = resp.json()
                 choices = data.get("choices", [])
                 if choices:
-                    content = choices[0].get("message", {}).get("content", "")
-                    clean_content = content.strip()
+                    first_choice = choices[0]
+                    message = first_choice.get("message", {})
+                    content = message.get("content")
+                    if content is None:
+                        # Fallback a reasoning o reasoning_content si content és buit o None
+                        content = message.get("reasoning") or message.get("reasoning_content") or ""
+                    
+                    clean_content = content.strip() if isinstance(content, str) else ""
+
+                    if not clean_content:
+                        finish_reason = first_choice.get("finish_reason")
+                        if finish_reason == "length":
+                            last_error = f"El model {model_name} ha esgotat el límit de tokens (length) abans de produir la resposta."
+                        else:
+                            last_error = f"Resposta buida de l'API compatible ({model_name})"
+                        break
+
                     if json_mode and clean_content and not clean_content.endswith("}") and not clean_content.endswith("]") and not clean_content.endswith("```"):
                         if attempt < max_attempts - 1:
                             time.sleep(2.0)
