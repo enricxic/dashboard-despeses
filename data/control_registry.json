@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 13:41:02",
+  "updated_at": "16/11/2026 13:43:45",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,13 +18,13 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "c6d1fcee472627816e129dc95de4dad1a727e823fd5a3cd25a7792e3fb1f519f"
+        "modules/compres.py": "550d3b346fbc478b127e2e2dd048a4a32bd2c3d38b17231505d1af9f0cf2fb15"
       },
-      "verified_at": "16/11/2026 11:55:43",
-      "verified_commit": "492ba1b",
+      "verified_at": "16/11/2026 13:43:45",
+      "verified_commit": "97a36db",
       "verified_by": "admin",
-      "unlocked_until": "17/11/2026 13:41:02",
-      "unlock_reason": "Integrar RapidOCR local per suportar DeepSeek Llama i Qwen sense tesseract"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 13:43:45",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Verificat RapidOCR amb DeepSeek)",
+      "user": "admin",
+      "git_head": "97a36db"
+    },
     {
       "timestamp": "16/11/2026 13:41:02",
       "action": "UNLOCK",
