@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 19:51:24",
+  "updated_at": "16/11/2026 19:52:20",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -20,11 +20,11 @@
       "verified_hashes": {
         "modules/compres.py": "85bf58f3462d1636c2252f9e48c67f762cec1311ee654b3f6843edeaaa4100ad"
       },
-      "verified_at": "16/11/2026 19:49:28",
-      "verified_commit": "9c6fc4d",
+      "verified_at": "16/11/2026 19:52:19",
+      "verified_commit": "70469f3",
       "verified_by": "admin",
-      "unlocked_until": "17/11/2026 19:51:24",
-      "unlock_reason": "Moure show_mismatch_dialog a labast global"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 19:52:19",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Fix NameError show_mismatch_dialog)",
+      "user": "admin",
+      "git_head": "70469f3"
+    },
     {
       "timestamp": "16/11/2026 19:51:24",
       "action": "UNLOCK",
