@@ -263,6 +263,9 @@ def _call_openai_compatible(
 
                 last_error = f"Balanç de crèdits esgotat a OpenRouter ({model_name}). Recomanació: Selecciona el motor 'Gemini (2.5 Flash)' gratuït a la configuració superior."
                 break
+            elif resp.status_code == 404 and "Filter by Image Support" in resp.text:
+                last_error = f"El model '{model_name}' és només de text i no accepta imatges directes. S'ha d'extreure el text amb OCR prèviament o triar un model multimodal com Gemini."
+                break
             elif resp.status_code in [503, 429]:
                 if attempt < max_attempts - 1:
                     sleep_time = 1.5 if resp.status_code == 429 else 2.0

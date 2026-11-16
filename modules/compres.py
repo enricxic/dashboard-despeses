@@ -2174,25 +2174,45 @@ def render_compres_super_interface():
                         else:
                             mime_type = "image/jpeg"
 
-                        # Si l'usuari tria Visió Pura però el model no té visió (ex. DeepSeek, Llama),
-                        # fem fallback automàtic a Híbrid amb Tesseract per evitar errors d'API.
+                        # Si l'usuari tria Visió Pura però el model no té visió (ex. DeepSeek, Llama, Qwen),
+                        # fem fallback automàtic a Híbrid amb OCR per evitar errors de 404 a l'API.
                         if not use_hybrid and prov != "gemini":
                             use_hybrid = True
-                            st.toast(f"ℹ️ El model {mod} no té visió d'imatges; s'usarà Tesseract OCR per extreure el text primer.", icon="ℹ️")
+                            st.toast(f"ℹ️ El model {mod} no té visió d'imatges; s'utilitza OCR local per extreure el text primer.", icon="ℹ️")
 
                         if use_hybrid:
-                            with st.spinner("1/2 - Llegint tiquet amb Tesseract OCR..."):
-                                uploaded_file.seek(0)
-                                img = Image.open(io.BytesIO(uploaded_file.read()))
+                            with st.spinner("1/2 - Llegint tiquet amb OCR..."):
+                                # 1. Intentem primer RapidOCR (motor ONNX local integrat, molt ràpid i sense dependències de sistema)
                                 try:
-                                    raw_text = pytesseract.image_to_string(img, lang='cat+spa')
-                                except Exception:
+                                    from rapidocr_onnxruntime import RapidOCR
+                                    import numpy as np
+                                    uploaded_file.seek(0)
+                                    img_pil = Image.open(io.BytesIO(uploaded_file.read()))
+                                    if img_pil.mode in ("RGBA", "P"):
+                                        img_pil = img_pil.convert("RGB")
+                                    engine = RapidOCR()
+                                    ocr_res, _ = engine(np.array(img_pil))
+                                    if ocr_res:
+                                        raw_text = "\n".join([line[1] for line in ocr_res if line[1].strip()])
+                                except Exception as e_rapid:
+                                    print(f"RapidOCR no disponible: {e_rapid}")
+
+                                # 2. Fallback a Tesseract si RapidOCR no ha trobat text
+                                if not raw_text.strip():
                                     try:
-                                        raw_text = pytesseract.image_to_string(img)
+                                        uploaded_file.seek(0)
+                                        img = Image.open(io.BytesIO(uploaded_file.read()))
+                                        try:
+                                            raw_text = pytesseract.image_to_string(img, lang='cat+spa')
+                                        except Exception:
+                                            raw_text = pytesseract.image_to_string(img)
                                     except Exception as e_tess:
-                                        raw_text = ""
-                                        print(f"Tesseract OCR no disponible: {e_tess}. S'utilitzarà visió multimodal si el model ho suporta.")
-                                        use_hybrid = False
+                                        print(f"Tesseract OCR no disponible: {e_tess}")
+
+                                if not raw_text.strip():
+                                    if prov != "gemini":
+                                        raise Exception(f"No s'ha pogut extreure text de la imatge per al model {mod} (que requereix text pur). Prova amb el motor Gemini (2.5 Flash) que suporta visió directa.")
+                                    use_hybrid = False
                             
                     if use_hybrid and raw_text.strip():
                         with st.spinner(f"2/2 - Endreçant i estructurant dades amb IA ({mod})..."):

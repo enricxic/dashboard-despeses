@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 11:55:44",
+  "updated_at": "16/11/2026 13:41:02",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -23,8 +23,8 @@
       "verified_at": "16/11/2026 11:55:43",
       "verified_commit": "492ba1b",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "17/11/2026 13:41:02",
+      "unlock_reason": "Integrar RapidOCR local per suportar DeepSeek Llama i Qwen sense tesseract"
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 13:41:02",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 17/11/2026 13:41:02. Motiu: Integrar RapidOCR local per suportar DeepSeek Llama i Qwen sense tesseract",
+      "user": "admin",
+      "git_head": "da8e9dd"
+    },
     {
       "timestamp": "16/11/2026 11:55:44",
       "action": "SEAL",
