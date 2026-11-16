@@ -2028,21 +2028,30 @@ def render_compres_super_interface():
                 file_id = f"{uploaded_file.name}_{uploaded_file.size}"
                 col_sub_re, col_sub_del = st.columns([1, 1])
                 with col_sub_re:
-                    if st.session_state.get("ocr_failed", False) or st.session_state.get("processed_file_id") == file_id:
-                        if st.button("🔄", key="btn_retry_ocr_ui", help="Torna a passar el tiquet per la IA"):
-                            st.session_state.pop("processed_file_id", None)
-                            st.session_state.pop("ocr_failed", None)
-                            st.rerun()
+                    if st.button("🔄", key="btn_retry_ocr_ui", help="Torna a passar el tiquet per la IA"):
+                        st.session_state["force_ocr"] = True
+                        st.session_state.pop("processed_file_id", None)
+                        st.session_state["ocr_failed"] = False
+                        st.rerun()
                 with col_sub_del:
                     if st.button("❌", key="btn_discard_loaded_ticket", help="Descartar aquest tiquet"):
                         st.session_state.pop("loaded_scanned_file", None)
                         st.session_state.pop("processed_file_id", None)
                         st.session_state.pop("ocr_failed", None)
+                        st.session_state["ticket_items"] = []
                         curr_uidx = int(uploader_key.split("_")[-1]) if "_" in uploader_key and uploader_key.split("_")[-1].isdigit() else 0
                         st.session_state["uploader_key"] = f"ticket_file_uploader_{curr_uidx + 1}"
                         cam_uidx = int(camera_key.split("_")[-1]) if "_" in camera_key and camera_key.split("_")[-1].isdigit() else 0
                         st.session_state["camera_uploader_key"] = f"ticket_cam_{cam_uidx + 1}"
                         st.rerun()
+            
+            # Botó destacat per si no s'ha processat automàticament o es vol forçar la lectura
+            if not st.session_state.get("ticket_items") or st.session_state.get("ocr_failed", False):
+                if st.button("⚡ Llegir / Processar Tiquet amb IA", type="primary", use_container_width=True, key="btn_explicit_trigger_ocr"):
+                    st.session_state["force_ocr"] = True
+                    st.session_state.pop("processed_file_id", None)
+                    st.session_state["ocr_failed"] = False
+                    st.rerun()
         
     # Row 1: Send to expense checkbox, Bank, Payment Method, Mètode d'Escaneig + Selector IA
     col_hdr1, col_hdr2, col_hdr3, col_hdr4 = st.columns([2.0, 2.5, 2.5, 5.0], vertical_alignment="bottom")
@@ -2089,18 +2098,26 @@ def render_compres_super_interface():
                 vision_only=use_vision_only
             )
             
-    # Si s'ha canviat de model després d'un error, netegem processed_file_id per reintentar immediatament amb el nou model
+    # Si s'ha canviat de model d'IA, preparem per reintentar si el fitxer està carregat
     last_mod = st.session_state.get("last_ocr_model")
-    if last_mod and last_mod != mod and st.session_state.get("ocr_failed", False):
-        if "processed_file_id" in st.session_state:
-            del st.session_state["processed_file_id"]
+    if last_mod and last_mod != mod:
+        st.session_state["last_ocr_model"] = mod
+        st.session_state.pop("processed_file_id", None)
         st.session_state.pop("ocr_last_error_is_429", None)
+        st.session_state["ocr_failed"] = False
+        st.session_state["force_ocr"] = True
 
     if uploaded_file is not None:
         file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-        # Processar si és un fitxer nou o si el tiquet actual està buit
-        if st.session_state.get("processed_file_id") != file_id or not st.session_state.get("ticket_items"):
+        # Processar si és un fitxer nou, o si s'ha forçat manualment, o si encara no s'ha processat
+        should_process = (
+            st.session_state.pop("force_ocr", False)
+            or (st.session_state.get("processed_file_id") != file_id and not st.session_state.get("ocr_failed", False))
+            or (not st.session_state.get("ticket_items") and not st.session_state.get("ocr_failed", False) and st.session_state.get("processed_file_id") != file_id)
+        )
+        if should_process:
             st.session_state["processed_file_id"] = file_id
+            st.session_state["ocr_failed"] = False
             fname_lower = uploaded_file.name.lower()
             is_txt = fname_lower.endswith(".txt")
             is_pdf = fname_lower.endswith(".pdf")
@@ -2480,14 +2497,14 @@ Retorna ÚNICAMENT l'objecte JSON.
                     st.rerun()
                 except Exception as e:
                     st.session_state["ocr_failed"] = True
-                    st.session_state.pop("processed_file_id", None)
+                    st.session_state["processed_file_id"] = file_id  # Marcar per evitar bucles infinits de rerun
                     err_str = str(e)
                     if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "quota" in err_str.lower():
                         st.session_state["ocr_last_error_is_429"] = True
                         st.session_state["ticket_msg_error"] = f"⚠️ Quota de Gemini esgotada (HTTP 429). Pots prémer el botó inferior per canviar a Nemotron Vision (Gratuït) o triar un altre model al desplegable."
                     else:
                         st.session_state["ocr_last_error_is_429"] = False
-                        st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {err_str}. Pots escollir un altre motor d'IA (ex. DeepSeek) al desplegable superior o prémer Reintentar."
+                        st.session_state["ticket_msg_error"] = f"Error al processar el tiquet amb IA ({mod}): {err_str}. Pots triar un altre model o prémer '⚡ Llegir / Processar Tiquet amb IA'."
                     st.rerun()
     
 
