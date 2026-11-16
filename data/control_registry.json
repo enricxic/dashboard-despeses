@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 11:54:56",
+  "updated_at": "16/11/2026 11:55:44",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -20,11 +20,11 @@
       "verified_hashes": {
         "modules/compres.py": "c6d1fcee472627816e129dc95de4dad1a727e823fd5a3cd25a7792e3fb1f519f"
       },
-      "verified_at": "16/11/2026 11:46:17",
-      "verified_commit": "e1ea8d3",
+      "verified_at": "16/11/2026 11:55:43",
+      "verified_commit": "492ba1b",
       "verified_by": "admin",
-      "unlocked_until": "17/11/2026 11:54:56",
-      "unlock_reason": "Optimitzacio fail-fast 429 i canvi rapid a DeepSeek"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 11:55:44",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Verificat fail-fast 429 i fallback a DeepSeek)",
+      "user": "admin",
+      "git_head": "492ba1b"
+    },
     {
       "timestamp": "16/11/2026 11:54:56",
       "action": "UNLOCK",
