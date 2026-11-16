@@ -3352,6 +3352,82 @@ def modal_recepta(row):
 
 
 
+@st.dialog("⚠️ Avís: Diferència amb la Previsió")
+def show_mismatch_dialog(target_table_name, scheduled_import, input_import, idx, status_col, new_row_desp, is_gas_cat, new_row_gas, is_hipoteca, is_estalvis, df_to_update, csv_filename):
+    st.markdown(f"Hi ha una previsió pendent per aquest concepte per valor de **{scheduled_import:,.2f} €**.")
+    st.markdown(f"Has introduït **{input_import:,.2f} €**.")
+    
+    st.write("Què vols fer?")
+    
+    if st.button(f"✅ Acceptar import previsió ({scheduled_import:,.2f} €)", use_container_width=True):
+        if target_table_name == 'pagaments':
+            new_row_desp['Import càrrec'] = scheduled_import
+        else:
+            new_row_desp['import ingrés'] = scheduled_import
+            
+        df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'cobrat'
+        save_to_csv(df_to_update.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
+        
+        if target_table_name == 'pagaments':
+            st.session_state["df_pag"] = df_to_update
+        else:
+            st.session_state["df_ing"] = df_to_update
+            
+        insert_db_row('despeses', new_row_desp)
+        if is_gas_cat:
+            insert_db_row('gasolina', new_row_gas)
+            
+        if is_hipoteca:
+            df_hip_local = st.session_state["df_hip"]
+            df_hip_local.loc[(df_hip_local['any'] == new_row_desp['any']) & (df_hip_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
+            save_to_csv(df_hip_local, 'hipoteca.csv')
+            st.session_state["df_hip"] = df_hip_local
+            
+        if is_estalvis:
+            df_est_local = st.session_state["df_est"]
+            df_est_local.loc[(df_est_local['any'] == new_row_desp['any']) & (df_est_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
+            save_to_csv(df_est_local, 'estalviDP.csv')
+            st.session_state["df_est"] = df_est_local
+            
+        st.success("Desat correctament aplicant la previsió!")
+        st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
+        st.rerun()
+
+    if st.button(f"✏️ Modificar previsió a {input_import:,.2f} €", use_container_width=True):
+        df_to_update.loc[idx, 'Import'] = input_import
+        df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'cobrat'
+        save_to_csv(df_to_update.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
+        
+        if target_table_name == 'pagaments':
+            st.session_state["df_pag"] = df_to_update
+        else:
+            st.session_state["df_ing"] = df_to_update
+            
+        insert_db_row('despeses', new_row_desp)
+        if is_gas_cat:
+            insert_db_row('gasolina', new_row_gas)
+            
+        if is_hipoteca:
+            df_hip_local = st.session_state["df_hip"]
+            df_hip_local.loc[(df_hip_local['any'] == new_row_desp['any']) & (df_hip_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
+            save_to_csv(df_hip_local, 'hipoteca.csv')
+            st.session_state["df_hip"] = df_hip_local
+            
+        if is_estalvis:
+            df_est_local = st.session_state["df_est"]
+            df_est_local.loc[(df_est_local['any'] == new_row_desp['any']) & (df_est_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
+            save_to_csv(df_est_local, 'estalviDP.csv')
+            st.session_state["df_est"] = df_est_local
+            
+        st.success("Desat correctament modificant la previsió!")
+        st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
+        st.rerun()
+
+    if st.button("❌ Denegar (Cancel·lar inserció)", use_container_width=True):
+        # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
+        st.rerun()
+
+
 def render_ingres_despesa_general_interface():
     from core.db import ensure_session_dfs
     ensure_session_dfs()
@@ -4018,81 +4094,6 @@ def render():
                     del st.query_params["mod"]
                 except Exception:
                     pass
-            st.rerun()
-
-    @st.dialog("⚠️ Avís: Diferència amb la Previsió")
-    def show_mismatch_dialog(target_table_name, scheduled_import, input_import, idx, status_col, new_row_desp, is_gas_cat, new_row_gas, is_hipoteca, is_estalvis, df_to_update, csv_filename):
-        st.markdown(f"Hi ha una previsió pendent per aquest concepte per valor de **{scheduled_import:,.2f} €**.")
-        st.markdown(f"Has introduït **{input_import:,.2f} €**.")
-        
-        st.write("Què vols fer?")
-        
-        if st.button(f"✅ Acceptar import previsió ({scheduled_import:,.2f} €)", use_container_width=True):
-            if target_table_name == 'pagaments':
-                new_row_desp['Import càrrec'] = scheduled_import
-            else:
-                new_row_desp['import ingrés'] = scheduled_import
-                
-            df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'cobrat'
-            save_to_csv(df_to_update.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
-            
-            if target_table_name == 'pagaments':
-                st.session_state["df_pag"] = df_to_update
-            else:
-                st.session_state["df_ing"] = df_to_update
-                
-            insert_db_row('despeses', new_row_desp)
-            if is_gas_cat:
-                insert_db_row('gasolina', new_row_gas)
-                
-            if is_hipoteca:
-                df_hip_local = st.session_state["df_hip"]
-                df_hip_local.loc[(df_hip_local['any'] == new_row_desp['any']) & (df_hip_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
-                save_to_csv(df_hip_local, 'hipoteca.csv')
-                st.session_state["df_hip"] = df_hip_local
-                
-            if is_estalvis:
-                df_est_local = st.session_state["df_est"]
-                df_est_local.loc[(df_est_local['any'] == new_row_desp['any']) & (df_est_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
-                save_to_csv(df_est_local, 'estalviDP.csv')
-                st.session_state["df_est"] = df_est_local
-                
-            st.success("Desat correctament aplicant la previsió!")
-            st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
-            st.rerun()
-    
-        if st.button(f"✏️ Modificar previsió a {input_import:,.2f} €", use_container_width=True):
-            df_to_update.loc[idx, 'Import'] = input_import
-            df_to_update.loc[idx, status_col] = 'Pagat' if target_table_name == 'pagaments' else 'cobrat'
-            save_to_csv(df_to_update.drop(columns=['parsed_date', 'clean_mes'], errors='ignore'), csv_filename)
-            
-            if target_table_name == 'pagaments':
-                st.session_state["df_pag"] = df_to_update
-            else:
-                st.session_state["df_ing"] = df_to_update
-                
-            insert_db_row('despeses', new_row_desp)
-            if is_gas_cat:
-                insert_db_row('gasolina', new_row_gas)
-                
-            if is_hipoteca:
-                df_hip_local = st.session_state["df_hip"]
-                df_hip_local.loc[(df_hip_local['any'] == new_row_desp['any']) & (df_hip_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
-                save_to_csv(df_hip_local, 'hipoteca.csv')
-                st.session_state["df_hip"] = df_hip_local
-                
-            if is_estalvis:
-                df_est_local = st.session_state["df_est"]
-                df_est_local.loc[(df_est_local['any'] == new_row_desp['any']) & (df_est_local['mes'].str.lower() == new_row_desp['mes'].lower()), 'pagat'] = "pagat"
-                save_to_csv(df_est_local, 'estalviDP.csv')
-                st.session_state["df_est"] = df_est_local
-                
-            st.success("Desat correctament modificant la previsió!")
-            st.session_state["desp_version"] = st.session_state.get("desp_version", 0) + 1
-            st.rerun()
-    
-        if st.button("❌ Denegar (Cancel·lar inserció)", use_container_width=True):
-            # Do absolutely nothing, just close dialog and reset form (or not reset form, just close)
             st.rerun()
 
     # Netejar possibles estats antics de prova

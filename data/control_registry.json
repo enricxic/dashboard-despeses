@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 19:39:05",
+  "updated_at": "16/11/2026 19:51:24",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,13 +18,13 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "df651a41c81e84fab549f425939992ec75893580a2fab310ec0ad1cfd55dc771"
+        "modules/compres.py": "85bf58f3462d1636c2252f9e48c67f762cec1311ee654b3f6843edeaaa4100ad"
       },
-      "verified_at": "16/11/2026 19:39:05",
-      "verified_commit": "9d09428",
+      "verified_at": "16/11/2026 19:49:28",
+      "verified_commit": "9c6fc4d",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "17/11/2026 19:51:24",
+      "unlock_reason": "Moure show_mismatch_dialog a labast global"
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,30 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 19:51:24",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 17/11/2026 19:51:24. Motiu: Moure show_mismatch_dialog a labast global",
+      "user": "admin",
+      "git_head": "9c6fc4d"
+    },
+    {
+      "timestamp": "16/11/2026 19:49:28",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Fix NameError show_mismatch_dialog mitjancant moviment a lambit de modul)",
+      "user": "admin",
+      "git_head": "9c6fc4d"
+    },
+    {
+      "timestamp": "16/11/2026 19:45:33",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 17/11/2026 19:45:33. Motiu: Moure show_mismatch_dialog a labast de modul per evitar NameError",
+      "user": "admin",
+      "git_head": "9c6fc4d"
+    },
     {
       "timestamp": "16/11/2026 19:39:05",
       "action": "SEAL",
