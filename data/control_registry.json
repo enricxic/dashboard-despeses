@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 19:52:20",
+  "updated_at": "16/11/2026 20:33:28",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,10 +18,10 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "85bf58f3462d1636c2252f9e48c67f762cec1311ee654b3f6843edeaaa4100ad"
+        "modules/compres.py": "f9462e44f8056fdcaa6fb1e8e8004c3da1a43f9e0c8ebc5841fb872d7eb271be"
       },
-      "verified_at": "16/11/2026 19:52:19",
-      "verified_commit": "70469f3",
+      "verified_at": "16/11/2026 20:33:28",
+      "verified_commit": "e157fa3",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 20:33:28",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Boto explicit de lectura de tiquet i evitar rerun loop)",
+      "user": "admin",
+      "git_head": "e157fa3"
+    },
+    {
+      "timestamp": "16/11/2026 20:29:38",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 17/11/2026 20:29:38. Motiu: Millorar deteccio de carrega de tiquet i afegir boto explicit de processar",
+      "user": "admin",
+      "git_head": "c6dd9bd"
+    },
     {
       "timestamp": "16/11/2026 19:52:19",
       "action": "SEAL",
