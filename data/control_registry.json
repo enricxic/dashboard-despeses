@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "16/11/2026 19:34:51",
+  "updated_at": "16/11/2026 19:39:05",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,13 +18,13 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "550d3b346fbc478b127e2e2dd048a4a32bd2c3d38b17231505d1af9f0cf2fb15"
+        "modules/compres.py": "df651a41c81e84fab549f425939992ec75893580a2fab310ec0ad1cfd55dc771"
       },
-      "verified_at": "16/11/2026 13:43:45",
-      "verified_commit": "97a36db",
+      "verified_at": "16/11/2026 19:39:05",
+      "verified_commit": "9d09428",
       "verified_by": "admin",
-      "unlocked_until": "17/11/2026 19:34:50",
-      "unlock_reason": "Integrar Nemotron Vision gratuit i encaminament segur"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "16/11/2026 19:39:05",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Segellat compres amb Nemotron Vision)",
+      "user": "admin",
+      "git_head": "9d09428"
+    },
     {
       "timestamp": "16/11/2026 19:34:50",
       "action": "UNLOCK",
