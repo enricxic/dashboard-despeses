@@ -22,6 +22,11 @@ def load_alerts_config():
             }
         }
 
+def clear_alerts_cache():
+    global _IN_MEMORY_ALERTS, _LAST_ALERTS_TS
+    _IN_MEMORY_ALERTS = None
+    _LAST_ALERTS_TS = 0.0
+
 def get_global_alerts(force_reload: bool = False):
     global _IN_MEMORY_ALERTS, _LAST_ALERTS_TS
     import time
@@ -430,15 +435,15 @@ def get_projectes_fases_alerts(avui=None):
 
         for f in p.get("fases", []):
             estat_f = str(f.get("estat", "Pendent")).strip().lower()
-            if estat_f == "completada":
-                continue
-
             tasques = f.get("tasques", [])
+            # Si la fase està acabada/completada o totes les subtasques estan fetes, no alertar
+            if estat_f in ("completada", "acabada", "finalitzada", "feta"):
+                continue
             if tasques and all(bool(t.get("feta", False)) for t in tasques):
                 continue
 
             f_nom = str(f.get("nom", "Fase")).strip() or "Fase"
-            is_pending = (estat_f == "pendent") and not any(bool(t.get("feta", False)) for t in tasques)
+            is_pending = (estat_f == "pendent") and (not tasques or not any(bool(t.get("feta", False)) for t in tasques))
 
             d_inici = parse_date_cat(f.get("data_inici"))
             d_fi = parse_date_cat(f.get("data_fi"))
@@ -571,3 +576,6 @@ def render_alerts_dropdown_html(alerts_list: list, url_suffix: str = "") -> str:
         f'</div>'
     )
     return html
+
+
+get_global_alerts.clear = clear_alerts_cache

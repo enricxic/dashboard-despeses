@@ -935,10 +935,13 @@ def _render_fases_tab(projecte: Dict[str, Any]):
     """, unsafe_allow_html=True)
 
     def _is_fase_done(f: Dict[str, Any]) -> bool:
+        est = str(f.get("estat", "")).strip().lower()
+        if est in ("completada", "acabada", "finalitzada", "feta"):
+            return True
         t_list = f.get("tasques", [])
         if t_list:
             return all(t.get("feta", False) for t in t_list)
-        return f.get("estat") == "Completada"
+        return False
 
     all_phases_done = len(fases) > 0 and all(_is_fase_done(f) for f in fases)
     is_proj_finalitzat = (_normalize_project_estat(projecte.get("estat")) == "Finalitzat")
@@ -1030,7 +1033,15 @@ def _render_fases_tab(projecte: Dict[str, Any]):
 
     # Llistat de fases existents
     if fases:
-        for i, f in enumerate(fases):
+        # Ordenar les fases cronològicament per data d'inici i de fi
+        def _fase_sort_key(item):
+            f_obj = item[1]
+            d_in = parse_date_cat(f_obj.get("data_inici")) or date.max
+            d_out = parse_date_cat(f_obj.get("data_fi")) or date.max
+            return (d_in, d_out, item[0])
+
+        sorted_fases = sorted(enumerate(fases), key=_fase_sort_key)
+        for i, f in sorted_fases:
             fase_id = f.get("id", str(i))
             tasques = f.get("tasques", [])
             f_done = sum(1 for t in tasques if t.get("feta", False))
@@ -1054,7 +1065,9 @@ def _render_fases_tab(projecte: Dict[str, Any]):
             if is_target_fase:
                 label_exp = f"👉 {label_exp} ⭐"
 
-            with st.expander(label_exp, expanded=True):
+            # Col·lapsar automàticament les fases que ja estan acabades
+            is_expanded = is_target_fase or (not is_done)
+            with st.expander(label_exp, expanded=is_expanded):
                 if is_target_fase:
                     st.info("⭐ **Aquesta és la fase d'alerta seleccionada.** Pots revisar-la o marcar-la com a Acabada a continuació.")
                 cf_info, cf_b_pend, cf_b_curs, cf_b_done, cf_b_del = st.columns([1.5, 0.9, 0.9, 1.1, 0.3], vertical_alignment="center")

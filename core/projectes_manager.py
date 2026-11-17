@@ -223,6 +223,12 @@ def save_projectes(projectes: List[Dict[str, Any]]) -> bool:
     # 2. Guardar còpia de seguretat local al disc
     _save_local(valid_projs)
 
+    try:
+        from core.alerts import clear_alerts_cache
+        clear_alerts_cache()
+    except Exception:
+        pass
+
     # 3. Desar de forma síncrona a Supabase perquè no es perdi mai cap canvi en tancar o reiniciar
     role = "admin"
     try:
@@ -549,10 +555,10 @@ def marcar_fase_estat(project_id: str, fase_id: str, estat_o_completada: Any) ->
     """Marca directament l'estat d'una fase ('Completada', 'En curs', 'Pendent' o bool True/False)."""
     projectes = load_projectes()
     for p in projectes:
-        if p.get("id") == project_id:
+        if str(p.get("id")) == str(project_id):
             for f in p.get("fases", []):
-                if f.get("id") == fase_id:
-                    if estat_o_completada is True or estat_o_completada == "Completada":
+                if str(f.get("id")) == str(fase_id):
+                    if estat_o_completada is True or estat_o_completada in ("Completada", "Acabada"):
                         f["estat"] = "Completada"
                         for t in f.get("tasques", []):
                             t["feta"] = True

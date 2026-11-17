@@ -1685,6 +1685,17 @@ def render():
                 return False
             filtered_tasks = [t for t in filtered_tasks if _member_match(t, filtre_persona)]
 
+        # Ordenar les tasques per data de manteniment (més properes primer)
+        def _task_date_key(t):
+            d_str = str(t.get("dataManteniment", "")).strip()
+            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                try:
+                    return datetime.strptime(d_str, fmt).date()
+                except Exception:
+                    pass
+            return date.max
+        filtered_tasks = sorted(filtered_tasks, key=_task_date_key)
+
         # Selector de format de visualització
         c_mode1, c_mode2 = st.columns([3, 1], vertical_alignment="center")
         with c_mode1:

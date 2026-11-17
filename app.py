@@ -536,9 +536,9 @@ if st.session_state.get("show_notifications"):
                                 try:
                                     from core.manteniment_manager import toggle_manteniment_acompliment
                                     toggle_manteniment_acompliment(t_task_id)
-                                    from core.alerts import get_global_alerts
-                                    get_global_alerts.clear()
-                                    st.session_state["global_alerts_list"] = get_global_alerts()
+                                    from core.alerts import get_global_alerts, clear_alerts_cache
+                                    clear_alerts_cache()
+                                    st.session_state["global_alerts_list"] = get_global_alerts(force_reload=True)
                                     st.session_state["global_alerts_ts"] = time.time()
                                     st.toast("✅ Tasca de manteniment marcada com a feta!", icon="✅")
                                     st.rerun()
@@ -549,9 +549,9 @@ if st.session_state.get("show_notifications"):
                                 try:
                                     from core.projectes_manager import marcar_fase_estat
                                     marcar_fase_estat(t_proj_id, t_fase_id, "Completada")
-                                    from core.alerts import get_global_alerts
-                                    get_global_alerts.clear()
-                                    st.session_state["global_alerts_list"] = get_global_alerts()
+                                    from core.alerts import get_global_alerts, clear_alerts_cache
+                                    clear_alerts_cache()
+                                    st.session_state["global_alerts_list"] = get_global_alerts(force_reload=True)
                                     st.session_state["global_alerts_ts"] = time.time()
                                     st.toast("✅ Fase completada!", icon="✅")
                                     st.rerun()
