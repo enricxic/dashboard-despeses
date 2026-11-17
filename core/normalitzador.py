@@ -9,6 +9,7 @@ TABLE_SPECS = {
     "despeses": {
         "pk": "ID_mov",
         "date_cols": ["Data"],
+        "date_format": "DD/MM/AAAA",
         "cat_col": "Idcategoria",
         "concept_col": "Idconcepte",
         "bank_col": "Banc",
@@ -18,6 +19,7 @@ TABLE_SPECS = {
     "ingressos": {
         "pk": "idIngres",
         "date_cols": ["Data"],
+        "date_format": "DD/MM/AAAA",
         "cat_col": "Categoria",
         "concept_col": "Concepte",
         "bank_col": "Banc",
@@ -27,6 +29,7 @@ TABLE_SPECS = {
     "pagaments": {
         "pk": "idPago",
         "date_cols": ["Data"],
+        "date_format": "DD/MM/AAAA",
         "cat_col": "Categoria",
         "concept_col": "Concepte",
         "bank_col": "Banc",
@@ -36,6 +39,7 @@ TABLE_SPECS = {
     "tr_cartera": {
         "pk": "idTRCartera",
         "date_cols": ["DATA"],
+        "date_format": "AAAA-MM-DD",
         "cat_col": None,
         "concept_col": "CONCEPTE",
         "bank_col": "CARTERA",
@@ -45,6 +49,7 @@ TABLE_SPECS = {
     "compresSuper": {
         "pk": "IdCompra",
         "date_cols": ["data"],
+        "date_format": "DD/MM/AAAA",
         "cat_col": None,
         "concept_col": None,
         "bank_col": None,
@@ -54,6 +59,7 @@ TABLE_SPECS = {
     "kmCotxe": {
         "pk": "idRuta",
         "date_cols": ["data"],
+        "date_format": "DD/MM/AAAA",
         "cat_col": None,
         "concept_col": None,
         "bank_col": None,
@@ -86,7 +92,7 @@ def remove_accents(input_str: str) -> str:
             res.append("".join([ch for ch in nfkd if not unicodedata.combining(ch)]))
     return "".join(res)
 
-def normalitzar_data_str(val: Any) -> Tuple[str, bool]:
+def normalitzar_data_str(val: Any, target_format: str = "DD/MM/AAAA") -> Tuple[str, bool]:
     if val is None or pd.isna(val):
         return "", False
     s = str(val).strip()
@@ -94,40 +100,43 @@ def normalitzar_data_str(val: Any) -> Tuple[str, bool]:
         return "", False
     
     # Treure part d'hora si n'hi ha (e.g. 2026-10-13 00:00:00 o 2026-10-13T00:00:00)
-    if " " in s:
-        s = s.split(" ")[0].strip()
-    elif "t" in s.lower():
-        s = re.split(r'[tT]', s)[0].strip()
+    clean_s = s
+    if " " in clean_s:
+        clean_s = clean_s.split(" ")[0].strip()
+    elif "t" in clean_s.lower():
+        clean_s = re.split(r'[tT]', clean_s)[0].strip()
 
-    # Si ja és estrictament DD/MM/AAAA
-    m_ddmmyyyy = re.match(r"^(\d{1,2})/(\d{1,2})/(\d{4})$", s)
+    d, m, y = None, None, None
+
+    # Format DD/MM/AAAA
+    m_ddmmyyyy = re.match(r"^(\d{1,2})/(\d{1,2})/(\d{4})$", clean_s)
     if m_ddmmyyyy:
         d, m, y = m_ddmmyyyy.groups()
-        canon = f"{int(d):02d}/{int(m):02d}/{int(y):04d}"
-        return (canon, canon != s)
+    else:
+        # Format ISO: YYYY-MM-DD o YYYY/MM/DD
+        m_iso = re.match(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$", clean_s)
+        if m_iso:
+            y, m, d = m_iso.groups()
+        else:
+            # Format DD-MM-YYYY
+            m_dmy_dash = re.match(r"^(\d{1,2})-(\d{1,2})-(\d{4})$", clean_s)
+            if m_dmy_dash:
+                d, m, y = m_dmy_dash.groups()
+            else:
+                # Intent de parsing amb pandas com a darrer recurs
+                try:
+                    dt = pd.to_datetime(clean_s, dayfirst=True, errors="coerce")
+                    if pd.notna(dt):
+                        d, m, y = dt.day, dt.month, dt.year
+                except Exception:
+                    pass
 
-    # Format ISO: YYYY-MM-DD o YYYY/MM/DD
-    m_iso = re.match(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$", s)
-    if m_iso:
-        y, m, d = m_iso.groups()
-        canon = f"{int(d):02d}/{int(m):02d}/{int(y):04d}"
-        return canon, True
-
-    # Format DD-MM-YYYY
-    m_dmy_dash = re.match(r"^(\d{1,2})-(\d{1,2})-(\d{4})$", s)
-    if m_dmy_dash:
-        d, m, y = m_dmy_dash.groups()
-        canon = f"{int(d):02d}/{int(m):02d}/{int(y):04d}"
-        return canon, True
-
-    # Intent de parsing amb pandas com a darrer recurs
-    try:
-        dt = pd.to_datetime(s, dayfirst=True, errors="coerce")
-        if pd.notna(dt):
-            canon = dt.strftime("%d/%m/%Y")
-            return canon, (canon != s)
-    except Exception:
-        pass
+    if d is not None and m is not None and y is not None:
+        if target_format in ("AAAA-MM-DD", "YYYY-MM-DD", "%Y-%m-%d"):
+            canon = f"{int(y):04d}-{int(m):02d}-{int(d):02d}"
+        else:
+            canon = f"{int(d):02d}/{int(m):02d}/{int(y):04d}"
+        return canon, (canon != s)
 
     return s, False
 
@@ -209,10 +218,11 @@ def diagnosticar_taula(nom_taula: str, ambits: List[str], supabase=None) -> List
 
         # 1. Dates
         if "dates" in ambits:
+            target_fmt = spec.get("date_format", "DD/MM/AAAA")
             for d_col in spec.get("date_cols", []):
                 if d_col in df.columns:
                     val_act = row.get(d_col)
-                    val_nou, mod = normalitzar_data_str(val_act)
+                    val_nou, mod = normalitzar_data_str(val_act, target_format=target_fmt)
                     if mod and val_nou != str(val_act):
                         discrepancies.append({
                             "taula": nom_taula,
@@ -221,7 +231,7 @@ def diagnosticar_taula(nom_taula: str, ambits: List[str], supabase=None) -> List
                             "columna": d_col,
                             "valor_actual": "" if pd.isna(val_act) else str(val_act),
                             "valor_nou": val_nou,
-                            "motiu": "Format data no normalitzat (convertir a DD/MM/AAAA)",
+                            "motiu": f"Format data no normalitzat (convertir a {target_fmt})",
                             "ambit": "dates"
                         })
 

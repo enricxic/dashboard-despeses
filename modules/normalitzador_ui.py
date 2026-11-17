@@ -13,7 +13,7 @@ def show_normalitzador_dialog():
     st.markdown("""
     Aquesta eina permet **analitzar i corregir** discrepàncies de format a les taules de la base de dades i fitxers de configuració:
     - **Minúscules sense accents** per a categories (`buta`, `farmacia`, `ingres_general`, etc.).
-    - Format estricte de dates a **`DD/MM/AAAA`**.
+    - Format estricte de dates (**`DD/MM/AAAA`** i **`AAAA-MM-DD`** per a camps natius de tipus DATE com `tr_cartera`).
     - Harmonització de conceptes i formes de pagament.
     """)
 
@@ -37,7 +37,7 @@ def show_normalitzador_dialog():
 
         with col_a:
             st.markdown("**Àmbits a verificar:**")
-            chk_dates = st.checkbox("📅 Dates (garantir format DD/MM/AAAA)", value=True)
+            chk_dates = st.checkbox("📅 Dates (format canònic DD/MM/AAAA / AAAA-MM-DD)", value=True)
             chk_cats = st.checkbox("🏷️ Categories (minúscula sense accents)", value=True)
             chk_conc = st.checkbox("📝 Conceptes (harmonització de noms)", value=True)
             chk_bancs = st.checkbox("🏦 Bancs i Formes de Pagament", value=False)
@@ -124,11 +124,15 @@ def show_normalitzador_dialog():
                             with st.spinner(f"Aplicant canvis a {len(items_to_apply)} registres..."):
                                 res = aplicar_discrepancies(items_to_apply, supabase)
 
-                            if res["errors"]:
-                                st.error(f"S'han produït alguns errors:\n" + "\n".join(res["errors"]))
-                            else:
+                            if res["actualitzats"] > 0:
                                 st.success(f"✅ S'han normalitzat correctament {res['actualitzats']} registres!")
                                 st.cache_data.clear()
+
+                            if res["errors"]:
+                                st.error(f"⚠️ S'han produït {len(res['errors'])} errors:\n" + "\n".join(res["errors"][:10]))
+                                if len(res["errors"]) > 10:
+                                    st.caption(f"... i {len(res['errors']) - 10} errors més.")
+                            else:
                                 # Netejar llista de la sessió per recarregar si es vol
                                 del st.session_state["discrepancies_pendents"]
                                 st.rerun()
