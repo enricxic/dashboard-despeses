@@ -1,6 +1,6 @@
 # Documentació del Projecte: Dashboard Despeses i Gestió de la Llar - XiquiHouse
 > **Versió Generalitzada i Modular**  
-> *Data d'actualització: 5 de novembre de 2026*  
+> *Data d'actualització: 17 de novembre de 2026*  
 > *Fitxer mestre de referència per a desenvolupament, noves sessions d'IA i desplegament del sistema.*
 
 ---
@@ -1137,6 +1137,10 @@ Espai integral per a la planificació, disseny i seguiment d'obres majors, refor
 4. **Fases d'Execució, Checklist i Gestió d'Estats a 1 Clic**:
    - Desglossament per etapes constructives seqüencials (ex: Enderroc, Instal·lacions, Revestiments, Pintura) amb dates en `DD/MM/AAAA`.
    - **Selector Directe d'Estat en 3 Botons per Fase**: Substitució del desplegable tradicional per 3 botons d'acció directa: `[ ⏳ Pendent ]`, `[ 🔨 En curs ]`, `[ ✅ Acabada ]` amb indicadors d'estat i ressaltat visual segons l'estat actual. En commutar, s'aplica el canvi immediatament sense bloquejos ni atenuacions de pantalla (eliminat el diàleg modal que deixava atenuada la meitat inferior de la interfície).
+   - **Botó Popover `✏️ Editar Fase`**: Cada fase disposa d'un botó d'edició ràpida protegit amb `st.form(f"form_edit_fase_{project_id}_{fase_id}")`, permetent canviar el nom de la fase, les dates d'inici i finalització en format `DD/MM/YYYY` i l'estat. En utilitzar un formulari tancat, s'eviten recàrregues intermèdies i desplaçaments incontrolats cap a dalt de la pàgina mentre s'escriu.
+   - **Resolució de Conflictes d'Estat i `on_change` per a Subtasques**: Implementació de callbacks natius `on_change` (`_make_subtask_toggle_cb`) vinculats a `set_subtasca_estat()` a `core/projectes_manager.py`. S'elimina el bucle pel qual marcar una fase com a acabada revertia immediatament a pendent a causa dels valors residuals de checkboxes a `st.session_state` (en commutar l'estat de fase es purguen les claus obsoletes de la sessió).
+   - **Col·lapsat Automàtic de Fases Acabades**: Les fases completades es renderitzen a l'acordió com a col·lapsades (`expanded=False`), mantenint l'atenció visual focalitzada en les fases pendents o en curs (`expanded=True`).
+   - **Ordenació Cronològica de Fases i Tasques**: Tant les tasques com les fases es mantenen ordenades per data per garantir una planificació coherent de l'obra.
    - **Promoció Automàtica a «En curs»**: Si un projecte està en estat «Pendent» i es marca qualsevol fase o subtasca com a «En curs» o «Acabada», el projecte pare passa automàticament a «En curs».
    - **Neteja Reactiva de Subtasques**: El formulari d'afegir subtasca es buida automàticament en enviar (`clear_on_submit=True`), emet missatges de confirmació temporal (`st.toast` i `st.success`) i incorpora un botó d'eliminació ràpida `🗑️` al costat de cada subtasca.
    - **Tancament d'Obra i Banner de Progrés**:
@@ -2158,9 +2162,11 @@ flowchart TD
 1. **Campaneta de Notificacions Persistent (`🔔`)**:
    - La campaneta d'alertes està present de forma unificada a la barra superior de navegació de l'aplicació i al tauler d'inici (*Landing*).
    - Mostra un distintiu numèric en temps real (*badge*) amb la suma d'avisos pendents que requereixen atenció.
+   - **Obertura In-Place sense Recàrrega de Navegador**: S'utilitza un disparador JavaScript natiu sobre un botó ocult de Streamlit (`_btn_trigger_notifications_bell`) en lloc d'un enllaç `<a href="...">`. Això elimina per complet els flaixos de pantalla en blanc i negre provocats per la recàrrega del navegador, obrint directament el diàleg modal `@st.dialog`.
+   - **Preservació de Navegació i Estat Actiu**: L'obertura i el tancament de la finestra d'alertes (mitjançant el botó dedicat `❌ Tancar` o clic exterior) preserva tots els paràmetres de navegació actius (`mod`, `tab`, `subtab`, `proj_id`) a `st.session_state` i com a fallback a la URL, evitant redirigir involuntàriament a la pantalla d'inici.
 2. **Optimització de Memòria i Rendiment**:
    - Per evitar consultes redundants a la base de dades, [`core/alerts.py`](file:///e:/Dashboard/core/alerts.py) aprofita directament els DataFrames actius ja presents a la memòria de sessió (`df_desp`, `df_km`, `df_limits`). Només si la sessió és verge invoca `load_dashboard_data`.
-   - [`app.py`](file:///e:/Dashboard/app.py) manté una memòria cau de 60 segons sobre el recompte per mantenir la navegació fluida i sense latència.
+   - [`app.py`](file:///e:/Dashboard/app.py) manté una memòria cau de 60 segons sobre el recompte per mantenir la navegació fluida i sense latència (amb funció `clear_alerts_cache()` exposada a `get_global_alerts.clear` per invalidació atòmica).
 
 ---
 
@@ -2239,6 +2245,10 @@ flowchart TD
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
+| **17/11/2026** | **Normalització / BD & JSON** | **Suport per a columnes `DATE` de PostgreSQL (`tr_cartera` a `AAAA-MM-DD`)**: Resolució de l'error Postgres `22008 date/time field value out of range: "29/12/2025"` en actualitzar `tr_cartera`. S'ha incorporat `date_format` configurable per taula a `TABLE_SPECS` (`core/normalitzador.py`), establint `AAAA-MM-DD` per a tipus de dades `DATE` de PostgreSQL (`tr_cartera`) i preservant `DD/MM/AAAA` per a columnes de text (`despeses`, `ingressos`, `pagaments`, `compresSuper`, `kmCotxe`). S'ha millorat la gestió d'errors i confirmació visual a `modules/normalitzador_ui.py`. |
+| **17/11/2026** | **Alertes / Campaneta & Navegació** | **Obertura In-Place sense Recàrrega i Preservació de Navegació**: Eliminats els flaixos de pantalla blanca i negra en prémer la campaneta `🔔`. S'ha substituït l'enllaç de recàrrega de navegador per un disparador JavaScript natiu sobre botó ocult de Streamlit que obre el diàleg `@st.dialog` de forma instantània. A més, es preserven els paràmetres de navegació actius (`mod`, `tab`, `subtab`, `proj_id`) i s'afegeix un botó `❌ Tancar` perquè en tancar el modal mai es retorni a la pantalla d'inici, sinó que es quedi on estava l'usuari. |
+| **17/11/2026** | **Manteniment / Fases d'Obra** | **Botó `✏️ Editar Fase`, Resolució de Reversió d'Estat i Col·lapsat**: Afegit botó popover per editar fases amb `st.form` (nom, dates `DD/MM/YYYY` i estat) prevenint salts de pantalla i bucles de recàrrega. Resolt el bug crític pel qual marcar una fase com a acabada revertia immediatament a pendent a causa de l'estat residual dels checkboxes a `st.session_state`; implementat `on_change` natiu i neteja de claus a `set_subtasca_estat()`. Col·lapsat automàtic de fases acabades (`expanded=False`) i ordenació cronològica de tasques i fases per data. |
+| **17/11/2026** | **Editor JSON / Modals** | **Neteja Atòmica de Query Params al Tancament**: Neteja atòmica dels paràmetres `action` i `file` de `st.query_params` en tancar l'editor JSON per evitar que el modal es reobri en bucle en recarregar la pàgina. |
 | **05/11/2026** | **Projectes / Persistència & Filtres** | **Canvi d'Estat a «En curs», Persistència Híbrida i Vinculació Reactiva de Filtres**: Resolt el desajust pel qual el projecte «Connexió Acumulador 2000w» tornava a sortir com a «Pendent». S'ha actualitzat directament i permanentment a «En curs» tant al fitxer local com a Supabase ID=11 (`app_config`), i s'han vinculat els botons ràpids de capçalera (`🔨 Iniciar Projecte` / `⏳ Pausar Projecte`) i el formulari d'edició amb `pending_filtre_estat_projectes` i `pending_select_projecte_actiu` perquè la interfície canviï de filtre a l'instant i mantingui el projecte actiu i visible sense que desaparegui de la pantalla. A més, en iniciar o completar qualsevol fase o subtasca, el projecte passa automàticament a «En curs». |
 | **05/11/2026** | **Projectes / Renderització d'Imatges** | **Miniatures Natives amb `st.image` i Eliminació de Bolcats Base64**: Substituït el renderitzat antic `st.markdown('<img src="...">')` per `st.image(..., use_container_width=True)` tant a la galeria de fotografies del projecte com a les miniatures de la graella de materials (`modules/canvas_planol.py` i `modules/projectes_ui.py`). Això resol definitivament el bolcat de text pla amb cadenes llargues de Base64 que es produïa quan el parser de Markdown de Streamlit fallava amb imatges pesades. |
 | **05/11/2026** | **Projectes / Galeria Fotogràfica** | **Compressió Automàtica d'Imatges (PIL) i Escriptura Atòmica**: Resolt el reinici sobtat de l'aplicació i pèrdua de fotos en carregar imatges en cru de 10-15 MB des del mòbil. Implementada la funció `compress_image_b64` a `core/projectes_manager.py` (Pillow + `ImageOps.exif_transpose`) per redimensionar a màxim 1280px i qualitat 80% JPEG (~150 KB, reducció del 90%), eliminant caigudes del WebSocket de Tornado i respectant el límit de Supabase. Les dades es desen de forma atòmica mitjançant fitxer temporal `.tmp` i `os.replace`. |
@@ -2321,7 +2331,9 @@ flowchart TD
 ### 21.1. Objectiu i Arquitectura
 L'eina de normalització (`core/normalitzador.py` i `modules/normalitzador_ui.py`) neix per resoldre i prevenir la coexistència de discrepàncies històriques als registres de la base de dades (Supabase i rèpliques CSV) i als fitxers JSON de taxonomia:
 1. **Categories en minúscules sense accents**: Les claus canòniques tècniques no poden tenir accents ni majúscules (`buta`, `farmacia`, `ingres_general`, `ingres_extra`, `parallar`, `manteniment`, `assegurança`). Els registres històrics que utilitzaven `butà`, `farmàcia`, `ingrés_general`, `ingrés_extra`, `Parallar`, `mant_netej` són transformats automàticament a la forma canònica (preservant expressament la ce trencada a `assegurança`).
-2. **Format estricte de dates (`DD/MM/AAAA`)**: Detecció i conversió de formats ISO (`AAAA-MM-DD`, `AAAA-MM-DDTHH:MM:SS`), formats amb guió (`DD-MM-AAAA`) i components residuals de temps cap al patró unificat català `DD/MM/AAAA`.
+2. **Format estricte de dates segons tipus de columna (`DD/MM/AAAA` vs `AAAA-MM-DD`)**:
+   - Detecció i conversió de formats ISO (`AAAA-MM-DD`, `AAAA-MM-DDTHH:MM:SS`), formats amb guió (`DD-MM-AAAA`) i components residuals de temps cap al patró unificat català `DD/MM/AAAA` per a taules amb dates emmagatzemades en text (`despeses`, `ingressos`, `pagaments`, `compresSuper`, `kmCotxe`).
+   - Suport explícit per a columnes nacionals de tipus `DATE` de PostgreSQL (`tr_cartera`), on s'especifica `date_format: "AAAA-MM-DD"` a la configuració `TABLE_SPECS`, evitant errors de base de dades (*Postgres 22008 date/time field value out of range*).
 3. **Harmonització de Conceptes i Formes de Pagament**: Supressió d'espais residuals, homologació de conceptes (`CashBack` a operacions bancàries, supermercats com `Dia`/`Mercadona`/`Novavenda` a neteja, `Accions NVIDIA`/`Accions S&P500` a despesa general) i unificació de text.
 
 ### 21.2. Funcionament Granular i Configurable
