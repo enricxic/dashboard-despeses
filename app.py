@@ -388,22 +388,32 @@ if "action" in st.query_params:
         json_f = st.query_params.get("file", "")
         if json_f:
             st.session_state["editing_json_file"] = json_f
+        st.query_params.pop("action", None)
+        st.query_params.pop("file", None)
     elif act == "edit_routes":
         st.session_state["editing_routes"] = True
+        st.query_params.pop("action", None)
     elif act == "show_faq_economic":
         st.session_state["show_faq_economic"] = True
+        st.query_params.pop("action", None)
     elif act == "afegir_any_comptable":
         st.session_state["show_afegir_any_comptable"] = True
+        st.query_params.pop("action", None)
     elif act == "generar_any_manteniment":
         st.session_state["show_generar_any_manteniment"] = True
+        st.query_params.pop("action", None)
     elif act == "show_faq_menjar":
         st.session_state["show_faq_menjar"] = True
+        st.query_params.pop("action", None)
     elif act == "edit_rules":
         st.session_state["editing_ocr_rules"] = True
+        st.query_params.pop("action", None)
     elif act == "clean_orphans":
         st.session_state["cleaning_ocr_orphans"] = True
+        st.query_params.pop("action", None)
     elif act in ("normalitzar_dades", "normalitzar_bd"):
         st.session_state["normalitzant_dades"] = True
+        st.query_params.pop("action", None)
     elif act == "sync_db":
         st.cache_data.clear()
         st.session_state["db_synced_toast"] = True
@@ -635,8 +645,11 @@ def show_json_editor_dialog(file_rel_path):
     if not full_path.startswith(base_dir) or not full_path.endswith(".json"):
         st.error("Ruta de fitxer no permesa.")
         if st.button("Tancar"):
-            if "editing_json_file" in st.session_state:
-                del st.session_state["editing_json_file"]
+            st.session_state.pop("editing_json_file", None)
+            st.session_state.pop(content_key, None)
+            st.session_state.pop(f"ta_{content_key}", None)
+            st.query_params.pop("action", None)
+            st.query_params.pop("file", None)
             st.rerun()
         return
 
@@ -684,10 +697,11 @@ def show_json_editor_dialog(file_rel_path):
                 
                 st.cache_data.clear()
                 st.toast("✅ Arxiu JSON desat correctament!", icon="💾")
-                if "editing_json_file" in st.session_state:
-                    del st.session_state["editing_json_file"]
-                if content_key in st.session_state:
-                    del st.session_state[content_key]
+                st.session_state.pop("editing_json_file", None)
+                st.session_state.pop(content_key, None)
+                st.session_state.pop(f"ta_{content_key}", None)
+                st.query_params.pop("action", None)
+                st.query_params.pop("file", None)
                 st.rerun()
             except json.JSONDecodeError as err:
                 st.error(f"❌ Error de sintaxi JSON: {err}")
@@ -706,10 +720,11 @@ def show_json_editor_dialog(file_rel_path):
 
     with c3:
         if st.button("❌ Tancar", use_container_width=True):
-            if "editing_json_file" in st.session_state:
-                del st.session_state["editing_json_file"]
-            if content_key in st.session_state:
-                del st.session_state[content_key]
+            st.session_state.pop("editing_json_file", None)
+            st.session_state.pop(content_key, None)
+            st.session_state.pop(f"ta_{content_key}", None)
+            st.query_params.pop("action", None)
+            st.query_params.pop("file", None)
             st.rerun()
 
 if st.session_state.get("editing_json_file"):
