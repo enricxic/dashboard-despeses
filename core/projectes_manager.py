@@ -573,17 +573,51 @@ def marcar_fase_estat(project_id: str, fase_id: str, estat_o_completada: Any) ->
                         f["estat"] = "Pendent"
                         for t in f.get("tasques", []):
                             t["feta"] = False
+                    
+                    # Netejar les claus de widget a st.session_state per evitar que checkboxes reverteixin l'estat
+                    try:
+                        import streamlit as st
+                        for t in f.get("tasques", []):
+                            st.session_state.pop(f"chk_t_{project_id}_{fase_id}_{t.get('id')}", None)
+                    except Exception:
+                        pass
+
                     return save_projectes(projectes)
+    return False
+
+def set_subtasca_estat(project_id: str, fase_id: str, tasca_id: str, feta: bool) -> bool:
+    """Estableix directament l'estat d'una subtasca i recalcula l'estat de la fase."""
+    projectes = load_projectes()
+    for p in projectes:
+        if str(p.get("id")) == str(project_id):
+            for f in p.get("fases", []):
+                if str(f.get("id")) == str(fase_id):
+                    for t in f.get("tasques", []):
+                        if str(t.get("id")) == str(tasca_id):
+                            t["feta"] = bool(feta)
+                            all_done = all(x.get("feta", False) for x in f.get("tasques", []))
+                            any_done = any(x.get("feta", False) for x in f.get("tasques", []))
+                            if all_done and len(f.get("tasques", [])) > 0:
+                                f["estat"] = "Completada"
+                                if p.get("estat") == "Pendent":
+                                    p["estat"] = "En curs"
+                            elif any_done:
+                                f["estat"] = "En curs"
+                                if p.get("estat") == "Pendent":
+                                    p["estat"] = "En curs"
+                            else:
+                                f["estat"] = "Pendent"
+                            return save_projectes(projectes)
     return False
 
 def toggle_subtasca(project_id: str, fase_id: str, tasca_id: str) -> bool:
     projectes = load_projectes()
     for p in projectes:
-        if p.get("id") == project_id:
+        if str(p.get("id")) == str(project_id):
             for f in p.get("fases", []):
-                if f.get("id") == fase_id:
+                if str(f.get("id")) == str(fase_id):
                     for t in f.get("tasques", []):
-                        if t.get("id") == tasca_id:
+                        if str(t.get("id")) == str(tasca_id):
                             t["feta"] = not t.get("feta", False)
                             # Actualitzar l'estat de la fase automàticament
                             all_done = all(x.get("feta", False) for x in f.get("tasques", []))

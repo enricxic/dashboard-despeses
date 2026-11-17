@@ -31,6 +31,7 @@ from core.projectes_manager import (
     update_fase,
     delete_fase,
     marcar_fase_estat,
+    set_subtasca_estat,
     toggle_subtasca,
     add_subtasca_a_fase,
     delete_subtasca,
@@ -1082,42 +1083,48 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                 with cf_b_edit:
                     with st.popover("✏️ Editar Fase", use_container_width=True):
                         st.markdown(f"**✏️ Editar Fase: {f.get('nom', '')}**")
-                        cur_f_nom = f.get("nom", "")
-                        ed_nom = st.text_input("Nom de la fase:", value=cur_f_nom, key=f"ed_fnom_{project_id}_{fase_id}")
-                        
-                        c_ed1, c_ed2 = st.columns(2)
-                        cur_fd_in = parse_date_cat(f.get("data_inici")) or date.today()
-                        cur_fd_out = parse_date_cat(f.get("data_fi")) or (cur_fd_in + timedelta(days=7))
-                        with c_ed1:
-                            ed_fd_in = st.date_input("Inici fase:", value=cur_fd_in, format="DD/MM/YYYY", key=f"ed_fd_in_{project_id}_{fase_id}")
-                        with c_ed2:
-                            ed_fd_out = st.date_input("Fi fase:", value=cur_fd_out, format="DD/MM/YYYY", key=f"ed_fd_out_{project_id}_{fase_id}")
-                        
-                        estat_opts = ["Pendent", "En curs", "Completada"]
-                        cur_estat_idx = estat_opts.index(status_desc) if status_desc in estat_opts else 0
-                        ed_estat = st.selectbox("Estat de la fase:", estat_opts, index=cur_estat_idx, key=f"ed_festat_{project_id}_{fase_id}")
-                        
-                        if st.button("💾 Desar canvis", key=f"save_fase_all_{project_id}_{fase_id}", type="primary", use_container_width=True):
-                            nom_net = ed_nom.strip()
-                            if nom_net:
-                                update_fase(project_id, fase_id, {
-                                    "nom": nom_net,
-                                    "data_inici": to_iso_date(ed_fd_in),
-                                    "data_fi": to_iso_date(ed_fd_out),
-                                    "estat": ed_estat
-                                })
-                                if ed_estat != status_desc:
-                                    marcar_fase_estat(project_id, fase_id, ed_estat)
-                                st.toast(f"✏️ Fase «{nom_net}» actualitzada!", icon="✅")
-                                st.rerun()
-                            else:
-                                st.error("El nom de la fase no pot estar buit.")
+                        with st.form(f"form_edit_fase_{project_id}_{fase_id}"):
+                            cur_f_nom = f.get("nom", "")
+                            ed_nom = st.text_input("Nom de la fase:", value=cur_f_nom)
+                            
+                            c_ed1, c_ed2 = st.columns(2)
+                            cur_fd_in = parse_date_cat(f.get("data_inici")) or date.today()
+                            cur_fd_out = parse_date_cat(f.get("data_fi")) or (cur_fd_in + timedelta(days=7))
+                            with c_ed1:
+                                ed_fd_in = st.date_input("Inici fase:", value=cur_fd_in, format="DD/MM/YYYY")
+                            with c_ed2:
+                                ed_fd_out = st.date_input("Fi fase:", value=cur_fd_out, format="DD/MM/YYYY")
+                            
+                            estat_opts = ["Pendent", "En curs", "Completada"]
+                            cur_estat_idx = estat_opts.index(status_desc) if status_desc in estat_opts else 0
+                            ed_estat = st.selectbox("Estat de la fase:", estat_opts, index=cur_estat_idx)
+                            
+                            sub_edit = st.form_submit_button("💾 Desar canvis", type="primary", use_container_width=True)
+                            if sub_edit:
+                                nom_net = ed_nom.strip()
+                                if nom_net:
+                                    update_fase(project_id, fase_id, {
+                                        "nom": nom_net,
+                                        "data_inici": to_iso_date(ed_fd_in),
+                                        "data_fi": to_iso_date(ed_fd_out),
+                                        "estat": ed_estat
+                                    })
+                                    if ed_estat != status_desc:
+                                        marcar_fase_estat(project_id, fase_id, ed_estat)
+                                    for t in tasques:
+                                        st.session_state.pop(f"chk_t_{project_id}_{fase_id}_{t.get('id')}", None)
+                                    st.toast(f"✏️ Fase «{nom_net}» actualitzada!", icon="✅")
+                                    st.rerun()
+                                else:
+                                    st.error("El nom de la fase no pot estar buit.")
                 
                 with cf_b_pend:
                     is_active_pend = (status_desc == "Pendent")
                     if st.button("⏳ Pendent", key=f"btn_st_pend_{project_id}_{fase_id}", type="primary" if is_active_pend else "secondary", use_container_width=True, help="Marcar fase com a Pendent"):
                         if not is_active_pend:
                             marcar_fase_estat(project_id, fase_id, "Pendent")
+                            for t in tasques:
+                                st.session_state.pop(f"chk_t_{project_id}_{fase_id}_{t.get('id')}", None)
                             st.toast(f"⏳ Fase «{f.get('nom', '')}» passada a Pendent", icon="⏳")
                             st.rerun()
 
@@ -1126,6 +1133,8 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                     if st.button("🔨 En curs", key=f"btn_st_curs_{project_id}_{fase_id}", type="primary" if is_active_curs else "secondary", use_container_width=True, help="Iniciar fase (posa també el projecte En curs)"):
                         if not is_active_curs:
                             marcar_fase_estat(project_id, fase_id, "En curs")
+                            for t in tasques:
+                                st.session_state.pop(f"chk_t_{project_id}_{fase_id}_{t.get('id')}", None)
                             st.toast(f"🔨 Fase «{f.get('nom', '')}» en curs!", icon="🔨")
                             st.rerun()
 
@@ -1134,6 +1143,8 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                     if st.button("✅ Acabada", key=f"btn_st_done_{project_id}_{fase_id}", type="primary" if is_active_done else "secondary", use_container_width=True, help="Marcar fase i subtasques com a acabades"):
                         if not is_active_done:
                             marcar_fase_estat(project_id, fase_id, "Completada")
+                            for t in tasques:
+                                st.session_state.pop(f"chk_t_{project_id}_{fase_id}_{t.get('id')}", None)
                             st.toast(f"✅ Fase «{f.get('nom', '')}» completada!", icon="✅")
                             other_f = [xf for xf in fases if xf.get("id") != fase_id]
                             if len(other_f) == 0 or all(_is_fase_done(xf) for xf in other_f):
@@ -1158,26 +1169,29 @@ def _render_fases_tab(projecte: Dict[str, Any]):
 
                 # Subtasques
                 if tasques:
+                    def _make_subtask_toggle_cb(p_id, f_id, task_id, key):
+                        def _cb():
+                            val = st.session_state.get(key, False)
+                            set_subtasca_estat(p_id, f_id, task_id, val)
+                        return _cb
+
                     for t in tasques:
                         t_id = t.get("id")
                         t_done = t.get("feta", False)
                         t_titol = t.get("titol", "")
+                        chk_key = f"chk_t_{project_id}_{fase_id}_{t_id}"
                         c_t_chk, c_t_del = st.columns([0.88, 0.12], vertical_alignment="center")
                         with c_t_chk:
-                            chk_t = st.checkbox(
+                            st.checkbox(
                                 t_titol,
                                 value=t_done,
-                                key=f"chk_t_{project_id}_{fase_id}_{t_id}"
+                                key=chk_key,
+                                on_change=_make_subtask_toggle_cb(project_id, fase_id, t_id, chk_key)
                             )
-                            if chk_t != t_done:
-                                toggle_subtasca(project_id, fase_id, t_id)
-                                up_p = get_projecte(project_id)
-                                if up_p and all(_is_fase_done(xf) for xf in up_p.get("fases", [])):
-                                    st.balloons()
-                                st.rerun()
                         with c_t_del:
                             if st.button("🗑️", key=f"del_t_{project_id}_{fase_id}_{t_id}", help=f"Eliminar subtasca: {t_titol}"):
                                 delete_subtasca(project_id, fase_id, t_id)
+                                st.session_state.pop(chk_key, None)
                                 st.session_state[f"msg_del_subt_{fase_id}"] = f"🗑️ Subtasca «{t_titol}» eliminada correctament."
                                 st.toast(f"🗑️ Subtasca eliminada: {t_titol}")
                                 st.rerun()
