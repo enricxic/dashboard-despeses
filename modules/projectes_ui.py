@@ -1070,7 +1070,7 @@ def _render_fases_tab(projecte: Dict[str, Any]):
             with st.expander(label_exp, expanded=is_expanded):
                 if is_target_fase:
                     st.info("⭐ **Aquesta és la fase d'alerta seleccionada.** Pots revisar-la o marcar-la com a Acabada a continuació.")
-                cf_info, cf_b_pend, cf_b_curs, cf_b_done, cf_b_del = st.columns([1.5, 0.9, 0.9, 1.1, 0.3], vertical_alignment="center")
+                cf_info, cf_b_edit, cf_b_pend, cf_b_curs, cf_b_done, cf_b_del = st.columns([1.3, 0.95, 0.75, 0.75, 0.85, 0.25], vertical_alignment="center")
                 with cf_info:
                     d_in = format_date_cat(f.get("data_inici"))
                     d_out = format_date_cat(f.get("data_fi"))
@@ -1078,18 +1078,40 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                         st.caption(f"📅 Termini: {d_in or '?'} → {d_out or '?'}")
                     else:
                         st.caption(f"Estat: **{status_desc}** (sense dates d'avís)")
-                    with st.popover("📅 Termini"):
+                
+                with cf_b_edit:
+                    with st.popover("✏️ Editar Fase", use_container_width=True):
+                        st.markdown(f"**✏️ Editar Fase: {f.get('nom', '')}**")
+                        cur_f_nom = f.get("nom", "")
+                        ed_nom = st.text_input("Nom de la fase:", value=cur_f_nom, key=f"ed_fnom_{project_id}_{fase_id}")
+                        
+                        c_ed1, c_ed2 = st.columns(2)
                         cur_fd_in = parse_date_cat(f.get("data_inici")) or date.today()
                         cur_fd_out = parse_date_cat(f.get("data_fi")) or (cur_fd_in + timedelta(days=7))
-                        ed_fd_in = st.date_input("Inici fase:", value=cur_fd_in, format="DD/MM/YYYY", key=f"ed_fd_in_{project_id}_{fase_id}")
-                        ed_fd_out = st.date_input("Fi fase:", value=cur_fd_out, format="DD/MM/YYYY", key=f"ed_fd_out_{project_id}_{fase_id}")
-                        if st.button("Desar dates", key=f"save_fd_{project_id}_{fase_id}", type="primary", use_container_width=True):
-                            update_fase(project_id, fase_id, {
-                                "data_inici": to_iso_date(ed_fd_in),
-                                "data_fi": to_iso_date(ed_fd_out),
-                            })
-                            st.toast("📅 Dates de fase actualitzades!", icon="📅")
-                            st.rerun()
+                        with c_ed1:
+                            ed_fd_in = st.date_input("Inici fase:", value=cur_fd_in, format="DD/MM/YYYY", key=f"ed_fd_in_{project_id}_{fase_id}")
+                        with c_ed2:
+                            ed_fd_out = st.date_input("Fi fase:", value=cur_fd_out, format="DD/MM/YYYY", key=f"ed_fd_out_{project_id}_{fase_id}")
+                        
+                        estat_opts = ["Pendent", "En curs", "Completada"]
+                        cur_estat_idx = estat_opts.index(status_desc) if status_desc in estat_opts else 0
+                        ed_estat = st.selectbox("Estat de la fase:", estat_opts, index=cur_estat_idx, key=f"ed_festat_{project_id}_{fase_id}")
+                        
+                        if st.button("💾 Desar canvis", key=f"save_fase_all_{project_id}_{fase_id}", type="primary", use_container_width=True):
+                            nom_net = ed_nom.strip()
+                            if nom_net:
+                                update_fase(project_id, fase_id, {
+                                    "nom": nom_net,
+                                    "data_inici": to_iso_date(ed_fd_in),
+                                    "data_fi": to_iso_date(ed_fd_out),
+                                    "estat": ed_estat
+                                })
+                                if ed_estat != status_desc:
+                                    marcar_fase_estat(project_id, fase_id, ed_estat)
+                                st.toast(f"✏️ Fase «{nom_net}» actualitzada!", icon="✅")
+                                st.rerun()
+                            else:
+                                st.error("El nom de la fase no pot estar buit.")
                 
                 with cf_b_pend:
                     is_active_pend = (status_desc == "Pendent")

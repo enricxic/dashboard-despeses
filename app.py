@@ -458,6 +458,17 @@ if "action" in st.query_params:
         st.session_state["db_backup_toast"] = os.path.basename(zip_path)
     elif act == "notifications":
         st.session_state["show_notifications"] = True
+        if "mod" in st.query_params:
+            st.session_state.current_module = st.query_params.get("mod")
+            st.session_state["_browser_mod"] = st.query_params.get("mod")
+        if "tab" in st.query_params:
+            st.session_state["active_nav_tab"] = st.query_params.get("tab")
+            st.session_state["nav_target_tab"] = st.query_params.get("tab")
+        if "subtab" in st.query_params:
+            st.session_state["active_nav_subtab"] = st.query_params.get("subtab")
+            st.session_state["nav_target_subtab"] = st.query_params.get("subtab")
+        if "proj_id" in st.query_params:
+            st.session_state["select_projecte_actiu"] = st.query_params.get("proj_id")
         try:
             del st.query_params["action"]
         except Exception:
@@ -481,6 +492,20 @@ if st.session_state.get("offline_toast"):
     else:
         st.toast("🌐 MODE ONLINE RECUPERAT. Es torna a connectar al núvol.", icon="🌐")
     del st.session_state["offline_toast"]
+
+# Disparador invisible per a obrir la finestra modal d'alertes sense recarregar la pàgina
+st.markdown("""
+<style>
+div[data-testid="stButton"]:has(button[title="hidden_bell_trigger"]),
+button[title="hidden_bell_trigger"] {
+    display: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+if st.button("🔔", key="_btn_trigger_notifications_bell", help="hidden_bell_trigger"):
+    st.session_state["show_notifications"] = True
+    st.rerun()
 
 if st.session_state.get("show_notifications"):
     del st.session_state["show_notifications"]
@@ -567,6 +592,10 @@ if st.session_state.get("show_notifications"):
                                     st.rerun()
                                 except Exception as e_done:
                                     st.error(f"Error: {e_done}")
+
+        st.markdown("<hr style='margin: 15px 0;'/>", unsafe_allow_html=True)
+        if st.button("❌ Tancar", key="btn_close_notif_dialog", use_container_width=True):
+            st.rerun()
     notifications_dialog()
 
 # Mostra una franja temporal de mode offline durant uns 12 segons abans de retirar-se a la icona superior
@@ -997,6 +1026,14 @@ def render_traditional_menubar():
     curr_mod = st.session_state.get("current_module")
     mod_suffix = f"&mod={curr_mod}" if curr_mod else ""
     action_suffix = f"{mod_suffix}{url_suffix}"
+    curr_tab = st.query_params.get("tab") or st.session_state.get("active_nav_tab") or st.session_state.get("nav_target_tab")
+    tab_suffix = f"&tab={curr_tab}" if curr_tab else ""
+    curr_subtab = st.query_params.get("subtab") or st.session_state.get("active_nav_subtab") or st.session_state.get("nav_target_subtab")
+    subtab_suffix = f"&subtab={curr_subtab}" if curr_subtab else ""
+    curr_proj = st.query_params.get("proj_id") or st.session_state.get("select_projecte_actiu")
+    proj_suffix = f"&proj_id={curr_proj}" if curr_proj else ""
+    context_suffix = f"{mod_suffix}{tab_suffix}{subtab_suffix}{proj_suffix}"
+    notif_url = f"?action=notifications{context_suffix}{url_suffix}"
     
     icones_actives = app_cfg.get("icones_actives", {})
     
@@ -1324,8 +1361,8 @@ div.block-container {{
 <!-- Capçalera dreta: Indicador Offline, Campana Notificacions i Avatar Rol -->
 <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
 {offline_badge_html}
-<div style="position: relative; display: flex; align-items: center;">
-<a href="?action=notifications{url_suffix}" target="_self" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+<div class="bell-container" style="position: relative; display: flex; align-items: center;">
+<a href="{notif_url}" onclick="const b=(window.parent||window).document.querySelector('button[title=\\'hidden_bell_trigger\\']'); if(b){{b.click(); return false;}}" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
 <span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer; padding: 0 4px; position: relative;">🔔<span style="background: {'red' if len(current_alerts) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(current_alerts)}</span></span>
 </a>
 </div>
@@ -1615,7 +1652,7 @@ if st.session_state.current_module is None:
     <span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>''' if st.session_state.get("is_offline") else ''}
 <div class="bell-container" style="position: relative; cursor: pointer;">
-<a href="?action=notifications{url_suffix}" target="_self" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+<a href="?action=notifications{url_suffix}" onclick="const b=(window.parent||window).document.querySelector('button[title=\\'hidden_bell_trigger\\']'); if(b){{b.click(); return false;}}" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
 <span style="font-size: 1.75rem; display: flex; align-items: center; position: relative; padding: 5px 6px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 </a>
 </div>
