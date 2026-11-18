@@ -1519,8 +1519,7 @@ def render():
             </div>
             """, unsafe_allow_html=True)
             
-            from core.config_manager import CONFIG_FILE
-            st.warning(f"🛠️ **MODE DEPURACIÓ - Ruta real del config.json:** `{CONFIG_FILE}`")
+
             
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             
