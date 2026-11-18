@@ -1357,6 +1357,7 @@ def render():
                         "matricula": "",
                         "combustible": "Gasolina",
                         "km_inicials": 0,
+                        "actiu": True,
                         "principal": False
                     })
                     st.rerun()
@@ -1372,6 +1373,7 @@ def render():
                         "matricula": "",
                         "combustible": "Dièsel",
                         "km_inicials": 0,
+                        "actiu": True,
                         "principal": False
                     })
                     st.rerun()
@@ -1387,6 +1389,7 @@ def render():
                         "matricula": "",
                         "combustible": "Dièsel",
                         "km_inicials": 0,
+                        "actiu": True,
                         "principal": False
                     })
                     st.rerun()
@@ -1402,6 +1405,7 @@ def render():
                         "matricula": "",
                         "combustible": "Gasolina",
                         "km_inicials": 0,
+                        "actiu": True,
                         "principal": False
                     })
                     st.rerun()
@@ -1416,6 +1420,7 @@ def render():
                         "matricula": "",
                         "combustible": "Gasolina",
                         "km_inicials": 0,
+                        "actiu": True,
                         "principal": False
                     })
                     st.rerun()
@@ -1441,9 +1446,15 @@ def render():
                 v_comb = v.get("combustible", "Gasolina")
                 is_p = v.get("principal", False)
 
-                principal_badge = " ⭐ (Principal)" if is_p else ""
+                is_actiu = v.get("actiu", True)
+                if is_p:
+                    status_badge = " ⭐ (Principal)"
+                elif not is_actiu:
+                    status_badge = " 📦 (Arxivat / Baixa)"
+                else:
+                    status_badge = ""
                 
-                with st.expander(f"{v_icona} **{v_nom}** — *{v_tipus}* ({v_comb}){principal_badge}", expanded=(len(vehicles_list) == 1 or idx == 0)):
+                with st.expander(f"{v_icona} **{v_nom}** — *{v_tipus}* ({v_comb}){status_badge}", expanded=(len(vehicles_list) == 1 or idx == 0)):
                     c1, c2, c3 = st.columns([3, 2, 2])
                     with c1:
                         new_nom = st.text_input("Nom del vehicle", value=v_nom, key=f"veh_nom_{idx}_{v_id}")
@@ -1460,7 +1471,7 @@ def render():
                         new_comb = st.selectbox("Combustible", comb_list, index=c_idx, key=f"veh_comb_{idx}_{v_id}")
                         v["combustible"] = new_comb
 
-                    c4, c5, c6, c7 = st.columns([3, 2, 2.5, 2])
+                    c4, c5, c6 = st.columns([3, 2, 2])
                     with c4:
                         new_model = st.text_input("Marca / Model", value=v_model, placeholder="Ex: SsangYong Tívoli", key=f"veh_mod_{idx}_{v_id}")
                         v["model"] = new_model
@@ -1470,17 +1481,24 @@ def render():
                     with c6:
                         new_km_ini = st.number_input("Km inicials (adquisició)", min_value=0, value=int(v.get("km_inicials", 0) or 0), step=100, key=f"veh_kmini_{idx}_{v_id}", help="Si el vehicle és de segona mà, introdueix els km que marcava el quadre en comprar-lo. Si era nou, deixa 0.")
                         v["km_inicials"] = int(new_km_ini)
-                    with c7:
-                        if not is_p:
-                            st.write("")
-                            st.write("")
+
+                    c_act1, c_act2, c_act3 = st.columns([3, 2, 2])
+                    with c_act1:
+                        st.write("")
+                        new_actiu_val = st.toggle("🟢 Vehicle en ús (Actiu)", value=is_actiu, key=f"veh_act_{idx}_{v_id}", help="Desmarca per donar de baixa / arxivar el vehicle si s'ha venut. Es preservarà tot l'històric de rutes, despeses i consum sense barrejar-se amb els nous vehicles.")
+                        v["actiu"] = new_actiu_val
+                        if not new_actiu_val and is_p:
+                            v["principal"] = False
+                    with c_act2:
+                        st.write("")
+                        if not is_p and is_actiu:
                             if st.button("⭐ Fer Principal", key=f"btn_make_princ_{idx}_{v_id}", use_container_width=True):
                                 to_set_principal_idx = idx
-
-                    # Botó eliminar
-                    if len(vehicles_list) > 1:
-                        if st.button(f"🗑️ Eliminar {v_nom}", key=f"btn_del_veh_{idx}_{v_id}", type="secondary"):
-                            to_delete_idx = idx
+                    with c_act3:
+                        st.write("")
+                        if len(vehicles_list) > 1:
+                            if st.button(f"🗑️ Eliminar permanentment", key=f"btn_del_veh_{idx}_{v_id}", type="secondary", use_container_width=True):
+                                to_delete_idx = idx
 
                     st.markdown("---")
 

@@ -33,29 +33,56 @@ def render():
     from core.config_manager import get_vehicles_casa, TIPUS_VEHICLES
     vehicles = get_vehicles_casa()
 
+    actius_vehicles = [v for v in vehicles if v.get("actiu", True)]
+    arxivats_vehicles = [v for v in vehicles if not v.get("actiu", True)]
+
+    # Determinar vehicle actiu per defecte
     default_vid = None
-    for v in vehicles:
+    for v in actius_vehicles:
         if v.get("principal"):
             default_vid = v.get("id")
             break
-    if not default_vid and vehicles:
+    if not default_vid and actius_vehicles:
+        default_vid = actius_vehicles[0].get("id")
+    elif not default_vid and vehicles:
         default_vid = vehicles[0].get("id")
 
     if "cotxe_active_vehicle_id" not in st.session_state or not any(v.get("id") == st.session_state["cotxe_active_vehicle_id"] for v in vehicles):
         st.session_state["cotxe_active_vehicle_id"] = default_vid
 
-    v_ids = [v.get("id") for v in vehicles]
-    v_labels = {v.get("id"): f"{v.get('icona', '🚗')} {v.get('nom', 'Vehicle')}" + (" (⭐ Principal)" if v.get("principal") else "") for v in vehicles}
+    # Suport per visualitzar vehicles arxivats
+    c_pills, c_opt = st.columns([4, 1.5])
+    with c_opt:
+        show_arxivats = False
+        if arxivats_vehicles:
+            show_arxivats = st.toggle("📦 Mostrar arxivats", value=False, key="toggle_show_arxivats_cotxe", help="Mostra vehicles històrics donats de baixa per consultar rutes, consum i despeses passades.")
+    
+    selectable_vehicles = vehicles if show_arxivats else (actius_vehicles or vehicles)
+    v_ids = [v.get("id") for v in selectable_vehicles]
+    
+    # Assegurar que el vehicle seleccionat està a la llista visible o canviar al per defecte
+    if st.session_state["cotxe_active_vehicle_id"] not in v_ids and v_ids:
+        st.session_state["cotxe_active_vehicle_id"] = default_vid if default_vid in v_ids else v_ids[0]
 
-    if len(vehicles) > 1:
-        curr_idx = v_ids.index(st.session_state["cotxe_active_vehicle_id"]) if st.session_state["cotxe_active_vehicle_id"] in v_ids else 0
-        sel_vid = st.pills("Selecciona el vehicle:", v_ids, format_func=lambda x: v_labels.get(x, x), default=v_ids[curr_idx], key="cotxe_pills_vehicle")
-        if sel_vid and sel_vid != st.session_state["cotxe_active_vehicle_id"]:
-            st.session_state["cotxe_active_vehicle_id"] = sel_vid
-            st.rerun()
-    else:
-        v_curr = vehicles[0]
-        st.markdown(f"<div style='background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.25); border-radius:8px; padding:6px 14px; display:inline-block; margin-bottom:10px;'>{v_curr.get('icona', '🚗')} <b>{v_curr.get('nom')}</b> ({v_curr.get('tipus', 'Cotxe')}{f' - {v_curr.get("model")}' if v_curr.get("model") else ''})</div>", unsafe_allow_html=True)
+    v_labels = {}
+    for v in selectable_vehicles:
+        tag = ""
+        if v.get("principal"):
+            tag = " (⭐ Principal)"
+        elif not v.get("actiu", True):
+            tag = " (📦 Arxivat)"
+        v_labels[v.get("id")] = f"{v.get('icona', '🚗')} {v.get('nom', 'Vehicle')}{tag}"
+
+    with c_pills:
+        if len(selectable_vehicles) > 1:
+            curr_idx = v_ids.index(st.session_state["cotxe_active_vehicle_id"]) if st.session_state["cotxe_active_vehicle_id"] in v_ids else 0
+            sel_vid = st.pills("Selecciona el vehicle:", v_ids, format_func=lambda x: v_labels.get(x, x), default=v_ids[curr_idx], key="cotxe_pills_vehicle")
+            if sel_vid and sel_vid != st.session_state["cotxe_active_vehicle_id"]:
+                st.session_state["cotxe_active_vehicle_id"] = sel_vid
+                st.rerun()
+        else:
+            v_curr = selectable_vehicles[0]
+            st.markdown(f"<div style='background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.25); border-radius:8px; padding:6px 14px; display:inline-block; margin-bottom:10px;'>{v_curr.get('icona', '🚗')} <b>{v_curr.get('nom')}</b> ({v_curr.get('tipus', 'Cotxe')}{f' - {v_curr.get("model")}' if v_curr.get("model") else ''})</div>", unsafe_allow_html=True)
 
     active_vehicle = next((v for v in vehicles if v.get("id") == st.session_state["cotxe_active_vehicle_id"]), vehicles[0])
     active_v_nom = active_vehicle.get("nom", "Tívoli")
@@ -94,6 +121,9 @@ def render():
     # TAB 1: REGISTRE DE KM I RUTES
     # ----------------------------------------------------
     with tab_km:
+        is_veh_actiu = active_vehicle.get("actiu", True)
+        if not is_veh_actiu:
+            st.info(f"📦 **{active_v_nom}** és un vehicle **arxivat / donat de baixa**. Pots consultar a sota tot el seu històric de rutes, però no s'hi poden registrar nous trajectes.")
         st.markdown("<h4 style='color:#f39c12;'>➕ Nou Registre de Quilòmetres</h4>", unsafe_allow_html=True)
         
         km_version = st.session_state.get("km_version", 0)

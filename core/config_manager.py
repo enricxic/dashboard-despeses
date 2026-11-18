@@ -606,7 +606,7 @@ def save_estances_casa(estances: list) -> bool:
 
 
 
-def get_vehicles_casa(cfg: dict = None) -> list:
+def get_vehicles_casa(cfg: dict = None, include_inactius: bool = True) -> list:
     """Retorna la llista de vehicles de la llar, garantint com a mínim un vehicle principal."""
     if cfg is None:
         cfg = load_app_config()
@@ -614,13 +614,10 @@ def get_vehicles_casa(cfg: dict = None) -> list:
     if not vehicles:
         vehicles = copy.deepcopy(DEFAULT_VEHICLES)
     
-    # Assegurar que almenys un sigui principal
-    has_principal = any(v.get("principal") for v in vehicles)
-    if not has_principal and vehicles:
-        vehicles[0]["principal"] = True
-
     # Assegurar camps bàsics
     for v in vehicles:
+        if "actiu" not in v:
+            v["actiu"] = True
         if "km_inicials" not in v:
             v["km_inicials"] = 0
         if "icona" not in v or not v["icona"]:
@@ -629,6 +626,15 @@ def get_vehicles_casa(cfg: dict = None) -> list:
             import re
             clean_name = re.sub(r'[^a-zA-Z0-9]+', '_', v.get("nom", "vehicle")).strip('_').lower()
             v["id"] = clean_name or f"v_{int(datetime.now().timestamp())}"
+
+    # Assegurar que almenys un vehicle actiu sigui principal
+    actius = [v for v in vehicles if v.get("actiu", True)]
+    has_principal = any(v.get("principal") for v in actius)
+    if not has_principal and actius:
+        actius[0]["principal"] = True
+
+    if not include_inactius:
+        return [v for v in vehicles if v.get("actiu", True)]
 
     return vehicles
 

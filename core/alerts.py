@@ -67,6 +67,8 @@ def get_global_alerts(force_reload: bool = False):
             veh_mants = app_cfg.get("manteniment_vehicles", {})
 
             for veh in vehicles:
+                if not veh.get("actiu", True):
+                    continue  # Vehicles arxivats / donats de baixa no generen alertes
                 v_nom = veh.get("nom", "Cotxe")
                 v_id = veh.get("id", "tivoli")
                 v_icon = veh.get("icona", "🚗")

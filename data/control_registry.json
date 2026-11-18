@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "18/11/2026 12:23:02",
+  "updated_at": "18/11/2026 12:27:54",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -69,8 +69,8 @@
       "verified_at": "18/11/2026 12:23:01",
       "verified_commit": "6d61482",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "19/11/2026 12:27:54",
+      "unlock_reason": "Suport de vehicles actius i arxivats per a preservacio historica"
     },
     "dashboard": {
       "name": "Dashboard",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "18/11/2026 12:27:54",
+      "action": "UNLOCK",
+      "module": "cotxe",
+      "detail": "Autoritzat fins 19/11/2026 12:27:54. Motiu: Suport de vehicles actius i arxivats per a preservacio historica",
+      "user": "admin",
+      "git_head": "fdce756"
+    },
     {
       "timestamp": "18/11/2026 12:23:01",
       "action": "SEAL",
