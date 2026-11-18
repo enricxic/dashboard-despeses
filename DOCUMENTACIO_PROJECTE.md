@@ -8,6 +8,7 @@
 ## Taula de Continguts
 1. [Instruccions per a IA i Directrius Crítiques (Prioritat 1)](#1-instruccions-per-a-ia-i-directrius-crítiques-prioritat-1)
 2. [Arquitectura del Sistema, Sincronització i Rendiment (Prioritat 1)](#2-arquitectura-del-sistema-sincronització-i-rendiment-prioritat-1)
+   - [2.4 Tauler d'Inici Interactiu (Landing Page amb Logotip XiquiHouse i Hotspots)](#24-tauler-dinici-interactiu-landing-page-amb-logotip-xiquihouse-i-hotspots)
 3. [Estructura del Projecte i Mapa de Fitxers](#3-estructura-del-projecte-i-mapa-de-fitxers)
 4. [Mòduls de Prioritat 2: Gestió Econòmica i Compres](#4-mòduls-de-prioritat-2-gestió-econòmica-i-compres)
    - [4.1 Compres Super i Stock (`modules/compres.py`)](#41-compres-super-i-stock-modulescomprespy)
@@ -99,6 +100,44 @@ Per assegurar la persistència completa de les dades al núvol i evitar pèrdues
 | **9** | `data/consum_llum.json` / `csv/consum_llum.csv` | Factures elèctriques, potències i consums per tram (històric) |
 | **10** | `data/consum_aigua.json` / `csv/consum_aigua.csv` | Factures d'aigua, lectures de comptador i consums en m³ |
 | **11** | `data/projectes_manteniment.json` | Projectes d'obra, reformes, plànols, materials i fases de la llar |
+
+### 2.4 Tauler d'Inici Interactiu (Landing Page amb Logotip XiquiHouse i Hotspots)
+La pantalla d'entrada de l'aplicació ([`app.py`](file:///e:/Dashboard/app.py)) presenta un tauler central amb el logotip interactiu de la casa com a eix vertebrador de tota la gestió domèstica.
+
+![Tauler d'Inici: Logotip Interactiu XiquiHouse](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/00_dashboard_landing.png)
+*Figura 5: Pantalla principal d'arrencada (Landing) amb el logotip interactiu de la llar, les icones d'accés ràpid als mòduls, la campana d'alertes en temps real i l'avatar d'administrador. Fitxer local: [`docs/img/00_dashboard_landing.png`](file:///e:/Dashboard/docs/img/00_dashboard_landing.png).*
+
+#### Característiques clau i personalització:
+
+1. **Personalització Dinàmica de Marca (Nom i Eslògan de la Casa)**:
+   - **Nom de la Llar**: El títol principal (per defecte *"XiquiHouse"*) i el lema secundari (*"TOTA LA TEVA LLAR, CONTROLADA"*) no són estàtics; es configuren directament a `core/config.json` o des del panell **Configuració > 🏷️ Títol de la casa** (`modules/admin.py`).
+   - Cada família pot adaptar lliurement el nom de la residència, l'eslògan, el color hexadecimal del rètol i la mida de la tipografia, reflectint-se a l'instant tant a la pantalla d'inici com a l'accés directe de Windows.
+
+2. **Activació i Visibilitat Selectiva d'Icones (`icones_actives`)**:
+   - Cadascuna de les 12 icones circulars (*hotspots*) connectades visualment mitjançant tubs de bus al voltant de la casa correspon a un mòdul específic.
+   - **Control Granular d'Estat**: A través del mapa booleà `icones_actives` (`app_config` ID 2 / `core/config.json`), l'administrador pot **activar (`True`) o desactivar (`False`) individualment qualsevol mòdul**.
+   - Si una família no utilitza determinats serveis (per exemple *Medicació*, *Domòtica* o *Cotxe*), es poden desactivar des d'administració: les seves icones queden ocultes o desactivades, deixant el tauler net i adaptat estrictament als mòduls que la llar utilitza realment.
+
+3. **Distribució dels Mòduls al voltant de la Casa**:
+   - **Ala Esquerra**:
+     - 📹 **Seguretat**: Estat de càmeres, accessos i detectors de presència.
+     - 📶 **Domòtica**: Integració IoT i passarel·la amb Home Assistant.
+     - 💡 **Llum i Aigua**: Monitoratge energètic, tarifes PVPC, acumuladors i factures.
+     - 🛠️ **Manteniment de la Llar**: Tasques periòdiques, manuals, garanties i projectes de reforma.
+     - 📈 **Gestió Econòmica**: Pressupost, comptabilitat plurianual i inversions.
+     - ⚙️ **Configuració Global**: Administració d'usuaris, estances, eines i paràmetres del sistema.
+   - **Ala Dreta**:
+     - 📊 **Dashboard General**: Panell executiu financer, saldos bancaris i matriu de despeses.
+     - 📅 **Calendari / Agenda**: Esdeveniments familiars sincronitzats via iCal.
+     - 💊 **Medicació**: Control de pautes farmacològiques, horaris i familiars tutelats.
+     - 🍽️ **Menús i Cuina**: Receptari, planificador setmanal IA, mise en place i estris.
+     - 🚗 **Cotxe i Mobilitat**: Quilometratge, consum de combustible, ITV i manteniments.
+     - 🛒 **Compres Super**: Escaneig OCR de tiquets, gestió de rebost i impressora tèrmica.
+
+4. **Capçalera Superior Dreta**:
+   - 🔌 **Indicador Mode Offline**: Es mostra automàticament quan no hi ha connexió a internet, permetent commutar o forçar el retorn a mode en línia en 1 sol clic.
+   - 🔔 **Campana d'Alertes Globals**: Badge vermell interactiu amb el nombre d'avisos pendents que requereixen atenció.
+   - 👑 **Avatar de Seguretat**: Identifica el rol actiu (Administrador 👑 o Convidat 👤).
 
 ---
 
@@ -2356,7 +2395,8 @@ El mòdul de **Control** neix per evitar regressions funcionals i alteracions vi
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
-| **18/11/2026** | **Documentació / Dashboard** | **Incorporació de Captura Visual i Desglossament Funcional**: Afegida la primera captura oficial optimitzada de la vista executiva ([`00_dashboard_general.png`](file:///e:/Dashboard/docs/img/00_dashboard_general.png)) amb distorsió de seguretat de les xifres privades (saldos bancaris, límits i matriu de despeses). Detallada a la secció 4.2.1 la guia funcional de cada bloc: menús, campaneta d'alertes, targetes semafòriques de tresoreria en 1 clic, banner de sobrecost i matriu mensual interactiva. |
+| **18/11/2026** | **Documentació / Landing** | **Captura Oficial del Tauler Central i Hotspots (`00_dashboard_landing.png`)**: Incorporada la nova Secció 2.4 amb la captura del logotip interactiu central de la llar. Documentada la personalització del nom de la casa i eslògan (`modules/admin.py`), i el mecanisme de visibilitat granular d'icones (`icones_actives`) que permet habilitar o ocultar qualsevol mòdul segons les necessitats de cada família. |
+| **18/11/2026** | **Documentació / Dashboard** | **Sèrie Completa de 4 Captures del Dashboard amb Privadesa**: Afegides les captures oficials del gràfic plurianual a 3 anys ([`00_dashboard_grafic_previsio.png`](file:///e:/Dashboard/docs/img/00_dashboard_grafic_previsio.png)), del panell de liquidació mensual ([`00_dashboard_detalls_mensuals.png`](file:///e:/Dashboard/docs/img/00_dashboard_detalls_mensuals.png)) i del desplegament reactiu de despeses per categoria ([`00_dashboard_desgloss_categoria.png`](file:///e:/Dashboard/docs/img/00_dashboard_desgloss_categoria.png)), amb filtres de privadesa sobre tots els imports financers. Detallada a la secció 4.2.1 la guia funcional de cada bloc. |
 | **18/11/2026** | **Control / Disciplina & UI** | **Blindatge Inviolable de Mòduls i Eliminació de Disparador Bell Duplicat**: Formalitzada a la Secció 1.3 i Secció 7.6 la regla d'or de desenvolupament: prohibició estricta d'afegir, treure o alterar funcionalitats o elements visuals en mòduls `[BLINDAT]` sense autorització expressa. Eliminat el botó duplicat de campana a l'extrem superior esquerre de `app.py`. |
 | **17/11/2026** | **Normalització / BD & JSON** | **Suport per a columnes `DATE` de PostgreSQL (`tr_cartera` a `AAAA-MM-DD`)**: Resolució de l'error Postgres `22008 date/time field value out of range: "29/12/2025"` en actualitzar `tr_cartera`. S'ha incorporat `date_format` configurable per taula a `TABLE_SPECS` (`core/normalitzador.py`), establint `AAAA-MM-DD` per a tipus de dades `DATE` de PostgreSQL (`tr_cartera`) i preservant `DD/MM/AAAA` per a columnes de text (`despeses`, `ingressos`, `pagaments`, `compresSuper`, `kmCotxe`). S'ha millorat la gestió d'errors i confirmació visual a `modules/normalitzador_ui.py`. |
 | **17/11/2026** | **Alertes / Campaneta & Navegació** | **Preservació de Navegació i Neteja de Disparadors**: Eliminat el botó duplicat a l'esquerra de la pantalla d'inici. La campaneta canònica a la capçalera i menú superior gestiona l'obertura del diàleg modal `@st.dialog` preservant els paràmetres de navegació actius (`mod`, `tab`, `subtab`, `proj_id`) i incorporant botó `❌ Tancar` per no tornar a la pantalla d'inici. |
