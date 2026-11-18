@@ -117,6 +117,51 @@ def dialog_finalitzar_obra(project_id: str, project_nom: str):
         if st.button("Encara no, deixar en curs", use_container_width=True):
             st.rerun()
 
+@st.dialog("✏️ Editar Fase", width="medium")
+def dialog_edit_fase(project_id: str, fase: Dict[str, Any], status_desc: str, tasques: List[Dict[str, Any]]):
+    """Finestra modal per editar les dades d'una fase, tancant-se automàticament en desar o cancel·lar."""
+    fase_id = fase.get("id")
+    nom_fase = fase.get("nom", "")
+    st.markdown(f"<h3 style='margin-top:0; color:#f39c12;'>✏️ Editar Fase: {nom_fase}</h3>", unsafe_allow_html=True)
+    
+    ed_nom = st.text_input("Nom de la fase:", value=nom_fase, key=f"dlg_ed_nom_{project_id}_{fase_id}")
+    
+    c_ed1, c_ed2 = st.columns(2)
+    cur_fd_in = parse_date_cat(fase.get("data_inici")) or date.today()
+    cur_fd_out = parse_date_cat(fase.get("data_fi")) or (cur_fd_in + timedelta(days=7))
+    with c_ed1:
+        ed_fd_in = st.date_input("Inici fase:", value=cur_fd_in, format="DD/MM/YYYY", key=f"dlg_ed_fd_in_{project_id}_{fase_id}")
+    with c_ed2:
+        ed_fd_out = st.date_input("Fi fase:", value=cur_fd_out, format="DD/MM/YYYY", key=f"dlg_ed_fd_out_{project_id}_{fase_id}")
+    
+    estat_opts = ["Pendent", "En curs", "Completada"]
+    cur_estat_idx = estat_opts.index(status_desc) if status_desc in estat_opts else 0
+    ed_estat = st.selectbox("Estat de la fase:", estat_opts, index=cur_estat_idx, key=f"dlg_ed_estat_{project_id}_{fase_id}")
+    
+    c_save, c_cancel = st.columns([1.5, 1])
+    with c_save:
+        if st.button("💾 Desar canvis", type="primary", use_container_width=True, key=f"btn_dlg_save_fase_{project_id}_{fase_id}"):
+            nom_net = ed_nom.strip()
+            if nom_net:
+                update_fase(project_id, fase_id, {
+                    "nom": nom_net,
+                    "data_inici": to_iso_date(ed_fd_in),
+                    "data_fi": to_iso_date(ed_fd_out),
+                    "estat": ed_estat
+                })
+                if ed_estat != status_desc:
+                    marcar_fase_estat(project_id, fase_id, ed_estat)
+                for t in tasques:
+                    st.session_state.pop(f"chk_t_{project_id}_{fase_id}_{t.get('id')}", None)
+                st.toast(f"✏️ Fase «{nom_net}» actualitzada!", icon="✅")
+                st.rerun()
+            else:
+                st.error("El nom de la fase no pot estar buit.")
+    with c_cancel:
+        if st.button("Cancel·lar", use_container_width=True, key=f"btn_dlg_cancel_fase_{project_id}_{fase_id}"):
+            st.rerun()
+
+
 @st.dialog("🧱 Fitxa i Detalls del Material")
 def dialog_detall_material(project_id: str, material: Dict[str, Any]):
     """Finestra modal completa amb totes les dades del material: foto, estat, stock, proveïdor i preus."""
@@ -1081,42 +1126,8 @@ def _render_fases_tab(projecte: Dict[str, Any]):
                         st.caption(f"Estat: **{status_desc}** (sense dates d'avís)")
                 
                 with cf_b_edit:
-                    with st.popover("✏️ Editar Fase", use_container_width=True):
-                        st.markdown(f"**✏️ Editar Fase: {f.get('nom', '')}**")
-                        with st.form(f"form_edit_fase_{project_id}_{fase_id}"):
-                            cur_f_nom = f.get("nom", "")
-                            ed_nom = st.text_input("Nom de la fase:", value=cur_f_nom)
-                            
-                            c_ed1, c_ed2 = st.columns(2)
-                            cur_fd_in = parse_date_cat(f.get("data_inici")) or date.today()
-                            cur_fd_out = parse_date_cat(f.get("data_fi")) or (cur_fd_in + timedelta(days=7))
-                            with c_ed1:
-                                ed_fd_in = st.date_input("Inici fase:", value=cur_fd_in, format="DD/MM/YYYY")
-                            with c_ed2:
-                                ed_fd_out = st.date_input("Fi fase:", value=cur_fd_out, format="DD/MM/YYYY")
-                            
-                            estat_opts = ["Pendent", "En curs", "Completada"]
-                            cur_estat_idx = estat_opts.index(status_desc) if status_desc in estat_opts else 0
-                            ed_estat = st.selectbox("Estat de la fase:", estat_opts, index=cur_estat_idx)
-                            
-                            sub_edit = st.form_submit_button("💾 Desar canvis", type="primary", use_container_width=True)
-                            if sub_edit:
-                                nom_net = ed_nom.strip()
-                                if nom_net:
-                                    update_fase(project_id, fase_id, {
-                                        "nom": nom_net,
-                                        "data_inici": to_iso_date(ed_fd_in),
-                                        "data_fi": to_iso_date(ed_fd_out),
-                                        "estat": ed_estat
-                                    })
-                                    if ed_estat != status_desc:
-                                        marcar_fase_estat(project_id, fase_id, ed_estat)
-                                    for t in tasques:
-                                        st.session_state.pop(f"chk_t_{project_id}_{fase_id}_{t.get('id')}", None)
-                                    st.toast(f"✏️ Fase «{nom_net}» actualitzada!", icon="✅")
-                                    st.rerun()
-                                else:
-                                    st.error("El nom de la fase no pot estar buit.")
+                    if st.button("✏️ Editar", key=f"btn_open_ed_fase_{project_id}_{fase_id}", use_container_width=True, help="Editar nom, dates i estat de la fase"):
+                        dialog_edit_fase(project_id, f, status_desc, tasques)
                 
                 with cf_b_pend:
                     is_active_pend = (status_desc == "Pendent")
