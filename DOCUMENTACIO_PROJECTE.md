@@ -710,21 +710,52 @@ La pantalla d'inici i comandament financer del Dashboard ([`modules/dashboard.py
 5. **Filtres Temporals i Opcions de Cerca**:
    - Selector d'Any i botó de desplegament (`🔍`) per alternar entre exercicis comptables o activar la visualització dels límits de despesa mensuals.
 
-3. **Gràfica Temporal i Taula Resum de Categories**:
-   - **Gràfic Comparatiu d'Ingressos vs Despeses (Plotly)**: Finestra temporal de 3 anys (`Any-1`, `Any`, `Any+1`) per comparar l'evolució del mes actual amb anys anteriors i projeccions futures.
-   - **Taula Resum Ràpida (`generate_fast_summary_table_html`)**: Taula HTML optimitzada amb estils visuals i gradient cromàtic verd/vermell segons el saldo de cada categoria.
-   - **Taula Interactiva de Detall del Mes (`st.dataframe` amb `on_select="rerun"`)**: Permet fer clic a qualsevol fila o categoria per filtrar automàticament els moviments individuals a la part inferior de la pantalla.
+3. **Gràfica Plurianual de Previsió d'Ingressos i Despeses (Plotly)**:
+   ![Gràfic de Previsió d'Ingressos i Despeses](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/00_dashboard_grafic_previsio.png)
+   *Figura 2: Gràfic interactiu de previsió financera a 3 anys vista (exercici anterior, actual i següent) amb codi cromàtic per a ingressos i despeses reals vs previstes. Fitxer local: [`docs/img/00_dashboard_grafic_previsio.png`](file:///e:/Dashboard/docs/img/00_dashboard_grafic_previsio.png).*
 
-4. **Seccions Operatives de Detall Mensual: `📤 Pagaments del Mes` i `📥 Ingressos del Mes`**:
-   - **Llistats de Moviments del Mes**: Visualització clara de les previsions del mes actiu segregades entre pendents de liquidar i ja pagats/cobrats.
-   - **Ajust d'Import Real en 1 Clic**: Cada concepte pendent disposa d'una casella (`st.checkbox`) que en activar-se desplega un selector numèric per ajustar l'import real abans de confirmar l'operació.
-   - **Botons d'Acció de Traspàs a BBDD**: Botons dedicats `📥 Passar seleccionats a la BBDD` (per a pagaments) i `📥 Passar ingressos a BBDD` (per a ingressos) que activen el diàleg modal de conciliació.
-   - **Modal de Confirmació i Conciliació (`dialog_confirmar_operacions`)**:
-     - **Modificació de la Data de l'Apunt (`st.date_input`)**: Cada pagament o ingrés seleccionat inclou un selector de data individual en format `dd/mm/aaaa` que permet indicar exactament el dia de cobrament o càrrec en compte.
-     - **Control Estricte de Data del Mes**: El selector de data està blindat tant per interfície (`min_value` al dia 1 i `max_value` a l'últim dia del mes seleccionat) com per comprovació al servidor, impedint que es puguin desar operacions amb dates fora del mes en curs.
-     - **Assignació de Banc i Forma de Pagament**: Verificació del compte bancari associat amb selector desplegable si manca assignació prèvia.
-     - **Compatibilitat de Tipus amb PyArrow**: El registre de la data i del dia (`dia`) als DataFrames en memòria (`df_pag_local`, `df_ing_local`) està protegit mitjançant assignació polimòrfica i blocs d'excepció segurs, garantint el correcte funcionament en entorns cloud amb PyArrow (`string[pyarrow]`).
-     - **Automatització de Traspassos a Inversions**: Si un pagament té com a destí `TR Cartera`, el sistema genera simultàniament l'apunt de despesa, l'ingrés compensatori bancari i la compra a la taula d'inversions `tr_cartera` (NVIDIA o S&P500).
+   - **Finestra Temporal Contínua de 3 Anys**: Presenta 36 mesos consecutius dividits en:
+     - *Any anterior* (ex: `Gen 25` a `Des 25`): Registres històrics reals ja consolidats.
+     - *Any en curs* (ex: `Gen 26` a `Des 26`): Transició dinàmica de dades reals (mesos passats) i previsions (mesos restants).
+     - *Any següent* (ex: `Gen 27` a `Des 27`): Projecció automàtica de pressupost calculat segons el patró de quotes i ingressos fixos.
+   - **Codificació Semafòrica de Barres**:
+     - 🟩 **Ingressos (Reals)**: Barres verdes que indiquen diners efectivament ingressats als comptes.
+     - 🟨 **Ingressos (Previsió)**: Barres grogues que mostren la previsió d'ingressos futurs programats (nòmines, pagues dobles).
+     - 🔴 **Despeses (Gastat / Reals)**: Barres vermelles de consum i sortides reals de diners.
+     - 🟤 **Despeses (Previsió / Restant)**: Barres marrons que indiquen els pagaments i càrrecs encara pendents per a mesos futurs.
+   - **Tooltip d'Inspecció en Temps Real**: En passar el cursor o tocar qualsevol barra del gràfic, es desplega una finestra emergent de detall indicant el mes exacte, el total d'ingressos reals i el total de despeses reals.
+
+4. **Detalls Operatius del Mes (`Pagaments`, `Ingressos` i `Càrrecs per Categoria`)**:
+   ![Detalls Operatius del Mes](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/00_dashboard_detalls_mensuals.png)
+   *Figura 3: Panell operatiu de liquidació mensual amb segregació de pagaments, cobraments pendents i càrrecs acumulats per categoria amb selectors de mes i any. Fitxer local: [`docs/img/00_dashboard_detalls_mensuals.png`](file:///e:/Dashboard/docs/img/00_dashboard_detalls_mensuals.png).*
+
+   - **Selectors Dinàmics de Període (Capçalera Dreta)**: Desplegables de `Mes` (ex: *novembre*) i `Any` (ex: *2026*) per consultar i operar sobre qualsevol període comptable en segons.
+   - **Columna 1: 📤 Pagaments del Mes**:
+     - *Pendents de pagament*: Llistat de quotes o rebuts pendents de liquidar (ex: *Crèdit Cotxe*, *Hipoteca*) amb casella interactiva (`st.checkbox`) per ajustar l'import real abans de confirmar l'apunt a la base de dades.
+     - *Pagats*: Registres ja liquidats satisfactòriament, identificats amb icona pròpia de servei (💧 Aigua, ⚡ Endesa, 🏊 Piscina, 🛡️ Assegurança, 🚗 Pàrquing, 📈 Inversions NVIDIA/S&P500) i el distintiu verd clar `pagat`.
+     - *Mètriques inferiors*: Còmput de `Total per a pagar` i el saldo restant `Pendent` en vermell.
+   - **Columna 2: 📥 Ingressos del Mes**:
+     - *Pendents de cobrament*: Llistat de tots els ingressos previstos pendents d'abonar (salaris, pagues extres, pensions, carteres o liquidacions tributàries d'Hisenda).
+     - *Mètriques inferiors*: Balanç agregat en blau gran de `Total per a ingressar` i `Pendent`.
+   - **Columna 3: 📊 Càrrecs per Categoria**:
+     - Taula resum que agrega totes les despeses reals registrades al mes actiu agrupades per categories canòniques (`despesa_general`, `menjar`, `proveïdor`, `varis`, `restaurant`, `neteja`, `assegurança`, `gasolina`, `manteniment`, `butà`).
+     - Cada fila inclou un selector interactiu tipus xip/checkbox per aprofundir en el detall de despeses.
+     - Mètrica destacada gran **`Total Gastat`** que suma l'import global consumit al període.
+   - **Conciliació i Traspàs a BBDD (`dialog_confirmar_operacions`)**:
+     - Botons dedicats `📥 Passar seleccionats a la BBDD` (per a pagaments) i `📥 Passar ingressos a BBDD` que obren el diàleg modal de conciliació amb selector de data individual `DD/MM/AAAA` blindat al mes actiu.
+
+5. **Desglòs Interactiu de Despeses per Categoria (Drill-Down)**:
+   ![Detall de Despeses Filtrades per Categoria](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/00_dashboard_desgloss_categoria.png)
+   *Figura 4: Desplegament interactiu de la taula de moviments individuals en seleccionar una categoria concreta (ex: menjar). Fitxer local: [`docs/img/00_dashboard_desgloss_categoria.png`](file:///e:/Dashboard/docs/img/00_dashboard_desgloss_categoria.png).*
+
+   - **Interactivitat Reactiva**: Quan l'usuari activa la casella d'una categoria a la taula de càrrecs (ex: casella taronja a `menjar`), el Dashboard filtra automàticament i desplega a sota la graella **`🔍 Desglòs de despeses: [nom_categoria]`**.
+   - **Camps Detallats de cada Moviment**:
+     - `Data`: Dia exacte de la despesa en format europeu `DD/MM/AAAA`.
+     - `FormaPago`: Mitjà de pagament utilitzat (Dèbit, Crèdit, Efectiu, etc.).
+     - `Idconcepte`: Comerç o concepte concret de la despesa (ex: *Dia*, *Novavenda*, *AreaGuissona*, *Fleca Arnau*, *Plaça*, *La Sirena*).
+     - `Import càrrec`: Despesa exacta imputada a la compra.
+     - `Comentari`: Notes addicionals o observacions de l'operació.
+   - **Barra d'Eines Integrada de la Graella (`st.dataframe`)**: Permet cerca instantània de text, descàrrega directa del subconjunt a CSV i ampliació a pantalla completa.
 
 ---
 

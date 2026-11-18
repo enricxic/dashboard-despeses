@@ -11,6 +11,9 @@ Aquest directori està destinat a allotjar les captures de pantalla visuals per 
 | Nom de Fitxer | Mòdul / Secció Documentada |
 |:---|:---|
 | `00_dashboard_general.png` | Vista Executiva: Dashboard General (`modules/dashboard.py`) |
+| `00_dashboard_grafic_previsio.png` | Gràfic de Previsió d'Ingressos i Despeses a 3 anys (`modules/dashboard.py`) |
+| `00_dashboard_detalls_mensuals.png` | Detalls de Pagaments, Ingressos i Càrrecs mensuals (`modules/dashboard.py`) |
+| `00_dashboard_desgloss_categoria.png` | Desglòs de despeses filtrades per categoria - drill-down (`modules/dashboard.py`) |
 | `00_dashboard_landing.png` | Tauler central / Landing de la casa (`app.py`) |
 | `01_compres_super.png` | Compres Supermercat i Tiquets (`modules/compres.py`) |
 | `02_economic.png` | Gestió Econòmica, Gràfics i Pressupost (`modules/economic.py`) |
