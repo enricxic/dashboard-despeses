@@ -415,6 +415,20 @@ def render():
         mant.setdefault("historic", [])
         avis_km = float(mant.get("avis_km", 20000))
 
+        def _save_mant(new_mant):
+            cfg = copy.deepcopy(load_app_config())
+            if "manteniment_vehicles" not in cfg or not isinstance(cfg.get("manteniment_vehicles"), dict):
+                cfg["manteniment_vehicles"] = {}
+            cfg["manteniment_vehicles"][active_v_id] = new_mant
+            if active_vehicle.get("principal", False):
+                cfg["manteniment_cotxe"] = new_mant
+            save_app_config(cfg)
+            try:
+                from core.alerts import get_global_alerts
+                get_global_alerts.clear()
+            except Exception:
+                pass
+
         col_hdr, col_toggle = st.columns([3, 1])
         with col_hdr:
             st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0 0 8px 0;'>Revisions d'oli, rodes, inflat, nivells, taller i històric de manteniment del vehicle.</p>", unsafe_allow_html=True)
@@ -429,20 +443,6 @@ def render():
                 mant["avis_km"] = int(nou_avis)
                 _save_mant(mant)
                 st.rerun()
-
-        def _save_mant(new_mant):
-            cfg = copy.deepcopy(load_app_config())
-            if "manteniment_vehicles" not in cfg or not isinstance(cfg.get("manteniment_vehicles"), dict):
-                cfg["manteniment_vehicles"] = {}
-            cfg["manteniment_vehicles"][active_v_id] = new_mant
-            if active_vehicle.get("principal", False):
-                cfg["manteniment_cotxe"] = new_mant
-            save_app_config(cfg)
-            try:
-                from core.alerts import get_global_alerts
-                get_global_alerts.clear()
-            except Exception:
-                pass
 
         def _estat(left, interval):
             usat = 1 - (left / interval) if interval else 1
