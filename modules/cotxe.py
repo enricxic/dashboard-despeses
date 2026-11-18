@@ -307,21 +307,20 @@ def render():
         st.markdown("<h4 style='color:#f39c12;'>📋 Històric de Rutes Registrades</h4>", unsafe_allow_html=True)
         if not df_km.empty:
             df_km_show = df_km.copy()
-            if len(vehicles) > 1 and 'cotxe' in df_km_show.columns:
-                filter_curr = st.checkbox(f"Filtrar només rutes de **{active_v_nom}**", value=True, key="filter_km_curr_veh")
-                if filter_curr:
-                    if active_v_nom.lower() in ['tívoli', 'tivoli']:
-                        df_km_show = df_km_show[df_km_show['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
-                    else:
-                        import re as _re_kf
-                        df_km_show = df_km_show[df_km_show['cotxe'].astype(str).str.contains(_re_kf.escape(active_v_nom), case=False, na=False)]
+            if 'cotxe' in df_km_show.columns:
+                if active_v_nom.lower() in ['tívoli', 'tivoli']:
+                    df_km_show = df_km_show[df_km_show['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
+                else:
+                    import re as _re_kf
+                    df_km_show = df_km_show[df_km_show['cotxe'].astype(str).str.contains(_re_kf.escape(active_v_nom), case=False, na=False)]
             df_km_show['parsed_date'] = df_km_show['data'].apply(parse_excel_date)
             sort_cols = [c for c in ['parsed_date', 'idRuta'] if c in df_km_show.columns]
             if sort_cols:
                 df_km_show = df_km_show.sort_values(by=sort_cols, ascending=[False] * len(sort_cols))
             cols_avail = [c for c in ['data', 'cotxe', 'ruta', 'km', 'contador'] if c in df_km_show.columns]
-            df_km_show = df_km_show[cols_avail].head(50)
+            df_km_show = df_km_show[cols_avail]
             df_km_show.rename(columns={'data': 'Data', 'cotxe': 'Cotxe', 'ruta': 'Ruta', 'km': 'Km trajecte', 'contador': 'Odòmetre'}, inplace=True)
+            st.caption(f"Mostrant **{len(df_km_show)}** rutes trobades")
             st.dataframe(df_km_show, use_container_width=True, hide_index=True)
         else:
             st.info("No hi ha rutes registrades.")
