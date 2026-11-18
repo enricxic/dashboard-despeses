@@ -1523,17 +1523,12 @@ def render():
             
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             
-            # Botons d'accions (Recarregar disc i Afegir membre)
+            # Botó d'acció (Afegir membre)
             if num_membres < 10:
-                col_add1, col_sync, col_add2 = st.columns([5.2, 2.8, 2])
-                with col_sync:
-                    st.button("🔄 Descartar canvis", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Descarta els canvis no desats i torna a carregar les dades originals")
+                col_add1, col_add2 = st.columns([7.5, 2.5])
                 with col_add2:
                     st.button("➕ Afegir Membre", type="primary", use_container_width=True, key="btn_add_fam_mem", on_click=_on_add_family_member)
             else:
-                col_add1, col_sync = st.columns([7, 3])
-                with col_sync:
-                    st.button("🔄 Descartar canvis", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Descarta els canvis no desats i torna a carregar les dades originals")
                 st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
                 
             st.write("")
@@ -1638,7 +1633,11 @@ def render():
                         
             st.write("")
             _render_flash_message()
-            st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam", on_click=_on_save_family_members)
+            col_save, col_discard = st.columns([7, 3])
+            with col_save:
+                st.button("💾 Desar Membres de la Família", type="primary", use_container_width=True, key="save_fam", on_click=_on_save_family_members)
+            with col_discard:
+                st.button("🔄 Descartar canvis", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Descarta els canvis no desats i torna a carregar les dades originals")
             st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
