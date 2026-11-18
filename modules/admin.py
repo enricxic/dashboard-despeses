@@ -2706,7 +2706,6 @@ def render():
                         "nom": f"Banc {num_bancs + 1}",
                         "actiu": True,
                         "icona": "🏦",
-                        "color": "#3b82f6",
                         "descripcio": "Compte o targeta",
                         "titular": "Enric Xicars",
                         "compte_iban": ""
@@ -2728,7 +2727,6 @@ def render():
                 b_id = b_item.get("id", k + 1)
                 is_act = b_item.get("actiu", True)
                 status_badge = "🟢 ACTIU" if is_act else "⚪ INACTIU"
-                b_color = b_item.get("color", "#3b82f6")
                 b_icon = b_item.get("icona", "🏦")
                 b_nom = b_item.get("nom", f"Banc {k+1}")
                 b_desc = b_item.get("descripcio", "")
@@ -2750,14 +2748,12 @@ def render():
                         b_ic_idx = bank_icons_pool.index(cur_b_ic) if cur_b_ic in bank_icons_pool else 0
                         new_b_icon = st.selectbox("Icona", bank_icons_pool, index=b_ic_idx, key=f"b_icon_{b_id}")
                     
-                    # Fila 2: Descripció, Titular, Color
-                    c4, c5, c6 = st.columns([4.0, 3.5, 1.5])
+                    # Fila 2: Descripció i Titular
+                    c4, c5 = st.columns([1.0, 1.0])
                     with c4:
                         new_b_desc = st.text_input("Tipus / Descripció", value=b_desc, key=f"b_desc_{b_id}", placeholder="ex: Compte corrent, Targeta crèdit, etc.")
                     with c5:
                         new_b_titular = st.text_input("Titular del compte", value=b_item.get("titular", ""), key=f"b_titular_{b_id}", placeholder="ex: Enric Xicars")
-                    with c6:
-                        new_b_color = st.color_picker("Color", value=b_color, key=f"b_color_{b_id}")
                         
                     # Fila 3: IBAN / Núm. Compte i Botó Esborrar
                     c7, c8 = st.columns([8.2, 1.8], vertical_alignment="center")
@@ -2773,7 +2769,6 @@ def render():
                             "nom": new_b_nom,
                             "actiu": new_b_actiu,
                             "icona": new_b_icon,
-                            "color": new_b_color,
                             "descripcio": new_b_desc,
                             "titular": new_b_titular,
                             "compte_iban": new_b_iban
