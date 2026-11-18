@@ -672,17 +672,39 @@ flowchart TD
 ##### 4.2.1 Vista Executiva: Dashboard General (`view_mode == "dashboard"`)
 La pantalla d'inici i comandament financer del Dashboard ([`modules/dashboard.py`](file:///e:/Dashboard/modules/dashboard.py)).
 
-1. **Targetes Interactives de Tresoreria i Comptes Bancaris (Top Container)**:
-   - **Mètrica Principal de Saldo Global**: Mostra la suma consolidada de diners de tots els comptes actius: `💰 Saldo Comptes: X.XX €` en verd vibrant i tipografia destacada.
-   - **Botons-Targeta de Comptes Bancaris**: Bloc horitzontal amb un botó estilitzat per a cada compte oficial en l'ordre estricte: `BBVA`, `La Caixa`, `TRADE REPUB.`, `Casa` (Efectiu), `Tg.Moneder`, `CORTEINGLÉS`, `Pago VISA`.
-     - Tipografia condicional: Verd si el saldo és positiu (`> 0.05 €`), Vermell si és negatiu (`< -0.05 €`).
-     - **Acció en 1 Clic**: En clicar sobre qualsevol targeta de banc, s'obre el modal **`show_bank_extract_modal(banc, any, mes)`**.
-   - **Diàleg Modal d'Extracte Bancari (`show_bank_extract_modal`)**:
-     - Mostra l'extracte complet d'aquell compte per al mes actiu: Saldo inicial a l'inici de mes, llistat cronològic de càrrecs i abonaments amb categoria i concepte, i saldo final resultant.
+![Vista Executiva: Dashboard General](docs/img/00_dashboard_general.png)
+*Figura 1: Pantalla executiva del Dashboard General amb tresoreria consolidada, alertes de desviació pressupostària i matriu mensual d'ingressos i despeses (xifres privades desenfocades per seguretat).*
 
-2. **Filtres Temporals i Límits de Despesa**:
-   - **Títol Dinàmic**: `📅 Resum Mensual d'Ingressos i Despeses {Any}`.
-   - **Botó Popover `🔍`**: Desplega el selector d'Any i la casella **`Veure límits despesa`** per mostrar les fites pressupostàries mensuals.
+#### Funcionalitat detallada de cada component de la pantalla:
+
+1. **Barra de Navegació Superior i Accessos Ràpids**:
+   - **Menús desplegables d'escriptori**: Accés ràpid a *Arxiu* (exportació i sessió), *Editar* (eines de normalització, regles OCR, control de mòduls), *Mòduls* (accés directe a qualsevol àrea de la casa) i *Bases de dades* (gestor directe de taules).
+   - **Campaneta d'Alertes Globals (`🔔`)**: Mostra un distintiu numèric vermell en temps real amb els avisos vençuts o propers (revisions del cotxe, tiquets pendents, manteniments de la llar). En fer-hi clic, obre la finestra modal d'alertes sense canviar de pàgina.
+   - **Distintiu de Rol d'Usuari (`👑` / `👤`)**: Identifica el perfil de seguretat actiu (Administrador o Convidat/Visualitzador).
+   - **Botó `🔙 Inici`**: Retorna a l'instant al tauler central amb el logotip interactiu de la llar.
+
+2. **Targetes Interactives de Tresoreria i Comptes Bancaris (Top Container)**:
+   - **Mètrica Principal de Saldo Global**: `💰 Saldo Comptes` mostra la suma consolidada de la tresoreria real en temps real, destacat en verd d'alta visibilitat.
+   - **Targetes Individuals per a Cada Compte**: Visualitzen el saldo de les entitats i caixes de la llar en ordre canònic: `BBVA`, `LA CAIXA`, `TRADE REPUB.`, `CASA` (efectiu), `TG.MONEDER`, `CORTEINGLÉS` i `PAGO VISA`.
+   - **Codi Cromàtic de Saldos**: Valors positius en verd clar i imports deutors o negatius (ex: liquidacions pendents de targeta Visa) en vermell clar.
+   - **Extracte Bancari a 1 Clic**: Fent clic a qualsevol de les targetes s'obre el diàleg modal `show_bank_extract_modal(banc, any, mes)` que desglossa els moviments reals del mes (saldo inicial, ingressos, càrrecs i saldo final).
+
+3. **Panell d'Alerta de Llindars i Despesa Superada (`⚠️ Valor superat`)**:
+   - **Vigilància Pressupostària Automàtica**: Monitoritza automàticament les despeses acumulades del mes respecte als límits establerts per a la llar a `core/config.json`.
+   - **Banner de Desviació**: Si alguna categoria supera el sostre previst (per exemple *neteja* o *varis*), es genera un banner vermell destacat indicant tant la despesa real com el límit configurat per alertar d'un sobrecost abans de final de mes.
+
+4. **Matriu Mensual d'Ingressos, Despeses i Balanç (Taula Executiva)**:
+   - **Temporalitat per Mesos**: Llistat cronològic de `Gener` a `Desembre` amb una fila final de tancament `TOTAL`. El mes en curs (ex: *Novembre*) es ressalta visualment en groc.
+   - **Bloc d'Ingressos**: Desglossa els `Ing. Fixes` (salaris i ingressos regulars), `Ing. Extres` (pagues dobles, devolucions) i el total consolidat `Ing. Total`.
+   - **Bloc de Despeses per Categories Canòniques**: Agrupació de les sortides en categories clau de la llar: `Fixes` (hipoteca, subministraments), `Menjar`, `Rebost`, `Gasolina`, `Restaurant`, `Farmàcia`, `Neteja`, `Varis`, `Proveïdor` i el còmput total `Total Desp.`.
+   - **Columna de Saldo Semafòric**: Mostra el resultat net de tresoreria de cada mes amb semàfor visual:
+     - 🟢 **Verd**: Mesos amb superàvit financer (estalvi positiu).
+     - 🟡 **Groc**: Mesos en equilibri o dèficit lleuger.
+     - 🔴 **Vermell**: Mesos amb dèficit significatiu (on les despeses han superat els ingressos).
+   - **Interactivitat Dinàmica**: Seleccionant qualsevol fila de la taula, es filtren i mostren immediatament els pagaments i ingressos individuals del mes seleccionat a les seccions operatives inferiors.
+
+5. **Filtres Temporals i Opcions de Cerca**:
+   - Selector d'Any i botó de desplegament (`🔍`) per alternar entre exercicis comptables o activar la visualització dels límits de despesa mensuals.
 
 3. **Gràfica Temporal i Taula Resum de Categories**:
    - **Gràfic Comparatiu d'Ingressos vs Despeses (Plotly)**: Finestra temporal de 3 anys (`Any-1`, `Any`, `Any+1`) per comparar l'evolució del mes actual amb anys anteriors i projeccions futures.
