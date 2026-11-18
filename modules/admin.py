@@ -394,7 +394,7 @@ def _on_sync_family_from_disk():
         st.cache_data.clear()
     except Exception:
         pass
-    st.session_state["flash_success"] = "🔄 Dades de la família recarregades directament des de config.json!"
+    st.session_state["flash_success"] = "🔄 Canvis descartats i dades originals recarregades!"
 
 def _render_flash_message():
     if "flash_success" in st.session_state:
@@ -1527,13 +1527,13 @@ def render():
             if num_membres < 10:
                 col_add1, col_sync, col_add2 = st.columns([5.2, 2.8, 2])
                 with col_sync:
-                    st.button("🔄 Recarregar disc", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Llegeix directament el fitxer config.json del disc i buida la memòria cau")
+                    st.button("🔄 Descartar canvis", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Descarta els canvis no desats i torna a carregar les dades originals")
                 with col_add2:
                     st.button("➕ Afegir Membre", type="primary", use_container_width=True, key="btn_add_fam_mem", on_click=_on_add_family_member)
             else:
                 col_add1, col_sync = st.columns([7, 3])
                 with col_sync:
-                    st.button("🔄 Recarregar disc", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Llegeix directament el fitxer config.json del disc i buida la memòria cau")
+                    st.button("🔄 Descartar canvis", type="secondary", use_container_width=True, key="btn_sync_fam_mem", on_click=_on_sync_family_from_disk, help="Descarta els canvis no desats i torna a carregar les dades originals")
                 st.info("ℹ️ S'ha assolit el límit màxim de 10 membres a la família.")
                 
             st.write("")
