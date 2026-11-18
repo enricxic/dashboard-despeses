@@ -12,6 +12,8 @@
 4. [Mòduls de Prioritat 2: Gestió Econòmica i Compres](#4-mòduls-de-prioritat-2-gestió-econòmica-i-compres)
    - [4.1 Compres Super i Stock (`modules/compres.py`)](#41-compres-super-i-stock-modulescomprespy)
    - [4.2 Mòdul Econòmic i Dashboard (`modules/economic.py`, `modules/dashboard.py`)](#42-mòdul-econòmic-i-dashboard-moduleseconomicpy-modulesdashboardpy)
+     - [4.2.1 Vista Executiva: Dashboard General (amb captura visual oficial)](#421-vista-executiva-dashboard-general-view_mode--dashboard)
+     - [4.2.2 Vista Operativa: Mòdul Econòmic](#422-vista-operativa-mòdul-econòmic-view_mode--economic)
 5. [Mòduls de Prioritat 3: Subministraments i Manteniment de la Llar](#5-mòduls-de-prioritat-3-subministraments-i-manteniment-de-la-llar)
    - [5.1 Llum i Aigua (`modules/llum_aigua.py`)](#51-llum-i-aigua-modulesllum_aiguapy)
    - [5.2 Manteniment de la Llar (`modules/manteniment.py`)](#52-manteniment-de-la-llar-modulesmantenimentpy)
@@ -146,6 +148,8 @@ Dashboard/
 │   ├── projectes_ui.py            # 🏗️ Interfície completa de la pestanya de projectes i reformes
 │   ├── seguretat.py               # 📹 Estat de càmeres, accessos i alarmes
 │   └── sincronitzacio.py          # 🔄 Consolidació de dades offline retingudes
+├── docs/                          # Documentació complementària i recursos visuals
+│   └── img/                       # Captures de pantalla oficials dels mòduls per a la documentació
 ├── PDF/                           # Magatzem centralitzat de documents en PDF
 │   ├── Factures_Aigua/	           # Dipòsit de factures d'aigua en PDF
 │   ├── Factures_Llum/             # Dipòsit de factures elèctriques en PDF
@@ -2321,6 +2325,8 @@ El mòdul de **Control** neix per evitar regressions funcionals i alteracions vi
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
+| **18/11/2026** | **Documentació / Dashboard** | **Incorporació de Captura Visual i Desglossament Funcional**: Afegida la primera captura oficial optimitzada de la vista executiva ([`00_dashboard_general.png`](file:///e:/Dashboard/docs/img/00_dashboard_general.png)) amb distorsió de seguretat de les xifres privades (saldos bancaris, límits i matriu de despeses). Detallada a la secció 4.2.1 la guia funcional de cada bloc: menús, campaneta d'alertes, targetes semafòriques de tresoreria en 1 clic, banner de sobrecost i matriu mensual interactiva. |
+| **18/11/2026** | **Control / Disciplina & UI** | **Blindatge Inviolable de Mòduls i Eliminació de Disparador Bell Duplicat**: Formalitzada a la Secció 1.3 i Secció 7.6 la regla d'or de desenvolupament: prohibició estricta d'afegir, treure o alterar funcionalitats o elements visuals en mòduls `[BLINDAT]` sense autorització expressa. Eliminat el botó duplicat de campana a l'extrem superior esquerre de `app.py`. |
 | **17/11/2026** | **Normalització / BD & JSON** | **Suport per a columnes `DATE` de PostgreSQL (`tr_cartera` a `AAAA-MM-DD`)**: Resolució de l'error Postgres `22008 date/time field value out of range: "29/12/2025"` en actualitzar `tr_cartera`. S'ha incorporat `date_format` configurable per taula a `TABLE_SPECS` (`core/normalitzador.py`), establint `AAAA-MM-DD` per a tipus de dades `DATE` de PostgreSQL (`tr_cartera`) i preservant `DD/MM/AAAA` per a columnes de text (`despeses`, `ingressos`, `pagaments`, `compresSuper`, `kmCotxe`). S'ha millorat la gestió d'errors i confirmació visual a `modules/normalitzador_ui.py`. |
 | **17/11/2026** | **Alertes / Campaneta & Navegació** | **Preservació de Navegació i Neteja de Disparadors**: Eliminat el botó duplicat a l'esquerra de la pantalla d'inici. La campaneta canònica a la capçalera i menú superior gestiona l'obertura del diàleg modal `@st.dialog` preservant els paràmetres de navegació actius (`mod`, `tab`, `subtab`, `proj_id`) i incorporant botó `❌ Tancar` per no tornar a la pantalla d'inici. |
 | **17/11/2026** | **Manteniment / Fases d'Obra** | **Botó `✏️ Editar Fase`, Resolució de Reversió d'Estat i Col·lapsat**: Afegit botó popover per editar fases amb `st.form` (nom, dates `DD/MM/YYYY` i estat) prevenint salts de pantalla i bucles de recàrrega. Resolt el bug crític pel qual marcar una fase com a acabada revertia immediatament a pendent a causa de l'estat residual dels checkboxes a `st.session_state`; implementat `on_change` natiu i neteja de claus a `set_subtasca_estat()`. Col·lapsat automàtic de fases acabades (`expanded=False`) i ordenació cronològica de tasques i fases per data. |

@@ -10,7 +10,8 @@ Aquest directori està destinat a allotjar les captures de pantalla visuals per 
 ## Nomenclatura Suggerida de Fitxers
 | Nom de Fitxer | Mòdul / Secció Documentada |
 |:---|:---|
-| `00_dashboard_inici.png` | Tauler d'inici / Landing (`app.py`, `modules/dashboard.py`) |
+| `00_dashboard_general.png` | Vista Executiva: Dashboard General (`modules/dashboard.py`) |
+| `00_dashboard_landing.png` | Tauler central / Landing de la casa (`app.py`) |
 | `01_compres_super.png` | Compres Supermercat i Tiquets (`modules/compres.py`) |
 | `02_economic.png` | Gestió Econòmica, Gràfics i Pressupost (`modules/economic.py`) |
 | `03_llum_aigua.png` | Subministraments Llum i Aigua (`modules/llum_aigua.py`) |
