@@ -493,19 +493,6 @@ if st.session_state.get("offline_toast"):
         st.toast("🌐 MODE ONLINE RECUPERAT. Es torna a connectar al núvol.", icon="🌐")
     del st.session_state["offline_toast"]
 
-# Disparador invisible per a obrir la finestra modal d'alertes sense recarregar la pàgina
-st.markdown("""
-<style>
-div[data-testid="stButton"]:has(button[title="hidden_bell_trigger"]),
-button[title="hidden_bell_trigger"] {
-    display: none !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-if st.button("🔔", key="_btn_trigger_notifications_bell", help="hidden_bell_trigger"):
-    st.session_state["show_notifications"] = True
-    st.rerun()
 
 if st.session_state.get("show_notifications"):
     del st.session_state["show_notifications"]
@@ -1362,7 +1349,7 @@ div.block-container {{
 <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
 {offline_badge_html}
 <div class="bell-container" style="position: relative; display: flex; align-items: center;">
-<a href="{notif_url}" onclick="const b=(window.parent||window).document.querySelector('button[title=\\'hidden_bell_trigger\\']'); if(b){{b.click(); return false;}}" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+<a href="{notif_url}" target="_self" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
 <span class="menu-title" style="font-size: 1.5rem; display: flex; align-items: center; cursor: pointer; padding: 0 4px; position: relative;">🔔<span style="background: {'red' if len(current_alerts) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: -5px; right: -5px;">{len(current_alerts)}</span></span>
 </a>
 </div>
@@ -1652,7 +1639,7 @@ if st.session_state.current_module is None:
     <span style="text-decoration: none !important; border: none !important; outline: none !important;">🔌</span>
 </a>''' if st.session_state.get("is_offline") else ''}
 <div class="bell-container" style="position: relative; cursor: pointer;">
-<a href="?action=notifications{url_suffix}" onclick="const b=(window.parent||window).document.querySelector('button[title=\\'hidden_bell_trigger\\']'); if(b){{b.click(); return false;}}" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+<a href="?action=notifications{url_suffix}" target="_self" title="Veure notificacions i alertes" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
 <span style="font-size: 1.75rem; display: flex; align-items: center; position: relative; padding: 5px 6px; color: inherit; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">🔔<span style="background: {'red' if len(st.session_state.get('global_alerts_list', [])) > 0 else '#888'}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; position: absolute; top: 0px; right: 0px;">{len(st.session_state.get('global_alerts_list', []))}</span></span>
 </a>
 </div>
