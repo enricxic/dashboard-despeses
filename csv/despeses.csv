@@ -4018,6 +4018,7 @@ ID_mov;Banc;FormaPago;Data;mes;any;import ingrés;Import càrrec;grup;Idcategori
 808;BBVA;Compte;29/03/2022;marzo;2022;47.14;0.0;Ingrés;ingres_general;Cartera DP Gran;;False
 7130;TradeRep.;Dèbit;09/09/2026;septiembre;2026;0.0;24.69;Càrrec;menjar;AreaGuissona;;False
 7131;TradeRep.;Dèbit;09/09/2026;septiembre;2026;0.0;1.35;Càrrec;neteja;AreaGuissona;;False
+8314;TradeRep.;Dèbit;18/11/2026;noviembre;2026;0.0;15.73;Càrrec;menjar;AreaGuissona;;False
 7132;BBVA;Compte;10/09/2026;septiembre;2026;0.0;30.0;Càrrec;varis;Expectacle/Teatre;Marxa Joanet;False
 7133;TradeRep.;Dèbit;10/09/2026;septiembre;2026;0.0;10.2453;Càrrec;menjar;Fruiterra;;False
 1372;Efectiu;;21/09/2022;septiembre;2022;0.0;11.3;Càrrec;menjar;Dia;;False

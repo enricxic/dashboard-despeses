@@ -237,6 +237,22 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
 
   <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
   
+  <!-- Selector de Salts de Mida de la Línia (Resolució de traç) -->
+  <div style="display: inline-flex; align-items: center; gap: 4px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 2px 7px;" title="Tria el salt o increment de mida en traçar línies i parets">
+    <span style="font-size: 11px; font-weight: 700; color: #334155;">📐 Salt:</span>
+    <select id="selectSnapStep" onchange="setSnapStep(this.value)" style="border: 1px solid #94a3b8; border-radius: 6px; padding: 4px 6px; font-size: 12px; font-weight: 600; background: #ffffff; color: #0f172a; cursor: pointer;">
+      <option value="0.05">5 cm (0,05 m)</option>
+      <option value="0.10" selected>10 cm (0,10 m)</option>
+      <option value="0.20">20 cm (0,20 m)</option>
+      <option value="0.25">25 cm (0,25 m)</option>
+      <option value="0.50">50 cm (0,50 m)</option>
+      <option value="1.00">1 m (1,00 m)</option>
+      <option value="0">Lliure (Sense salt)</option>
+    </select>
+  </div>
+
+  <div style="height: 20px; width: 1px; background: #cbd5e1; margin: 0 2px;"></div>
+  
   <!-- Controls de Zoom -->
   <div style="display: inline-flex; gap: 2px; align-items: center; background: #f1f5f9; padding: 2px 4px; border-radius: 8px; border: 1px solid #cbd5e1;">
     <button class="btn" onclick="zoomIn()" style="padding: 5px 8px; font-size: 12px;" title="Apropar plànol">🔍+</button>
@@ -348,14 +364,15 @@ def get_canvas_html(project_id: str, existing_bg_b64: str = "") -> str:
 
 <div class="status-bar">
   <span id="toolStatus">👉 Mode Planta: Arrossega el dit per dibuixar una paret recta</span>
-  <span id="modeStatus">Graella: 20px ≈ 0,5m</span>
+  <span id="modeStatus">Graella / Salt: 10 cm (0,10 m)</span>
 </div>
 
 <script>
 const canvas = document.getElementById('planolCanvas');
 const canvasWrapper = document.querySelector('.canvas-wrapper');
 const ctx = canvas.getContext('2d');
-const GRID_SIZE = 20;
+let currentSnapStepM = 0.10; // Salt de mida seleccionat (per defecte 10 cm = 0,10 m)
+let GRID_SIZE = 20; // Malla visual base (20px = 0,5m)
 
 let currentTool = 'wall';
 let previousDrawingTool = 'wall';
@@ -795,8 +812,9 @@ function createPresetRoom() {{
   const texInput = selectedRoomTexture || 'parquet';
 
   // 40px = 1m
-  const wPx = Math.round((wInput * 40) / GRID_SIZE) * GRID_SIZE;
-  const hPx = Math.round((hInput * 40) / GRID_SIZE) * GRID_SIZE;
+  const stepPx = (currentSnapStepM > 0) ? (currentSnapStepM * 40) : 20;
+  const wPx = Math.round((wInput * 40) / stepPx) * stepPx;
+  const hPx = Math.round((hInput * 40) / stepPx) * stepPx;
 
   // Trobar posició centrada a l'espai visible del canvas
   let rx = snap((canvas.width - wPx) / 2);
@@ -965,8 +983,41 @@ function setTool(tool) {{
   else if (tool === 'bucket') status.innerText = `👉 Galleda (${{selectedTextureName || 'Textura'}}): Toca un espai per omplir-lo o arrossega per crear una zona texturada.`;
 }}
 
+function getSnapStepPx() {{
+  if (currentSnapStepM <= 0) return 1;
+  return currentSnapStepM * 40; // 40px = 1m
+}}
+
 function snap(val) {{
-  return Math.round(val / GRID_SIZE) * GRID_SIZE;
+  if (currentSnapStepM <= 0) {{
+    return Math.round(val);
+  }}
+  const stepPx = currentSnapStepM * 40;
+  return Math.round(val / stepPx) * stepPx;
+}}
+
+function setSnapStep(val) {{
+  currentSnapStepM = parseFloat(val);
+  if (isNaN(currentSnapStepM)) currentSnapStepM = 0.10;
+  try {{ localStorage.setItem('canvas_planol_snap_step', String(currentSnapStepM)); }} catch(err) {{}}
+  updateSnapStepUI();
+  drawAll();
+}}
+
+function updateSnapStepUI() {{
+  const sel = document.getElementById('selectSnapStep');
+  if (sel) sel.value = String(currentSnapStepM);
+  const modeStatus = document.getElementById('modeStatus');
+  if (modeStatus) {{
+    if (currentSnapStepM <= 0) {{
+      modeStatus.innerText = "Salt de mida: Lliure (Sense salt)";
+    }} else if (currentSnapStepM < 1.0) {{
+      const cm = Math.round(currentSnapStepM * 100);
+      modeStatus.innerText = `Graella / Salt: ${{cm}} cm (${{currentSnapStepM.toFixed(2)}} m)`;
+    }} else {{
+      modeStatus.innerText = `Graella / Salt: ${{currentSnapStepM.toFixed(2)}} m`;
+    }}
+  }}
 }}
 
 // Càlcul de distància matemàtica exacta entre un punt (px, py) i un segment de línia
@@ -1162,20 +1213,42 @@ function undo() {{
 }}
 
 function drawGrid() {{
+  const stepPx = (currentSnapStepM > 0) ? (currentSnapStepM * 40) : 20;
+  const visualGridStep = (stepPx >= 8) ? stepPx : 20;
+
+  ctx.save();
+  // 1. Malla de salt suau
   ctx.strokeStyle = '#f1f5f9';
   ctx.lineWidth = 1;
-  for (let x = 0; x < canvas.width; x += GRID_SIZE) {{
+  for (let x = 0; x < canvas.width; x += visualGridStep) {{
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, canvas.height);
     ctx.stroke();
   }}
-  for (let y = 0; y < canvas.height; y += GRID_SIZE) {{
+  for (let y = 0; y < canvas.height; y += visualGridStep) {{
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(canvas.width, y);
     ctx.stroke();
   }}
+
+  // 2. Línies mestres cada 1 metre (40px)
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < canvas.width; x += 40) {{
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }}
+  for (let y = 0; y < canvas.height; y += 40) {{
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }}
+  ctx.restore();
 
   // Guies visuals de referència quan estem en mode Alçat (Paret)
   if (currentViewMode === 'paret') {{
@@ -1796,8 +1869,17 @@ canvas.addEventListener('pointermove', (e) => {{
   if (currentTool === 'pan' || !isDrawing) return;
   e.preventDefault();
   const c = getPointerCoords(e);
-  const currX = c.x;
-  const currY = c.y;
+  let currX = c.x;
+  let currY = c.y;
+  
+  // Assistència ortogonal automàtica si el traç és gairebé horitzontal o vertical
+  if (!c.isSnapped && (currentTool === 'wall' || currentTool === 'line' || currentTool === 'dim')) {{
+    if (Math.abs(c.rawY - startY) <= 10) {{
+      currY = startY;
+    }} else if (Math.abs(c.rawX - startX) <= 10) {{
+      currX = startX;
+    }}
+  }}
   
   if (currentTool === 'curve' && pendingCurve) {{
     pendingCurve.cx = c.rawX;
@@ -1899,8 +1981,17 @@ canvas.addEventListener('pointerup', (e) => {{
   try {{ canvas.releasePointerCapture(e.pointerId); }} catch(err) {{}}
   
   const c = getPointerCoords(e);
-  const endX = c.x;
-  const endY = c.y;
+  let endX = c.x;
+  let endY = c.y;
+
+  // Assistència ortogonal automàtica si el traç final és gairebé horitzontal o vertical
+  if (!c.isSnapped && (currentTool === 'wall' || currentTool === 'line' || currentTool === 'dim')) {{
+    if (Math.abs(c.rawY - startY) <= 10) {{
+      endY = startY;
+    }} else if (Math.abs(c.rawX - startX) <= 10) {{
+      endX = startX;
+    }}
+  }}
 
   if (currentTool === 'curve' && pendingCurve) {{
     pendingCurve.cx = c.rawX;
@@ -2098,7 +2189,15 @@ function downloadImage() {{
   document.body.removeChild(a);
 }}
 
-// Inicialització
+// Inicialització de Salt de Mida i Canvas
+try {{
+  const savedStep = localStorage.getItem('canvas_planol_snap_step');
+  if (savedStep !== null) {{
+    currentSnapStepM = parseFloat(savedStep);
+    if (isNaN(currentSnapStepM)) currentSnapStepM = 0.10;
+  }}
+}} catch(err) {{}}
+updateSnapStepUI();
 drawAll();
 </script>
 
@@ -2139,6 +2238,7 @@ def render_planol_tab(projecte: Dict[str, Any]):
         with st.expander("📖 Guia d'Ús: Com funciona l'editor de plànols?", expanded=False):
             st.info("""📱 **Com utilitzar-lo al mòbil (tacte directe):**
 - **🧱 Paret / 🔗 Seguir traç:** Arrossega el dit per fer la primera paret. Les següents s'enllaçaran automàticament des de l'última cantonada (ideal per dibuixar habitacions senceres sense buscar on continua).
+- **📐 Salt de Mida Configurable:** Al selector de la barra d'eines pots triar l'increment de mida en traçar (5 cm, 10 cm, 20 cm, 25 cm, 50 cm, 1 m o Lliure) per dibuixar parets amb la màxima precisió i flexibilitat.
 - **🧲 Snap Magnètic:** En acostar el dit a qualsevol cantonada o extrem, s'activa un imant verd (`🟢`) que fixa la posició exacta i permet tancar l'habitació a la perfecció.
 - **🖐️ Moure:** Activa aquesta eina per desplaçar el plànol lliurement amb el dit quan hagis ampliat la vista amb zoom.
 - **🔍 Controls de Zoom:** Prem `🔍+`, `🔍-` o `100%` per apropar detalls o veure tota l'estança.
