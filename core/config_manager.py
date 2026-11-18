@@ -23,6 +23,29 @@ IOT_CATEGORIES = {
 
 IOT_PROTOCOLS = ["Tuya / Smart Life", "Wi-Fi", "Shelly", "Zigbee", "Sonoff", "Matter", "Bluetooth", "Z-Wave", "Home Assistant", "RF 433MHz", "Programador horari", "Altres"]
 
+TIPUS_VEHICLES = {
+    "Cotxe": "🚗",
+    "Autocaravana": "🚐",
+    "Furgoneta": "🚚",
+    "Moto": "🏍️",
+    "Altres": "🚙"
+}
+
+COMBUSTIBLES_VEHICLES = ["Gasolina", "Dièsel", "Híbrid", "Elèctric", "GLP / GNC"]
+
+DEFAULT_VEHICLES = [
+    {
+        "id": "tivoli",
+        "nom": "Tívoli",
+        "tipus": "Cotxe",
+        "icona": "🚗",
+        "model": "SsangYong Tívoli",
+        "matricula": "",
+        "combustible": "Gasolina",
+        "principal": True
+    }
+]
+
 DEFAULT_ESTANCES = [
     {"id": "menjador", "nom": "Menjador / Sala", "icona": "🛋️", "tipus": "menjador"},
     {"id": "cuina", "nom": "Cuina", "icona": "🍳", "tipus": "cuina"},
@@ -50,6 +73,7 @@ DEFAULT_CONFIG = {
         "tamany_lletra": 60
     },
     "estances": copy.deepcopy(DEFAULT_ESTANCES),
+    "vehicles": copy.deepcopy(DEFAULT_VEHICLES),
     "familia": [
         {"id": 1, "nom": "Enric", "rol": "Pare", "data_naixement": "23/09/1957", "edat": "68", "actiu": True, "alergies": [], "vetos": ["fetge", "casqueria"], "comodins": ["Pit de pollastre a la planxa", "Truita francesa"], "icona": "👨", "google_calendar_ical": "", "color": "#3b82f6"},
         {"id": 2, "nom": "Isabel", "rol": "Mare", "data_naixement": "06/03/1959", "edat": "67", "actiu": True, "alergies": [], "vetos": [], "comodins": ["Amanida completa", "Salmó a la planxa"], "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"},
@@ -579,3 +603,35 @@ def save_estances_casa(estances: list) -> bool:
 
     return save_app_config(cfg)
 
+
+
+def get_vehicles_casa(cfg: dict = None) -> list:
+    """Retorna la llista de vehicles de la llar, garantint com a mínim un vehicle principal."""
+    if cfg is None:
+        cfg = load_app_config()
+    vehicles = list(cfg.get("vehicles", []))
+    if not vehicles:
+        vehicles = copy.deepcopy(DEFAULT_VEHICLES)
+    
+    # Assegurar que almenys un sigui principal
+    has_principal = any(v.get("principal") for v in vehicles)
+    if not has_principal and vehicles:
+        vehicles[0]["principal"] = True
+
+    # Assegurar camps bàsics
+    for v in vehicles:
+        if "icona" not in v or not v["icona"]:
+            v["icona"] = TIPUS_VEHICLES.get(v.get("tipus", "Cotxe"), "🚗")
+        if "id" not in v or not v["id"]:
+            import re
+            clean_name = re.sub(r'[^a-zA-Z0-9]+', '_', v.get("nom", "vehicle")).strip('_').lower()
+            v["id"] = clean_name or f"v_{int(datetime.now().timestamp())}"
+
+    return vehicles
+
+
+def save_vehicles_casa(vehicles: list) -> bool:
+    """Desa la llista de vehicles de la llar a la configuració global."""
+    cfg = load_app_config()
+    cfg["vehicles"] = vehicles
+    return save_app_config(cfg)

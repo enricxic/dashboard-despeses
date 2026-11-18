@@ -612,5 +612,17 @@
                 ]
             }
         ]
-    }
+    },
+    "vehicles": [
+        {
+            "id": "tivoli",
+            "nom": "Tívoli",
+            "tipus": "Cotxe",
+            "icona": "🚗",
+            "model": "SsangYong Tívoli",
+            "matricula": "",
+            "combustible": "Gasolina",
+            "principal": true
+        }
+    ]
 }

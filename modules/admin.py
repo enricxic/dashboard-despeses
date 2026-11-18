@@ -4,7 +4,7 @@ import copy
 import os
 import base64
 from datetime import datetime, date
-from core.config_manager import load_app_config, save_app_config, get_translation, get_cataleg_eines, DEFAULT_CATALEG_EINES, get_estances_casa, save_estances_casa, IOT_CATEGORIES, IOT_PROTOCOLS
+from core.config_manager import load_app_config, save_app_config, get_translation, get_cataleg_eines, DEFAULT_CATALEG_EINES, get_estances_casa, save_estances_casa, IOT_CATEGORIES, IOT_PROTOCOLS, get_vehicles_casa, save_vehicles_casa, TIPUS_VEHICLES, COMBUSTIBLES_VEHICLES
 
 def _get_eina_foto_src(foto_val, e_id=None, nom=None):
     if foto_val and (foto_val.startswith("http://") or foto_val.startswith("https://") or foto_val.startswith("data:")):
@@ -582,6 +582,7 @@ def render():
             ("admin", "👤 Administrador"),
             ("titol", "🏷️ Títol de la casa"),
             ("estances", "🏡 Estances de la casa"),
+            ("vehicles", "🚗 Vehicles de la llar"),
             ("familia", "👨‍👩‍👧‍👦 Família"),
             ("menjar", "🍽️ Menús i Nutrició"),
             ("alertes", "🔔 Alertes Globals"),
@@ -1318,6 +1319,189 @@ def render():
                     st.rerun()
                 else:
                     st.error("Error en desar la configuració d'estances.")
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =========================================================================
+        # 2c. SECCIÓ: VEHICLES DE LA LLAR
+        # =========================================================================
+        elif active == "vehicles":
+            st.markdown(f"""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🚗 Vehicles de la Llar</div>
+                <div class="chrome-card-desc">Configura els vehicles de la família (cotxes, autocaravanes, furgonetes, motos, etc.). Podràs seleccionar el vehicle actiu al mòdul de Cotxe per registrar rutes, repostatges i manteniments de forma independent.</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if "admin_vehicles_list" not in st.session_state:
+                st.session_state["admin_vehicles_list"] = get_vehicles_casa(cfg)
+
+            vehicles_list = st.session_state["admin_vehicles_list"]
+
+            # Targeta: Afegir vehicle ràpidament
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            st.markdown("<div class='chrome-card-header'>⚡ Afegir Vehicle Ràpidament</div>", unsafe_allow_html=True)
+            st.markdown("<div class='chrome-card-desc'>Clica sobre qualsevol tipus per crear una nova entrada amb la seva icona:</div>", unsafe_allow_html=True)
+            st.write("")
+
+            col_q1, col_q2, col_q3, col_q4, col_q5 = st.columns(5)
+            with col_q1:
+                if st.button("🚗 + Cotxe", use_container_width=True, key="btn_quick_add_cotxe"):
+                    c_count = sum(1 for v in vehicles_list if v.get("tipus") == "Cotxe") + 1
+                    vehicles_list.append({
+                        "id": f"cotxe_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": f"Cotxe {c_count}",
+                        "tipus": "Cotxe",
+                        "icona": "🚗",
+                        "model": "",
+                        "matricula": "",
+                        "combustible": "Gasolina",
+                        "principal": False
+                    })
+                    st.rerun()
+            with col_q2:
+                if st.button("🚐 + Autocaravana", use_container_width=True, key="btn_quick_add_autoc"):
+                    a_count = sum(1 for v in vehicles_list if v.get("tipus") == "Autocaravana") + 1
+                    vehicles_list.append({
+                        "id": f"autocaravana_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": f"Autocaravana {a_count}" if a_count > 1 else "Autocaravana",
+                        "tipus": "Autocaravana",
+                        "icona": "🚐",
+                        "model": "",
+                        "matricula": "",
+                        "combustible": "Dièsel",
+                        "principal": False
+                    })
+                    st.rerun()
+            with col_q3:
+                if st.button("🚚 + Furgoneta", use_container_width=True, key="btn_quick_add_furgo"):
+                    f_count = sum(1 for v in vehicles_list if v.get("tipus") == "Furgoneta") + 1
+                    vehicles_list.append({
+                        "id": f"furgo_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": f"Furgoneta {f_count}",
+                        "tipus": "Furgoneta",
+                        "icona": "🚚",
+                        "model": "",
+                        "matricula": "",
+                        "combustible": "Dièsel",
+                        "principal": False
+                    })
+                    st.rerun()
+            with col_q4:
+                if st.button("🏍️ + Moto", use_container_width=True, key="btn_quick_add_moto"):
+                    m_count = sum(1 for v in vehicles_list if v.get("tipus") == "Moto") + 1
+                    vehicles_list.append({
+                        "id": f"moto_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": f"Moto {m_count}",
+                        "tipus": "Moto",
+                        "icona": "🏍️",
+                        "model": "",
+                        "matricula": "",
+                        "combustible": "Gasolina",
+                        "principal": False
+                    })
+                    st.rerun()
+            with col_q5:
+                if st.button("➕ Personalitzat", use_container_width=True, key="btn_quick_add_custom_veh"):
+                    vehicles_list.append({
+                        "id": f"veh_{int(datetime.now().timestamp() * 1000)}",
+                        "nom": f"Vehicle {len(vehicles_list) + 1}",
+                        "tipus": "Altres",
+                        "icona": "🚙",
+                        "model": "",
+                        "matricula": "",
+                        "combustible": "Gasolina",
+                        "principal": False
+                    })
+                    st.rerun()
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            # Llistat i edició de vehicles
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+            st.markdown("<div class='chrome-card-header'>📋 Llistat de Vehicles de la Llar</div>", unsafe_allow_html=True)
+            st.markdown("<div class='chrome-card-desc'>Defineix el nom, model, matrícula, tipus de combustible i quin vehicle és el principal per defecte.</div>", unsafe_allow_html=True)
+            st.write("")
+
+            to_delete_idx = None
+            to_set_principal_idx = None
+
+            for idx, v in enumerate(vehicles_list):
+                v_id = v.get("id", f"v_{idx}")
+                v_nom = v.get("nom", f"Vehicle {idx+1}")
+                v_tipus = v.get("tipus", "Cotxe")
+                v_icona = v.get("icona", TIPUS_VEHICLES.get(v_tipus, "🚗"))
+                v_model = v.get("model", "")
+                v_mat = v.get("matricula", "")
+                v_comb = v.get("combustible", "Gasolina")
+                is_p = v.get("principal", False)
+
+                principal_badge = " <span style='background:#f59e0b; color:#000; font-weight:bold; font-size:0.75rem; padding:2px 8px; border-radius:12px;'>⭐ PRINCIPAL</span>" if is_p else ""
+                
+                with st.expander(f"{v_icona} **{v_nom}** — *{v_tipus}* ({v_comb}){principal_badge}", expanded=(len(vehicles_list) == 1 or idx == 0)):
+                    c1, c2, c3 = st.columns([3, 2, 2])
+                    with c1:
+                        new_nom = st.text_input("Nom del vehicle", value=v_nom, key=f"veh_nom_{idx}_{v_id}")
+                        v["nom"] = new_nom
+                    with c2:
+                        tipus_keys = list(TIPUS_VEHICLES.keys())
+                        t_idx = tipus_keys.index(v_tipus) if v_tipus in tipus_keys else 0
+                        new_tipus = st.selectbox("Tipus", tipus_keys, index=t_idx, key=f"veh_tipus_{idx}_{v_id}")
+                        v["tipus"] = new_tipus
+                        v["icona"] = TIPUS_VEHICLES.get(new_tipus, "🚗")
+                    with c3:
+                        comb_list = COMBUSTIBLES_VEHICLES
+                        c_idx = comb_list.index(v_comb) if v_comb in comb_list else 0
+                        new_comb = st.selectbox("Combustible", comb_list, index=c_idx, key=f"veh_comb_{idx}_{v_id}")
+                        v["combustible"] = new_comb
+
+                    c4, c5, c6 = st.columns([3, 2, 2])
+                    with c4:
+                        new_model = st.text_input("Marca / Model", value=v_model, placeholder="Ex: SsangYong Tívoli", key=f"veh_mod_{idx}_{v_id}")
+                        v["model"] = new_model
+                    with c5:
+                        new_mat = st.text_input("Matrícula", value=v_mat, placeholder="Ex: 1234-XYZ", key=f"veh_mat_{idx}_{v_id}")
+                        v["matricula"] = new_mat
+                    with c6:
+                        st.write("")
+                        st.write("")
+                        if not is_p:
+                            if st.button("⭐ Fer Principal", key=f"btn_make_princ_{idx}_{v_id}", use_container_width=True):
+                                to_set_principal_idx = idx
+                        else:
+                            st.markdown("<div style='margin-top:8px; color:#f59e0b; font-weight:600;'>⭐ Vehicle Principal</div>", unsafe_allow_html=True)
+
+                    # Botó eliminar
+                    if len(vehicles_list) > 1:
+                        if st.button(f"🗑️ Eliminar {v_nom}", key=f"btn_del_veh_{idx}_{v_id}", type="secondary"):
+                            to_delete_idx = idx
+
+                    st.markdown("---")
+
+            if to_set_principal_idx is not None:
+                for i, vh in enumerate(vehicles_list):
+                    vh["principal"] = (i == to_set_principal_idx)
+                st.rerun()
+
+            if to_delete_idx is not None:
+                del vehicles_list[to_delete_idx]
+                if not any(v.get("principal") for v in vehicles_list) and vehicles_list:
+                    vehicles_list[0]["principal"] = True
+                st.rerun()
+
+            st.write("")
+            col_save1, col_save2 = st.columns([2, 5])
+            with col_save1:
+                if st.button("💾 Desar Canvis de Vehicles", type="primary", use_container_width=True, key="btn_save_vehicles"):
+                    if not any(v.get("principal") for v in vehicles_list) and vehicles_list:
+                        vehicles_list[0]["principal"] = True
+
+                    if save_vehicles_casa(vehicles_list):
+                        st.session_state["admin_vehicles_list"] = vehicles_list
+                        st.session_state["flash_success"] = "✅ Configuració de vehicles desada correctament a la configuració global!"
+                        st.rerun()
+                    else:
+                        st.error("Error en desar la configuració de vehicles.")
 
             st.markdown("</div>", unsafe_allow_html=True)
 

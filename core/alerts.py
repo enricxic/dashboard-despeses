@@ -59,53 +59,80 @@ def get_global_alerts(force_reload: bool = False):
                     df_km = d_km
                     st.session_state["df_km"] = d_km
             
-        # 1. Alerta de canvi d'oli (Cotxe)
+        # 1. Alerta de manteniment de vehicles (Oli, Rodes, Inflat, Nivells)
         if df_km is not None and not df_km.empty:
-            if 'cotxe' in df_km.columns:
-                df_km_tivoli = df_km[df_km['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)].copy()
-            else:
-                df_km_tivoli = df_km.copy()
-            
-            if not df_km_tivoli.empty:
-                df_km_tivoli = df_km_tivoli.sort_values(by='data', ascending=False)
-                car_kms_actuals = pd.to_numeric(df_km_tivoli['contador'], errors='coerce').max()
-                if pd.isna(car_kms_actuals):
+            from core.config_manager import load_app_config, get_vehicles_casa
+            app_cfg = load_app_config()
+            vehicles = get_vehicles_casa(app_cfg)
+            veh_mants = app_cfg.get("manteniment_vehicles", {})
+
+            for veh in vehicles:
+                v_nom = veh.get("nom", "Cotxe")
+                v_id = veh.get("id", "tivoli")
+                v_icon = veh.get("icona", "🚗")
+                is_p = veh.get("principal", False)
+
+                if 'cotxe' in df_km.columns:
+                    if v_nom.lower() in ['tívoli', 'tivoli']:
+                        df_km_v = df_km[df_km['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)].copy()
+                    else:
+                        import re as _re_av
+                        df_km_v = df_km[df_km['cotxe'].astype(str).str.contains(_re_av.escape(v_nom), case=False, na=False)].copy()
+                else:
+                    df_km_v = df_km.copy() if is_p else pd.DataFrame()
+
+                if df_km_v.empty:
                     car_kms_actuals = 0.0
-                from core.config_manager import load_app_config
-                mant = load_app_config().get("manteniment_cotxe", {})
+                else:
+                    df_km_v = df_km_v.sort_values(by='data', ascending=False)
+                    car_kms_actuals = pd.to_numeric(df_km_v['contador'], errors='coerce').max()
+                    if pd.isna(car_kms_actuals):
+                        car_kms_actuals = 0.0
+
+                # Obtenir manteniment per aquest vehicle
+                if v_id in veh_mants:
+                    mant = veh_mants[v_id]
+                elif is_p:
+                    mant = app_cfg.get("manteniment_cotxe", {})
+                else:
+                    continue
+
                 oli = mant.get("oli", {})
                 rodes = mant.get("rodes", {})
                 avis_km = float(mant.get("avis_km", 20000))
-                oli_next = float(oli.get("ultim_canvi_km", 30000)) + float(oli.get("interval_km", 16000))
-                kms_left = oli_next - car_kms_actuals
-                if kms_left <= 0:
-                    alerts.append({
-                        "type": "error", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
-                        "message": f"Cal fer el canvi d'oli (previst als {int(oli_next):,} km). Superat per {int(abs(kms_left)):,} km.",
-                        "mod": "modules.cotxe", "tab": "manteniment"
-                    })
-                elif kms_left <= avis_km:
-                    alerts.append({
-                        "type": "warning", "icon": "🔧", "title": "Canvi d'Oli (Tivoli)",
-                        "message": f"Queden {int(kms_left):,} km per al canvi d'oli (als {int(oli_next):,} km).",
-                        "mod": "modules.cotxe", "tab": "manteniment"
-                    })
-                previst = rodes.get("previst") or {}
-                if previst.get("km"):
-                    rodes_next = float(previst["km"])
-                elif rodes.get("ultim_canvi_km"):
-                    rodes_next = float(rodes["ultim_canvi_km"]) + float(rodes.get("interval_km", 40000))
-                else:
-                    rodes_next = None
-                rodes_left = (rodes_next - car_kms_actuals) if rodes_next else None
-                if rodes_left is not None and rodes_left <= avis_km:
-                    alerts.append({
-                        "type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": "Pneumàtics (Tivoli)",
-                        "message": f"Revisar/canviar rodes: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants).",
-                        "mod": "modules.cotxe", "tab": "manteniment"
-                    })
 
-                # Inflat de rodes (per dates planificades o propera data)
+                if car_kms_actuals > 0:
+                    oli_next = float(oli.get("ultim_canvi_km", 30000)) + float(oli.get("interval_km", 16000))
+                    kms_left = oli_next - car_kms_actuals
+                    if kms_left <= 0:
+                        alerts.append({
+                            "type": "error", "icon": "🔧", "title": f"Canvi d'Oli ({v_nom})",
+                            "message": f"Cal fer el canvi d'oli de {v_nom} (previst als {int(oli_next):,} km). Superat per {int(abs(kms_left)):,} km.",
+                            "mod": "modules.cotxe", "tab": "manteniment"
+                        })
+                    elif kms_left <= avis_km:
+                        alerts.append({
+                            "type": "warning", "icon": "🔧", "title": f"Canvi d'Oli ({v_nom})",
+                            "message": f"Queden {int(kms_left):,} km per al canvi d'oli de {v_nom} (als {int(oli_next):,} km).",
+                            "mod": "modules.cotxe", "tab": "manteniment"
+                        })
+
+                    previst = rodes.get("previst") or {}
+                    if previst.get("km"):
+                        rodes_next = float(previst["km"])
+                    elif rodes.get("ultim_canvi_km"):
+                        rodes_next = float(rodes["ultim_canvi_km"]) + float(rodes.get("interval_km", 40000))
+                    else:
+                        rodes_next = None
+                    rodes_left = (rodes_next - car_kms_actuals) if rodes_next else None
+                    if rodes_left is not None and rodes_left <= avis_km:
+                        alerts.append({
+                            "type": "error" if rodes_left <= 0 else "warning", "icon": "🛞", "title": f"Pneumàtics ({v_nom})",
+                            "message": f"Revisar/canviar rodes de {v_nom}: previst als {int(rodes_next):,} km ({int(rodes_left):,} km restants).",
+                            "mod": "modules.cotxe", "tab": "manteniment"
+                        })
+
+                # Inflat de rodes
                 inflat = mant.get("inflat_rodes", {})
                 planificacions = inflat.get("planificacions")
                 if not planificacions or not isinstance(planificacions, list):
@@ -126,8 +153,8 @@ def get_global_alerts(force_reload: bool = False):
                             alerts.append({
                                 "type": "error",
                                 "icon": "🛞",
-                                "title": f"Inflat de Rodes ({titol})",
-                                "message": f"Inflat de rodes pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies).",
+                                "title": f"Inflat de Rodes - {v_nom} ({titol})",
+                                "message": f"Inflat de rodes de {v_nom} pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies).",
                                 "mod": "modules.cotxe",
                                 "tab": "manteniment"
                             })
@@ -135,15 +162,15 @@ def get_global_alerts(force_reload: bool = False):
                             alerts.append({
                                 "type": "warning",
                                 "icon": "🛞",
-                                "title": f"Inflat de Rodes ({titol})",
-                                "message": f"Toca revisar pressió/inflar rodes el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies).",
+                                "title": f"Inflat de Rodes - {v_nom} ({titol})",
+                                "message": f"Toca revisar pressió/inflar rodes de {v_nom} el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies).",
                                 "mod": "modules.cotxe",
                                 "tab": "manteniment"
                             })
                 except Exception as e_inf_alert:
                     print(f"Error alerta inflat: {e_inf_alert}")
 
-                # Control de nivells (per dates planificades o propera data)
+                # Control de nivells
                 nivells = mant.get("control_nivells", {})
                 plan_niv = nivells.get("planificacions")
                 if not plan_niv or not isinstance(plan_niv, list):
@@ -164,8 +191,8 @@ def get_global_alerts(force_reload: bool = False):
                             alerts.append({
                                 "type": "error",
                                 "icon": "🧪",
-                                "title": f"Control de Nivells ({titol})",
-                                "message": f"Control de nivells pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies).",
+                                "title": f"Control de Nivells - {v_nom} ({titol})",
+                                "message": f"Control de nivells de {v_nom} pendent des del {d_target.strftime('%d/%m/%Y')} (superat per {abs(dies)} dies).",
                                 "mod": "modules.cotxe",
                                 "tab": "manteniment"
                             })
@@ -173,14 +200,14 @@ def get_global_alerts(force_reload: bool = False):
                             alerts.append({
                                 "type": "warning",
                                 "icon": "🧪",
-                                "title": f"Control de Nivells ({titol})",
-                                "message": f"Toca revisar els nivells del cotxe el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies).",
+                                "title": f"Control de Nivells - {v_nom} ({titol})",
+                                "message": f"Toca revisar els nivells de {v_nom} el {d_target.strftime('%d/%m/%Y')} (queden {dies} dies).",
                                 "mod": "modules.cotxe",
                                 "tab": "manteniment"
                             })
                 except Exception as e_niv_alert:
                     print(f"Error alerta nivells: {e_niv_alert}")
-                    
+
         # 2. Alerta de Loteria
         loteria_cfg = config.get("regles_alertes", {}).get("loteria", {})
         if loteria_cfg.get("mostrar_a_campana", True):

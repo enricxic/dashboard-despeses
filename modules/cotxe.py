@@ -30,6 +30,41 @@ def render():
 
     st.write("---")
 
+    from core.config_manager import get_vehicles_casa, TIPUS_VEHICLES
+    vehicles = get_vehicles_casa()
+
+    default_vid = None
+    for v in vehicles:
+        if v.get("principal"):
+            default_vid = v.get("id")
+            break
+    if not default_vid and vehicles:
+        default_vid = vehicles[0].get("id")
+
+    if "cotxe_active_vehicle_id" not in st.session_state or not any(v.get("id") == st.session_state["cotxe_active_vehicle_id"] for v in vehicles):
+        st.session_state["cotxe_active_vehicle_id"] = default_vid
+
+    v_ids = [v.get("id") for v in vehicles]
+    v_labels = {v.get("id"): f"{v.get('icona', '🚗')} {v.get('nom', 'Vehicle')}" + (" (⭐ Principal)" if v.get("principal") else "") for v in vehicles}
+
+    if len(vehicles) > 1:
+        curr_idx = v_ids.index(st.session_state["cotxe_active_vehicle_id"]) if st.session_state["cotxe_active_vehicle_id"] in v_ids else 0
+        sel_vid = st.pills("Selecciona el vehicle:", v_ids, format_func=lambda x: v_labels.get(x, x), default=v_ids[curr_idx], key="cotxe_pills_vehicle")
+        if sel_vid and sel_vid != st.session_state["cotxe_active_vehicle_id"]:
+            st.session_state["cotxe_active_vehicle_id"] = sel_vid
+            st.rerun()
+    else:
+        v_curr = vehicles[0]
+        st.markdown(f"<div style='background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.25); border-radius:8px; padding:6px 14px; display:inline-block; margin-bottom:10px;'>{v_curr.get('icona', '🚗')} <b>{v_curr.get('nom')}</b> ({v_curr.get('tipus', 'Cotxe')}{f' - {v_curr.get("model")}' if v_curr.get("model") else ''})</div>", unsafe_allow_html=True)
+
+    active_vehicle = next((v for v in vehicles if v.get("id") == st.session_state["cotxe_active_vehicle_id"]), vehicles[0])
+    active_v_nom = active_vehicle.get("nom", "Tívoli")
+    active_v_icon = active_vehicle.get("icona", "🚗")
+    active_v_tipus = active_vehicle.get("tipus", "Cotxe")
+    active_v_model = active_vehicle.get("model", "")
+    active_v_mat = active_vehicle.get("matricula", "")
+    active_v_id = active_vehicle.get("id", "tivoli")
+
     supabase = get_supabase_client(st.session_state.get("role", "guest"))
     
     # Ensure data is loaded
@@ -62,11 +97,18 @@ def render():
         st.markdown("<h4 style='color:#f39c12;'>➕ Nou Registre de Quilòmetres</h4>", unsafe_allow_html=True)
         
         km_version = st.session_state.get("km_version", 0)
-        cotxe_val = "tívoli"
+        cotxe_val = active_v_nom.lower()
         
         # Last odometer
         last_km = 0.0
-        df_km_car = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
+        if 'cotxe' in df_km.columns:
+            if active_v_nom.lower() in ['tívoli', 'tivoli']:
+                df_km_car = df_km[df_km['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
+            else:
+                import re as _re_km
+                df_km_car = df_km[df_km['cotxe'].astype(str).str.contains(_re_km.escape(active_v_nom), case=False, na=False)]
+        else:
+            df_km_car = df_km
         if not df_km_car.empty:
             df_km_car_sorted = df_km_car.copy()
             df_km_car_sorted['parsed_date'] = df_km_car_sorted['data'].apply(parse_excel_date)
@@ -144,14 +186,19 @@ def render():
                     unsafe_allow_html=True
                 )
         with r1_col3:
-            is_valid_odo = (contador_val is not None and contador_val > last_km)
-            km_val = (contador_val - last_km) if is_valid_odo else 0.0
-            if contador_val is not None and contador_val <= last_km:
-                trajecte_label = "0 km (⚠️ Invàlid: ≤ odòmetre)"
-            elif contador_val is not None:
-                trajecte_label = f"{int(km_val):,} km"
+            if last_km > 0:
+                is_valid_odo = (contador_val is not None and contador_val > last_km)
+                km_val = (contador_val - last_km) if is_valid_odo else 0.0
+                if contador_val is not None and contador_val <= last_km:
+                    trajecte_label = "0 km (⚠️ Invàlid: ≤ odòmetre)"
+                elif contador_val is not None:
+                    trajecte_label = f"{int(km_val):,} km"
+                else:
+                    trajecte_label = "0 km"
             else:
-                trajecte_label = "0 km"
+                is_valid_odo = (contador_val is not None and contador_val >= 0)
+                km_val = 0.0
+                trajecte_label = "0 km (Lectura inicial odòmetre)" if contador_val is not None else "0 km"
             st.text_input("Kilòmetres del trajecte", value=trajecte_label, disabled=True)
 
         ruta_opts = get_config_routes(df_km)
@@ -186,8 +233,10 @@ def render():
             st.rerun()
             
         if submitted:
-            if contador_val is None or contador_val <= 0:
+            if contador_val is None or contador_val < 0:
                 st.error("⚠️ Heu d'introduir una lectura d'odòmetre vàlida.")
+            elif last_km > 0 and contador_val <= last_km:
+                st.error(f"⚠️ La lectura de l'odòmetre ha de ser superior a {int(last_km):,} km.")
             elif contador_val <= last_km:
                 st.error(f"⚠️ **Error de validació**: Els kilòmetres entrats ({int(contador_val):,} km) mai poden ser iguals o inferiors a l'última quantitat registrada de l'odòmetre ({int(last_km):,} km). El nou registre ha de ser estrictament superior.")
             elif not ruta_val or not ruta_val.strip():
@@ -226,6 +275,14 @@ def render():
         st.markdown("<h4 style='color:#f39c12;'>📋 Històric de Rutes Registrades</h4>", unsafe_allow_html=True)
         if not df_km.empty:
             df_km_show = df_km.copy()
+            if len(vehicles) > 1 and 'cotxe' in df_km_show.columns:
+                filter_curr = st.checkbox(f"Filtrar només rutes de **{active_v_nom}**", value=True, key="filter_km_curr_veh")
+                if filter_curr:
+                    if active_v_nom.lower() in ['tívoli', 'tivoli']:
+                        df_km_show = df_km_show[df_km_show['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
+                    else:
+                        import re as _re_kf
+                        df_km_show = df_km_show[df_km_show['cotxe'].astype(str).str.contains(_re_kf.escape(active_v_nom), case=False, na=False)]
             df_km_show['parsed_date'] = df_km_show['data'].apply(parse_excel_date)
             sort_cols = [c for c in ['parsed_date', 'idRuta'] if c in df_km_show.columns]
             if sort_cols:
@@ -246,6 +303,14 @@ def render():
         
         if not df_gas.empty:
             df_gas_work = df_gas.copy()
+            if len(vehicles) > 1 and 'cotxe' in df_gas_work.columns:
+                filter_gas = st.checkbox(f"Filtrar només repostatges de **{active_v_nom}**", value=True, key="filter_gas_curr_veh")
+                if filter_gas:
+                    if active_v_nom.lower() in ['tívoli', 'tivoli']:
+                        df_gas_work = df_gas_work[df_gas_work['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
+                    else:
+                        import re as _re_gf
+                        df_gas_work = df_gas_work[df_gas_work['cotxe'].astype(str).str.contains(_re_gf.escape(active_v_nom), case=False, na=False)]
             df_gas_work['parsed_date'] = df_gas_work['data'].apply(parse_excel_date)
             df_gas_work['import_val'] = clean_numeric(df_gas_work.get('import', 0))
             df_gas_work['litres_val'] = clean_numeric(df_gas_work.get('litres', 0))
@@ -291,7 +356,14 @@ def render():
         import copy
 
         car_kms_actuals = 0.0
-        df_km_oli = df_km[df_km['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km.columns else df_km
+        if 'cotxe' in df_km.columns:
+            if active_v_nom.lower() in ['tívoli', 'tivoli']:
+                df_km_oli = df_km[df_km['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
+            else:
+                import re as _re_om
+                df_km_oli = df_km[df_km['cotxe'].astype(str).str.contains(_re_om.escape(active_v_nom), case=False, na=False)]
+        else:
+            df_km_oli = df_km
         if not df_km_oli.empty and 'contador' in df_km_oli.columns:
             car_kms_actuals = pd.to_numeric(df_km_oli['contador'], errors='coerce').max()
             if pd.isna(car_kms_actuals): car_kms_actuals = 0.0
@@ -321,7 +393,13 @@ def render():
             "historic": []
         }
         app_cfg = load_app_config()
-        mant = copy.deepcopy(app_cfg.get("manteniment_cotxe") or DEFAULT_CONFIG.get("manteniment_cotxe") or _DEF_MANT)
+        veh_mants = app_cfg.get("manteniment_vehicles", {})
+        if active_v_id in veh_mants:
+            mant = copy.deepcopy(veh_mants[active_v_id])
+        elif active_vehicle.get("principal", False):
+            mant = copy.deepcopy(app_cfg.get("manteniment_cotxe") or DEFAULT_CONFIG.get("manteniment_cotxe") or _DEF_MANT)
+        else:
+            mant = copy.deepcopy(_DEF_MANT)
         mant.setdefault("oli", copy.deepcopy(_DEF_MANT["oli"]))
         mant.setdefault("rodes", copy.deepcopy(_DEF_MANT["rodes"]))
         mant.setdefault("inflat_rodes", copy.deepcopy(_DEF_MANT["inflat_rodes"]))
@@ -349,19 +427,16 @@ def render():
             a2.write("")
             if a2.button("💾 Desar", key="save_avis"):
                 mant["avis_km"] = int(nou_avis)
-                cfg_tmp = copy.deepcopy(load_app_config())
-                cfg_tmp["manteniment_cotxe"] = mant
-                save_app_config(cfg_tmp)
-                try:
-                    from core.alerts import get_global_alerts
-                    get_global_alerts.clear()
-                except Exception:
-                    pass
+                _save_mant(mant)
                 st.rerun()
 
         def _save_mant(new_mant):
             cfg = copy.deepcopy(load_app_config())
-            cfg["manteniment_cotxe"] = new_mant
+            if "manteniment_vehicles" not in cfg or not isinstance(cfg.get("manteniment_vehicles"), dict):
+                cfg["manteniment_vehicles"] = {}
+            cfg["manteniment_vehicles"][active_v_id] = new_mant
+            if active_vehicle.get("principal", False):
+                cfg["manteniment_cotxe"] = new_mant
             save_app_config(cfg)
             try:
                 from core.alerts import get_global_alerts
@@ -1077,7 +1152,7 @@ def render():
     # TAB 4: CONSUM ANUAL
     # ----------------------------------------------------
     with tab_consum:
-        st.markdown("<h4 style='color:#f39c12;'>📊 Consum Mitjà Anual (L/100km)</h4>", unsafe_allow_html=True)
+        st.markdown(f"<h4 style='color:#f39c12;'>📊 Consum Mitjà Anual de {active_v_icon} {active_v_nom} (L/100km)</h4>", unsafe_allow_html=True)
 
         if not df_gas.empty and not df_km.empty:
             df_gas_work = df_gas.copy()
@@ -1086,16 +1161,31 @@ def render():
             df_gas_work['litres_val'] = clean_numeric(df_gas_work.get('litres', 0))
             df_km_work['parsed_date'] = df_km_work['data'].apply(parse_excel_date)
 
-            df_gas_tivoli = df_gas_work[df_gas_work['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_gas_work.columns else df_gas_work
-            df_km_tivoli = df_km_work[df_km_work['cotxe'].str.contains('tivoli|tívoli', case=False, na=False)] if 'cotxe' in df_km_work.columns else df_km_work
+            if 'cotxe' in df_gas_work.columns:
+                if active_v_nom.lower() in ['tívoli', 'tivoli']:
+                    df_gas_veh = df_gas_work[df_gas_work['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
+                else:
+                    import re as _re_gc
+                    df_gas_veh = df_gas_work[df_gas_work['cotxe'].astype(str).str.contains(_re_gc.escape(active_v_nom), case=False, na=False)]
+            else:
+                df_gas_veh = df_gas_work
 
-            df_km_tivoli_valid = df_km_tivoli.dropna(subset=['contador', 'parsed_date']).copy()
-            df_km_tivoli_valid['contador_val'] = pd.to_numeric(df_km_tivoli_valid['contador'], errors='coerce')
-            df_km_tivoli_valid = df_km_tivoli_valid.dropna(subset=['contador_val'])
+            if 'cotxe' in df_km_work.columns:
+                if active_v_nom.lower() in ['tívoli', 'tivoli']:
+                    df_km_veh = df_km_work[df_km_work['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
+                else:
+                    import re as _re_kc
+                    df_km_veh = df_km_work[df_km_work['cotxe'].astype(str).str.contains(_re_kc.escape(active_v_nom), case=False, na=False)]
+            else:
+                df_km_veh = df_km_work
 
-            if not df_gas_tivoli.empty and not df_km_tivoli_valid.empty:
-                gas_yr = df_gas_tivoli.groupby(df_gas_tivoli['parsed_date'].dt.year)['litres_val'].sum()
-                km_yr = df_km_tivoli_valid.groupby(df_km_tivoli_valid['parsed_date'].dt.year)['contador_val'].agg(lambda x: x.max() - x.min())
+            df_km_veh_valid = df_km_veh.dropna(subset=['contador', 'parsed_date']).copy()
+            df_km_veh_valid['contador_val'] = pd.to_numeric(df_km_veh_valid['contador'], errors='coerce')
+            df_km_veh_valid = df_km_veh_valid.dropna(subset=['contador_val'])
+
+            if not df_gas_veh.empty and not df_km_veh_valid.empty:
+                gas_yr = df_gas_veh.groupby(df_gas_veh['parsed_date'].dt.year)['litres_val'].sum()
+                km_yr = df_km_veh_valid.groupby(df_km_veh_valid['parsed_date'].dt.year)['contador_val'].agg(lambda x: x.max() - x.min())
                 km_yr = km_yr.replace(0, pd.NA)
 
                 consumption = ((gas_yr / km_yr) * 100).dropna().reset_index()
