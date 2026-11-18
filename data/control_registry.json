@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "18/11/2026 11:58:27",
+  "updated_at": "18/11/2026 12:04:11",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -64,10 +64,10 @@
         "Km i rutes, repostatge, manteniment i consum"
       ],
       "verified_hashes": {
-        "modules/cotxe.py": "6406c0831ff5fb2d9dab9dd9c0cc18204ae3ab96cd17512acc2b672c6d1f30ee"
+        "modules/cotxe.py": "92f64e825baf37d2701250276093f1f1f6cf0e25f143f9de62713824aa2ff2af"
       },
-      "verified_at": "18/11/2026 11:58:27",
-      "verified_commit": "3fae9ea",
+      "verified_at": "18/11/2026 12:04:11",
+      "verified_commit": "7e3704d",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "18/11/2026 12:04:11",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "7e3704d"
+    },
+    {
+      "timestamp": "18/11/2026 12:02:30",
+      "action": "UNLOCK",
+      "module": "cotxe",
+      "detail": "Autoritzat fins 19/11/2026 12:02:30. Motiu: Moure la definicio de _save_mant abans de la seva invocacio per evitar UnboundLocalError",
+      "user": "admin",
+      "git_head": "56bfe58"
+    },
     {
       "timestamp": "18/11/2026 11:58:27",
       "action": "SEAL",
