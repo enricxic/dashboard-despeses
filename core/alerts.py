@@ -82,12 +82,12 @@ def get_global_alerts(force_reload: bool = False):
                     df_km_v = df_km.copy() if is_p else pd.DataFrame()
 
                 if df_km_v.empty:
-                    car_kms_actuals = 0.0
+                    car_kms_actuals = float(veh.get("km_inicials", 0) or 0)
                 else:
                     df_km_v = df_km_v.sort_values(by='data', ascending=False)
                     car_kms_actuals = pd.to_numeric(df_km_v['contador'], errors='coerce').max()
-                    if pd.isna(car_kms_actuals):
-                        car_kms_actuals = 0.0
+                    if pd.isna(car_kms_actuals) or car_kms_actuals == 0.0:
+                        car_kms_actuals = float(veh.get("km_inicials", 0) or 0)
 
                 # Obtenir manteniment per aquest vehicle
                 if v_id in veh_mants:

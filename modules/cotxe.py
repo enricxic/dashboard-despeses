@@ -119,6 +119,8 @@ def render():
             max_cont = pd.to_numeric(df_km_car['contador'], errors='coerce').max()
             if pd.notna(max_cont) and float(max_cont) > last_km:
                 last_km = float(max_cont)
+        if last_km == 0.0:
+            last_km = float(active_vehicle.get("km_inicials", 0) or 0)
 
         # --- Lectura per foto del comptaquilòmetres ---
         odo_key = f"km_odo_{km_version}"
@@ -367,6 +369,8 @@ def render():
         if not df_km_oli.empty and 'contador' in df_km_oli.columns:
             car_kms_actuals = pd.to_numeric(df_km_oli['contador'], errors='coerce').max()
             if pd.isna(car_kms_actuals): car_kms_actuals = 0.0
+        if car_kms_actuals == 0.0:
+            car_kms_actuals = float(active_vehicle.get("km_inicials", 0) or 0)
 
         from core.config_manager import DEFAULT_PLANIFICACIONS_INFLAT, get_inflat_occurrences
         _DEF_MANT = {

@@ -42,6 +42,7 @@ DEFAULT_VEHICLES = [
         "model": "SsangYong Tívoli",
         "matricula": "",
         "combustible": "Gasolina",
+        "km_inicials": 0,
         "principal": True
     }
 ]
@@ -620,6 +621,8 @@ def get_vehicles_casa(cfg: dict = None) -> list:
 
     # Assegurar camps bàsics
     for v in vehicles:
+        if "km_inicials" not in v:
+            v["km_inicials"] = 0
         if "icona" not in v or not v["icona"]:
             v["icona"] = TIPUS_VEHICLES.get(v.get("tipus", "Cotxe"), "🚗")
         if "id" not in v or not v["id"]:

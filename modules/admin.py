@@ -1356,6 +1356,7 @@ def render():
                         "model": "",
                         "matricula": "",
                         "combustible": "Gasolina",
+                        "km_inicials": 0,
                         "principal": False
                     })
                     st.rerun()
@@ -1370,6 +1371,7 @@ def render():
                         "model": "",
                         "matricula": "",
                         "combustible": "Dièsel",
+                        "km_inicials": 0,
                         "principal": False
                     })
                     st.rerun()
@@ -1384,6 +1386,7 @@ def render():
                         "model": "",
                         "matricula": "",
                         "combustible": "Dièsel",
+                        "km_inicials": 0,
                         "principal": False
                     })
                     st.rerun()
@@ -1398,6 +1401,7 @@ def render():
                         "model": "",
                         "matricula": "",
                         "combustible": "Gasolina",
+                        "km_inicials": 0,
                         "principal": False
                     })
                     st.rerun()
@@ -1411,6 +1415,7 @@ def render():
                         "model": "",
                         "matricula": "",
                         "combustible": "Gasolina",
+                        "km_inicials": 0,
                         "principal": False
                     })
                     st.rerun()
@@ -1436,7 +1441,7 @@ def render():
                 v_comb = v.get("combustible", "Gasolina")
                 is_p = v.get("principal", False)
 
-                principal_badge = " <span style='background:#f59e0b; color:#000; font-weight:bold; font-size:0.75rem; padding:2px 8px; border-radius:12px;'>⭐ PRINCIPAL</span>" if is_p else ""
+                principal_badge = " ⭐ (Principal)" if is_p else ""
                 
                 with st.expander(f"{v_icona} **{v_nom}** — *{v_tipus}* ({v_comb}){principal_badge}", expanded=(len(vehicles_list) == 1 or idx == 0)):
                     c1, c2, c3 = st.columns([3, 2, 2])
@@ -1455,7 +1460,7 @@ def render():
                         new_comb = st.selectbox("Combustible", comb_list, index=c_idx, key=f"veh_comb_{idx}_{v_id}")
                         v["combustible"] = new_comb
 
-                    c4, c5, c6 = st.columns([3, 2, 2])
+                    c4, c5, c6, c7 = st.columns([3, 2, 2.5, 2])
                     with c4:
                         new_model = st.text_input("Marca / Model", value=v_model, placeholder="Ex: SsangYong Tívoli", key=f"veh_mod_{idx}_{v_id}")
                         v["model"] = new_model
@@ -1463,13 +1468,14 @@ def render():
                         new_mat = st.text_input("Matrícula", value=v_mat, placeholder="Ex: 1234-XYZ", key=f"veh_mat_{idx}_{v_id}")
                         v["matricula"] = new_mat
                     with c6:
-                        st.write("")
-                        st.write("")
+                        new_km_ini = st.number_input("Km inicials (adquisició)", min_value=0, value=int(v.get("km_inicials", 0) or 0), step=100, key=f"veh_kmini_{idx}_{v_id}", help="Si el vehicle és de segona mà, introdueix els km que marcava el quadre en comprar-lo. Si era nou, deixa 0.")
+                        v["km_inicials"] = int(new_km_ini)
+                    with c7:
                         if not is_p:
+                            st.write("")
+                            st.write("")
                             if st.button("⭐ Fer Principal", key=f"btn_make_princ_{idx}_{v_id}", use_container_width=True):
                                 to_set_principal_idx = idx
-                        else:
-                            st.markdown("<div style='margin-top:8px; color:#f59e0b; font-weight:600;'>⭐ Vehicle Principal</div>", unsafe_allow_html=True)
 
                     # Botó eliminar
                     if len(vehicles_list) > 1:
