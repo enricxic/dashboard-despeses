@@ -127,58 +127,46 @@ def load_projectes(force_reload: bool = False) -> List[Dict[str, Any]]:
         if _IN_MEMORY_PROJECTES is not None and (time.time() - _LAST_PROJECTES_FETCH_TS) < 60:
             return _IN_MEMORY_PROJECTES
 
-    # 2. Si _IN_MEMORY_PROJECTES és buit (arrencada inicial en fred o nou procés), carregar del fitxer local
-    # per respondre immediatament (0.04s) sense bloquejar l'inici de l'app ni el login
-    if _IN_MEMORY_PROJECTES is None and os.path.exists(PROJECTES_FILE):
+    # 2. Consultar Supabase directament (font de veritat persistent entre reinicis, PC i mòbil/núvol)
+    is_offline = False
+    try:
+        import streamlit as st
+        if hasattr(st, "session_state") and st.session_state.get("is_offline"):
+            is_offline = True
+    except Exception:
+        pass
+
+    if not is_offline:
         try:
-            with open(PROJECTES_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    valid = [p for p in data if _is_valid_project(p)]
-                    _IN_MEMORY_PROJECTES = valid
+            from core.db import get_supabase_client
+            role = "guest"
+            try:
+                import streamlit as st
+                if hasattr(st, "session_state") and "role" in st.session_state:
+                    role = st.session_state.get("role", "guest")
+            except Exception:
+                role = "guest"
+            supabase = get_supabase_client(role)
+            res = supabase.table("app_config").select("config_json").eq("id", CONFIG_ID_PROJECTES).execute()
+            if res.data and len(res.data) > 0 and res.data[0].get("config_json") is not None:
+                cfg = res.data[0]["config_json"]
+                if isinstance(cfg, list):
+                    valid_projs = [p for p in cfg if _is_valid_project(p)]
+                    _IN_MEMORY_PROJECTES = valid_projs
                     _LAST_PROJECTES_FETCH_TS = time.time()
+                    _save_local(valid_projs)
                     try:
                         import streamlit as st
                         if hasattr(st, "session_state"):
-                            st.session_state["cached_projectes_list"] = valid
+                            st.session_state["cached_projectes_list"] = valid_projs
+                            st.session_state["projectes_loaded_from_cloud"] = True
                     except Exception:
                         pass
-                    if not force_reload:
-                        return valid
-        except Exception:
-            pass
+                    return valid_projs
+        except Exception as e:
+            print(f"⚠️ [ProjectesManager] Error carregant de Supabase, utilitzant fallback local: {e}")
 
-    # 3. Consultar Supabase directament (font de veritat persistent entre reinicis, PC i mòbil/núvol)
-    try:
-        from core.db import get_supabase_client
-        role = "guest"
-        try:
-            import streamlit as st
-            if hasattr(st, "session_state") and "role" in st.session_state:
-                role = st.session_state.get("role", "guest")
-        except Exception:
-            role = "guest"
-        supabase = get_supabase_client(role)
-        res = supabase.table("app_config").select("config_json").eq("id", CONFIG_ID_PROJECTES).execute()
-        if res.data and len(res.data) > 0 and res.data[0].get("config_json") is not None:
-            cfg = res.data[0]["config_json"]
-            if isinstance(cfg, list):
-                valid_projs = [p for p in cfg if _is_valid_project(p)]
-                _IN_MEMORY_PROJECTES = valid_projs
-                _LAST_PROJECTES_FETCH_TS = time.time()
-                _save_local(valid_projs)
-                try:
-                    import streamlit as st
-                    if hasattr(st, "session_state"):
-                        st.session_state["cached_projectes_list"] = valid_projs
-                        st.session_state["projectes_loaded_from_cloud"] = True
-                except Exception:
-                    pass
-                return valid_projs
-    except Exception as e:
-        print(f"⚠️ [ProjectesManager] Error carregant de Supabase, utilitzant fallback local: {e}")
-
-    # 4. Fallback: memòria de procés o fitxer JSON local
+    # 3. Fallback: memòria de procés o fitxer JSON local
     if _IN_MEMORY_PROJECTES is not None and len(_IN_MEMORY_PROJECTES) > 0:
         return _IN_MEMORY_PROJECTES
 

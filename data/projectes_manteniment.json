@@ -204,12 +204,12 @@
       {
         "id": "fase_2_1794235968",
         "nom": "Tallar rajoles rectes",
-        "estat": "Pendent",
+        "estat": "Completada",
         "data_fi": "2026-11-18",
         "tasques": [
           {
             "id": "t_1_1794235991",
-            "feta": false,
+            "feta": true,
             "titol": "Medir rajoles part baixa"
           }
         ],
