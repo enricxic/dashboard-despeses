@@ -135,9 +135,9 @@ def get_global_alerts(force_reload: bool = False):
                 # Inflat de rodes
                 inflat = mant.get("inflat_rodes", {})
                 planificacions = inflat.get("planificacions")
-                if not planificacions or not isinstance(planificacions, list):
+                if planificacions is None or not isinstance(planificacions, list):
                     from core.config_manager import DEFAULT_PLANIFICACIONS_INFLAT
-                    planificacions = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+                    planificacions = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT) if is_p else []
                 
                 try:
                     from core.config_manager import get_inflat_occurrences
@@ -173,9 +173,9 @@ def get_global_alerts(force_reload: bool = False):
                 # Control de nivells
                 nivells = mant.get("control_nivells", {})
                 plan_niv = nivells.get("planificacions")
-                if not plan_niv or not isinstance(plan_niv, list):
+                if plan_niv is None or not isinstance(plan_niv, list):
                     from core.config_manager import DEFAULT_PLANIFICACIONS_INFLAT
-                    plan_niv = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+                    plan_niv = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT) if is_p else []
 
                 try:
                     from core.config_manager import get_inflat_occurrences

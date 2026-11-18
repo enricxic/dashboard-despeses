@@ -403,13 +403,13 @@ def render():
         mant.setdefault("oli", copy.deepcopy(_DEF_MANT["oli"]))
         mant.setdefault("rodes", copy.deepcopy(_DEF_MANT["rodes"]))
         mant.setdefault("inflat_rodes", copy.deepcopy(_DEF_MANT["inflat_rodes"]))
-        if "planificacions" not in mant["inflat_rodes"] or not isinstance(mant["inflat_rodes"]["planificacions"], list) or len(mant["inflat_rodes"]["planificacions"]) == 0:
-            mant["inflat_rodes"]["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+        if "planificacions" not in mant["inflat_rodes"] or not isinstance(mant["inflat_rodes"]["planificacions"], list):
+            mant["inflat_rodes"]["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT) if active_vehicle.get("principal", False) else []
         if "pressio" not in mant["inflat_rodes"] or not mant["inflat_rodes"]["pressio"]:
             mant["inflat_rodes"]["pressio"] = "2.4 bar"
         mant.setdefault("control_nivells", copy.deepcopy(_DEF_MANT["control_nivells"]))
-        if "planificacions" not in mant["control_nivells"] or not isinstance(mant["control_nivells"]["planificacions"], list) or len(mant["control_nivells"]["planificacions"]) == 0:
-            mant["control_nivells"]["planificacions"] = copy.deepcopy(_DEF_MANT["control_nivells"]["planificacions"])
+        if "planificacions" not in mant["control_nivells"] or not isinstance(mant["control_nivells"]["planificacions"], list):
+            mant["control_nivells"]["planificacions"] = copy.deepcopy(_DEF_MANT["control_nivells"]["planificacions"]) if active_vehicle.get("principal", False) else []
         if "estat_nivells" not in mant["control_nivells"] or not mant["control_nivells"]["estat_nivells"]:
             mant["control_nivells"]["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
         mant.setdefault("historic", [])

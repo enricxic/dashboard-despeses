@@ -344,13 +344,13 @@ def load_app_config():
             inf_c = mant_c.setdefault("inflat_rodes", {})
             if "pressio" not in inf_c or not inf_c["pressio"]:
                 inf_c["pressio"] = "2.4 bar"
-            if "planificacions" not in inf_c or not isinstance(inf_c["planificacions"], list) or len(inf_c["planificacions"]) == 0:
+            if "planificacions" not in inf_c or not isinstance(inf_c["planificacions"], list):
                 inf_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             
             niv_c = mant_c.setdefault("control_nivells", {})
             if "estat_nivells" not in niv_c or not niv_c["estat_nivells"]:
                 niv_c["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
-            if "planificacions" not in niv_c or not isinstance(niv_c["planificacions"], list) or len(niv_c["planificacions"]) == 0:
+            if "planificacions" not in niv_c or not isinstance(niv_c["planificacions"], list):
                 niv_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             return merged
     except Exception as e:
@@ -376,13 +376,13 @@ def load_app_config():
             inf_c = mant_c.setdefault("inflat_rodes", {})
             if "pressio" not in inf_c or not inf_c["pressio"]:
                 inf_c["pressio"] = "2.4 bar"
-            if "planificacions" not in inf_c or not isinstance(inf_c["planificacions"], list) or len(inf_c["planificacions"]) == 0:
+            if "planificacions" not in inf_c or not isinstance(inf_c["planificacions"], list):
                 inf_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             
             niv_c = mant_c.setdefault("control_nivells", {})
             if "estat_nivells" not in niv_c or not niv_c["estat_nivells"]:
                 niv_c["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
-            if "planificacions" not in niv_c or not isinstance(niv_c["planificacions"], list) or len(niv_c["planificacions"]) == 0:
+            if "planificacions" not in niv_c or not isinstance(niv_c["planificacions"], list):
                 niv_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             return merged
     except Exception as e:
