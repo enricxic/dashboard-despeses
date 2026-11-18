@@ -1,6 +1,6 @@
 # Documentació del Projecte: Dashboard Despeses i Gestió de la Llar - XiquiHouse
 > **Versió Generalitzada i Modular**  
-> *Data d'actualització: 17 de novembre de 2026*  
+> *Data d'actualització: 18 de novembre de 2026*  
 > *Fitxer mestre de referència per a desenvolupament, noves sessions d'IA i desplegament del sistema.*
 
 ---
@@ -27,6 +27,7 @@
    - [7.3 Gestió de Bases de Dades i Sincronització Offline (`modules/bases_dades.py`, `modules/sincronitzacio.py`)](#73-gestió-de-bases-de-dades-i-sincronització-offline-modulesbases_dadespy-modulessincronitzaciopy)
    - [7.4 Sistema Global d'Alertes (`core/alerts.py`)](#74-sistema-global-dalertes-corealertspy)
    - [7.5 Impressora de Tiquets (`modules/impressora.py`)](#75-impressora-de-tiquets-modulesimpressorapy)
+   - [7.6 Sistema de Control de Mòduls i Anti-Regressió (`modules/control.py`, `core/control_manager.py`)](#76-sistema-de-control-de-mòduls-i-anti-regressió-modulescontrolpy-corecontrol_managerpy)
 8. [Annex: Historial de Canvis Recents Consolidat](#8-annex-historial-de-canvis-recents-consolidat)
 
 ---
@@ -45,6 +46,18 @@
 
 ### 1.2 Llengua de Comunicació
 - La llengua vehicular del projecte i de totes les comunicacions amb l'usuari és el **Català** per defecte, però es pot triar altres idiomes.
+
+### 1.3 Directriu Inviolable de Blindatge de Mòduls i Disciplina de Canvis (Mòdul de Control)
+- **REGLE INVIOLABLE DE BLINDATGE**: Si un mòdul està catalogat com a **TANCAT / BLINDAT** (`[BLINDAT]`), **PER CAP CONCEPTE I SENSE PERMÍS EXPLÍCIT DE L'USUARI S'HI PODEN AFEGIR, ELIMINAR O MODIFICAR FUNCIONALITATS, BOTONS, MENÚS O COMPORTAMENTS VISUALS**.
+- **Impacte Transversal del Nucli Compartit (`app.py`, `core/`)**:
+  - Les millores, correccions o noves eines al nucli (`Nucli Compartit (App & BD)`) **NO poden alterar la interfície gràfica ni injectar botons, elements residuals o canvis de disseny a les pantalles dels mòduls blindats** (com el Tauler d'inici / Dashboard, Compres Super, Econòmic o Cotxe).
+  - Està terminantment prohibit introduir ginys visuals de prova (disparadors, botons temporals o estils invasius) a la plantilla global que puguin filtrar-se a les vistes de l'usuari.
+- **Els 3 Nivells de Seguretat de Codi (`core/control_manager.py`)**:
+  - **`[BLINDAT]`**: Mòduls consolidats i tancats (`Compres Super`, `Econòmic`, `Cotxe`, `Dashboard`). Bloqueig estricte contra escriptura. Qualsevol modificació requereix desbloqueig exprés autoritzat per l'usuari (`python scripts/check_control.py unlock <modul>`).
+  - **`[VIGILAT]`**: Mòduls estables (`Llum i Aigua`, `Configuració / Admin`, `Manteniment`, `Menjar`, `Nucli Compartit`, `Control`). Creen còpia de seguretat atòmica prèvia a `data/control_backups/` i requereixen verificació d'impacte transversal sobre mòduls blindats dependents.
+  - **`[OBERT]`**: Mòduls en desenvolupament actiu (`Calendari`, `Medicació`, `Seguretat`, `Domòtica`). Edició lliure amb punts de control i proves ràpides.
+- **Verificació Obligatòria Prèvia**:
+  - Abans de qualsevol canvi o commit, cal executar `python scripts/check_control.py status` i `python scripts/check_control.py test --fast`.
 
 ---
 
@@ -2238,6 +2251,47 @@ flowchart TD
     K --> L["Finestra Emergent HTML5 amb window.print()"]
     L --> M["📱 Diàleg d'Impressió del Navegador o Impressora Wi-Fi"]
 ```
+
+---
+
+### 7.6 Sistema de Control de Mòduls i Anti-Regressió (`modules/control.py`, `core/control_manager.py`)
+
+#### A. Propòsit i Filosofia de Blindatge
+El mòdul de **Control** neix per evitar regressions funcionals i alteracions visuals involuntàries en mòduls que ja han estat finalitzats i validats per l'usuari.
+
+**Principi rector**: *Un cop un mòdul està tancat i blindat, cap desenvolupament (humà o per IA) pot afegir, eliminar o alterar funcionalitats, botons ni elements visuals sense un permís explícit i previ de l'usuari.*
+
+#### B. Arquitectura dels 3 Nivells de Protecció
+1. **`[BLINDAT]` (Consolidat / Tancat)**:
+   - Mòduls: **Compres Super**, **Econòmic**, **Cotxe**, **Dashboard General**.
+   - Els fitxers que componen aquests mòduls estan protegits per signatura hash i verificats al pre-commit.
+   - Si s'intenta editar un fitxer blindat sense permís, l'eina de control bloqueja el commit.
+   - Per editar-los cal autorització expressa de l'usuari i desbloqueig manual:
+     ```bash
+     python scripts/check_control.py unlock <modul>
+     ```
+   - Un cop finalitzada la feina autoritzada, es torna a segellar:
+     ```bash
+     python scripts/check_control.py seal <modul>
+     ```
+2. **`[VIGILAT]` (Estable amb Impacte Transversal)**:
+   - Mòduls: **Llum i Aigua**, **Configuració / Admin**, **Manteniment**, **Menjar**, **Nucli Compartit (App & BD)**, **Control**.
+   - Abans de qualsevol canvi o commit, el sistema genera automàticament una còpia de seguretat a `data/control_backups/`.
+   - Si es modifica el `Nucli Compartit` (`app.py`, `core/`), el sistema verifica automàticament que no es trenquin contractes ni s'introdueixin alteracions visuals a la interfície dels mòduls blindats dependents.
+3. **`[OBERT]` (Desenvolupament Actiu)**:
+   - Mòduls: **Calendari**, **Medicació**, **Seguretat**, **Domòtica**.
+   - Permet edicions lliures amb punts de control i proves ràpides.
+
+#### C. Comandes i Gestió del Sistema de Control
+- **Consultar estat de tots els mòduls**:
+  ```bash
+  python scripts/check_control.py status
+  ```
+- **Execució de proves ràpides (Smoke Tests & Contractes)**:
+  ```bash
+  python scripts/check_control.py test --fast
+  ```
+- **Interfície Gràfica d'Administració**: Accessible des del menú superior per a usuaris administradors a través d'**Editar > 🛡️ Control de Mòduls** (`modules/control.py`).
 
 ---
 
