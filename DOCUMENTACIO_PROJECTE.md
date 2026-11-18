@@ -2035,17 +2035,7 @@ flowchart TD
 
 #### C. Detall Exhaustiu de les 13 Seccions de Configuració
 
-##### 1. Secció 👤 Administrador
-- **Capçalera Dinàmica i Avatar**: Targeta corporativa d'estil Chrome Settings que reflecteix el nom complet de l'administrador, rol del sistema (`admin`), correu electrònic i avatar circular amb fons degradat.
-- **Formulari de Dades Personals**:
-  - `Nom de l'Administrador`: Camp de text editable vinculat a la sessió activa.
-  - `Correu Electrònic`: Text d'avís per a notificacions administratives.
-  - `Telèfon de Contacte`: Per a integracions de missatgeria o avisos d'urgència.
-  - `Selector d'Avatar`: Tria d'emojis o càrrega d'imatge local.
-- **PIN Mestre de Seguretat**:
-  - Camp de contrasenya/PIN numèric per desbloquejar accions de màxima sensibilitat (esborrat massiu de registres, accés al gestor de bases de dades des d'usuaris convidats o configuració de passarel·les bancàries).
-
-##### 2. Secció 🏷️ Títol de la casa
+##### 1. Secció 🏷️ Títol de la casa
 - **Personalització Visual de la Marca de la Llar**:
   - `Text del Títol Principal`: Camp de text (per defecte *"XIQUIHOUSE"*).
   - `Subtítol o Lema`: Text secundari (ex: *"Gestió Integral de la Llar"*).
@@ -2095,8 +2085,12 @@ flowchart TD
   - **Sincronització Global**: El botó `💾 Desar Vehicles de la Llar` guarda la configuració a `config.json` i actualitza Supabase atòmicament.
 
 ##### 4. Secció 👨‍👩‍👧‍👦 Família
-- **Llistat de Membres Familiars**:
+- **Llistat de Membres Familiars i Rols d'Administració**:
   - Cada membre es presenta en una targeta independent plegable (`st.expander`) o llista estructurada.
+  - **👑 Permisos d'Administrador Multi-Usuari**: Commutador per assignar privilegis d'administració a un o diversos membres de la família (ex: tant el Pare com la Mare). En activar-se, es despleguen:
+    - `📧 Correu d'Administrador`: Per a comunicacions administratives i alertes del sistema.
+    - `🔒 PIN mestre / Contrasenya`: Clau de seguretat personalitzada per autoritzar accions crítiques.
+    - `Avatar d'Admin`: Icona identificativa de comandament (👑, 🛡️, ⭐, 👤, 🚀, 🏠).
   - `Nom i Cognoms`: Identificador del familiar.
   - `Data de Naixement`: Format europeu estricte (`DD/MM/AAAA`).
   - `Càlcul Dinàmic d'Edat (`calcular_edat`)`: Funció algorísmica que processa dates en formats string o objecte datetime i calcula exactament els anys complerts tenint en compte mes i dia actuals.
@@ -2440,6 +2434,7 @@ El mòdul de **Control** neix per evitar regressions funcionals i alteracions vi
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
 | **18/11/2026** | **Documentació / Landing** | **Captura Oficial del Tauler Central i Hotspots (`00_dashboard_landing.png`)**: Incorporada la nova Secció 2.4 amb la captura del logotip interactiu central de la llar. Documentada la personalització del nom de la casa i eslògan (`modules/admin.py`), i el mecanisme de visibilitat granular d'icones (`icones_actives`) que permet habilitar o ocultar qualsevol mòdul segons les necessitats de cada família. |
+| **18/11/2026** | **Configuració / Família** | **Multi-Administrador Integrat a Família**: Eliminada la pestanya independent d'Administrador i fusionats els seus controls a cada fitxa familiar amb commutador de permisos `👑 Permisos Administrador`, correu, PIN mestre i avatar, permetent coadministració de la llar (Pare i Mare). |
 | **18/11/2026** | **Cotxe / Documentació** | **Sèrie Completa de 4 Captures del Mòdul Cotxe**: Integrades les 4 captures oficials del mòdul de mobilitat ([`05_cotxe_km_rutes.png`](file:///e:/Dashboard/docs/img/05_cotxe_km_rutes.png), [`05_cotxe_repostatge.png`](file:///e:/Dashboard/docs/img/05_cotxe_repostatge.png), [`05_cotxe_manteniment.png`](file:///e:/Dashboard/docs/img/05_cotxe_manteniment.png) i [`05_cotxe_consum.png`](file:///e:/Dashboard/docs/img/05_cotxe_consum.png)). Suport multivehicle amb pastilles, arxivament de vehicles per a preservació històrica (Ibiza), km inicials d'adquisició i eliminació de la limitació de 50 rutes. |
 | **18/11/2026** | **Documentació / Dashboard** | **Sèrie Completa de 4 Captures del Dashboard amb Privadesa**: Afegides les captures oficials del gràfic plurianual a 3 anys ([`00_dashboard_grafic_previsio.png`](file:///e:/Dashboard/docs/img/00_dashboard_grafic_previsio.png)), del panell de liquidació mensual ([`00_dashboard_detalls_mensuals.png`](file:///e:/Dashboard/docs/img/00_dashboard_detalls_mensuals.png)) i del desplegament reactiu de despeses per categoria ([`00_dashboard_desgloss_categoria.png`](file:///e:/Dashboard/docs/img/00_dashboard_desgloss_categoria.png)), amb filtres de privadesa sobre tots els imports financers. Detallada a la secció 4.2.1 la guia funcional de cada bloc. |
 | **18/11/2026** | **Control / Disciplina & UI** | **Blindatge Inviolable de Mòduls i Eliminació de Disparador Bell Duplicat**: Formalitzada a la Secció 1.3 i Secció 7.6 la regla d'or de desenvolupament: prohibició estricta d'afegir, treure o alterar funcionalitats o elements visuals en mòduls `[BLINDAT]` sense autorització expressa. Eliminat el botó duplicat de campana a l'extrem superior esquerre de `app.py`. |

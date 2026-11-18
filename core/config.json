@@ -36,7 +36,11 @@
             "circunstancies": [],
             "data_naixement": "23/09/1957",
             "plats_alternatius": [],
-            "google_calendar_ical": ""
+            "google_calendar_ical": "",
+            "is_admin": true,
+            "pin": "1234",
+            "avatar_admin": "👑",
+            "email": "enricxicars@gmail.com"
         },
         {
             "id": 2,
@@ -56,7 +60,10 @@
             "circunstancies": [],
             "data_naixement": "06/03/1959",
             "plats_alternatius": [],
-            "google_calendar_ical": ""
+            "google_calendar_ical": "",
+            "is_admin": true,
+            "pin": "1234",
+            "avatar_admin": "👑"
         },
         {
             "id": 3,
@@ -76,7 +83,8 @@
             "circunstancies": [],
             "data_naixement": "18/12/1988",
             "plats_alternatius": [],
-            "google_calendar_ical": ""
+            "google_calendar_ical": "",
+            "is_admin": false
         },
         {
             "id": 4,
@@ -102,7 +110,8 @@
             ],
             "data_naixement": "01/08/1994",
             "plats_alternatius": [],
-            "google_calendar_ical": ""
+            "google_calendar_ical": "",
+            "is_admin": false
         }
     ],
     "tutelats": [],

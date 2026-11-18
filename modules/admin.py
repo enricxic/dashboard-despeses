@@ -245,6 +245,14 @@ def _get_all_family_members_from_state_and_config():
             m["google_calendar_ical"] = str(st.session_state[f"f_gcal_{m_id}"]).strip()
         if f"f_col_{m_id}" in st.session_state:
             m["color"] = st.session_state[f"f_col_{m_id}"]
+        if f"f_is_admin_{m_id}" in st.session_state:
+            m["is_admin"] = bool(st.session_state[f"f_is_admin_{m_id}"])
+        if f"f_email_{m_id}" in st.session_state:
+            m["email"] = str(st.session_state[f"f_email_{m_id}"]).strip()
+        if f"f_pin_{m_id}" in st.session_state:
+            m["pin"] = str(st.session_state[f"f_pin_{m_id}"]).strip()
+        if f"f_avadmin_{m_id}" in st.session_state:
+            m["avatar_admin"] = str(st.session_state[f"f_avadmin_{m_id}"]).strip()
             
         updated_fam.append(m)
         
@@ -330,8 +338,27 @@ def _on_add_family_member():
         "google_calendar_ical": "",
         "color": "#3b82f6"
     })
+    # Assegurar que com a mínim un membre sigui administrador
+    has_admin = any(m.get("is_admin") for m in all_members)
+    if not has_admin and all_members:
+        all_members[0]["is_admin"] = True
+
     cur_cfg = load_app_config()
     cur_cfg["familia"] = all_members
+    
+    # Sincronitzar cur_cfg["admin"] amb el primer administrador per compatibilitat retroactiva
+    admins = [m for m in all_members if m.get("is_admin")]
+    if admins:
+        first_adm = admins[0]
+        cur_cfg["admin"] = {
+            "nom": first_adm.get("nom", "Administrador"),
+            "email": first_adm.get("email", ""),
+            "telefon": first_adm.get("telefon", ""),
+            "avatar": first_adm.get("avatar_admin", "👑"),
+            "rol": "Administrador",
+            "pin": first_adm.get("pin", "1234")
+        }
+
     if save_app_config(cur_cfg):
         _clear_section_session_keys("f_")
         try:
@@ -579,7 +606,6 @@ def render():
         st.markdown(f"<div style='font-size:0.8rem; text-transform:uppercase; font-weight:700; color:{text_secondary}; margin-bottom:8px; padding-left:6px;'>Seccions</div>", unsafe_allow_html=True)
         
         sections = [
-            ("admin", "👤 Administrador"),
             ("titol", "🏷️ Títol de la casa"),
             ("estances", "🏡 Estances de la casa"),
             ("vehicles", "🚗 Vehicles de la llar"),
@@ -611,8 +637,8 @@ def render():
             except Exception:
                 pass
 
-        if "cfg_active_tab" not in st.session_state:
-            st.session_state.cfg_active_tab = "admin"
+        if "cfg_active_tab" not in st.session_state or st.session_state.cfg_active_tab == "admin":
+            st.session_state.cfg_active_tab = "titol"
             
         for key_s, label_s in filtered_sections:
             is_active = (st.session_state.cfg_active_tab == key_s)
@@ -629,68 +655,9 @@ def render():
         active = st.session_state.get("cfg_active_tab", "admin")
         
         # =========================================================================
-        # 1. SECCIÓ: ADMINISTRADOR
-        # =========================================================================
-        if active == "admin":
-            admin_cfg = cfg.get("admin", {})
-            st.markdown(f"""
-            <div class="chrome-card">
-                <div class="chrome-card-header">👤 Administrador del Sistema</div>
-                <div class="chrome-card-desc">Gestiona el compte principal, el perfil i les credencials d'accés mestres.</div>
-                <div class="chrome-profile-banner">
-                    <div class="chrome-profile-avatar">{admin_cfg.get('avatar', '👑')}</div>
-                    <div class="chrome-profile-info">
-                        <div class="chrome-profile-name">{admin_cfg.get('nom', 'Enric Xicars')}</div>
-                        <div class="chrome-profile-sub">Sincronitzat amb <b>{admin_cfg.get('email', 'enricxicars@gmail.com')}</b></div>
-                        <div class="chrome-profile-sub" style="color:#22c55e; margin-top:2px;">● Rol actiu: {admin_cfg.get('rol', 'Administrador')}</div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            with st.container():
-                st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
-                st.markdown("#### ✏️ Dades de contacte i perfil")
-                c1, c2 = st.columns(2)
-                with c1:
-                    new_nom = st.text_input("Nom de l'administrador", value=admin_cfg.get("nom", "Enric Xicars"))
-                    new_email = st.text_input("Correu electrònic", value=admin_cfg.get("email", "enricxicars@gmail.com"))
-                with c2:
-                    new_tel = st.text_input("Telèfon de contacte", value=admin_cfg.get("telefon", "+34 600 000 000"))
-                    avatar_options = ["👑", "👤", "⭐", "🏠", "🛡️", "🚀"]
-                    cur_avatar = admin_cfg.get("avatar", "👑")
-                    av_idx = avatar_options.index(cur_avatar) if cur_avatar in avatar_options else 0
-                    new_avatar = st.selectbox("Icona / Avatar", avatar_options, index=av_idx)
-                
-                st.markdown("---")
-                st.markdown("#### 🔒 Seguretat i PIN mestre")
-                c_pin1, c_pin2 = st.columns(2)
-                with c_pin1:
-                    new_pin = st.text_input("PIN d'accés / Contrasenya", value=admin_cfg.get("pin", "1234"), type="password")
-                with c_pin2:
-                    new_rol = st.selectbox("Rol per defecte", ["Administrador", "Usuari Avançat", "Convidat"], index=0)
-                
-                st.write("")
-                _render_flash_message()
-                if st.button("💾 Desar Dades d'Administrador", type="primary", use_container_width=True, key="save_admin"):
-                    cur_cfg = load_app_config()
-                    cur_cfg["admin"] = {
-                        "nom": new_nom,
-                        "email": new_email,
-                        "telefon": new_tel,
-                        "avatar": new_avatar,
-                        "pin": new_pin,
-                        "rol": new_rol
-                    }
-                    if save_app_config(cur_cfg):
-                        st.session_state["flash_success"] = "✅ Dades d'administrador actualitzades correctament!"
-                        st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
-        # =========================================================================
         # 2. SECCIÓ: TÍTOL DE LA CASA
         # =========================================================================
-        elif active == "titol":
+        if active == "titol":
             casa_cfg = cfg.get("casa", {})
             st.markdown(f"""
             <div class="chrome-card">
@@ -1583,16 +1550,36 @@ def render():
                 calc_e = calcular_edat(raw_naix if raw_naix else raw_edat)
                 edat_badge = f" - 🎂 {calc_e} anys" if str(calc_e).isdigit() else ""
                 is_mem_actiu = mem.get("actiu", True)
-                estat_badge = "🟢 Present a la llar" if is_mem_actiu else "⚪ Fora de la llar"
+                is_mem_admin = mem.get("is_admin", (i == 0 or mem.get("rol") in ["Pare", "Mare"]))
+                estat_badge = "🟢 Present" if is_mem_actiu else "⚪ Fora"
+                admin_badge = " · 👑 Admin" if is_mem_admin else ""
                 
-                with st.expander(f"{mem.get('icona', '👤')} {mem.get('nom', f'Membre {i+1}')} ({mem.get('rol', 'Familiar')}){edat_badge} · {estat_badge}", expanded=True):
-                    c_act1, c_del_top = st.columns([8.2, 1.8], vertical_alignment="center")
+                with st.expander(f"{mem.get('icona', '👤')} {mem.get('nom', f'Membre {i+1}')} ({mem.get('rol', 'Familiar')}){edat_badge}{admin_badge} · {estat_badge}", expanded=True):
+                    c_act1, c_adm_top, c_del_top = st.columns([5.2, 3.2, 1.6], vertical_alignment="center")
                     with c_act1:
-                        m_actiu = st.toggle("🏠 Membre actiu a la llar (Participa en menús i rutines diàries)", value=is_mem_actiu, key=f"f_actiu_{mem_id}")
-                        if not m_actiu:
-                            st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les seves dades però no es computarà per defecte als menús setmanals.*")
+                        m_actiu = st.toggle("🏠 Actiu a la llar (Menús i rutines)", value=is_mem_actiu, key=f"f_actiu_{mem_id}")
+                    with c_adm_top:
+                        m_admin = st.toggle("👑 Permisos Administrador", value=is_mem_admin, key=f"f_is_admin_{mem_id}", help="Permet a aquest familiar gestionar la configuració, bases de dades i accions protegides.")
                     with c_del_top:
                         st.button("🗑️ Esborrar", key=f"f_del_{mem_id}", use_container_width=True, on_click=_on_request_delete_family_member, args=(mem_id,))
+
+                    if not m_actiu:
+                        st.caption("ℹ️ *Aquest membre viu fora o està temporalment absent. Es guarden totes les seves dades però no es computarà per defecte als menús setmanals.*")
+
+                    if m_admin:
+                        st.markdown("<div style='background:rgba(245, 158, 11, 0.08); border-left:3px solid #f59e0b; padding:8px 12px; border-radius:6px; margin:8px 0 12px 0;'><b>👑 Perfil d'Administrador:</b> Configura el correu, PIN d'accés mestre i avatar administratiu.</div>", unsafe_allow_html=True)
+                        c_ad1, c_ad2, c_ad3 = st.columns([4.5, 3.0, 2.5])
+                        with c_ad1:
+                            def_email = mem.get("email", "enricxicars@gmail.com" if i == 0 else "")
+                            st.text_input("📧 Correu d'Administrador", value=def_email, key=f"f_email_{mem_id}", placeholder="ex: correu@gmail.com")
+                        with c_ad2:
+                            def_pin = mem.get("pin", "1234")
+                            st.text_input("🔒 PIN d'accés / Contrasenya", value=def_pin, type="password", key=f"f_pin_{mem_id}")
+                        with c_ad3:
+                            av_opts = ["👑", "🛡️", "⭐", "👤", "🚀", "🏠"]
+                            cur_av = mem.get("avatar_admin", "👑")
+                            av_idx = av_opts.index(cur_av) if cur_av in av_opts else 0
+                            st.selectbox("Avatar d'Admin", av_opts, index=av_idx, key=f"f_avadmin_{mem_id}")
                     
                     st.write("")
                     c1, c2, c3, c4 = st.columns([1.2, 3, 2.5, 2.3])

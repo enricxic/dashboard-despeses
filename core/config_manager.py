@@ -76,8 +76,8 @@ DEFAULT_CONFIG = {
     "estances": copy.deepcopy(DEFAULT_ESTANCES),
     "vehicles": copy.deepcopy(DEFAULT_VEHICLES),
     "familia": [
-        {"id": 1, "nom": "Enric", "rol": "Pare", "data_naixement": "23/09/1957", "edat": "68", "actiu": True, "alergies": [], "vetos": ["fetge", "casqueria"], "comodins": ["Pit de pollastre a la planxa", "Truita francesa"], "icona": "👨", "google_calendar_ical": "", "color": "#3b82f6"},
-        {"id": 2, "nom": "Isabel", "rol": "Mare", "data_naixement": "06/03/1959", "edat": "67", "actiu": True, "alergies": [], "vetos": [], "comodins": ["Amanida completa", "Salmó a la planxa"], "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"},
+        {"id": 1, "nom": "Enric", "rol": "Pare", "data_naixement": "23/09/1957", "edat": "68", "actiu": True, "is_admin": True, "email": "enricxicars@gmail.com", "pin": "1234", "avatar_admin": "👑", "alergies": [], "vetos": ["fetge", "casqueria"], "comodins": ["Pit de pollastre a la planxa", "Truita francesa"], "icona": "👨", "google_calendar_ical": "", "color": "#3b82f6"},
+        {"id": 2, "nom": "Isabel", "rol": "Mare", "data_naixement": "06/03/1959", "edat": "67", "actiu": True, "is_admin": True, "email": "isabel@gmail.com", "pin": "1234", "avatar_admin": "👑", "alergies": [], "vetos": [], "comodins": ["Amanida completa", "Salmó a la planxa"], "icona": "👩", "google_calendar_ical": "", "color": "#ec4899"},
         {"id": 3, "nom": "Jordi", "rol": "Fill", "data_naixement": "18/12/1988", "edat": "37", "actiu": True, "alergies": [], "vetos": [], "comodins": ["Macarrons", "Hamburguesa"], "icona": "👦", "google_calendar_ical": "", "color": "#10b981"},
         {"id": 4, "nom": "Mireia", "rol": "Filla", "data_naixement": "01/08/1994", "edat": "32", "actiu": False, "alergies": ["Lactosa"], "vetos": ["Carn vermella"], "comodins": ["Wok de verdures amb tofu", "Arròs vegetal"], "icona": "👧", "google_calendar_ical": "", "color": "#f59e0b"}
     ],
@@ -644,3 +644,15 @@ def save_vehicles_casa(vehicles: list) -> bool:
     cfg = load_app_config()
     cfg["vehicles"] = vehicles
     return save_app_config(cfg)
+
+
+def get_administradors_familia(cfg: dict = None) -> list:
+    """Retorna la llista de familiars que tenen permisos d'administrador."""
+    if cfg is None:
+        cfg = load_app_config()
+    familia = cfg.get("familia", [])
+    admins = [m for m in familia if m.get("is_admin")]
+    if not admins and familia:
+        # Fallback al primer membre si ningú té marcat is_admin
+        admins = [familia[0]]
+    return admins
