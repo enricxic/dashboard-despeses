@@ -2097,23 +2097,23 @@ def render():
             st.markdown("""
             <div class="chrome-card">
                 <div class="chrome-card-header">🔌 Perifèrics de la Llar</div>
-                <div class="chrome-card-desc">Configura la impressora de tiquets de compra i l'escàner físic de sobretaula connectat al sistema.</div>
+                <div class="chrome-card-desc">Configura la impressora de tiquets de compra i el mètode d'escaneig de tiquets (arxiu digital o maquinari directe USB).</div>
             </div>
             """, unsafe_allow_html=True)
             
             # --- BLOC 1: IMPRESSORA DE TIQUETS ---
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
             st.markdown("#### 🖨️ Impressora de Tiquets de Compra")
-            st.caption("Configuració per a impressores de rotlle tèrmic o matriu d'agulles (76mm / 80mm).")
+            st.caption("Configuració per a impressores de rotlle tèrmic o matriu d'agulles (76mm / 80mm BIXOLON SRP-275).")
             
             p_activa = st.toggle("Activar impressora de tiquets", value=prn_cfg.get("activa", True), key="p_activa")
             
             metode_options = [
-                ("raw_usb", "⚡ Directe per USB / Controlador Windows (ESC/POS en local)"),
-                ("web", "🌐 Navegador Web (window.print() compatible amb Streamlit Cloud)")
+                ("web", "🌐 Navegador Web (window.print() compatible amb Streamlit Cloud, Mòbil i PC)"),
+                ("raw_usb", "⚡ Directe per USB / Controlador Windows (ESC/POS només en local)")
             ]
-            cur_metode = prn_cfg.get("metode", "raw_usb")
-            cur_metode_idx = 0 if cur_metode == "raw_usb" else 1
+            cur_metode = prn_cfg.get("metode", "web")
+            cur_metode_idx = 0 if cur_metode == "web" else 1
             metode_sel = st.radio(
                 "Mètode d'impressió preferit",
                 options=[o[0] for o in metode_options],
@@ -2121,6 +2121,21 @@ def render():
                 index=cur_metode_idx,
                 key="p_metode"
             )
+
+            # Avís d'entorn
+            import os as _os_prn
+            has_win32print = False
+            if _os_prn.name == "nt":
+                try:
+                    import win32print
+                    has_win32print = True
+                except Exception:
+                    has_win32print = False
+
+            if metode_sel == "raw_usb" and not has_win32print:
+                st.warning("⚠️ **Atenció entorn Núvol / Linux:** La connexió directa per cable USB només pot funcionar quan executes el Dashboard en local al teu PC Windows. Des del núvol (Streamlit Cloud), selecciona el mètode **'🌐 Navegador Web'** per imprimir a qualsevol impressora.")
+            elif metode_sel == "web":
+                st.info("💡 **Mètode Web actiu:** En clicar imprimir, s'obrirà el diàleg d'impressió estàndard del teu navegador amb el format de tiquet de 76mm. És 100% compatible amb Streamlit Cloud, tablets i telèfons.")
             
             col_p1, col_p2 = st.columns(2)
             with col_p1:
@@ -2156,90 +2171,138 @@ def render():
                 p_tall = st.checkbox("Tall automàtic de paper (guillotina ESC/POS)", value=prn_cfg.get("tall_automatic", True), key="p_tall")
                 p_salts = st.slider("Salts de línia abans de tallar", min_value=1, max_value=10, value=int(prn_cfg.get("salts_linia_tall", 6)), key="p_salts", help="Marge de seguretat entre el capçal d'impressió i la guillotina física")
                 
-            col_p_test, _ = st.columns([1, 2])
+            col_p_test, _ = st.columns([1.5, 2])
             with col_p_test:
                 if st.button("📄 Imprimir tiquet de prova", key="btn_test_print"):
-                    with st.spinner("Enviant prova d'impressió..."):
-                        if callable(imprimir_tiquet_prova):
-                            ok_p, msg_p = imprimir_tiquet_prova(printer_name=p_drv)
-                            if ok_p:
-                                st.success(f"✅ {msg_p}")
+                    if callable(imprimir_tiquet_prova):
+                        ok_p, msg_or_html = imprimir_tiquet_prova(printer_name=p_drv, metode=metode_sel)
+                        if ok_p:
+                            if metode_sel == "web":
+                                st.session_state["preview_test_ticket_html"] = msg_or_html
+                                st.success("✅ Tiquet de prova generat. Clica a sota per imprimir:")
                             else:
-                                st.error(f"❌ {msg_p}")
+                                st.success(f"✅ {msg_or_html}")
                         else:
-                            st.warning("⚠️ La impressió directa USB només està disponible en entorns Windows locals.")
+                            st.error(f"❌ {msg_or_html}")
+                    else:
+                        st.warning("⚠️ Mòdul d'impressora no disponible.")
+
+            if st.session_state.get("preview_test_ticket_html"):
+                import streamlit.components.v1 as _components
+                _components.html(st.session_state["preview_test_ticket_html"], height=360, scrolling=True)
+                if st.button("Tancar vista prèvia", key="btn_close_test_ticket"):
+                    st.session_state.pop("preview_test_ticket_html", None)
+                    st.rerun()
+
             st.markdown("</div>", unsafe_allow_html=True)
             
-            # --- BLOC 2: ESCÀNER DE SOBREMESA ---
+            # --- BLOC 2: ESCÀNER I ENTRADA DE TIQUETS ---
             st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
-            st.markdown("#### 📠 Escàner de Sobremesa")
-            st.caption("Configuració de l'escàner directe mitjançant la nova infraestructura WinRT / Windows.Devices.Scanners.")
+            st.markdown("#### 📠 Escàner i Mètode d'Entrada de Tiquets")
+            st.caption("Configura com captures i puges els tiquets de compra per alimentar el lector OCR / IA de Compres Super.")
             
-            s_actiu = st.toggle("Activar escaneig directe", value=scn_cfg.get("actiu", True), key="s_actiu")
-            
-            try:
-                import importlib
-                import scanner as mod_scn
-                if not hasattr(mod_scn, "get_connected_scanners"):
-                    importlib.reload(mod_scn)
-                get_connected_scanners = getattr(mod_scn, "get_connected_scanners", lambda: [])
-                scanners_detectats = get_connected_scanners()
-            except Exception:
-                scanners_detectats = []
+            metode_scan_options = [
+                ("arxiu", "📁 Pujada manual d'arxiu (PDF o imatge des de Compres Super) [Recomanat - Núvol i Local]"),
+                ("directe_usb", "⚡ Escaneig directe USB per maquinari (WinRT només a Windows en local)")
+            ]
+            cur_s_metode = scn_cfg.get("metode", "arxiu")
+            cur_s_idx = 0 if cur_s_metode == "arxiu" else 1
+            s_metode_sel = st.radio(
+                "Mètode d'escaneig preferit",
+                options=[o[0] for o in metode_scan_options],
+                format_func=lambda x: dict(metode_scan_options).get(x, x),
+                index=cur_s_idx,
+                key="s_metode_sel"
+            )
 
-            col_s1, col_s2 = st.columns(2)
-            with col_s1:
-                scanner_choices = [("default", "Primer escàner detectat (per defecte)")]
-                for sc in scanners_detectats:
-                    scanner_choices.append((sc["nom"], f"🖨️ {sc['nom']}"))
+            if s_metode_sel == "arxiu":
+                st.markdown("""
+                <div style='background:rgba(34, 197, 94, 0.08); border-left:3px solid #22c55e; padding:12px 14px; border-radius:6px; margin:10px 0;'>
+                    <b>📁 Flux de treball per arxiu (Ideal per al dia a dia):</b><br>
+                    1. Escaneja el tiquet amb el teu programari habitual de l'escàner (o fes-li una foto amb el mòbil).<br>
+                    2. Desa'l en format <b>PDF</b> o imatge (<b>JPG/PNG</b>) a la carpeta de tiquets o al teu dispositiu.<br>
+                    3. Entra a <b>Compres Super</b> i carrega l'arxiu amb el selector de fitxers. La IA extreurà automàticament els articles, preus i totals.<br>
+                    <i>Aquest mètode és 100% compatible tant des de Streamlit Cloud com en local a Windows, Mac o mòbil.</i>
+                </div>
+                """, unsafe_allow_html=True)
+                s_carpeta = st.text_input("Carpeta local de tiquets", value=scn_cfg.get("carpeta_tickets", "tickets/"), key="s_carpeta_tickets", help="Carpeta del projecte on es desen els tiquets escanejats")
+                s_actiu = False
+                s_dev = scn_cfg.get("dispositiu", "default")
+                s_dpi = scn_cfg.get("dpi", 300)
+                s_mode = scn_cfg.get("mode_color", "Color")
+            else:
+                st.markdown("""
+                <div style='background:rgba(245, 158, 11, 0.08); border-left:3px solid #f59e0b; padding:10px 14px; border-radius:6px; margin:10px 0;'>
+                    <b>⚡ Escaneig directe WinRT:</b> Dispara l'escaneig directament amb un clic des de la interfície. Requereix executar el Dashboard en local al teu PC Windows amb l'escàner connectat per USB.
+                </div>
+                """, unsafe_allow_html=True)
+                s_actiu = st.toggle("Activar escaneig directe USB", value=scn_cfg.get("actiu", True), key="s_actiu")
+                s_carpeta = scn_cfg.get("carpeta_tickets", "tickets/")
+
+                try:
+                    import importlib
+                    import scanner as mod_scn
+                    if not hasattr(mod_scn, "get_connected_scanners"):
+                        importlib.reload(mod_scn)
+                    get_connected_scanners = getattr(mod_scn, "get_connected_scanners", lambda: [])
+                    scanners_detectats = get_connected_scanners()
+                except Exception:
+                    scanners_detectats = []
+
+                col_s1, col_s2 = st.columns(2)
+                with col_s1:
+                    scanner_choices = [("default", "Primer escàner detectat (per defecte)")]
+                    for sc in scanners_detectats:
+                        scanner_choices.append((sc["nom"], f"🖨️ {sc['nom']}"))
+                        
+                    cur_dev = scn_cfg.get("dispositiu", "default")
+                    choice_keys = [c[0] for c in scanner_choices]
+                    idx_dev = choice_keys.index(cur_dev) if cur_dev in choice_keys else 0
                     
-                cur_dev = scn_cfg.get("dispositiu", "default")
-                choice_keys = [c[0] for c in scanner_choices]
-                idx_dev = choice_keys.index(cur_dev) if cur_dev in choice_keys else 0
-                
-                s_dev = st.selectbox(
-                    "Dispositiu d'escaneig",
-                    options=choice_keys,
-                    format_func=lambda x: dict(scanner_choices).get(x, x),
-                    index=idx_dev,
-                    key="s_dev"
-                )
-                if scanners_detectats:
-                    st.caption(f"🟢 S'ha detectat: **{', '.join([s['nom'] for s in scanners_detectats])}**")
-                else:
-                    st.caption("⚠️ No s'ha detectat cap escàner USB actiu en aquest moment.")
+                    s_dev = st.selectbox(
+                        "Dispositiu d'escaneig",
+                        options=choice_keys,
+                        format_func=lambda x: dict(scanner_choices).get(x, x),
+                        index=idx_dev,
+                        key="s_dev"
+                    )
+                    if scanners_detectats:
+                        st.caption(f"🟢 S'ha detectat: **{', '.join([s['nom'] for s in scanners_detectats])}**")
+                    else:
+                        st.caption("⚠️ No s'ha detectat cap escàner USB actiu en aquest moment.")
+                        
+                with col_s2:
+                    dpi_opts = [150, 200, 300, 600]
+                    cur_dpi = int(scn_cfg.get("dpi", 300))
+                    idx_dpi = dpi_opts.index(cur_dpi) if cur_dpi in dpi_opts else 2
+                    s_dpi = st.selectbox(
+                        "Resolució per defecte (DPI)",
+                        options=dpi_opts,
+                        index=idx_dpi,
+                        format_func=lambda x: f"{x} DPI {'(Recomanat OCR)' if x==300 else ''}",
+                        key="s_dpi"
+                    )
                     
-            with col_s2:
-                dpi_opts = [150, 200, 300, 600]
-                cur_dpi = int(scn_cfg.get("dpi", 300))
-                idx_dpi = dpi_opts.index(cur_dpi) if cur_dpi in dpi_opts else 2
-                s_dpi = st.selectbox(
-                    "Resolució per defecte (DPI)",
-                    options=dpi_opts,
-                    index=idx_dpi,
-                    format_func=lambda x: f"{x} DPI {'(Recomanat OCR)' if x==300 else ''}",
-                    key="s_dpi"
-                )
-                
-            col_s3, col_s4 = st.columns(2)
-            with col_s3:
-                mode_opts = ["Color", "Grayscale", "Monochrome"]
-                cur_mode = scn_cfg.get("mode_color", "Color")
-                idx_mode = mode_opts.index(cur_mode) if cur_mode in mode_opts else 0
-                s_mode = st.selectbox(
-                    "Mode de color",
-                    options=mode_opts,
-                    index=idx_mode,
-                    format_func=lambda x: "Color (RGB)" if x=="Color" else ("Escala de grisos" if x=="Grayscale" else "Blanc i negre (BN)"),
-                    key="s_mode"
-                )
-                
-            with col_s4:
-                st.write("")
-                st.write("")
-                if st.button("🔍 Detectar escàners ara", key="btn_detect_scanners"):
-                    st.session_state["flash_success"] = f"Recerca completada: {len(scanners_detectats)} dispositius trobats."
-                    st.rerun()
+                col_s3, col_s4 = st.columns(2)
+                with col_s3:
+                    mode_opts = ["Color", "Grayscale", "Monochrome"]
+                    cur_mode = scn_cfg.get("mode_color", "Color")
+                    idx_mode = mode_opts.index(cur_mode) if cur_mode in mode_opts else 0
+                    s_mode = st.selectbox(
+                        "Mode de color",
+                        options=mode_opts,
+                        index=idx_mode,
+                        format_func=lambda x: "Color (RGB)" if x=="Color" else ("Escala de grisos" if x=="Grayscale" else "Blanc i negre (BN)"),
+                        key="s_mode"
+                    )
+                    
+                with col_s4:
+                    st.write("")
+                    st.write("")
+                    if st.button("🔍 Detectar escàners ara", key="btn_detect_scanners"):
+                        st.session_state["flash_success"] = f"Recerca completada: {len(scanners_detectats)} dispositius trobats."
+                        st.rerun()
+
             st.markdown("</div>", unsafe_allow_html=True)
             
             # Botó Desar canvis
@@ -2258,6 +2321,8 @@ def render():
                     "salts_linia_tall": p_salts
                 }
                 cur_cfg["periferics"]["escaner"] = {
+                    "metode": s_metode_sel,
+                    "carpeta_tickets": s_carpeta,
                     "actiu": s_actiu,
                     "dispositiu": s_dev,
                     "dpi": s_dpi,

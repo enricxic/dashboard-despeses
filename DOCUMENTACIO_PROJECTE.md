@@ -2104,7 +2104,7 @@ flowchart TD
 - **Accions i Modals de Família**:
   - `➕ Afegir Membre Familiar`: Formulari emergent per registrar nous integrants.
   - `🗑️ Esborrar Membre Familiar (`show_delete_family_member_dialog`)`: Modal de seguretat de Streamlit (`@st.dialog`) que sol·licita confirmació explícita abans d'eliminar el registre per evitar pèrdues accidentals.
-  - `💾 Desar Canvis de Família`: Invoca `_on_save_family_members()`, purga les claus `f_` de la sessió i reescriu el fitxer de configuració.
+  - `💾 Desar Canvis de Família` i `🔄 Descartar canvis`: Botons situats al final del formulari per desar permanentment les dades a `config.json` i Supabase o bé recarregar de disc restaurant els valors originals sense desar.
 
 ##### 5. Secció 🍽️ Menús i Nutrició / 🍳 Eines de Cuina
 - **Catàleg Visual d'Eines i Aparells de Cuina (`DEFAULT_CATALEG_EINES`)**:
@@ -2122,17 +2122,18 @@ flowchart TD
   - `Visibilitat a la Campaneta`: Selectors per activar o silenciar categories d'alertes específiques al panell superior.
 
 ##### 7. Secció 🔌 Perifèrics (Impressora i Escàner)
-- **Impressora Tèrmica de Tiquets (ESC/POS)**:
-  - `Llistat de Controladors Detectats`: Detecció automàtica d'impressores locals de Windows mitjançant `win32print`.
-  - `Controlador Seleccionat`: Selector del dispositiu (per defecte `BIXOLON_SRP275`).
-  - `Mètode d'Impressió Preferit`: Radio button entre *RAW ESC/POS (Windows natiu local)* i *Impressió Web (HTML5/window.print())*.
-  - `Salts de Línia de Marge`: Quantitat de salts buits (per defecte 6) abans de tallar perquè el text no quedi atrapat sota la guillotina.
-  - `Tall de Paper Automàtic`: Interruptor per enviar la comanda ESC/POS `\x1dV\x00` en finalitzar.
-  - `Botó d'Impressió de Prova`: Envia un tiquet curt de diagnòstic per verificar alimentació de paper i impressió de capçalera.
-- **Escàner USB de Documents i Tiquets**:
-  - `Motor d'Escaneig`: Selector entre el motor d'última generació WinRT natiu ([`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1)) o l'API clàssica WIA.
-  - `Resolució d'Escaneig (DPI)`: 150 DPI (ràpid per a OCR) o 300 DPI (alta definició).
-  - `Ruta de Destí`: Carpeta local predeterminada (`tickets/`).
+- **Impressora de Tiquets de Compra (ESC/POS / Web)**:
+  - `Mètode d'Impressió Preferit`: Commutació entre:
+    - `🌐 Navegador Web (window.print())`: Solució universal 100% compatible amb Streamlit Cloud (Linux), telèfons mòbils, tauletes i qualsevol navegador web. Genera un document HTML5 optimitzat per a rotllo de 76mm/80mm amb vista prèvia interactiva.
+    - `⚡ Directe per USB / Controlador Windows (ESC/POS)`: Envia cadenes de bytes en cru (RAW) directament al controlador de la impressora tèrmica de sobretaula (ex: *BIXOLON SRP-275*) mitjançant `win32print` (només quan s'executa en entorn local Windows).
+  - `Detecció de Controladors`: Llistat d'impressores locals de Windows obtingut dinàmicament quan s'executa en local.
+  - `Tall de Paper Automàtic i Marges`: Control de la comanda de guillotina ESC/POS `\x1dV\x00` i selector de salts de línia de seguretat (1 a 10 salts, per defecte 6).
+  - `📄 Imprimir tiquet de prova`: Botó de diagnòstic integrat. En mode Web genera una finestra de prova interactiva incrustada amb diàleg d'impressió del navegador; en mode Directe USB verifica l'alimentació física de paper i el tall de guillotina. Si s'executa des del núvol amb mode USB seleccionat, alerta l'usuari amb recomanació de canviar a mode Web.
+- **Mètode d'Escaneig de Tiquets**:
+  - `Selector de Mètode`:
+    - `📁 Pujada manual d'arxiu (PDF o imatge des de Compres Super)`: Mètode preferent i recomanat tant per a entorns al Núvol com en local. L'usuari escaneja des del seu programari habitual (o des del mòbil), desa el fitxer (PDF/JPG/PNG) a la carpeta de tiquets (`tickets/`) i el carrega directament a la pestanya de Compres Super per processar-lo amb OCR / IA.
+    - `⚡ Escaneig directe USB per maquinari (WinRT només a Windows en local)`: Integració directa amb escàners físics connectats per USB mitjançant PowerShell WinRT ([`scan_winrt.ps1`](file:///e:/Dashboard/scan_winrt.ps1)), amb selecció de resolució (150, 200, 300, 600 DPI) i mode de color (Color RGB, Escala de grisos o Blanc i negre).
+  - `Ruta de Destí`: Carpeta local predeterminada configurada al sistema (`tickets/`).
 
 ##### 8. Secció 🧪 Laboratori IA (Harness)
 - Accés directe als controls del banc de proves heurístic i informes d'avaluació de models (vegeu subapartat 7.2).
@@ -2433,6 +2434,7 @@ El mòdul de **Control** neix per evitar regressions funcionals i alteracions vi
 
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
+| **18/11/2026** | **Configuració / Perifèrics** | **Impressió Web Universal i Suport d'Escaneig per Arxiu**: Resolt l'error de `win32print` en entorns núvol/Linux afegint suport per a impressió de tiquets de prova via HTML5 `window.print()` amb previsualització interactiva. Integrat selector explícit a Configuració > Perifèrics per triar entre el flux recomanat de pujada manual d'arxiu des de Compres Super (`tickets/`) o l'adquisició directa per maquinari USB WinRT a Windows local. |
 | **18/11/2026** | **Documentació / Landing** | **Captura Oficial del Tauler Central i Hotspots (`00_dashboard_landing.png`)**: Incorporada la nova Secció 2.4 amb la captura del logotip interactiu central de la llar. Documentada la personalització del nom de la casa i eslògan (`modules/admin.py`), i el mecanisme de visibilitat granular d'icones (`icones_actives`) que permet habilitar o ocultar qualsevol mòdul segons les necessitats de cada família. |
 | **18/11/2026** | **Configuració / Família** | **Multi-Administrador Integrat a Família**: Eliminada la pestanya independent d'Administrador i fusionats els seus controls a cada fitxa familiar amb commutador de permisos `👑 Permisos Administrador`, correu, PIN mestre i avatar, permetent coadministració de la llar (Pare i Mare). |
 | **18/11/2026** | **Cotxe / Documentació** | **Sèrie Completa de 4 Captures del Mòdul Cotxe**: Integrades les 4 captures oficials del mòdul de mobilitat ([`05_cotxe_km_rutes.png`](file:///e:/Dashboard/docs/img/05_cotxe_km_rutes.png), [`05_cotxe_repostatge.png`](file:///e:/Dashboard/docs/img/05_cotxe_repostatge.png), [`05_cotxe_manteniment.png`](file:///e:/Dashboard/docs/img/05_cotxe_manteniment.png) i [`05_cotxe_consum.png`](file:///e:/Dashboard/docs/img/05_cotxe_consum.png)). Suport multivehicle amb pastilles, arxivament de vehicles per a preservació històrica (Ibiza), km inicials d'adquisició i eliminació de la limitació de 50 rutes. |

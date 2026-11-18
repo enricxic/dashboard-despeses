@@ -198,7 +198,7 @@ def imprimir_directe_bixolon(supermercat, items, total_super=0.0, printer_name=N
     try:
         import win32print
     except ImportError:
-        return False, "El mòdul win32print no està disponible en aquest entorn."
+        return False, "El mòdul win32print només està disponible a Windows en local. A Streamlit Cloud (Linux), canvia el mètode a '🌐 Navegador Web (window.print())'."
         
     try:
         if supermercat == "__ALL__":
@@ -376,14 +376,17 @@ def generar_html_imprimir_tiquet(supermercat, items, total_super=0.0):
 
 
 
-def imprimir_tiquet_prova(printer_name=None):
+def imprimir_tiquet_prova(printer_name=None, metode="raw_usb"):
     """
     Imprimeix un tiquet curt de prova per verificar el funcionament de la impressora i el tall de paper.
+    Admet tant impressió directa USB (Windows local) com tiquet web (HTML window.print).
     """
     items_prova = [
-        {"nom_estandard": "Comprovacio USB", "falta": 1, "total_linia": 1.25},
-        {"nom_estandard": "Test Guillotina", "falta": 1, "total_linia": 2.50}
+        {"nom_estandard": "Comprovacio Tiquet", "falta": 1, "total_linia": 1.25},
+        {"nom_estandard": "Test Impressora", "falta": 1, "total_linia": 2.50}
     ]
+    if metode == "web":
+        return True, generar_html_imprimir_tiquet("TEST_PERIFERIC", items_prova, total_super=3.75)
     return imprimir_directe_bixolon("TEST_PERIFERIC", items_prova, total_super=3.75, printer_name=printer_name)
 
 def render_printer_widget(supermercat, items, total_super=0.0, key_prefix="shop"):
