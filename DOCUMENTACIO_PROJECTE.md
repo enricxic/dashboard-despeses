@@ -1348,6 +1348,9 @@ El mòdul s'estructura en 4 pestanyes operatives mitjançant `st.tabs` amb supor
 
 ##### 5.3.1 Pestanya 1: `🛣️ Registre Km i Rutes` (Control d'Odòmetre i Desplaçaments)
 
+![Registre de Km i Rutes](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/05_cotxe_km_rutes.png)
+*Figura 6: Interfície del registre de quilòmetres i rutes amb selector superior de pastilles multivehicle (`st.pills`), commutador de consulta de vehicles arxivats, formulari de lectura d'odòmetre amb validació estricta i llistat complet de trajectes històrics. Fitxer local: [`docs/img/05_cotxe_km_rutes.png`](file:///e:/Dashboard/docs/img/05_cotxe_km_rutes.png).*
+
 La interfície d'enregistrament diari de desplaçaments del vehicle:
 
 1. **Mètriques Resum d'Odòmetre (Top Container)**:
@@ -1384,6 +1387,9 @@ La interfície d'enregistrament diari de desplaçaments del vehicle:
 
 ##### 5.3.2 Pestanya 2: `⛽ Repostatge` (Proveïment i Despesa de Carburant)
 
+![Històric de Repostatges de Gasolina](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/05_cotxe_repostatge.png)
+*Figura 7: Panell de repostatges de combustible filtrat directament pel vehicle actiu seleccionat, amb KPIs del preu de l'últim proveïment, màxim i mínim pagat per litre (€/l) i taula de càrregues. Fitxer local: [`docs/img/05_cotxe_repostatge.png`](file:///e:/Dashboard/docs/img/05_cotxe_repostatge.png).*
+
 Gestió de combustible del vehicle:
 
 1. **Formulari de Càrrega de Carburant**:
@@ -1404,6 +1410,9 @@ Gestió de combustible del vehicle:
 ---
 
 ##### 5.3.3 Pestanya 3: `🔧 Manteniment i Nivells` (Estructura Col·lapsable d'Expanders)
+
+![Vigilància Mecànica i Manteniment Integral](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/05_cotxe_manteniment.png)
+*Figura 8: Tauler de vigilància mecànica amb configuració d'avisos, barra de desgast d'oli en temps real, comptadors de quilòmetres restants i planificació col·lapsable d'inflat de pneumàtics, control de nivells de líquids i entrades a taller. Fitxer local: [`docs/img/05_cotxe_manteniment.png`](file:///e:/Dashboard/docs/img/05_cotxe_manteniment.png).*
 
 Monitor mecànic integral organitzat en blocs desplegables independents (`st.expander`) per mantenir una navegació neta i compacta, amb interruptor superior *"Desplegar totes les seccions"* i **badges d'estat en temps real als encapçalaments**:
 
@@ -1445,6 +1454,9 @@ Monitor mecànic integral organitzat en blocs desplegables independents (`st.exp
 ---
 
 ##### 5.3.4 Pestanya 4: `📊 Consum i Rendiment` (KPIs Analítics i Eficiència)
+
+![Consum Mitjà Anual](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/05_cotxe_consum.png)
+*Figura 9: Gràfic interactiu de barres amb l'evolució del consum mitjà anual real en litres als 100 km (L/100km) calculat a partir de les lectures d'odòmetre i proveïments del vehicle. Fitxer local: [`docs/img/05_cotxe_consum.png`](file:///e:/Dashboard/docs/img/05_cotxe_consum.png).*
 
 Panell d'intel·ligència energètica i econòmica del vehicle:
 
@@ -2424,6 +2436,7 @@ El mòdul de **Control** neix per evitar regressions funcionals i alteracions vi
 | Data | Mòdul Afectat | Descripció del Canvi Consolidat |
 |:---|:---|:---|
 | **18/11/2026** | **Documentació / Landing** | **Captura Oficial del Tauler Central i Hotspots (`00_dashboard_landing.png`)**: Incorporada la nova Secció 2.4 amb la captura del logotip interactiu central de la llar. Documentada la personalització del nom de la casa i eslògan (`modules/admin.py`), i el mecanisme de visibilitat granular d'icones (`icones_actives`) que permet habilitar o ocultar qualsevol mòdul segons les necessitats de cada família. |
+| **18/11/2026** | **Cotxe / Documentació** | **Sèrie Completa de 4 Captures del Mòdul Cotxe**: Integrades les 4 captures oficials del mòdul de mobilitat ([`05_cotxe_km_rutes.png`](file:///e:/Dashboard/docs/img/05_cotxe_km_rutes.png), [`05_cotxe_repostatge.png`](file:///e:/Dashboard/docs/img/05_cotxe_repostatge.png), [`05_cotxe_manteniment.png`](file:///e:/Dashboard/docs/img/05_cotxe_manteniment.png) i [`05_cotxe_consum.png`](file:///e:/Dashboard/docs/img/05_cotxe_consum.png)). Suport multivehicle amb pastilles, arxivament de vehicles per a preservació històrica (Ibiza), km inicials d'adquisició i eliminació de la limitació de 50 rutes. |
 | **18/11/2026** | **Documentació / Dashboard** | **Sèrie Completa de 4 Captures del Dashboard amb Privadesa**: Afegides les captures oficials del gràfic plurianual a 3 anys ([`00_dashboard_grafic_previsio.png`](file:///e:/Dashboard/docs/img/00_dashboard_grafic_previsio.png)), del panell de liquidació mensual ([`00_dashboard_detalls_mensuals.png`](file:///e:/Dashboard/docs/img/00_dashboard_detalls_mensuals.png)) i del desplegament reactiu de despeses per categoria ([`00_dashboard_desgloss_categoria.png`](file:///e:/Dashboard/docs/img/00_dashboard_desgloss_categoria.png)), amb filtres de privadesa sobre tots els imports financers. Detallada a la secció 4.2.1 la guia funcional de cada bloc. |
 | **18/11/2026** | **Control / Disciplina & UI** | **Blindatge Inviolable de Mòduls i Eliminació de Disparador Bell Duplicat**: Formalitzada a la Secció 1.3 i Secció 7.6 la regla d'or de desenvolupament: prohibició estricta d'afegir, treure o alterar funcionalitats o elements visuals en mòduls `[BLINDAT]` sense autorització expressa. Eliminat el botó duplicat de campana a l'extrem superior esquerre de `app.py`. |
 | **17/11/2026** | **Normalització / BD & JSON** | **Suport per a columnes `DATE` de PostgreSQL (`tr_cartera` a `AAAA-MM-DD`)**: Resolució de l'error Postgres `22008 date/time field value out of range: "29/12/2025"` en actualitzar `tr_cartera`. S'ha incorporat `date_format` configurable per taula a `TABLE_SPECS` (`core/normalitzador.py`), establint `AAAA-MM-DD` per a tipus de dades `DATE` de PostgreSQL (`tr_cartera`) i preservant `DD/MM/AAAA` per a columnes de text (`despeses`, `ingressos`, `pagaments`, `compresSuper`, `kmCotxe`). S'ha millorat la gestió d'errors i confirmació visual a `modules/normalitzador_ui.py`. |
