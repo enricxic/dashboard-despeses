@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "18/11/2026 12:13:22",
+  "updated_at": "18/11/2026 12:23:02",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -64,10 +64,10 @@
         "Km i rutes, repostatge, manteniment i consum"
       ],
       "verified_hashes": {
-        "modules/cotxe.py": "b7e1ac542adfa67bde9a13d1846ac30a5613763cb52ef31d42aaa6a54a72fbb3"
+        "modules/cotxe.py": "8e50f65376de70f3f3bf8ea20378572438da6c75001c606cee8f00624c1620a8"
       },
-      "verified_at": "18/11/2026 12:13:21",
-      "verified_commit": "8dbca4a",
+      "verified_at": "18/11/2026 12:23:01",
+      "verified_commit": "6d61482",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "18/11/2026 12:23:01",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "6d61482"
+    },
+    {
+      "timestamp": "18/11/2026 12:19:58",
+      "action": "UNLOCK",
+      "module": "cotxe",
+      "detail": "Autoritzat fins 19/11/2026 12:19:58. Motiu: Suport km inicials de compra i millores visuals",
+      "user": "admin",
+      "git_head": "f8e49bd"
+    },
     {
       "timestamp": "18/11/2026 12:13:21",
       "action": "SEAL",
