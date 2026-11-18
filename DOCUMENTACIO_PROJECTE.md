@@ -676,8 +676,8 @@ flowchart TD
 ##### 4.2.1 Vista Executiva: Dashboard General (`view_mode == "dashboard"`)
 La pantalla d'inici i comandament financer del Dashboard ([`modules/dashboard.py`](file:///e:/Dashboard/modules/dashboard.py)).
 
-![Vista Executiva: Dashboard General](docs/img/00_dashboard_general.png)
-*Figura 1: Pantalla executiva del Dashboard General amb tresoreria consolidada, alertes de desviació pressupostària i matriu mensual d'ingressos i despeses (xifres privades desenfocades per seguretat).*
+![Vista Executiva: Dashboard General](https://raw.githubusercontent.com/enricxic/dashboard-despeses/main/docs/img/00_dashboard_general.png)
+*Figura 1: Pantalla executiva del Dashboard General amb tresoreria consolidada, alertes de desviació pressupostària i matriu mensual d'ingressos i despeses (xifres privades desenfocades per seguretat). Fitxer local: [`docs/img/00_dashboard_general.png`](file:///e:/Dashboard/docs/img/00_dashboard_general.png).*
 
 #### Funcionalitat detallada de cada component de la pantalla:
 
