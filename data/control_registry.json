@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "18/11/2026 12:04:11",
+  "updated_at": "18/11/2026 12:13:22",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -64,10 +64,10 @@
         "Km i rutes, repostatge, manteniment i consum"
       ],
       "verified_hashes": {
-        "modules/cotxe.py": "92f64e825baf37d2701250276093f1f1f6cf0e25f143f9de62713824aa2ff2af"
+        "modules/cotxe.py": "b7e1ac542adfa67bde9a13d1846ac30a5613763cb52ef31d42aaa6a54a72fbb3"
       },
-      "verified_at": "18/11/2026 12:04:11",
-      "verified_commit": "7e3704d",
+      "verified_at": "18/11/2026 12:13:21",
+      "verified_commit": "8dbca4a",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "18/11/2026 12:13:21",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "8dbca4a"
+    },
+    {
+      "timestamp": "18/11/2026 12:10:42",
+      "action": "UNLOCK",
+      "module": "cotxe",
+      "detail": "Autoritzat fins 19/11/2026 12:10:42. Motiu: Permetre eliminar planificacions d'inflat i nivells sense que reapareguin per defecte",
+      "user": "admin",
+      "git_head": "7e051d5"
+    },
     {
       "timestamp": "18/11/2026 12:04:11",
       "action": "SEAL",
