@@ -1,0 +1,8 @@
+dataFactura,periodeInici,periodeFi,mesAny,importTotal,m3Consum,lecturaAnterior,lecturaActual,comercialitzadora,pdfFitxer,observacions,id
+05/05/2025,30/01/2025,05/05/2025,2T/2025,77.56,34.0,754.0,788.0,Servei d'Aigua d'Arbúcies (Agbar),Aigua05_25.pdf,Consum trimestral (358 L/dia),1
+31/07/2025,05/05/2025,31/07/2025,3T/2025,70.76,32.0,788.0,820.0,Servei d'Aigua d'Arbúcies (Agbar),Aigua08_25.pdf,Consum trimestral (368 L/dia),2
+31/10/2025,31/07/2025,31/10/2025,4T/2025,60.7,28.0,820.0,848.0,Servei d'Aigua d'Arbúcies (Agbar),Aigua11_25.pdf,Consum trimestral (304 L/dia),3
+30/01/2026,31/10/2025,30/01/2026,1T/2026,68.43,31.0,848.0,879.0,Servei d'Aigua d'Arbúcies (Agbar),Aigua02_26.pdf,Consum trimestral (341 L/dia),4
+06/05/2026,30/01/2026,05/05/2026,2T/2026,90.94,37.0,879.0,916.0,Servei d'Aigua d'Arbúcies (Agbar),Aigua05_26.pdf,Consum trimestral (389 L/dia),5
+05/08/2026,05/05/2026,04/08/2026,3T/2026,64.57,28.0,916.0,944.0,Servei d'Aigua d'Arbúcies (Agbar),Aigua08_26.pdf,Consum trimestral (308 L/dia),6
+04/11/2026,04/08/2026,02/11/2026,4T/2026,66.35,29.0,944.0,973.0,Servei d'Aigua d'Arbúcies (Veolia),Aigua11_26.pdf,Consum trimestral (322 L/dia),7

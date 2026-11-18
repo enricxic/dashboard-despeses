@@ -513,6 +513,113 @@ def extract_data_from_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> dict:
         return {}
 
 
+
+def extract_water_data_from_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> dict:
+    """Extreu automàticament les dades d'una factura d'aigua (Agbar / Veolia / Servei d'Aigua d'Arbúcies)."""
+    try:
+        import pypdf
+        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+        text = '\n'.join([p.extract_text() or '' for p in reader.pages])
+
+        # 1. Total a pagar
+        m_before = re.findall(r'(\d+[.,]\d{2})\s*(?:€|\x80)?\s*TOTAL\s+A\s+PAGAR', text, re.I)
+        m_after = re.findall(r'TOTAL\s+A\s+PAGAR\s*[:\s]*(\d+[.,]\d{2})', text, re.I)
+        import_total = 0.0
+        if m_before:
+            import_total = float(m_before[0].replace(',', '.'))
+        elif m_after:
+            import_total = float(m_after[0].replace(',', '.'))
+
+        # 2. Periode trimestre: 2025/02 -> 2T/2025
+        period_code = re.findall(r'(202[4567])/(0[1-4])', text)
+        if period_code:
+            yr, trim = period_code[0]
+            mes_any = f"{int(trim)}T/{yr}"
+        else:
+            mes_any = ""
+
+        # 3. Lectura anterior i lectura actual
+        readings = re.findall(r'(\d{2}-\d{2}-\d{2,4})\s+(\d+)\s*(\d{2}-\d{2}-\d{2,4})\s+(\d+)', text)
+        lect_ant, lect_act, m3 = 0.0, 0.0, 0.0
+        p_inici, p_fi = "", ""
+
+        def norm_date(d_str):
+            parts = d_str.split('-')
+            if len(parts) == 3:
+                day, month, yr = parts[0], parts[1], parts[2]
+                if len(yr) == 2:
+                    yr = '20' + yr
+                return f"{day}/{month}/{yr}"
+            return d_str
+
+        def parse_date_dmy(d_str):
+            try:
+                parts = d_str.split('/')
+                return datetime(int(parts[2]), int(parts[1]), int(parts[0]))
+            except Exception:
+                return datetime(1970, 1, 1)
+
+        if readings:
+            r = readings[0]
+            d1 = norm_date(r[0])
+            val1 = float(r[1])
+            d2 = norm_date(r[2])
+            val2 = float(r[3])
+
+            lect_ant = min(val1, val2)
+            lect_act = max(val1, val2)
+            m3 = round(lect_act - lect_ant, 2)
+
+            dt1 = parse_date_dmy(d1)
+            dt2 = parse_date_dmy(d2)
+            if dt1 <= dt2:
+                p_inici, p_fi = d1, d2
+            else:
+                p_inici, p_fi = d2, d1
+
+        # 4. Data emissió
+        m_emis = re.findall(r'Data emissi[oó]\s*[:\s]*(\d{2}[-/]\d{2}[-/]\d{2,4})', text, re.I)
+        if not m_emis:
+            m_emis = re.findall(r'(\d{2}[-/]\d{2}[-/]\d{4})\s*\n.*Data emissi', text)
+
+        data_factura = ""
+        if m_emis:
+            d_raw = m_emis[0].replace('-', '/')
+            parts = d_raw.split('/')
+            if len(parts) == 3 and len(parts[2]) == 2:
+                d_raw = f"{parts[0]}/{parts[1]}/20{parts[2]}"
+            data_factura = d_raw
+        else:
+            data_factura = p_fi
+
+        # 5. Litres per dia
+        m_litres = re.findall(r'(\d+)\s*litres\s+per\s+dia', text, re.I)
+        litres_dia = int(m_litres[0]) if m_litres else 0
+
+        # 6. Comercialitzadora
+        comercialitzadora = "Servei d'Aigua d'Arbúcies"
+        if "SOCIEDAD GRAL.AGUAS BCN" in text or "agbar" in text.lower():
+            comercialitzadora = "Servei d'Aigua d'Arbúcies (Agbar)"
+        elif "veolia" in text.lower():
+            comercialitzadora = "Servei d'Aigua d'Arbúcies (Veolia)"
+
+        return {
+            "data_factura": data_factura,
+            "periode_inici": p_inici,
+            "periode_fi": p_fi,
+            "mes_any": mes_any,
+            "import_total": import_total,
+            "m3_consum": m3,
+            "lectura_anterior": lect_ant,
+            "lectura_actual": lect_act,
+            "comercialitzadora": comercialitzadora,
+            "pdf_fitxer": filename,
+            "observacions": f"Consum trimestral ({litres_dia} L/dia)" if litres_dia else "Consum trimestral"
+        }
+    except Exception:
+        return {}
+
+
 # =========================================================================
 # PESTANYA 1: CONSUM LLUM I OPTIMITZADOR D'ACUMULADORS
 # =========================================================================
@@ -1374,123 +1481,198 @@ def render_consum_llum_tab():
 # =========================================================================
 
 def render_consum_aigua_tab():
-    st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0 0 16px 0;'>Registre de factures d'aigua, lectures de comptador i evolució dels metres cúbics (m³) consumits.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#94a3b8; font-size:0.95rem; margin:0 0 16px 0;'>Registre de factures d'aigua, lectures de comptador, extracció automàtica des de PDF i comparativa d'evolució del consum en m³ i despesa.</p>", unsafe_allow_html=True)
 
     factures_aigua = load_factures_aigua()
 
     c_aig_h, c_aig_btn = st.columns([3, 1], vertical_alignment="center")
     with c_aig_h:
-        st.markdown("<h4 style='color:#0284c7; margin:0;'>💧 Històric de Factures i Consum d'Aigua</h4>", unsafe_allow_html=True)
-        st.markdown("<div style='font-size:0.8rem; color:#94a3b8;'>Control periòdic del consum d'aigua de la llar en m³ i cost per factura.</div>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color:#0284c7; margin:0;'>💧 Gestió i Anàlisi de Factures d'Aigua</h4>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:0.8rem; color:#94a3b8;'>Servei d'Aigua d'Arbúcies • Control periòdic del consum trimestral en m³, lectures i comparatives.</div>", unsafe_allow_html=True)
     with c_aig_btn:
         show_add_aigua = st.checkbox("➕ Nova Factura Aigua", key="chk_show_add_factura_aigua")
 
-    # FORMULARI D'ALTA AIGUA
+    # FORMULARI D'ALTA AMB EXTRACCIÓ AUTOMÀTICA DE PDF (UX idèntica a la llum)
     if show_add_aigua:
         with st.container(border=True):
             st.markdown("<h5 style='color:#0284c7; margin-top:0;'>➕ Introduir Nova Factura d'Aigua</h5>", unsafe_allow_html=True)
-            
+
+            pdf_file = st.file_uploader(
+                "📄 Selecciona o arrossega la factura d'aigua en PDF:",
+                type=["pdf"],
+                key="uploader_nova_factura_aigua",
+                help="Si adjuntes el PDF d'Agbar o Veolia, el sistema n'extraurà automàticament totes les dades i desarà el fitxer."
+            )
+
+            if "last_processed_water_pdf" not in st.session_state:
+                st.session_state.last_processed_water_pdf = None
+
+            if pdf_file is not None and pdf_file.name != st.session_state.last_processed_water_pdf:
+                st.session_state.last_processed_water_pdf = pdf_file.name
+                ext = extract_water_data_from_pdf_bytes(pdf_file.getvalue(), pdf_file.name)
+                if ext:
+                    st.session_state.in_fact_aigua_mes = ext.get("mes_any", "")
+                    st.session_state.in_fact_aigua_imp = float(ext.get("import_total", 0.0))
+                    st.session_state.in_fact_aigua_m3 = float(ext.get("m3_consum", 0.0))
+                    st.session_state.in_fact_aigua_la = float(ext.get("lectura_anterior", 0.0))
+                    st.session_state.in_fact_aigua_lact = float(ext.get("lectura_actual", 0.0))
+                    st.session_state.in_fact_aigua_com = ext.get("comercialitzadora", "Servei d'Aigua d'Arbúcies")
+                    st.session_state.in_fact_aigua_obs = ext.get("observacions", "")
+                    if ext.get("data_factura"):
+                        st.session_state.in_fact_aigua_df = _parse_dmy_or_iso(ext["data_factura"])
+                    if ext.get("periode_inici"):
+                        st.session_state.in_fact_aigua_pi = _parse_dmy_or_iso(ext["periode_inici"])
+                    if ext.get("periode_fi"):
+                        st.session_state.in_fact_aigua_pf = _parse_dmy_or_iso(ext["periode_fi"])
+
+            if pdf_file is not None and st.session_state.get("in_fact_aigua_imp", 0.0) > 0:
+                st.success("✨ S'han detectat i extret automàticament les dades de la factura d'aigua! Revisa-les a continuació.")
+
             f_col1, f_col2, f_col3 = st.columns(3)
             with f_col1:
-                in_data_fact = st.date_input("Data Emissió Factura *", value=datetime.today().date(), format="DD/MM/YYYY", key="in_fact_aigua_df")
+                in_data_fact = st.date_input("Data Emissió Factura *", value=st.session_state.get("in_fact_aigua_df", datetime.today().date()), format="DD/MM/YYYY", key="in_fact_aigua_df")
             with f_col2:
-                in_mes_any = st.text_input("Mes / Trimestre (ex: 3T/2026 o 10/2026) *", value=datetime.today().strftime("%m/%Y"), key="in_fact_aigua_mes")
+                in_mes_any = st.text_input("Trimestre / Mes (ex: 3T/2026 o 10/2026) *", value=st.session_state.get("in_fact_aigua_mes", datetime.today().strftime("%m/%Y")), key="in_fact_aigua_mes")
             with f_col3:
-                in_import = st.number_input("Import Total Factura (€) *", min_value=0.0, step=0.01, format="%.2f", key="in_fact_aigua_imp")
+                in_import = st.number_input("Import Total Factura (€) *", min_value=0.0, value=float(st.session_state.get("in_fact_aigua_imp", 0.0)), step=0.01, format="%.2f", key="in_fact_aigua_imp")
 
             p_col1, p_col2 = st.columns(2)
             with p_col1:
-                in_p_inici = st.date_input("Període de Facturació: Des de", value=(datetime.today().date() - timedelta(days=60)), format="DD/MM/YYYY", key="in_fact_aigua_pi")
+                in_p_inici = st.date_input("Període de Facturació: Des de", value=st.session_state.get("in_fact_aigua_pi", datetime.today().date() - timedelta(days=90)), format="DD/MM/YYYY", key="in_fact_aigua_pi")
             with p_col2:
-                in_p_fi = st.date_input("Fins a", value=datetime.today().date(), format="DD/MM/YYYY", key="in_fact_aigua_pf")
+                in_p_fi = st.date_input("Fins a", value=st.session_state.get("in_fact_aigua_pf", datetime.today().date()), format="DD/MM/YYYY", key="in_fact_aigua_pf")
 
             st.markdown("<p style='font-weight:600; color:#cbd5e1; margin:8px 0 2px 0;'>💧 Consum i Lectures (m³)</p>", unsafe_allow_html=True)
             c_m1, c_m2, c_m3 = st.columns(3)
             with c_m1:
-                in_m3 = st.number_input("Consum Facturat (m³) *", min_value=0.0, step=0.1, format="%.2f", key="in_fact_aigua_m3")
+                in_m3 = st.number_input("Consum Facturat (m³) *", min_value=0.0, value=float(st.session_state.get("in_fact_aigua_m3", 0.0)), step=0.1, format="%.2f", key="in_fact_aigua_m3")
             with c_m2:
-                in_lec_ant = st.number_input("Lectura Anterior (m³)", min_value=0.0, step=1.0, format="%.0f", key="in_fact_aigua_la")
+                in_lec_ant = st.number_input("Lectura Anterior (m³)", min_value=0.0, value=float(st.session_state.get("in_fact_aigua_la", 0.0)), step=1.0, format="%.0f", key="in_fact_aigua_la")
             with c_m3:
-                in_lec_act = st.number_input("Lectura Actual (m³)", min_value=0.0, step=1.0, format="%.0f", key="in_fact_aigua_lact")
+                in_lec_act = st.number_input("Lectura Actual (m³)", min_value=0.0, value=float(st.session_state.get("in_fact_aigua_lact", 0.0)), step=1.0, format="%.0f", key="in_fact_aigua_lact")
 
             c_extra1, c_extra2 = st.columns(2)
             with c_extra1:
-                in_com = st.text_input("Comercialitzadora / Empresa", value="Aigües de Girona", key="in_fact_aigua_com")
+                in_com = st.text_input("Comercialitzadora / Empresa", value=st.session_state.get("in_fact_aigua_com", "Servei d'Aigua d'Arbúcies"), key="in_fact_aigua_com")
             with c_extra2:
-                in_obs = st.text_input("Observacions", placeholder="Ex: Consum habitual o reg de jardí", key="in_fact_aigua_obs")
+                in_obs = st.text_input("Observacions", value=st.session_state.get("in_fact_aigua_obs", ""), placeholder="Ex: Consum habitual o reg de jardí", key="in_fact_aigua_obs")
 
-            pdf_file = st.file_uploader("Adjuntar Factura en PDF (opcional)", type=["pdf"], key="in_fact_aigua_pdf")
+            c_save, c_cancel = st.columns([2, 1])
+            with c_save:
+                if st.button("💾 Desar Factura d'Aigua", type="primary", use_container_width=True, key="btn_save_new_fact_aigua"):
+                    pdf_fname = ""
+                    if pdf_file is not None:
+                        try:
+                            dest_dir = get_pdf_dir("Factures_Aigua")
+                            os.makedirs(dest_dir, exist_ok=True)
+                            pdf_fname = pdf_file.name
+                            dest_path = os.path.join(dest_dir, pdf_fname)
+                            with open(dest_path, "wb") as f_out:
+                                f_out.write(pdf_file.getbuffer())
+                        except Exception as err:
+                            st.warning(f"No s'ha pogut desar el fitxer PDF d'aigua: {err}")
+                            pdf_fname = ""
 
-            if st.button("💾 Desar Factura d'Aigua", type="primary", use_container_width=True, key="btn_save_new_fact_aigua"):
-                pdf_fname = ""
-                if pdf_file is not None:
-                    try:
-                        clean_mes = in_mes_any.replace("/", "_").replace(" ", "_")
-                        pdf_fname = f"factura_aigua_{clean_mes}_{int(datetime.now().timestamp())}.pdf"
-                        dest_dir = get_pdf_dir("Factures_Aigua")
-                        dest_path = os.path.join(dest_dir, pdf_fname)
-                        with open(dest_path, "wb") as f_out:
-                            f_out.write(pdf_file.getbuffer())
-                    except Exception as err:
-                        st.warning(f"No s'ha pogut desar el fitxer PDF d'aigua: {err}")
-                        pdf_fname = ""
+                    add_factura_aigua(
+                        data_factura=in_data_fact.strftime("%d/%m/%Y"),
+                        periode_inici=in_p_inici.strftime("%d/%m/%Y"),
+                        periode_fi=in_p_fi.strftime("%d/%m/%Y"),
+                        mes_any=in_mes_any.strip(),
+                        import_total=in_import,
+                        m3_consum=in_m3,
+                        lectura_anterior=in_lec_ant,
+                        lectura_actual=in_lec_act,
+                        comercialitzadora=in_com.strip(),
+                        pdf_fitxer=pdf_fname,
+                        observacions=in_obs.strip()
+                    )
+                    st.session_state.last_processed_water_pdf = None
+                    st.success("✅ Factura d'aigua desada correctament!")
+                    st.rerun()
+            with c_cancel:
+                if st.button("❌ Cancel·lar", use_container_width=True, key="btn_cancel_add_aigua"):
+                    st.session_state.last_processed_water_pdf = None
+                    st.rerun()
 
-                add_factura_aigua(
-                    data_factura=in_data_fact.strftime("%d/%m/%Y"),
-                    periode_inici=in_p_inici.strftime("%d/%m/%Y"),
-                    periode_fi=in_p_fi.strftime("%d/%m/%Y"),
-                    mes_any=in_mes_any.strip(),
-                    import_total=in_import,
-                    m3_consum=in_m3,
-                    lectura_anterior=in_lec_ant,
-                    lectura_actual=in_lec_act,
-                    comercialitzadora=in_com.strip(),
-                    pdf_fitxer=pdf_fname,
-                    observacions=in_obs.strip()
-                )
-                st.success("✅ Factura d'aigua desada correctament!")
-                st.rerun()
+    if not factures_aigua:
+        st.info("💡 Encara no hi ha cap factura d'aigua registrada. Fes clic a **➕ Nova Factura Aigua** per començar a registrar els consums en m³.")
+        return
 
-    # KPIS HISTÒRICS I GRÀFIC AIGUA
-    if factures_aigua:
-        tot_despesa_aig = sum(float(f.get("importTotal", 0.0)) for f in factures_aigua)
-        tot_m3 = sum(float(f.get("m3Consum", 0.0)) for f in factures_aigua)
-        mitjana_cost_m3 = round(tot_despesa_aig / tot_m3, 2) if tot_m3 > 0 else 0.0
+    # KPIS HISTÒRICS GLOBALS
+    tot_despesa_aig = sum(float(f.get("importTotal", 0.0)) for f in factures_aigua)
+    tot_m3 = sum(float(f.get("m3Consum", 0.0)) for f in factures_aigua)
+    mitjana_cost_m3 = round(tot_despesa_aig / tot_m3, 2) if tot_m3 > 0 else 0.0
 
-        m1, m2, m3, m4 = st.columns(4)
-        with m1:
-            st.metric("Total Facturat", f"{tot_despesa_aig:.2f} €", help="Cost acumulat de factures d'aigua")
-        with m2:
-            st.metric("Total Aigua Consumida", f"{tot_m3:.1f} m³", help="Metres cúbics acumulats")
-        with m3:
-            st.metric("Cost Mitjà / m³", f"{mitjana_cost_m3:.2f} €/m³", help="Preu mig resultant per metre cúbic")
-        with m4:
-            st.metric("Nº Factures", f"{len(factures_aigua)}", help="Total de factures registrades")
+    # Càlcul de consum diari mitjà històric en litres
+    litres_dia_llista = []
+    for fac in factures_aigua:
+        obs = fac.get("observacions", "")
+        m_l = re.search(r'(\d+)\s*L/dia', obs)
+        if m_l:
+            litres_dia_llista.append(int(m_l.group(1)))
+    consum_mitja_dia = round(sum(litres_dia_llista) / len(litres_dia_llista)) if litres_dia_llista else 0
 
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
+        st.metric("Total Facturat", f"{tot_despesa_aig:.2f} €", help="Cost acumulat de factures d'aigua registrades")
+    with m2:
+        st.metric("Total Aigua Consumida", f"{tot_m3:.1f} m³", help="Metres cúbics acumulats")
+    with m3:
+        st.metric("Cost Mitjà / m³", f"{mitjana_cost_m3:.2f} €/m³", help="Preu mig resultant per metre cúbic")
+    with m4:
+        st.metric("Consum Mitjà Habitatge", f"{consum_mitja_dia} L/dia" if consum_mitja_dia > 0 else f"{len(factures_aigua)} factures", help="Mitjana de consum diari de la llar segons lectures oficials")
+
+    st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+
+    # SUB-PESTANYES: 1) HISTÒRIC I EVOLUCIÓ, 2) COMPARATIVA INTERANUAL I EFICIÈNCIA
+    tab_hist, tab_comp = st.tabs(["📊 Evolució i Històric", "⚖️ Comparativa Interanual i Eficiència"])
+
+    # -------------------------------------------------------------
+    # 1. PESTANYA: HISTÒRIC I EVOLUCIÓ
+    # -------------------------------------------------------------
+    with tab_hist:
         df_aig = pd.DataFrame(factures_aigua)
         if "mesAny" in df_aig.columns and len(df_aig) > 0:
+            max_m3 = float(df_aig["m3Consum"].max()) if len(df_aig) > 0 else 50.0
+            max_imp = float(df_aig["importTotal"].max()) if len(df_aig) > 0 else 100.0
+
             fig_aig = go.Figure()
+            # Barres de volum m³
             fig_aig.add_trace(go.Bar(
                 name="Consum Aigua (m³)",
                 x=df_aig["mesAny"],
                 y=df_aig["m3Consum"],
                 marker_color="#0284c7",
-                hovertemplate="Consum: %{y:.1f} m³<extra></extra>"
+                hovertemplate="<b>%{x}</b><br>Consum: %{y:.1f} m³<extra></extra>"
             ))
+            # Text de preu a sobre de les barres (estil coherent amb el mòdul de llum)
+            fig_aig.add_trace(go.Scatter(
+                name="Import Factura",
+                x=df_aig["mesAny"],
+                y=df_aig["m3Consum"],
+                mode="text",
+                text=[f"<b>{float(v):.2f}€</b>" for v in df_aig["importTotal"]],
+                textposition="top center",
+                textfont=dict(size=10, color="#38bdf8"),
+                showlegend=False,
+                cliponaxis=False,
+                hoverinfo="skip"
+            ))
+            # Línia d'import total (€) a l'eix dret
             fig_aig.add_trace(go.Scatter(
                 name="Import Factura (€)",
                 x=df_aig["mesAny"],
                 y=df_aig["importTotal"],
                 yaxis="y2",
                 mode="lines+markers",
-                line=dict(color="#38bdf8", width=3),
-                marker=dict(size=8, color="#38bdf8"),
-                hovertemplate="Cost: %{y:.2f} €<extra></extra>"
+                line=dict(color="#38bdf8", width=2.5),
+                marker=dict(size=7, color="#38bdf8"),
+                hovertemplate="Import: %{y:.2f} €<extra></extra>"
             ))
 
             fig_aig.update_layout(
-                margin=dict(l=10, r=10, t=30, b=30),
-                height=300,
+                margin=dict(l=10, r=10, t=35, b=30),
+                height=320,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(15, 23, 42, 0.4)",
                 xaxis=dict(showgrid=False, color="#94a3b8"),
@@ -1499,7 +1681,8 @@ def render_consum_aigua_tab():
                     title_font=dict(color="#0284c7", size=11),
                     showgrid=True,
                     gridcolor="#334155",
-                    color="#94a3b8"
+                    color="#94a3b8",
+                    range=[0, max_m3 * 1.25]
                 ),
                 yaxis2=dict(
                     title="Import (€)",
@@ -1507,7 +1690,8 @@ def render_consum_aigua_tab():
                     overlaying="y",
                     side="right",
                     showgrid=False,
-                    color="#38bdf8"
+                    color="#38bdf8",
+                    range=[0, max_imp * 1.25]
                 ),
                 legend=dict(
                     orientation="h",
@@ -1541,9 +1725,12 @@ def render_consum_aigua_tab():
                     m3_val = float(fac.get("m3Consum", 0.0))
                     la_val = float(fac.get("lecturaAnterior", 0.0))
                     lact_val = float(fac.get("lecturaActual", 0.0))
+                    eur_m3 = (float(fac.get('importTotal', 0.0)) / m3_val) if m3_val > 0 else 0.0
+
                     st.markdown(f"""
-                    <div style='display:flex; gap:14px; font-size:0.85rem; color:#94a3b8; margin:6px 0;'>
+                    <div style='display:flex; gap:16px; font-size:0.85rem; color:#94a3b8; margin:6px 0; flex-wrap:wrap;'>
                         <span>💧 Consum: <b style='color:#38bdf8;'>{m3_val:.2f} m³</b></span>
+                        <span>💶 Preu/m³: <b style='color:#a78bfa;'>{eur_m3:.2f} €/m³</b></span>
                         {f"<span>Lectures: <b>{la_val:.0f}</b> ➔ <b>{lact_val:.0f}</b></span>" if lact_val > 0 else ""}
                     </div>
                     <div style='font-size:0.8rem; color:#64748b;'>
@@ -1581,8 +1768,191 @@ def render_consum_aigua_tab():
                     with c_a4:
                         if st.button("🗑️ Esborrar", use_container_width=True, key=f"btn_del_fac_aig_{fid}"):
                             delete_factura_aigua_dialog(fid, fac.get("mesAny", ""), fname)
-    else:
-        st.info("💡 Encara no hi ha cap factura d'aigua registrada. Fes clic a **➕ Nova Factura Aigua** per començar a registrar els consums en m³.")
+
+    # -------------------------------------------------------------
+    # 2. PESTANYA: COMPARATIVA INTERANUAL I EFICIÈNCIA
+    # -------------------------------------------------------------
+    with tab_comp:
+        st.markdown("<h5 style='color:#38bdf8; margin-top:0;'>⚖️ Comparativa Interanual de Factures (Mateix Trimestre)</h5>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#94a3b8; font-size:0.85rem;'>Permet comparar trimestres homologables entre anys consecutius (ex: 2T/2025 vs 2T/2026) per identificar patrons d'estalvi o variacions tarifàries.</p>", unsafe_allow_html=True)
+
+        # Agrupació per trimestre: ex '2T', '3T', '4T'
+        trim_groups = {}
+        for fac in factures_aigua:
+            m = str(fac.get("mesAny", "")).strip()
+            if "T/" in m:
+                parts = m.split("T/")
+                trim_key = f"{parts[0]}T"
+                yr_key = parts[1]
+                if trim_key not in trim_groups:
+                    trim_groups[trim_key] = {}
+                trim_groups[trim_key][yr_key] = fac
+
+        # Ordenar trimestres
+        sorted_trims = sorted(trim_groups.keys())
+        comparables = [t for t in sorted_trims if len(trim_groups[t]) >= 2]
+
+        if comparables:
+            cols_comp = st.columns(len(comparables))
+            for i, trim_key in enumerate(comparables):
+                with cols_comp[i]:
+                    y_dict = trim_groups[trim_key]
+                    years = sorted(y_dict.keys())
+                    y_prev, y_curr = years[-2], years[-1]
+                    f_prev, f_curr = y_dict[y_prev], y_dict[y_curr]
+
+                    m3_prev = float(f_prev.get("m3Consum", 0.0))
+                    m3_curr = float(f_curr.get("m3Consum", 0.0))
+                    diff_m3 = m3_curr - m3_prev
+                    pct_m3 = (diff_m3 / m3_prev * 100) if m3_prev > 0 else 0.0
+
+                    imp_prev = float(f_prev.get("importTotal", 0.0))
+                    imp_curr = float(f_curr.get("importTotal", 0.0))
+                    diff_imp = imp_curr - imp_prev
+                    pct_imp = (diff_imp / imp_prev * 100) if imp_prev > 0 else 0.0
+
+                    is_m3_saving = diff_m3 <= 0
+                    color_m3 = "#34d399" if is_m3_saving else "#f87171"
+                    sign_m3 = "+" if diff_m3 > 0 else ""
+
+                    with st.container(border=True):
+                        st.markdown(f"""
+                        <div style='text-align:center; padding-bottom:8px; border-bottom:1px solid #334155;'>
+                            <span style='font-size:1.15rem; font-weight:700; color:#38bdf8;'>{trim_key}</span>
+                            <span style='font-size:0.85rem; color:#94a3b8;'> ({y_prev} vs {y_curr})</span>
+                        </div>
+                        <div style='display:flex; justify-content:space-between; margin-top:10px; font-size:0.85rem;'>
+                            <span style='color:#94a3b8;'>Any {y_prev}:</span>
+                            <span style='font-weight:600; color:#e2e8f0;'>{m3_prev:.1f} m³ • {imp_prev:.2f} €</span>
+                        </div>
+                        <div style='display:flex; justify-content:space-between; margin:4px 0; font-size:0.85rem;'>
+                            <span style='color:#94a3b8;'>Any {y_curr}:</span>
+                            <span style='font-weight:600; color:#e2e8f0;'>{m3_curr:.1f} m³ • {imp_curr:.2f} €</span>
+                        </div>
+                        <div style='margin-top:10px; padding:6px; background:#0f172a; border-radius:6px; text-align:center;'>
+                            <div style='font-size:0.85rem; font-weight:700; color:{color_m3};'>
+                                {sign_m3}{diff_m3:.1f} m³ ({sign_m3}{pct_m3:.1f}%)
+                            </div>
+                            <div style='font-size:0.75rem; color:#94a3b8; margin-top:2px;'>
+                                Despesa: {diff_imp:+.2f} € ({pct_imp:+.1f}%)
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+            # GRÀFICS COMPARATIUS DE VOLUM I COST PER TRIMESTRE
+            st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+            gc1, gc2 = st.columns(2)
+
+            with gc1:
+                # Gràfic de barres agrupades m3
+                fig_c_m3 = go.Figure()
+                fig_c_m3.add_trace(go.Bar(
+                    name="2025",
+                    x=[f"{t}" for t in comparables],
+                    y=[float(trim_groups[t]["2025"].get("m3Consum", 0.0)) for t in comparables],
+                    marker_color="#38bdf8",
+                    hovertemplate="2025: %{y:.1f} m³<extra></extra>"
+                ))
+                fig_c_m3.add_trace(go.Bar(
+                    name="2026",
+                    x=[f"{t}" for t in comparables],
+                    y=[float(trim_groups[t]["2026"].get("m3Consum", 0.0)) for t in comparables],
+                    marker_color="#0284c7",
+                    hovertemplate="2026: %{y:.1f} m³<extra></extra>"
+                ))
+                fig_c_m3.update_layout(
+                    barmode="group",
+                    title="Comparativa Volum d'Aigua (m³)",
+                    title_font=dict(size=12, color="#cbd5e1"),
+                    margin=dict(l=10, r=10, t=35, b=25),
+                    height=260,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(15, 23, 42, 0.4)",
+                    xaxis=dict(color="#94a3b8"),
+                    yaxis=dict(title="m³", color="#94a3b8", showgrid=True, gridcolor="#334155"),
+                    legend=dict(orientation="h", y=1.1, x=1, xanchor="right", font=dict(color="#cbd5e1", size=10))
+                )
+                st.plotly_chart(fig_c_m3, use_container_width=True)
+
+            with gc2:
+                # Gràfic de barres agrupades import €
+                fig_c_imp = go.Figure()
+                fig_c_imp.add_trace(go.Bar(
+                    name="2025",
+                    x=[f"{t}" for t in comparables],
+                    y=[float(trim_groups[t]["2025"].get("importTotal", 0.0)) for t in comparables],
+                    marker_color="#a78bfa",
+                    hovertemplate="2025: %{y:.2f} €<extra></extra>"
+                ))
+                fig_c_imp.add_trace(go.Bar(
+                    name="2026",
+                    x=[f"{t}" for t in comparables],
+                    y=[float(trim_groups[t]["2026"].get("importTotal", 0.0)) for t in comparables],
+                    marker_color="#6366f1",
+                    hovertemplate="2026: %{y:.2f} €<extra></extra>"
+                ))
+                fig_c_imp.update_layout(
+                    barmode="group",
+                    title="Comparativa Despesa Total (€)",
+                    title_font=dict(size=12, color="#cbd5e1"),
+                    margin=dict(l=10, r=10, t=35, b=25),
+                    height=260,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(15, 23, 42, 0.4)",
+                    xaxis=dict(color="#94a3b8"),
+                    yaxis=dict(title="€", color="#94a3b8", showgrid=True, gridcolor="#334155"),
+                    legend=dict(orientation="h", y=1.1, x=1, xanchor="right", font=dict(color="#cbd5e1", size=10))
+                )
+                st.plotly_chart(fig_c_imp, use_container_width=True)
+        else:
+            st.info("Cal disposar de factures de com a mínim 2 anys pel mateix trimestre per generar la comparativa interanual.")
+
+        # ANÀLISI D'EFICIÈNCIA HÍDRICA VS MITJANA MUNICIPAL D'ARBÚCIES
+        st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown("<h5 style='color:#0284c7; margin-top:0;'>🏡 Anàlisi d'Eficiència Hídrica vs Mitjana Municipal d'Arbúcies</h5>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style='font-size:0.85rem; color:#94a3b8; margin-bottom:12px;'>
+                A les factures del <i>Servei d'Aigua d'Arbúcies (Agbar / Veolia)</i> s'informa oficialment que el consum mitjà dels ciutadans d'Arbúcies és de <b>87 litres per persona i dia</b>.
+            </div>
+            """, unsafe_allow_html=True)
+
+            c_pers1, c_pers2 = st.columns([1.5, 2.5], vertical_alignment="center")
+            with c_pers1:
+                persones_llar = st.slider("Persones que conviuen a l'habitatge:", min_value=1, max_value=6, value=2, step=1, key="slider_persones_aigua")
+            with c_pers2:
+                mitjana_mun = 87 * persones_llar
+                st.caption(f"Objectiu de consum responsable per a {persones_llar} persona{'es' if persones_llar > 1 else ''}: **{mitjana_mun} L/dia** ({87} L/persona/dia).")
+
+            # Comparativa per cada trimestre registrat
+            eficiencia_rows = []
+            for fac in factures_aigua:
+                m_any = fac.get("mesAny", "")
+                m3_v = float(fac.get("m3Consum", 0.0))
+                # extreure litres dia de l'observació o calcular per dies aproximats de trimestre (91 dies)
+                obs = fac.get("observacions", "")
+                m_l = re.search(r'(\d+)\s*L/dia', obs)
+                if m_l:
+                    l_dia_total = int(m_l.group(1))
+                else:
+                    l_dia_total = round((m3_v * 1000) / 91)
+
+                l_persona_dia = round(l_dia_total / max(1, persones_llar))
+                delta_vs_mun = l_persona_dia - 87
+                pct_vs_mun = round((delta_vs_mun / 87) * 100)
+
+                eficiencia_rows.append({
+                    "Trimestre": m_any,
+                    "Consum Factura": f"{m3_v:.1f} m³",
+                    "Import": f"{float(fac.get('importTotal', 0.0)):.2f} €",
+                    "Llar (L/dia)": f"{l_dia_total} L/dia",
+                    "Per persona": f"{l_persona_dia} L/dia",
+                    "vs Arbúcies (87 L)": f"{delta_vs_mun:+d} L ({pct_vs_mun:+d}%)",
+                    "Estatus": "🟢 Molt Eficient" if delta_vs_mun <= 0 else ("🟡 Moderat" if delta_vs_mun <= 40 else "🟠 Consum Elevat")
+                })
+
+            df_efi = pd.DataFrame(eficiencia_rows)
+            st.dataframe(df_efi, use_container_width=True, hide_index=True)
 
 
 # =========================================================================
