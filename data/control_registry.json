@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "18/11/2026 11:56:40",
+  "updated_at": "18/11/2026 11:58:27",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -66,11 +66,11 @@
       "verified_hashes": {
         "modules/cotxe.py": "6406c0831ff5fb2d9dab9dd9c0cc18204ae3ab96cd17512acc2b672c6d1f30ee"
       },
-      "verified_at": "18/11/2026 11:51:17",
-      "verified_commit": "4de0f96",
+      "verified_at": "18/11/2026 11:58:27",
+      "verified_commit": "3fae9ea",
       "verified_by": "admin",
-      "unlocked_until": "19/11/2026 11:56:39",
-      "unlock_reason": "Suport multivehicle amb autocaravana i seleccio dinamica"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "dashboard": {
       "name": "Dashboard",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "18/11/2026 11:58:27",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "3fae9ea"
+    },
     {
       "timestamp": "18/11/2026 11:56:39",
       "action": "UNLOCK",
