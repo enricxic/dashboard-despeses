@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "18/11/2026 12:27:54",
+  "updated_at": "18/11/2026 12:31:10",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -64,13 +64,13 @@
         "Km i rutes, repostatge, manteniment i consum"
       ],
       "verified_hashes": {
-        "modules/cotxe.py": "8e50f65376de70f3f3bf8ea20378572438da6c75001c606cee8f00624c1620a8"
+        "modules/cotxe.py": "ff153f5b4973a615d1a6e6e1eb75c5916e9d08412465a3def75f72083a1b0913"
       },
-      "verified_at": "18/11/2026 12:23:01",
-      "verified_commit": "6d61482",
+      "verified_at": "18/11/2026 12:31:09",
+      "verified_commit": "32847fc",
       "verified_by": "admin",
-      "unlocked_until": "19/11/2026 12:27:54",
-      "unlock_reason": "Suport de vehicles actius i arxivats per a preservacio historica"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "dashboard": {
       "name": "Dashboard",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "18/11/2026 12:31:10",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "32847fc"
+    },
     {
       "timestamp": "18/11/2026 12:27:54",
       "action": "UNLOCK",
