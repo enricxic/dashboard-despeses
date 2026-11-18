@@ -1212,20 +1212,7 @@ div.block-container {{
 <div class="menu-item">
 <span class="menu-title">Editar</span>
 <div class="menu-dropdown">
-<div class="submenu-item">
-<a href="?mod=modules.admin{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>⚙️ Configuració general</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
-<div class="submenu-dropdown">
-<a href="?mod=modules.admin{url_suffix}" target="_self">⚙️ Tauler de Configuració</a>
-<a href="?mod=modules.admin&tab=admin{url_suffix}" target="_self">👤 Perfil Administrador</a>
-<a href="?mod=modules.admin&tab=titol{url_suffix}" target="_self">🏷️ Títol de la casa</a>
-<a href="?mod=modules.admin&tab=familia{url_suffix}" target="_self">👨‍👩‍👧‍👦 Membres de la família</a>
-<a href="?mod=modules.admin&tab=tutelats{url_suffix}" target="_self">🤝 Persones Tutelades</a>
-<a href="?mod=modules.admin&tab=bancs{url_suffix}" target="_self">🏦 Bancs i Comptes</a>
-<a href="?mod=modules.admin&tab=tema{url_suffix}" target="_self">🎨 Aspecte i tema</a>
-<a href="?mod=modules.admin&tab=icones{url_suffix}" target="_self">🔘 Icones actives d'inici</a>
-<a href="?mod=modules.admin&tab=idioma{url_suffix}" target="_self">🌐 Idioma i traducció</a>
-</div>
-</div>
+<a href="?mod=modules.admin{url_suffix}" target="_self">⚙️ Configuració general</a>
 <div class="submenu-item">
 <div class="submenu-title"><span>📂 Arxius JSON</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></div>
 <div class="submenu-dropdown">
