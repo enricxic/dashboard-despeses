@@ -1292,26 +1292,28 @@ Espai integral per a la planificació, disseny i seguiment d'obres majors, refor
 ### 5.3 Cotxe i Mobilitat (`modules/cotxe.py`)
 Mòdul especialitzat en la gestió multivehicle de la llar (**Cotxe, Autocaravana, Furgoneta, Moto, etc.**), registre de trajectes i quilometratge per lectura d'odòmetre amb comprovació estricta anti-errors, commutador interactiu de vehicle actiu, control de proveïments de combustible i consum real, vigilància mecànica integral col·lapsable per a cada vehicle (oli, pneumàtics, pressió, líquids i taller) i mètriques analítiques de consum anual (L/100km).
 
-#### A. Arquitectura Multivehicle i Fonts de Dades
-El mòdul admet múltiples vehicles configurats a la llar a través de `core/config.json` (`core/config_manager.py` - `get_vehicles_casa()`) i gestionats des d'**Administració > 🚗 Vehicles de la llar**:
-1. **Identificació Dinàmica de Vehicle**:
-   - Selector horitzontal estil pastilles (`st.pills`) situat a la part superior del mòdul que permet alternar entre els vehicles registrats (ex: `🚗 Tívoli (⭐ Principal)`, `🚐 Autocaravana`, etc.).
-   - Estat persistit a `st.session_state["cotxe_active_vehicle_id"]`.
-   - Compatibilitat retroactiva total: el vehicle històric `Tívoli` manté tots els registres previs (`tivoli|tívoli`), mentre que els nous vehicles (com l'*Autocaravana*) gestionen el seu propi comptador i rutes de manera completament aïllada.
-2. **Taules Principals a Supabase (PostgreSQL) i CSV**:
+#### A. Arquitectura Multivehicle, Preservació Històrica i Fonts de Dades
+El mòdul admet la gestió simultània de múltiples vehicles a la llar (**Cotxes, Autocaravanes, Furgonetes, Motos, etc.**) configurats a `core/config.json` (`core/config_manager.py` - `get_vehicles_casa()`) i administrats des de **Configuració > 🚗 Vehicles de la llar**:
+1. **Identificació Dinàmica i Commutació de Vehicle**:
+   - Selector horitzontal estilitzat (`st.pills`) situat a la capçalera del mòdul que permet alternar a l'instant entre els vehicles actius registrats (ex: `🚗 Tívoli (⭐ Principal)`, `🏍️ Moto BMW`, `🚐 Autocaravana`, etc.).
+   - Persistència d'estat a `st.session_state["cotxe_active_vehicle_id"]`.
+   - Compatibilitat retroactiva total: el vehicle històric `Tívoli` conserva intactes tots els registres previs (`tivoli|tívoli`), mentre que qualsevol vehicle addicional o secundari gestiona les seves rutes, repostatges i manteniments de forma completament aïllada.
+2. **Quilòmetres Inicials d'Adquisició (`km_inicials`)**:
+   - Suport natiu per a vehicles adquirits de segona mà o amb quilometratge previ.
+   - En registrar el primer trajecte d'un vehicle nou, el sistema pren com a base `km_inicials` (en comptes de zero) per validar l'odòmetre i computar amb exactitud els quilòmetres nets del primer viatge ($\Delta\text{Km} = \text{contador} - \text{km\_inicials}$).
+   - Si el vehicle es va comprar de primera mà (nou), el valor per defecte és `0`.
+3. **Cicle de Vida del Vehicle i Preservació Històrica (`actiu: True/False`)**:
+   - **Donar de baixa / Arxivar**: Quan un vehicle es ven, es dóna de baixa o se substitueix, es desmarca l'interruptor `🟢 Vehicle en ús (Actiu)` a Configuració.
+   - **Històric 100% Protegit**: El vehicle passa a estat arxivat (`📦 Arxivat / Baixa`). No s'esborra cap registre previ de rutes (`kmCotxe`), benzina (`gasolina`), manteniment o despeses econòmiques associades a [`modules/economic.py`](file:///e:/Dashboard/modules/economic.py).
+   - **Interfície Neta per al Dia a Dia**: Els vehicles arxivats s'oculten automàticament dels selectors d'entrada habituals i deixen de generar avisos o alertes mecàniques a la campaneta.
+   - **Mode Consulta / Auditoria**: Mitjançant el commutador `📦 Mostrar arxivats` a la capçalera de Cotxe, l'usuari pot visualitzar en qualsevol moment la fitxa del vehicle antic, consultar tots els seus gràfics de consum històric i llistats de trajectes en mode lectura.
+4. **Taules Principals a Supabase (PostgreSQL) i CSV**:
    - `kmCotxe` / `csv/kmCotxe.csv`: Registre cronològic de lectures de l'odòmetre (`idRuta`, `cotxe`, `data`, `ruta`, `contador`, `km`).
    - `gasolina` / `csv/gasolina.csv`: Històric de càrregues de combustible (`idGasolina`, `cotxe`, `data`, `lloc`, `import`, `euros/litre`, `litres`).
-   - `manteniment_vehicles` a `config.json`: Diccionari amb el manteniment individualitzat per a cada vehicle (`oli`, `rodes`, `inflat_rodes`, `control_nivells`, `historic`), mantenint sincronització bidireccional amb `manteniment_cotxe` per al vehicle principal.
-
-#### A. Arquitectura del Mòdul i Fonts de Dades
-El mòdul interactua amb les següents taules a Supabase (PostgreSQL) i fitxers de configuració:
-1. **Taules Principals**:
-   - `kmCotxe` / `csv/kmCotxe.csv`: Registre cronològic de lectures del comptaquilòmetres i desplaçaments (`idKm`, `data`, `contador`, `km`, `ruta`, `observacions`, `conductor`).
-   - `repostatge` / `csv/repostatge.csv`: Històric de càrregues de combustible (`idRepost`, `data`, `litres`, `preu_litre`, `total_import`, `estacio`, `tipus_combustible`, `km_odometre`).
-   - `manteniment_cotxe.json` (sincronitzat a Supabase): Registre de canvis d'oli, pneumàtics, inflats de rodes, nivells de líquids i entrades a taller.
-2. **Configuració de Rutes Habituals**:
+   - `manteniment_vehicles` a `config.json`: Diccionari d'estat mecànic independent per vehicle (`oli`, `rodes`, `inflat_rodes`, `control_nivells`, `historic`), sincronitzat de forma bidireccional amb `manteniment_cotxe` per al vehicle principal.
+5. **Configuració de Rutes Habituals**:
    - `rutes_config` (centralitzat a `categories_conceptes.json`): Catàleg de trajectes freqüents de la llar amb quilometratges predefinits (ex: Arbúcies-Girona, Arbúcies-Vic, etc.) per accelerar l'entrada de dades.
-3. **Mecanisme de Validació Estricta d'Odòmetre**:
+6. **Mecanisme de Validació Estricta d'Odòmetre**:
    - Blindatge en temps real que impedeix desar lectures incoherents on el quilometratge entrat sigui igual o inferior a l'últim valor registrat a la base de dades (`contador_val > last_km`).
 
 ---
@@ -2060,6 +2062,21 @@ flowchart TD
   - **Llistat Dinàmic amb Edició en Línia**: Selector d'icona i camp de text per canviar el nom de qualsevol estança en viu, botó de recàrrega de valors desats (`🔄 Recarregar desats`) i botó de desat global (`💾 Desar Estances de la Casa`).
 - **Integració amb Mòduls Operatius**:
   - **Projectes de Manteniment i Reformes (`modules/projectes_ui.py`)**: Tant el formulari d'alta de nous projectes (`_render_modal_nou_projecte`) com el formulari d'edició del projecte seleccionat (`_render_projecte_header`) obtenen dinàmicament el llistat desplegable d'ubicacions directament de `get_estances_casa()`, mantenint perfecta coherència entre la configuració global de la casa i els espais d'obra.
+
+##### 3b. Secció 🚗 Vehicles de la Llar
+- **Model de Gestió Multivehicle (`core/config_manager.py` / `DEFAULT_VEHICLES`)**:
+  - Centralització de tots els vehicles de la família (cotxes, autocaravanes, furgonetes, motos, etc.) a `app_config["vehicles"]`.
+  - **Alta Ràpida 1-Clic**: Botons d'accés directe per afegir a l'instant `🚗 + Cotxe`, `🏍️ + Moto`, `🚐 + Furgoneta`, `🚐 + Autocaravana` o `⚡ + Elèctric`.
+  - **Fitxa de Vehicle Individualitzada (Expander)**:
+    - `Nom del vehicle`: Etiqueta identificativa (ex: *Tívoli*, *BMW R1200*, etc.).
+    - `Tipus i Icona`: Selector de tipus (Cotxe, Moto, Furgoneta, Autocaravana, Ciclomotor, Remolc, Patinet) que actualitza dinàmicament l'emoji associat.
+    - `Combustible`: Gasolina, Dièsel, Híbrid, Elèctric, GLP, GNC.
+    - `Marca / Model` i `Matrícula`: Dades oficials per a control administratiu i assegurances.
+    - `Km inicials (adquisició)`: Quilometratge del comptador en el moment de la compra (0 si és de primera mà, o els km reals si és de segona mà).
+    - `🟢 Vehicle en ús (Actiu)`: Commutador de cicle de vida. Si es desmarca per venda o baixa, el vehicle passa a estat arxivat (`📦 Arxivat / Baixa`), protegint tot l'històric a la base de dades i retirant-lo de les alertes de manteniment i selectors d'entrada habituals.
+    - `⭐ Fer Principal`: Designa quin és el vehicle principal de la llar.
+    - `🗑️ Eliminar permanentment`: Acció protegida disponible només quan hi ha més d'un vehicle configurat.
+  - **Sincronització Global**: El botó `💾 Desar Vehicles de la Llar` guarda la configuració a `config.json` i actualitza Supabase atòmicament.
 
 ##### 4. Secció 👨‍👩‍👧‍👦 Família
 - **Llistat de Membres Familiars**:
