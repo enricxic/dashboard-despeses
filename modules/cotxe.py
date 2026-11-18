@@ -335,14 +335,12 @@ def render():
         
         if not df_gas.empty:
             df_gas_work = df_gas.copy()
-            if len(vehicles) > 1 and 'cotxe' in df_gas_work.columns:
-                filter_gas = st.checkbox(f"Filtrar només repostatges de **{active_v_nom}**", value=True, key="filter_gas_curr_veh")
-                if filter_gas:
-                    if active_v_nom.lower() in ['tívoli', 'tivoli']:
-                        df_gas_work = df_gas_work[df_gas_work['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
-                    else:
-                        import re as _re_gf
-                        df_gas_work = df_gas_work[df_gas_work['cotxe'].astype(str).str.contains(_re_gf.escape(active_v_nom), case=False, na=False)]
+            if 'cotxe' in df_gas_work.columns:
+                if active_v_nom.lower() in ['tívoli', 'tivoli']:
+                    df_gas_work = df_gas_work[df_gas_work['cotxe'].astype(str).str.contains('tivoli|tívoli', case=False, na=False)]
+                else:
+                    import re as _re_gf
+                    df_gas_work = df_gas_work[df_gas_work['cotxe'].astype(str).str.contains(_re_gf.escape(active_v_nom), case=False, na=False)]
             df_gas_work['parsed_date'] = df_gas_work['data'].apply(parse_excel_date)
             df_gas_work['import_val'] = clean_numeric(df_gas_work.get('import', 0))
             df_gas_work['litres_val'] = clean_numeric(df_gas_work.get('litres', 0))
