@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "18/11/2026 12:52:42",
+  "updated_at": "18/11/2026 12:55:46",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -64,10 +64,10 @@
         "Km i rutes, repostatge, manteniment i consum"
       ],
       "verified_hashes": {
-        "modules/cotxe.py": "1d46df35ff7056abf327d514f5156eb9d894f078d640175e57e0b07be370e984"
+        "modules/cotxe.py": "1a8ae17086fd22a2266118227cbae17fc43fedd9d064c8689773a814ec1a16e9"
       },
-      "verified_at": "18/11/2026 12:52:41",
-      "verified_commit": "72fc12a",
+      "verified_at": "18/11/2026 12:55:45",
+      "verified_commit": "04b3ee4",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "18/11/2026 12:55:45",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "04b3ee4"
+    },
+    {
+      "timestamp": "18/11/2026 12:54:02",
+      "action": "UNLOCK",
+      "module": "cotxe",
+      "detail": "Autoritzat fins 19/11/2026 12:54:02. Motiu: Eliminar limit head(50) i checkbox redundant a l'historic de rutes",
+      "user": "admin",
+      "git_head": "d16653d"
+    },
     {
       "timestamp": "18/11/2026 12:52:41",
       "action": "SEAL",
