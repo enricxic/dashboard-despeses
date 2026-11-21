@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "21/11/2026 19:09:19",
+  "updated_at": "21/11/2026 19:11:26",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -66,11 +66,11 @@
       "verified_hashes": {
         "modules/cotxe.py": "a244edf84ac5caf99df4be34a67a0108eeb2d6891ebe52867d0772b9751d4189"
       },
-      "verified_at": "21/11/2026 19:04:44",
-      "verified_commit": "71ab868",
+      "verified_at": "21/11/2026 19:11:26",
+      "verified_commit": "aeb5c8b",
       "verified_by": "admin",
-      "unlocked_until": "22/11/2026 19:09:19",
-      "unlock_reason": "afegir manteniment netejavidres accio immediata alertes"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "dashboard": {
       "name": "Dashboard",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "21/11/2026 19:11:26",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Versió verificada i segellada (segellat post-commit netejavidres)",
+      "user": "admin",
+      "git_head": "aeb5c8b"
+    },
     {
       "timestamp": "21/11/2026 19:09:19",
       "action": "UNLOCK",
