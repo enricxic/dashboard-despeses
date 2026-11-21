@@ -1,7 +1,7 @@
 import copy
 import pandas as pd
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta, date
 import json
 import os
 from core.db import load_dashboard_data
@@ -229,7 +229,6 @@ def get_global_alerts(force_reload: bool = False):
                         interval_dies = int(netejavidres.get("interval_dies", 90) or 90)
                         avis_dies = int(netejavidres.get("avis_dies_abans", 7) or 7)
                         if u_data_str:
-                            from datetime import datetime, timedelta, date
                             u_dt = datetime.strptime(u_data_str, "%d/%m/%Y").date()
                             avui_d = date.today()
                             proxima_data = u_dt + timedelta(days=interval_dies)
