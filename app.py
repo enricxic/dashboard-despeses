@@ -579,6 +579,56 @@ if st.session_state.get("show_notifications"):
                                     st.rerun()
                                 except Exception as e_done:
                                     st.error(f"Error: {e_done}")
+                        elif al.get("action_type") == "cotxe_netejavidres":
+                            if st.button("💧 Omplert ara", key=f"btn_mark_netejavidres_{idx}", type="primary", use_container_width=True):
+                                try:
+                                    import copy, time
+                                    from datetime import date
+                                    import pandas as pd
+                                    from core.config_manager import load_app_config, save_app_config
+                                    
+                                    cfg = copy.deepcopy(load_app_config())
+                                    v_id_al = al.get("vehicle_id", "tivoli")
+                                    v_nom_al = al.get("vehicle_nom", "Cotxe")
+                                    avui_str = date.today().strftime("%d/%m/%Y")
+
+                                    df_km = st.session_state.get("df_km", pd.DataFrame())
+                                    car_kms = 0
+                                    if not df_km.empty and 'contador' in df_km.columns:
+                                        try:
+                                            car_kms = int(pd.to_numeric(df_km['contador'], errors='coerce').max() or 0)
+                                        except Exception:
+                                            car_kms = 0
+
+                                    veh_mants = cfg.setdefault("manteniment_vehicles", {})
+                                    v_mant = veh_mants.setdefault(v_id_al, {})
+                                    net_cfg = v_mant.setdefault("netejavidres", {})
+                                    net_cfg["data_ultim_omplert"] = avui_str
+                                    net_cfg["km_ultim_omplert"] = car_kms if car_kms > 0 else None
+                                    net_cfg["estat"] = "Correcte"
+                                    net_cfg["alerta_activa"] = False
+
+                                    v_hist = v_mant.setdefault("historic", [])
+                                    v_hist.append({
+                                        "data": avui_str,
+                                        "tipus": "Netejavidres",
+                                        "km": car_kms,
+                                        "rodes": "",
+                                        "detall": "Omplert dipòsit de líquid netejavidres [Des d'Alertes]"
+                                    })
+
+                                    if v_id_al == "tivoli" or v_id_al == cfg.get("vehicle_principal_id", "tivoli"):
+                                        cfg["manteniment_cotxe"] = copy.deepcopy(v_mant)
+
+                                    save_app_config(cfg)
+                                    from core.alerts import clear_alerts_cache, get_global_alerts
+                                    clear_alerts_cache()
+                                    st.session_state["global_alerts_list"] = get_global_alerts(force_reload=True)
+                                    st.session_state["global_alerts_ts"] = time.time()
+                                    st.toast(f"💧 Netejavidres de {v_nom_al} marcat com a omplert!", icon="✅")
+                                    st.rerun()
+                                except Exception as e_net:
+                                    st.error(f"Error en marcar omplert: {e_net}")
 
         st.markdown("<hr style='margin: 15px 0;'/>", unsafe_allow_html=True)
         if st.button("❌ Tancar", key="btn_close_notif_dialog", use_container_width=True):

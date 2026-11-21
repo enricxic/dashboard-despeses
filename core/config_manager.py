@@ -162,7 +162,17 @@ DEFAULT_CONFIG = {
                 {"id": "nadal", "titol": "Viatge de Nadal (~1800 km)", "dia": 22, "mes": 12, "recurrent": True, "avis_dies_abans": 15, "actiu": True}
             ]
         },
-                "historic": []
+        "netejavidres": {
+            "data_ultim_omplert": "",
+            "km_ultim_omplert": None,
+            "estat": "Correcte",
+            "alerta_activa": False,
+            "interval_dies": 90,
+            "avis_dies_abans": 7,
+            "producte": "Líquid eixugaparabrises",
+            "observacions": ""
+        },
+        "historic": []
     },
     "periferics": {
         "escaner": {
@@ -353,6 +363,13 @@ def load_app_config():
                 niv_c["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
             if "planificacions" not in niv_c or not isinstance(niv_c["planificacions"], list):
                 niv_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+            net_c = mant_c.setdefault("netejavidres", {})
+            net_c.setdefault("estat", "Correcte")
+            net_c.setdefault("alerta_activa", False)
+            net_c.setdefault("interval_dies", 90)
+            net_c.setdefault("avis_dies_abans", 7)
+            net_c.setdefault("producte", "Líquid eixugaparabrises")
+            net_c.setdefault("data_ultim_omplert", "")
             return merged
     except Exception as e:
         print("Supabase config_manager load failed:", e)
@@ -385,6 +402,13 @@ def load_app_config():
                 niv_c["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
             if "planificacions" not in niv_c or not isinstance(niv_c["planificacions"], list):
                 niv_c["planificacions"] = copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
+            net_c = mant_c.setdefault("netejavidres", {})
+            net_c.setdefault("estat", "Correcte")
+            net_c.setdefault("alerta_activa", False)
+            net_c.setdefault("interval_dies", 90)
+            net_c.setdefault("avis_dies_abans", 7)
+            net_c.setdefault("producte", "Líquid eixugaparabrises")
+            net_c.setdefault("data_ultim_omplert", "")
             return merged
     except Exception as e:
         print("Error reading config file:", e)

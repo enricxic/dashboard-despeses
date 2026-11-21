@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "18/11/2026 12:55:46",
+  "updated_at": "21/11/2026 19:09:19",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -64,13 +64,13 @@
         "Km i rutes, repostatge, manteniment i consum"
       ],
       "verified_hashes": {
-        "modules/cotxe.py": "1a8ae17086fd22a2266118227cbae17fc43fedd9d064c8689773a814ec1a16e9"
+        "modules/cotxe.py": "a244edf84ac5caf99df4be34a67a0108eeb2d6891ebe52867d0772b9751d4189"
       },
-      "verified_at": "18/11/2026 12:55:45",
-      "verified_commit": "04b3ee4",
+      "verified_at": "21/11/2026 19:04:44",
+      "verified_commit": "71ab868",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "22/11/2026 19:09:19",
+      "unlock_reason": "afegir manteniment netejavidres accio immediata alertes"
     },
     "dashboard": {
       "name": "Dashboard",
@@ -352,6 +352,30 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "21/11/2026 19:09:19",
+      "action": "UNLOCK",
+      "module": "cotxe",
+      "detail": "Autoritzat fins 22/11/2026 19:09:19. Motiu: afegir manteniment netejavidres accio immediata alertes",
+      "user": "admin",
+      "git_head": "71ab868"
+    },
+    {
+      "timestamp": "21/11/2026 19:04:44",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Versió verificada i segellada (afegit manteniment netejavidres accio immediata alertes i apartat accio feta)",
+      "user": "admin",
+      "git_head": "71ab868"
+    },
+    {
+      "timestamp": "21/11/2026 18:50:16",
+      "action": "UNLOCK",
+      "module": "cotxe",
+      "detail": "Autoritzat fins 22/11/2026 18:50:16. Motiu: afegir_manteniment_netejavidres",
+      "user": "admin",
+      "git_head": "71ab868"
+    },
     {
       "timestamp": "18/11/2026 12:55:45",
       "action": "SEAL",

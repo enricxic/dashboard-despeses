@@ -421,6 +421,16 @@ def render():
                 "estat_nivells": "Tots correctes (Oli, refrigerant, parabrises, frens)",
                 "planificacions": copy.deepcopy(DEFAULT_PLANIFICACIONS_INFLAT)
             },
+            "netejavidres": {
+                "data_ultim_omplert": "",
+                "km_ultim_omplert": None,
+                "estat": "Correcte",
+                "alerta_activa": False,
+                "interval_dies": 90,
+                "avis_dies_abans": 7,
+                "producte": "Líquid eixugaparabrises",
+                "observacions": ""
+            },
             "historic": []
         }
         app_cfg = load_app_config()
@@ -443,6 +453,13 @@ def render():
             mant["control_nivells"]["planificacions"] = copy.deepcopy(_DEF_MANT["control_nivells"]["planificacions"]) if active_vehicle.get("principal", False) else []
         if "estat_nivells" not in mant["control_nivells"] or not mant["control_nivells"]["estat_nivells"]:
             mant["control_nivells"]["estat_nivells"] = "Tots correctes (Oli, refrigerant, parabrises, frens)"
+        mant.setdefault("netejavidres", copy.deepcopy(_DEF_MANT["netejavidres"]))
+        if "estat" not in mant["netejavidres"] or not mant["netejavidres"]["estat"]:
+            mant["netejavidres"]["estat"] = "Correcte"
+        if "interval_dies" not in mant["netejavidres"]:
+            mant["netejavidres"]["interval_dies"] = 90
+        if "avis_dies_abans" not in mant["netejavidres"]:
+            mant["netejavidres"]["avis_dies_abans"] = 7
         mant.setdefault("historic", [])
         avis_km = float(mant.get("avis_km", 20000))
 
@@ -1086,6 +1103,175 @@ def render():
                     st.success(f"Control de nivells desat correctament! Estat: {rn_estat}.")
                     st.rerun()
 
+        # ---------- LÍQUID NETEJAVIDRES ----------
+        netejavidres = mant.get("netejavidres") or {}
+        net_last_str = str(netejavidres.get("data_ultim_omplert") or "").strip()
+        net_last_km = netejavidres.get("km_ultim_omplert")
+        net_estat = netejavidres.get("estat") or "Correcte"
+        net_alerta = bool(netejavidres.get("alerta_activa", False))
+        net_interval = int(netejavidres.get("interval_dies", 90) or 90)
+        net_avis = int(netejavidres.get("avis_dies_abans", 7) or 7)
+        net_prod = netejavidres.get("producte") or "Líquid eixugaparabrises"
+
+        dies_passats = None
+        dies_fins_proper = None
+        data_propera_str = ""
+        is_overdue = False
+        is_soon = False
+
+        if net_last_str:
+            try:
+                from datetime import datetime as _dt_nj, timedelta as _td_nj
+                u_dt_nj = _dt_nj.strptime(net_last_str, "%d/%m/%Y").date()
+                dies_passats = (avui - u_dt_nj).days
+                proper_dt_nj = u_dt_nj + _td_nj(days=net_interval)
+                data_propera_str = proper_dt_nj.strftime("%d/%m/%Y")
+                dies_fins_proper = (proper_dt_nj - avui).days
+                if dies_fins_proper < 0:
+                    is_overdue = True
+                elif dies_fins_proper <= net_avis:
+                    is_soon = True
+            except Exception:
+                pass
+
+        cal_omplir = net_alerta or (net_estat in ("Nivell baix", "Buit", "Pendent")) or is_overdue
+
+        if cal_omplir:
+            net_tag = " · 🚨 Nivell Baix / Cal Omplir"
+        elif is_soon:
+            net_tag = f" · ⚠️ Toca omplir aviat ({dies_fins_proper} dies)"
+        elif net_last_str:
+            net_tag = f" · Últim: {net_last_str} (Ple)"
+        else:
+            net_tag = " · Sense registrar"
+
+        exp_net = expand_all or cal_omplir or is_soon
+
+        with st.expander(f"💧 Líquid Netejavidres{net_tag}", expanded=exp_net):
+            col_nj1, col_nj2, col_nj3, col_nj4 = st.columns(4)
+
+            # Mètrica 1: Estat
+            if cal_omplir:
+                col_nj1.metric("Estat del dipòsit", "⚠️ Cal omplir", delta=f"{net_estat}", delta_color="inverse")
+            else:
+                col_nj1.metric("Estat del dipòsit", "✅ Ple / Correcte", delta="Nivell OK", delta_color="normal")
+
+            # Mètrica 2: Últim omplert
+            km_text = f" ({int(net_last_km):,} km)" if net_last_km else ""
+            col_nj2.metric("Últim omplert", net_last_str if net_last_str else "Sense registre", help=f"Producte: {net_prod}{km_text}")
+
+            # Mètrica 3: Dies transcorreguts
+            col_nj3.metric("Dies transcorreguts", f"{dies_passats} dies" if dies_passats is not None else "-")
+
+            # Mètrica 4: Propera revisió
+            if data_propera_str:
+                col_nj4.metric("Propera revisió", data_propera_str, help=f"Interval cada {net_interval} dies")
+            else:
+                col_nj4.metric("Propera revisió", f"Cada {net_interval} dies")
+
+            # Avisos visuals
+            if cal_omplir:
+                st.error(f"🚨 **Atenció:** El dipòsit de netejavidres de **{active_v_nom}** necessita líquid! (Estat actual: *{net_estat}*)")
+            elif is_soon:
+                st.warning(f"⚠️ **Avís:** S'acosta la data recomanada per omplir el netejavidres de **{active_v_nom}** ({data_propera_str}, queden {dies_fins_proper} dies).")
+            else:
+                st.success(f"✅ Nivell de líquid netejavidres correcte per a **{active_v_nom}**.")
+
+            # Acció ràpida
+            c_quick1, c_quick2 = st.columns([1.5, 1])
+            with c_quick1:
+                if st.button("💧 Omplert Fet Ara (Avui)", type="primary", key=f"btn_quick_net_fet_{active_v_id}", use_container_width=True):
+                    avui_str = avui.strftime("%d/%m/%Y")
+                    mant["netejavidres"]["data_ultim_omplert"] = avui_str
+                    mant["netejavidres"]["km_ultim_omplert"] = int(car_kms_actuals) if car_kms_actuals > 0 else None
+                    mant["netejavidres"]["estat"] = "Correcte"
+                    mant["netejavidres"]["alerta_activa"] = False
+                    mant["historic"].append({
+                        "data": avui_str,
+                        "tipus": "Netejavidres",
+                        "km": int(car_kms_actuals),
+                        "rodes": "",
+                        "detall": f"Omplert dipòsit de líquid netejavidres [{net_prod}]"
+                    })
+                    _save_mant(mant)
+                    st.toast("✅ Netejavidres marcat com a omplert correctament!", icon="💧")
+                    st.rerun()
+
+            with c_quick2:
+                if not cal_omplir:
+                    if st.button("⚠️ Marcar nivell baix", key=f"btn_alert_low_net_{active_v_id}", use_container_width=True, help="Activa l'alerta a la campaneta per recordar-te d'omplir-lo"):
+                        mant["netejavidres"]["estat"] = "Nivell baix"
+                        mant["netejavidres"]["alerta_activa"] = True
+                        _save_mant(mant)
+                        st.warning("Alerta de netejavidres activada!")
+                        st.rerun()
+                else:
+                    if st.button("✅ Desactivar alerta", key=f"btn_clear_al_net_{active_v_id}", use_container_width=True):
+                        mant["netejavidres"]["estat"] = "Correcte"
+                        mant["netejavidres"]["alerta_activa"] = False
+                        _save_mant(mant)
+                        st.rerun()
+
+            # APARTAT D'ACCIÓ FETA (Formulari detallat)
+            st.markdown("---")
+            st.markdown("##### ✏️ Apartat d'Acció Feta (Registrar omplert)")
+            with st.expander("📝 Detallar data, quilometratge o tipus de líquid utilitzat", expanded=False):
+                af_c1, af_c2, af_c3 = st.columns(3)
+                rn_data = af_c1.date_input("Data de l'acció feta", value=avui, format="DD/MM/YYYY", key=f"form_net_data_{active_v_id}")
+                rn_km = af_c2.number_input("Km del cotxe (opcional)", min_value=0, value=int(car_kms_actuals), step=100, key=f"form_net_km_{active_v_id}")
+                
+                estats_opts = ["Correcte / Ple", "Nivell baix", "Buit"]
+                idx_est = 0
+                if net_estat in ("Nivell baix", "Buit"):
+                    idx_est = estats_opts.index(net_estat)
+                rn_estat = af_c3.selectbox("Estat resultant", estats_opts, index=idx_est, key=f"form_net_estat_{active_v_id}")
+
+                af_c4, af_c5 = st.columns(2)
+                prods_opts = [
+                    "Líquid eixugaparabrises estàndard",
+                    "Líquid antimosquits (estiu)",
+                    "Líquid anticongelant (hivern)",
+                    "Aigua desmineralitzada + sabó concentrat",
+                    "Altres (veure observacions)"
+                ]
+                idx_prod = prods_opts.index(net_prod) if net_prod in prods_opts else 0
+                rn_prod = af_c4.selectbox("Producte afegit", prods_opts, index=idx_prod, key=f"form_net_prod_{active_v_id}")
+                rn_obs = af_c5.text_input("Observacions / Notes", value="Omplert dipòsit netejavidres", key=f"form_net_obs_{active_v_id}")
+
+                af_chk1, af_chk2 = st.columns(2)
+                rn_alerta_chk = af_chk1.checkbox("⚠️ Mantenir alerta activa a la campaneta", value=(rn_estat != "Correcte / Ple"), key=f"form_net_alerta_{active_v_id}")
+                rn_hist_chk = af_chk2.checkbox("Afegir a l'històric de manteniment", value=True, key=f"form_net_hist_{active_v_id}")
+
+                if st.button("💾 Desar acció feta", type="primary", key=f"btn_save_form_net_{active_v_id}"):
+                    d_str_fet = rn_data.strftime("%d/%m/%Y")
+                    mant["netejavidres"]["data_ultim_omplert"] = d_str_fet
+                    mant["netejavidres"]["km_ultim_omplert"] = int(rn_km) if rn_km > 0 else None
+                    mant["netejavidres"]["estat"] = "Correcte" if rn_estat == "Correcte / Ple" else rn_estat
+                    mant["netejavidres"]["alerta_activa"] = rn_alerta_chk
+                    mant["netejavidres"]["producte"] = rn_prod
+                    mant["netejavidres"]["observacions"] = rn_obs.strip()
+
+                    if rn_hist_chk:
+                        mant["historic"].append({
+                            "data": d_str_fet,
+                            "tipus": "Netejavidres",
+                            "km": int(rn_km),
+                            "rodes": "",
+                            "detall": f"{rn_obs.strip()} [{rn_prod}]"
+                        })
+
+                    _save_mant(mant)
+                    st.success(f"Acció d'omplert de netejavidres desada correctament! ({d_str_fet})")
+                    st.rerun()
+
+            # Històric d'accions fetes de netejavidres
+            hist_net = [h for h in mant.get("historic", []) if str(h.get("tipus", "")).lower() == "netejavidres"]
+            if hist_net:
+                st.markdown("##### 📋 Darreres accions d'omplert registrades:")
+                df_nj_hist = pd.DataFrame(hist_net).tail(5)[::-1]
+                cols_show = [c for c in ["data", "km", "detall"] if c in df_nj_hist.columns]
+                st.dataframe(df_nj_hist[cols_show], hide_index=True, use_container_width=True)
+
         # ---------- TALLER / AVARIES ----------
         pendents = [h for h in mant["historic"] if h.get("estat") in ("Pendent", "En taller")]
         taller_tag = f" · ⚠️ {len(pendents)} pendents" if pendents else ""
@@ -1157,7 +1343,7 @@ def render():
                         "rodes": "Rodes", "detall": "Detall", "taller": "Taller",
                         "cost": st.column_config.NumberColumn("Cost (€)", format="%.2f"),
                         "estat": st.column_config.SelectboxColumn("Estat", options=["", "Resolt", "Pendent", "En taller"]),
-                        "tipus": st.column_config.SelectboxColumn("Tipus", options=sorted(set(["Oli", "Rodes", "Avaria", "Revisió", "ITV", "Frens", "Bateria", "Filtres", "Carrosseria", "Altres"] + tipus_disp))),
+                        "tipus": st.column_config.SelectboxColumn("Tipus", options=sorted(set(["Oli", "Rodes", "Control Nivells", "Netejavidres", "Avaria", "Revisió", "ITV", "Frens", "Bateria", "Filtres", "Carrosseria", "Altres"] + tipus_disp))),
                     },
                     disabled=["rodes"],
                 )
