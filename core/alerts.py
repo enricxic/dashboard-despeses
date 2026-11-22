@@ -210,39 +210,15 @@ def get_global_alerts(force_reload: bool = False):
                 except Exception as e_niv_alert:
                     print(f"Error alerta nivells: {e_niv_alert}")
 
-                # Netejavidres
+                # Netejavidres (alerta sota demanda només quan falta líquid)
                 try:
                     netejavidres = mant.get("netejavidres", {})
-                    alerta_net = False
-                    motiu_net = ""
-                    tipus_alerta_net = "warning"
-
                     estat_net = netejavidres.get("estat", "Correcte")
                     al_act = bool(netejavidres.get("alerta_activa", False))
 
-                    if al_act or estat_net in ("Nivell baix", "Buit", "Pendent"):
-                        alerta_net = True
-                        tipus_alerta_net = "error" if estat_net == "Buit" else "warning"
+                    if al_act or estat_net in ("Nivell baix", "Buit", "Pendent", "Falta líquid"):
+                        tipus_alerta_net = "error" if estat_net in ("Buit", "Falta líquid") else "warning"
                         motiu_net = f"Nivell indicat com a '{estat_net}'."
-                    else:
-                        u_data_str = netejavidres.get("data_ultim_omplert", "")
-                        interval_dies = int(netejavidres.get("interval_dies", 90) or 90)
-                        avis_dies = int(netejavidres.get("avis_dies_abans", 7) or 7)
-                        if u_data_str:
-                            u_dt = datetime.strptime(u_data_str, "%d/%m/%Y").date()
-                            avui_d = date.today()
-                            proxima_data = u_dt + timedelta(days=interval_dies)
-                            dies_restants = (proxima_data - avui_d).days
-                            if dies_restants < 0:
-                                alerta_net = True
-                                tipus_alerta_net = "error"
-                                motiu_net = f"Superat per {abs(dies_restants)} dies (previst el {proxima_data.strftime('%d/%m/%Y')})."
-                            elif dies_restants <= avis_dies:
-                                alerta_net = True
-                                tipus_alerta_net = "warning"
-                                motiu_net = f"Toca omplir el {proxima_data.strftime('%d/%m/%Y')} (queden {dies_restants} dies)."
-
-                    if alerta_net:
                         alerts.append({
                             "type": tipus_alerta_net,
                             "icon": "💧",

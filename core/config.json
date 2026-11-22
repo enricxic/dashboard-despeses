@@ -14,6 +14,44 @@
         "color2": "#73ad69",
         "tamany_lletra": 60
     },
+    "estances": [
+        {
+            "id": "menjador",
+            "nom": "Menjador / Sala",
+            "icona": "🛋️",
+            "tipus": "menjador"
+        },
+        {
+            "id": "cuina",
+            "nom": "Cuina",
+            "icona": "🍳",
+            "tipus": "cuina"
+        },
+        {
+            "id": "bany_1",
+            "nom": "Bany principal",
+            "icona": "🚿",
+            "tipus": "bany"
+        },
+        {
+            "id": "habitacio_1",
+            "nom": "Habitació principal",
+            "icona": "🛏️",
+            "tipus": "habitacio"
+        }
+    ],
+    "vehicles": [
+        {
+            "id": "tivoli",
+            "nom": "Tívoli",
+            "tipus": "Cotxe",
+            "icona": "🚗",
+            "model": "SsangYong Tívoli",
+            "matricula": "",
+            "combustible": "Gasolina",
+            "principal": true
+        }
+    ],
     "familia": [
         {
             "id": 1,
@@ -259,8 +297,8 @@
             "ultim_canvi_km": null
         },
         "inflat_rodes": {
-            "pressio": "2.4 bar",
-            "propera_data": "23/10/2026",
+            "pressio": "2.6 bar",
+            "propera_data": "15/12/2026",
             "planificacions": [
                 {
                     "id": "estiu",
@@ -294,9 +332,9 @@
                 }
             ],
             "avis_dies_abans": 15,
-            "km_ultim_inflat": 35684,
+            "km_ultim_inflat": 36329,
             "repeticions_any": 2,
-            "data_ultim_inflat": "22/10/2026"
+            "data_ultim_inflat": "19/11/2026"
         },
         "control_nivells": {
             "propera_data": "22/12/2026",
@@ -336,25 +374,16 @@
                 "tipus": "Avaria",
                 "detall": "Revisió i canvi de oli i filtres. Segellat llibre oficial",
                 "taller": "Aurgi"
+            },
+            {
+                "data": "19/11/2026",
+                "tipus": "Inflat Rodes",
+                "km": 36329,
+                "rodes": "Totes 4",
+                "detall": "Revisió i inflat de pressió de les rodes (2.6 bar)"
             }
         ],
-        "avis_km": 2000
-    },
-    "harness_overrides": {
-        "regles_menjar": {
-            "us_forn": "Només cap de setmana (Dissabte i Diumenge)",
-            "min_peix": 2,
-            "freq_peix": 2,
-            "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
-            "min_llegums": 2,
-            "control_dietetic": true,
-            "limit_cals_dinar": 800,
-            "limit_cals_sopar": 500,
-            "comensals_defecte": 3,
-            "max_carn_vermella": 1,
-            "max_embotits_sopar": 2,
-            "no_repetir_hidrats": true
-        }
+        "avis_km": 200
     },
     "periferics": {
         "escaner": {
@@ -614,16 +643,127 @@
             }
         ]
     },
-    "vehicles": [
-        {
-            "id": "tivoli",
-            "nom": "Tívoli",
-            "tipus": "Cotxe",
-            "icona": "🚗",
-            "model": "SsangYong Tívoli",
-            "matricula": "",
-            "combustible": "Gasolina",
-            "principal": true
+    "harness_overrides": {
+        "regles_menjar": {
+            "us_forn": "Només cap de setmana (Dissabte i Diumenge)",
+            "min_peix": 2,
+            "freq_peix": 2,
+            "mode_apats": "Tota la setmana (Dinars i Sopars - 14 àpats)",
+            "min_llegums": 2,
+            "control_dietetic": true,
+            "limit_cals_dinar": 800,
+            "limit_cals_sopar": 500,
+            "comensals_defecte": 3,
+            "max_carn_vermella": 1,
+            "max_embotits_sopar": 2,
+            "no_repetir_hidrats": true
         }
-    ]
+    },
+    "manteniment_vehicles": {
+        "tivoli": {
+            "oli": {
+                "interval_km": 16000,
+                "ultim_canvi_km": 30000,
+                "data_ultim_canvi": ""
+            },
+            "rodes": {
+                "previst": {
+                    "km": 39600,
+                    "data": "Nadal 2026",
+                    "posicio": "Davanteres",
+                    "quantes": 2
+                },
+                "interval_km": 40000,
+                "ultim_canvi_km": null
+            },
+            "inflat_rodes": {
+                "pressio": "2.6 bar",
+                "propera_data": "15/12/2026",
+                "planificacions": [
+                    {
+                        "id": "estiu",
+                        "dia": 20,
+                        "mes": 7,
+                        "actiu": true,
+                        "titol": "Viatge d'estiu (~1800 km)",
+                        "recurrent": true,
+                        "data_puntual": "",
+                        "avis_dies_abans": 5
+                    },
+                    {
+                        "id": "nadal",
+                        "dia": 15,
+                        "mes": 12,
+                        "actiu": true,
+                        "titol": "Viatge de Nadal (~1800 km)",
+                        "recurrent": true,
+                        "data_puntual": "",
+                        "avis_dies_abans": 5
+                    },
+                    {
+                        "id": "1792669518",
+                        "dia": 23,
+                        "mes": 10,
+                        "actiu": true,
+                        "titol": "Control",
+                        "recurrent": false,
+                        "data_puntual": "23/10/2026",
+                        "avis_dies_abans": 1
+                    }
+                ],
+                "avis_dies_abans": 15,
+                "km_ultim_inflat": 36329,
+                "repeticions_any": 2,
+                "data_ultim_inflat": "19/11/2026"
+            },
+            "control_nivells": {
+                "propera_data": "22/12/2026",
+                "repeticions_any": 2,
+                "avis_dies_abans": 15,
+                "data_ultim_control": "",
+                "km_ultim_control": null,
+                "estat_nivells": "Tots correctes (Oli, refrigerant, parabrises, frens)",
+                "planificacions": [
+                    {
+                        "id": "estiu",
+                        "titol": "Viatge d'estiu (~1800 km)",
+                        "dia": 20,
+                        "mes": 7,
+                        "recurrent": true,
+                        "avis_dies_abans": 15,
+                        "actiu": true
+                    },
+                    {
+                        "id": "nadal",
+                        "titol": "Viatge de Nadal (~1800 km)",
+                        "dia": 22,
+                        "mes": 12,
+                        "recurrent": true,
+                        "avis_dies_abans": 15,
+                        "actiu": true
+                    }
+                ]
+            },
+            "historic": [
+                {
+                    "km": 35684,
+                    "cost": 226.51,
+                    "data": "14/10/2026",
+                    "estat": "Resolt",
+                    "rodes": "",
+                    "tipus": "Avaria",
+                    "detall": "Revisió i canvi de oli i filtres. Segellat llibre oficial",
+                    "taller": "Aurgi"
+                },
+                {
+                    "data": "19/11/2026",
+                    "tipus": "Inflat Rodes",
+                    "km": 36329,
+                    "rodes": "Totes 4",
+                    "detall": "Revisió i inflat de pressió de les rodes (2.6 bar)"
+                }
+            ],
+            "avis_km": 200
+        }
+    }
 }

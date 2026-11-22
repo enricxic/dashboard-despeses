@@ -1,0 +1,582 @@
+{
+  "version": 1,
+  "project_id": "proj_20261111_105303",
+  "elements": [
+    {
+      "kind": "symbol",
+      "symType": "panel",
+      "x": 1150,
+      "y": 195,
+      "w": 260,
+      "h": 370,
+      "rot": 0,
+      "label": "Quadre"
+    },
+    {
+      "kind": "symbol",
+      "symType": "thermostat",
+      "x": 640,
+      "y": 94,
+      "rot": 0,
+      "label": "Termòstat",
+      "w": 74,
+      "h": 72
+    },
+    {
+      "kind": "symbol",
+      "symType": "contactor",
+      "x": 1140,
+      "y": 300,
+      "rot": 0,
+      "label": "Contactor 40A",
+      "w": 84,
+      "h": 84
+    },
+    {
+      "kind": "symbol",
+      "symType": "mcb",
+      "x": 1140,
+      "y": 120,
+      "rot": 0,
+      "label": "PIA 25A",
+      "w": 94,
+      "h": 84
+    },
+    {
+      "kind": "symbol",
+      "symType": "load",
+      "x": 280,
+      "y": 345,
+      "w": 360,
+      "h": 170,
+      "rot": 0,
+      "label": "Càrrega"
+    },
+    {
+      "kind": "symbol",
+      "symType": "load",
+      "x": 380,
+      "y": 260,
+      "w": 120,
+      "h": 80,
+      "rot": 0,
+      "label": "Càrrega"
+    },
+    {
+      "kind": "symbol",
+      "symType": "socket",
+      "x": 600,
+      "y": 320,
+      "rot": 0,
+      "label": "Endoll 16A"
+    },
+    {
+      "kind": "symbol",
+      "symType": "timer",
+      "x": 740,
+      "y": 340,
+      "rot": 0,
+      "label": "Programador",
+      "w": 94,
+      "h": 84
+    },
+    {
+      "kind": "text",
+      "x": 340,
+      "y": 220,
+      "text": "Ventilador",
+      "scale": 1
+    },
+    {
+      "kind": "text",
+      "x": 200,
+      "y": 460,
+      "text": "ACUMULADOR 4000W",
+      "scale": 1
+    },
+    {
+      "kind": "wire",
+      "wireType": "terra",
+      "points": [
+        {
+          "x": 440,
+          "y": 420
+        },
+        {
+          "x": 440,
+          "y": 460
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "terra",
+      "points": [
+        {
+          "x": 440,
+          "y": 460
+        },
+        {
+          "x": 1220,
+          "y": 460
+        },
+        {
+          "x": 1220,
+          "y": 380
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 420,
+          "y": 420
+        },
+        {
+          "x": 420,
+          "y": 480
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 420,
+          "y": 480
+        },
+        {
+          "x": 1240,
+          "y": 480
+        },
+        {
+          "x": 1240,
+          "y": 380
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 400,
+          "y": 420
+        },
+        {
+          "x": 400,
+          "y": 500
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 400,
+          "y": 500
+        },
+        {
+          "x": 1260,
+          "y": 500
+        },
+        {
+          "x": 1260,
+          "y": 380
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 1060,
+          "y": 380
+        },
+        {
+          "x": 1060,
+          "y": 400
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 1060,
+          "y": 400
+        },
+        {
+          "x": 794.8333333333334,
+          "y": 400
+        },
+        {
+          "x": 794.8333333333334,
+          "y": 340
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 1080,
+          "y": 380
+        },
+        {
+          "x": 1080,
+          "y": 420
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 1080,
+          "y": 420
+        },
+        {
+          "x": 760,
+          "y": 420
+        },
+        {
+          "x": 760,
+          "y": 380
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 572,
+          "y": 320
+        },
+        {
+          "x": 540,
+          "y": 320
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 540,
+          "y": 320
+        },
+        {
+          "x": 540,
+          "y": 380
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 540,
+          "y": 380
+        },
+        {
+          "x": 680,
+          "y": 380
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 628,
+          "y": 320
+        },
+        {
+          "x": 680,
+          "y": 320
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 1020,
+          "y": 100
+        },
+        {
+          "x": 760,
+          "y": 100
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 760,
+          "y": 220
+        },
+        {
+          "x": 760,
+          "y": 100
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 760,
+          "y": 220
+        },
+        {
+          "x": 580,
+          "y": 220
+        },
+        {
+          "x": 580,
+          "y": 280
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 1020,
+          "y": 120
+        },
+        {
+          "x": 780,
+          "y": 120
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 780,
+          "y": 120
+        },
+        {
+          "x": 780,
+          "y": 240
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 780,
+          "y": 240
+        },
+        {
+          "x": 600,
+          "y": 240
+        },
+        {
+          "x": 600,
+          "y": 280
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "terra",
+      "points": [
+        {
+          "x": 1020,
+          "y": 140
+        },
+        {
+          "x": 800,
+          "y": 140
+        },
+        {
+          "x": 800,
+          "y": 260
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "terra",
+      "points": [
+        {
+          "x": 800,
+          "y": 260
+        },
+        {
+          "x": 620,
+          "y": 260
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "terra",
+      "points": [
+        {
+          "x": 620,
+          "y": 260
+        },
+        {
+          "x": 620,
+          "y": 280
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 1020,
+          "y": 10
+        },
+        {
+          "x": 620,
+          "y": 10
+        },
+        {
+          "x": 620,
+          "y": 60
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 1020,
+          "y": 40
+        },
+        {
+          "x": 660,
+          "y": 40
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 660,
+          "y": 40
+        },
+        {
+          "x": 660,
+          "y": 60
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 618.4166666666666,
+          "y": 127
+        },
+        {
+          "x": 620,
+          "y": 160
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 620,
+          "y": 160
+        },
+        {
+          "x": 360,
+          "y": 160
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "fase",
+      "points": [
+        {
+          "x": 360,
+          "y": 160
+        },
+        {
+          "x": 360,
+          "y": 200
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 661.5833333333334,
+          "y": 127
+        },
+        {
+          "x": 660,
+          "y": 180
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 660,
+          "y": 180
+        },
+        {
+          "x": 380,
+          "y": 180
+        }
+      ]
+    },
+    {
+      "kind": "wire",
+      "wireType": "neutre",
+      "points": [
+        {
+          "x": 380,
+          "y": 180
+        },
+        {
+          "x": 380,
+          "y": 200
+        }
+      ]
+    }
+  ]
+}

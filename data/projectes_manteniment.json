@@ -203,29 +203,15 @@
       },
       {
         "id": "fase_2_1794235968",
-        "nom": "Tallar rajoles rectes",
+        "nom": "Tallar rajoles rectes (part baixa)",
         "estat": "Completada",
         "data_fi": "2026-11-18",
-        "tasques": [
-          {
-            "id": "t_1_1794235991",
-            "feta": true,
-            "titol": "Medir rajoles part baixa"
-          }
-        ],
+        "tasques": [],
         "data_inici": "2026-11-16"
       },
       {
         "id": "fase_4_1794236080",
-        "nom": "Tapar juntes",
-        "estat": "Pendent",
-        "data_fi": "2026-11-21",
-        "tasques": [],
-        "data_inici": "2026-11-20"
-      },
-      {
-        "id": "fase_5_1794236133",
-        "nom": "Posar rajoles sobre cuina",
+        "nom": "Posar rajoles (part baixa)",
         "estat": "Pendent",
         "data_fi": "2026-11-22",
         "tasques": [],
@@ -233,11 +219,19 @@
       },
       {
         "id": "fase_6_1794602059",
-        "nom": "Medir rajoles",
+        "nom": "Medir rajoles (part baixa)",
         "estat": "Completada",
         "data_fi": "2026-11-14",
         "tasques": [],
         "data_inici": "2026-11-13"
+      },
+      {
+        "id": "fase_5_1795030963",
+        "nom": "Biselar rajoles (part baixa)",
+        "estat": "Pendent",
+        "data_fi": "2026-11-21",
+        "tasques": [],
+        "data_inici": "2026-11-21"
       }
     ],
     "fotos": [],

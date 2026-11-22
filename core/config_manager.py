@@ -167,8 +167,6 @@ DEFAULT_CONFIG = {
             "km_ultim_omplert": None,
             "estat": "Correcte",
             "alerta_activa": False,
-            "interval_dies": 90,
-            "avis_dies_abans": 7,
             "producte": "Líquid eixugaparabrises",
             "observacions": ""
         },
@@ -366,8 +364,6 @@ def load_app_config():
             net_c = mant_c.setdefault("netejavidres", {})
             net_c.setdefault("estat", "Correcte")
             net_c.setdefault("alerta_activa", False)
-            net_c.setdefault("interval_dies", 90)
-            net_c.setdefault("avis_dies_abans", 7)
             net_c.setdefault("producte", "Líquid eixugaparabrises")
             net_c.setdefault("data_ultim_omplert", "")
             return merged
@@ -405,8 +401,6 @@ def load_app_config():
             net_c = mant_c.setdefault("netejavidres", {})
             net_c.setdefault("estat", "Correcte")
             net_c.setdefault("alerta_activa", False)
-            net_c.setdefault("interval_dies", 90)
-            net_c.setdefault("avis_dies_abans", 7)
             net_c.setdefault("producte", "Líquid eixugaparabrises")
             net_c.setdefault("data_ultim_omplert", "")
             return merged
