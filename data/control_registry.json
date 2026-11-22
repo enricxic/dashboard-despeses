@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "22/11/2026 17:38:05",
+  "updated_at": "22/11/2026 17:39:52",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -66,11 +66,11 @@
       "verified_hashes": {
         "modules/cotxe.py": "1f1aab51e2a8a2eb47b1640a8b37c9b35864a1d44792c2d515a83a964590f11e"
       },
-      "verified_at": "22/11/2026 17:27:44",
-      "verified_commit": "f4e7a3f",
+      "verified_at": "22/11/2026 17:39:52",
+      "verified_commit": "fae9164",
       "verified_by": "admin",
-      "unlocked_until": "23/11/2026 17:38:05",
-      "unlock_reason": "Simplificacio liquid netejavidres boto unic omplenat"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "dashboard": {
       "name": "Dashboard",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "22/11/2026 17:39:52",
+      "action": "SEAL",
+      "module": "cotxe",
+      "detail": "Segellat post-commit simplificacio liquid netejavidres",
+      "user": "admin",
+      "git_head": "fae9164"
+    },
     {
       "timestamp": "22/11/2026 17:38:05",
       "action": "UNLOCK",
@@ -1143,14 +1151,6 @@
       "detail": "Versió verificada i segellada (Miniatures mobil vertical, canvi fotos i IA millorada)",
       "user": "admin",
       "git_head": "93cecab"
-    },
-    {
-      "timestamp": "11/11/2026 17:14:58",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Miniatures materials 48x48px)",
-      "user": "admin",
-      "git_head": "dfe4de6"
     }
   ]
 }
