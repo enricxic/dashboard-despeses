@@ -1345,6 +1345,8 @@ div.block-container {{
 {f'<a href="?mod=modules.domotica{url_suffix}" target="_self">📶 Domòtica (Home Assistant)</a>' if icones_actives.get('domotica', True) else ''}
 {f'<a href="?mod=modules.seguretat{url_suffix}" target="_self">📹 Seguretat i Càmeres</a>' if icones_actives.get('seguretat', True) else ''}
 {f'<a href="?mod=modules.calendari{url_suffix}" target="_self">📅 Agenda</a>' if icones_actives.get('agenda', True) else ''}
+{f'<a href="?mod=modules.viatges{url_suffix}" target="_self">✈️ Planificador de Viatges</a>' if icones_actives.get('viatges', True) else ''}
+{f'<a href="?mod=modules.roba{url_suffix}" target="_self">🧥 Roba i Armari</a>' if icones_actives.get('roba', True) else ''}
 {f'''<div class="submenu-item">
 <a href="?mod=modules.medicacio{url_suffix}" target="_self" class="submenu-title" style="text-decoration:none; color:inherit;"><span>💊 Control de medicació</span> <span style="font-size: 0.68rem; margin-left: 10px;">▶</span></a>
 <div class="submenu-dropdown">
@@ -1403,14 +1405,29 @@ div.block-container {{
 
 if st.session_state.current_module is None:
     # ------------------ PANTALLA PRINCIPAL (LOGO INTERACTIU) ------------------
-    # Carregar el fons de pantalla completa
-    fons_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "fons xiquiHouse.jpg")
-    if not os.path.exists(fons_path):
-        fons_path = os.path.join(os.path.dirname(__file__), "imatges", "fons xiquiHouse.jpg")
-    b64_fons = _get_static_b64(fons_path)
+    # Carregar el fons de pantalla completa (amb suport H i V configurable)
+    casa_cfg = app_cfg.get("casa", {})
+    fons_h_name = casa_cfg.get("fons_h", "fons xiquiHouse.jpg")
+    fons_v_name = casa_cfg.get("fons_v", fons_h_name)
 
-    # Carregar el logotip horitzontal
-    logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse ampliat.png")
+    fons_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", fons_h_name)
+    if not os.path.exists(fons_h_path):
+        fons_h_path = os.path.join(os.path.dirname(__file__), "imatges", fons_h_name)
+    if not os.path.exists(fons_h_path):
+        fons_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "fons xiquiHouse.jpg")
+    b64_fons_h = _get_static_b64(fons_h_path)
+
+    fons_v_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", fons_v_name)
+    if not os.path.exists(fons_v_path):
+        fons_v_path = os.path.join(os.path.dirname(__file__), "imatges", fons_v_name)
+    if not os.path.exists(fons_v_path):
+        fons_v_path = fons_h_path
+    b64_fons_v = _get_static_b64(fons_v_path)
+
+    # Carregar el logotip horitzontal (prioritza la nova versió de 14 icones)
+    logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo_xiquiHouse_14_horitzontal.png")
+    if not os.path.exists(logo_h_path):
+        logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse ampliat.png")
     if not os.path.exists(logo_h_path):
         logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse.png")
     if not os.path.exists(logo_h_path):
@@ -1419,8 +1436,10 @@ if st.session_state.current_module is None:
         logo_h_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse.png")
     b64_logo_h = _get_static_b64(logo_h_path)
 
-    # Carregar el logotip vertical
-    logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse vertical.png")
+    # Carregar el logotip vertical (prioritza la nova versió de 14 icones)
+    logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo_xiquiHouse_14_vertical.png")
+    if not os.path.exists(logo_v_path):
+        logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "Disseny", "logo xiquiHouse vertical.png")
     if not os.path.exists(logo_v_path):
         logo_v_path = os.path.join(os.path.dirname(__file__), "imatges", "logo xiquiHouse vertical.png")
     if not os.path.exists(logo_v_path):
@@ -1472,7 +1491,7 @@ if st.session_state.current_module is None:
     --title-size: {tamany_px}px;
 }}
 .stApp {{
-    background-image: url("data:image/jpeg;base64,{b64_fons}") !important;
+    background-image: url("data:image/jpeg;base64,{b64_fons_h}") !important;
     background-size: cover !important;
     background-position: center center !important;
     background-repeat: no-repeat !important;
@@ -1614,26 +1633,31 @@ if st.session_state.current_module is None:
     z-index: 99;
 }}
 
-/* COORDENADES HORITZONTALS (Actualitzades a imatge ampliada) */
-.hs-admin {{ left: 35.50%; top: 12.28%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-dashboard {{ left: 64.71%; top: 12.07%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-economic {{ left: 23.90%; top: 21.10%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-seguretat {{ left: 10.90%; top: 31.82%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-manteniment {{ left: 23.51%; top: 40.44%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-domotica {{ left: 10.72%; top: 52.48%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-llum_aigua, .hs-jocs {{ left: 23.51%; top: 60.28%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-calendari {{ left: 78.17%; top: 21.49%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-medicacio {{ left: 89.05%; top: 31.54%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-menjar {{ left: 77.82%; top: 40.62%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-cotxe {{ left: 88.88%; top: 52.47%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
-.hs-compres {{ left: 77.82%; top: 61.18%; width: 8.2% !important; height: calc(8.2 * min(85vw, 140vh) / 100) !important; }}
+/* COORDENADES HORITZONTALS (14 icones) */
+.hs-admin {{ left: 37.12%; top: 16.47%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-dashboard {{ left: 61.71%; top: 16.04%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-economic {{ left: 27.00%; top: 24.06%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-seguretat {{ left: 18.18%; top: 32.99%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-manteniment {{ left: 27.05%; top: 40.35%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-viatges {{ left: 9.71%; top: 40.81%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-domotica {{ left: 18.19%; top: 50.36%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-llum_aigua, .hs-jocs {{ left: 27.06%; top: 57.63%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-calendari {{ left: 73.15%; top: 24.21%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-medicacio {{ left: 82.13%; top: 32.51%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-menjar {{ left: 73.11%; top: 40.48%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-roba {{ left: 90.35%; top: 40.23%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-cotxe {{ left: 82.11%; top: 50.46%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
+.hs-compres {{ left: 73.13%; top: 57.63%; width: 7.8% !important; height: calc(7.8 * min(85vw, 140vh) / 100) !important; }}
 
 /* -- VERTICAL (Mòbils / Tablets verticals) -- */
 @media (max-width: 900px) and (orientation: portrait), (orientation: portrait) {{
     .img-logo-h {{ display: none !important; }}
     .img-logo-v {{ display: block !important; }}
     
-    .stApp {{ overflow-x: hidden !important; }}
+    .stApp {{
+        background-image: url("data:image/jpeg;base64,{b64_fons_v}") !important;
+        overflow-x: hidden !important;
+    }}
     .main-wrapper {{ min-height: 96vh !important; padding: 0 !important; }}
     
     .logo-box {{
@@ -1654,19 +1678,21 @@ if st.session_state.current_module is None:
         letter-spacing: 1.5px !important;
     }}
 
-    /* COORDENADES VERTICALS (Actualitzades a imatge ampliada) */
-    .hs-admin {{ left: 30.27%; top: 13.69%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-dashboard {{ left: 69.86%; top: 13.40%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-economic {{ left: 10.70%; top: 20.10%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-seguretat {{ left: 10.5%; top: 30.81%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-manteniment {{ left: 10.3%; top: 40.46%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-domotica {{ left: 10.3%; top: 50.56%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-llum_aigua, .hs-jocs {{ left: 10.3%; top: 60.67%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-calendari {{ left: 89.5%; top: 20.09%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-medicacio {{ left: 88.8%; top: 30.76%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-menjar {{ left: 89.0%; top: 40.74%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-cotxe {{ left: 89.2%; top: 51.02%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
-    .hs-compres {{ left: 88.9%; top: 61.34%; width: 12.3% !important; height: 12.3vw !important; min-width: 44px; min-height: 44px; }}
+    /* COORDENADES VERTICALS (14 icones) */
+    .hs-admin {{ left: 35.46%; top: 13.67%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-dashboard {{ left: 65.95%; top: 13.11%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-economic {{ left: 10.50%; top: 17.13%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-seguretat {{ left: 10.14%; top: 27.85%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-manteniment {{ left: 10.43%; top: 37.46%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-domotica {{ left: 10.24%; top: 47.61%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-viatges {{ left: 10.63%; top: 57.31%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-llum_aigua, .hs-jocs {{ left: 10.46%; top: 67.40%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-calendari {{ left: 89.53%; top: 17.22%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-medicacio {{ left: 89.05%; top: 27.88%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-menjar {{ left: 89.08%; top: 38.05%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-cotxe {{ left: 89.17%; top: 47.69%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-roba {{ left: 88.78%; top: 57.23%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
+    .hs-compres {{ left: 88.89%; top: 67.63%; width: 11.8% !important; height: 11.8vw !important; min-width: 44px; min-height: 44px; }}
 }}
 .bell-dropdown {{ display: none; position: absolute; top: 40px; right: 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; min-width: 320px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100000; cursor: default; white-space: normal; text-align: left; }}
 .bell-container:hover .bell-dropdown {{ display: block; }}
@@ -1706,18 +1732,20 @@ if st.session_state.current_module is None:
 {render_hotspot('admin', '⚙️ Configuració Global')}
 {render_hotspot('dashboard', '📊 Dashboard General', always_active=True)}
 
-<!-- ================= AMB RODONA PART ESQUERRA (5 NODES) ================= -->
+<!-- ================= AMB RODONA PART ESQUERRA (6 NODES) ================= -->
 {render_hotspot('economic', '📈 Mòdul Econòmic')}
 {render_hotspot('seguretat', '📹 Seguretat i Càmeres')}
 {render_hotspot('manteniment', '🛠️ Manteniment de la Llar')}
+{render_hotspot('viatges', '✈️ Planificador de Viatges')}
 {render_hotspot('domotica', '📶 Domòtica (Home Assistant)')}
 {render_hotspot('llum_aigua', '💡 Llum i Aigua')}
 
-<!-- ================= AMB RODONA PART DRETA (5 NODES) ================= -->
+<!-- ================= AMB RODONA PART DRETA (6 NODES) ================= -->
 {render_hotspot('calendari', '📅 Agenda')}
 {render_hotspot('medicacio', '💊 Control de Medicació')}
 {render_hotspot('menjar', '🍽️ Menjar, Menús i Rebost')}
 {render_hotspot('cotxe', '🚗 Cotxe i Transport')}
+{render_hotspot('roba', '🧥 Roba i Armari')}
 {render_hotspot('compres', '🛒 Compres Super i Stock')}
 
 </div>

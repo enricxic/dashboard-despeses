@@ -760,16 +760,80 @@ def render():
                     print("Error actualitzant drecera:", e)
                     return False
 
+            st.markdown("<hr style='border:none; border-top:1px solid #334155; margin:24px 0 16px 0;'>", unsafe_allow_html=True)
+            st.markdown("##### 🖼️ Fons de Pantalla d'Inici")
+            st.caption("Tria la imatge de fons per a la pantalla principal. En seleccionar una imatge horitzontal (Hxx), el sistema associarà automàticament la seva corresponent versió vertical (Vxx) per a dispositius mòbils.")
+
+            disseny_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "imatges", "Disseny")
+            if not os.path.exists(disseny_folder):
+                disseny_folder = os.path.join(os.getcwd(), "imatges", "Disseny")
+
+            h_candidates = []
+            if os.path.exists(disseny_folder):
+                import re as _re_fons
+                for fn in sorted(os.listdir(disseny_folder)):
+                    if _re_fons.match(r"^H\d+", fn, _re_fons.IGNORECASE):
+                        h_candidates.append(fn)
+
+            fons_options = ["Per defecte (fons xiquiHouse.jpg)"] + h_candidates
+            cur_fons_h = casa_cfg.get("fons_h", "fons xiquiHouse.jpg")
+            default_fons_idx = 0
+            if cur_fons_h in fons_options:
+                default_fons_idx = fons_options.index(cur_fons_h)
+            elif cur_fons_h in h_candidates:
+                default_fons_idx = h_candidates.index(cur_fons_h) + 1
+
+            def _format_fons_label(fn):
+                if fn.startswith("Per defecte"):
+                    return "🌟 Predeterminat Clàssic (fons xiquiHouse.jpg)"
+                import re as _re_f
+                m = _re_f.match(r"^H(\d+)(?:_\d+)?_(.+)\.(?:jpg|jpeg|png)", fn, _re_f.IGNORECASE)
+                if m:
+                    code, desc = m.group(1), m.group(2)
+                    desc_spaced = _re_f.sub(r"([a-z])([A-Z])", r"\1 \2", desc)
+                    return f"🖼️ H{code} — {desc_spaced}"
+                return f"🖼️ {fn}"
+
+            sel_fons = st.selectbox(
+                "Selecciona el fons:",
+                fons_options,
+                index=default_fons_idx,
+                format_func=_format_fons_label,
+                key="sel_fons_pantalla_inici"
+            )
+
+            chosen_h_file = "fons xiquiHouse.jpg" if sel_fons.startswith("Per defecte") else sel_fons
+            preview_img_path = os.path.join(disseny_folder, chosen_h_file)
+            if not os.path.exists(preview_img_path):
+                preview_img_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "imatges", chosen_h_file)
+
+            if os.path.exists(preview_img_path):
+                st.image(preview_img_path, caption=f"Previsualització del fons: {chosen_h_file}", use_container_width=True)
+
+            chosen_v_file = chosen_h_file
+            if chosen_h_file != "fons xiquiHouse.jpg":
+                import re as _re_code
+                m_code = _re_code.search(r"^H(\d+)", chosen_h_file, _re_code.IGNORECASE)
+                if m_code and os.path.exists(disseny_folder):
+                    num = int(m_code.group(1))
+                    for vf in os.listdir(disseny_folder):
+                        if _re_code.search(rf"^V0*{num}", vf, _re_code.IGNORECASE):
+                            chosen_v_file = vf
+                            break
+            st.caption(f"📱 Versió vertical associada per a mòbils: **{chosen_v_file}**")
+
             st.write("")
             _render_flash_message()
-            if st.button("💾 Desar Títol de la Casa", type="primary", use_container_width=True, key="save_titol"):
+            if st.button("💾 Desar Títol i Fons de la Casa", type="primary", use_container_width=True, key="save_titol"):
                 cur_cfg = load_app_config()
                 cur_cfg["casa"] = {
                     "paraula1": p1,
                     "color1": col1,
                     "paraula2": p2,
                     "color2": col2,
-                    "tamany_lletra": tamany_lletra
+                    "tamany_lletra": tamany_lletra,
+                    "fons_h": chosen_h_file,
+                    "fons_v": chosen_v_file
                 }
                 if save_app_config(cur_cfg):
                     if not _update_desktop_shortcut(f"{p1}{p2}"):
@@ -2856,6 +2920,8 @@ def render():
                 ("menjar", "🍽️ Menjar, Menús i Rebost", icones_cfg.get("menjar", True), False, "Planificació de menús setmanals i stock del rebost"),
                 ("cotxe", "🚗 Cotxe i Transport", icones_cfg.get("cotxe", True), False, "Quilometratge, consums, canvis d'oli i ITV"),
                 ("compres", "🛒 Compres al Súper i Stock", icones_cfg.get("compres", True), False, "Gestió de tiquets del súper i preus d'articles"),
+                ("viatges", "✈️ Planificador de Viatges", icones_cfg.get("viatges", True), False, "Itineraris, bitllets, reserves i llista d'equipatge"),
+                ("roba", "🧥 Roba i Armari", icones_cfg.get("roba", True), False, "Organització de l'armari, inventari de roba, canvi d'estació i talles"),
                 ("admin", "⚙️ Configuració Global", icones_cfg.get("admin", True), False, "Ajustos de la casa, administradors i paràmetres")
             ]
             

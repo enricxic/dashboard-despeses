@@ -132,7 +132,9 @@ DEFAULT_CONFIG = {
         "menjar": True,
         "cotxe": True,
         "compres": True,
-        "admin": True
+        "admin": True,
+        "viatges": True,
+        "roba": True
     },
     "idioma": "ca",
     "manteniment_cotxe": {

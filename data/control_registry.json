@@ -349,6 +349,28 @@
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
+    },
+    "viatges": {
+      "nom": "Planificador de Viatges",
+      "politica": "OBERT",
+      "fitxers": [
+        "modules/viatges.py"
+      ],
+      "hash_segellat": null,
+      "data_segellat": null,
+      "unlocked_until": null,
+      "last_unlock_reason": null
+    },
+    "roba": {
+      "nom": "Roba i Armari",
+      "politica": "OBERT",
+      "fitxers": [
+        "modules/roba.py"
+      ],
+      "hash_segellat": null,
+      "data_segellat": null,
+      "unlocked_until": null,
+      "last_unlock_reason": null
     }
   },
   "audit_log": [
