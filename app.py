@@ -1474,7 +1474,7 @@ if st.session_state.current_module is None:
         title_html = f'<span style="color: {c1};">Xiqui</span><span style="color: {c2};">House</span>'
     
     lang = app_cfg.get("idioma", "ca")
-    slogan_text = get_translation("slogan", lang)
+    slogan_text = get_translation("slogan", lang) or "TOTA LA TEVA LLAR, CONTROLADA"
     
     icones_actives = app_cfg.get("icones_actives", {})
 
@@ -1581,6 +1581,7 @@ if st.session_state.current_module is None:
     display: inline-flex;
     justify-content: center;
     align-items: center;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.95);
 }}
 .house-custom-slogan {{
     font-size: calc({max(11, int(tamany_px * 0.32))} * min(85vw, 140vh) / 1024);
@@ -1592,6 +1593,7 @@ if st.session_state.current_module is None:
     text-align: center;
     white-space: nowrap;
     line-height: 1;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.9);
 }}
 .hotspot {{
     position: absolute;
@@ -1668,14 +1670,30 @@ if st.session_state.current_module is None:
     }}
     
     .house-title-container {{
-        display: none !important;
+        display: flex !important;
+        position: absolute !important;
+        top: 74% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 50 !important;
+        pointer-events: none !important;
+        user-select: none !important;
+        width: 100% !important;
+        gap: 6px !important;
     }}
     .house-custom-title {{
-        font-size: calc({tamany_px} * 1.6 * 98vw / 1024) !important;
+        font-size: calc({tamany_px} * 1.5 * 100vw / 1024) !important;
+        font-weight: 800 !important;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.95) !important;
     }}
     .house-custom-slogan {{
-        font-size: calc({max(11, int(tamany_px * 0.32))} * 1.6 * 98vw / 1024) !important;
+        font-size: calc({max(11, int(tamany_px * 0.32))} * 1.5 * 100vw / 1024) !important;
+        color: #407faf !important;
         letter-spacing: 1.5px !important;
+        text-shadow: 0 1px 6px rgba(0,0,0,0.9) !important;
     }}
 
     /* COORDENADES VERTICALS (14 icones) */
