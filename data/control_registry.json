@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 10:40:24",
+  "updated_at": "23/11/2026 13:11:15",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -41,10 +41,10 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "e890a5d0957d454405e88e7db643b9248b4ec7d3b777f833b804ef39a7e256fe"
+        "modules/economic.py": "3684dc20b4573a746ae1bb7eade225511a493a0181d8ed94e149ae92a3a6c1f4"
       },
-      "verified_at": "23/11/2026 10:40:24",
-      "verified_commit": "a466d48",
+      "verified_at": "23/11/2026 13:11:15",
+      "verified_commit": "ad9ebcf",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -352,6 +352,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 13:11:15",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "ad9ebcf"
+    },
+    {
+      "timestamp": "23/11/2026 13:07:00",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 13:07:00. Motiu: Crear nova pestanya Hipoteca darrera Estalvis amb resum de dades i grafics",
+      "user": "admin",
+      "git_head": "ad9ebcf"
+    },
     {
       "timestamp": "23/11/2026 10:40:24",
       "action": "SEAL",
@@ -1135,22 +1151,6 @@
       "detail": "Versió verificada i segellada (Esborrar element seleccionat amb tecla Supr)",
       "user": "admin",
       "git_head": "1fc5dbc"
-    },
-    {
-      "timestamp": "11/11/2026 20:59:11",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Afegida carrega i exportacio d'esquemes electrics guardats (JSON i nuvol))",
-      "user": "admin",
-      "git_head": "96bafd6"
-    },
-    {
-      "timestamp": "11/11/2026 20:42:24",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Seleccio, moviment i goma sobre tota la caixa de text)",
-      "user": "admin",
-      "git_head": "5d96dbd"
     }
   ]
 }

@@ -2737,7 +2737,7 @@ def render(view_mode="economic"):
 
     tabs_list = ["📝 Ingrés / Despesa General"]
     if st.session_state.get("role") in ["admin", "guest"]:
-        tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🤖 Xat IA"])
+        tabs_list.extend(["🔴 Prev. Despeses", "🟢 Prev. Ingressos", "📈 Inversions", "💰 Estalvis", "🏡 Hipoteca", "🤖 Xat IA"])
     
     # Sincronització de pestanya nativa des de la URL (si es ve del menú superior amb tab=...)
     tab_param = st.query_params.get("tab")
@@ -2747,6 +2747,7 @@ def render(view_mode="economic"):
         "prev_ingressos": "🟢 Prev. Ingressos",
         "inversions": "📈 Inversions",
         "estalvis": "💰 Estalvis",
+        "hipoteca": "🏡 Hipoteca",
         "xat_ia": "🤖 Xat IA"
     }
     default_tab = tab_mapping.get(tab_param)
@@ -2762,12 +2763,14 @@ def render(view_mode="economic"):
         tab_prev_ing = tabs[2]
         tab_inversions = tabs[3]
         tab_estalvis = tabs[4]
-        tab_xat = tabs[5]
+        tab_hipoteca = tabs[5]
+        tab_xat = tabs[6]
     else:
         tab_prev_desp = None
         tab_prev_ing = None
         tab_inversions = None
         tab_estalvis = None
+        tab_hipoteca = None
         tab_xat = None
 
     # Removed Compres Super
@@ -3686,6 +3689,222 @@ def render(view_mode="economic"):
                 )
             else:
                 st.info("No hi ha dades registrades al pla d'estalvi.")
+
+    # ================= TAB: HIPOTECA =================
+    if tab_hipoteca:
+        with tab_hipoteca:
+            st.markdown("<h3 style='color:#f39c12;'>🏡 Préstec Hipotecari (Quadre d'Amortització)</h3>", unsafe_allow_html=True)
+            
+            if not df_hip.empty:
+                df_h_work = df_hip.copy()
+                df_h_work = df_h_work[df_h_work['any'].notna()].copy()
+                
+                # Normalitzar columnes
+                h_col_map = {}
+                for c in df_h_work.columns:
+                    cl = c.lower().strip()
+                    if 'period' in cl: h_col_map[c] = 'periode'
+                    elif 'inicial' in cl: h_col_map[c] = 'saldo_inicial'
+                    elif 'quota' in cl: h_col_map[c] = 'quota'
+                    elif 'inter' in cl: h_col_map[c] = 'interes'
+                    elif 'abono' in cl or 'amort' in cl: h_col_map[c] = 'amortitzacio'
+                    elif 'aport' in cl: h_col_map[c] = 'aportacio'
+                    elif 'final' in cl: h_col_map[c] = 'saldo_final'
+                    elif 'data' in cl: h_col_map[c] = 'data'
+                    elif 'mes' in cl: h_col_map[c] = 'mes'
+                    elif 'any' in cl: h_col_map[c] = 'any'
+                    elif 'pagat' in cl: h_col_map[c] = 'pagat'
+                    elif 'id' in cl: h_col_map[c] = 'id'
+                df_h_work.rename(columns=h_col_map, inplace=True)
+                
+                df_h_work['periode'] = pd.to_numeric(df_h_work['periode'], errors='coerce').fillna(0).astype(int)
+                df_h_work['any_num'] = pd.to_numeric(df_h_work['any'], errors='coerce').fillna(2026).astype(int)
+                
+                month_order = {
+                    'gener': 1, 'febrer': 2, 'març': 3, 'marc': 3, 'abril': 4, 'maig': 5, 'juny': 6,
+                    'juliol': 7, 'agost': 8, 'setembre': 9, 'octubre': 10, 'novembre': 11, 'desembre': 12,
+                    'enero': 1, 'febrero': 2, 'marzo': 3, 'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8, 'septiembre': 9, 'noviembre': 11, 'diciembre': 12
+                }
+                df_h_work['m_num'] = df_h_work['mes'].astype(str).str.lower().str.strip().map(month_order).fillna(1).astype(int)
+                df_h_work['sort_score'] = df_h_work['any_num'] * 100 + df_h_work['m_num']
+                df_h_sorted = df_h_work.sort_values(by='sort_score', ascending=True).reset_index(drop=True)
+                
+                for c in ['saldo_inicial', 'quota', 'interes', 'amortitzacio', 'aportacio', 'saldo_final']:
+                    if c in df_h_sorted.columns:
+                        df_h_sorted[c] = pd.to_numeric(df_h_sorted[c].astype(str).str.replace(',', '.'), errors='coerce').fillna(0.0)
+                
+                df_h_sorted['Period'] = df_h_sorted['mes'].astype(str).str.capitalize() + " " + df_h_sorted['any_num'].astype(str)
+                
+                # Mètriques clau
+                cap_inicial = float(df_h_sorted.iloc[0]['saldo_inicial']) if not df_h_sorted.empty else 0.0
+                paid_mask = df_h_sorted['pagat'].astype(str).str.lower().str.strip() == 'pagat'
+                df_paid = df_h_sorted[paid_mask]
+                df_pending = df_h_sorted[~paid_mask]
+                
+                num_pagats = len(df_paid)
+                total_quotes = len(df_h_sorted)
+                num_pendents = total_quotes - num_pagats
+                any_final = int(df_h_sorted.iloc[-1]['any_num']) if not df_h_sorted.empty else 2038
+                
+                if not df_paid.empty:
+                    last_p = df_paid.iloc[-1]
+                    saldo_pendent = float(last_p['saldo_final'])
+                    quota_actual = float(last_p['quota'])
+                    interes_actual = float(last_p['interes'])
+                    amort_actual = float(last_p['amortitzacio'])
+                    darrer_mes_pagat = f"{last_p['mes'].capitalize()} {int(last_p['any_num'])}"
+                else:
+                    saldo_pendent = cap_inicial
+                    quota_actual = float(df_h_sorted.iloc[0]['quota'])
+                    interes_actual = float(df_h_sorted.iloc[0]['interes'])
+                    amort_actual = float(df_h_sorted.iloc[0]['amortitzacio'])
+                    darrer_mes_pagat = "Cap"
+                
+                cap_amortitzat = cap_inicial - saldo_pendent
+                pct_amortitzat = (cap_amortitzat / cap_inicial * 100) if cap_inicial > 0 else 0.0
+                pct_progress = (num_pagats / total_quotes) if total_quotes > 0 else 0.0
+                
+                # 1. Mètriques en 4 columnes
+                col_h1, col_h2, col_h3, col_h4 = st.columns(4)
+                with col_h1:
+                    st.metric("Capital Pendent", f"{saldo_pendent:,.2f} €", delta=f"-{cap_amortitzat:,.2f} € amortitzat", delta_color="normal")
+                with col_h2:
+                    st.metric("Capital Inicial Concedit", f"{cap_inicial:,.2f} €", help="Capital inicial atorgat a l'inici del préstec")
+                with col_h3:
+                    st.metric("Quota Mensual Actual", f"{quota_actual:,.2f} €", delta=f"Cap: {amort_actual:,.0f}€ | Int: {interes_actual:,.0f}€", delta_color="off")
+                with col_h4:
+                    st.metric("Quotes Pagades / Venciment", f"{num_pagats} / {total_quotes}", delta=f"{num_pendents} restants (fins a {any_final})", delta_color="off")
+                
+                st.progress(pct_progress, text=f"Progrés del préstec: {pct_progress*100:.1f}% amortitzat ({num_pagats} de {total_quotes} quotes) — Darrer rebut pagat: {darrer_mes_pagat}")
+                
+                # 2. Gràfics d'Evolució
+                st.markdown("<h4 style='color:#f39c12; margin-top:20px;'>📈 Evolució i Amortització del Préstec</h4>", unsafe_allow_html=True)
+                tab_g1, tab_g2 = st.tabs(["📉 Saldo Pendent (Deute)", "📊 Desglossament Quota (Capital vs Interessos)"])
+                
+                with tab_g1:
+                    fig_deute = graph_objects.Figure()
+                    fig_deute.add_trace(graph_objects.Scatter(
+                        x=df_paid['Period'],
+                        y=df_paid['saldo_final'],
+                        mode='lines',
+                        name='Amortitzat Pagat (€)',
+                        line=dict(color='#22c55e', width=3),
+                        fill='tozeroy',
+                        fillcolor='rgba(34, 197, 94, 0.15)',
+                        hovertemplate='<b>%{x}</b><br>Saldo Pagat: <b>%{y:,.2f} €</b><extra></extra>'
+                    ))
+                    
+                    connect_df = pd.concat([df_paid.tail(1), df_pending]) if (not df_paid.empty and not df_pending.empty) else df_pending
+                    fig_deute.add_trace(graph_objects.Scatter(
+                        x=connect_df['Period'],
+                        y=connect_df['saldo_final'],
+                        mode='lines',
+                        name='Pendent Futur (€)',
+                        line=dict(color='#f59e0b', width=3, dash='dot'),
+                        fill='tozeroy',
+                        fillcolor='rgba(245, 158, 11, 0.08)',
+                        hovertemplate='<b>%{x}</b><br>Saldo Pendent: <b>%{y:,.2f} €</b><extra></extra>'
+                    ))
+                    fig_deute.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='#f8fafc', size=12),
+                        hovermode='x unified',
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                        xaxis=dict(gridcolor='#334155', tickangle=-45),
+                        yaxis=dict(gridcolor='#334155', ticksuffix=' €', tickformat=',.0f'),
+                        margin=dict(t=20, b=30, l=10, r=10),
+                        height=350
+                    )
+                    st.plotly_chart(fig_deute, use_container_width=True, config={'displayModeBar': False})
+                
+                with tab_g2:
+                    fig_quota = graph_objects.Figure()
+                    fig_quota.add_trace(graph_objects.Scatter(
+                        x=df_h_sorted['Period'],
+                        y=df_h_sorted['amortitzacio'],
+                        mode='lines',
+                        name='Amortització Capital (€)',
+                        stackgroup='one',
+                        line=dict(color='#38bdf8', width=1.5),
+                        fillcolor='rgba(56, 189, 248, 0.6)',
+                        hovertemplate='<b>%{x}</b><br>Amortització Capital: <b>%{y:,.2f} €</b><extra></extra>'
+                    ))
+                    fig_quota.add_trace(graph_objects.Scatter(
+                        x=df_h_sorted['Period'],
+                        y=df_h_sorted['interes'],
+                        mode='lines',
+                        name='Interessos Bancaris (€)',
+                        stackgroup='one',
+                        line=dict(color='#ef4444', width=1.5),
+                        fillcolor='rgba(239, 68, 68, 0.6)',
+                        hovertemplate='<b>%{x}</b><br>Interessos: <b>%{y:,.2f} €</b><extra></extra>'
+                    ))
+                    fig_quota.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='#f8fafc', size=12),
+                        hovermode='x unified',
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                        xaxis=dict(gridcolor='#334155', tickangle=-45),
+                        yaxis=dict(gridcolor='#334155', ticksuffix=' €', tickformat=',.0f'),
+                        margin=dict(t=20, b=30, l=10, r=10),
+                        height=350
+                    )
+                    st.plotly_chart(fig_quota, use_container_width=True, config={'displayModeBar': False})
+                
+                # 3. Taula d'amortització detallada amb filtre per any
+                st.markdown("<h4 style='color:#f39c12; margin-top:20px;'>📋 Quadre d'Amortització Detallat</h4>", unsafe_allow_html=True)
+                
+                col_filt1, col_filt2 = st.columns([4, 8], vertical_alignment="center")
+                with col_filt1:
+                    available_h_years = sorted(df_h_sorted['any_num'].unique().tolist(), reverse=True)
+                    sel_h_year = st.selectbox(
+                        "📅 Filtrar quadre per any:",
+                        ["Tots els anys (2018 - 2038)"] + [str(y) for y in available_h_years],
+                        index=available_h_years.index(selected_year) + 1 if selected_year in available_h_years else 0,
+                        key="sel_filter_hip_year"
+                    )
+                with col_filt2:
+                    if sel_h_year != "Tots els anys (2018 - 2038)":
+                        sub_y_h = df_h_sorted[df_h_sorted['any_num'] == int(sel_h_year)]
+                        tot_q_y = sub_y_h['quota'].sum()
+                        tot_c_y = sub_y_h['amortitzacio'].sum()
+                        tot_i_y = sub_y_h['interes'].sum()
+                        st.caption(f"Resum {sel_h_year}: Total quotes: **{tot_q_y:,.2f} €** (Capital: **{tot_c_y:,.2f} €** | Interessos: **{tot_i_y:,.2f} €**)")
+                
+                if sel_h_year == "Tots els anys (2018 - 2038)":
+                    df_h_table = df_h_sorted.copy()
+                else:
+                    df_h_table = df_h_sorted[df_h_sorted['any_num'] == int(sel_h_year)].copy()
+                
+                df_h_table_show = df_h_table[['periode', 'any_num', 'mes', 'quota', 'amortitzacio', 'interes', 'saldo_final', 'pagat']].copy()
+                df_h_table_show['mes'] = df_h_table_show['mes'].astype(str).str.capitalize()
+                df_h_table_show['pagat'] = df_h_table_show['pagat'].fillna('pendent').apply(lambda x: '✅ Pagat' if str(x).lower().strip() == 'pagat' else '⏳ Pendent')
+                
+                df_h_table_show.rename(columns={
+                    'periode': 'Període',
+                    'any_num': 'Any',
+                    'mes': 'Mes',
+                    'quota': 'Quota (€)',
+                    'amortitzacio': 'Amortització Capital (€)',
+                    'interes': 'Interessos (€)',
+                    'saldo_final': 'Saldo Pendent (€)',
+                    'pagat': 'Estat'
+                }, inplace=True)
+                
+                st.dataframe(
+                    df_h_table_show.style.format({
+                        'Quota (€)': '{:,.2f} €',
+                        'Amortització Capital (€)': '{:,.2f} €',
+                        'Interessos (€)': '{:,.2f} €',
+                        'Saldo Pendent (€)': '{:,.2f} €'
+                    }),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.info("No hi ha dades registrades a la taula d'hipoteca.")
 
 
         # ================= TAB 4: XAT IA & CONSELL D'ANCIANS =================
