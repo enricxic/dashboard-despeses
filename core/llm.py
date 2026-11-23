@@ -10,7 +10,8 @@ def call_llm_api(
     provider: str = "gemini",
     json_mode: bool = False,
     image_bytes: bytes = None,
-    mime_type: str = "image/jpeg"
+    mime_type: str = "image/jpeg",
+    max_tokens: int = 4096
 ) -> Tuple[bool, str, float]:
     """
     Funció centralitzada per fer crides a qualsevol proveïdor d'IA (Gemini, DeepSeek, OpenRouter).
@@ -19,9 +20,9 @@ def call_llm_api(
     start_time = time.time()
     
     if provider == "gemini":
-        return _call_gemini(prompt, api_key, model_name, start_time, json_mode=json_mode, image_bytes=image_bytes, mime_type=mime_type)
+        return _call_gemini(prompt, api_key, model_name, start_time, json_mode=json_mode, image_bytes=image_bytes, mime_type=mime_type, max_tokens=max_tokens)
     elif provider in ["deepseek", "openrouter", "openai"]:
-        return _call_openai_compatible(prompt, api_key, model_name, provider, start_time, json_mode=json_mode, image_bytes=image_bytes, mime_type=mime_type)
+        return _call_openai_compatible(prompt, api_key, model_name, provider, start_time, json_mode=json_mode, image_bytes=image_bytes, mime_type=mime_type, max_tokens=max_tokens)
     else:
         return False, f"Proveïdor d'IA desconegut: {provider}", 0.0
 
@@ -32,7 +33,8 @@ def _call_gemini(
     start_time: float,
     json_mode: bool = False,
     image_bytes: bytes = None,
-    mime_type: str = "image/jpeg"
+    mime_type: str = "image/jpeg",
+    max_tokens: int = 4096
 ) -> Tuple[bool, str, float]:
     models_to_try = [model_name]
     for alt in ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.5-pro", "gemini-flash-latest", "gemini-pro-latest"]:
@@ -57,7 +59,7 @@ def _call_gemini(
             
         gen_config: Dict[str, Any] = {
             "temperature": 0.1,
-            "maxOutputTokens": 4096
+            "maxOutputTokens": max_tokens
         }
         if json_mode:
             gen_config["responseMimeType"] = "application/json"
@@ -169,7 +171,8 @@ def _call_openai_compatible(
     start_time: float,
     json_mode: bool = False,
     image_bytes: bytes = None,
-    mime_type: str = "image/jpeg"
+    mime_type: str = "image/jpeg",
+    max_tokens: int = 4000
 ) -> Tuple[bool, str, float]:
     if provider == "deepseek":
         base_url = "https://api.deepseek.com/chat/completions"
@@ -203,12 +206,13 @@ def _call_openai_compatible(
     else:
         messages = [{"role": "user", "content": prompt}]
 
-    # Per OpenRouter, 4000 tokens evita errors 402 si el balanç és reduït
+    # Per defecte limitem per evitar errors 402/saturació
+    eff_max_tokens = min(max_tokens, 4000) if provider == "openrouter" else max_tokens
     payload: Dict[str, Any] = {
         "model": model_name,
         "messages": messages,
         "temperature": 0.1,
-        "max_tokens": 4000
+        "max_tokens": eff_max_tokens
     }
     if json_mode:
         payload["response_format"] = {"type": "json_object"}

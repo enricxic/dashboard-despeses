@@ -19,79 +19,103 @@ from core.llm import call_llm_api
 
 # ----------------- PROMPTS DELS CONSELLERS -----------------
 
-PROMPT_SENECA = """Ets SÈNECA, l'Ancià Prudent i Conservador del Consell Financer de la llar (XiquiHouse).
-La teva filosofia es basa en l'estoïcisme, la gestió estricta del risc i la pau d'esperit:
-- La teva màxima prioritat és protegir la família davant de qualsevol imprevist (fons d'emergència intocable, liquiditat, cap deute innecessari).
-- Analitza sempre el pitjor escenari possible (worst-case scenario).
-- Alerta sobre despeses supèrflues, quotes fixes que lliguin les mans de la família i inversions massa arriscades.
-- Parla amb to assenyat, mesurat i savi, en català clar i elegant.
-- Comença la teva intervenció amb una breu reflexió estoica i exposa 2 o 3 arguments clars des de la prudència.
-- No facis introduccions buides, vés directe a l'anàlisi de la consulta plantejada."""
+PROMPT_SENECA = """Ets SÈNECA, l'Ancià Prudent del Consell Financer de XiquiHouse.
+La teva filosofia: estoïcisme, gestió del risc, fons d'emergència i tranquil·litat familiar davant de qualsevol imprevist.
+REGLA D'OR DE BREVETAT I CLARETAT (MOLT IMPORTANT):
+- Vés DIRECTE al gra, sense salutacions ni introduccions buides.
+- Respon OBLIGATÒRIAMENT en un màxim de 3 punts curts (bullets).
+- Longitud total: Màxim 70-90 paraules en total. Prohibit allargar-te.
+- To: assenyat, estoic i realista, en català."""
 
-PROMPT_KEYNES = """Ets KEYNES, l'Ancià Estrateg i Oportunista del Consell Financer de la llar (XiquiHouse).
-La teva filosofia es basa en l'economia pràctica, el creixement patrimonial i l'eficiència del capital:
-- La teva màxima prioritat és no deixar els diners parats perdent valor per la inflació; els diners han de treballar per a la família.
-- Analitza el cost d'oportunitat, el retorn de la inversió (ROI), la rendibilitat a llarg termini i les oportunitats d'optimització (reducció de costos recurrents, eficiència energètica, etc.).
-- Sigues pragmàtic i audaç però intel·ligent: si una despesa o inversió genera estalvi futur o creixement, defenseu-la amb números.
-- Parla amb to analític, dinàmic i decidit, en català directe.
-- Exposa 2 o 3 arguments econòmics estratègics clars sobre la consulta."""
+PROMPT_KEYNES = """Ets KEYNES, l'Ancià Estrateg del Consell Financer de XiquiHouse.
+La teva filosofia: inversió intel·ligent, no deixar diners parats perdent per la inflació, retorn (ROI) i cost d'oportunitat.
+REGLA D'OR DE BREVETAT I CLARETAT (MOLT IMPORTANT):
+- Vés DIRECTE al gra, sense salutacions ni teoria econòmica abstracta.
+- Respon OBLIGATÒRIAMENT en un màxim de 3 punts curts (bullets) amb criteris i recomanacions pràctiques.
+- Longitud total: Màxim 70-90 paraules en total. Prohibit allargar-te.
+- To: àgil, pragmàtic i analític, en català."""
 
-PROMPT_EPICUR = """Ets EPICUR, l'Ancià del Benestar i la Llar del Consell Financer de la llar (XiquiHouse).
-La teva filosofia es basa en el benestar humà, la felicitat quotidiana i la reducció de l'angoixa:
-- La teva màxima prioritat és la qualitat de vida dels membres de la família: els diners són només una eina per viure millor, no un fi en si mateix.
-- Valora com la decisió afecta la convivència, el descans, el temps lliure compartit, la salut mental i la comoditat de la llar.
-- Si una despesa estalvia temps o maldecaps a la família, el seu valor és incalculable; si un estalvi extrem porta frustració o conflicte, és un mal negoci.
-- Parla amb to càlid, humà i empàtic, en català proper.
-- Exposa 2 o 3 reflexions humanes clares sobre com afecta aquesta decisió el dia a dia de la casa."""
+PROMPT_EPICUR = """Ets EPICUR, l'Ancià del Benestar del Consell Financer de XiquiHouse.
+La teva filosofia: benestar de la llar, qualitat de vida familiar, pau mental i gaudi raonable del present.
+REGLA D'OR DE BREVETAT I CLARETAT (MOLT IMPORTANT):
+- Vés DIRECTE al gra, sense salutacions ni preàmbuls.
+- Respon OBLIGATÒRIAMENT en un màxim de 3 punts curts (bullets) enfocats a la convivència, descans i felicitat familiar.
+- Longitud total: Màxim 70-90 paraules en total. Prohibit allargar-te.
+- To: càlid, empàtic i humà, en català."""
 
 PROMPT_PRESIDENT = """Ets el PRESIDENT DEL CONSELL FINANCER de XiquiHouse.
-Has escoltat atentament la deliberació dels teus tres consellers (Sèneca la Prudència, Keynes l'Estratègia i Epicur el Benestar).
+Has d'arbitrar i sintetitzar les deliberacions dels 3 ancians (Sèneca la Prudència, Keynes l'Estratègia i Epicur el Benestar) per donar un veredicte clar i executable a la família.
 
-La teva missió és actuar com a àrbitre neutral i emetre el VEREDICTE FINAL per a la família.
-
-Estructura la teva resposta obligatòriament en aquests 4 punts en català:
-
-1. 🤝 **Punts de Consens**: On coincideixen els consellers? Què és evident i inqüestionable?
-2. ⚡ **Tensions i Riscos Clau**: Quin és el gran dilema detectat (ex: prudència vs comoditat, risc vs oportunitat)?
-3. ⚖️ **Veredicte i Recomanació Recomanada**: Quina és la millor decisió equilibrada per a XiquiHouse tenint en compte les seves dades reals?
-4. 📋 **Full de Ruta (Passos concrets)**: 2 o 3 accions pràctiques i immediates per executar la decisió sense sobresalts."""
+REGLA D'OR DE BREVETAT (MOLT IMPORTANT):
+- Màxim 110-130 paraules en total per a tota la teva resposta. Sigues concís, contundent i pràctic.
+- Respon OBLIGATÒRIAMENT estructurat en aquests 4 punts clau:
+1. 🤝 **Consens**: En què coincideixen els 3 consellers? (1 frase curta)
+2. ⚡ **Tensió clau**: Quin és el dilema principal (ex: risc vs oportunitat, estalvi vs confort)? (1 frase curta)
+3. ⚖️ **Veredicte**: Quina decisió recomana el Consell tenint en compte les dades reals? (1 o 2 frases curtes)
+4. 📋 **Passos immediats**: 2 accions pràctiques per executar avui o demà. (2 punts curts)"""
 
 
 def construir_resum_dades(df_desp, df_ing, df_cartera, any_analitzar: Optional[int] = None) -> str:
     """Condensa les dades financeres clau per enviar el context als consellers sense saturar tokens."""
     try:
         import pandas as pd
-        any_actual = any_analitzar or 2026
+        any_actual = int(any_analitzar) if any_analitzar is not None else 2026
         
-        # Filtre any
-        desp_any = df_desp[df_desp["any"] == any_actual] if "any" in df_desp.columns else df_desp
-        ing_any = df_ing[df_ing["any"] == any_actual] if "any" in df_ing.columns else df_ing
-        
-        tot_desp = desp_any["Import"].sum() if "Import" in desp_any.columns else 0.0
-        tot_ing = ing_any["Import"].sum() if "Import" in ing_any.columns else 0.0
-        balanc_any = tot_ing - tot_desp
-        
-        # Top 3 categories despesa
-        top_cat = ""
-        if "Categoria" in desp_any.columns and "Import" in desp_any.columns:
-            gr = desp_any.groupby("Categoria")["Import"].sum().sort_values(ascending=False).head(4)
-            top_cat = ", ".join([f"{c}: {v:.0f}€" for c, v in gr.items()])
+        # 1. Anàlisi taula despeses.csv (Import càrrec i import ingrés)
+        if df_desp is not None and not df_desp.empty:
+            any_s = pd.to_numeric(df_desp.get("any"), errors="coerce")
+            desp_any = df_desp[any_s == any_actual].copy()
             
-        # Cartera / fons
+            # Excloure traspassos interns entre comptes (op_banc)
+            if "Idcategoria" in desp_any.columns:
+                desp_any = desp_any[desp_any["Idcategoria"] != "op_banc"]
+            if "grup" in desp_any.columns:
+                desp_any = desp_any[desp_any["grup"] != "op_banc"]
+                
+            # Trobar columna de càrrecs (despeses reals)
+            col_carrec = next((c for c in desp_any.columns if any(w in c.lower() for w in ["carrec", "càrrec", "crrec"])), None)
+            tot_desp = pd.to_numeric(desp_any[col_carrec], errors="coerce").sum() if col_carrec else 0.0
+
+            # Trobar columna d'ingressos bancaris
+            col_ing = next((c for c in desp_any.columns if "ingr" in c.lower()), None)
+            tot_ing = pd.to_numeric(desp_any[col_ing], errors="coerce").sum() if col_ing else 0.0
+
+            # Categories principals de despesa
+            top_cat = ""
+            cat_col = "Idcategoria" if "Idcategoria" in desp_any.columns else ("Categoria" if "Categoria" in desp_any.columns else None)
+            if cat_col and col_carrec:
+                gr = desp_any.groupby(cat_col)[col_carrec].sum().sort_values(ascending=False).head(5)
+                top_cat = ", ".join([f"{c}: {v:,.0f}€" for c, v in gr.items() if v > 0])
+        else:
+            tot_desp = 0.0
+            tot_ing = 0.0
+            top_cat = "Sense dades"
+
+        # 2. Ingressos des de la taula ingressos.csv si no en tenim a despeses
+        if tot_ing == 0.0 and df_ing is not None and not df_ing.empty:
+            any_ing = pd.to_numeric(df_ing.get("any"), errors="coerce")
+            ing_any = df_ing[any_ing == any_actual]
+            if "Import" in ing_any.columns:
+                tot_ing = pd.to_numeric(ing_any["Import"], errors="coerce").sum()
+
+        balanc_any = tot_ing - tot_desp
+
+        # 3. Cartera d'inversió (tr_cartera.csv)
         tot_cartera = 0.0
-        if df_cartera is not None and not df_cartera.empty and "saldo" in df_cartera.columns:
-            try:
-                tot_cartera = pd.to_numeric(df_cartera["saldo"], errors="coerce").sum()
-            except Exception:
-                tot_cartera = 0.0
+        if df_cartera is not None and not df_cartera.empty:
+            compra = pd.to_numeric(df_cartera.get("COMPRA", 0), errors="coerce").fillna(0).sum()
+            venda = pd.to_numeric(df_cartera.get("VENDA", 0), errors="coerce").fillna(0).sum()
+            tot_cartera = compra - venda
+            if tot_cartera == 0.0 and "saldo" in df_cartera.columns:
+                tot_cartera = pd.to_numeric(df_cartera["saldo"], errors="coerce").fillna(0).sum()
 
         resum = (
             f"- Any d'anàlisi: {any_actual}\n"
             f"- Total Ingressos de l'any: {tot_ing:,.2f} €\n"
             f"- Total Despeses de l'any: {tot_desp:,.2f} €\n"
-            f"- Saldo acumulat de l'any: {balanc_any:,.2f} €\n"
-            f"- Despeses principals: {top_cat}\n"
-            f"- Valor total actius/cartera registrat: {tot_cartera:,.2f} €\n"
+            f"- Balanç de l'any (Ingressos - Despeses): {balanc_any:,.2f} €\n"
+            f"- Categories de despesa principals: {top_cat}\n"
+            f"- Valor total invertit en cartera (actius): {tot_cartera:,.2f} €\n"
         )
         return resum
     except Exception as e:
@@ -99,14 +123,20 @@ def construir_resum_dades(df_desp, df_ing, df_cartera, any_analitzar: Optional[i
 
 
 def _consultar_membre(prompt_sistema: str, consulta: str, context_financier: str, api_key: str, model_name: str, provider: str) -> str:
-    """Executa la consulta per a un membre individual del consell."""
+    """Executa la consulta per a un membre individual del consell amb límit estricte de tokens."""
     prompt_complet = (
         f"{prompt_sistema}\n\n"
         f"--- CONTEXT FINANCER DE XIQUIHOUSE ---\n{context_financier}\n\n"
         f"--- CONSULTA DE LA FAMÍLIA ---\n{consulta}\n\n"
-        f"Emet el teu judici raonat:"
+        f"Emet la teva resposta breu (màxim 3 punts curts):"
     )
-    ok, resp, _ = call_llm_api(prompt_complet, api_key=api_key, model_name=model_name, provider=provider)
+    ok, resp, _ = call_llm_api(
+        prompt_complet,
+        api_key=api_key,
+        model_name=model_name,
+        provider=provider,
+        max_tokens=350
+    )
     if ok and resp.strip():
         return resp.strip()
     return f"⚠️ No s'ha pogut obtenir l'opinió del conseller (Error de resposta)."
@@ -124,9 +154,9 @@ def deliberar_consell(
 ) -> Dict[str, Any]:
     """
     Executa la deliberació completa del Consell d'Ancians:
-    1. Crida en paral·lel a Sèneca, Keynes i Epicur.
+    1. Crida en paral·lel a Sèneca, Keynes i Epicur (max_tokens=350).
     2. Recull les 3 opinions.
-    3. Convoca el President per emetre el veredicte final ponderat.
+    3. Convoca el President per emetre el veredicte final ponderat (max_tokens=600).
     """
     t_start = time.time()
     context_str = construir_resum_dades(df_desp, df_ing, df_cartera, any_analitzar)
@@ -149,14 +179,15 @@ def deliberar_consell(
         f"🏡 OPINIÓ D'EPICUR (Benestar i Família):\n{op_epicur}\n\n"
         f"--- CONTEXT DE LA CASA ---\n{context_str}\n\n"
         f"--- PREGUNTA DE LA FAMÍLIA ---\n{consulta}\n\n"
-        f"President, sintetitza la deliberació i emet el veredicte final segons l'estructura demanada:"
+        f"President, sintetitza la deliberació i emet el veredicte final segons l'estructura demanada (màxim 120 paraules):"
     )
     
     ok_p, veredicte_text, _ = call_llm_api(
         f"{PROMPT_PRESIDENT}\n\n{deliberacio_conjunta}",
         api_key=api_key,
         model_name=model_name,
-        provider=provider
+        provider=provider,
+        max_tokens=600
     )
     if not ok_p or not veredicte_text.strip():
         veredicte_text = "⚠️ No s'ha pogut generar el veredicte del President."
