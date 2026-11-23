@@ -235,7 +235,10 @@ def render():
     # TAB 4: NOVA PEÇA
     with tab4:
         st.markdown("<h4 style='color:#f39c12;'>➕ Registrar Nova Peça de Roba</h4>", unsafe_allow_html=True)
-        with st.form("form_nova_peça"):
+        if "roba_saved_msg" in st.session_state:
+            st.success(st.session_state.pop("roba_saved_msg"))
+
+        with st.form("form_nova_peça", clear_on_submit=True):
             col_r1, col_r2 = st.columns(2)
             with col_r1:
                 r_nom = st.text_input("Descripció de la peça", placeholder="Ex: Jaqueta impermeable verda, texans...", key="r_nom")
@@ -263,6 +266,12 @@ def render():
                         "ubicacio": r_ubic.strip()
                     })
                     data["peces"] = peces
+                    _save_roba_data(data)
+                    for k in ["r_nom", "r_prop", "r_talla", "r_color", "r_ubic"]:
+                        if k in st.session_state:
+                            st.session_state[k] = ""
+                    st.session_state["roba_saved_msg"] = f"✅ Peça '{r_nom.strip()}' desada amb èxit!"
+                    st.rerun()
                     _save_roba_data(data)
                     st.success("✅ Peça de roba afegida a l'armari!")
                     st.rerun()

@@ -212,7 +212,10 @@ def render():
     # TAB 4: NOU VIATGE
     with tab4:
         st.markdown("<h4 style='color:#f39c12;'>➕ Registrar una Nova Aventura o Escapada</h4>", unsafe_allow_html=True)
-        with st.form("form_nou_viatge"):
+        if "viatge_saved_msg" in st.session_state:
+            st.success(st.session_state.pop("viatge_saved_msg"))
+
+        with st.form("form_nou_viatge", clear_on_submit=True):
             col_f1, col_f2 = st.columns(2)
             with col_f1:
                 f_dest = st.text_input("📍 Destinació / Ciutat / Zona", placeholder="Ex: Roma, Menorca, Pirineus...", key="form_v_dest")
@@ -248,7 +251,19 @@ def render():
                     viatges.append(nou_viatge)
                     data["viatges"] = viatges
                     _save_viatges_data(data)
-                    st.success("✅ Viatge registrat amb èxit!")
+                    
+                    # Buidar explícitament els camps del formulari
+                    for k in ["form_v_dest", "form_v_pais", "form_v_allotj", "form_v_notes"]:
+                        if k in st.session_state:
+                            st.session_state[k] = ""
+                    if "form_v_press" in st.session_state:
+                        st.session_state["form_v_press"] = 300.0
+                    if "form_v_dini" in st.session_state:
+                        st.session_state["form_v_dini"] = date.today()
+                    if "form_v_dfi" in st.session_state:
+                        st.session_state["form_v_dfi"] = date.today()
+
+                    st.session_state["viatge_saved_msg"] = f"✅ Viatge a '{nou_viatge['destinacio']}' registrat amb èxit!"
                     st.rerun()
                 else:
                     st.error("Si us plau, introdueix com a mínim la destinació del viatge.")
