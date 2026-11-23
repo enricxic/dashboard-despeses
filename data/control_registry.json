@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 09:14:14",
+  "updated_at": "23/11/2026 09:19:54",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -41,13 +41,13 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "3c28cefd92f73897e24de96a8d04283211e041b3e84e6815073bbf46cf550e31"
+        "modules/economic.py": "0319575951ddb65fa1e8efeb7925e73c15c9d17001be64ebd532ca3326e2fa23"
       },
-      "verified_at": "12/11/2026 13:27:28",
-      "verified_commit": "0df16fb",
+      "verified_at": "23/11/2026 09:19:53",
+      "verified_commit": "02b365c",
       "verified_by": "admin",
-      "unlocked_until": "24/11/2026 09:14:14",
-      "unlock_reason": "Integracio Consell Financer al Chat IA"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 09:19:53",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Segellat post-commit integracio Consell d Ancians",
+      "user": "admin",
+      "git_head": "02b365c"
+    },
     {
       "timestamp": "23/11/2026 09:14:14",
       "action": "UNLOCK",
@@ -1143,14 +1151,6 @@
       "detail": "Versió verificada i segellada (Dies avis fases pendents i popover dates)",
       "user": "admin",
       "git_head": "29196f1"
-    },
-    {
-      "timestamp": "11/11/2026 17:45:58",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Graella Grid 100% amplada i miniatures 68x68px)",
-      "user": "admin",
-      "git_head": "7381e7e"
     }
   ]
 }
