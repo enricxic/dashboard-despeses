@@ -101,7 +101,7 @@ def render():
         else:
             for idx, v in enumerate(viatges):
                 with st.container():
-                    col_card, col_act = st.columns([8, 2], vertical_alignment="center")
+                    col_card, col_act = st.columns([7.8, 2.2], vertical_alignment="center")
                     with col_card:
                         try:
                             d_ini = datetime.strptime(v["data_inici"], "%Y-%m-%d").strftime("%d/%m/%Y")
@@ -126,11 +126,83 @@ def render():
                         </div>
                         """, unsafe_allow_html=True)
                     with col_act:
-                        if st.button("🗑️ Eliminar", key=f"del_viatge_{idx}", use_container_width=True):
+                        is_editing = (st.session_state.get("editing_viatge_id") == v.get("id"))
+                        btn_edit_label = "✖️ Tancar" if is_editing else "✏️ Modificar"
+                        if st.button(btn_edit_label, key=f"edit_viatge_{v.get('id', idx)}", use_container_width=True):
+                            st.session_state["editing_viatge_id"] = None if is_editing else v.get("id")
+                            st.rerun()
+                        if st.button("🗑️ Eliminar", key=f"del_viatge_{v.get('id', idx)}", use_container_width=True):
+                            if st.session_state.get("editing_viatge_id") == v.get("id"):
+                                st.session_state["editing_viatge_id"] = None
                             viatges.pop(idx)
                             data["viatges"] = viatges
                             _save_viatges_data(data)
                             st.rerun()
+
+                    # Formulari desplegable de modificació
+                    if st.session_state.get("editing_viatge_id") == v.get("id"):
+                        with st.container():
+                            st.markdown(f"""
+                            <div style="background:#0f172a; border:1px solid #38bdf8; border-radius:8px; padding:16px; margin: 0 0 16px 0;">
+                                <div style="font-size:1rem; font-weight:700; color:#38bdf8; margin-bottom:12px;">✏️ Modificant: {v.get('destinacio')}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            with st.form(f"form_edit_viatge_{v.get('id', idx)}"):
+                                ce1, ce2 = st.columns(2)
+                                with ce1:
+                                    e_dest = st.text_input("📍 Destinació", value=v.get("destinacio", ""), key=f"e_dest_{v.get('id')}")
+                                    e_pais = st.text_input("🌍 País / Regió", value=v.get("pais", ""), key=f"e_pais_{v.get('id')}")
+                                    t_opts = ["Cotxe propi", "Avió", "Tren", "Autobús", "Vaixell / Ferri", "Altres"]
+                                    cur_t = v.get("transport", "Cotxe propi")
+                                    idx_t = t_opts.index(cur_t) if cur_t in t_opts else 0
+                                    e_transp = st.selectbox("🚗 Mitjà de Transport", t_opts, index=idx_t, key=f"e_transp_{v.get('id')}")
+                                    
+                                    estats = ["Planificat", "En curs", "Completat", "Cancel·lat"]
+                                    cur_e = v.get("estat", "Planificat")
+                                    idx_e = estats.index(cur_e) if cur_e in estats else 0
+                                    e_estat = st.selectbox("📌 Estat del Viatge", estats, index=idx_e, key=f"e_estat_{v.get('id')}")
+                                with ce2:
+                                    ce_d1, ce_d2 = st.columns(2)
+                                    try:
+                                        val_dini = datetime.strptime(v.get("data_inici", ""), "%Y-%m-%d").date()
+                                    except Exception:
+                                        val_dini = date.today()
+                                    try:
+                                        val_dfi = datetime.strptime(v.get("data_fi", ""), "%Y-%m-%d").date()
+                                    except Exception:
+                                        val_dfi = date.today()
+                                    with ce_d1:
+                                        e_dini = st.date_input("📅 Data d'inici", value=val_dini, format="DD/MM/YYYY", key=f"e_dini_{v.get('id')}")
+                                    with ce_d2:
+                                        e_dfi = st.date_input("📅 Data de tornada", value=val_dfi, format="DD/MM/YYYY", key=f"e_dfi_{v.get('id')}")
+                                    e_allotj = st.text_input("🏨 Allotjament", value=v.get("allotjament", ""), key=f"e_allotj_{v.get('id')}")
+                                    e_press = st.number_input("💶 Pressupost estimat (€)", min_value=0.0, step=50.0, value=float(v.get("pressupost", 0.0)), key=f"e_press_{v.get('id')}")
+
+                                e_notes = st.text_area("📝 Notes, enllaços o plans", value=v.get("notes", ""), key=f"e_notes_{v.get('id')}")
+
+                                c_save, c_cancel = st.columns([2, 1])
+                                with c_save:
+                                    if st.form_submit_button("💾 Desar Canvis", type="primary", use_container_width=True):
+                                        if e_dest.strip():
+                                            v["destinacio"] = e_dest.strip()
+                                            v["pais"] = e_pais.strip()
+                                            v["transport"] = e_transp
+                                            v["estat"] = e_estat
+                                            v["data_inici"] = e_dini.strftime("%Y-%m-%d")
+                                            v["data_fi"] = e_dfi.strftime("%Y-%m-%d")
+                                            v["allotjament"] = e_allotj.strip()
+                                            v["pressupost"] = float(e_press)
+                                            v["notes"] = e_notes.strip()
+                                            data["viatges"] = viatges
+                                            _save_viatges_data(data)
+                                            st.session_state["editing_viatge_id"] = None
+                                            st.rerun()
+                                        else:
+                                            st.error("La destinació no pot estar buida.")
+                                with c_cancel:
+                                    if st.form_submit_button("❌ Cancel·lar", use_container_width=True):
+                                        st.session_state["editing_viatge_id"] = None
+                                        st.rerun()
 
     # TAB 2: LLISTA D'EQUIPATGE
     with tab2:
