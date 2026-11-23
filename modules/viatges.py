@@ -186,6 +186,16 @@ def render():
             import pandas as pd
             df_v = pd.DataFrame(viatges)
             df_show = df_v[["destinacio", "data_inici", "data_fi", "transport", "allotjament", "pressupost", "estat"]].copy()
+            
+            def _fmt_d(val):
+                try:
+                    return datetime.strptime(str(val), "%Y-%m-%d").strftime("%d/%m/%Y")
+                except Exception:
+                    return str(val)
+                    
+            df_show["data_inici"] = df_show["data_inici"].apply(_fmt_d)
+            df_show["data_fi"] = df_show["data_fi"].apply(_fmt_d)
+            
             df_show.rename(columns={
                 "destinacio": "Destinació",
                 "data_inici": "Inici",
@@ -211,9 +221,9 @@ def render():
             with col_f2:
                 col_d1, col_d2 = st.columns(2)
                 with col_d1:
-                    f_dini = st.date_input("📅 Data d'inici", value=date.today(), key="form_v_dini")
+                    f_dini = st.date_input("📅 Data d'inici", value=date.today(), format="DD/MM/YYYY", key="form_v_dini")
                 with col_d2:
-                    f_dfi = st.date_input("📅 Data de tornada", value=date.today(), key="form_v_dfi")
+                    f_dfi = st.date_input("📅 Data de tornada", value=date.today(), format="DD/MM/YYYY", key="form_v_dfi")
                 f_allotj = st.text_input("🏨 Allotjament", placeholder="Ex: Hotel, Apartament, Càmping...", key="form_v_allotj")
                 f_press = st.number_input("💶 Pressupost estimat (€)", min_value=0.0, step=50.0, value=300.0, key="form_v_press")
 
