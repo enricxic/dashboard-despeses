@@ -3688,14 +3688,23 @@ def render(view_mode="economic"):
                 st.info("No hi ha dades registrades al pla d'estalvi.")
 
 
-        # ================= TAB 4: XAT IA =================
+        # ================= TAB 4: XAT IA & CONSELL D'ANCIANS =================
     if tab_xat:
         with tab_xat:
-            st.markdown("<h3 style='color:#f39c12;'>💬 Xat IA amb Gemini</h3>", unsafe_allow_html=True)
-                
-            if not has_gemini:
-                st.warning("⚠️ No s'ha detectat la clau GEMINI_API_KEY als secrets. L'assistent no està disponible.")
-            else:
+            col_t_title, col_t_mode = st.columns([6, 6], vertical_alignment="center")
+            with col_t_title:
+                st.markdown("<h3 style='color:#f39c12; margin:0;'>💬 Intel·ligència Financera</h3>", unsafe_allow_html=True)
+            with col_t_mode:
+                mode_ia = st.radio(
+                    "Mode de consulta:",
+                    ["💬 Xiqui Administrativa (Respostes ràpides)", "🏛️ Consell d'Ancians (Debat de decisions)"],
+                    horizontal=True,
+                    key="sel_mode_xat_eco"
+                )
+
+            if not has_gemini and "OPENROUTER_API_KEY" not in st.secrets:
+                st.warning("⚠️ No s'ha detectat cap clau d'IA (GEMINI_API_KEY o OPENROUTER_API_KEY) als secrets. L'assistent no està disponible.")
+            elif mode_ia == "💬 Xiqui Administrativa (Respostes ràpides)":
                 col_text, col_filter = st.columns([8, 4], vertical_alignment="bottom")
                 with col_text:
                     st.write("Pregunta-li el que vulguis a l'assistent sobre les teves despeses, ingressos o cartera.")
@@ -3724,9 +3733,7 @@ def render(view_mode="economic"):
     
                 # React to user input
                 if prompt := st.chat_input("Exemple: Quant he gastat en gasolina el mes de juny?"):
-                    # Display user message in chat message container
                     st.chat_message("user", avatar="👤").markdown(prompt)
-                    # Add user message to chat history
                     st.session_state.messages.append({"role": "user", "content": prompt})
                         
                     with st.spinner("La Xiqui Administrativa està pensant..."):
@@ -3734,7 +3741,6 @@ def render(view_mode="economic"):
                             import google.generativeai as genai
                             model = genai.GenerativeModel('gemini-flash-latest')
                                 
-                            # Prepare context using only analisi_year to drastically reduce token usage
                             year_desp_context = df_desp[df_desp['any'] == analisi_year] if 'any' in df_desp.columns else df_desp
                             year_ing_context = df_ing[df_ing['any'] == analisi_year] if 'any' in df_ing.columns else df_ing
                                 
@@ -3745,13 +3751,11 @@ def render(view_mode="economic"):
                                 
                             sys_prompt = "Ets la Xiqui, l'assistent financera anime de 20 anys per a XiquiHouse. Respons a les preguntes de l'usuari únicament basant-te en les dades proporcionades. Respon sempre en català de forma molt clara, amable i concisa. IMPORTANT: Respon exclusivament amb text normal, no utilitzis cap eina ni function call ni codi."
                                 
-                            # Generate response
                             response = model.generate_content([sys_prompt, context, prompt])
                                 
                             try:
                                 response_text = response.text
                             except ValueError:
-                                # Safely extract parts if it threw an error
                                 parts = response.candidates[0].content.parts
                                 response_text = "".join([p.text for p in parts if hasattr(p, 'text')])
                                 if not response_text:
@@ -3759,13 +3763,117 @@ def render(view_mode="economic"):
                         except Exception as e:
                             response_text = f"❌ Error de l'API: {str(e)}"
                                 
-                    # Display assistant response in chat message container
                     with st.chat_message("assistant"):
                         st.markdown(response_text)
-                    # Add assistant response to chat history
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
-    
-    
+
+            else:
+                # ================= CONSELL D'ANCIANS =================
+                st.markdown(
+                    """
+                    <div style="background-color: #1e293b; border-left: 5px solid #8e44ad; padding: 14px 18px; border-radius: 8px; margin: 10px 0 16px 0;">
+                        <h4 style="margin: 0; color: #c084fc;">🏛️ Consell d'Ancians Financer de XiquiHouse</h4>
+                        <p style="margin: 6px 0 0 0; font-size: 0.9em; color: #e2e8f0; line-height: 1.4;">
+                            Arquitectura multi-agent (inspirada en Google ADK): Tres consellers deliberen de manera independent des de perspectives oposades i el <b>President del Consell</b> sintetitza el veredicte final per a decisions financeres clau.
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                # Targetes dels 3 consellers
+                col_m1, col_m2, col_m3 = st.columns(3)
+                with col_m1:
+                    st.info("🛡️ **SÈNECA**\n\n*L'Ancià Prudent*\n\nPrioritza la liquiditat, el fons d'emergència i la minimització del risc.")
+                with col_m2:
+                    st.warning("📈 **KEYNES**\n\n*L'Ancià Estrateg*\n\nPrioritza el ROI, el cost d'oportunitat i no deixar diners parats.")
+                with col_m3:
+                    st.success("🏡 **EPICUR**\n\n*L'Ancià del Benestar*\n\nPrioritza la qualitat de vida, la tranquil·litat mental i el confort familiar.")
+
+                col_c_config1, col_c_config2 = st.columns([7, 5], vertical_alignment="bottom")
+                with col_c_config1:
+                    from core.llm_ui import render_ai_selector
+                    c_prov, c_mod, c_key = render_ai_selector(key_prefix="consell_eco", default_model="Gemini (2.5 Flash)")
+                with col_c_config2:
+                    c_year = st.selectbox("📅 Any de referència:", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year_consell")
+
+                st.markdown("###### 💡 Preguntes ràpides freqüents per al Consell:")
+                q1, q2, q3 = st.columns(3)
+                p_preset = None
+                if q1.button("📉 Amortitzar hipoteca o fons?", use_container_width=True, key="btn_q_hipo"):
+                    p_preset = "Val la pena amortitzar part de la hipoteca ara mateix o és millor destinar aquests diners a fons d'inversió / cartera?"
+                if q2.button("🚗 Despesa important o cotxe?", use_container_width=True, key="btn_q_cotxe"):
+                    p_preset = "Com podem planificar una despesa extraordinària important (com canviar de cotxe o gran reparació) sense desestabilitzar l'estalvi familiar?"
+                if q3.button("✂️ Retallar un 15% de despeses?", use_container_width=True, key="btn_q_retall"):
+                    p_preset = "Quina estratègia recomaneu per reduir un 15% les despeses mensuals sense perjudicar el benestar ni la convivència de la llar?"
+
+                if "deliberacions_consell" not in st.session_state:
+                    st.session_state["deliberacions_consell"] = []
+
+                # Formulari d'entrada per al Consell
+                prompt_consell = st.chat_input("Planteja un dilema o decisió financera al Consell d'Ancians...", key="input_consell_chat")
+                if p_preset:
+                    prompt_consell = p_preset
+
+                if prompt_consell:
+                    from core.consell_financer import deliberar_consell
+                    with st.spinner("🏛️ El Consell d'Ancians està deliberant... (Sèneca, Keynes i Epicur avaluen les dades en paral·lel)"):
+                        try:
+                            res_deliberacio = deliberar_consell(
+                                consulta=prompt_consell,
+                                df_desp=df_desp,
+                                df_ing=df_ing,
+                                df_cartera=df_cartera,
+                                any_analitzar=c_year,
+                                api_key=c_key,
+                                model_name=c_mod,
+                                provider=c_prov
+                            )
+                            st.session_state["deliberacions_consell"].insert(0, res_deliberacio)
+                        except Exception as e_del:
+                            st.error(f"Error en la deliberació del Consell: {e_del}")
+
+                # Mostrar historial de deliberacions
+                if st.session_state["deliberacions_consell"]:
+                    c_h_top1, c_h_top2 = st.columns([10, 2])
+                    with c_h_top1:
+                        st.markdown("##### 📜 Deliberacions i Veredictes Recents:")
+                    with c_h_top2:
+                        if st.button("🗑️ Netejar", key="btn_clear_consell"):
+                            st.session_state["deliberacions_consell"] = []
+                            st.rerun()
+
+                    for idx, d in enumerate(st.session_state["deliberacions_consell"]):
+                        with st.container(border=True):
+                            st.markdown(f"#### ❓ Consulta: *«{d.get('consulta', '')}»*")
+                            st.caption(f"⏱️ Temps de deliberació col·lectiva: **{d.get('temps', 0)} s** | Motor: **{c_mod}**")
+
+                            col_s, col_k, col_e = st.columns(3)
+                            with col_s:
+                                st.markdown(f"##### {d['seneca']['icona']} {d['seneca']['nom']}")
+                                st.caption(d['seneca']['titol'])
+                                st.markdown(d['seneca']['opinio'])
+
+                            with col_k:
+                                st.markdown(f"##### {d['keynes']['icona']} {d['keynes']['nom']}")
+                                st.caption(d['keynes']['titol'])
+                                st.markdown(d['keynes']['opinio'])
+
+                            with col_e:
+                                st.markdown(f"##### {d['epicur']['icona']} {d['epicur']['nom']}")
+                                st.caption(d['epicur']['titol'])
+                                st.markdown(d['epicur']['opinio'])
+
+                            st.markdown("---")
+                            st.markdown(
+                                f"""
+                                <div style="background-color: #2e1065; border-left: 5px solid #a855f7; padding: 14px 18px; border-radius: 8px; margin-top: 10px;">
+                                    <h4 style="margin: 0 0 10px 0; color: #e9d5ff;">{d['president']['icona']} {d['president']['nom']} — {d['president']['titol']}</h4>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+                            st.markdown(d['president']['veredicte'])
 
     # ================= EXTRA SPACE AT THE BOTTOM =================
     st.markdown("<br><br><br><br>", unsafe_allow_html=True)

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "22/11/2026 17:39:52",
+  "updated_at": "23/11/2026 09:14:14",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -46,8 +46,8 @@
       "verified_at": "12/11/2026 13:27:28",
       "verified_commit": "0df16fb",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "24/11/2026 09:14:14",
+      "unlock_reason": "Integracio Consell Financer al Chat IA"
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 09:14:14",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 09:14:14. Consell Financer",
+      "user": "admin",
+      "git_head": "76d375e"
+    },
     {
       "timestamp": "22/11/2026 17:39:52",
       "action": "SEAL",
@@ -1143,14 +1151,6 @@
       "detail": "Versió verificada i segellada (Graella Grid 100% amplada i miniatures 68x68px)",
       "user": "admin",
       "git_head": "7381e7e"
-    },
-    {
-      "timestamp": "11/11/2026 17:27:25",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Miniatures mobil vertical, canvi fotos i IA millorada)",
-      "user": "admin",
-      "git_head": "93cecab"
     }
   ]
 }
