@@ -3853,37 +3853,54 @@ def render(view_mode="economic"):
                     )
                     st.plotly_chart(fig_quota, use_container_width=True, config={'displayModeBar': False})
                 
-                # 3. Taula d'amortització detallada amb filtre per any
-                st.markdown("<h4 style='color:#f39c12; margin-top:20px;'>📋 Quadre d'Amortització Detallat</h4>", unsafe_allow_html=True)
+                # 3. Taula d'amortització completa (sense limitació per defecte)
+                st.markdown("<h4 style='color:#f39c12; margin-top:20px;'>📋 Quadre d'Amortització Complet</h4>", unsafe_allow_html=True)
                 
-                col_filt1, col_filt2 = st.columns([4, 8], vertical_alignment="center")
+                col_filt1, col_filt2, col_filt3 = st.columns([4, 3, 5], vertical_alignment="center")
                 with col_filt1:
-                    available_h_years = sorted(df_h_sorted['any_num'].unique().tolist(), reverse=True)
+                    available_h_years = sorted(df_h_sorted['any_num'].unique().tolist())
                     sel_h_year = st.selectbox(
-                        "📅 Filtrar quadre per any:",
-                        ["Tots els anys (2018 - 2038)"] + [str(y) for y in available_h_years],
-                        index=available_h_years.index(selected_year) + 1 if selected_year in available_h_years else 0,
+                        "📅 Anys:",
+                        ["Totes les quotes (2018 - 2038)"] + [f"Any {y}" for y in available_h_years],
+                        index=0,
                         key="sel_filter_hip_year"
                     )
                 with col_filt2:
-                    if sel_h_year != "Tots els anys (2018 - 2038)":
-                        sub_y_h = df_h_sorted[df_h_sorted['any_num'] == int(sel_h_year)]
+                    sel_h_estat = st.selectbox(
+                        "📌 Estat de pagament:",
+                        ["Totes (240 quotes)", "✅ Només pagades (95)", "⏳ Només pendents (145)"],
+                        index=0,
+                        key="sel_filter_hip_estat"
+                    )
+                with col_filt3:
+                    if "Totes les quotes" in sel_h_year and "Totes" in sel_h_estat:
+                        st.caption(f"Mostrant **totes les {len(df_h_sorted)} quotes** (2018 - 2038) | Amortitzat: **{cap_amortitzat:,.2f} €** | Pendent: **{saldo_pendent:,.2f} €**")
+                    elif "Totes les quotes" not in sel_h_year:
+                        val_year = int(sel_h_year.replace("Any", "").strip())
+                        sub_y_h = df_h_sorted[df_h_sorted['any_num'] == val_year]
                         tot_q_y = sub_y_h['quota'].sum()
                         tot_c_y = sub_y_h['amortitzacio'].sum()
                         tot_i_y = sub_y_h['interes'].sum()
-                        st.caption(f"Resum {sel_h_year}: Total quotes: **{tot_q_y:,.2f} €** (Capital: **{tot_c_y:,.2f} €** | Interessos: **{tot_i_y:,.2f} €**)")
+                        st.caption(f"Resum {sel_h_year}: Total quotes: **{tot_q_y:,.2f} €** (Cap: **{tot_c_y:,.2f} €** | Int: **{tot_i_y:,.2f} €**)")
+                    else:
+                        st.caption(f"Filtre per estat actiu: **{sel_h_estat}**")
                 
-                if sel_h_year == "Tots els anys (2018 - 2038)":
-                    df_h_table = df_h_sorted.copy()
-                else:
-                    df_h_table = df_h_sorted[df_h_sorted['any_num'] == int(sel_h_year)].copy()
+                df_h_table = df_h_sorted.copy()
+                if "Totes les quotes" not in sel_h_year:
+                    val_year = int(sel_h_year.replace("Any", "").strip())
+                    df_h_table = df_h_table[df_h_table['any_num'] == val_year].copy()
+                
+                if "pagades" in sel_h_estat.lower():
+                    df_h_table = df_h_table[df_h_table['pagat'].astype(str).str.lower().str.strip() == 'pagat'].copy()
+                elif "pendents" in sel_h_estat.lower():
+                    df_h_table = df_h_table[df_h_table['pagat'].astype(str).str.lower().str.strip() != 'pagat'].copy()
                 
                 df_h_table_show = df_h_table[['periode', 'any_num', 'mes', 'quota', 'amortitzacio', 'interes', 'saldo_final', 'pagat']].copy()
                 df_h_table_show['mes'] = df_h_table_show['mes'].astype(str).str.capitalize()
                 df_h_table_show['pagat'] = df_h_table_show['pagat'].fillna('pendent').apply(lambda x: '✅ Pagat' if str(x).lower().strip() == 'pagat' else '⏳ Pendent')
                 
                 df_h_table_show.rename(columns={
-                    'periode': 'Període',
+                    'periode': 'Període (Quota)',
                     'any_num': 'Any',
                     'mes': 'Mes',
                     'quota': 'Quota (€)',
@@ -3893,6 +3910,9 @@ def render(view_mode="economic"):
                     'pagat': 'Estat'
                 }, inplace=True)
                 
+                # Càlcul d'alçada per permetre veure tots els registres amb comoditat
+                table_height = min(750, max(420, (len(df_h_table_show) + 1) * 35 + 30))
+                
                 st.dataframe(
                     df_h_table_show.style.format({
                         'Quota (€)': '{:,.2f} €',
@@ -3901,7 +3921,8 @@ def render(view_mode="economic"):
                         'Saldo Pendent (€)': '{:,.2f} €'
                     }),
                     use_container_width=True,
-                    hide_index=True
+                    hide_index=True,
+                    height=table_height
                 )
             else:
                 st.info("No hi ha dades registrades a la taula d'hipoteca.")

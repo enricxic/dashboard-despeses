@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 13:23:03",
+  "updated_at": "23/11/2026 13:37:58",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -41,13 +41,13 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "3684dc20b4573a746ae1bb7eade225511a493a0181d8ed94e149ae92a3a6c1f4"
+        "modules/economic.py": "4cb67d315710693f49b2e5d30a0f2a53549d8bf2f9dbdeee9ddfbeb4efb1072e"
       },
-      "verified_at": "23/11/2026 13:23:03",
-      "verified_commit": "2592c4b",
+      "verified_at": "23/11/2026 13:34:01",
+      "verified_commit": "ac353d9",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "24/11/2026 13:37:58",
+      "unlock_reason": "Quadre complet hipoteca"
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,30 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 13:37:58",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 13:37:58. Motiu: Quadre complet hipoteca",
+      "user": "admin",
+      "git_head": "ac353d9"
+    },
+    {
+      "timestamp": "23/11/2026 13:34:01",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "ac353d9"
+    },
+    {
+      "timestamp": "23/11/2026 13:32:05",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 13:32:05. Motiu: Mostrar totes les quotes a la taula d hipoteca",
+      "user": "admin",
+      "git_head": "ac353d9"
+    },
     {
       "timestamp": "23/11/2026 13:23:03",
       "action": "SEAL",
@@ -1127,30 +1151,6 @@
       "detail": "Versió verificada i segellada (Descomptes OFERTES I CUPONS Dia com a promocio a la linia del producte)",
       "user": "admin",
       "git_head": "55990e7"
-    },
-    {
-      "timestamp": "12/11/2026 13:17:44",
-      "action": "UNLOCK",
-      "module": "compres",
-      "detail": "Autoritzat fins 13/11/2026 13:17:44. Motiu: Aplicar descomptes OFERTES I CUPONS de Dia com a promocio a la linia del producte",
-      "user": "admin",
-      "git_head": "69788e5"
-    },
-    {
-      "timestamp": "12/11/2026 13:16:09",
-      "action": "SEAL",
-      "module": "compres",
-      "detail": "Versió verificada i segellada (Descomptes OFERTES I CUPONS Dia com a promocio a la linia del producte)",
-      "user": "admin",
-      "git_head": "69788e5"
-    },
-    {
-      "timestamp": "12/11/2026 13:12:02",
-      "action": "UNLOCK",
-      "module": "compres",
-      "detail": "Autoritzat fins 13/11/2026 13:12:02. Motiu: Aplicar descomptes OFERTES I CUPONS de Dia com a promocio a la linia del producte",
-      "user": "admin",
-      "git_head": "69788e5"
     }
   ]
 }
