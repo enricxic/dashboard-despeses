@@ -3945,13 +3945,14 @@ def render(view_mode="economic"):
             if not has_gemini and "OPENROUTER_API_KEY" not in st.secrets:
                 st.warning("⚠️ No s'ha detectat cap clau d'IA (GEMINI_API_KEY o OPENROUTER_API_KEY) als secrets. L'assistent no està disponible.")
             elif mode_ia == "💬 Xiqui Administrativa (Respostes ràpides)":
-                col_text, col_filter = st.columns([8, 4], vertical_alignment="bottom")
-                with col_text:
-                    st.write("Pregunta-li el que vulguis a l'assistent sobre les teves despeses, ingressos o cartera.")
-                with col_filter:
+                col_cfg1, col_cfg2 = st.columns([7, 5], vertical_alignment="bottom")
+                with col_cfg1:
+                    from core.llm_ui import render_ai_selector
+                    x_prov, x_mod, x_key = render_ai_selector(key_prefix="xiqui_admin", default_model="Gemini Flash Lite (Ràpid & Recomanat)")
+                with col_cfg2:
                     analisi_year = st.selectbox("📅 Any a analitzar per l'IA:", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year_analisi")
                     
-                st.info(f"💡 L'assistent està analitzant exclusivament les dades de l'any **{analisi_year}** per garantir una resposta ràpida i respectar els límits.")
+                st.caption(f"💡 L'assistent analitza les dades de l'any **{analisi_year}** usant el motor **{x_mod}**.")
                     
                 # Initialize chat history
                 if "messages" not in st.session_state:
@@ -3976,34 +3977,47 @@ def render(view_mode="economic"):
                     st.chat_message("user", avatar="👤").markdown(prompt)
                     st.session_state.messages.append({"role": "user", "content": prompt})
                         
-                    with st.spinner("La Xiqui Administrativa està pensant..."):
+                    with st.spinner("La Xiqui Administrativa està consultant les dades..."):
                         try:
-                            import google.generativeai as genai
-                            model = genai.GenerativeModel('gemini-flash-latest')
-                                
+                            from core.llm import call_llm_api
+                            
                             year_desp_context = df_desp[df_desp['any'] == analisi_year] if 'any' in df_desp.columns else df_desp
                             year_ing_context = df_ing[df_ing['any'] == analisi_year] if 'any' in df_ing.columns else df_ing
-                                
-                            context = f"Tens les següents taules de dades financeres de l'any {analisi_year} en format CSV:\n\n"
-                            context += "TAULA DESPESES:\n" + year_desp_context.to_csv(index=False) + "\n\n"
-                            context += "TAULA INGRESSOS:\n" + year_ing_context.to_csv(index=False) + "\n\n"
-                            context += "TAULA TR CARTERA:\n" + df_cartera.to_csv(index=False) + "\n\n"
-                                
-                            sys_prompt = "Ets la Xiqui, l'assistent financera anime de 20 anys per a XiquiHouse. Respons a les preguntes de l'usuari únicament basant-te en les dades proporcionades. Respon sempre en català de forma molt clara, amable i concisa. IMPORTANT: Respon exclusivament amb text normal, no utilitzis cap eina ni function call ni codi."
-                                
-                            response = model.generate_content([sys_prompt, context, prompt])
-                                
-                            try:
-                                response_text = response.text
-                            except ValueError:
-                                parts = response.candidates[0].content.parts
-                                response_text = "".join([p.text for p in parts if hasattr(p, 'text')])
-                                if not response_text:
-                                    response_text = "L'assistent ha intentat executar codi però aquesta funció no està habilitada. Si us plau, torna a fer la pregunta."
+                            
+                            cols_desp = [c for c in ['Data', 'mes', 'Concepte', 'Import càrrec', 'Categoria', 'Subcategoria'] if c in year_desp_context.columns]
+                            desp_csv = year_desp_context[cols_desp].to_csv(index=False) if cols_desp else year_desp_context.to_csv(index=False)
+                            
+                            cols_ing = [c for c in ['Data', 'mes', 'Concepte', 'Import', 'Categoria'] if c in year_ing_context.columns]
+                            ing_csv = year_ing_context[cols_ing].to_csv(index=False) if cols_ing else year_ing_context.to_csv(index=False)
+                            
+                            context = f"Dades financeres de l'any {analisi_year}:\n\n"
+                            context += f"TAULA DESPESES ({len(year_desp_context)} registres):\n{desp_csv}\n\n"
+                            context += f"TAULA INGRESSOS ({len(year_ing_context)} registres):\n{ing_csv}\n\n"
+                            if not df_cartera.empty:
+                                cols_cart = [c for c in ['ACTIU', 'COMPRA', 'VENDA', 'TITOLS', 'PREU COMPRA'] if c in df_cartera.columns]
+                                context += "TAULA TR CARTERA:\n" + (df_cartera[cols_cart].to_csv(index=False) if cols_cart else df_cartera.to_csv(index=False)) + "\n\n"
+                            
+                            sys_prompt = f"""Ets la Xiqui, l'assistent financera de 20 anys de XiquiHouse.
+Respons a les preguntes de l'usuari únicament basant-te en les dades proporcionades de l'any {analisi_year}.
+Respon sempre en català de forma molt clara, amable i concisa (màxim 2-3 paràgrafs ben explicats).
+Si l'usuari et demana totals o sumes, calcula'ls amb precisió basant-te en els registres proporcionats.
+IMPORTANT: Respon exclusivament amb text normal en Markdown, sense inventar dades ni codi."""
+
+                            full_prompt = f"{sys_prompt}\n\nDADES DISPONIBLES:\n{context}\n\nPREGUNTA DE L'USUARI:\n{prompt}"
+                            
+                            ok, response_text, dur = call_llm_api(
+                                prompt=full_prompt,
+                                api_key=x_key,
+                                model_name=x_mod,
+                                provider=x_prov,
+                                max_tokens=1200
+                            )
+                            if not ok:
+                                response_text = f"❌ Error de connexió amb la IA: {response_text}"
                         except Exception as e:
-                            response_text = f"❌ Error de l'API: {str(e)}"
+                            response_text = f"❌ Error intern de l'assistent: {str(e)}"
                                 
-                    with st.chat_message("assistant"):
+                    with st.chat_message("assistant", avatar=avatar_admin_img):
                         st.markdown(response_text)
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
 

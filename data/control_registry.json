@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 13:38:32",
+  "updated_at": "23/11/2026 15:58:49",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -46,8 +46,8 @@
       "verified_at": "23/11/2026 13:38:32",
       "verified_commit": "46ed6d7",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "24/11/2026 15:58:49",
+      "unlock_reason": "Optimitzar Xiqui Administrativa amb call_llm_api i selector IA"
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 15:58:49",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 15:58:49. Motiu: Optimitzar Xiqui Administrativa amb call_llm_api i selector IA",
+      "user": "admin",
+      "git_head": "993783e"
+    },
     {
       "timestamp": "23/11/2026 13:38:32",
       "action": "SEAL",
@@ -1143,14 +1151,6 @@
       "detail": "Versió verificada i segellada (Protegir df_hip, df_pag, df_ing i df_desp buits contra KeyError: any)",
       "user": "admin",
       "git_head": "0df16fb"
-    },
-    {
-      "timestamp": "12/11/2026 13:24:26",
-      "action": "UNLOCK",
-      "module": "economic",
-      "detail": "Autoritzat fins 13/11/2026 13:24:26. Motiu: Protegir df_hip, df_pag, df_ing i df_desp buits contra KeyError: any al Dashboard",
-      "user": "admin",
-      "git_head": "872e643"
     }
   ]
 }
