@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 10:39:43",
+  "updated_at": "23/11/2026 10:40:24",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -43,11 +43,11 @@
       "verified_hashes": {
         "modules/economic.py": "e890a5d0957d454405e88e7db643b9248b4ec7d3b777f833b804ef39a7e256fe"
       },
-      "verified_at": "23/11/2026 10:38:54",
-      "verified_commit": "f28a68f",
+      "verified_at": "23/11/2026 10:40:24",
+      "verified_commit": "a466d48",
       "verified_by": "admin",
-      "unlocked_until": "24/11/2026 10:39:43",
-      "unlock_reason": "Integrar saldos bancaris, fons DP i ingressos imminents"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 10:40:24",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "a466d48"
+    },
     {
       "timestamp": "23/11/2026 10:39:43",
       "action": "UNLOCK",
@@ -1143,14 +1151,6 @@
       "detail": "Versió verificada i segellada (Seleccio, moviment i goma sobre tota la caixa de text)",
       "user": "admin",
       "git_head": "5d96dbd"
-    },
-    {
-      "timestamp": "11/11/2026 20:35:02",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Boto fletxa Seleccionar amb 8 quadrets cantonades/mig i centre)",
-      "user": "admin",
-      "git_head": "dcc3778"
     }
   ]
 }
