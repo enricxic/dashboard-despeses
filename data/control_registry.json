@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 15:58:49",
+  "updated_at": "23/11/2026 16:03:42",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -41,13 +41,13 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "4cb67d315710693f49b2e5d30a0f2a53549d8bf2f9dbdeee9ddfbeb4efb1072e"
+        "modules/economic.py": "3f0c1664978e77c6e6d441ae3741942110d00423cb913f3a615fd98b735109a9"
       },
-      "verified_at": "23/11/2026 13:38:32",
-      "verified_commit": "46ed6d7",
+      "verified_at": "23/11/2026 16:03:42",
+      "verified_commit": "1d85edc",
       "verified_by": "admin",
-      "unlocked_until": "24/11/2026 15:58:49",
-      "unlock_reason": "Optimitzar Xiqui Administrativa amb call_llm_api i selector IA"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 16:03:42",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "1d85edc"
+    },
     {
       "timestamp": "23/11/2026 15:58:49",
       "action": "UNLOCK",
@@ -1143,14 +1151,6 @@
       "detail": "Versió verificada i segellada (Invalidar cache load_dashboard_data i actualitzar tracker en insert/update/delete de core/db.py)",
       "user": "admin",
       "git_head": "ac193c6"
-    },
-    {
-      "timestamp": "12/11/2026 13:27:28",
-      "action": "SEAL",
-      "module": "economic",
-      "detail": "Versió verificada i segellada (Protegir df_hip, df_pag, df_ing i df_desp buits contra KeyError: any)",
-      "user": "admin",
-      "git_head": "0df16fb"
     }
   ]
 }
