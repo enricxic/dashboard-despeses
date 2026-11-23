@@ -177,7 +177,8 @@ function attachMenuTabInterceptors() {
                             else if (href.includes('tab=prev_ingressos')) { targetIdx = 2; targetText = 'prev. ingressos'; }
                             else if (href.includes('tab=inversions')) { targetIdx = 3; targetText = 'inversions'; }
                             else if (href.includes('tab=estalvis')) { targetIdx = 4; targetText = 'estalvis'; }
-                            else if (href.includes('tab=xat_ia')) { targetIdx = 5; targetText = 'xat'; }
+                            else if (href.includes('tab=hipoteca')) { targetIdx = 5; targetText = 'hipoteca'; }
+                            else if (href.includes('tab=xat_ia')) { targetIdx = 6; targetText = 'xat'; }
                         } else if (href.includes('mod=modules.cotxe')) {
                             if (href.includes('tab=km_rutes')) { targetIdx = 0; targetText = 'km'; }
                             else if (href.includes('tab=repostatge')) { targetIdx = 1; targetText = 'repostatge'; }
@@ -1288,6 +1289,7 @@ div.block-container {{
 <a href="?mod=modules.economic&tab=prev_ingressos{url_suffix}" target="_self">🟢 Prev. Ingressos</a>
 <a href="?mod=modules.economic&tab=inversions{url_suffix}" target="_self">📈 Inversions</a>
 <a href="?mod=modules.economic&tab=estalvis{url_suffix}" target="_self">💰 Estalvis</a>
+<a href="?mod=modules.economic&tab=hipoteca{url_suffix}" target="_self">🏡 Hipoteca</a>
 <a href="?mod=modules.economic&tab=xat_ia{url_suffix}" target="_self">🤖 Xat IA</a>
 <div class="menu-separator"></div>
 <a href="?mod=modules.economic&action=afegir_any_comptable{url_suffix}" target="_self">📅 Afegir nou any comptable</a>
