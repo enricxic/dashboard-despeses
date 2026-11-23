@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 13:37:58",
+  "updated_at": "23/11/2026 13:38:32",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -43,11 +43,11 @@
       "verified_hashes": {
         "modules/economic.py": "4cb67d315710693f49b2e5d30a0f2a53549d8bf2f9dbdeee9ddfbeb4efb1072e"
       },
-      "verified_at": "23/11/2026 13:34:01",
-      "verified_commit": "ac353d9",
+      "verified_at": "23/11/2026 13:38:32",
+      "verified_commit": "46ed6d7",
       "verified_by": "admin",
-      "unlocked_until": "24/11/2026 13:37:58",
-      "unlock_reason": "Quadre complet hipoteca"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 13:38:32",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "46ed6d7"
+    },
     {
       "timestamp": "23/11/2026 13:37:58",
       "action": "UNLOCK",
@@ -1143,14 +1151,6 @@
       "detail": "Autoritzat fins 13/11/2026 13:24:26. Motiu: Protegir df_hip, df_pag, df_ing i df_desp buits contra KeyError: any al Dashboard",
       "user": "admin",
       "git_head": "872e643"
-    },
-    {
-      "timestamp": "12/11/2026 13:18:33",
-      "action": "SEAL",
-      "module": "compres",
-      "detail": "Versió verificada i segellada (Descomptes OFERTES I CUPONS Dia com a promocio a la linia del producte)",
-      "user": "admin",
-      "git_head": "55990e7"
     }
   ]
 }
