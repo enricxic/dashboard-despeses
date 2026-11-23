@@ -90,7 +90,61 @@ def _normalitzar_categoria_viatge(cat_str, concepte_str=""):
         return "🎟️ Restauració i Oci"
     return "🎒 Altres / Compres"
 
-def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None):
+def _get_blocs_vacances_disponibles():
+    """Retorna una llista de blocs de vacances detectats a la BD per ajudar l'usuari a acotar."""
+    df = _get_despeses_reals_df()
+    if df is None or df.empty:
+        return []
+    import pandas as pd
+    df_vac = df[df['Comentari'].astype(str).str.contains(r'\[VACANCES\]|vacances', case=False, na=False, regex=True)].copy()
+    if df_vac.empty:
+        return []
+    def _parse_dt(d_str):
+        try: return datetime.strptime(str(d_str).strip(), '%d/%m/%Y').date()
+        except: return None
+    df_vac['dt_obj'] = df_vac['Data'].apply(_parse_dt)
+    df_vac = df_vac.dropna(subset=['dt_obj']).sort_values('dt_obj', ascending=False)
+    
+    # Agrupar per blocs si la distància és <= 7 dies
+    blocs = []
+    curr_bloc = []
+    # Com que està descendent, comparem amb l'últim afegit
+    df_vac_asc = df_vac.sort_values('dt_obj')
+    for _, r in df_vac_asc.iterrows():
+        if not curr_bloc:
+            curr_bloc.append(r)
+        else:
+            diff = (r['dt_obj'] - curr_bloc[-1]['dt_obj']).days
+            if diff <= 7:
+                curr_bloc.append(r)
+            else:
+                blocs.append(pd.DataFrame(curr_bloc))
+                curr_bloc = [r]
+    if curr_bloc:
+        blocs.append(pd.DataFrame(curr_bloc))
+        
+    res = []
+    imp_col = next((c for c in ['Import càrrec', 'Import crrec', 'Import carrec'] if c in df_vac.columns), 'Import càrrec')
+    def _parse_imp(x):
+        try: return float(str(x).replace(',', '.').replace('€', '').strip())
+        except: return 0.0
+
+    for b in reversed(blocs):
+        d_min = b['dt_obj'].min()
+        d_max = b['dt_obj'].max()
+        dies = max(1, (d_max - d_min).days + 1)
+        tot = b[imp_col].apply(_parse_imp).sum()
+        res.append({
+            "d_inici": d_min,
+            "d_fi": d_max,
+            "dies": dies,
+            "total": tot,
+            "moviments": len(b),
+            "label": f"🏖️ {d_min.strftime('%d/%m/%Y')} al {d_max.strftime('%d/%m/%Y')} ({dies} dies · {len(b)} moviments · {tot:,.2f} €)"
+        })
+    return res
+
+def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None, ref_d_inici=None, ref_d_fi=None):
     """Analitza l'històric de despeses de [VACANCES] per estimar el pressupost del viatge."""
     df = _get_despeses_reals_df()
     if df is None or df.empty:
@@ -125,18 +179,24 @@ def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None):
     if df_vac.empty:
         return None
 
-    # Filtrar per paraules clau si hi ha destinació
     sub_df = pd.DataFrame()
-    dest_cleaned = destinacio.strip().lower()
-    if dest_cleaned:
-        words = [w for w in dest_cleaned.replace("de", "").replace("a", "").replace("la", "").replace("el", "").split() if len(w) > 2]
-        for w in words:
-            matched = df_vac[df_vac['Comentari'].str.lower().str.contains(w, regex=False, na=False) |
-                             df_vac['Idconcepte'].astype(str).str.lower().str.contains(w, regex=False, na=False)]
-            if not matched.empty:
-                sub_df = matched
-                break
+    # 1. Si s'han especificat dates de referència explícites per acotar
+    if ref_d_inici and ref_d_fi:
+        sub_df = df_vac[(df_vac['dt_obj'] >= ref_d_inici) & (df_vac['dt_obj'] <= ref_d_fi)]
 
+    # 2. Si no, filtrar per paraules clau si hi ha destinació
+    if sub_df.empty:
+        dest_cleaned = destinacio.strip().lower()
+        if dest_cleaned:
+            words = [w for w in dest_cleaned.replace("de", "").replace("a", "").replace("la", "").replace("el", "").split() if len(w) > 2]
+            for w in words:
+                matched = df_vac[df_vac['Comentari'].str.lower().str.contains(w, regex=False, na=False) |
+                                 df_vac['Idconcepte'].astype(str).str.lower().str.contains(w, regex=False, na=False)]
+                if not matched.empty:
+                    sub_df = matched
+                    break
+
+    # 3. Si no s'ha trobat, agafem el bloc més recent
     if sub_df.empty:
         ultim_dt = df_vac['dt_obj'].max()
         sub_df = df_vac[df_vac['dt_obj'] >= (ultim_dt - pd.Timedelta(days=25))]
@@ -157,7 +217,6 @@ def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None):
 
     total_estimat = round(mitjana_dia * dies_nou, 2)
 
-    # Agrupar per categories normalitzades
     sub_df['cat_norm'] = sub_df.apply(lambda r: _normalitzar_categoria_viatge(r.get('Idcategoria', ''), r.get('Idconcepte', '')), axis=1)
     cat_totals = sub_df.groupby('cat_norm')['imp_clean'].sum().to_dict()
 
@@ -403,9 +462,7 @@ def render():
             if "sel_viatge_pressupost_idx" in st.session_state and st.session_state["sel_viatge_pressupost_idx"] < len(viatges):
                 sel_idx = st.session_state["sel_viatge_pressupost_idx"]
 
-            c_sel_v, c_auto_btn = st.columns([7, 3], vertical_alignment="bottom")
-            with c_sel_v:
-                sel_v_str = st.selectbox("Selecciona el viatge a consultar o gestionar:", v_noms, index=sel_idx, key="sel_viatge_press_box")
+            sel_v_str = st.selectbox("Selecciona el viatge a consultar o gestionar:", v_noms, index=sel_idx, key="sel_viatge_press_box")
             curr_v_idx = v_noms.index(sel_v_str) if sel_v_str in v_noms else 0
             st.session_state["sel_viatge_pressupost_idx"] = curr_v_idx
             curr_v = viatges[curr_v_idx]
@@ -414,22 +471,43 @@ def render():
                 v_dini = datetime.strptime(curr_v.get("data_inici", ""), "%Y-%m-%d").date()
                 v_dfi = datetime.strptime(curr_v.get("data_fi", ""), "%Y-%m-%d").date()
             except Exception:
-                v_dini = None
-                v_dfi = None
+                v_dini = date.today()
+                v_dfi = date.today()
 
-            # Botó per auto-generar partides desglossades des de l'històric
-            with c_auto_btn:
-                if st.button("💡 Auto-estimar per Històric", key="btn_auto_press_tab3", use_container_width=True, help="Calcula el pressupost i les partides a partir dels viatges anteriors a la BD"):
-                    est = _estimar_pressupost_historic(curr_v.get("destinacio", ""), v_dini, v_dfi)
+            # Panell d'acotació per dates per a la cerca i auto-estimació
+            with st.expander("⚙️ Opcions avançades: Acotar dates de referència o confrontació", expanded=False):
+                st.caption("A vegades s'han fet molts viatges al mateix lloc o no es recorda el nom exacte. Aquí pots acotar per dates el període a analitzar:")
+                blocs_disp = _get_blocs_vacances_disponibles()
+                bloc_labels = ["✨ Automàtic (Segons destinació o últim viatge)"] + [b["label"] for b in blocs_disp] + ["📆 Dates manuals personalitzades"]
+                
+                sel_b_str = st.selectbox("Període de vacances de referència a la BD:", bloc_labels, key=f"sel_bloc_ref_{curr_v['id']}")
+                
+                col_ref_d1, col_ref_d2 = st.columns(2)
+                d_ref_ini_calc = v_dini
+                d_ref_fi_calc = v_dfi
+                
+                if sel_b_str.startswith("🏖️"):
+                    idx_b = bloc_labels.index(sel_b_str) - 1
+                    b_sel = blocs_disp[idx_b]
+                    d_ref_ini_calc = b_sel["d_inici"]
+                    d_ref_fi_calc = b_sel["d_fi"]
+                
+                with col_ref_d1:
+                    d_confront_ini = st.date_input("Data inici confrontació / referència", value=d_ref_ini_calc, format="DD/MM/YYYY", key=f"d_confront_ini_{curr_v['id']}")
+                with col_ref_d2:
+                    d_confront_fi = st.date_input("Data fi confrontació / referència", value=d_ref_fi_calc, format="DD/MM/YYYY", key=f"d_confront_fi_{curr_v['id']}")
+
+                if st.button("💡 Auto-generar partides a partir d'aquestes dates", key=f"btn_auto_press_custom_{curr_v['id']}", use_container_width=True):
+                    est = _estimar_pressupost_historic(curr_v.get("destinacio", ""), v_dini, v_dfi, d_confront_ini, d_confront_fi)
                     if est and est.get("partides"):
                         curr_v["despeses_previstes"] = est["partides"]
                         curr_v["pressupost"] = est["total_estimat"]
                         data["viatges"] = viatges
                         _save_viatges_data(data)
-                        st.session_state["flash_auto_press"] = f"✅ S'han generat {len(est['partides'])} partides estimades ({est['total_estimat']:,.2f} €) a partir de l'històric de {est['periode_ref']}!"
+                        st.session_state["flash_auto_press"] = f"✅ S'han generat {len(est['partides'])} partides ({est['total_estimat']:,.2f} €) a partir de les dates acotades ({d_confront_ini.strftime('%d/%m/%Y')} al {d_confront_fi.strftime('%d/%m/%Y')})!"
                         st.rerun()
                     else:
-                        st.warning("No s'han trobat prous despeses de vacances històriques per auto-generar el pressupost.")
+                        st.warning("No s'han trobat despeses en aquest rang de dates per auto-generar el pressupost.")
 
             if "flash_auto_press" in st.session_state:
                 st.success(st.session_state.pop("flash_auto_press"))
@@ -465,13 +543,15 @@ def render():
             if total_previst == 0 and float(curr_v.get("pressupost", 0)) > 0:
                 total_previst = float(curr_v.get("pressupost", 0))
 
-            # -------------------------------------------------------------
             # Recuperar i classificar despeses reals del Mòdul Econòmic
-            # -------------------------------------------------------------
+            # S'utilitzen les dates acotades si s'han definit a la sessió
+            f_ini_eval = st.session_state.get(f"d_confront_ini_{curr_v['id']}", v_dini)
+            f_fi_eval = st.session_state.get(f"d_confront_fi_{curr_v['id']}", v_dfi)
+
             df_desp_all = _get_despeses_reals_df()
             despeses_reals_viatge = []
 
-            if df_desp_all is not None and not df_desp_all.empty and v_dini and v_dfi:
+            if df_desp_all is not None and not df_desp_all.empty and f_ini_eval and f_fi_eval:
                 import pandas as pd
                 for _, row in df_desp_all.iterrows():
                     d_str = str(row.get("Data", "")).strip()
@@ -489,9 +569,9 @@ def render():
                     comentari_txt = str(row.get("Comentari", ""))
                     is_vacances = ("[VACANCES]" in comentari_txt.upper()) or ("VACANCES" in comentari_txt.upper())
                     is_dest_mention = curr_v.get("destinacio", "").lower() in comentari_txt.lower()
-                    in_range = (v_dini <= row_date <= v_dfi)
+                    in_range = (f_ini_eval <= row_date <= f_fi_eval)
 
-                    if (in_range and is_vacances) or is_dest_mention:
+                    if (in_range and is_vacances) or (is_dest_mention and in_range):
                         imp_carg = 0.0
                         for col_c in ["Import càrrec", "Import crrec", "Import carrec", "import_carrec"]:
                             if col_c in row and pd.notna(row[col_c]):
@@ -518,9 +598,7 @@ def render():
             diferencia = total_previst - total_real
             pct_consumit = (total_real / total_previst * 100) if total_previst > 0 else 0
 
-            # -------------------------------------------------------------
             # RESUM SUPERIOR I BALANÇ GLOBAL
-            # -------------------------------------------------------------
             st.markdown(f"##### 📊 Balanç Global: **{curr_v.get('destinacio')}**")
             col_b1, col_b2, col_b3 = st.columns(3)
             with col_b1:
@@ -537,9 +615,7 @@ def render():
             st.write("")
             st.markdown("---")
 
-            # -------------------------------------------------------------
             # AGRUPACIÓ I DESGLOSSAMENT PER CATEGORIES
-            # -------------------------------------------------------------
             st.markdown("#### 📂 Desglossament i Comparativa per Categories")
             st.caption("Compara la previsió de cada categoria amb les despeses reals extretes del Mòdul Econòmic.")
 
@@ -551,16 +627,14 @@ def render():
                 "🎒 Altres / Compres"
             ]
 
-            # Construir resum per categories
             cat_summary = []
             for c_nom in CATEGORIES_ESTANDARD:
                 p_items = [p for p in partides if _normalitzar_categoria_viatge(p.get("categoria", ""), p.get("concepte", "")) == c_nom]
                 r_items = [r for r in despeses_reals_viatge if r.get("Categoria") == c_nom]
-                
+
                 c_prev = sum(float(x.get("import", 0)) for x in p_items)
                 c_real = sum(float(x.get("Import", 0)) for x in r_items)
-                
-                # Mostrar si té pressupost o despesa real
+
                 if c_prev > 0 or c_real > 0:
                     c_dif = c_prev - c_real
                     c_pct = (c_real / c_prev * 100) if c_prev > 0 else 0
@@ -574,7 +648,6 @@ def render():
                         "reals": r_items
                     })
 
-            # Taula resum de categories
             if cat_summary:
                 import pandas as pd
                 df_cat_table = pd.DataFrame([{
@@ -596,10 +669,8 @@ def render():
                 )
 
                 st.write("")
-                # Desglossament detallat en acordions per a cada categoria
                 st.markdown("##### 🔍 Detall de Moviments per Categoria")
                 for cs in cat_summary:
-                    color_tag = "#10b981" if cs["diferencia"] >= 0 else "#ef4444"
                     titol_exp = f"{cs['nom']}  —  Previst: {cs['previst']:,.2f} €  |  Real: {cs['real']:,.2f} €  ({cs['diferencia']:+,.2f} €)"
                     with st.expander(titol_exp, expanded=False):
                         c_col_prev, c_col_real = st.columns(2, gap="medium")
@@ -661,6 +732,27 @@ def render():
         if "viatge_estimat_info" in st.session_state:
             st.info(st.session_state.pop("viatge_estimat_info"))
 
+        # Panell per acotar dates històriques abans de desar
+        with st.expander("📅 Acotar viatge de referència per dates (Opcional si s'han fet molts viatges al mateix lloc)", expanded=False):
+            st.caption("Si no saps el nom exacte o has anat moltes vegades al mateix lloc, pots triar directament les dates del viatge anterior que vols fer servir de base:")
+            blocs_nou = _get_blocs_vacances_disponibles()
+            opcions_blocs = ["✨ Automàtic (Segons nom de la destinació o últim viatge)"] + [b["label"] for b in blocs_nou] + ["📆 Dates manuals personalitzades"]
+            sel_b_nou = st.selectbox("Tria el viatge de referència:", opcions_blocs, key="sel_bloc_ref_nou")
+            
+            c_ac1, c_ac2 = st.columns(2)
+            d_ac_ini_def = date.today()
+            d_ac_fi_def = date.today()
+            if sel_b_nou.startswith("🏖️"):
+                idx_bn = opcions_blocs.index(sel_b_nou) - 1
+                b_sel_n = blocs_nou[idx_bn]
+                d_ac_ini_def = b_sel_n["d_inici"]
+                d_ac_fi_def = b_sel_n["d_fi"]
+                
+            with c_ac1:
+                ref_dini_custom = st.date_input("Data d'inici de referència", value=d_ac_ini_def, format="DD/MM/YYYY", key="ref_dini_custom_key")
+            with c_ac2:
+                ref_dfi_custom = st.date_input("Data de fi de referència", value=d_ac_fi_def, format="DD/MM/YYYY", key="ref_dfi_custom_key")
+
         with st.form("form_nou_viatge", clear_on_submit=False):
             col_f1, col_f2 = st.columns(2)
             with col_f1:
@@ -675,12 +767,11 @@ def render():
                     f_dfi = st.date_input("📅 Data de tornada", value=st.session_state.get("form_v_dfi_val", date.today()), format="DD/MM/YYYY", key="form_v_dfi")
                 f_allotj = st.text_input("🏨 Allotjament", value=st.session_state.get("form_v_allotj_val", ""), placeholder="Ex: Hotel, Apartament, Casa Mireia...", key="form_v_allotj")
 
-                # Pressupost i Botó d'estimació intel·ligent
                 col_p_in, col_p_btn = st.columns([1.2, 1.3], vertical_alignment="bottom")
                 with col_p_in:
                     f_press = st.number_input("💶 Pressupost (€)", min_value=0.0, step=25.0, value=float(st.session_state.get("form_v_press_val", 300.0)), key="form_v_press")
                 with col_p_btn:
-                    btn_est = st.form_submit_button("💡 Estimar per Històric", use_container_width=True, help="Calcula el pressupost automàticament segons viatges anteriors amb [VACANCES]")
+                    btn_est = st.form_submit_button("💡 Estimar per Històric / Dates", use_container_width=True, help="Calcula el pressupost automàticament segons el viatge anterior acotat")
 
             f_notes = st.text_area("📝 Notes, enllaços o plans a realitzar", value=st.session_state.get("form_v_notes_val", ""), placeholder="Llocs a visitar, restaurants recomanats, reserves...", key="form_v_notes")
 
@@ -688,7 +779,14 @@ def render():
             btn_save_v = st.form_submit_button("💾 Desar Viatge", type="primary", use_container_width=True)
 
             if btn_est:
-                est = _estimar_pressupost_historic(f_dest, f_dini, f_dfi)
+                # Comprovar si s'ha triat acotar per dates de referència
+                d_ref_i = None
+                d_ref_f = None
+                if sel_b_nou != "✨ Automàtic (Segons nom de la destinació o últim viatge)":
+                    d_ref_i = ref_dini_custom
+                    d_ref_f = ref_dfi_custom
+
+                est = _estimar_pressupost_historic(f_dest, f_dini, f_dfi, d_ref_i, d_ref_f)
                 if est:
                     st.session_state["form_v_dest_val"] = f_dest
                     st.session_state["form_v_pais_val"] = f_pais
@@ -698,16 +796,14 @@ def render():
                     st.session_state["form_v_notes_val"] = f_notes
                     st.session_state["form_v_press_val"] = float(est["total_estimat"])
                     st.session_state["form_v_partides_calc"] = est["partides"]
-                    st.session_state["viatge_estimat_info"] = f"💡 Estimació calculada: **{est['total_estimat']:,.2f} €** per a {est['dies_nou']} dies (~{est['mitjana_dia']:,.2f} €/dia), basat en l'històric de {est['periode_ref']} ({est['num_moviments']} moviments registrats amb [VACANCES])."
+                    st.session_state["viatge_estimat_info"] = f"💡 Estimació calculada: **{est['total_estimat']:,.2f} €** per a {est['dies_nou']} dies (~{est['mitjana_dia']:,.2f} €/dia), basat en el període de referència **{est['periode_ref']}** ({est['num_moviments']} moviments registrats amb [VACANCES])."
                     st.rerun()
                 else:
-                    st.warning("No s'han trobat prous despeses anteriors amb [VACANCES] per generar una estimació.")
+                    st.warning("No s'han trobat prous despeses anteriors amb [VACANCES] en aquestes dates per generar una estimació.")
 
             if btn_save_v:
                 if f_dest.strip():
                     next_vid = max([v.get("id", 0) for v in viatges], default=0) + 1
-                    
-                    # Utilitzar les partides calculades si n'hi ha, o generar-ne d'inicials
                     partides_inicials = st.session_state.get("form_v_partides_calc", [])
                     if not partides_inicials and float(f_press) > 0:
                         partides_inicials = [
@@ -733,7 +829,6 @@ def render():
                     data["viatges"] = viatges
                     _save_viatges_data(data)
 
-                    # Buidar explícitament els camps temporals
                     for k in ["form_v_dest_val", "form_v_pais_val", "form_v_allotj_val", "form_v_notes_val", "form_v_dest", "form_v_pais", "form_v_allotj", "form_v_notes"]:
                         if k in st.session_state:
                             st.session_state[k] = ""
