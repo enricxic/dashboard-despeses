@@ -55,6 +55,13 @@ def _get_despeses_reals_df():
     if "df_desp" in st.session_state and st.session_state["df_desp"] is not None and not st.session_state["df_desp"].empty:
         return st.session_state["df_desp"]
     try:
+        from core.db import fetch_table_fast
+        _, df = fetch_table_fast('despeses')
+        if df is not None and not df.empty:
+            return df
+    except Exception:
+        pass
+    try:
         from core.db import get_data_with_metadata
         _, df = get_data_with_metadata('despeses')
         if df is not None and not df.empty:
@@ -69,6 +76,115 @@ def _get_despeses_reals_df():
             except Exception:
                 pass
     return None
+
+def _normalitzar_categoria_viatge(cat_str, concepte_str=""):
+    """Agrupa categories de la BD en categories estàndard de viatge."""
+    c = (str(cat_str) + " " + str(concepte_str)).lower()
+    if any(k in c for k in ["super", "menjar", "aliment", "compra", "mercat", "fleca", "fruita", "carn", "peix", "pa"]):
+        return "🍽️ Menjar / Supermercat"
+    elif any(k in c for k in ["gasolina", "carburant", "transport", "peatge", "parking", "tren", "avio", "vol", "taxi"]):
+        return "🚗 Transport / Carburant"
+    elif any(k in c for k in ["hotel", "apartament", "allotj", "casa", "camping"]):
+        return "🏨 Allotjament"
+    elif any(k in c for k in ["restaurant", "bar", "terrassa", "oci", "visita", "museu", "tarda", "sopar", "dinar"]):
+        return "🎟️ Restauració i Oci"
+    return "🎒 Altres / Compres"
+
+def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None):
+    """Analitza l'històric de despeses de [VACANCES] per estimar el pressupost del viatge."""
+    df = _get_despeses_reals_df()
+    if df is None or df.empty:
+        return None
+    import pandas as pd
+    df_vac = df[df['Comentari'].astype(str).str.contains(r'\[VACANCES\]|vacances', case=False, na=False, regex=True)].copy()
+    if df_vac.empty:
+        return None
+
+    def _parse_imp(val):
+        if pd.isna(val) or val is None: return 0.0
+        try:
+            return float(str(val).replace(',', '.').replace('€', '').strip())
+        except Exception:
+            return 0.0
+
+    imp_col = next((c for c in ["Import càrrec", "Import crrec", "Import carrec"] if c in df_vac.columns), "Import càrrec")
+    df_vac['imp_clean'] = df_vac[imp_col].apply(_parse_imp)
+    df_vac = df_vac[df_vac['imp_clean'] > 0].copy()
+
+    def _parse_dt(d_str):
+        try:
+            return datetime.strptime(str(d_str).strip(), "%d/%m/%Y").date()
+        except Exception:
+            try:
+                return pd.to_datetime(d_str).date()
+            except Exception:
+                return None
+
+    df_vac['dt_obj'] = df_vac['Data'].apply(_parse_dt)
+    df_vac = df_vac.dropna(subset=['dt_obj']).sort_values('dt_obj')
+    if df_vac.empty:
+        return None
+
+    # Filtrar per paraules clau si hi ha destinació
+    sub_df = pd.DataFrame()
+    dest_cleaned = destinacio.strip().lower()
+    if dest_cleaned:
+        words = [w for w in dest_cleaned.replace("de", "").replace("a", "").replace("la", "").replace("el", "").split() if len(w) > 2]
+        for w in words:
+            matched = df_vac[df_vac['Comentari'].str.lower().str.contains(w, regex=False, na=False) |
+                             df_vac['Idconcepte'].astype(str).str.lower().str.contains(w, regex=False, na=False)]
+            if not matched.empty:
+                sub_df = matched
+                break
+
+    if sub_df.empty:
+        ultim_dt = df_vac['dt_obj'].max()
+        sub_df = df_vac[df_vac['dt_obj'] >= (ultim_dt - pd.Timedelta(days=25))]
+
+    if sub_df.empty:
+        sub_df = df_vac
+
+    min_d = sub_df['dt_obj'].min()
+    max_d = sub_df['dt_obj'].max()
+    dies_ref = max(1, (max_d - min_d).days + 1)
+    total_ref = sub_df['imp_clean'].sum()
+    mitjana_dia = total_ref / dies_ref
+
+    if d_inici and d_fi:
+        dies_nou = max(1, (d_fi - d_inici).days + 1)
+    else:
+        dies_nou = dies_ref
+
+    total_estimat = round(mitjana_dia * dies_nou, 2)
+
+    # Agrupar per categories normalitzades
+    sub_df['cat_norm'] = sub_df.apply(lambda r: _normalitzar_categoria_viatge(r.get('Idcategoria', ''), r.get('Idconcepte', '')), axis=1)
+    cat_totals = sub_df.groupby('cat_norm')['imp_clean'].sum().to_dict()
+
+    partides_suggerides = []
+    pid = 1
+    for c_nom, c_val in cat_totals.items():
+        pct = c_val / total_ref if total_ref > 0 else 0
+        partida_imp = round(total_estimat * pct, 2)
+        if partida_imp > 0:
+            partides_suggerides.append({
+                "id": pid,
+                "categoria": c_nom,
+                "concepte": f"Previsió {c_nom.split()[-1]} ({dies_nou} dies)",
+                "import": partida_imp
+            })
+            pid += 1
+
+    return {
+        "total_estimat": total_estimat,
+        "mitjana_dia": mitjana_dia,
+        "dies_nou": dies_nou,
+        "dies_ref": dies_ref,
+        "total_ref": total_ref,
+        "periode_ref": f"{min_d.strftime('%d/%m/%Y')} al {max_d.strftime('%d/%m/%Y')}",
+        "partides": partides_suggerides,
+        "num_moviments": len(sub_df)
+    }
 
 def render():
     try:
@@ -276,22 +392,47 @@ def render():
 
     # TAB 3: PRESSUPOST & DESPESES
     with tab3:
-        st.markdown("<h4 style='color:#f39c12;'>💰 Pressupost Previst & Despeses Reals del Viatge</h4>", unsafe_allow_html=True)
-        st.caption("Gestiona les partides de despesa previstes per a cada escapada i confronta-les amb les despeses reals registrades al Mòdul Econòmic (etiqueta [VACANCES]).")
+        st.markdown("<h4 style='color:#f39c12;'>💰 Pressupost Previst & Despeses Reals per Categories</h4>", unsafe_allow_html=True)
+        st.caption("Confronta el pressupost previst amb les despeses reals registrades al Mòdul Econòmic (etiqueta [VACANCES]), agrupades i desglossades per categories.")
 
         if not viatges:
             st.info("No hi ha viatges planificats. Afegeix-ne un a la pestanya '➕ Nou Viatge' per començar a gestionar el pressupost.")
         else:
-            # Selector de viatge
             v_noms = [f"{v.get('destinacio', 'Sense nom')} ({v.get('data_inici', '')} al {v.get('data_fi', '')})" for v in viatges]
             sel_idx = 0
             if "sel_viatge_pressupost_idx" in st.session_state and st.session_state["sel_viatge_pressupost_idx"] < len(viatges):
                 sel_idx = st.session_state["sel_viatge_pressupost_idx"]
-            
-            sel_v_str = st.selectbox("Selecciona el viatge a consultar o gestionar:", v_noms, index=sel_idx, key="sel_viatge_press_box")
+
+            c_sel_v, c_auto_btn = st.columns([7, 3], vertical_alignment="bottom")
+            with c_sel_v:
+                sel_v_str = st.selectbox("Selecciona el viatge a consultar o gestionar:", v_noms, index=sel_idx, key="sel_viatge_press_box")
             curr_v_idx = v_noms.index(sel_v_str) if sel_v_str in v_noms else 0
             st.session_state["sel_viatge_pressupost_idx"] = curr_v_idx
             curr_v = viatges[curr_v_idx]
+
+            try:
+                v_dini = datetime.strptime(curr_v.get("data_inici", ""), "%Y-%m-%d").date()
+                v_dfi = datetime.strptime(curr_v.get("data_fi", ""), "%Y-%m-%d").date()
+            except Exception:
+                v_dini = None
+                v_dfi = None
+
+            # Botó per auto-generar partides desglossades des de l'històric
+            with c_auto_btn:
+                if st.button("💡 Auto-estimar per Històric", key="btn_auto_press_tab3", use_container_width=True, help="Calcula el pressupost i les partides a partir dels viatges anteriors a la BD"):
+                    est = _estimar_pressupost_historic(curr_v.get("destinacio", ""), v_dini, v_dfi)
+                    if est and est.get("partides"):
+                        curr_v["despeses_previstes"] = est["partides"]
+                        curr_v["pressupost"] = est["total_estimat"]
+                        data["viatges"] = viatges
+                        _save_viatges_data(data)
+                        st.session_state["flash_auto_press"] = f"✅ S'han generat {len(est['partides'])} partides estimades ({est['total_estimat']:,.2f} €) a partir de l'històric de {est['periode_ref']}!"
+                        st.rerun()
+                    else:
+                        st.warning("No s'han trobat prous despeses de vacances històriques per auto-generar el pressupost.")
+
+            if "flash_auto_press" in st.session_state:
+                st.success(st.session_state.pop("flash_auto_press"))
 
             # Inicialitzar partides previstes si no n'hi ha
             if "despeses_previstes" not in curr_v or not isinstance(curr_v["despeses_previstes"], list):
@@ -302,19 +443,19 @@ def render():
                         "id": 1,
                         "categoria": "🏨 Allotjament",
                         "concepte": f"Estimació {curr_v.get('allotjament', 'Allotjament')}",
-                        "import": p_init * 0.5
+                        "import": round(p_init * 0.45, 2)
                     })
                     curr_v["despeses_previstes"].append({
                         "id": 2,
                         "categoria": "🚗 Transport / Carburant",
                         "concepte": f"Transport ({curr_v.get('transport', 'General')})",
-                        "import": p_init * 0.3
+                        "import": round(p_init * 0.25, 2)
                     })
                     curr_v["despeses_previstes"].append({
                         "id": 3,
-                        "categoria": "🍽️ Menjar / Restaurants",
-                        "concepte": "Compres i restaurants de vacances",
-                        "import": p_init * 0.2
+                        "categoria": "🍽️ Menjar / Supermercat",
+                        "concepte": "Compres súper i àpats",
+                        "import": round(p_init * 0.30, 2)
                     })
                     data["viatges"] = viatges
                     _save_viatges_data(data)
@@ -324,16 +465,11 @@ def render():
             if total_previst == 0 and float(curr_v.get("pressupost", 0)) > 0:
                 total_previst = float(curr_v.get("pressupost", 0))
 
-            # Recuperar despeses reals des del Mòdul Econòmic
+            # -------------------------------------------------------------
+            # Recuperar i classificar despeses reals del Mòdul Econòmic
+            # -------------------------------------------------------------
             df_desp_all = _get_despeses_reals_df()
             despeses_reals_viatge = []
-            
-            try:
-                v_dini = datetime.strptime(curr_v.get("data_inici", ""), "%Y-%m-%d").date()
-                v_dfi = datetime.strptime(curr_v.get("data_fi", ""), "%Y-%m-%d").date()
-            except Exception:
-                v_dini = None
-                v_dfi = None
 
             if df_desp_all is not None and not df_desp_all.empty and v_dini and v_dfi:
                 import pandas as pd
@@ -347,7 +483,6 @@ def render():
                             row_date = pd.to_datetime(d_str).date()
                         except Exception:
                             pass
-                    
                     if not row_date:
                         continue
 
@@ -366,10 +501,12 @@ def render():
                                 except Exception:
                                     pass
                         if imp_carg > 0:
+                            cat_norm = _normalitzar_categoria_viatge(row.get("Idcategoria", ""), row.get("Idconcepte", ""))
                             despeses_reals_viatge.append({
                                 "Data": d_str,
                                 "Concepte": str(row.get("Idconcepte", "")),
-                                "Categoria": str(row.get("Idcategoria", "")),
+                                "Categoria_BD": str(row.get("Idcategoria", "")),
+                                "Categoria": cat_norm,
                                 "Banc": str(row.get("Banc", "")),
                                 "FormaPago": str(row.get("FormaPago", "")),
                                 "Import": imp_carg,
@@ -381,13 +518,15 @@ def render():
             diferencia = total_previst - total_real
             pct_consumit = (total_real / total_previst * 100) if total_previst > 0 else 0
 
-            # RESUM I METRIQUES COMPARATIVES
-            st.markdown(f"##### 📊 Balanç del Viatge: **{curr_v.get('destinacio')}**")
+            # -------------------------------------------------------------
+            # RESUM SUPERIOR I BALANÇ GLOBAL
+            # -------------------------------------------------------------
+            st.markdown(f"##### 📊 Balanç Global: **{curr_v.get('destinacio')}**")
             col_b1, col_b2, col_b3 = st.columns(3)
             with col_b1:
                 st.metric("💶 Total Pressupostat (Previst)", f"{total_previst:,.2f} €")
             with col_b2:
-                st.metric("💳 Despesa Real (Mòdul Econòmic)", f"{total_real:,.2f} €", delta=f"{pct_consumit:.1f}% gastat", delta_color="inverse")
+                st.metric("💳 Despesa Real Acumulada", f"{total_real:,.2f} €", delta=f"{pct_consumit:.1f}% consumit", delta_color="inverse")
             with col_b3:
                 color_dif = "normal" if diferencia >= 0 else "inverse"
                 st.metric("⚖️ Romanent / Desviació", f"{diferencia:,.2f} €", delta="Dins del pressupost" if diferencia >= 0 else "Superat", delta_color=color_dif)
@@ -396,127 +535,187 @@ def render():
             st.progress(prog_val, text=f"Progrés de la despesa: {total_real:,.2f} € de {total_previst:,.2f} € ({pct_consumit:.1f}%)")
 
             st.write("")
-            col_partides, col_reals = st.columns([1, 1], gap="medium")
+            st.markdown("---")
 
-            # COLUMNA ESQUERRA: PARTIDES PREVISTES (OBERTA I ACTUALITZABLE)
-            with col_partides:
-                st.markdown("##### 📝 Despeses Previstes (Pressupost Desglossat)")
-                st.caption("Afegeix o modifica les partides que estimes que costarà el viatge:")
+            # -------------------------------------------------------------
+            # AGRUPACIÓ I DESGLOSSAMENT PER CATEGORIES
+            # -------------------------------------------------------------
+            st.markdown("#### 📂 Desglossament i Comparativa per Categories")
+            st.caption("Compara la previsió de cada categoria amb les despeses reals extretes del Mòdul Econòmic.")
 
-                if partides:
-                    for p_idx, p in enumerate(partides):
-                        with st.container():
-                            cp1, cp2, cp3 = st.columns([6, 3, 1], vertical_alignment="center")
-                            with cp1:
-                                st.markdown(f"**{p.get('concepte')}**  \n<span style='font-size:0.8rem; color:#94a3b8;'>📂 {p.get('categoria')}</span>", unsafe_allow_html=True)
-                            with cp2:
-                                st.markdown(f"<span style='font-size:1rem; font-weight:700; color:#38bdf8;'>{float(p.get('import', 0)):,.2f} €</span>", unsafe_allow_html=True)
-                            with cp3:
-                                if st.button("🗑️", key=f"del_partida_{curr_v['id']}_{p_idx}", help="Eliminar partida"):
-                                    partides.pop(p_idx)
-                                    curr_v["despeses_previstes"] = partides
-                                    curr_v["pressupost"] = sum(float(x.get("import", 0)) for x in partides)
-                                    data["viatges"] = viatges
-                                    _save_viatges_data(data)
-                                    st.rerun()
-                            st.markdown("<hr style='margin:4px 0 8px 0; border:none; border-top:1px solid #334155;'>", unsafe_allow_html=True)
-                else:
-                    st.info("Encara no has afegit cap partida prevista per a aquest viatge.")
+            CATEGORIES_ESTANDARD = [
+                "🍽️ Menjar / Supermercat",
+                "🚗 Transport / Carburant",
+                "🏨 Allotjament",
+                "🎟️ Restauració i Oci",
+                "🎒 Altres / Compres"
+            ]
 
-                with st.expander("➕ Afegir Nova Despesa Prevista", expanded=True):
-                    with st.form(f"form_add_partida_{curr_v['id']}", clear_on_submit=True):
-                        np_cat = st.selectbox("Categoria", ["🏨 Allotjament", "🚗 Transport / Carburant", "🍽️ Menjar / Restaurants", "🎟️ Oci / Entrades", "🛍️ Compres / Souvenirs", "🎒 Altres"], key=f"np_cat_{curr_v['id']}")
-                        np_conc = st.text_input("Concepte", placeholder="Ex: Hotel 3 nits, Gasolina anada, Sopar...", key=f"np_conc_{curr_v['id']}")
-                        np_imp = st.number_input("Import estimat (€)", min_value=0.0, step=10.0, value=50.0, key=f"np_imp_{curr_v['id']}")
-                        
-                        if st.form_submit_button("➕ Afegir al Pressupost", type="primary", use_container_width=True):
-                            if np_conc.strip() and np_imp > 0:
-                                next_p_id = max([x.get("id", 0) for x in partides], default=0) + 1
-                                partides.append({
-                                    "id": next_p_id,
-                                    "categoria": np_cat,
-                                    "concepte": np_conc.strip(),
-                                    "import": float(np_imp)
-                                })
-                                curr_v["despeses_previstes"] = partides
-                                curr_v["pressupost"] = sum(float(x.get("import", 0)) for x in partides)
-                                data["viatges"] = viatges
-                                _save_viatges_data(data)
-                                st.rerun()
+            # Construir resum per categories
+            cat_summary = []
+            for c_nom in CATEGORIES_ESTANDARD:
+                p_items = [p for p in partides if _normalitzar_categoria_viatge(p.get("categoria", ""), p.get("concepte", "")) == c_nom]
+                r_items = [r for r in despeses_reals_viatge if r.get("Categoria") == c_nom]
+                
+                c_prev = sum(float(x.get("import", 0)) for x in p_items)
+                c_real = sum(float(x.get("Import", 0)) for x in r_items)
+                
+                # Mostrar si té pressupost o despesa real
+                if c_prev > 0 or c_real > 0:
+                    c_dif = c_prev - c_real
+                    c_pct = (c_real / c_prev * 100) if c_prev > 0 else 0
+                    cat_summary.append({
+                        "nom": c_nom,
+                        "previst": c_prev,
+                        "real": c_real,
+                        "diferencia": c_dif,
+                        "pct": c_pct,
+                        "partides": p_items,
+                        "reals": r_items
+                    })
+
+            # Taula resum de categories
+            if cat_summary:
+                import pandas as pd
+                df_cat_table = pd.DataFrame([{
+                    "Categoria": cs["nom"],
+                    "Pressupostat": cs["previst"],
+                    "Despesa Real [VACANCES]": cs["real"],
+                    "Diferència": cs["diferencia"],
+                    "Estat": "🟢 En pressupost" if cs["diferencia"] >= 0 else "🔴 Superat"
+                } for cs in cat_summary])
+
+                st.dataframe(
+                    df_cat_table.style.format({
+                        "Pressupostat": "{:,.2f} €",
+                        "Despesa Real [VACANCES]": "{:,.2f} €",
+                        "Diferència": "{:,.2f} €"
+                    }),
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+                st.write("")
+                # Desglossament detallat en acordions per a cada categoria
+                st.markdown("##### 🔍 Detall de Moviments per Categoria")
+                for cs in cat_summary:
+                    color_tag = "#10b981" if cs["diferencia"] >= 0 else "#ef4444"
+                    titol_exp = f"{cs['nom']}  —  Previst: {cs['previst']:,.2f} €  |  Real: {cs['real']:,.2f} €  ({cs['diferencia']:+,.2f} €)"
+                    with st.expander(titol_exp, expanded=False):
+                        c_col_prev, c_col_real = st.columns(2, gap="medium")
+                        with c_col_prev:
+                            st.markdown("###### 📝 Partides Previstes")
+                            if cs["partides"]:
+                                for p in cs["partides"]:
+                                    st.markdown(f"• **{p.get('concepte')}**: `{float(p.get('import', 0)):,.2f} €`")
                             else:
-                                st.error("Introdueix un concepte i un import major que 0.")
+                                st.caption("Sense partides previstes definides.")
 
-            # COLUMNA DRETA: DESPESES REALS DEL MÒDUL ECONÒMIC
-            with col_reals:
-                st.markdown("##### 💳 Despeses Reals del Mòdul Econòmic")
-                st.caption(f"Despeses registrades durant les dates ({curr_v.get('data_inici')} - {curr_v.get('data_fi')}) amb etiqueta `[VACANCES]`:")
-
-                if despeses_reals_viatge:
-                    import pandas as pd
-                    df_r = pd.DataFrame(despeses_reals_viatge)
-                    df_r_show = df_r[["Data", "Concepte", "Categoria", "Import", "Comentari"]].copy()
-                    df_r_show.rename(columns={"Import": "Import (€)"}, inplace=True)
-                    st.dataframe(df_r_show.style.format({"Import (€)": "{:,.2f} €"}), use_container_width=True, hide_index=True)
-                    st.success(f"**Total Real Gastat:** {total_real:,.2f} € ({len(despeses_reals_viatge)} moviments)")
-                else:
-                    st.info("Encara no s'han trobat despeses reals associades a aquest viatge. Quan afegeixis moviments al Mòdul Econòmic marcant la casella **'Compra de viatge / vacances'**, apareixeran automàticament aquí.")
-                    
-                    if df_desp_all is not None and not df_desp_all.empty and v_dini and v_dfi:
-                        with st.expander("🔍 Cercar totes les despeses reals ocorregudes en aquestes dates"):
-                            totes_en_dates = []
-                            for _, r in df_desp_all.iterrows():
-                                try:
-                                    rd = datetime.strptime(str(r.get("Data", "")).strip(), "%d/%m/%Y").date()
-                                    if v_dini <= rd <= v_dfi:
-                                        ic = 0.0
-                                        for c in ["Import càrrec", "Import crrec", "Import carrec"]:
-                                            if c in r and pd.notna(r[c]):
-                                                ic = float(str(r[c]).replace(",", ".").replace("€", "").strip())
-                                                break
-                                        if ic > 0:
-                                            totes_en_dates.append({
-                                                "Data": str(r.get("Data", "")),
-                                                "Concepte": str(r.get("Idconcepte", "")),
-                                                "Categoria": str(r.get("Idcategoria", "")),
-                                                "Import (€)": ic,
-                                                "Comentari": str(r.get("Comentari", ""))
-                                            })
-                                except Exception:
-                                    pass
-                            if totes_en_dates:
-                                df_totes = pd.DataFrame(totes_en_dates)
-                                st.dataframe(df_totes.style.format({"Import (€)": "{:,.2f} €"}), use_container_width=True, hide_index=True)
-                                st.caption(f"S'han trobat {len(totes_en_dates)} moviments durant les dates del viatge ({sum(x['Import (€)'] for x in totes_en_dates):,.2f} €).")
+                        with c_col_real:
+                            st.markdown(f"###### 💳 Moviments Reals Mòdul Econòmic ({len(cs['reals'])})")
+                            if cs["reals"]:
+                                for r in cs["reals"]:
+                                    banc_info = f"({r.get('Banc')})" if r.get('Banc') else ""
+                                    coment_clean = r.get('Comentari', '').replace('[VACANCES]', '').strip()
+                                    detall_extra = f" — *{coment_clean}*" if coment_clean else ""
+                                    st.markdown(f"• **{r.get('Data')}** | **{r.get('Concepte')}**: `{r.get('Import', 0):,.2f} €` {banc_info}{detall_extra}")
                             else:
-                                st.caption("No hi ha cap moviment registrat en aquest rang de dates al Mòdul Econòmic.")
+                                st.caption("Cap despesa real trobada per a aquesta categoria.")
+            else:
+                st.info("No s'ha definit cap pressupost per categories ni s'han trobat despeses reals per a aquest viatge.")
+
+            # Formulari per afegir noves partides previstes
+            st.write("")
+            with st.expander("➕ Afegir / Ampliar Partida Prevista al Pressupost", expanded=False):
+                with st.form(f"form_add_partida_{curr_v['id']}", clear_on_submit=True):
+                    c_n1, c_n2, c_n3 = st.columns([4, 5, 3], vertical_alignment="bottom")
+                    with c_n1:
+                        np_cat = st.selectbox("Categoria", CATEGORIES_ESTANDARD, key=f"np_cat_{curr_v['id']}")
+                    with c_n2:
+                        np_conc = st.text_input("Concepte", placeholder="Ex: Supermercat, Gasolina, Allotjament...", key=f"np_conc_{curr_v['id']}")
+                    with c_n3:
+                        np_imp = st.number_input("Import (€)", min_value=0.0, step=10.0, value=50.0, key=f"np_imp_{curr_v['id']}")
+
+                    if st.form_submit_button("➕ Afegir Partida", type="primary", use_container_width=True):
+                        if np_conc.strip() and np_imp > 0:
+                            next_p_id = max([x.get("id", 0) for x in partides], default=0) + 1
+                            partides.append({
+                                "id": next_p_id,
+                                "categoria": np_cat,
+                                "concepte": np_conc.strip(),
+                                "import": float(np_imp)
+                            })
+                            curr_v["despeses_previstes"] = partides
+                            curr_v["pressupost"] = sum(float(x.get("import", 0)) for x in partides)
+                            data["viatges"] = viatges
+                            _save_viatges_data(data)
+                            st.rerun()
+                        else:
+                            st.error("Introdueix un concepte i un import major que 0.")
 
     # TAB 4: NOU VIATGE
     with tab4:
         st.markdown("<h4 style='color:#f39c12;'>➕ Registrar una Nova Aventura o Escapada</h4>", unsafe_allow_html=True)
         if "viatge_saved_msg" in st.session_state:
             st.success(st.session_state.pop("viatge_saved_msg"))
+        if "viatge_estimat_info" in st.session_state:
+            st.info(st.session_state.pop("viatge_estimat_info"))
 
-        with st.form("form_nou_viatge", clear_on_submit=True):
+        with st.form("form_nou_viatge", clear_on_submit=False):
             col_f1, col_f2 = st.columns(2)
             with col_f1:
-                f_dest = st.text_input("📍 Destinació / Ciutat / Zona", placeholder="Ex: Roma, Menorca, Pirineus...", key="form_v_dest")
-                f_pais = st.text_input("🌍 País / Regió", placeholder="Ex: Itàlia, Illes Balears...", key="form_v_pais")
+                f_dest = st.text_input("📍 Destinació / Ciutat / Zona", value=st.session_state.get("form_v_dest_val", ""), placeholder="Ex: Roma, La Torre, Pirineus...", key="form_v_dest")
+                f_pais = st.text_input("🌍 País / Regió", value=st.session_state.get("form_v_pais_val", ""), placeholder="Ex: Alacant, Itàlia, Illes Balears...", key="form_v_pais")
                 f_transp = st.selectbox("🚗 Mitjà de Transport", ["Cotxe propi", "Avió", "Tren", "Autobús", "Vaixell / Ferri", "Altres"], key="form_v_transp")
             with col_f2:
                 col_d1, col_d2 = st.columns(2)
                 with col_d1:
-                    f_dini = st.date_input("📅 Data d'inici", value=date.today(), format="DD/MM/YYYY", key="form_v_dini")
+                    f_dini = st.date_input("📅 Data d'inici", value=st.session_state.get("form_v_dini_val", date.today()), format="DD/MM/YYYY", key="form_v_dini")
                 with col_d2:
-                    f_dfi = st.date_input("📅 Data de tornada", value=date.today(), format="DD/MM/YYYY", key="form_v_dfi")
-                f_allotj = st.text_input("🏨 Allotjament", placeholder="Ex: Hotel, Apartament, Càmping...", key="form_v_allotj")
-                f_press = st.number_input("💶 Pressupost estimat (€)", min_value=0.0, step=50.0, value=300.0, key="form_v_press")
+                    f_dfi = st.date_input("📅 Data de tornada", value=st.session_state.get("form_v_dfi_val", date.today()), format="DD/MM/YYYY", key="form_v_dfi")
+                f_allotj = st.text_input("🏨 Allotjament", value=st.session_state.get("form_v_allotj_val", ""), placeholder="Ex: Hotel, Apartament, Casa Mireia...", key="form_v_allotj")
 
-            f_notes = st.text_area("📝 Notes, enllaços o plans a realitzar", placeholder="Llocs a visitar, restaurants recomanats, reserves...", key="form_v_notes")
-            
+                # Pressupost i Botó d'estimació intel·ligent
+                col_p_in, col_p_btn = st.columns([1.2, 1.3], vertical_alignment="bottom")
+                with col_p_in:
+                    f_press = st.number_input("💶 Pressupost (€)", min_value=0.0, step=25.0, value=float(st.session_state.get("form_v_press_val", 300.0)), key="form_v_press")
+                with col_p_btn:
+                    btn_est = st.form_submit_button("💡 Estimar per Històric", use_container_width=True, help="Calcula el pressupost automàticament segons viatges anteriors amb [VACANCES]")
+
+            f_notes = st.text_area("📝 Notes, enllaços o plans a realitzar", value=st.session_state.get("form_v_notes_val", ""), placeholder="Llocs a visitar, restaurants recomanats, reserves...", key="form_v_notes")
+
+            st.write("")
             btn_save_v = st.form_submit_button("💾 Desar Viatge", type="primary", use_container_width=True)
+
+            if btn_est:
+                est = _estimar_pressupost_historic(f_dest, f_dini, f_dfi)
+                if est:
+                    st.session_state["form_v_dest_val"] = f_dest
+                    st.session_state["form_v_pais_val"] = f_pais
+                    st.session_state["form_v_dini_val"] = f_dini
+                    st.session_state["form_v_dfi_val"] = f_dfi
+                    st.session_state["form_v_allotj_val"] = f_allotj
+                    st.session_state["form_v_notes_val"] = f_notes
+                    st.session_state["form_v_press_val"] = float(est["total_estimat"])
+                    st.session_state["form_v_partides_calc"] = est["partides"]
+                    st.session_state["viatge_estimat_info"] = f"💡 Estimació calculada: **{est['total_estimat']:,.2f} €** per a {est['dies_nou']} dies (~{est['mitjana_dia']:,.2f} €/dia), basat en l'històric de {est['periode_ref']} ({est['num_moviments']} moviments registrats amb [VACANCES])."
+                    st.rerun()
+                else:
+                    st.warning("No s'han trobat prous despeses anteriors amb [VACANCES] per generar una estimació.")
+
             if btn_save_v:
                 if f_dest.strip():
                     next_vid = max([v.get("id", 0) for v in viatges], default=0) + 1
+                    
+                    # Utilitzar les partides calculades si n'hi ha, o generar-ne d'inicials
+                    partides_inicials = st.session_state.get("form_v_partides_calc", [])
+                    if not partides_inicials and float(f_press) > 0:
+                        partides_inicials = [
+                            {"id": 1, "categoria": "🏨 Allotjament", "concepte": f"Allotjament ({f_allotj.strip() or 'Estada'})", "import": round(float(f_press) * 0.45, 2)},
+                            {"id": 2, "categoria": "🚗 Transport / Carburant", "concepte": f"Transport ({f_transp})", "import": round(float(f_press) * 0.25, 2)},
+                            {"id": 3, "categoria": "🍽️ Menjar / Supermercat", "concepte": "Compres súper i restaurants", "import": round(float(f_press) * 0.30, 2)}
+                        ]
+
                     nou_viatge = {
                         "id": next_vid,
                         "destinacio": f_dest.strip(),
@@ -527,22 +726,23 @@ def render():
                         "allotjament": f_allotj.strip(),
                         "pressupost": float(f_press),
                         "notes": f_notes.strip(),
-                        "estat": "Planificat"
+                        "estat": "Planificat",
+                        "despeses_previstes": partides_inicials
                     }
                     viatges.append(nou_viatge)
                     data["viatges"] = viatges
                     _save_viatges_data(data)
-                    
-                    # Buidar explícitament els camps del formulari
-                    for k in ["form_v_dest", "form_v_pais", "form_v_allotj", "form_v_notes"]:
+
+                    # Buidar explícitament els camps temporals
+                    for k in ["form_v_dest_val", "form_v_pais_val", "form_v_allotj_val", "form_v_notes_val", "form_v_dest", "form_v_pais", "form_v_allotj", "form_v_notes"]:
                         if k in st.session_state:
                             st.session_state[k] = ""
-                    if "form_v_press" in st.session_state:
-                        st.session_state["form_v_press"] = 300.0
-                    if "form_v_dini" in st.session_state:
-                        st.session_state["form_v_dini"] = date.today()
-                    if "form_v_dfi" in st.session_state:
-                        st.session_state["form_v_dfi"] = date.today()
+                    st.session_state["form_v_press_val"] = 300.0
+                    st.session_state["form_v_press"] = 300.0
+                    st.session_state["form_v_dini_val"] = date.today()
+                    st.session_state["form_v_dfi_val"] = date.today()
+                    if "form_v_partides_calc" in st.session_state:
+                        del st.session_state["form_v_partides_calc"]
 
                     st.session_state["viatge_saved_msg"] = f"✅ Viatge a '{nou_viatge['destinacio']}' registrat amb èxit!"
                     st.rerun()
