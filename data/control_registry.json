@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 10:20:44",
+  "updated_at": "23/11/2026 10:21:26",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -43,11 +43,11 @@
       "verified_hashes": {
         "modules/economic.py": "026470994a14f90c10d6bc7a95b05e04bfe3803605c4c4d4c6a64505bbef7d8b"
       },
-      "verified_at": "23/11/2026 10:19:44",
-      "verified_commit": "d47cb1f",
+      "verified_at": "23/11/2026 10:21:26",
+      "verified_commit": "32d8673",
       "verified_by": "admin",
-      "unlocked_until": "24/11/2026 10:20:44",
-      "unlock_reason": "Actualitzar motor per defecte a Gemini Flash Lite per evitar limits de quota"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 10:21:26",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "32d8673"
+    },
     {
       "timestamp": "23/11/2026 10:20:44",
       "action": "UNLOCK",
@@ -1143,14 +1151,6 @@
       "detail": "Versió verificada i segellada (Afegit botó Programador junt amb Contactor i Termòstat)",
       "user": "admin",
       "git_head": "47b32af"
-    },
-    {
-      "timestamp": "11/11/2026 20:12:44",
-      "action": "SEAL",
-      "module": "control",
-      "detail": "Versió verificada i segellada (Registre actualitzat amb canvas_electric.py)",
-      "user": "admin",
-      "git_head": "dc8bf80"
     }
   ]
 }
