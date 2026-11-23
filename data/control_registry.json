@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 10:21:26",
+  "updated_at": "23/11/2026 10:39:43",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -41,13 +41,13 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "026470994a14f90c10d6bc7a95b05e04bfe3803605c4c4d4c6a64505bbef7d8b"
+        "modules/economic.py": "e890a5d0957d454405e88e7db643b9248b4ec7d3b777f833b804ef39a7e256fe"
       },
-      "verified_at": "23/11/2026 10:21:26",
-      "verified_commit": "32d8673",
+      "verified_at": "23/11/2026 10:38:54",
+      "verified_commit": "f28a68f",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "24/11/2026 10:39:43",
+      "unlock_reason": "Integrar saldos bancaris, fons DP i ingressos imminents"
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,30 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 10:39:43",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 10:39:43. Motiu: Integrar saldos bancaris, fons DP i ingressos imminents",
+      "user": "admin",
+      "git_head": "f28a68f"
+    },
+    {
+      "timestamp": "23/11/2026 10:38:54",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada",
+      "user": "admin",
+      "git_head": "f28a68f"
+    },
+    {
+      "timestamp": "23/11/2026 10:37:08",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 10:37:08. Motiu: Passar dades reals de bancs, estalvi DP i ingressos imminents al Consell",
+      "user": "admin",
+      "git_head": "f28a68f"
+    },
     {
       "timestamp": "23/11/2026 10:21:26",
       "action": "SEAL",
@@ -1127,30 +1151,6 @@
       "detail": "Versió verificada i segellada (Boto fletxa Seleccionar amb 8 quadrets cantonades/mig i centre)",
       "user": "admin",
       "git_head": "dcc3778"
-    },
-    {
-      "timestamp": "11/11/2026 20:29:21",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Confirmacio abans de netejar esquema electric)",
-      "user": "admin",
-      "git_head": "25343c3"
-    },
-    {
-      "timestamp": "11/11/2026 20:26:09",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Caixa/Quadre/Carrega redimensionables, Moure element, Termostat 4 contactes)",
-      "user": "admin",
-      "git_head": "f5691b4"
-    },
-    {
-      "timestamp": "11/11/2026 20:19:27",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Afegit botó Programador junt amb Contactor i Termòstat)",
-      "user": "admin",
-      "git_head": "47b32af"
     }
   ]
 }
