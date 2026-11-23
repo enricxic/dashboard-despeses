@@ -237,19 +237,22 @@ def render():
 
         st.markdown("---")
         st.markdown("###### ➕ Afegir nou element a la llista d'equipatge:")
-        c_ncat, c_nitem, c_nbtn = st.columns([3, 6, 2], vertical_alignment="bottom")
-        with c_ncat:
-            nova_cat = st.selectbox("Categoria", ["📄 Documentació", "🔌 Electrònica", "💊 Farmaciola", "🧴 Necesser", "🧥 Roba & Calçat", "🎒 Altres"], key="sel_chk_cat")
-        with c_nitem:
-            nou_item_nom = st.text_input("Element a portar", placeholder="Ex: Crema solar, Carregador...", key="inp_chk_item")
-        with c_nbtn:
-            if st.button("➕ Afegir", key="btn_add_chk", use_container_width=True):
-                if nou_item_nom.strip():
-                    next_id = max([c["id"] for c in checklist], default=0) + 1
-                    checklist.append({"id": next_id, "categoria": nova_cat, "item": nou_item_nom.strip(), "fet": False})
-                    data["checklist"] = checklist
-                    _save_viatges_data(data)
-                    st.rerun()
+        with st.form("form_add_chk_item", clear_on_submit=True):
+            c_ncat, c_nitem, c_nbtn = st.columns([3, 6, 2], vertical_alignment="bottom")
+            with c_ncat:
+                nova_cat = st.selectbox("Categoria", ["📄 Documentació", "🔌 Electrònica", "💊 Farmaciola", "🧴 Necesser", "🧥 Roba & Calçat", "🎒 Altres"], key="sel_chk_cat")
+            with c_nitem:
+                nou_item_nom = st.text_input("Element a portar", placeholder="Ex: Crema solar, Carregador...", key="inp_chk_item")
+            with c_nbtn:
+                if st.form_submit_button("➕ Afegir", use_container_width=True):
+                    if nou_item_nom.strip():
+                        next_id = max([c["id"] for c in checklist], default=0) + 1
+                        checklist.append({"id": next_id, "categoria": nova_cat, "item": nou_item_nom.strip(), "fet": False})
+                        data["checklist"] = checklist
+                        _save_viatges_data(data)
+                        if "inp_chk_item" in st.session_state:
+                            st.session_state["inp_chk_item"] = ""
+                        st.rerun()
 
     # TAB 3: PRESSUPOST & DESPESES
     with tab3:
