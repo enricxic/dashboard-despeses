@@ -608,6 +608,7 @@ def render():
         
         sections = [
             ("titol", "🏷️ Títol de la casa"),
+            ("fons", "🖼️ Fons de pantalla"),
             ("estances", "🏡 Estances de la casa"),
             ("vehicles", "🚗 Vehicles de la llar"),
             ("familia", "👨‍👩‍👧‍👦 Família"),
@@ -658,6 +659,128 @@ def render():
         # =========================================================================
         # 2. SECCIÓ: TÍTOL DE LA CASA
         # =========================================================================
+        def _render_fons_seccio(casa_cfg):
+            st.markdown("""
+            <div class="chrome-card">
+                <div class="chrome-card-header">🖼️ Fons de Pantalla d'Inici</div>
+                <div class="chrome-card-desc">Personalitza el fons visual de la teva pantalla principal. Tria qualsevol dels dissenys disponibles a la galeria d'imatges; en seleccionar un fons horitzontal (H), el sistema associarà automàticament la seva corresponent versió vertical (V) per a telèfons mòbils.</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown("<div class='chrome-card'>", unsafe_allow_html=True)
+
+            disseny_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "imatges", "Disseny")
+            if not os.path.exists(disseny_folder):
+                disseny_folder = os.path.join(os.getcwd(), "imatges", "Disseny")
+
+            h_candidates = []
+            if os.path.exists(disseny_folder):
+                import re as _re_f
+                for fn in sorted(os.listdir(disseny_folder)):
+                    if _re_f.match(r"^H\d+", fn, _re_f.IGNORECASE):
+                        h_candidates.append(fn)
+
+            cur_saved_fons = casa_cfg.get("fons_h", "fons xiquiHouse.jpg")
+            if "sel_fons_pantalla_inici" not in st.session_state:
+                st.session_state["sel_fons_pantalla_inici"] = cur_saved_fons
+
+            selected_fons = st.session_state["sel_fons_pantalla_inici"]
+            if selected_fons not in h_candidates and selected_fons != "fons xiquiHouse.jpg" and h_candidates:
+                selected_fons = h_candidates[0]
+                st.session_state["sel_fons_pantalla_inici"] = selected_fons
+
+            def _clean_name(fn):
+                if fn == "fons xiquiHouse.jpg":
+                    return "🌟 Predeterminat Clàssic"
+                import re as _re_n
+                m = _re_n.match(r"^H(\d+)(?:_\d+)?_(.+)\.(?:jpg|jpeg|png)", fn, _re_n.IGNORECASE)
+                if m:
+                    code, desc = m.group(1), m.group(2)
+                    desc_spaced = _re_n.sub(r"([a-z])([A-Z])", r"\1 \2", desc)
+                    return f"H{code} · {desc_spaced}"
+                return fn
+
+            st.markdown("##### 🎨 Galeria de Fons Disponibles")
+            st.caption("Fes clic a qualsevol imatge per seleccionar-la per a la teva pantalla principal:")
+
+            # Renderitzar graella de 3 columnes
+            cols_per_row = 3
+            for i in range(0, len(h_candidates), cols_per_row):
+                row_items = h_candidates[i:i + cols_per_row]
+                grid_cols = st.columns(cols_per_row)
+                for col_idx, fn in enumerate(row_items):
+                    with grid_cols[col_idx]:
+                        is_active = (selected_fons == fn)
+                        display_name = _clean_name(fn)
+                        img_path = os.path.join(disseny_folder, fn)
+
+                        border_col = "#3b82f6" if is_active else "#334155"
+                        bg_box = "rgba(59, 130, 246, 0.12)" if is_active else "rgba(255, 255, 255, 0.02)"
+                        badge_html = "<div style='background:#3b82f6; color:#ffffff; font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:6px; text-align:center; margin-bottom:8px;'>✓ SELECCIONAT</div>" if is_active else "<div style='height:25px;'></div>"
+
+                        st.markdown(f"""
+                        <div style="border: 2px solid {border_col}; border-radius: 10px; padding: 10px; background: {bg_box}; margin-bottom: 8px;">
+                            {badge_html}
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        if os.path.exists(img_path):
+                            st.image(img_path, use_container_width=True)
+
+                        st.markdown(f"<div style='font-size:0.9rem; font-weight:700; text-align:center; margin:6px 0 10px 0;'>{display_name}</div>", unsafe_allow_html=True)
+
+                        if is_active:
+                            st.button("✅ Actiu", key=f"fons_btn_{fn}", type="primary", disabled=True, use_container_width=True)
+                        else:
+                            if st.button("Tria aquest", key=f"fons_btn_{fn}", use_container_width=True):
+                                st.session_state["sel_fons_pantalla_inici"] = fn
+                                st.rerun()
+
+            # Previsualització detallada i emparellament vertical
+            st.markdown("<hr style='border:none; border-top:1px solid #334155; margin:24px 0 16px 0;'>", unsafe_allow_html=True)
+            st.markdown("##### 👁️ Previsualització del Fons Seleccionat")
+
+            chosen_h_file = selected_fons
+            chosen_v_file = chosen_h_file
+            if chosen_h_file != "fons xiquiHouse.jpg":
+                import re as _re_code
+                m_code = _re_code.search(r"^H(\d+)", chosen_h_file, _re_code.IGNORECASE)
+                if m_code and os.path.exists(disseny_folder):
+                    num = int(m_code.group(1))
+                    for vf in os.listdir(disseny_folder):
+                        if _re_code.search(rf"^V0*{num}", vf, _re_code.IGNORECASE):
+                            chosen_v_file = vf
+                            break
+
+            col_prev_h, col_prev_v = st.columns([1.6, 1.0])
+            with col_prev_h:
+                st.markdown(f"**🖥️ Horitzontal (PC / Tablet):** `{chosen_h_file}`")
+                h_path = os.path.join(disseny_folder, chosen_h_file)
+                if not os.path.exists(h_path):
+                    h_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "imatges", chosen_h_file)
+                if os.path.exists(h_path):
+                    st.image(h_path, use_container_width=True)
+            with col_prev_v:
+                st.markdown(f"**📱 Vertical mòbil associat:** `{chosen_v_file}`")
+                v_path = os.path.join(disseny_folder, chosen_v_file)
+                if os.path.exists(v_path):
+                    st.image(v_path, use_container_width=True)
+                else:
+                    st.caption("S'utilitzarà la imatge principal adaptada.")
+
+            st.write("")
+            if st.button("💾 Desar Fons de la Pantalla d'Inici", type="primary", use_container_width=True, key="save_fons_main"):
+                cur_cfg = load_app_config()
+                if "casa" not in cur_cfg:
+                    cur_cfg["casa"] = {}
+                cur_cfg["casa"]["fons_h"] = chosen_h_file
+                cur_cfg["casa"]["fons_v"] = chosen_v_file
+                if save_app_config(cur_cfg):
+                    st.session_state["flash_success"] = f"✅ Fons '{_clean_name(chosen_h_file)}' desat correctament per a la pantalla principal!"
+                    st.rerun()
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
         if active == "titol":
             casa_cfg = cfg.get("casa", {})
             st.markdown(f"""
@@ -761,87 +884,33 @@ def render():
                     print("Error actualitzant drecera:", e)
                     return False
 
-            st.markdown("<hr style='border:none; border-top:1px solid #334155; margin:24px 0 16px 0;'>", unsafe_allow_html=True)
-            st.markdown("##### 🖼️ Fons de Pantalla d'Inici")
-            st.caption("Tria la imatge de fons per a la pantalla principal. En seleccionar una imatge horitzontal (Hxx), el sistema associarà automàticament la seva corresponent versió vertical (Vxx) per a dispositius mòbils.")
-
-            disseny_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "imatges", "Disseny")
-            if not os.path.exists(disseny_folder):
-                disseny_folder = os.path.join(os.getcwd(), "imatges", "Disseny")
-
-            h_candidates = []
-            if os.path.exists(disseny_folder):
-                import re as _re_fons
-                for fn in sorted(os.listdir(disseny_folder)):
-                    if _re_fons.match(r"^H\d+", fn, _re_fons.IGNORECASE):
-                        h_candidates.append(fn)
-
-            fons_options = ["Per defecte (fons xiquiHouse.jpg)"] + h_candidates
-            cur_fons_h = casa_cfg.get("fons_h", "fons xiquiHouse.jpg")
-            default_fons_idx = 0
-            if cur_fons_h in fons_options:
-                default_fons_idx = fons_options.index(cur_fons_h)
-            elif cur_fons_h in h_candidates:
-                default_fons_idx = h_candidates.index(cur_fons_h) + 1
-
-            def _format_fons_label(fn):
-                if fn.startswith("Per defecte"):
-                    return "🌟 Predeterminat Clàssic (fons xiquiHouse.jpg)"
-                import re as _re_f
-                m = _re_f.match(r"^H(\d+)(?:_\d+)?_(.+)\.(?:jpg|jpeg|png)", fn, _re_f.IGNORECASE)
-                if m:
-                    code, desc = m.group(1), m.group(2)
-                    desc_spaced = _re_f.sub(r"([a-z])([A-Z])", r"\1 \2", desc)
-                    return f"🖼️ H{code} — {desc_spaced}"
-                return f"🖼️ {fn}"
-
-            sel_fons = st.selectbox(
-                "Selecciona el fons:",
-                fons_options,
-                index=default_fons_idx,
-                format_func=_format_fons_label,
-                key="sel_fons_pantalla_inici"
-            )
-
-            chosen_h_file = "fons xiquiHouse.jpg" if sel_fons.startswith("Per defecte") else sel_fons
-            preview_img_path = os.path.join(disseny_folder, chosen_h_file)
-            if not os.path.exists(preview_img_path):
-                preview_img_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "imatges", chosen_h_file)
-
-            if os.path.exists(preview_img_path):
-                st.image(preview_img_path, caption=f"Previsualització del fons: {chosen_h_file}", use_container_width=True)
-
-            chosen_v_file = chosen_h_file
-            if chosen_h_file != "fons xiquiHouse.jpg":
-                import re as _re_code
-                m_code = _re_code.search(r"^H(\d+)", chosen_h_file, _re_code.IGNORECASE)
-                if m_code and os.path.exists(disseny_folder):
-                    num = int(m_code.group(1))
-                    for vf in os.listdir(disseny_folder):
-                        if _re_code.search(rf"^V0*{num}", vf, _re_code.IGNORECASE):
-                            chosen_v_file = vf
-                            break
-            st.caption(f"📱 Versió vertical associada per a mòbils: **{chosen_v_file}**")
-
             st.write("")
             _render_flash_message()
-            if st.button("💾 Desar Títol i Fons de la Casa", type="primary", use_container_width=True, key="save_titol"):
+            if st.button("💾 Desar Títol de la Casa", type="primary", use_container_width=True, key="save_titol"):
                 cur_cfg = load_app_config()
-                cur_cfg["casa"] = {
-                    "paraula1": p1,
-                    "color1": col1,
-                    "paraula2": p2,
-                    "color2": col2,
-                    "tamany_lletra": tamany_lletra,
-                    "fons_h": chosen_h_file,
-                    "fons_v": chosen_v_file
-                }
+                if "casa" not in cur_cfg:
+                    cur_cfg["casa"] = {}
+                cur_cfg["casa"]["paraula1"] = p1
+                cur_cfg["casa"]["color1"] = col1
+                cur_cfg["casa"]["paraula2"] = p2
+                cur_cfg["casa"]["color2"] = col2
+                cur_cfg["casa"]["tamany_lletra"] = tamany_lletra
                 if save_app_config(cur_cfg):
                     if not _update_desktop_shortcut(f"{p1}{p2}"):
                         st.session_state["flash_warning"] = f"S'ha desat la configuració al núvol. Recorda canviar manualment el nom de la icona del teu escriptori a '{p1}{p2}' o fer-ho estant en mode Offline."
                     st.session_state["flash_success"] = "✅ Títol de la casa desat correctament!"
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
+
+            # Replicar estructura de títol per al Fons de Pantalla d'Inici
+            _render_fons_seccio(casa_cfg)
+
+        # =========================================================================
+        # 2b. SECCIÓ: FONS DE PANTALLA D'INICI
+        # =========================================================================
+        elif active == "fons":
+            casa_cfg = cfg.get("casa", {})
+            _render_fons_seccio(casa_cfg)
 
         # =========================================================================
         # 2b. SECCIÓ: ESTANCES DE LA CASA
