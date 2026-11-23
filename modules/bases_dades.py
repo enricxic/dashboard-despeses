@@ -56,10 +56,10 @@ def apply_import_filter(df_target, col_name, val_str):
             target = float(s_clean)
             mask = (num_series - target).abs() < 0.01
             if not mask.any():
-                mask = df_target[col_name].astype(str).str.contains(s_raw, case=False, na=False)
+                mask = df_target[col_name].astype(str).str.contains(s_raw, case=False, na=False, regex=False)
             return df_target[mask]
     except Exception:
-        return df_target[df_target[col_name].astype(str).str.contains(s_raw, case=False, na=False)]
+        return df_target[df_target[col_name].astype(str).str.contains(s_raw, case=False, na=False, regex=False)]
 
 def robust_parse_date_series(series):
     s_d = pd.to_datetime(series, format='%d/%m/%Y', errors='coerce')
@@ -227,7 +227,7 @@ def render():
         term = search_term.strip()
         mask = pd.Series(False, index=df.index)
         for col in df.columns:
-            mask = mask | df[col].astype(str).str.contains(term, case=False, na=False)
+            mask = mask | df[col].astype(str).str.contains(term, case=False, na=False, regex=False)
         df = df[mask]
         
     df = df.reset_index(drop=True)
