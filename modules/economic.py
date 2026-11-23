@@ -3793,7 +3793,7 @@ def render(view_mode="economic"):
                 col_c_config1, col_c_config2 = st.columns([7, 5], vertical_alignment="bottom")
                 with col_c_config1:
                     from core.llm_ui import render_ai_selector
-                    c_prov, c_mod, c_key = render_ai_selector(key_prefix="consell_eco", default_model="Gemini (2.5 Flash)")
+                    c_prov, c_mod, c_key = render_ai_selector(key_prefix="consell_eco", default_model="Gemini Flash Lite (Ràpid & Recomanat)")
                 with col_c_config2:
                     c_year = st.selectbox("📅 Any de referència:", years_list, index=years_list.index(selected_year) if selected_year in years_list else 0, key="sel_year_consell")
 

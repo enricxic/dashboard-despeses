@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 09:19:54",
+  "updated_at": "23/11/2026 10:20:44",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -41,13 +41,13 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "0319575951ddb65fa1e8efeb7925e73c15c9d17001be64ebd532ca3326e2fa23"
+        "modules/economic.py": "026470994a14f90c10d6bc7a95b05e04bfe3803605c4c4d4c6a64505bbef7d8b"
       },
-      "verified_at": "23/11/2026 09:19:53",
-      "verified_commit": "02b365c",
+      "verified_at": "23/11/2026 10:19:44",
+      "verified_commit": "d47cb1f",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "24/11/2026 10:20:44",
+      "unlock_reason": "Actualitzar motor per defecte a Gemini Flash Lite per evitar limits de quota"
     },
     "cotxe": {
       "name": "Cotxe",
@@ -352,6 +352,30 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "23/11/2026 10:20:44",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 10:20:44. Motiu: Actualitzar motor per defecte a Gemini Flash Lite per evitar limits de quota",
+      "user": "admin",
+      "git_head": "d47cb1f"
+    },
+    {
+      "timestamp": "23/11/2026 10:19:44",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada (Actualitzat model per defecte a Gemini Flash Lite per estabilitat)",
+      "user": "admin",
+      "git_head": "d47cb1f"
+    },
+    {
+      "timestamp": "23/11/2026 10:18:42",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 24/11/2026 10:18:42. Motiu: Actualitzar model per defecte a Gemini Flash Lite per evitar limits de quota diaria",
+      "user": "admin",
+      "git_head": "d47cb1f"
+    },
     {
       "timestamp": "23/11/2026 09:19:53",
       "action": "SEAL",
@@ -1127,30 +1151,6 @@
       "detail": "Versió verificada i segellada (Registre actualitzat amb canvas_electric.py)",
       "user": "admin",
       "git_head": "dc8bf80"
-    },
-    {
-      "timestamp": "11/11/2026 20:12:21",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Editor grafic 3 pestanyes + esquemes electrics)",
-      "user": "admin",
-      "git_head": "dc8bf80"
-    },
-    {
-      "timestamp": "11/11/2026 20:00:27",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Alertes fases projectes En curs)",
-      "user": "admin",
-      "git_head": "29196f1"
-    },
-    {
-      "timestamp": "11/11/2026 20:00:05",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Dies avis fases pendents i popover dates)",
-      "user": "admin",
-      "git_head": "29196f1"
     }
   ]
 }

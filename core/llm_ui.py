@@ -1,6 +1,6 @@
 import streamlit as st
 
-def render_ai_selector(key_prefix="global", default_model="Gemini (2.5 Flash)", vision_only=False) -> tuple[str, str, str]:
+def render_ai_selector(key_prefix="global", default_model="Gemini Flash Lite (Ràpid & Recomanat)", vision_only=False) -> tuple[str, str, str]:
     """
     Renderitza un desplegable per seleccionar el motor d'IA.
     Retorna: provider, model_name, api_key
@@ -8,6 +8,7 @@ def render_ai_selector(key_prefix="global", default_model="Gemini (2.5 Flash)", 
     """
     # Opcions de models d'IA disponibles
     options = [
+        "Gemini Flash Lite (Ràpid & Recomanat)",
         "Gemini (2.5 Flash)",
         "Gemini (3.8 Flash)",
         "Nemotron Vision (Gratuït)",
@@ -53,6 +54,10 @@ def render_ai_selector(key_prefix="global", default_model="Gemini (2.5 Flash)", 
     elif "2.5 Pro" in selected:
         prov = "gemini"
         mod = "gemini-2.5-pro"
+        ai_key = st.secrets.get("GEMINI_API_KEY", "")
+    elif "Flash Lite" in selected:
+        prov = "gemini"
+        mod = "gemini-flash-lite-latest"
         ai_key = st.secrets.get("GEMINI_API_KEY", "")
     else:
         prov = "gemini"

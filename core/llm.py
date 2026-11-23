@@ -37,15 +37,13 @@ def _call_gemini(
     max_tokens: int = 4096
 ) -> Tuple[bool, str, float]:
     models_to_try = [model_name]
-    for alt in ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.5-pro", "gemini-flash-latest", "gemini-pro-latest"]:
+    for alt in ["gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-2.5-flash", "gemini-flash-latest", "gemini-pro-latest"]:
         if alt not in models_to_try:
             models_to_try.append(alt)
         
     quota_exhausted = False
+    last_error = ""
     for current_model in models_to_try:
-        if quota_exhausted:
-            break
-
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent?key={api_key}"
         parts = [{"text": prompt}]
         if image_bytes:
@@ -61,6 +59,10 @@ def _call_gemini(
             "temperature": 0.1,
             "maxOutputTokens": max_tokens
         }
+        # Desactivar 'thinking' en models 2.5 per no malgastar el pressupost de tokens i evitar truncaments
+        if "2.5" in current_model:
+            gen_config["thinkingConfig"] = {"thinkingBudget": 0}
+
         if json_mode:
             gen_config["responseMimeType"] = "application/json"
             
@@ -105,24 +107,19 @@ def _call_gemini(
                         or "GenerateContentRequests" in resp_txt
                         or "quota" in resp_txt.lower()
                     )
-                    if is_quota:
-                        # Error de quota global per clau/projecte: aturar immediatament (fail-fast)
-                        # No té sentit esperar 16s ni provar altres models Gemini que comparteixen la mateixa quota
-                        quota_exhausted = True
-                        last_error = f"HTTP 429 ({current_model}): Quota de Gemini esgotada (RESOURCE_EXHAUSTED)."
-                        break
-                    else:
-                        if attempt < max_attempts - 1:
-                            time.sleep(1.5)
-                            continue
-                        last_error = f"HTTP 429 ({current_model}): Límit de peticions temporal assolit."
-                        break
+                    last_error = f"HTTP 429 ({current_model}): Quota o límit assolit."
+                    # La quota de Gemini Free Tier és per model; continuem amb el següent model alternatiu
+                    break
                 elif resp.status_code == 503:
                     if attempt < max_attempts - 1:
                         time.sleep(2.0)
                         continue
                     last_error = f"HTTP 503 ({current_model}): Servei temporalment no disponible."
                     break
+                elif resp.status_code == 400 and "thinkingConfig" in gen_config:
+                    # Model no suporta thinkingConfig, provem sense
+                    del gen_config["thinkingConfig"]
+                    continue
                 else:
                     last_error = f"Error HTTP {resp.status_code} ({current_model}): {resp.text}"
                     break

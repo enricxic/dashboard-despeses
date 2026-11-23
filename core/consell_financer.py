@@ -123,7 +123,7 @@ def construir_resum_dades(df_desp, df_ing, df_cartera, any_analitzar: Optional[i
 
 
 def _consultar_membre(prompt_sistema: str, consulta: str, context_financier: str, api_key: str, model_name: str, provider: str) -> str:
-    """Executa la consulta per a un membre individual del consell amb límit estricte de tokens."""
+    """Executa la consulta per a un membre individual del consell amb límit de seguretat de tokens."""
     prompt_complet = (
         f"{prompt_sistema}\n\n"
         f"--- CONTEXT FINANCER DE XIQUIHOUSE ---\n{context_financier}\n\n"
@@ -135,7 +135,7 @@ def _consultar_membre(prompt_sistema: str, consulta: str, context_financier: str
         api_key=api_key,
         model_name=model_name,
         provider=provider,
-        max_tokens=350
+        max_tokens=1000
     )
     if ok and resp.strip():
         return resp.strip()
@@ -149,14 +149,14 @@ def deliberar_consell(
     df_cartera,
     any_analitzar: Optional[int] = None,
     api_key: str = "",
-    model_name: str = "gemini-2.5-flash",
+    model_name: str = "gemini-flash-lite-latest",
     provider: str = "gemini"
 ) -> Dict[str, Any]:
     """
     Executa la deliberació completa del Consell d'Ancians:
-    1. Crida en paral·lel a Sèneca, Keynes i Epicur (max_tokens=350).
+    1. Crida en paral·lel a Sèneca, Keynes i Epicur (max_tokens=1000).
     2. Recull les 3 opinions.
-    3. Convoca el President per emetre el veredicte final ponderat (max_tokens=600).
+    3. Convoca el President per emetre el veredicte final ponderat (max_tokens=1500).
     """
     t_start = time.time()
     context_str = construir_resum_dades(df_desp, df_ing, df_cartera, any_analitzar)
@@ -187,7 +187,7 @@ def deliberar_consell(
         api_key=api_key,
         model_name=model_name,
         provider=provider,
-        max_tokens=600
+        max_tokens=1500
     )
     if not ok_p or not veredicte_text.strip():
         veredicte_text = "⚠️ No s'ha pogut generar el veredicte del President."
