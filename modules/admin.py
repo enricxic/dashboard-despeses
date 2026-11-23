@@ -450,6 +450,7 @@ def _on_icona_change(key_m):
         st.session_state["flash_success"] = f"✅ Icona d'inici {status_txt} i desada correctament!"
 
 def render():
+    import os, glob, re, json
     cfg = load_app_config()
     lang = cfg.get("idioma", "ca")
     
