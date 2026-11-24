@@ -203,12 +203,19 @@ def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None, ref_d_i
         blocs.append(pd.DataFrame(curr_bloc))
 
     sub_df = pd.DataFrame()
+    min_d = None
+    max_d = None
+    dies_ref = 1
+
     # 1. Si s'han especificat dates de referència explícites per acotar
     if ref_d_inici and ref_d_fi:
         sub_df = df_vac[(df_vac['dt_obj'] >= ref_d_inici) & (df_vac['dt_obj'] <= ref_d_fi)]
+        min_d = ref_d_inici
+        max_d = ref_d_fi
+        dies_ref = max(1, (ref_d_fi - ref_d_inici).days + 1)
 
     # 2. Si no, buscar quin bloc de vacances conté referències a la destinació
-    if sub_df.empty:
+    if sub_df.empty and (not ref_d_inici or not ref_d_fi):
         dest_cleaned = destinacio.strip().lower()
         if dest_cleaned:
             stopwords = {"de", "del", "a", "la", "el", "les", "els", "al", "als", "per", "en", "viatge"}
@@ -224,7 +231,7 @@ def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None, ref_d_i
                 sub_df = matching_block
 
     # 3. Si no s'ha trobat cap bloc coincident per paraula, prenem l'últim bloc complet detectat
-    if sub_df.empty:
+    if sub_df.empty and (not ref_d_inici or not ref_d_fi):
         if blocs:
             sub_df = blocs[-1]
         else:
@@ -232,11 +239,13 @@ def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None, ref_d_i
             sub_df = df_vac[df_vac['dt_obj'] >= (ultim_dt - pd.Timedelta(days=25))]
 
     if sub_df.empty:
-        sub_df = df_vac
+        return None
 
-    min_d = sub_df['dt_obj'].min()
-    max_d = sub_df['dt_obj'].max()
-    dies_ref = max(1, (max_d - min_d).days + 1)
+    if min_d is None or max_d is None:
+        min_d = sub_df['dt_obj'].min()
+        max_d = sub_df['dt_obj'].max()
+        dies_ref = max(1, (max_d - min_d).days + 1)
+
     total_ref = sub_df['imp_clean'].sum()
     mitjana_dia = total_ref / dies_ref
 
@@ -793,13 +802,15 @@ def render():
                 f_press = st.number_input("💶 Valoració de pressupost (€)", min_value=0.0, step=25.0, value=float(st.session_state.get("form_v_press_val", 300.0)), key=f"form_v_press_{form_v_ver}_{st.session_state.get('v_press_ver', 0)}")
 
             # Fila 3b: Camps de data inici i fi de referència (s'activen en clicar 'Estimar per Històric')
+            d_ref_i_val = None
+            d_ref_f_val = None
             if st.session_state.get("activar_dates_ref", False):
                 st.caption("⚙️ **Camps de referència activats**: S'ha calculat la despesa amb les dates inferiors. Pots canviar-les per acotar un altre període concret i tornar a prémer '💡 Estimar per Històric'.")
                 c_rf1, c_rf2, c_rf3 = st.columns([1.2, 1.2, 1.0], vertical_alignment="bottom")
                 with c_rf1:
-                    d_ref_i_val = st.date_input("📅 Data inici referència", value=st.session_state.get("ref_dini_custom", date.today()), format="DD/MM/YYYY", key=f"ref_dini_key_{st.session_state.get('v_dates_ver', 0)}")
+                    d_ref_i_val = st.date_input("📅 Data inici referència", value=st.session_state.get("ref_dini_custom", date.today()), format="DD/MM/YYYY", key="ref_dini_custom_widget")
                 with c_rf2:
-                    d_ref_f_val = st.date_input("📅 Data final referència", value=st.session_state.get("ref_dfi_custom", date.today()), format="DD/MM/YYYY", key=f"ref_dfi_key_{st.session_state.get('v_dates_ver', 0)}")
+                    d_ref_f_val = st.date_input("📅 Data final referència", value=st.session_state.get("ref_dfi_custom", date.today()), format="DD/MM/YYYY", key="ref_dfi_custom_widget")
                 with c_rf3:
                     btn_tancar_ref = st.form_submit_button("✖️ Amagar dates ref.", use_container_width=True)
                     if btn_tancar_ref:
@@ -819,22 +830,27 @@ def render():
                 st.session_state["form_v_allotj_val"] = f_allotj
                 st.session_state["form_v_notes_val"] = f_notes
                 
-                # Activem els camps de data de referència
-                st.session_state["activar_dates_ref"] = True
-
-                # Si ja estaven actius a la sessió, agafem els valors dels selectors
-                d_custom_i = st.session_state.get(f"ref_dini_key_{st.session_state.get('v_dates_ver', 0)}", None)
-                d_custom_f = st.session_state.get(f"ref_dfi_key_{st.session_state.get('v_dates_ver', 0)}", None)
+                # Si els camps de dates de referència ja estaven actius, agafem el valor que ha triat l'usuari als inputs
+                d_custom_i = None
+                d_custom_f = None
+                if st.session_state.get("activar_dates_ref", False) and d_ref_i_val and d_ref_f_val:
+                    d_custom_i = d_ref_i_val
+                    d_custom_f = d_ref_f_val
+                    st.session_state["ref_dini_custom"] = d_ref_i_val
+                    st.session_state["ref_dfi_custom"] = d_ref_f_val
+                else:
+                    st.session_state["activar_dates_ref"] = True
 
                 est = _estimar_pressupost_historic(f_dest, f_dini, f_dfi, d_custom_i, d_custom_f)
                 if est:
                     st.session_state["form_v_press_val"] = float(est["total_estimat"])
                     st.session_state["v_press_ver"] = st.session_state.get("v_press_ver", 0) + 1
                     st.session_state["form_v_partides_calc"] = est["partides"]
-                    if "dt_ref_inici" in est and "dt_ref_fi" in est:
-                        st.session_state["ref_dini_custom"] = est["dt_ref_inici"]
-                        st.session_state["ref_dfi_custom"] = est["dt_ref_fi"]
-                        st.session_state["v_dates_ver"] = st.session_state.get("v_dates_ver", 0) + 1
+                    # Si no venien d'inputs expressos de l'usuari, prenem les dates trobades a la BD
+                    if d_custom_i is None or d_custom_f is None:
+                        if "dt_ref_inici" in est and "dt_ref_fi" in est:
+                            st.session_state["ref_dini_custom"] = est["dt_ref_inici"]
+                            st.session_state["ref_dfi_custom"] = est["dt_ref_fi"]
                     st.session_state["viatge_estimat_info"] = f"💡 Estimació calculada: **{est['total_estimat']:,.2f} €** per a {est['dies_nou']} dies (~{est['mitjana_dia']:,.2f} €/dia), basat en el període de referència **{est['periode_ref']}** ({est['num_moviments']} moviments registrats amb [VACANCES])."
                     st.rerun()
                 else:
