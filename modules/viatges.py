@@ -270,6 +270,8 @@ def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None, ref_d_i
         "dies_nou": dies_nou,
         "dies_ref": dies_ref,
         "total_ref": total_ref,
+        "dt_ref_inici": min_d,
+        "dt_ref_fi": max_d,
         "periode_ref": f"{min_d.strftime('%d/%m/%Y')} al {max_d.strftime('%d/%m/%Y')}",
         "partides": partides_suggerides,
         "num_moviments": len(sub_df)
@@ -762,47 +764,47 @@ def render():
         if "viatge_estimat_info" in st.session_state:
             st.info(st.session_state.pop("viatge_estimat_info"))
 
-        # Panell per acotar dates històriques abans de desar
-        with st.expander("📅 Acotar viatge de referència per dates (Opcional si s'han fet molts viatges al mateix lloc)", expanded=False):
-            st.caption("Si no saps el nom exacte o has anat moltes vegades al mateix lloc, pots triar directament les dates del viatge anterior que vols fer servir de base:")
-            blocs_nou = _get_blocs_vacances_disponibles()
-            opcions_blocs = ["✨ Automàtic (Segons nom de la destinació o últim viatge)"] + [b["label"] for b in blocs_nou] + ["📆 Dates manuals personalitzades"]
-            sel_b_nou = st.selectbox("Tria el viatge de referència:", opcions_blocs, key="sel_bloc_ref_nou")
-            
-            ref_dini_custom = date.today()
-            ref_dfi_custom = date.today()
-            if sel_b_nou == "📆 Dates manuals personalitzades":
-                c_ac1, c_ac2 = st.columns(2)
-                with c_ac1:
-                    ref_dini_custom = st.date_input("Data d'inici de referència", value=date.today(), format="DD/MM/YYYY", key="ref_dini_custom_key")
-                with c_ac2:
-                    ref_dfi_custom = st.date_input("Data de fi de referència", value=date.today(), format="DD/MM/YYYY", key="ref_dfi_custom_key")
-            elif sel_b_nou.startswith("🏖️"):
-                idx_bn = opcions_blocs.index(sel_b_nou) - 1
-                b_sel_n = blocs_nou[idx_bn]
-                st.info(f"S'utilitzaran les despeses del període de **{b_sel_n['d_inici'].strftime('%d/%m/%Y')} al {b_sel_n['d_fi'].strftime('%d/%m/%Y')}** ({b_sel_n['dies']} dies · {b_sel_n['moviments']} moviments · {b_sel_n['total']:,.2f} €) com a referència.")
-            else:
-                st.caption("✨ En mode automàtic es cercarà el viatge anterior complet a la mateixa destinació o el més recent.")
-
         with st.form("form_nou_viatge", clear_on_submit=False):
+            # Fila 1: Destinació i Dates
             col_f1, col_f2 = st.columns(2)
             with col_f1:
                 f_dest = st.text_input("📍 Destinació / Ciutat / Zona", value=st.session_state.get("form_v_dest_val", ""), placeholder="Ex: Roma, La Torre, Pirineus...", key="form_v_dest")
-                f_pais = st.text_input("🌍 País / Regió", value=st.session_state.get("form_v_pais_val", ""), placeholder="Ex: Alacant, Itàlia, Illes Balears...", key="form_v_pais")
-                f_transp = st.selectbox("🚗 Mitjà de Transport", ["Cotxe propi", "Avió", "Tren", "Autobús", "Vaixell / Ferri", "Altres"], key="form_v_transp")
             with col_f2:
                 col_d1, col_d2 = st.columns(2)
                 with col_d1:
                     f_dini = st.date_input("📅 Data d'inici", value=st.session_state.get("form_v_dini_val", date.today()), format="DD/MM/YYYY", key="form_v_dini")
                 with col_d2:
                     f_dfi = st.date_input("📅 Data de tornada", value=st.session_state.get("form_v_dfi_val", date.today()), format="DD/MM/YYYY", key="form_v_dfi")
+
+            # Fila 2: País / Regió i Allotjament
+            col_g1, col_g2 = st.columns(2)
+            with col_g1:
+                f_pais = st.text_input("🌍 País / Regió", value=st.session_state.get("form_v_pais_val", ""), placeholder="Ex: Alacant, Itàlia, Illes Balears...", key="form_v_pais")
+            with col_g2:
                 f_allotj = st.text_input("🏨 Allotjament", value=st.session_state.get("form_v_allotj_val", ""), placeholder="Ex: Hotel, Apartament, Casa Mireia...", key="form_v_allotj")
 
-                col_p_in, col_p_btn = st.columns([1.2, 1.3], vertical_alignment="bottom")
-                with col_p_in:
-                    f_press = st.number_input("💶 Pressupost (€)", min_value=0.0, step=25.0, value=float(st.session_state.get("form_v_press_val", 300.0)), key="form_v_press")
-                with col_p_btn:
-                    btn_est = st.form_submit_button("💡 Estimar per Històric / Dates", use_container_width=True, help="Calcula el pressupost automàticament segons el viatge anterior acotat")
+            # Fila 3: Reordenada: 1) Mitjà de Transport, 2) Botó Estimar per Històric, 3) Valoració de pressupost
+            col_m1, col_m2, col_m3 = st.columns([1.2, 1.2, 1.0], vertical_alignment="bottom")
+            with col_m1:
+                f_transp = st.selectbox("🚗 Mitjà de Transport", ["Cotxe propi", "Avió", "Tren", "Autobús", "Vaixell / Ferri", "Altres"], key="form_v_transp")
+            with col_m2:
+                btn_est = st.form_submit_button("💡 Estimar per Històric", use_container_width=True, help="Estima el pressupost i activa els camps de dates de referència")
+            with col_m3:
+                f_press = st.number_input("💶 Valoració de pressupost (€)", min_value=0.0, step=25.0, value=float(st.session_state.get("form_v_press_val", 300.0)), key="form_v_press")
+
+            # Fila 3b: Camps de data inici i fi de referència (s'activen en clicar 'Estimar per Històric')
+            if st.session_state.get("activar_dates_ref", False):
+                st.caption("⚙️ **Camps de referència activats**: S'ha calculat la despesa amb les dates inferiors. Pots canviar-les per acotar un altre període concret i tornar a prémer '💡 Estimar per Històric'.")
+                c_rf1, c_rf2, c_rf3 = st.columns([1.2, 1.2, 1.0], vertical_alignment="bottom")
+                with c_rf1:
+                    d_ref_i_val = st.date_input("📅 Data inici referència", value=st.session_state.get("ref_dini_custom", date.today()), format="DD/MM/YYYY", key="ref_dini_custom_key")
+                with c_rf2:
+                    d_ref_f_val = st.date_input("📅 Data final referència", value=st.session_state.get("ref_dfi_custom", date.today()), format="DD/MM/YYYY", key="ref_dfi_custom_key")
+                with c_rf3:
+                    btn_tancar_ref = st.form_submit_button("✖️ Amagar dates ref.", use_container_width=True)
+                    if btn_tancar_ref:
+                        st.session_state["activar_dates_ref"] = False
+                        st.rerun()
 
             f_notes = st.text_area("📝 Notes, enllaços o plans a realitzar", value=st.session_state.get("form_v_notes_val", ""), placeholder="Llocs a visitar, restaurants recomanats, reserves...", key="form_v_notes")
 
@@ -810,28 +812,28 @@ def render():
             btn_save_v = st.form_submit_button("💾 Desar Viatge", type="primary", use_container_width=True)
 
             if btn_est:
-                # Comprovar si s'ha triat acotar per dates de referència
-                d_ref_i = None
-                d_ref_f = None
-                if sel_b_nou.startswith("🏖️"):
-                    idx_bn = opcions_blocs.index(sel_b_nou) - 1
-                    d_ref_i = blocs_nou[idx_bn]["d_inici"]
-                    d_ref_f = blocs_nou[idx_bn]["d_fi"]
-                elif sel_b_nou == "📆 Dates manuals personalitzades":
-                    d_ref_i = ref_dini_custom
-                    d_ref_f = ref_dfi_custom
+                st.session_state["form_v_dest_val"] = f_dest
+                st.session_state["form_v_pais_val"] = f_pais
+                st.session_state["form_v_dini_val"] = f_dini
+                st.session_state["form_v_dfi_val"] = f_dfi
+                st.session_state["form_v_allotj_val"] = f_allotj
+                st.session_state["form_v_notes_val"] = f_notes
+                
+                # Activem els camps de data de referència
+                st.session_state["activar_dates_ref"] = True
 
-                est = _estimar_pressupost_historic(f_dest, f_dini, f_dfi, d_ref_i, d_ref_f)
+                # Si ja estaven actius a la sessió i l'usuari els ha tocat, agafem aquests
+                d_custom_i = st.session_state.get("ref_dini_custom_key", None)
+                d_custom_f = st.session_state.get("ref_dfi_custom_key", None)
+
+                est = _estimar_pressupost_historic(f_dest, f_dini, f_dfi, d_custom_i, d_custom_f)
                 if est:
-                    st.session_state["form_v_dest_val"] = f_dest
-                    st.session_state["form_v_pais_val"] = f_pais
-                    st.session_state["form_v_dini_val"] = f_dini
-                    st.session_state["form_v_dfi_val"] = f_dfi
-                    st.session_state["form_v_allotj_val"] = f_allotj
-                    st.session_state["form_v_notes_val"] = f_notes
                     st.session_state["form_v_press"] = float(est["total_estimat"])
                     st.session_state["form_v_press_val"] = float(est["total_estimat"])
                     st.session_state["form_v_partides_calc"] = est["partides"]
+                    if "dt_ref_inici" in est and "dt_ref_fi" in est:
+                        st.session_state["ref_dini_custom"] = est["dt_ref_inici"]
+                        st.session_state["ref_dfi_custom"] = est["dt_ref_fi"]
                     st.session_state["viatge_estimat_info"] = f"💡 Estimació calculada: **{est['total_estimat']:,.2f} €** per a {est['dies_nou']} dies (~{est['mitjana_dia']:,.2f} €/dia), basat en el període de referència **{est['periode_ref']}** ({est['num_moviments']} moviments registrats amb [VACANCES])."
                     st.rerun()
                 else:
@@ -872,6 +874,10 @@ def render():
                     st.session_state["form_v_press_val"] = 300.0
                     st.session_state["form_v_dini_val"] = date.today()
                     st.session_state["form_v_dfi_val"] = date.today()
+                    st.session_state["activar_dates_ref"] = False
+                    for kr in ["ref_dini_custom", "ref_dfi_custom", "ref_dini_custom_key", "ref_dfi_custom_key"]:
+                        if kr in st.session_state:
+                            del st.session_state[kr]
                     if "form_v_partides_calc" in st.session_state:
                         del st.session_state["form_v_partides_calc"]
 
