@@ -790,16 +790,16 @@ def render():
             with col_m2:
                 btn_est = st.form_submit_button("💡 Estimar per Històric", use_container_width=True, help="Estima el pressupost i activa els camps de dates de referència")
             with col_m3:
-                f_press = st.number_input("💶 Valoració de pressupost (€)", min_value=0.0, step=25.0, value=float(st.session_state.get("form_v_press_val", 300.0)), key="form_v_press")
+                f_press = st.number_input("💶 Valoració de pressupost (€)", min_value=0.0, step=25.0, value=float(st.session_state.get("form_v_press_val", 300.0)), key=f"form_v_press_{st.session_state.get('v_press_ver', 0)}")
 
             # Fila 3b: Camps de data inici i fi de referència (s'activen en clicar 'Estimar per Històric')
             if st.session_state.get("activar_dates_ref", False):
                 st.caption("⚙️ **Camps de referència activats**: S'ha calculat la despesa amb les dates inferiors. Pots canviar-les per acotar un altre període concret i tornar a prémer '💡 Estimar per Històric'.")
                 c_rf1, c_rf2, c_rf3 = st.columns([1.2, 1.2, 1.0], vertical_alignment="bottom")
                 with c_rf1:
-                    d_ref_i_val = st.date_input("📅 Data inici referència", value=st.session_state.get("ref_dini_custom", date.today()), format="DD/MM/YYYY", key="ref_dini_custom_key")
+                    d_ref_i_val = st.date_input("📅 Data inici referència", value=st.session_state.get("ref_dini_custom", date.today()), format="DD/MM/YYYY", key=f"ref_dini_key_{st.session_state.get('v_dates_ver', 0)}")
                 with c_rf2:
-                    d_ref_f_val = st.date_input("📅 Data final referència", value=st.session_state.get("ref_dfi_custom", date.today()), format="DD/MM/YYYY", key="ref_dfi_custom_key")
+                    d_ref_f_val = st.date_input("📅 Data final referència", value=st.session_state.get("ref_dfi_custom", date.today()), format="DD/MM/YYYY", key=f"ref_dfi_key_{st.session_state.get('v_dates_ver', 0)}")
                 with c_rf3:
                     btn_tancar_ref = st.form_submit_button("✖️ Amagar dates ref.", use_container_width=True)
                     if btn_tancar_ref:
@@ -822,18 +822,19 @@ def render():
                 # Activem els camps de data de referència
                 st.session_state["activar_dates_ref"] = True
 
-                # Si ja estaven actius a la sessió i l'usuari els ha tocat, agafem aquests
-                d_custom_i = st.session_state.get("ref_dini_custom_key", None)
-                d_custom_f = st.session_state.get("ref_dfi_custom_key", None)
+                # Si ja estaven actius a la sessió, agafem els valors dels selectors
+                d_custom_i = st.session_state.get(f"ref_dini_key_{st.session_state.get('v_dates_ver', 0)}", None)
+                d_custom_f = st.session_state.get(f"ref_dfi_key_{st.session_state.get('v_dates_ver', 0)}", None)
 
                 est = _estimar_pressupost_historic(f_dest, f_dini, f_dfi, d_custom_i, d_custom_f)
                 if est:
-                    st.session_state["form_v_press"] = float(est["total_estimat"])
                     st.session_state["form_v_press_val"] = float(est["total_estimat"])
+                    st.session_state["v_press_ver"] = st.session_state.get("v_press_ver", 0) + 1
                     st.session_state["form_v_partides_calc"] = est["partides"]
                     if "dt_ref_inici" in est and "dt_ref_fi" in est:
                         st.session_state["ref_dini_custom"] = est["dt_ref_inici"]
                         st.session_state["ref_dfi_custom"] = est["dt_ref_fi"]
+                        st.session_state["v_dates_ver"] = st.session_state.get("v_dates_ver", 0) + 1
                     st.session_state["viatge_estimat_info"] = f"💡 Estimació calculada: **{est['total_estimat']:,.2f} €** per a {est['dies_nou']} dies (~{est['mitjana_dia']:,.2f} €/dia), basat en el període de referència **{est['periode_ref']}** ({est['num_moviments']} moviments registrats amb [VACANCES])."
                     st.rerun()
                 else:
@@ -870,12 +871,12 @@ def render():
                     for k in ["form_v_dest_val", "form_v_pais_val", "form_v_allotj_val", "form_v_notes_val", "form_v_dest", "form_v_pais", "form_v_allotj", "form_v_notes"]:
                         if k in st.session_state:
                             st.session_state[k] = ""
-                    st.session_state["form_v_press"] = 300.0
                     st.session_state["form_v_press_val"] = 300.0
+                    st.session_state["v_press_ver"] = st.session_state.get("v_press_ver", 0) + 1
                     st.session_state["form_v_dini_val"] = date.today()
                     st.session_state["form_v_dfi_val"] = date.today()
                     st.session_state["activar_dates_ref"] = False
-                    for kr in ["ref_dini_custom", "ref_dfi_custom", "ref_dini_custom_key", "ref_dfi_custom_key"]:
+                    for kr in ["ref_dini_custom", "ref_dfi_custom", "form_v_press"]:
                         if kr in st.session_state:
                             del st.session_state[kr]
                     if "form_v_partides_calc" in st.session_state:
