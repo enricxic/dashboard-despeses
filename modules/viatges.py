@@ -99,18 +99,29 @@ def _get_blocs_vacances_disponibles():
     df_vac = df[df['Comentari'].astype(str).str.contains(r'\[VACANCES\]|vacances', case=False, na=False, regex=True)].copy()
     if df_vac.empty:
         return []
+
+    def _parse_imp(x):
+        try: return float(str(x).replace(',', '.').replace('€', '').strip())
+        except Exception: return 0.0
+
+    imp_col = next((c for c in ['Import càrrec', 'Import crrec', 'Import carrec'] if c in df_vac.columns), 'Import càrrec')
+    df_vac['imp_clean'] = df_vac[imp_col].apply(_parse_imp)
+
     def _parse_dt(d_str):
         try: return datetime.strptime(str(d_str).strip(), '%d/%m/%Y').date()
-        except: return None
+        except Exception:
+            try: return pd.to_datetime(d_str).date()
+            except Exception: return None
+
     df_vac['dt_obj'] = df_vac['Data'].apply(_parse_dt)
-    df_vac = df_vac.dropna(subset=['dt_obj']).sort_values('dt_obj', ascending=False)
+    df_vac = df_vac.dropna(subset=['dt_obj']).sort_values('dt_obj')
+    if df_vac.empty:
+        return []
     
     # Agrupar per blocs si la distància és <= 7 dies
     blocs = []
     curr_bloc = []
-    # Com que està descendent, comparem amb l'últim afegit
-    df_vac_asc = df_vac.sort_values('dt_obj')
-    for _, r in df_vac_asc.iterrows():
+    for _, r in df_vac.iterrows():
         if not curr_bloc:
             curr_bloc.append(r)
         else:
@@ -124,23 +135,19 @@ def _get_blocs_vacances_disponibles():
         blocs.append(pd.DataFrame(curr_bloc))
         
     res = []
-    imp_col = next((c for c in ['Import càrrec', 'Import crrec', 'Import carrec'] if c in df_vac.columns), 'Import càrrec')
-    def _parse_imp(x):
-        try: return float(str(x).replace(',', '.').replace('€', '').strip())
-        except: return 0.0
-
     for b in reversed(blocs):
         d_min = b['dt_obj'].min()
         d_max = b['dt_obj'].max()
         dies = max(1, (d_max - d_min).days + 1)
-        tot = b[imp_col].apply(_parse_imp).sum()
+        tot = b['imp_clean'].sum()
+        movs_pos = len(b[b['imp_clean'] > 0])
         res.append({
             "d_inici": d_min,
             "d_fi": d_max,
             "dies": dies,
             "total": tot,
-            "moviments": len(b),
-            "label": f"🏖️ {d_min.strftime('%d/%m/%Y')} al {d_max.strftime('%d/%m/%Y')} ({dies} dies · {len(b)} moviments · {tot:,.2f} €)"
+            "moviments": movs_pos,
+            "label": f"🏖️ {d_min.strftime('%d/%m/%Y')} al {d_max.strftime('%d/%m/%Y')} ({dies} dies · {movs_pos} moviments · {tot:,.2f} €)"
         })
     return res
 
@@ -179,27 +186,50 @@ def _estimar_pressupost_historic(destinacio="", d_inici=None, d_fi=None, ref_d_i
     if df_vac.empty:
         return None
 
+    # Detectar blocs continus de vacances
+    blocs = []
+    curr_bloc = []
+    for _, r in df_vac.iterrows():
+        if not curr_bloc:
+            curr_bloc.append(r)
+        else:
+            diff = (r['dt_obj'] - curr_bloc[-1]['dt_obj']).days
+            if diff <= 7:
+                curr_bloc.append(r)
+            else:
+                blocs.append(pd.DataFrame(curr_bloc))
+                curr_bloc = [r]
+    if curr_bloc:
+        blocs.append(pd.DataFrame(curr_bloc))
+
     sub_df = pd.DataFrame()
     # 1. Si s'han especificat dates de referència explícites per acotar
     if ref_d_inici and ref_d_fi:
         sub_df = df_vac[(df_vac['dt_obj'] >= ref_d_inici) & (df_vac['dt_obj'] <= ref_d_fi)]
 
-    # 2. Si no, filtrar per paraules clau si hi ha destinació
+    # 2. Si no, buscar quin bloc de vacances conté referències a la destinació
     if sub_df.empty:
         dest_cleaned = destinacio.strip().lower()
         if dest_cleaned:
-            words = [w for w in dest_cleaned.replace("de", "").replace("a", "").replace("la", "").replace("el", "").split() if len(w) > 2]
-            for w in words:
-                matched = df_vac[df_vac['Comentari'].str.lower().str.contains(w, regex=False, na=False) |
-                                 df_vac['Idconcepte'].astype(str).str.lower().str.contains(w, regex=False, na=False)]
-                if not matched.empty:
-                    sub_df = matched
+            stopwords = {"de", "del", "a", "la", "el", "les", "els", "al", "als", "per", "en", "viatge"}
+            words = [w for w in dest_cleaned.replace("'", " ").replace("-", " ").split() if len(w) > 2 and w not in stopwords]
+            matching_block = None
+            for b in reversed(blocs):
+                b_text = (b['Comentari'].astype(str) + " " + b['Idconcepte'].astype(str)).str.lower()
+                full_text = " ".join(b_text)
+                if any(w in full_text for w in words):
+                    matching_block = b
                     break
+            if matching_block is not None:
+                sub_df = matching_block
 
-    # 3. Si no s'ha trobat, agafem el bloc més recent
+    # 3. Si no s'ha trobat cap bloc coincident per paraula, prenem l'últim bloc complet detectat
     if sub_df.empty:
-        ultim_dt = df_vac['dt_obj'].max()
-        sub_df = df_vac[df_vac['dt_obj'] >= (ultim_dt - pd.Timedelta(days=25))]
+        if blocs:
+            sub_df = blocs[-1]
+        else:
+            ultim_dt = df_vac['dt_obj'].max()
+            sub_df = df_vac[df_vac['dt_obj'] >= (ultim_dt - pd.Timedelta(days=25))]
 
     if sub_df.empty:
         sub_df = df_vac
@@ -739,19 +769,20 @@ def render():
             opcions_blocs = ["✨ Automàtic (Segons nom de la destinació o últim viatge)"] + [b["label"] for b in blocs_nou] + ["📆 Dates manuals personalitzades"]
             sel_b_nou = st.selectbox("Tria el viatge de referència:", opcions_blocs, key="sel_bloc_ref_nou")
             
-            c_ac1, c_ac2 = st.columns(2)
-            d_ac_ini_def = date.today()
-            d_ac_fi_def = date.today()
-            if sel_b_nou.startswith("🏖️"):
+            ref_dini_custom = date.today()
+            ref_dfi_custom = date.today()
+            if sel_b_nou == "📆 Dates manuals personalitzades":
+                c_ac1, c_ac2 = st.columns(2)
+                with c_ac1:
+                    ref_dini_custom = st.date_input("Data d'inici de referència", value=date.today(), format="DD/MM/YYYY", key="ref_dini_custom_key")
+                with c_ac2:
+                    ref_dfi_custom = st.date_input("Data de fi de referència", value=date.today(), format="DD/MM/YYYY", key="ref_dfi_custom_key")
+            elif sel_b_nou.startswith("🏖️"):
                 idx_bn = opcions_blocs.index(sel_b_nou) - 1
                 b_sel_n = blocs_nou[idx_bn]
-                d_ac_ini_def = b_sel_n["d_inici"]
-                d_ac_fi_def = b_sel_n["d_fi"]
-                
-            with c_ac1:
-                ref_dini_custom = st.date_input("Data d'inici de referència", value=d_ac_ini_def, format="DD/MM/YYYY", key="ref_dini_custom_key")
-            with c_ac2:
-                ref_dfi_custom = st.date_input("Data de fi de referència", value=d_ac_fi_def, format="DD/MM/YYYY", key="ref_dfi_custom_key")
+                st.info(f"S'utilitzaran les despeses del període de **{b_sel_n['d_inici'].strftime('%d/%m/%Y')} al {b_sel_n['d_fi'].strftime('%d/%m/%Y')}** ({b_sel_n['dies']} dies · {b_sel_n['moviments']} moviments · {b_sel_n['total']:,.2f} €) com a referència.")
+            else:
+                st.caption("✨ En mode automàtic es cercarà el viatge anterior complet a la mateixa destinació o el més recent.")
 
         with st.form("form_nou_viatge", clear_on_submit=False):
             col_f1, col_f2 = st.columns(2)
@@ -782,7 +813,11 @@ def render():
                 # Comprovar si s'ha triat acotar per dates de referència
                 d_ref_i = None
                 d_ref_f = None
-                if sel_b_nou != "✨ Automàtic (Segons nom de la destinació o últim viatge)":
+                if sel_b_nou.startswith("🏖️"):
+                    idx_bn = opcions_blocs.index(sel_b_nou) - 1
+                    d_ref_i = blocs_nou[idx_bn]["d_inici"]
+                    d_ref_f = blocs_nou[idx_bn]["d_fi"]
+                elif sel_b_nou == "📆 Dates manuals personalitzades":
                     d_ref_i = ref_dini_custom
                     d_ref_f = ref_dfi_custom
 
@@ -794,6 +829,7 @@ def render():
                     st.session_state["form_v_dfi_val"] = f_dfi
                     st.session_state["form_v_allotj_val"] = f_allotj
                     st.session_state["form_v_notes_val"] = f_notes
+                    st.session_state["form_v_press"] = float(est["total_estimat"])
                     st.session_state["form_v_press_val"] = float(est["total_estimat"])
                     st.session_state["form_v_partides_calc"] = est["partides"]
                     st.session_state["viatge_estimat_info"] = f"💡 Estimació calculada: **{est['total_estimat']:,.2f} €** per a {est['dies_nou']} dies (~{est['mitjana_dia']:,.2f} €/dia), basat en el període de referència **{est['periode_ref']}** ({est['num_moviments']} moviments registrats amb [VACANCES])."
@@ -832,8 +868,8 @@ def render():
                     for k in ["form_v_dest_val", "form_v_pais_val", "form_v_allotj_val", "form_v_notes_val", "form_v_dest", "form_v_pais", "form_v_allotj", "form_v_notes"]:
                         if k in st.session_state:
                             st.session_state[k] = ""
-                    st.session_state["form_v_press_val"] = 300.0
                     st.session_state["form_v_press"] = 300.0
+                    st.session_state["form_v_press_val"] = 300.0
                     st.session_state["form_v_dini_val"] = date.today()
                     st.session_state["form_v_dfi_val"] = date.today()
                     if "form_v_partides_calc" in st.session_state:
