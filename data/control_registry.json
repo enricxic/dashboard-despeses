@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "25/11/2026 13:53:13",
+  "updated_at": "25/11/2026 14:46:58",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,13 +18,13 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "631cd1f76cd8680200b359b8f5a663f77d5869134e0e4bf9063442d90dffc451"
+        "modules/compres.py": "d2d3cc5d05165d706586d0f1e25989a8222fe61c8638e1ae689246ca0893cb76"
       },
-      "verified_at": "16/11/2026 21:56:41",
-      "verified_commit": "4c7cff4",
+      "verified_at": "25/11/2026 14:46:58",
+      "verified_commit": "5093d73",
       "verified_by": "admin",
-      "unlocked_until": "26/11/2026 13:53:13",
-      "unlock_reason": "Corregir calcul i visualitzacio en viu de TOTAL LINIA a la fila manual"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -374,6 +374,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "25/11/2026 14:46:58",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Verificat calcul en viu TOTAL LINIA)",
+      "user": "admin",
+      "git_head": "5093d73"
+    },
     {
       "timestamp": "25/11/2026 13:53:13",
       "action": "UNLOCK",
@@ -1165,14 +1173,6 @@
       "detail": "Autoritzat fins 15/11/2026 15:37:37. Motiu: Suport per navegar a tasques i fases des d alertes",
       "user": "admin",
       "git_head": "90e90dc"
-    },
-    {
-      "timestamp": "12/11/2026 15:09:27",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Afegit toggle amagar/ensenyar fons (btnToggleBg) a canvas_planol.py)",
-      "user": "admin",
-      "git_head": "3ca9686"
     }
   ]
 }
