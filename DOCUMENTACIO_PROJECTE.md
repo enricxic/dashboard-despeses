@@ -1,6 +1,6 @@
 # Documentació del Projecte: Dashboard Despeses i Gestió de la Llar - XiquiHouse
 > **Versió Generalitzada i Modular**  
-> *Data d'actualització: 18 de novembre de 2026*  
+> *Data d'actualització: 25 de novembre de 2026*  
 > *Fitxer mestre de referència per a desenvolupament, noves sessions d'IA i desplegament del sistema.*
 
 ---
@@ -28,6 +28,7 @@
    - [6.2 Agenda i Calendari Familiar (`modules/calendari.py`)](#62-agenda-i-calendari-familiar-modulescalendaripy)
    - [6.3 Control de Medicació (`modules/medicacio.py`)](#63-control-de-medicació-modulesmedicaciopy)
    - [6.4 Seguretat i Domòtica (`modules/seguretat.py`, `modules/domotica.py`)](#64-seguretat-i-domòtica-modulesseguretatpy-modulesdomoticapy)
+   - [6.5 Viatges i Vacances (`modules/viatges.py`)](#65-viatges-i-vacances-modulesviatgespy)
 7. [Mòduls de Prioritat 5: Administració, Nucli i Serveis Transversals](#7-mòduls-de-prioritat-5-administració-nucli-i-serveis-transversals)
    - [7.1 Configuració Global (`modules/admin.py`, `core/config_manager.py`)](#71-configuració-global-modulesadminpy-coreconfig_managerpy)
    - [7.2 Laboratori IA - Harness (`core/harness.py`)](#72-laboratori-ia---harness-coreharnesspy)
@@ -837,6 +838,8 @@ Gestió integral de totes les obligacions econòmiques futures i passades de l'e
 4. **Accions Massives i Confirmació d'Operacions amb Control de Dates**:
    - **Modificació d'Imports en Bloc**: Permet ajustar l'import previst de múltiples rebuts o ingressos abans de traspassar-los a la comptabilitat definitiva.
    - **Liquidació i Confirmació en Bloc (`dialog_confirmar_operacions`)**: Diàleg modal interactiu que permet revisar cada concepte, verificar el banc associat (o assignar-ne un si manca) i **modificar la data de l'apunt** mitjançant un selector de dates (`st.date_input`) en format `dd/mm/aaaa`.
+   - **Encapsulament en Targetes per a Mòbil (`st.container(border=True)`)**: Cada operació a liquidar es presenta dins d'una targeta amb vora independent, evitant la confusió visual de columnes apilades en pantalles mòbils estretes.
+   - **Canvi Dinàmic de Banc (`st.selectbox`)**: S'incorpora un selector directe que permet revisar i modificar el compte bancari assignat abans de confirmar l'operació, guardant-se tant a la taula general de moviments (`despeses`) com als registres de pagaments i ingressos previstos.
    - **Control Estricte de Data del Mes**: El selector de dates està blindat visualment (`min_value` i `max_value`) i validat al servidor per garantir que la data de l'apunt estigui obligatòriament compresa entre el dia 1 i l'últim dia del mes consultat, impedint apunts erronis fora de període.
 
 ---
@@ -1998,6 +2001,35 @@ Mòduls complementaris de protecció física de la llar, videovigilància, integ
 
 ---
 
+### 6.5 Viatges i Vacances (`modules/viatges.py`)
+Mòdul dedicat a la planificació integral, pressupostació, checklists d'equipatge i seguiment financer en temps real de les sortides, escapades i vacances familiars.
+
+#### A. Arquitectura i Fonts de Dades
+- **Dades de Viatges (`data/viatges.json`)**: Emmagatzema el catàleg de viatges planificats i passats, juntament amb la llista d'equipatge (`checklist`) organitzada per categories.
+- **Enllaç amb la Base de Dades de Despeses (`despeses`)**: Connexió directa amb la taula de transaccions reals del mòdul econòmic, filtrant automàticament els moviments que contenen la marca de vacances (`[VACANCES]`) o compresos en el rang de dates del viatge.
+
+#### B. Funcionalitats Principals per Pestanyes
+1. **🗺️ Els Meus Viatges**:
+   - Graella completa de viatges ordenats cronològicament amb filtre per any.
+   - Targetes visuals de resum amb dades de destinació, país, rang de dates, dies totals, mitjà de transport i allotjament.
+   - Confrontació financera en temps real: pressupost assignat vs total de despeses reals acumulades, percentatge d'execució i indicador de saldo restant o desviació.
+2. **➕ Nou Viatge**:
+   - Formulari de registre amb destinació, país, dates d'inici i fi, mitjà de transport, allotjament i observacions.
+   - **Estimació Històrica Intel·ligent**: Botó interactiu per calcular la previsió de pressupost prenent com a referència despeses d'un viatge anterior (filtrant per període i etiquetatge `[VACANCES]` a la BBDD). Si es modifiquen les dates de referència, la previsió es recalcula automàticament en temps real en funció dels dies del nou viatge.
+   - **Neteja Dinàmica del Formulari**: Utilitza versionat d'estat de sessió (`form_v_ver`) per reiniciar de forma neta tots els camps del formulari després de desar un viatge nou, evitant conflictes amb claus actives de Streamlit.
+3. **💰 Pressupost & Despeses**:
+   - Panell d'anàlisi financera del viatge seleccionat: permet actualitzar el pressupost previst i confrontar-lo amb el consum real.
+   - **Desglossament per Categories de Viatge**: Agrupació automàtica de les despeses en `🍽️ Menjar / Supermercat`, `🚗 Transport / Carburant`, `🏨 Allotjament`, `🎟️ Restauració i Oci` i `🎒 Altres / Compres`.
+   - Comparativa de despesa prevista vs despesa real per cada categoria amb barres de progrés i desviacions.
+4. **📋 Llista d'Equipatge (Checklist)**:
+   - Llistat organitzat per categories: Documentació, Electrònica, Farmaciola, Necesser, Roba & Calçat.
+   - Checkboxes interactives amb persistència immediata per marcar els estris preparats abans de sortir.
+   - Formulari per afegir nous elements personalitzats a qualsevol categoria.
+5. **💡 Guies i Consells**:
+   - Espai per desar recomanacions d'itinerari, consells pràctics del destí i telèfons d'emergència.
+
+---
+
 ## 7. Mòduls de Prioritat 5: Administració, Nucli i Serveis Transversals
 
 ---
@@ -2497,6 +2529,8 @@ El mòdul de **Control** neix per evitar regressions funcionals i alteracions vi
 | **28/10/2026** | **Nucli / Editor JSON** | **Neteja d'Arxius Temporals Obsolets**: Eliminats els fitxers temporals obsolets d'antigues importacions de receptes (`pending_13.json`, `pending_13_real.json`, `missing_recipes.json`), netejant el menú superior desplegable `Editar > 📂 Arxius JSON` per mostrar exclusivament els fitxers de dades actius de l'aplicació. |
 | **28/10/2026** | **Documentació Global** | **Auditoria i Documentació Exhaustiva de la Secció 7**: Desglossament complet d'Administració (12 seccions estil Chrome Settings), Laboratori IA Harness (8 avaluadors deterministes i execució en segon pla), Gestor de Bases de Dades en temps real, Sincronització Offline i Controlador d'Impressora ESC/POS. |
 | **27/10/2026** | **Cotxe / Km i Rutes** | **Control Estricte d'Odòmetre**: Bloqueig i validació perquè els kilòmetres entrats a una nova ruta mai puguin ser iguals o inferiors a l'última lectura registrada de l'odòmetre (`contador_val > last_km`), amb avís dinàmic en vermell, indicador de trajecte invàlid i protecció tant a l'entrada manual com a l'escaneig per foto OCR. |
+| **25/11/2026** | **Econòmic / Confirmació Operacions** | **Encapsulament per a Mòbil i Canvi de Banc a la Confirmació**: Cada operació a liquidar a `dialog_confirmar_operacions` ([`modules/economic.py`](file:///e:/Dashboard/modules/economic.py)) s'ha encapsulat dins d'un `st.container(border=True)` per evitar la confusió visual de columnes apilades en dispositius mòbils. S'ha substituït l'etiqueta estàtica de banc per un selector desplegable (`st.selectbox`) que permet revisar i modificar el compte abans de desar, sincronitzant el canvi tant a `despeses` com a `pagaments` i `ingressos`. |
+| **25/11/2026** | **Viatges / Pressupost & Històric** | **Estimació de Despeses Històriques, Desglossament per Categories i Neteja de Formulari**: Afegida la capacitat d'estimar el pressupost d'un nou viatge ([`modules/viatges.py`](file:///e:/Dashboard/modules/viatges.py)) a partir de despeses de viatges anteriors acotades per dates i marca `[VACANCES]`. La pestanya *Pressupost & Despeses* ara desglossa la despesa per categories (Menjar, Transport, Allotjament, Oci, Altres) i la confronta amb les despeses reals. S'ha reorganitzat la interfície d'alta i s'ha implementat el buidatge net de camps en desar mitjançant versionat d'estat (`form_v_ver`). |
 | **26/10/2026** | **Llum i Aigua / Preus** | **Registre Persistent de Preus Horaris PVPC i Auditoria Factura**: Creat el registre diari `data/preus_llum_diaris.json` (accessible des del menú superior *Editar > 📂 Arxius JSON* sense afegir noves pestanyes), gravació automàtica continuada de les 24h de cada dia, funció de contrast de consums i auditoria completa de la factura 10-2026 (66,59 €, 449,572 kWh amb 25h de preus negatius). |
 | **28/10/2026** | **Compres / Escàner** | **Integració 1-Clic d'Escaneig a Compres**: Afegits botons `🖨️ Obrir Escàner` i `📥 Carregar últim tiquet` a `modules/compres.py`, encapsulament `LocalFileWrapper` i fallback automàtic de supermercat i data des del nom de fitxer (`tickets/ticket_<super>_<date>.jpg`). |
 | **28/10/2026** | **Cotxe / Odòmetre** | **Validació Estricta de Km**: Bloqueig d'entrades de quilòmetres inferiors o iguals al darrer registre a `modules/cotxe.py` amb alerta visual vermella en temps real. |
