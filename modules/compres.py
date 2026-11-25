@@ -1230,6 +1230,11 @@ def cb_recalculate_manual_pct():
         st.session_state["manual_prom_num"] = 0.0
         st.session_state["manual_target_tot"] = None
 
+    p_now = st.session_state.get("manual_preu_num", 0.0) or 0.0
+    pr_now = st.session_state.get("manual_prom_num", 0.0) or 0.0
+    t_calc = max(0.0, (qty * p_now) - pr_now)
+    st.session_state["manual_tot_linea_disp"] = f"{t_calc:,.2f} €"
+
 def cb_manual_preu_changed():
     pct = st.session_state.get("manual_pct_num", 0.0) or 0.0
     preu = st.session_state.get("manual_preu_num", 0.0) or 0.0
@@ -1242,6 +1247,10 @@ def cb_manual_preu_changed():
     else:
         st.session_state["manual_target_tot"] = round(preu * qty, 2)
         cb_recalculate_manual_pct()
+    
+    pr_now = st.session_state.get("manual_prom_num", 0.0) or 0.0
+    t_calc = max(0.0, (preu * qty) - pr_now)
+    st.session_state["manual_tot_linea_disp"] = f"{t_calc:,.2f} €"
 
 def cb_manual_qty_changed():
     pct = st.session_state.get("manual_pct_num", 0.0) or 0.0
@@ -1253,6 +1262,10 @@ def cb_manual_qty_changed():
         st.session_state["manual_target_tot"] = round(preu * qty, 2)
     else:
         cb_recalculate_manual_pct()
+
+    pr_now = st.session_state.get("manual_prom_num", 0.0) or 0.0
+    t_calc = max(0.0, (preu * qty) - pr_now)
+    st.session_state["manual_tot_linea_disp"] = f"{t_calc:,.2f} €"
 
 def cb_manual_prom_changed():
     prom = st.session_state.get("manual_prom_num", 0.0) or 0.0
@@ -1268,6 +1281,9 @@ def cb_manual_prom_changed():
     elif prom == 0.0:
         st.session_state["manual_pct_num"] = 0.0
         st.session_state["manual_target_tot"] = round(preu * qty, 2)
+
+    t_calc = max(0.0, (preu * qty) - prom)
+    st.session_state["manual_tot_linea_disp"] = f"{t_calc:,.2f} €" 
 
 
 def cb_set_date_today():
@@ -2810,8 +2826,10 @@ Retorna ÚNICAMENT l'objecte JSON.
     with col_prom:
         prom_val = st.number_input("PROMOCIÓ", min_value=0.0, step=0.01, key="manual_prom_num", on_change=cb_manual_prom_changed)
         
-    tot_linea_val = ((qty_val or 1.0) * (preu_val or 0.0)) - (prom_val or 0.0)
-    st.session_state["manual_tot_linea_disp"] = f"{tot_linea_val:,.2f} €"
+    tot_linea_val = max(0.0, ((qty_val or 1.0) * (preu_val or 0.0)) - (prom_val or 0.0))
+    tot_disp_str = f"{tot_linea_val:,.2f} €"
+    if st.session_state.get("manual_tot_linea_disp") != tot_disp_str:
+        st.session_state["manual_tot_linea_disp"] = tot_disp_str
     with col_tot:
         st.text_input("TOTAL LÍNIA", key="manual_tot_linea_disp", disabled=True)
     with col_reb:
@@ -2863,12 +2881,20 @@ Retorna ÚNICAMENT l'objecte JSON.
                 }}
 
                 function getWidgetLabel(el) {{
-                    const container = el.closest('[data-testid="stNumberInputContainer"]') || 
-                                      el.closest('[data-testid="stTextInputContainer"]') || 
-                                      el.closest('[data-testid="stSelectbox"]');
-                    const parentWidget = container ? container.parentElement : null;
-                    const labelElem = parentWidget ? (parentWidget.querySelector('label') || parentWidget.querySelector('[data-testid="stWidgetLabel"]')) : null;
-                    return labelElem ? (labelElem.textContent || '').toUpperCase() : '';
+                    if (!el) return '';
+                    const aria = el.getAttribute('aria-label') || '';
+                    if (aria) return aria.toUpperCase();
+                    const widget = el.closest('[data-testid^="stTextInput"], [data-testid^="stNumberInput"], [data-testid="stSelectbox"], [data-testid="stWidget"], div[class*="st-"]');
+                    if (widget) {{
+                        const lbl = widget.querySelector('label, [data-testid="stWidgetLabel"]');
+                        if (lbl && lbl.textContent) return lbl.textContent.toUpperCase();
+                    }}
+                    const col = el.closest('[data-testid="stColumn"]');
+                    if (col) {{
+                        const lbl = col.querySelector('label, [data-testid="stWidgetLabel"]');
+                        if (lbl && lbl.textContent) return lbl.textContent.toUpperCase();
+                    }}
+                    return '';
                 }}
 
                 function parseLocaleNum(raw, fallback) {{
@@ -2881,22 +2907,38 @@ Retorna ÚNICAMENT l'objecte JSON.
 
                 function updateLiveTotal(manualRow) {{
                     if (!manualRow) return;
-                    const allInputs = Array.from(manualRow.querySelectorAll('input:not([type="hidden"])'));
+                    const allInputs = Array.from(manualRow.querySelectorAll('input'));
                     let qtyInput = null, preuInput = null, promInput = null, totInput = null;
                     for (const inp of allInputs) {{
                         const lbl = getWidgetLabel(inp);
                         if (lbl.includes('QUANTITAT')) qtyInput = inp;
                         else if (lbl.includes('PREU')) preuInput = inp;
                         else if (lbl.includes('PROMOC')) promInput = inp;
-                        else if (lbl.includes('TOTAL L') && inp.disabled) totInput = inp;
+                        else if (lbl.includes('TOTAL') || (inp.disabled && allInputs.indexOf(inp) >= 4)) totInput = inp;
                     }}
+                    if (!qtyInput) qtyInput = manualRow.querySelector('input[aria-label*="QUANTITAT" i]');
+                    if (!preuInput) preuInput = manualRow.querySelector('input[aria-label*="PREU" i]');
+                    if (!promInput) promInput = manualRow.querySelector('input[aria-label*="PROMOC" i]');
+                    if (!totInput) totInput = manualRow.querySelector('input[aria-label*="TOTAL" i]') || manualRow.querySelector('input[disabled]');
+
                     if (!totInput) return;
                     const qtyRaw = qtyInput ? parseLocaleNum(qtyInput.value, 1.0) : 1.0;
                     const qty = qtyRaw > 0 ? qtyRaw : 1.0;
                     const preu = preuInput ? parseLocaleNum(preuInput.value, 0.0) : 0.0;
                     const prom = promInput ? parseLocaleNum(promInput.value, 0.0) : 0.0;
-                    const tot = (qty * preu) - prom;
-                    totInput.value = tot.toFixed(2) + ' €';
+                    const tot = Math.max(0.0, (qty * preu) - prom);
+                    const formatted = tot.toFixed(2) + ' €';
+
+                    if (totInput.value !== formatted) {{
+                        totInput.value = formatted;
+                        try {{
+                            const proto = Object.getPrototypeOf(totInput);
+                            const desc = Object.getOwnPropertyDescriptor(proto, 'value');
+                            if (desc && desc.set) {{
+                                desc.set.call(totInput, formatted);
+                            }}
+                        }} catch (_) {{}}
+                    }}
                 }}
 
                 function applyPendingFocus() {{
@@ -2943,6 +2985,8 @@ Retorna ÚNICAMENT l'objecte JSON.
                 }}
                 if (window.parent.__compres_input_handler) {{
                     doc.removeEventListener('input', window.parent.__compres_input_handler, true);
+                    doc.removeEventListener('keyup', window.parent.__compres_input_handler, true);
+                    doc.removeEventListener('change', window.parent.__compres_input_handler, true);
                 }}
 
                 window.parent.__compres_input_handler = function(e) {{
@@ -3043,7 +3087,20 @@ Retorna ÚNICAMENT l'objecte JSON.
                 }};
 
                 doc.addEventListener('input', window.parent.__compres_input_handler, true);
+                doc.addEventListener('keyup', window.parent.__compres_input_handler, true);
+                doc.addEventListener('change', window.parent.__compres_input_handler, true);
                 doc.addEventListener('keydown', window.parent.__compres_enter_handler, true);
+
+                setTimeout(() => {{
+                    const addBtn = getAddBtn();
+                    const manualRow = getManualRow(addBtn);
+                    if (manualRow) updateLiveTotal(manualRow);
+                }}, 60);
+                setTimeout(() => {{
+                    const addBtn = getAddBtn();
+                    const manualRow = getManualRow(addBtn);
+                    if (manualRow) updateLiveTotal(manualRow);
+                }}, 250);
             }} catch(e) {{
                 console.error("Error a compres_enter_handler:", e);
             }}
