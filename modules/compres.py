@@ -1140,7 +1140,12 @@ def cb_add_ticket_line():
     reb = st.session_state.get("manual_reb_chk", False)
     
     if not fam or not art:
-        st.session_state["manual_input_error"] = "Si us plau, selecciona una Família i un Article!"
+        msg = "Si us plau, selecciona una Família i un Article!"
+        st.session_state["manual_input_error"] = msg
+        try:
+            st.toast(f"⚠️ {msg}", icon="⚠️")
+        except Exception:
+            pass
         return
         
     if "manual_input_error" in st.session_state:
@@ -1186,6 +1191,12 @@ def cb_add_ticket_line():
         st.session_state["editing_ticket_item_idx"] = None
     else:
         st.session_state["ticket_items"].append(new_item)
+    
+    st.session_state["_line_added_flag"] = True
+    try:
+        st.toast(f"✅ Afegit: {art} ({tot:,.2f} €)", icon="✅")
+    except Exception:
+        pass
     
     # Reset widget states
     st.session_state["manual_pes_num"] = "0"
@@ -2835,7 +2846,9 @@ Retorna ÚNICAMENT l'objecte JSON.
     with col_reb:
         reb_val = st.checkbox("Reb.", key="manual_reb_chk")
     with col_add:
-        st.button("Entrar línia", key="btn_add_line", type="secondary", on_click=cb_add_ticket_line, use_container_width=True)
+        clicked_add = st.button("Entrar línia", key="btn_add_line", type="secondary", on_click=cb_add_ticket_line, use_container_width=True)
+        if clicked_add and not st.session_state.pop("_line_added_flag", False):
+            cb_add_ticket_line()
 
     # Render error if validation failed in callback
     if "manual_input_error" in st.session_state:
@@ -2986,7 +2999,9 @@ Retorna ÚNICAMENT l'objecte JSON.
                 if (window.parent.__compres_input_handler) {{
                     doc.removeEventListener('input', window.parent.__compres_input_handler, true);
                     doc.removeEventListener('keyup', window.parent.__compres_input_handler, true);
-                    doc.removeEventListener('change', window.parent.__compres_input_handler, true);
+                }}
+                if (window.parent.__compres_touch_handler) {{
+                    doc.removeEventListener('touchend', window.parent.__compres_touch_handler, true);
                 }}
 
                 window.parent.__compres_input_handler = function(e) {{
@@ -3086,10 +3101,29 @@ Retorna ÚNICAMENT l'objecte JSON.
                     setTimeout(applyPendingFocus, 90);
                 }};
 
+                window.parent.__compres_touch_handler = function(e) {{
+                    const target = e.target;
+                    if (!target) return;
+                    const addBtn = getAddBtn();
+                    if (!addBtn) return;
+                    if (target === addBtn || addBtn.contains(target)) {{
+                        const active = doc.activeElement;
+                        if (active && (active.tagName === 'INPUT' || active.tagName === 'SELECT')) {{
+                            // En mòbil, si hi ha un input actiu el primer toc tanca el teclat i perd el clic.
+                            // Forcem el blur i executem el clic del botó directament.
+                            active.blur();
+                            setTimeout(() => {{
+                                const btn = getAddBtn();
+                                if (btn) btn.click();
+                            }}, 120);
+                        }}
+                    }}
+                }};
+
                 doc.addEventListener('input', window.parent.__compres_input_handler, true);
                 doc.addEventListener('keyup', window.parent.__compres_input_handler, true);
-                doc.addEventListener('change', window.parent.__compres_input_handler, true);
                 doc.addEventListener('keydown', window.parent.__compres_enter_handler, true);
+                doc.addEventListener('touchend', window.parent.__compres_touch_handler, true);
 
                 setTimeout(() => {{
                     const addBtn = getAddBtn();

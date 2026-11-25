@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "25/11/2026 14:46:58",
+  "updated_at": "25/11/2026 15:06:59",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -23,8 +23,8 @@
       "verified_at": "25/11/2026 14:46:58",
       "verified_commit": "5093d73",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "26/11/2026 15:06:58",
+      "unlock_reason": "Corregir clic del boto Entrar linia en dispositius mobils i validacio visual"
     },
     "economic": {
       "name": "Econòmic",
@@ -374,6 +374,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "25/11/2026 15:06:58",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 26/11/2026 15:06:58. Motiu: Corregir clic del boto Entrar linia en dispositius mobils i validacio visual",
+      "user": "admin",
+      "git_head": "5069675"
+    },
     {
       "timestamp": "25/11/2026 14:46:58",
       "action": "SEAL",
@@ -1163,14 +1171,6 @@
       "action": "UNLOCK",
       "module": "core_compartit",
       "detail": "Autoritzat fins 15/11/2026 16:05:05. Motiu: Enllacos interactius a alertes i accio directa per marcar fet",
-      "user": "admin",
-      "git_head": "90e90dc"
-    },
-    {
-      "timestamp": "14/11/2026 15:37:37",
-      "action": "UNLOCK",
-      "module": "manteniment",
-      "detail": "Autoritzat fins 15/11/2026 15:37:37. Motiu: Suport per navegar a tasques i fases des d alertes",
       "user": "admin",
       "git_head": "90e90dc"
     }
