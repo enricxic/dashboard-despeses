@@ -1581,7 +1581,7 @@ if st.session_state.current_module is None:
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.95);
+    text-shadow: none;
 }}
 .house-custom-slogan {{
     font-size: calc({max(11, int(tamany_px * 0.32))} * min(85vw, 140vh) / 1024);
@@ -1593,7 +1593,7 @@ if st.session_state.current_module is None:
     text-align: center;
     white-space: nowrap;
     line-height: 1;
-    text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+    text-shadow: none;
 }}
 .hotspot {{
     position: absolute;
@@ -1687,13 +1687,13 @@ if st.session_state.current_module is None:
     .house-custom-title {{
         font-size: calc({tamany_px} * 1.5 * 100vw / 1024) !important;
         font-weight: 800 !important;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.95) !important;
+        text-shadow: none !important;
     }}
     .house-custom-slogan {{
         font-size: calc({max(11, int(tamany_px * 0.32))} * 1.5 * 100vw / 1024) !important;
         color: #407faf !important;
         letter-spacing: 1.5px !important;
-        text-shadow: 0 1px 6px rgba(0,0,0,0.9) !important;
+        text-shadow: none !important;
     }}
 
     /* COORDENADES VERTICALS (14 icones) */
