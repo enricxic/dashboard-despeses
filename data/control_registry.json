@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "25/11/2026 15:06:59",
+  "updated_at": "25/11/2026 15:11:10",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,13 +18,13 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "d2d3cc5d05165d706586d0f1e25989a8222fe61c8638e1ae689246ca0893cb76"
+        "modules/compres.py": "1b5b51ef67db2682fd931f4c3118bfa604185946cef8f54da866c911f5380431"
       },
-      "verified_at": "25/11/2026 14:46:58",
-      "verified_commit": "5093d73",
+      "verified_at": "25/11/2026 15:11:10",
+      "verified_commit": "79efcd0",
       "verified_by": "admin",
-      "unlocked_until": "26/11/2026 15:06:58",
-      "unlock_reason": "Corregir clic del boto Entrar linia en dispositius mobils i validacio visual"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -374,6 +374,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "25/11/2026 15:11:10",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Resolt clic de boto en mobils i feedback toast)",
+      "user": "admin",
+      "git_head": "79efcd0"
+    },
     {
       "timestamp": "25/11/2026 15:06:58",
       "action": "UNLOCK",
@@ -1163,14 +1171,6 @@
       "action": "SEAL",
       "module": "manteniment",
       "detail": "Versió verificada i segellada (Navegacio directa a tasques i fases des d alertes i marcar com a fet)",
-      "user": "admin",
-      "git_head": "90e90dc"
-    },
-    {
-      "timestamp": "14/11/2026 16:05:05",
-      "action": "UNLOCK",
-      "module": "core_compartit",
-      "detail": "Autoritzat fins 15/11/2026 16:05:05. Motiu: Enllacos interactius a alertes i accio directa per marcar fet",
       "user": "admin",
       "git_head": "90e90dc"
     }
