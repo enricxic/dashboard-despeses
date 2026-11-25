@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "25/11/2026 13:12:07",
+  "updated_at": "25/11/2026 13:12:57",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -43,11 +43,11 @@
       "verified_hashes": {
         "modules/economic.py": "17efa92e31fcaeb986dbb961584ab9eef50842351a6759f6c036bb010b71c4df"
       },
-      "verified_at": "25/11/2026 13:10:17",
-      "verified_commit": "935f09a",
+      "verified_at": "25/11/2026 13:12:57",
+      "verified_commit": "12fd054",
       "verified_by": "admin",
-      "unlocked_until": "26/11/2026 13:12:07",
-      "unlock_reason": "Permetre canviar el banc a la confirmacio i contenidors mobil"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "cotxe": {
       "name": "Cotxe",
@@ -374,6 +374,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "25/11/2026 13:12:57",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada (Verificat canvi de banc i contenidors mobil)",
+      "user": "admin",
+      "git_head": "12fd054"
+    },
     {
       "timestamp": "25/11/2026 13:12:07",
       "action": "UNLOCK",
@@ -1165,14 +1173,6 @@
       "detail": "Versió verificada i segellada (Multiples fotos de fons, eina Linia recta i toggle amagar/ensenyar dibuix a canvas_planol.py)",
       "user": "admin",
       "git_head": "e935cd4"
-    },
-    {
-      "timestamp": "12/11/2026 13:57:51",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Carrega mandrosa de taules a get_global_alerts() per evitar parpelleigs i esperes)",
-      "user": "admin",
-      "git_head": "6dac26c"
     }
   ]
 }
