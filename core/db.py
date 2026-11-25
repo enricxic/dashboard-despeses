@@ -1214,10 +1214,43 @@ def add_concept_to_config(category, concept):
         save_categories_conceptes(cat_config)
 
 def get_config_routes(df_km=None):
+    routes = set()
+    
+    # 1. De la configuració activa (Supabase / memòria cau)
     cfg = load_categories_conceptes()
-    if cfg and "rutes_cotxe" in cfg:
-        return sorted(cfg["rutes_cotxe"])
-    return []
+    if cfg and "rutes_cotxe" in cfg and isinstance(cfg["rutes_cotxe"], list):
+        routes.update([str(r).strip() for r in cfg["rutes_cotxe"] if str(r).strip() and str(r).strip() != "?"])
+
+    # 2. Del fitxer local categories_conceptes.json com a fallback o complement
+    filepath = "categories_conceptes.json"
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                local_cfg = json.load(f)
+                if local_cfg and "rutes_cotxe" in local_cfg and isinstance(local_cfg["rutes_cotxe"], list):
+                    routes.update([str(r).strip() for r in local_cfg["rutes_cotxe"] if str(r).strip() and str(r).strip() != "?"])
+        except Exception:
+            pass
+
+    # 3. De l'històric real de rutes registrades (df_km, session_state o CSV)
+    target_df = df_km
+    if target_df is None or (isinstance(target_df, pd.DataFrame) and target_df.empty):
+        try:
+            target_df = st.session_state.get("df_km", None)
+        except Exception:
+            target_df = None
+    if target_df is None or (isinstance(target_df, pd.DataFrame) and target_df.empty):
+        csv_km_path = os.path.join("csv", "kmCotxe.csv")
+        if os.path.exists(csv_km_path):
+            try:
+                target_df = pd.read_csv(csv_km_path, sep=';')
+            except Exception:
+                pass
+    if target_df is not None and isinstance(target_df, pd.DataFrame) and not target_df.empty and 'ruta' in target_df.columns:
+        valid_r = target_df['ruta'].dropna().unique()
+        routes.update([str(r).strip() for r in valid_r if str(r).strip() and str(r).strip() != "?"])
+
+    return sorted(list(routes))
 
 def init_routes_config(df_km=None):
     global cat_config

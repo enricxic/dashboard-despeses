@@ -802,7 +802,6 @@
         "preparacions"
     ],
     "rutes_cotxe": [
-        "?",
         "Aeroport BCN",
         "Argentona-Barcelona",
         "Barcelona",
@@ -826,6 +825,7 @@
         "Dinar Morillas",
         "Dinar Vic",
         "Dinar jubilats",
+        "Els Colls Arbúcies",
         "Espinelves",
         "Excursió",
         "Festa Lidia Cerrillo",
@@ -925,6 +925,7 @@
         "Viatge La Torre",
         "Viatge Torre",
         "Vic",
+        "Viladrau",
         "Volta carrega bateria",
         "metge Platja d'Aro",
         "palamós . Entrega com",
