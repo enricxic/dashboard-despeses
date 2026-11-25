@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "23/11/2026 16:03:42",
+  "updated_at": "25/11/2026 13:12:07",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -41,13 +41,13 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "3f0c1664978e77c6e6d441ae3741942110d00423cb913f3a615fd98b735109a9"
+        "modules/economic.py": "17efa92e31fcaeb986dbb961584ab9eef50842351a6759f6c036bb010b71c4df"
       },
-      "verified_at": "23/11/2026 16:03:42",
-      "verified_commit": "1d85edc",
+      "verified_at": "25/11/2026 13:10:17",
+      "verified_commit": "935f09a",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "26/11/2026 13:12:07",
+      "unlock_reason": "Permetre canviar el banc a la confirmacio i contenidors mobil"
     },
     "cotxe": {
       "name": "Cotxe",
@@ -374,6 +374,30 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "25/11/2026 13:12:07",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 26/11/2026 13:12:07. Motiu: Permetre canviar el banc a la confirmacio i contenidors mobil",
+      "user": "admin",
+      "git_head": "935f09a"
+    },
+    {
+      "timestamp": "25/11/2026 13:10:17",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada (Verificat canvi de banc i contenidors mobil)",
+      "user": "admin",
+      "git_head": "935f09a"
+    },
+    {
+      "timestamp": "25/11/2026 12:12:01",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 26/11/2026 12:12:01. Motiu: Permetre canviar banc i corregir visualitzacio mobil",
+      "user": "admin",
+      "git_head": "935f09a"
+    },
     {
       "timestamp": "23/11/2026 16:03:42",
       "action": "SEAL",
@@ -1149,30 +1173,6 @@
       "detail": "Versió verificada i segellada (Carrega mandrosa de taules a get_global_alerts() per evitar parpelleigs i esperes)",
       "user": "admin",
       "git_head": "6dac26c"
-    },
-    {
-      "timestamp": "12/11/2026 13:50:07",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Alinear sum_varis i categories de Valor superat a core/alerts.py)",
-      "user": "admin",
-      "git_head": "4cbc885"
-    },
-    {
-      "timestamp": "12/11/2026 13:42:45",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Correccio campaneta global alertes a app.py, core/alerts.py i core/db.py)",
-      "user": "admin",
-      "git_head": "43791d0"
-    },
-    {
-      "timestamp": "12/11/2026 13:37:57",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Invalidar cache load_dashboard_data i actualitzar tracker en insert/update/delete de core/db.py)",
-      "user": "admin",
-      "git_head": "ac193c6"
     }
   ]
 }
