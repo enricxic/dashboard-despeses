@@ -3216,16 +3216,37 @@ Retorna ÚNICAMENT l'objecte JSON.
 
 
     st.write("---")
-    col_desc, col_b1, col_b2 = st.columns([3, 2, 2], vertical_alignment="bottom")
+    col_desc, col_b1, col_tot, col_b2 = st.columns([2.5, 1.2, 1.8, 1.5], vertical_alignment="bottom")
     
     with col_desc:
         st.number_input("Descompte global del Tiquet (€):", min_value=0.0, step=0.01, key="ticket_discount")
 
     with col_b1:
-        st.button("Fi Tiquet", key="btn_finalize_ticket", type="primary", on_click=cb_finalize_ticket)
+        st.button("Fi Tiquet", key="btn_finalize_ticket", type="primary", on_click=cb_finalize_ticket, use_container_width=True)
+
+    with col_tot:
+        disc_bottom = float(st.session_state.get("ticket_discount", 0.0) or 0.0)
+        sum_items_bottom = round(sum(item['totLinea'] for item in st.session_state.get("ticket_items", [])), 2)
+        tot_import_bottom = max(0.0, round(sum_items_bottom - disc_bottom, 2))
+        st.markdown("**TOTAL TIQUET**")
+        if disc_bottom > 0:
+            st.markdown(
+                f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:6px; border-radius:4px; font-size:1.1rem; font-weight:bold; text-align:center; min-height:38px; display:flex; flex-direction:column; justify-content:center;'>"
+                f"{tot_import_bottom:,.2f} €"
+                f"<div style='font-size:0.75rem; color:#94a3b8; font-weight:normal;'>(Articles: {sum_items_bottom:.2f} € - Dto: {disc_bottom:.2f} €)</div>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                f"<div style='background-color:#1e293b; color:#ffffff; border:1px solid #334155; padding:8px; border-radius:4px; font-size:1.2rem; font-weight:bold; text-align:center; min-height:38px; display:flex; align-items:center; justify-content:center;'>"
+                f"{tot_import_bottom:,.2f} €"
+                f"</div>",
+                unsafe_allow_html=True
+            )
                 
     with col_b2:
-        st.button("Netejar Tiquet", key="btn_clear_ticket", on_click=cb_clear_ticket)
+        st.button("Netejar Tiquet", key="btn_clear_ticket", on_click=cb_clear_ticket, use_container_width=True)
 
 # ----------------- HEADER AREA -----------------
 

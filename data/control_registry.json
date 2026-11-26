@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "25/11/2026 15:11:10",
+  "updated_at": "26/11/2026 13:51:12",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -23,8 +23,8 @@
       "verified_at": "25/11/2026 15:11:10",
       "verified_commit": "79efcd0",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "27/11/2026 13:51:11",
+      "unlock_reason": "Afegir requadre amb total del tiquet al costat del boto Fi Tiquet"
     },
     "economic": {
       "name": "Econòmic",
@@ -374,6 +374,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "26/11/2026 13:51:11",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 27/11/2026 13:51:11. Motiu: Afegir requadre amb total del tiquet al costat del boto Fi Tiquet",
+      "user": "admin",
+      "git_head": "1611178"
+    },
     {
       "timestamp": "25/11/2026 15:11:10",
       "action": "SEAL",
@@ -1163,14 +1171,6 @@
       "action": "SEAL",
       "module": "core_compartit",
       "detail": "Versió verificada i segellada (Navegacio interactiva d alertes i accions per marcar com a fet)",
-      "user": "admin",
-      "git_head": "90e90dc"
-    },
-    {
-      "timestamp": "14/11/2026 16:11:14",
-      "action": "SEAL",
-      "module": "manteniment",
-      "detail": "Versió verificada i segellada (Navegacio directa a tasques i fases des d alertes i marcar com a fet)",
       "user": "admin",
       "git_head": "90e90dc"
     }
