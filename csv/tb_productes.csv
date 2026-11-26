@@ -1,24 +1,24 @@
 idProducte;nom_estandard;familia;unitat;stock_actual;stock_minim;lloc;select_stock;foto_url;super_habitual;x_etiqueta;preuUnit;stockXmenu;minim_compra
-489;Vol au Vent;pa;;1.0;0.0;;True;;;True;0.0;False;1
-497;Vaselina;neteja;;1.0;0.0;;True;;;True;0.0;False;1
+489;Vol au Vent;pa;;1.0;0.0;;True;;BonPreu;True;1.99;False;1
+497;Vaselina;neteja;;1.0;0.0;;True;;Novavenda;True;1.69;False;1
 317;Pipes Tijuana;extres;unitat;13.0;2.0;Armari cuina;True;;Novavenda;False;1.62;False;1
 95;Aletes pollastre;carn;unitat;0.0;0.0;;False;;;True;3.32;False;1
-58;Festuc;fruita;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
+58;Festuc;fruita;unitat;0.0;0.0;;False;;AreaGuissona;True;1.65;False;1
 126;Sobrassada;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
 60;Alls;verdura;unitat;0.0;0.0;;False;;Dia;True;0.8;False;1
 10;Llet 2L;lactics;unitat;0.0;0.0;;False;;;True;0.0;False;1
-85;Pèssols;verdura;unitat;0.0;0.0;;False;;;True;0.0;False;1
+85;Pèssols;verdura;unitat;0.0;0.0;;False;;La Sirena;True;1.29;False;1
 97;Braó porc;carn;unitat;0.0;0.0;;False;;;True;0.0;False;1
-98;Botifarra blanca;carn;unitat;0.0;0.0;;False;;;True;0.0;False;1
+98;Botifarra blanca;carn;unitat;0.0;0.0;;False;;Tot Carn;True;1.83;False;1
 206;Aigua 8L;begudes;unitat;3.0;1.0;Rebost;True;;Mercadona;False;0.94;False;1
 233;Altres neteja;neteja;unitat;0.0;0.0;;False;;;False;10.96;False;1
 229;Beguda Civada;begudes;unitat;0.0;0.0;;False;;Dia;False;0.0;False;1
-487;Cibulet;verdura;;1.0;0.0;;True;;;True;0.0;False;1
-193;Pà ratllat;pa;unitat;1.0;1.0;Rebost;True;;Dia;True;0.0;False;1
-212;Cervessa 1/5;begudes;unitat;0.0;0.0;;False;;Mercadona;False;0.0;False;1
+487;Cibulet;verdura;;1.0;0.0;;True;;BonPreu;True;1.49;False;1
+193;Pà ratllat;pa;unitat;1.0;1.0;Rebost;True;;Dia;True;1.94;False;1
+212;Cervessa 1/5;begudes;unitat;0.0;0.0;;False;;Mercadona;False;4.99;False;1
 209;Descafeinat cap.;begudes;unitat;6.0;2.0;Armari menjador;True;;LIDL;False;3.65;False;1
-208;Cafè capsula;begudes;unitat;2.0;1.0;Armari menjador;True;;LIDL;False;0.0;False;1
-205;Aigua 5L;begudes;unitat;0.0;0.0;;False;;Dia;False;0.0;False;1
+208;Cafè capsula;begudes;unitat;2.0;1.0;Armari menjador;True;;LIDL;False;3.65;False;1
+205;Aigua 5L;begudes;unitat;0.0;0.0;;False;;Dia;False;1.25;False;1
 262;Oral B;neteja;unitat;3.0;2.0;Escala;True;;Clarel;False;2.4;False;1
 149;Bacallà;peix;unitat;0.0;0.0;;False;;Dia;True;5.99;False;1
 178;Bestina;peix;unitat;0.0;0.0;;False;;;True;7.41;False;1
@@ -29,9 +29,9 @@ idProducte;nom_estandard;familia;unitat;stock_actual;stock_minim;lloc;select_sto
 140;Carn de Kebab;carn;unitat;0.0;0.0;;False;;;True;2.9;False;1
 219;Llimonada ll.;begudes;unitat;0.0;0.0;;False;;;False;0.0;False;1
 138;Carpaccio;carn;unitat;0.0;0.0;;False;;Dia;True;0.93;False;1
-223;Refresc;begudes;unitat;0.0;0.0;;False;;;False;0.0;False;1
+223;Refresc;begudes;unitat;0.0;0.0;;False;;Mercadona;False;0.7;False;1
 133;Txurrasco;carn;unitat;0.0;0.0;;False;;;True;0.0;False;1
-228;Whisky;begudes;unitat;0.0;0.0;;False;;;False;0.0;False;1
+228;Whisky;begudes;unitat;0.0;0.0;;False;;LIDL;False;5.99;False;1
 210;Cava;begudes;unitat;0.0;0.0;;False;;;False;1.5;False;1
 152;Cloïses;peix;unitat;0.0;0.0;;False;;Dia;True;1.89;False;1
 215;CocaCola Zero 1.5L;begudes;unitat;0.0;0.0;;False;;;False;0.8;False;1
@@ -41,7 +41,7 @@ idProducte;nom_estandard;familia;unitat;stock_actual;stock_minim;lloc;select_sto
 325;Bovril;bàsics;unitat;1.0;1.0;Rebost;True;;;True;2.98;False;1
 337;Mostassa;bàsics;unitat;0.0;1.0;Rebost;True;;;True;0.0;False;1
 338;Nyora;bàsics;unitat;0.0;1.0;Rebost;True;;;True;1.3;False;1
-490;Carn picada;carn;;1.0;0.0;;True;;;True;0.0;False;1
+490;Carn picada;carn;;1.0;0.0;;True;;Can Rinsa;True;3.49;False;1
 365;Oliva 5L;oli;unitat;4.0;2.0;Rebost;True;;;True;29.67;False;1
 362;Girasol 1L;oli;unitat;5.0;1.0;Rebost;True;;Novavenda;True;1.85;False;1
 379;Frankfurt;llaunes;unitat;3.0;1.0;Rebost;True;;Mercadona;True;2.4;False;1
@@ -50,14 +50,14 @@ idProducte;nom_estandard;familia;unitat;stock_actual;stock_minim;lloc;select_sto
 232;Abrillantador;neteja;unitat;1.0;1.0;Sota-pica;True;;Mercadona;False;1.49;False;1
 189;Hojaldre;pa;unitat;9.0;1.0;Nevera;True;;AreaGuissona;True;1.24;False;1
 288;Acondicionador;neteja;unitat;0.0;0.0;;False;;Novavenda;False;2.2;False;1
-343;Puré de patata;bàsics;unitat;0.0;1.0;Rebost;True;;Dia;True;0.0;False;1
+343;Puré de patata;bàsics;unitat;0.0;1.0;Rebost;True;;Dia;True;2.1;False;1
 322;All Molinet;bàsics;unitat;0.0;0.0;;False;;;True;0.7;False;1
 306;Altres extres;extres;unitat;0.0;0.0;;False;;;False;10.0;False;1
-330;Farina d'arròs;bàsics;unitat;0.0;1.0;Rebost;True;;Mercadona;True;0.0;False;1
+330;Farina d'arròs;bàsics;unitat;0.0;1.0;Rebost;True;;Mercadona;True;1.25;False;1
 371;Bolets;llaunes;unitat;0.0;0.0;;False;;;True;1.59;False;1
 327;Canyella;bàsics;unitat;0.0;0.0;;False;;;True;1.0;False;1
 360;Ceba fregida;bàsics;unitat;0.0;0.0;;False;;;True;2.43;False;1
-272;Neteja water;neteja;unitat;0.0;0.0;;False;;Clarel;False;0.0;False;1
+272;Neteja water;neteja;unitat;0.0;0.0;;False;;Clarel;False;2.05;False;1
 373;Cirera;llaunes;unitat;0.0;0.0;;False;;;True;4.29;False;1
 375;Cogombres;llaunes;unitat;0.0;0.0;;False;;;True;1.39;False;1
 376;Confit de ceba;llaunes;unitat;0.0;0.0;;False;;;True;2.35;False;1
@@ -67,32 +67,32 @@ idProducte;nom_estandard;familia;unitat;stock_actual;stock_minim;lloc;select_sto
 378;Favada;llaunes;unitat;0.0;0.0;;False;;Dia;True;2.89;False;1
 358;Oli de coco;bàsics;unitat;0.0;0.0;;False;;;True;2.69;False;1
 366;Olives verdes;oli;unitat;0.0;0.0;;False;;Dia;True;2.5;False;1
-305;Pèssols;congelats;unitat;0.0;0.0;;False;;;True;0.0;False;1
+305;Pèssols;congelats;unitat;0.0;0.0;;False;;La Sirena;True;1.29;False;1
 363;Girasol 5L;oli;unitat;0.0;0.0;;False;;;True;0.0;False;1
-454;Gyozas;bàsics;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
+454;Gyozas;bàsics;unitat;0.0;0.0;;False;;Dia;True;2.99;False;1
 399;Civada;esmorzar;unitat;1.0;1.0;Rebost;True;;Mercadona;False;1.3;False;1
 324;Arròs;bàsics;unitat;5.0;1.0;Rebost;True;imatges/basics_arros.jpg;Dia;True;1.19;False;1
-409;Formatge tall Tendre;lactics;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
-491;Percabonat;neteja;;1.0;0.0;;True;;;True;0.0;False;1
+409;Formatge tall Tendre;lactics;unitat;0.0;0.0;;False;;Dia;True;2.39;False;1
+491;Percabonat;neteja;;1.0;0.0;;True;;Dia;True;1.79;False;1
 402;Cargols llauna;preparacions;unitat;0.0;0.0;;False;;;False;15.6;False;1
-428;Ceba Tendra;verdura;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
-483;Bolleria;pa;;8.0;0.0;;True;;;True;0.0;False;1
+428;Ceba Tendra;verdura;unitat;0.0;0.0;;False;;Dia;True;0.59;False;1
+483;Bolleria;pa;;8.0;0.0;;True;;Mercadona;True;3.5;False;1
 424;Polvoron Granel;extres;unitat;0.0;0.0;;False;;Dia;False;0.0;False;1
 464;Crema D Esparrecs;bàsics;unitat;0.0;0.0;;False;;Mercadona;True;0.0;False;1
-411;Formatge tall Curat;lactics;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
-23;Coco;fruita;unitat;0.0;0.0;;False;;;True;0.0;False;1
-392;carxofes;llaunes;unitat;0.0;0.0;;False;;;True;0.0;False;1
+411;Formatge tall Curat;lactics;unitat;0.0;0.0;;False;;AreaGuissona;True;1.99;False;1
+23;Coco;fruita;unitat;0.0;0.0;;False;;Plaça;True;6.0;False;1
+392;carxofes;llaunes;unitat;0.0;0.0;;False;;Plaça;True;2.5;False;1
 430;Llonza gall d'indi;carn;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
-475;Macarrons Formatge;preparacions;unitat;0.0;0.0;;False;;Mercadona;False;0.0;False;1
+475;Macarrons Formatge;preparacions;unitat;0.0;0.0;;False;;Mercadona;False;2.4;False;1
 389;Alls;llaunes;unitat;0.0;0.0;;False;;;True;0.8;False;1
 460;Arros Amb Verdura;preparacions;unitat;0.0;0.0;;False;;Dia;False;3.5;False;1
-434;Formatge tall Burrata;lactics;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
-412;Formatge tall Brie;lactics;unitat;0.0;0.0;;False;;;True;0.0;False;1
-413;Formatge tall Edam;lactics;unitat;0.0;0.0;;False;;;True;0.0;False;1
+434;Formatge tall Burrata;lactics;unitat;0.0;0.0;;False;;AreaGuissona;True;1.99;False;1
+412;Formatge tall Brie;lactics;unitat;0.0;0.0;;False;;Plaça;True;3.0;False;1
+413;Formatge tall Edam;lactics;unitat;0.0;0.0;;False;;AreaGuissona;True;2.25;False;1
 471;Neceser;neteja;unitat;0.0;0.0;;False;;Clarel;False;0.0;False;1
 446;Vinagre de poma;bàsics;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
-447;Morcilla;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
-450;Pit Gall d'indi;carn;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
+447;Morcilla;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;1.84;False;1
+450;Pit Gall d'indi;carn;unitat;0.0;0.0;;False;;Dia;True;2.29;False;1
 451;Verat;llaunes;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
 438;Barra Gallega;pa;unitat;0.0;0.0;;False;;Novavenda;False;0.79;False;1
 462;Llet Cabra 1l;lactics;unitat;0.0;0.0;;False;;Mercadona;True;0.0;False;1
@@ -101,24 +101,24 @@ idProducte;nom_estandard;familia;unitat;stock_actual;stock_minim;lloc;select_sto
 439;Coliflor;verdura;unitat;0.0;0.0;;False;;Dia;True;1.28;False;1
 5;Crema formatge;lactics;unitat;0.0;0.0;;False;;AreaGuissona;True;1.75;False;1
 477;Crema solar;neteja;;0.0;1.0;Rebost;True;;Mercadona;False;7.0;False;1
-492;Coriandre;verdura;;1.0;0.0;;True;;;True;0.0;False;1
-493;Canelons;preparacions;;2.0;0.0;;True;;;True;0.0;False;1
-484;Carpaccio de Morro;carn;;3.0;0.0;;True;;;True;0.0;False;1
-300;Cua Gamba;congelats;unitat;0.0;0.0;;False;;;True;0.0;False;1
+492;Coriandre;verdura;;1.0;0.0;;True;;BonPreu;True;1.49;False;1
+493;Canelons;preparacions;;2.0;0.0;;True;;BonPreu;True;4.49;False;1
+484;Carpaccio de Morro;carn;;3.0;0.0;;True;;AreaGuissona;True;0.87;False;1
+300;Cua Gamba;congelats;unitat;0.0;0.0;;False;;BonPreu;True;3.99;False;1
 182;Pa de pagès;pa;unitat;0.0;0.0;;False;;;False;0.0;False;1
 220;Llimonada 1.5L;begudes;unitat;0.0;0.0;;False;;;False;0.0;False;1
 226;Té gingebre;begudes;unitat;0.0;0.0;;False;;;False;0.0;False;1
 99;Botifarra negra;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
-105;Filet de porc;carn;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
-117;Mortadela;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
+105;Filet de porc;carn;unitat;0.0;0.0;;False;;Dia;True;5.32;False;1
+117;Mortadela;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;1.65;False;1
 137;Llangardaix porc;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
-148;Peus de porc;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
+148;Peus de porc;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;3.05;False;1
 204;Aigua 1.50L;begudes;unitat;0.0;0.0;;False;;;False;1.29;False;1
 323;Allioli;bàsics;unitat;0.0;0.0;;False;;AreaGuissona;True;1.79;False;1
-313;Gelatina;extres;unitat;0.0;0.0;;False;;;True;0.0;False;1
+313;Gelatina;extres;unitat;0.0;0.0;;False;;Mercadona;True;1.5;False;1
 61;Alvocat;verdura;unitat;0.0;0.0;;False;;Dia;True;2.82;False;1
 191;Pa Rodó 1/2;pa;unitat;0.0;0.0;;False;;;False;0.0;False;1
-254;Guants;neteja;unitat;0.0;0.0;;False;;;False;0.0;False;1
+254;Guants;neteja;unitat;0.0;0.0;;False;;Action Girona;False;8.99;False;1
 96;Bacó;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;1.99;False;1
 64;Bròquil;verdura;unitat;0.0;0.0;;False;;;True;1.99;False;1
 326;Brou;bàsics;unitat;0.0;0.0;;False;;;False;1.0;False;1
@@ -130,59 +130,59 @@ idProducte;nom_estandard;familia;unitat;stock_actual;stock_minim;lloc;select_sto
 211;Cervessa llauna;begudes;unitat;0.0;0.0;;False;;Dia;False;0.35;False;1
 49;Cirera;fruita;unitat;0.0;0.0;;False;;;True;4.29;False;1
 214;CocaCola ll 0%;begudes;unitat;0.0;0.0;;False;;Dia;False;0.95;False;1
-427;Pasta Fideu 0;bàsics;unitat;1.0;2.0;Rebost;True;;Dia;True;0.0;False;1
+427;Pasta Fideu 0;bàsics;unitat;1.0;2.0;Rebost;True;;Dia;True;1.0;False;1
 386;Tomàquet fregit;llaunes;unitat;4.0;2.0;Rebost;True;imatges/llaunes_tomaquetFregit.jpg;Dia;True;1.95;False;1
-364;Oliva 1L;oli;unitat;0.0;0.0;;False;;;True;0.0;False;1
+364;Oliva 1L;oli;unitat;0.0;0.0;;False;;BonPreu;True;8.99;False;1
 255;Insecticida;neteja;unitat;1.0;1.0;Rebost;True;;;False;4.99;False;1
 354;Arròs amb xia;bàsics;unitat;3.0;1.0;Rebost;True;imatges/basics_arros_xia.jpg;Mercadona;True;1.45;False;1
-410;Formatge tall Semi;lactics;unitat;0.0;0.0;;False;;;True;0.0;False;1
+410;Formatge tall Semi;lactics;unitat;0.0;0.0;;False;;AreaGuissona;True;3.75;False;1
 429;Leche Desn. Asturi 1l;lactics;unitat;0.0;0.0;;False;;;True;0.0;False;1
 340;Pasta Fideu Cabellin;bàsics;unitat;0.0;2.0;Rebost;True;;Dia;True;0.0;False;1
 431;Nescafe Pack Estalvi 2x200g;begudes;unitat;0.0;0.0;Rebost;True;;Novavenda;False;0.0;False;1
 332;Ketchup;bàsics;unitat;3.0;1.0;Rebost;True;;Action Girona;True;0.0;False;1
-445;Preparat Fideua;peix;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
-437;Pure de Patata;verdura;unitat;0.0;0.0;;False;;AreaGuissona;True;0.0;False;1
-452;Formatge tall Blau;lactics;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
-461;Cocido Madrileño;llaunes;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
+445;Preparat Fideua;peix;unitat;0.0;0.0;;False;;Dia;True;3.99;False;1
+437;Pure de Patata;verdura;unitat;0.0;0.0;;False;;AreaGuissona;True;2.1;False;1
+452;Formatge tall Blau;lactics;unitat;0.0;0.0;;False;;Dia;True;3.12;False;1
+461;Cocido Madrileño;llaunes;unitat;0.0;0.0;;False;;Dia;True;3.39;False;1
 203;Aigua 0.50L;begudes;unitat;0.0;0.0;;False;;Dia;False;0.26;False;1
 357;Ous super;bàsics;unitat;0.0;0.0;;False;;;False;0.0;False;1
 407;Pasta Galets;bàsics;unitat;0.0;1.0;Rebost;True;;Novavenda;True;0.0;False;1
-456;Pasta Canelons;bàsics;unitat;0.0;1.0;Rebost;True;;AreaGuissona;True;0.0;False;1
+456;Pasta Canelons;bàsics;unitat;0.0;1.0;Rebost;True;;AreaGuissona;True;1.22;False;1
 465;Arros de Peix;preparacions;unitat;0.0;0.0;;False;;Mercadona;False;3.75;False;1
 404;Bombons;xocolata;unitat;0.0;0.0;;False;;Dia;False;4.79;False;1
 308;Bossa compra;extres;unitat;0.0;0.0;;False;;Dia;False;0.15;False;1
 448;Carloteña Pollastre;carn;unitat;0.0;0.0;;False;;Mercadona;True;2.14;False;1
 374;Cloïses;llaunes;unitat;0.0;0.0;;False;;;True;1.89;False;1
-239;Bossa Escomb.;neteja;unitat;1.0;1.0;Sota-pica;True;imatges/neteja_bossaEscombreria.jpg;AreaGuissona;False;0.0;False;1
-485;Entrecot;carn;;1.0;0.0;;True;;;True;0.0;False;1
-183;Pa de motlle;pa;unitat;0.0;0.0;;False;;Dia;True;0.0;False;1
-494;Oxygen Actiu;neteja;;1.0;0.0;;True;;;True;0.0;False;1
-318;Torró;extres;unitat;0.0;0.0;;False;;Dia;False;0.0;False;1
+239;Bossa Escomb.;neteja;unitat;1.0;1.0;Sota-pica;True;imatges/neteja_bossaEscombreria.jpg;AreaGuissona;False;1.0;False;1
+485;Entrecot;carn;;1.0;0.0;;True;;Tot Carn;True;16.47;False;1
+183;Pa de motlle;pa;unitat;0.0;0.0;;False;;Dia;True;1.19;False;1
+494;Oxygen Actiu;neteja;;1.0;0.0;;True;;Novavenda;True;1.5;False;1
+318;Torró;extres;unitat;0.0;0.0;;False;;Dia;False;2.0;False;1
 311;Donut;extres;unitat;0.0;0.0;;False;;;False;0.0;False;1
 480;Nectarina;fruita;;0.0;0.0;;False;;;True;0.0;False;1
 470;Alcohol;neteja;unitat;0.0;1.0;Armari menjador;True;;AreaGuissona;False;0.74;False;1
 235;Amoníac;neteja;unitat;0.0;0.0;;False;;;False;0.89;False;1
 185;Baguette;pa;unitat;0.0;0.0;;False;;Novavenda;False;0.9;False;1
-199;Tallar pa;pa;unitat;0.0;0.0;;False;;;False;0.0;False;1
-469;Fogassa;pa;unitat;0.0;0.0;;False;;Dia;False;0.0;False;1
+199;Tallar pa;pa;unitat;0.0;0.0;;False;;Pa i pastisseria;False;0.1;False;1
+469;Fogassa;pa;unitat;0.0;0.0;;False;;Dia;False;2.55;False;1
 261;Neteja Ximeneies;neteja;unitat;0.0;0.0;;False;;;False;0.0;False;1
-264;Paper alumini;neteja;unitat;0.0;0.0;;False;;;False;0.0;False;1
+264;Paper alumini;neteja;unitat;0.0;0.0;;False;;Dia;False;2.45;False;1
 275;Renta roba a mà;neteja;unitat;0.0;0.0;;False;;;False;0.0;False;1
-297;Colònia;neteja;unitat;0.0;0.0;;False;;;False;0.0;False;1
+297;Colònia;neteja;unitat;0.0;0.0;;False;;Clarel;False;3.95;False;1
 425;Sandal;neteja;unitat;0.0;0.0;;False;;Clarel;False;0.0;False;1
-449;Crema Peus;neteja;unitat;0.0;0.0;;False;;Dia;False;0.0;False;1
+449;Crema Peus;neteja;unitat;0.0;0.0;;False;;Dia;False;1.7;False;1
 468;Plantilla Antillisca;neteja;unitat;0.0;0.0;;False;;Clarel;False;0.0;False;1
 472;Anticel.lulitic;neteja;unitat;0.0;0.0;;False;;Mercadona;False;0.0;False;1
-474;Llet Netejadora;neteja;unitat;0.0;0.0;;False;;Mercadona;False;0.0;False;1
+474;Llet Netejadora;neteja;unitat;0.0;0.0;;False;;Mercadona;False;2.11;False;1
 184;Barra integral;pa;unitat;0.0;0.0;;False;;Dia;False;1.09;False;1
 186;Base pizza;pa;unitat;0.0;0.0;;False;;;False;1.1;False;1
-495;Pollastre al curry;preparacions;;1.0;0.0;;True;;;True;0.0;False;1
+495;Pollastre al curry;preparacions;;1.0;0.0;;True;;Mercadona;True;2.85;False;1
 92;Blat de moro;llaunes;unitat;2.0;1.0;Rebost;True;imatges/llaunes_blatDeMoro.jpg;Dia;True;1.59;False;1
-486;Callos;carn;;0.0;0.0;;True;;;True;0.0;False;1
+486;Callos;carn;;0.0;0.0;;True;;Tot Carn;True;4.21;False;1
 246;Detergent;neteja;unitat;4.0;1.0;Lavabo petit;True;;Clarel;False;8.9;False;1
 479;Oral B Menta;neteja;unitat;1.0;0.0;Escala;True;;;False;0.0;False;1
 372;Cigrons;llaunes;unitat;1.0;2.0;Rebost;True;imatges/llaunes_cigrons.jpg;Novavenda;True;0.85;False;1
-293;Mascarilla cabell;neteja;unitat;0.0;0.0;;False;;Clarel;False;0.0;False;1
+293;Mascarilla cabell;neteja;unitat;0.0;0.0;;False;;Clarel;False;5.29;False;1
 207;Camamilla;begudes;unitat;1.0;1.0;Armari menjador;True;imatges/begudes_camamilla.jpg;;False;0.6;False;1
 473;Mascara Peus;neteja;unitat;0.0;0.0;;False;;Mercadona;False;0.0;False;1
 294;Activador color;neteja;unitat;0.0;0.0;;False;;Mercadona;False;3.1;False;1
@@ -487,7 +487,7 @@ idProducte;nom_estandard;familia;unitat;stock_actual;stock_minim;lloc;select_sto
 132;Xoriç;carn;unitat;0.0;0.0;;False;;AreaGuissona;True;2.44;False;1
 353;Yatecomo;bàsics;unitat;2.0;2.0;Rebost;True;;Dia;True;1.15;False;1
 387;Tonyina;llaunes;unitat;8.0;4.0;Rebost;True;imatges/llaunes_tonyina.jpg;Novavenda;True;4.3;True;1
-488;Sanytol;neteja;;1.0;0.0;;True;;;True;0.0;False;1
+488;Sanytol;neteja;;1.0;0.0;;True;;BonPreu;True;3.29;False;1
 352;Xia;bàsics;unitat;3.0;1.0;Rebost;True;imatges/basics_xia.jpg;Mercadona;False;1.45;False;1
 284;Vinagre net.;neteja;unitat;3.0;1.0;Lavabo petit;True;;Clarel;False;1.35;False;1
 285;Xampú;neteja;unitat;4.0;2.0;Lavabo gran;True;;Clarel;False;4.19;False;1

@@ -1655,20 +1655,29 @@ def cb_finalize_ticket():
             try:
                 res = supabase.table('tb_productes').select('idProducte, stock_actual, select_stock').eq('nom_estandard', article).execute()
                 if res.data:
-                    # Check if the product has select_stock == True
+                    prod_id = res.data[0]['idProducte']
+                    prod_updates = {}
+                    
+                    # Update stock if tracking is enabled (select_stock == True)
                     if res.data[0].get('select_stock', False) == True:
-                        prod_id = res.data[0]['idProducte']
                         current_stock = res.data[0].get('stock_actual', 0)
                         if current_stock is None:
                             current_stock = 0
-                        
                         qty_to_add = float(item.get('qty', 1.0))
-                        new_stock = current_stock + qty_to_add
-                        
-                        supabase.table('tb_productes').update({'stock_actual': new_stock}).eq('idProducte', prod_id).execute()
+                        prod_updates['stock_actual'] = current_stock + qty_to_add
                         updated_stocks.append(article)
+                        
+                    # Always persist latest purchase price and supermarket
+                    p_unit = float(item.get('preuUnit', 0.0) or 0.0)
+                    if p_unit > 0.0:
+                        prod_updates['preuUnit'] = p_unit
+                        if ticket_super:
+                            prod_updates['super_habitual'] = ticket_super
+                            
+                    if prod_updates:
+                        supabase.table('tb_productes').update(prod_updates).eq('idProducte', prod_id).execute()
             except Exception as e:
-                print(f"Error updating stock for {article}: {e}")
+                print(f"Error updating stock/preu for {article}: {e}")
 
     extra_details = {'partials': {}}
     if import_menjar > 0: extra_details['partials']['menjar'] = round(import_menjar, 2)
@@ -4892,7 +4901,7 @@ def render():
                 st.markdown("### 📋 Taula d'Edició Ràpida")
                 st.write("Edita les quantitats i el lloc on guardes cada article directament a la taula.")
                 # We need to make sure cols exist in df
-                for col in ['stock_actual', 'stock_minim', 'minim_compra']:
+                for col in ['stock_actual', 'stock_minim', 'minim_compra', 'preuUnit']:
                     if col not in df_prods.columns:
                         df_prods[col] = 1.0 if col == 'minim_compra' else 0.0
                     else:
@@ -4924,7 +4933,7 @@ def render():
                     
                 with st.form("form_edicio_rapida_stock"):
                     edited_df = st.data_editor(
-                        df_prods_filtered[['idProducte', 'select_stock', 'stockXmenu', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'minim_compra', 'lloc']],
+                        df_prods_filtered[['idProducte', 'select_stock', 'stockXmenu', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'minim_compra', 'preuUnit', 'lloc']],
                         column_config={
                             "idProducte": None,
                             "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
@@ -4935,6 +4944,7 @@ def render():
                             "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
                             "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
                             "minim_compra": st.column_config.NumberColumn("Mínim Compra", min_value=1.0, step=1.0, default=1.0, help="Quantitat mínima a comprar (per oferta o pack)"),
+                            "preuUnit": st.column_config.NumberColumn("Últim Preu (€)", min_value=0.0, step=0.05, format="%.2f €", help="Últim preu unitari de compra registrat"),
                             "lloc": st.column_config.SelectboxColumn("Lloc", options=llocs_options, required=False)
                         },
                         hide_index=True,
@@ -4952,6 +4962,7 @@ def render():
                         if (row['stock_actual'] != orig_row['stock_actual'] or 
                             row['stock_minim'] != orig_row['stock_minim'] or 
                             row.get('minim_compra') != orig_row.get('minim_compra') or
+                            row.get('preuUnit') != orig_row.get('preuUnit') or
                             row['lloc'] != orig_row['lloc'] or
                             row['super_habitual'] != orig_row['super_habitual'] or
                             row['select_stock'] != orig_row['select_stock'] or
@@ -4971,6 +4982,7 @@ def render():
                                 'stock_actual': s_float(row['stock_actual']),
                                 'stock_minim': s_float(row['stock_minim']),
                                 'minim_compra': s_float(row.get('minim_compra', 1.0) or 1.0),
+                                'preuUnit': s_float(row.get('preuUnit', 0.0)),
                                 'lloc': str(row['lloc']) if pd.notna(row['lloc']) and str(row['lloc']).strip().lower() != "none" else None,
                                 'super_habitual': str(row['super_habitual']) if pd.notna(row['super_habitual']) and str(row['super_habitual']).strip().lower() != "none" else None
                             }).eq('idProducte', row['idProducte']).execute()
