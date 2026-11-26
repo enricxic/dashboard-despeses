@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "26/11/2026 13:51:12",
+  "updated_at": "26/11/2026 13:56:56",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,13 +18,13 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "1b5b51ef67db2682fd931f4c3118bfa604185946cef8f54da866c911f5380431"
+        "modules/compres.py": "434a2f29d31d6168c4194939f114022ca219ca0fd97fd4262d1e128d02bf0f00"
       },
-      "verified_at": "25/11/2026 15:11:10",
-      "verified_commit": "79efcd0",
+      "verified_at": "26/11/2026 13:56:56",
+      "verified_commit": "b67d2eb",
       "verified_by": "admin",
-      "unlocked_until": "27/11/2026 13:51:11",
-      "unlock_reason": "Afegir requadre amb total del tiquet al costat del boto Fi Tiquet"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -374,6 +374,14 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "26/11/2026 13:56:56",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Afegit requadre total tiquet inferior)",
+      "user": "admin",
+      "git_head": "b67d2eb"
+    },
     {
       "timestamp": "26/11/2026 13:51:11",
       "action": "UNLOCK",
@@ -1165,14 +1173,6 @@
       "detail": "Autoritzat fins 15/11/2026 16:23:13. Motiu: Robustesa d importacio alerts i fallback per Streamlit Cloud",
       "user": "admin",
       "git_head": "2cc7306"
-    },
-    {
-      "timestamp": "14/11/2026 16:11:39",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Navegacio interactiva d alertes i accions per marcar com a fet)",
-      "user": "admin",
-      "git_head": "90e90dc"
     }
   ]
 }
