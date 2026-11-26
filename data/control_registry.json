@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "26/11/2026 15:32:37",
+  "updated_at": "26/11/2026 15:41:46",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,13 +18,13 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "434a2f29d31d6168c4194939f114022ca219ca0fd97fd4262d1e128d02bf0f00"
+        "modules/compres.py": "ef188795cae296d805ad52945b0329031349fa6f213e7b334986b37cb876c01c"
       },
-      "verified_at": "26/11/2026 13:56:56",
-      "verified_commit": "b67d2eb",
+      "verified_at": "26/11/2026 15:41:01",
+      "verified_commit": "a5aea20",
       "verified_by": "admin",
-      "unlocked_until": "27/11/2026 15:31:44",
-      "unlock_reason": "Sincronitzacio automatica saldo banc post-tiquet"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "economic": {
       "name": "Econòmic",
@@ -41,13 +41,13 @@
         "Pestanyes Ingrés/Despesa, Previsions, Inversions, Estalvis i Xat IA"
       ],
       "verified_hashes": {
-        "modules/economic.py": "17efa92e31fcaeb986dbb961584ab9eef50842351a6759f6c036bb010b71c4df"
+        "modules/economic.py": "8fd5d5e0daae8e501cfaef8e994e3abc0652cd3f1805371ea69c077880aec5e2"
       },
-      "verified_at": "25/11/2026 13:12:57",
-      "verified_commit": "12fd054",
+      "verified_at": "26/11/2026 15:41:46",
+      "verified_commit": "a5aea20",
       "verified_by": "admin",
-      "unlocked_until": "27/11/2026 15:32:37",
-      "unlock_reason": "Sincronitzacio automatica saldo banc post-tiquet"
+      "unlocked_until": null,
+      "unlock_reason": ""
     },
     "cotxe": {
       "name": "Cotxe",
@@ -374,6 +374,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "26/11/2026 15:41:46",
+      "action": "SEAL",
+      "module": "economic",
+      "detail": "Versió verificada i segellada (Blindatge date_score i sincronitzacio saldo banc)",
+      "user": "admin",
+      "git_head": "a5aea20"
+    },
+    {
+      "timestamp": "26/11/2026 15:41:01",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Sincronitzacio automatica saldo banc post-tiquet)",
+      "user": "admin",
+      "git_head": "a5aea20"
+    },
     {
       "timestamp": "26/11/2026 15:32:37",
       "action": "UNLOCK",
@@ -1157,22 +1173,6 @@
       "detail": "Autoritzat fins 15/11/2026 16:58:48. Motiu: Mostrar conceptes a l alerta de valor superat",
       "user": "admin",
       "git_head": "f15fd28"
-    },
-    {
-      "timestamp": "14/11/2026 16:43:26",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Obertura directa instantania del dialeg d alertes sense parpelleig de desplegable hover)",
-      "user": "admin",
-      "git_head": "9315e59"
-    },
-    {
-      "timestamp": "14/11/2026 16:40:17",
-      "action": "UNLOCK",
-      "module": "core_compartit",
-      "detail": "Autoritzat fins 15/11/2026 16:40:17. Motiu: Eliminar duplicitat de desplegable hover i obertura directa neta del dialeg d alertes",
-      "user": "admin",
-      "git_head": "9315e59"
     }
   ]
 }
