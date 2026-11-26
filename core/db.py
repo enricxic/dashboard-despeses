@@ -543,9 +543,21 @@ def load_dashboard_data(tables_to_load=None, mtimes=None):
 
 # Monkey-patch clear method so existing code calling load_dashboard_data.clear() still works
 def _clear_dashboard_cache():
-    _fetch_single_table_cached.clear()
-    _fetch_fast_tables.clear()
-    _fetch_slow_tables.clear()
+    try:
+        _fetch_single_table_cached.clear()
+        _fetch_fast_tables.clear()
+        _fetch_slow_tables.clear()
+    except Exception:
+        pass
+    try:
+        _fetch_table_recent.clear()
+        _fetch_table_historical.clear()
+    except Exception:
+        pass
+    try:
+        st.cache_data.clear()
+    except Exception:
+        pass
 load_dashboard_data.clear = _clear_dashboard_cache
 
 # Load categories_conceptes.json if exists
@@ -1071,6 +1083,7 @@ def _invalidate_dashboard_cache_for(table_name: str):
     if table_name in ['despeses', 'compresSuper']:
         try:
             _fetch_table_recent.clear()
+            _fetch_table_historical.clear()
         except Exception:
             pass
     try:
@@ -1078,9 +1091,14 @@ def _invalidate_dashboard_cache_for(table_name: str):
     except Exception:
         pass
     try:
+        st.cache_data.clear()
+    except Exception:
+        pass
+    try:
         tracker = get_db_tracker()
         tracker.update()
-        st.session_state["last_synced_time"] = tracker.last_update
+        st.session_state.pop("last_synced_time", None)
+        st.session_state.pop("dfs_initialized", None)
     except Exception:
         pass
     try:
@@ -1184,11 +1202,35 @@ def append_to_db(df_new, table_name, state_key, extra_details=None):
         log_action(table_name, 'INSERT_BULK', details)
         
         if state_key and state_key in st.session_state:
-            st.session_state[state_key] = pd.concat([st.session_state[state_key], df_new], ignore_index=True)
+            updated_df = pd.concat([df_new, st.session_state[state_key]], ignore_index=True)
+            if table_name == 'despeses':
+                if 'Data' in updated_df.columns:
+                    updated_df['parsed_date'] = updated_df['Data'].apply(parse_excel_date)
+                if 'mes' in updated_df.columns:
+                    updated_df['clean_mes'] = updated_df['mes'].astype(str).str.strip().str.lower()
+                if 'any' in updated_df.columns and 'clean_mes' in updated_df.columns:
+                    updated_df['date_score'] = updated_df['any'] * 12 + updated_df['clean_mes'].map(MONTHS_MAP).fillna(12).astype(int)
+                if 'import ingrés' in updated_df.columns:
+                    updated_df['import ingrés'] = clean_numeric(updated_df['import ingrés'])
+                if 'Import càrrec' in updated_df.columns:
+                    updated_df['Import càrrec'] = clean_numeric(updated_df['Import càrrec'])
+                if 'ID_mov' in updated_df.columns:
+                    updated_df['ID_mov'] = pd.to_numeric(updated_df['ID_mov'], errors='coerce')
+                    updated_df = updated_df.dropna(subset=['ID_mov']).sort_values(by='ID_mov', ascending=False).reset_index(drop=True)
+            elif table_name == 'compresSuper':
+                if 'data' in updated_df.columns:
+                    updated_df['parsed_date'] = updated_df['data'].apply(parse_excel_date)
+                if 'totLinea' in updated_df.columns:
+                    updated_df['totLinea'] = clean_numeric(updated_df['totLinea'])
+                if 'IdCompra' in updated_df.columns:
+                    updated_df['IdCompra'] = pd.to_numeric(updated_df['IdCompra'], errors='coerce')
+                    updated_df = updated_df.dropna(subset=['IdCompra']).sort_values(by='IdCompra', ascending=False).reset_index(drop=True)
+            st.session_state[state_key] = updated_df
+            save_to_csv_local(updated_df, table_name)
             
-        load_dashboard_data.clear()
-        get_db_tracker().update()
-        st.session_state["last_synced_time"] = get_db_tracker().last_update
+        _invalidate_dashboard_cache_for(table_name)
+        st.session_state.pop("dfs_initialized", None)
+        st.session_state.pop("last_synced_time", None)
         return True
     except Exception as e:
         st.error(f"❌ **Error a la base de dades (APPEND {table_name})**: {str(e)}")

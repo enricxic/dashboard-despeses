@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "26/11/2026 13:56:56",
+  "updated_at": "26/11/2026 15:32:37",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -23,8 +23,8 @@
       "verified_at": "26/11/2026 13:56:56",
       "verified_commit": "b67d2eb",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "27/11/2026 15:31:44",
+      "unlock_reason": "Sincronitzacio automatica saldo banc post-tiquet"
     },
     "economic": {
       "name": "Econòmic",
@@ -46,8 +46,8 @@
       "verified_at": "25/11/2026 13:12:57",
       "verified_commit": "12fd054",
       "verified_by": "admin",
-      "unlocked_until": null,
-      "unlock_reason": ""
+      "unlocked_until": "27/11/2026 15:32:37",
+      "unlock_reason": "Sincronitzacio automatica saldo banc post-tiquet"
     },
     "cotxe": {
       "name": "Cotxe",
@@ -374,6 +374,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "26/11/2026 15:32:37",
+      "action": "UNLOCK",
+      "module": "economic",
+      "detail": "Autoritzat fins 27/11/2026 15:32:37. Motiu: Sincronitzacio automatica saldo banc post-tiquet",
+      "user": "admin",
+      "git_head": "c6ffe2a"
+    },
+    {
+      "timestamp": "26/11/2026 15:31:44",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 27/11/2026 15:31:44. Motiu: Sincronitzacio automatica saldo banc post-tiquet",
+      "user": "admin",
+      "git_head": "c6ffe2a"
+    },
     {
       "timestamp": "26/11/2026 13:56:56",
       "action": "SEAL",
@@ -1157,22 +1173,6 @@
       "detail": "Autoritzat fins 15/11/2026 16:40:17. Motiu: Eliminar duplicitat de desplegable hover i obertura directa neta del dialeg d alertes",
       "user": "admin",
       "git_head": "9315e59"
-    },
-    {
-      "timestamp": "14/11/2026 16:27:02",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Importacio resilient i autoreload d alertes per prevenir errors a Streamlit Cloud)",
-      "user": "admin",
-      "git_head": "2cc7306"
-    },
-    {
-      "timestamp": "14/11/2026 16:23:13",
-      "action": "UNLOCK",
-      "module": "core_compartit",
-      "detail": "Autoritzat fins 15/11/2026 16:23:13. Motiu: Robustesa d importacio alerts i fallback per Streamlit Cloud",
-      "user": "admin",
-      "git_head": "2cc7306"
     }
   ]
 }

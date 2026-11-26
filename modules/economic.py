@@ -899,15 +899,20 @@ def render(view_mode="economic"):
     df_pag = st.session_state.get("df_pag", pd.DataFrame())
     df_cartera = st.session_state.get("df_cartera", pd.DataFrame())
 
-    if not df_desp.empty and 'date_score' not in df_desp.columns and 'any' in df_desp.columns and 'mes' in df_desp.columns:
-        df_desp['date_score'] = df_desp['any'] * 12 + df_desp['mes'].astype(str).str.strip().str.lower().map(MONTHS_MAP).fillna(12).astype(int)
+    if not df_desp.empty and 'mes' in df_desp.columns:
+        if 'clean_mes' not in df_desp.columns or df_desp['clean_mes'].isnull().any():
+            df_desp['clean_mes'] = df_desp['mes'].astype(str).str.strip().str.lower()
+    if not df_desp.empty and 'any' in df_desp.columns and 'mes' in df_desp.columns:
+        if 'date_score' not in df_desp.columns or df_desp['date_score'].isnull().any():
+            clean_m = df_desp['clean_mes'] if 'clean_mes' in df_desp.columns else df_desp['mes'].astype(str).str.strip().str.lower()
+            df_desp['date_score'] = df_desp['any'] * 12 + clean_m.map(MONTHS_MAP).fillna(12).astype(int)
     
-    if 'clean_mes' not in df_desp.columns and 'mes' in df_desp.columns:
-        df_desp['clean_mes'] = df_desp['mes'].astype(str).str.strip().str.lower()
-    if 'clean_mes' not in df_ing.columns and 'mes' in df_ing.columns:
-        df_ing['clean_mes'] = df_ing['mes'].astype(str).str.strip().str.lower()
-    if 'clean_mes' not in df_pag.columns and 'mes' in df_pag.columns:
-        df_pag['clean_mes'] = df_pag['mes'].astype(str).str.strip().str.lower()
+    if not df_ing.empty and 'mes' in df_ing.columns:
+        if 'clean_mes' not in df_ing.columns or df_ing['clean_mes'].isnull().any():
+            df_ing['clean_mes'] = df_ing['mes'].astype(str).str.strip().str.lower()
+    if not df_pag.empty and 'mes' in df_pag.columns:
+        if 'clean_mes' not in df_pag.columns or df_pag['clean_mes'].isnull().any():
+            df_pag['clean_mes'] = df_pag['mes'].astype(str).str.strip().str.lower()
     
     def get_limits_for(year, month_name):
         from core.db import get_limits_for as _core_get_limits_for

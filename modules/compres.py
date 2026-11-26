@@ -1547,6 +1547,10 @@ def cb_finalize_ticket():
                         for k, v in first_entry.items():
                             if k in st.session_state['df_desp'].columns:
                                 st.session_state['df_desp'].loc[m_idx, k] = v
+                        if 'mes' in st.session_state['df_desp'].columns:
+                            st.session_state['df_desp']['clean_mes'] = st.session_state['df_desp']['mes'].astype(str).str.strip().str.lower()
+                        if 'any' in st.session_state['df_desp'].columns and 'clean_mes' in st.session_state['df_desp'].columns:
+                            st.session_state['df_desp']['date_score'] = st.session_state['df_desp']['any'] * 12 + st.session_state['df_desp']['clean_mes'].map(MONTHS_MAP).fillna(12).astype(int)
                         df_desp = st.session_state['df_desp']
                         
                     # Actualitzar còpia local al CSV
@@ -1716,6 +1720,17 @@ def cb_finalize_ticket():
         get_global_alerts.clear()
     except Exception:
         pass
+
+    # Invalida totes les memòries cau perquè el Dashboard i el saldo de bancs es recalculin immediatament
+    try:
+        from core.db import _invalidate_dashboard_cache_for
+        _invalidate_dashboard_cache_for('despeses')
+        _invalidate_dashboard_cache_for('compresSuper')
+    except Exception:
+        pass
+    st.cache_data.clear()
+    st.session_state.pop("dfs_initialized", None)
+    st.session_state.pop("last_synced_time", None)
             
     st.session_state["ticket_send_expense"] = True
     current_idx = int(st.session_state.get("uploader_key", "ticket_file_uploader_0").split("_")[-1])
