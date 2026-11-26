@@ -86,25 +86,39 @@ def render():
         st.warning("No tens permisos per accedir al gestor de bases de dades.")
         return
 
-    # Check if a db is passed via URL
-    url_db = st.query_params.get("db", "")
-    
     taules_disponibles = sorted(list(PK_MAP.keys()))
-    default_index = 0
+    
+    # Check if a db is passed via URL or session state
+    url_db = st.query_params.get("db", "") or st.session_state.pop("db_to_open", None) or ""
+    
     if url_db in taules_disponibles:
-        default_index = taules_disponibles.index(url_db)
-        
+        if st.session_state.get("_last_loaded_url_db") != url_db:
+            st.session_state["selected_db_table"] = url_db
+            st.session_state["_last_loaded_url_db"] = url_db
+    elif "selected_db_table" not in st.session_state:
+        st.session_state["selected_db_table"] = taules_disponibles[0]
+
+    if "selected_db_table" not in st.session_state or st.session_state["selected_db_table"] not in taules_disponibles:
+        st.session_state["selected_db_table"] = taules_disponibles[0]
+
+    def on_db_table_changed():
+        new_val = st.session_state.get("selected_db_table")
+        if new_val:
+            st.query_params["db"] = new_val
+            st.session_state["_last_loaded_url_db"] = new_val
+
     selected_table = st.selectbox(
         "Selecciona la Base de Dades (Taula)", 
         taules_disponibles, 
-        index=default_index,
+        key="selected_db_table",
+        on_change=on_db_table_changed,
         help="Tria quina taula de Supabase vols visualitzar i editar."
     )
     
-    # Update URL dynamically without rerunning
-    if selected_table != st.query_params.get("db", ""):
+    if st.query_params.get("db") != selected_table:
         st.query_params["db"] = selected_table
-        
+        st.session_state["_last_loaded_url_db"] = selected_table
+    
     pk_col = PK_MAP.get(selected_table, 'id')
     
     # Fetch Data
