@@ -323,10 +323,12 @@ La interfície d'adquisició, estructuració per IA, auditoria i consolidació c
    - **Botó `✏️` (Modificar línia)**: Carrega les dades de la línia seleccionada als camps superiors per editar-ne la família, article, preu o promoció.
    - **Botó `🗑️` (Eliminar línia)**: Elimina l'article del tiquet provisional.
    - **Camp `Descompte global del Tiquet (€)`**: Permet introduir descomptes globals de caixa (ex: vals de 5 € de fidelitat) que es reparteixen de forma ponderada.
-   - **Botó `💾 Fi Tiquet` (`type="primary"`)**: Porta a terme la validació integral:
+   - **Requadre `TOTAL TIQUET` i Botó `💾 Fi Tiquet` (`type="primary"`)**: Porta a terme la validació i sincronització integral:
+     - **Requadre en viu de TOTAL TIQUET**: Ubicat directament al costat del botó *Fi Tiquet*, reflecteix en temps real l'import net de la compra tenint en compte els descomptes sense necessitat de desplaçar la pantalla cap a dalt.
      - Bloqueja l'acció si hi ha articles pendents de categoritzar (`familia == 'Pendent'`).
      - Si la data supera els 7 dies, activa el modal de confirmació expressa `@st.dialog`.
      - Executa la inserció massiva a `compresSuper`, actualitza `despeses` (`ticketPendent = False`), refresca el rebost i neteja els formularis.
+     - **Sincronització automàtica de saldos i memòria cau**: Invalida immediatament la memòria cau de dades recents (`_fetch_table_recent.clear()`, `st.cache_data.clear()`, `_invalidate_dashboard_cache_for()`) i regenera els camps derivats (`clean_mes`, `date_score`, `parsed_date`), assegurant que en anar al Dashboard el saldo bancari quedi actualitzat a l'instant sense requerir sincronització manual.
    - **Botó `Netejar Tiquet`**: Restableix la sessió buidant la taula temporal sense modificar la base de dades.
 
 ---
