@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "26/11/2026 21:28:16",
+  "updated_at": "26/11/2026 21:49:46",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,10 +18,10 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "adee606e4cc3d6900cc940182fba55f99703532b9b4be732ffbddc340deca1dd"
+        "modules/compres.py": "4873653c2ce9b2de46b42876fbaf22c2121bddb0b142d6abf5b99545817fa1a1"
       },
-      "verified_at": "26/11/2026 21:28:16",
-      "verified_commit": "8947800",
+      "verified_at": "26/11/2026 21:49:45",
+      "verified_commit": "7078d48",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -374,6 +374,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "26/11/2026 21:49:46",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Consolidacio preuUnit i auto-actualitzacio)",
+      "user": "admin",
+      "git_head": "7078d48"
+    },
+    {
+      "timestamp": "26/11/2026 21:46:21",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 27/11/2026 21:46:21. Motiu: Auto-actualitzacio preuUnit en entrar tiquet i edicio preu a taula stock",
+      "user": "admin",
+      "git_head": "65af775"
+    },
     {
       "timestamp": "26/11/2026 21:28:16",
       "action": "SEAL",
@@ -1157,22 +1173,6 @@
       "detail": "Autoritzat fins 15/11/2026 17:52:00. Motiu: Corregir navegacio alertes fases i optimitzar velocitat",
       "user": "admin",
       "git_head": "fddead0"
-    },
-    {
-      "timestamp": "14/11/2026 17:14:52",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Mostrar nomes categoria i import a l alerta de valor superat)",
-      "user": "admin",
-      "git_head": "a445f27"
-    },
-    {
-      "timestamp": "14/11/2026 17:09:28",
-      "action": "UNLOCK",
-      "module": "core_compartit",
-      "detail": "Autoritzat fins 15/11/2026 17:09:28. Motiu: Treure conceptes de l alerta de valor superat, deixar nomes categoria i import",
-      "user": "admin",
-      "git_head": "a445f27"
     }
   ]
 }
