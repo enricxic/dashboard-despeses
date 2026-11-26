@@ -3286,6 +3286,12 @@ def modal_inventari(df_inv):
         st.warning("No hi ha productes de rebost.")
         return
         
+    for col in ['stock_actual', 'stock_minim', 'minim_compra']:
+        if col not in df_inv.columns:
+            df_inv[col] = 1.0 if col == 'minim_compra' else 0.0
+        else:
+            df_inv[col] = pd.to_numeric(df_inv[col], errors='coerce').fillna(1.0 if col == 'minim_compra' else 0.0)
+
     # Group by lloc
     df_inv['lloc'] = df_inv.get('lloc', 'Sense Assignar').fillna('Sense Assignar')
     df_inv.loc[df_inv['lloc'] == '', 'lloc'] = 'Sense Assignar'
@@ -3300,7 +3306,7 @@ def modal_inventari(df_inv):
             group = group.sort_values(by=['familia', 'nom_estandard'])
             
             # Prepare data editor df
-            cols_to_show = ['familia', 'nom_estandard', 'lloc', 'stock_actual', 'stock_minim']
+            cols_to_show = ['familia', 'nom_estandard', 'lloc', 'stock_actual', 'stock_minim', 'minim_compra']
             df_edit = group[cols_to_show].copy()
             df_edit.set_index(group['idProducte'], inplace=True)
             
@@ -3315,6 +3321,13 @@ def modal_inventari(df_inv):
                         help="Tria la ubicació on es guarda el producte",
                         options=llocs_options,
                         required=True
+                    ),
+                    "minim_compra": st.column_config.NumberColumn(
+                        "Mínim Compra",
+                        min_value=1.0,
+                        step=1.0,
+                        default=1.0,
+                        help="Quantitat mínima a comprar (per pack o oferta)"
                     )
                 },
                 key=f"editor_inv_{lloc}"
@@ -3325,13 +3338,16 @@ def modal_inventari(df_inv):
                 new_act = row['stock_actual']
                 old_min = df_edit.at[idx, 'stock_minim']
                 new_min = row['stock_minim']
+                old_min_c = df_edit.at[idx, 'minim_compra'] if 'minim_compra' in df_edit.columns else 1.0
+                new_min_c = row.get('minim_compra', 1.0)
                 old_loc = df_edit.at[idx, 'lloc']
                 new_loc = row['lloc']
                 
-                if old_act != new_act or old_min != new_min or old_loc != new_loc:
+                if old_act != new_act or old_min != new_min or old_min_c != new_min_c or old_loc != new_loc:
                     st.session_state.inv_changes[idx] = {
                         'stock_actual': new_act,
                         'stock_minim': new_min,
+                        'minim_compra': new_min_c,
                         'lloc': new_loc if pd.notna(new_loc) else None
                     }
                     
@@ -4463,9 +4479,11 @@ def render():
                 # Filter ONLY items that are in the pantry (select_stock == True)
                 df_prods_filtered = df_prods[df_prods['select_stock'] == True].copy()
                 
-                for col in ['stock_actual', 'stock_minim']:
+                for col in ['stock_actual', 'stock_minim', 'minim_compra']:
                     if col not in df_prods_filtered.columns:
-                        df_prods_filtered[col] = 0.0
+                        df_prods_filtered[col] = 1.0 if col == 'minim_compra' else 0.0
+                    else:
+                        df_prods_filtered[col] = pd.to_numeric(df_prods_filtered[col], errors='coerce').fillna(1.0 if col == 'minim_compra' else 0.0)
                 if 'super_habitual' not in df_prods_filtered.columns:
                     df_prods_filtered['super_habitual'] = None
                 if 'preuUnit' not in df_prods_filtered.columns:
@@ -4474,14 +4492,25 @@ def render():
                 df_shopping = df_prods_filtered[df_prods_filtered['stock_actual'] < df_prods_filtered['stock_minim']].copy()
                 
                 if not df_shopping.empty:
-                    df_shopping['falta'] = df_shopping['stock_minim'] - df_shopping['stock_actual']
+                    import math
+                    def calc_falta(row):
+                        deficit = max(0.0, float(row['stock_minim']) - float(row['stock_actual']))
+                        try:
+                            min_c = float(row.get('minim_compra', 1.0) or 1.0)
+                        except Exception:
+                            min_c = 1.0
+                        if min_c > 1.0:
+                            return float(math.ceil(deficit / min_c) * min_c)
+                        return deficit
+
+                    df_shopping['falta'] = df_shopping.apply(calc_falta, axis=1)
                     df_shopping['super_habitual'] = df_shopping['super_habitual'].fillna("Sense Assignar").replace("", "Sense Assignar")
                     df_shopping['is_manual'] = False
                     # Convert to numeric just in case
                     df_shopping['preuUnit'] = pd.to_numeric(df_shopping['preuUnit'], errors='coerce').fillna(0.0)
                     df_shopping['total_linia'] = df_shopping['falta'] * df_shopping['preuUnit']
                 else:
-                    df_shopping = pd.DataFrame(columns=['idProducte', 'nom_estandard', 'super_habitual', 'falta', 'unitat', 'is_manual', 'preuUnit', 'total_linia'])
+                    df_shopping = pd.DataFrame(columns=['idProducte', 'nom_estandard', 'super_habitual', 'falta', 'unitat', 'is_manual', 'preuUnit', 'total_linia', 'minim_compra'])
                 
                 # FETCH tb_pendents_compra
                 try:
@@ -4522,7 +4551,14 @@ def render():
                                 tot_linia = row.get('total_linia', 0.0)
                                 
                                 preu_str = f" (Últim preu: {preu_u:,.2f} €/u. ➜ **{tot_linia:,.2f} €**)" if preu_u > 0 else " ⚠️ *(Sense valoració)*"
-                                st.checkbox(f"{icon} **{row['nom_estandard']}**: falta **{int(row['falta'])}** {unit_str}{preu_str}", key=f"chk_shop_{row['idProducte']}_{superm}_{row.get('is_manual', False)}")
+                                falta_val = row['falta']
+                                falta_disp = int(falta_val) if falta_val == int(falta_val) else f"{falta_val:.2f}"
+                                try:
+                                    min_c_val = float(row.get('minim_compra', 1.0) or 1.0)
+                                except Exception:
+                                    min_c_val = 1.0
+                                min_str = f" · mín: {int(min_c_val) if min_c_val == int(min_c_val) else min_c_val}" if min_c_val > 1.0 else ""
+                                st.checkbox(f"{icon} **{row['nom_estandard']}**: falta **{falta_disp}** {unit_str}{min_str}{preu_str}", key=f"chk_shop_{row['idProducte']}_{superm}_{row.get('is_manual', False)}")
                                 
                             st.markdown(f"<div style='text-align:right; font-size:1.1rem; color:#f39c12; margin-top:8px;'><b>Total {superm}: {total_super:,.2f} €</b></div>", unsafe_allow_html=True)
                             
@@ -4856,9 +4892,11 @@ def render():
                 st.markdown("### 📋 Taula d'Edició Ràpida")
                 st.write("Edita les quantitats i el lloc on guardes cada article directament a la taula.")
                 # We need to make sure cols exist in df
-                for col in ['stock_actual', 'stock_minim']:
+                for col in ['stock_actual', 'stock_minim', 'minim_compra']:
                     if col not in df_prods.columns:
-                        df_prods[col] = 0.0
+                        df_prods[col] = 1.0 if col == 'minim_compra' else 0.0
+                    else:
+                        df_prods[col] = pd.to_numeric(df_prods[col], errors='coerce').fillna(1.0 if col == 'minim_compra' else 0.0)
                 if 'lloc' not in df_prods.columns:
                     df_prods['lloc'] = ""
                 if 'super_habitual' not in df_prods.columns:
@@ -4886,7 +4924,7 @@ def render():
                     
                 with st.form("form_edicio_rapida_stock"):
                     edited_df = st.data_editor(
-                        df_prods_filtered[['idProducte', 'select_stock', 'stockXmenu', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'lloc']],
+                        df_prods_filtered[['idProducte', 'select_stock', 'stockXmenu', 'nom_estandard', 'familia', 'super_habitual', 'stock_actual', 'stock_minim', 'minim_compra', 'lloc']],
                         column_config={
                             "idProducte": None,
                             "select_stock": st.column_config.CheckboxColumn("En Rebost?", default=True),
@@ -4896,6 +4934,7 @@ def render():
                             "super_habitual": st.column_config.SelectboxColumn("Súper Habitual", options=get_config_supers() + ["Sense Assignar"], required=False),
                             "stock_actual": st.column_config.NumberColumn("Stock Actual", min_value=0.0, step=1.0),
                             "stock_minim": st.column_config.NumberColumn("Stock Mínim", min_value=0.0, step=1.0),
+                            "minim_compra": st.column_config.NumberColumn("Mínim Compra", min_value=1.0, step=1.0, default=1.0, help="Quantitat mínima a comprar (per oferta o pack)"),
                             "lloc": st.column_config.SelectboxColumn("Lloc", options=llocs_options, required=False)
                         },
                         hide_index=True,
@@ -4912,6 +4951,7 @@ def render():
                         orig_row = df_prods_filtered.loc[i]
                         if (row['stock_actual'] != orig_row['stock_actual'] or 
                             row['stock_minim'] != orig_row['stock_minim'] or 
+                            row.get('minim_compra') != orig_row.get('minim_compra') or
                             row['lloc'] != orig_row['lloc'] or
                             row['super_habitual'] != orig_row['super_habitual'] or
                             row['select_stock'] != orig_row['select_stock'] or
@@ -4922,7 +4962,7 @@ def render():
                                     val = float(v)
                                     import math
                                     return 0.0 if math.isnan(val) else val
-                                except:
+                                except Exception:
                                     return 0.0
                                     
                             supabase.table('tb_productes').update({
@@ -4930,6 +4970,7 @@ def render():
                                 'stockXmenu': bool(row['stockXmenu']),
                                 'stock_actual': s_float(row['stock_actual']),
                                 'stock_minim': s_float(row['stock_minim']),
+                                'minim_compra': s_float(row.get('minim_compra', 1.0) or 1.0),
                                 'lloc': str(row['lloc']) if pd.notna(row['lloc']) and str(row['lloc']).strip().lower() != "none" else None,
                                 'super_habitual': str(row['super_habitual']) if pd.notna(row['super_habitual']) and str(row['super_habitual']).strip().lower() != "none" else None
                             }).eq('idProducte', row['idProducte']).execute()

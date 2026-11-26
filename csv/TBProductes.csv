@@ -1,476 +1,476 @@
-idProducte;nom_estandard;familia;unitat
-1;Llet 1,5L;lactics;unitat
-2;Iogurt xquatre;lactics;unitat
-3;Iogurt xvuit;lactics;unitat
-4;Llet 1L;lactics;unitat
-5;Crema formatge;lactics;unitat
-6;Formatge Llesq.;lactics;unitat
-7;Formatge rallat;lactics;unitat
-8;Formatge tall Gorgonzolla;lactics;unitat
-9;Iogurt grec;lactics;unitat
-10;Llet 2L;lactics;unitat
-11;Llet condensada;lactics;unitat
-12;Llet d'ametlla;lactics;unitat
-13;Mantequilla;lactics;unitat
-14;Mató;lactics;unitat
-15;Nata liq.;lactics;unitat
-16;Natilles;lactics;unitat
-17;Porcions formatge;lactics;unitat
-18;Flam;lactics;unitat
-19;Kefir;lactics;unitat
-20;Tot junt;fruita;unitat
-21;Ametlla;fruita;unitat
-22;Caquis;fruita;unitat
-23;Coco;fruita;unitat
-24;Coco ratllat;fruita;unitat
-25;Codonyat;fruita;unitat
-26;Dàtils;fruita;unitat
-27;Figues;fruita;unitat
-28;Figues seques;fruita;unitat
-29;Fruits vermells;fruita;unitat
-30;Llimona;fruita;unitat
-31;Maduixes;fruita;unitat
-32;Mandarina;fruita;unitat
-33;Mango;fruita;unitat
-34;Nous;fruita;unitat
-35;Orellanes;fruita;unitat
-36;Panses;fruita;unitat
-37;Pera;fruita;unitat
-38;Plàtan;fruita;unitat
-39;Poma;fruita;unitat
-40;Prunes;fruita;unitat
-41;Raïm;fruita;unitat
-42;Taronja;fruita;unitat
-43;Anacards;fruita;unitat
-44;Cacahuets;fruita;unitat
-45;Pipes pelades;fruita;unitat
-46;Prèsec;fruita;unitat
-47;Paraguayo;fruita;unitat
-48;Meló;fruita;unitat
-49;Cirera;fruita;unitat
-50;Gingebre;fruita;unitat
-51;Magrana;fruita;unitat
-52;Pinyó;fruita;unitat
-53;Castanya;fruita;unitat
-54;Nabius;fruita;unitat
-55;Nous del Brazil;fruita;unitat
-56;Coctail fruits secs;fruita;unitat
-57;Xindria;fruita;unitat
-58;Festuc;fruita;unitat
-59;Tot junt;verdura;unitat
-60;Alls;verdura;unitat
-61;Alvocat;verdura;unitat
-62;Amanida;verdura;unitat
-63;Bolets;verdura;unitat
-64;Bròquil;verdura;unitat
-65;Canonges;verdura;unitat
-66;Carbassa;verdura;unitat
-67;Carbassó;verdura;unitat
-68;Carxofes;verdura;unitat
-69;Ceba;verdura;unitat
-70;Cogombre;verdura;unitat
-71;Col;verdura;unitat
-72;Edamame;verdura;unitat
-73;Enciam;verdura;unitat
-74;Endívia;verdura;unitat
-75;Espàrrec;verdura;unitat
-76;Espinacs;verdura;unitat
-77;Gírgoles;verdura;unitat
-78;Guacamole;verdura;unitat
-79;Hummus;verdura;unitat
-80;Mongeta tendra;verdura;unitat
-81;Moniato;verdura;unitat
-82;Pastanaga;verdura;unitat
-83;Patata;verdura;unitat
-84;Pebrot;verdura;unitat
-85;Pèssols;verdura;unitat
-86;Quinoa;verdura;unitat
-87;Rossinyol;verdura;unitat
-88;Tomàquet;verdura;unitat
-89;Tomàquet Cherry;verdura;unitat
-90;Tomàquet pà;verdura;unitat
-91;Xampinyó;verdura;unitat
-92;Blat de moro;llaunes;unitat
-93;Calçots;verdura;unitat
-94;Porro;verdura;unitat
-95;Aletes pollastre;carn;unitat
-96;Bacó;carn;unitat
-97;Braó porc;carn;unitat
-98;Botifarra blanca;carn;unitat
-99;Botifarra negra;carn;unitat
-100;Botifarra;carn;unitat
-101;Cap porc tòfona;carn;unitat
-102;Cargols;carn;unitat
-103;Conill;carn;unitat
-104;Costella porc;carn;unitat
-105;Filet de porc;carn;unitat
-106;Filet pollastre;carn;unitat
-107;Foie Gras;carn;unitat
-108;Frankfurt;carn;unitat
-109;Fuet;carn;unitat
-110;Hamburguesa;carn;unitat
-111;Lacó fumat;carn;unitat
-112;Llardons;carn;unitat
-113;Llom canya;carn;unitat
-114;Llonganissa;carn;unitat
-115;Magret ànec;carn;unitat
-116;Mix perol;carn;unitat
-117;Mortadela;carn;unitat
-118;Pernil cuit llesq.;carn;unitat
-119;Pernil Gall dindi;carn;unitat
-120;Pernil serrà;carn;unitat
-121;Pit pollastre;carn;unitat
-122;Pollastre sencer;carn;unitat
-123;Rodó Vedella;carn;unitat
-124;Salami;carn;unitat
-125;Secret;carn;unitat
-126;Sobrassada;carn;unitat
-127;Tot junt;carn;unitat
-128;Txuleta vedella;carn;unitat
-129;Vedella;carn;unitat
-130;Xistorra;carn;unitat
-131;Xopped;carn;unitat
-132;Xoriç;carn;unitat
-133;Txurrasco;carn;unitat
-134;Salsitxes;carn;unitat
-135;Mandonguilles;carn;unitat
-136;Fetge;carn;unitat
-137;Llangardaix porc;carn;unitat
-138;Carpaccio;carn;unitat
-139;Morro cuit;carn;unitat
-140;Carn de Kebab;carn;unitat
-141;Panxeta;carn;unitat
-142;Torreznos;carn;unitat
-143;Llonganissa crua;carn;unitat
-144;Filet Gall dindi;carn;unitat
-145;Garrons de pernil;carn;unitat
-146;Cap de llom;carn;unitat
-147;Ossos;carn;unitat
-148;Peus de porc;carn;unitat
-149;Bacallà;peix;unitat
-150;Calamar;peix;unitat
-151;Caldo peix;peix;unitat
-152;Cloïses;peix;unitat
-153;Corbina;peix;unitat
-154;Gall;peix;unitat
-155;Gallineta;peix;unitat
-156;Gamba;peix;unitat
-157;Gules;peix;unitat
-158;Llagostí cuit;peix;unitat
-159;Maire;peix;unitat
-160;Musclo;peix;unitat
-161;Orada;peix;unitat
-162;Palets de mar;peix;unitat
-163;Pop;peix;unitat
-164;Cargol punxenc;peix;unitat
-165;Rap;peix;unitat
-166;Salmó;peix;unitat
-167;Sipia;peix;unitat
-168;Sushi;peix;unitat
-169;Tonyina;peix;unitat
-170;Tot junt;peix;unitat
-171;Vieira;peix;unitat
-172;Xipirons;peix;unitat
-173;Lluç;peix;unitat
-174;Seitó;peix;unitat
-175;Canana;peix;unitat
-176;Molla;peix;unitat
-177;Escamarlà;peix;unitat
-178;Bestina;peix;unitat
-179;Cap de Rap;peix;unitat
-180;Escopinya;peix;unitat
-181;Peix espasa;peix;unitat
-182;Pa de pagès;pa;unitat
-183;Pa de motlle;pa;unitat
-184;Barra integral;pa;unitat
-185;Baguette;pa;unitat
-186;Base pizza;pa;unitat
-187;Empanada;pa;unitat
-188;Fajitas;pa;unitat
-189;Hojaldre;pa;unitat
-190;Neules;pa;unitat
-191;Pa Rodó 1/2;pa;unitat
-192;Pa rodó 1K;pa;unitat
-193;Pà ratllat;pa;unitat
-194;Pa de vidre;pa;unitat
-195;Pa Burguer;pa;unitat
-196;Pa frankfurt;pa;unitat
-197;Panetone;pa;unitat
-198;Picos;pa;unitat
-199;Tallar pa;pa;unitat
-200;Torradetes;pa;unitat
-201;Creps;pa;unitat
-202;Panets;pa;unitat
-203;Aigua 0.50L;begudes;unitat
-204;Aigua 1.50L;begudes;unitat
-205;Aigua 5L;begudes;unitat
-206;Aigua 8L;begudes;unitat
-207;Camamilla;begudes;unitat
-208;Cafè capsula;begudes;unitat
-209;Descafeinat cap.;begudes;unitat
-210;Cava;begudes;unitat
-211;Cervessa llauna;begudes;unitat
-212;Cervessa 1/5;begudes;unitat
-213;CocaCola ll.;begudes;unitat
-214;CocaCola ll 0%;begudes;unitat
-215;CocaCola Zero 1.5L;begudes;unitat
-216;Dormir bé;begudes;unitat
-217;Gazpacho;begudes;unitat
-218;Gel;begudes;unitat
-219;Llimonada ll.;begudes;unitat
-220;Llimonada 1.5L;begudes;unitat
-221;Nescafé;begudes;unitat
-222;Ratafia;begudes;unitat
-223;Refresc;begudes;unitat
-224;Suc;begudes;unitat
-225;Taronjada;begudes;unitat
-226;Té gingebre;begudes;unitat
-227;Vi;begudes;unitat
-228;Whisky;begudes;unitat
-229;Beguda Civada;begudes;unitat
-230;Nestea;begudes;unitat
-231;Licor;begudes;unitat
-232;Abrillantador;neteja;unitat
-233;Altres neteja;neteja;unitat
-234;Ambientador;neteja;unitat
-235;Amoníac;neteja;unitat
-236;Bayetes microfibra;neteja;unitat
-237;Bicarbonat;neteja;unitat
-238;Blanquejador;neteja;unitat
-239;Bossa Escomb.;neteja;unitat
-240;Carbó barbacoa;neteja;unitat
-241;Condicionador;neteja;unitat
-242;Cosi plàstic;neteja;unitat
-243;Crema facial;neteja;unitat
-244;Depilatori;neteja;unitat
-245;Desodorant;neteja;unitat
-246;Detergent;neteja;unitat
-247;Draps cuina;neteja;unitat
-248;Esponja bany;neteja;unitat
-249;Film cuina;neteja;unitat
-250;Fregall Alumini;neteja;unitat
-251;Fregall plats;neteja;unitat
-252;Fregaterra;neteja;unitat
-253;Gel bany;neteja;unitat
-254;Guants;neteja;unitat
-255;Insecticida;neteja;unitat
-256;Leixiu;neteja;unitat
-257;Llevataques;neteja;unitat
-258;Mascareta;neteja;unitat
-259;Mocadors paper;neteja;unitat
-260;Neteja rentadora;neteja;unitat
-261;Neteja Ximeneies;neteja;unitat
-262;Oral B;neteja;unitat
-263;Pal escombra;neteja;unitat
-264;Paper alumini;neteja;unitat
-265;Paper cuina;neteja;unitat
-266;Paper forn;neteja;unitat
-267;Paper regal;neteja;unitat
-268;Paper water;neteja;unitat
-269;Pastilles foc;neteja;unitat
-270;Percabonat;neteja;unitat
-271;Perfumador;neteja;unitat
-272;Neteja water;neteja;unitat
-273;Raspall de dents;neteja;unitat
-274;Reductor nit;neteja;unitat
-275;Renta roba a mà;neteja;unitat
-276;Rentaplats;neteja;unitat
-277;Sal rentavaixelles;neteja;unitat
-278;Sobres perfumats;neteja;unitat
-279;Somat;neteja;unitat
-280;Spray vidres;neteja;unitat
-281;Suavitzant;neteja;unitat
-282;Tint roba;neteja;unitat
-283;Tovallons;neteja;unitat
-284;Vinagre net.;neteja;unitat
-285;Xampú;neteja;unitat
-286;Fulls afaitar;neteja;unitat
-287;Vanish;neteja;unitat
-288;Acondicionador;neteja;unitat
-289;Disc desmaquillà;neteja;unitat
-290;Escombra;neteja;unitat
-291;Fregona;neteja;unitat
-292;Amoníac;neteja;unitat
-293;Mascarilla cabell;neteja;unitat
-294;Activador color;neteja;unitat
-295;Oli aromàtic;neteja;unitat
-296;Nivea;neteja;unitat
-297;Colònia;neteja;unitat
-298;Tirites;neteja;unitat
-299;Desgreixador;neteja;unitat
-300;Cua Gamba;congelats;unitat
-301;Pizza;congelats;unitat
-302;Croquetes;congelats;unitat
-303;Muslitos de mar;congelats;unitat
-304;Tonyina;congelats;unitat
-305;Pèssols;congelats;unitat
-306;Altres extres;extres;unitat
-307;Bolleria;extres;unitat
-308;Bossa compra;extres;unitat
-309;Coulant Xoco;extres;unitat
-310;Crispetes;extres;unitat
-311;Donut;extres;unitat
-312;Gelat;extres;unitat
-313;Gelatina;extres;unitat
-314;Llaminadures;extres;unitat
-315;Pastissos;extres;unitat
-316;Patates bossa;extres;unitat
-317;Pipes Tijuana;extres;unitat
-318;Torró;extres;unitat
-319;Twix;extres;unitat
-320;varis;extres;unitat
-321;Crema de festuc;extres;unitat
-322;All Molinet;bàsics;unitat
-323;Allioli;bàsics;unitat
-324;Arròs;bàsics;unitat
-325;Bovril;bàsics;unitat
-326;Brou;bàsics;unitat
-327;Canyella;bàsics;unitat
-328;Cúrcuma;bàsics;unitat
-329;Farina blat;bàsics;unitat
-330;Farina d'arròs;bàsics;unitat
-331;Farina de cigró;bàsics;unitat
-332;Ketchup;bàsics;unitat
-333;Llevadura;bàsics;unitat
-334;Lli;bàsics;unitat
-335;Maionesa;bàsics;unitat
-336;Mel;bàsics;unitat
-337;Mostassa;bàsics;unitat
-338;Nyora;bàsics;unitat
-339;Ous cassolans;bàsics;unitat
-340;Pasta Fideu Cabellin;bàsics;unitat
-341;Pebre molinet;bàsics;unitat
-342;Pebre vermell dolç;bàsics;unitat
-343;Puré de patata;bàsics;unitat
-344;Sal;bàsics;unitat
-345;Salsa;bàsics;unitat
-346;Salsa soja;bàsics;unitat
-347;Sèsam;bàsics;unitat
-348;Sopa sobre;bàsics;unitat
-349;Sucre;bàsics;unitat
-350;Vinagre de vi;bàsics;unitat
-351;Vinagre mòdena;bàsics;unitat
-352;Xia;bàsics;unitat
-353;Yatecomo;bàsics;unitat
-354;Arròs amb xia;bàsics;unitat
-355;Tabulé;bàsics;unitat
-356;Safrà;bàsics;unitat
-357;Ous super;bàsics;unitat
-358;Oli de coco;bàsics;unitat
-359;Herbes;bàsics;unitat
-360;Ceba fregida;bàsics;unitat
-361;Orenga;bàsics;unitat
-362;Girasol 1L;oli;unitat
-363;Girasol 5L;oli;unitat
-364;Oliva 1L;oli;unitat
-365;Oliva 5L;oli;unitat
-366;Olives verdes;oli;unitat
-367;Olives negres;oli;unitat
-368;Xocolata Llet;xocolata;unitat
-369;Xocolata Negra;xocolata;unitat
-370;Blat de moro;llaunes;unitat
-371;Bolets;llaunes;unitat
-372;Cigrons;llaunes;unitat
-373;Cirera;llaunes;unitat
-374;Cloïses;llaunes;unitat
-375;Cogombres;llaunes;unitat
-376;Confit de ceba;llaunes;unitat
-377;Espàrrecs;llaunes;unitat
-378;Favada;llaunes;unitat
-379;Frankfurt;llaunes;unitat
-380;Llenties;llaunes;unitat
-381;Mongetes;llaunes;unitat
-382;Pebrot piquillo;llaunes;unitat
-383;Pinya;llaunes;unitat
-384;Sardines;llaunes;unitat
-385;Sopa;llaunes;unitat
-386;Tomàquet fregit;llaunes;unitat
-387;Tonyina;llaunes;unitat
-388;Tomàquet concentart;llaunes;unitat
-389;Alls;llaunes;unitat
-390;Mouse de peix;llaunes;unitat
-391;Remolatxa;llaunes;unitat
-392;carxofes;llaunes;unitat
-393;Crackers;esmorzar;unitat
-394;Galetes;esmorzar;unitat
-395;Melmelada;esmorzar;unitat
-396;Muesli 500gr.;esmorzar;unitat
-397;Nesquik;esmorzar;unitat
-398;Nocilla;esmorzar;unitat
-399;Civada;esmorzar;unitat
-400;Pollastre a l'ast;preparacions;unitat
-401;Fideuà;preparacions;unitat
-402;Cargols llauna;preparacions;unitat
-403;Empanadilla;preparacions;unitat
-404;Bombons;xocolata;unitat
-405;Pasta Macarrons;bàsics;unitat
-406;Pasta Espagetti;bàsics;unitat
-407;Pasta Galets;bàsics;unitat
-408;Formatge tall Cheddar;lactics;unitat
-409;Formatge tall Tendre;lactics;unitat
-410;Formatge tall Semi;lactics;unitat
-411;Formatge tall Curat;lactics;unitat
-412;Formatge tall Brie;lactics;unitat
-413;Formatge tall Edam;lactics;unitat
-414;Formatge tall varis;lactics;unitat
-415;Finissim Pernil;carn;unitat
-416;Pasta;bàsics;unitat
-417;Pasta Raviolis;bàsics;unitat
-418;Pasta Lasagna;bàsics;unitat
-419;Safata Brou;verdura;unitat
-420;Musclos;llaunes;unitat
-421;Secallona;carn;unitat
-422;Formatge tall Mozzarella;lactics;unitat
-423;Mescla de llavors;bàsics;unitat
-424;Polvoron Granel;extres;unitat
-425;Sandal;neteja;unitat
-426;Pernil d'ànec;carn;unitat
-427;Pasta Fideu 0;bàsics;unitat
-428;Ceba Tendra;verdura;unitat
-429;Leche Desn. Asturi 1l;lactics;unitat
-430;Llonza gall d'indi;carn;unitat
-431;Nescafe Pack Estalvi 2x200g;begudes;unitat
-432;Pasta Lasanya;bàsics;unitat
-433;Recollidor;neteja;unitat
-434;Formatge tall Burrata;lactics;unitat
-435;Llonganissa pollastre;carn;unitat
-436;Per A Borrar 2;lactics;unitat
-437;Pure de Patata;verdura;unitat
-438;Barra Gallega;pa;unitat
-439;Coliflor;verdura;unitat
-440;Salsa Calçots;bàsics;unitat
-441;Formatge tall Cabra;lactics;unitat
-442;Guanciale;carn;unitat
-443;Brocha Iluminador;neteja;unitat
-444;Pa Torrijas;pa;unitat
-445;Preparat Fideua;peix;unitat
-446;Vinagre de poma;bàsics;unitat
-447;Morcilla;carn;unitat
-448;Carloteña Pollastre;carn;unitat
-449;Crema Peus;neteja;unitat
-450;Pit Gall d'indi;carn;unitat
-451;Verat;llaunes;unitat
-452;Formatge tall Blau;lactics;unitat
-453;Listerine;neteja;unitat
-454;Gyozas;bàsics;unitat
-455;Formatge tall Fresc Cabra;lactics;unitat
-456;Pasta Canelons;bàsics;unitat
-457;Iogurt Cabra;lactics;unitat
-458;Finissim De Gall d'Indi;carn;unitat
-459;Cereals;esmorzar;unitat
-460;Arros Amb Verdura;preparacions;unitat
-461;Cocido Madrileño;llaunes;unitat
-462;Llet Cabra 1l;lactics;unitat
-463;Escarola;verdura;unitat
-464;Crema D Esparrecs;bàsics;unitat
-465;Arros de Peix;preparacions;unitat
-466;Migas;preparacions;unitat
-467;Pastis Tonyina;preparacions;unitat
-468;Plantilla Antillisca;neteja;unitat
-469;Fogassa;pa;unitat
-470;Alcohol;neteja;unitat
-471;Neceser;neteja;unitat
-472;Anticel.lulitic;neteja;unitat
-473;Mascara Peus;neteja;unitat
-474;Llet Netejadora;neteja;unitat
-475;Macarrons Formatge;preparacions;unitat
+idProducte;nom_estandard;familia;unitat;minim_compra
+1;Llet 1,5L;lactics;unitat;1
+2;Iogurt xquatre;lactics;unitat;1
+3;Iogurt xvuit;lactics;unitat;1
+4;Llet 1L;lactics;unitat;1
+5;Crema formatge;lactics;unitat;1
+6;Formatge Llesq.;lactics;unitat;1
+7;Formatge rallat;lactics;unitat;1
+8;Formatge tall Gorgonzolla;lactics;unitat;1
+9;Iogurt grec;lactics;unitat;1
+10;Llet 2L;lactics;unitat;1
+11;Llet condensada;lactics;unitat;1
+12;Llet d'ametlla;lactics;unitat;1
+13;Mantequilla;lactics;unitat;1
+14;Mató;lactics;unitat;1
+15;Nata liq.;lactics;unitat;1
+16;Natilles;lactics;unitat;1
+17;Porcions formatge;lactics;unitat;1
+18;Flam;lactics;unitat;1
+19;Kefir;lactics;unitat;1
+20;Tot junt;fruita;unitat;1
+21;Ametlla;fruita;unitat;1
+22;Caquis;fruita;unitat;1
+23;Coco;fruita;unitat;1
+24;Coco ratllat;fruita;unitat;1
+25;Codonyat;fruita;unitat;1
+26;Dàtils;fruita;unitat;1
+27;Figues;fruita;unitat;1
+28;Figues seques;fruita;unitat;1
+29;Fruits vermells;fruita;unitat;1
+30;Llimona;fruita;unitat;1
+31;Maduixes;fruita;unitat;1
+32;Mandarina;fruita;unitat;1
+33;Mango;fruita;unitat;1
+34;Nous;fruita;unitat;1
+35;Orellanes;fruita;unitat;1
+36;Panses;fruita;unitat;1
+37;Pera;fruita;unitat;1
+38;Plàtan;fruita;unitat;1
+39;Poma;fruita;unitat;1
+40;Prunes;fruita;unitat;1
+41;Raïm;fruita;unitat;1
+42;Taronja;fruita;unitat;1
+43;Anacards;fruita;unitat;1
+44;Cacahuets;fruita;unitat;1
+45;Pipes pelades;fruita;unitat;1
+46;Prèsec;fruita;unitat;1
+47;Paraguayo;fruita;unitat;1
+48;Meló;fruita;unitat;1
+49;Cirera;fruita;unitat;1
+50;Gingebre;fruita;unitat;1
+51;Magrana;fruita;unitat;1
+52;Pinyó;fruita;unitat;1
+53;Castanya;fruita;unitat;1
+54;Nabius;fruita;unitat;1
+55;Nous del Brazil;fruita;unitat;1
+56;Coctail fruits secs;fruita;unitat;1
+57;Xindria;fruita;unitat;1
+58;Festuc;fruita;unitat;1
+59;Tot junt;verdura;unitat;1
+60;Alls;verdura;unitat;1
+61;Alvocat;verdura;unitat;1
+62;Amanida;verdura;unitat;1
+63;Bolets;verdura;unitat;1
+64;Bròquil;verdura;unitat;1
+65;Canonges;verdura;unitat;1
+66;Carbassa;verdura;unitat;1
+67;Carbassó;verdura;unitat;1
+68;Carxofes;verdura;unitat;1
+69;Ceba;verdura;unitat;1
+70;Cogombre;verdura;unitat;1
+71;Col;verdura;unitat;1
+72;Edamame;verdura;unitat;1
+73;Enciam;verdura;unitat;1
+74;Endívia;verdura;unitat;1
+75;Espàrrec;verdura;unitat;1
+76;Espinacs;verdura;unitat;1
+77;Gírgoles;verdura;unitat;1
+78;Guacamole;verdura;unitat;1
+79;Hummus;verdura;unitat;1
+80;Mongeta tendra;verdura;unitat;1
+81;Moniato;verdura;unitat;1
+82;Pastanaga;verdura;unitat;1
+83;Patata;verdura;unitat;1
+84;Pebrot;verdura;unitat;1
+85;Pèssols;verdura;unitat;1
+86;Quinoa;verdura;unitat;1
+87;Rossinyol;verdura;unitat;1
+88;Tomàquet;verdura;unitat;1
+89;Tomàquet Cherry;verdura;unitat;1
+90;Tomàquet pà;verdura;unitat;1
+91;Xampinyó;verdura;unitat;1
+92;Blat de moro;llaunes;unitat;1
+93;Calçots;verdura;unitat;1
+94;Porro;verdura;unitat;1
+95;Aletes pollastre;carn;unitat;1
+96;Bacó;carn;unitat;1
+97;Braó porc;carn;unitat;1
+98;Botifarra blanca;carn;unitat;1
+99;Botifarra negra;carn;unitat;1
+100;Botifarra;carn;unitat;1
+101;Cap porc tòfona;carn;unitat;1
+102;Cargols;carn;unitat;1
+103;Conill;carn;unitat;1
+104;Costella porc;carn;unitat;1
+105;Filet de porc;carn;unitat;1
+106;Filet pollastre;carn;unitat;1
+107;Foie Gras;carn;unitat;1
+108;Frankfurt;carn;unitat;1
+109;Fuet;carn;unitat;1
+110;Hamburguesa;carn;unitat;1
+111;Lacó fumat;carn;unitat;1
+112;Llardons;carn;unitat;1
+113;Llom canya;carn;unitat;1
+114;Llonganissa;carn;unitat;1
+115;Magret ànec;carn;unitat;1
+116;Mix perol;carn;unitat;1
+117;Mortadela;carn;unitat;1
+118;Pernil cuit llesq.;carn;unitat;1
+119;Pernil Gall dindi;carn;unitat;1
+120;Pernil serrà;carn;unitat;1
+121;Pit pollastre;carn;unitat;1
+122;Pollastre sencer;carn;unitat;1
+123;Rodó Vedella;carn;unitat;1
+124;Salami;carn;unitat;1
+125;Secret;carn;unitat;1
+126;Sobrassada;carn;unitat;1
+127;Tot junt;carn;unitat;1
+128;Txuleta vedella;carn;unitat;1
+129;Vedella;carn;unitat;1
+130;Xistorra;carn;unitat;1
+131;Xopped;carn;unitat;1
+132;Xoriç;carn;unitat;1
+133;Txurrasco;carn;unitat;1
+134;Salsitxes;carn;unitat;1
+135;Mandonguilles;carn;unitat;1
+136;Fetge;carn;unitat;1
+137;Llangardaix porc;carn;unitat;1
+138;Carpaccio;carn;unitat;1
+139;Morro cuit;carn;unitat;1
+140;Carn de Kebab;carn;unitat;1
+141;Panxeta;carn;unitat;1
+142;Torreznos;carn;unitat;1
+143;Llonganissa crua;carn;unitat;1
+144;Filet Gall dindi;carn;unitat;1
+145;Garrons de pernil;carn;unitat;1
+146;Cap de llom;carn;unitat;1
+147;Ossos;carn;unitat;1
+148;Peus de porc;carn;unitat;1
+149;Bacallà;peix;unitat;1
+150;Calamar;peix;unitat;1
+151;Caldo peix;peix;unitat;1
+152;Cloïses;peix;unitat;1
+153;Corbina;peix;unitat;1
+154;Gall;peix;unitat;1
+155;Gallineta;peix;unitat;1
+156;Gamba;peix;unitat;1
+157;Gules;peix;unitat;1
+158;Llagostí cuit;peix;unitat;1
+159;Maire;peix;unitat;1
+160;Musclo;peix;unitat;1
+161;Orada;peix;unitat;1
+162;Palets de mar;peix;unitat;1
+163;Pop;peix;unitat;1
+164;Cargol punxenc;peix;unitat;1
+165;Rap;peix;unitat;1
+166;Salmó;peix;unitat;1
+167;Sipia;peix;unitat;1
+168;Sushi;peix;unitat;1
+169;Tonyina;peix;unitat;1
+170;Tot junt;peix;unitat;1
+171;Vieira;peix;unitat;1
+172;Xipirons;peix;unitat;1
+173;Lluç;peix;unitat;1
+174;Seitó;peix;unitat;1
+175;Canana;peix;unitat;1
+176;Molla;peix;unitat;1
+177;Escamarlà;peix;unitat;1
+178;Bestina;peix;unitat;1
+179;Cap de Rap;peix;unitat;1
+180;Escopinya;peix;unitat;1
+181;Peix espasa;peix;unitat;1
+182;Pa de pagès;pa;unitat;1
+183;Pa de motlle;pa;unitat;1
+184;Barra integral;pa;unitat;1
+185;Baguette;pa;unitat;1
+186;Base pizza;pa;unitat;1
+187;Empanada;pa;unitat;1
+188;Fajitas;pa;unitat;1
+189;Hojaldre;pa;unitat;1
+190;Neules;pa;unitat;1
+191;Pa Rodó 1/2;pa;unitat;1
+192;Pa rodó 1K;pa;unitat;1
+193;Pà ratllat;pa;unitat;1
+194;Pa de vidre;pa;unitat;1
+195;Pa Burguer;pa;unitat;1
+196;Pa frankfurt;pa;unitat;1
+197;Panetone;pa;unitat;1
+198;Picos;pa;unitat;1
+199;Tallar pa;pa;unitat;1
+200;Torradetes;pa;unitat;1
+201;Creps;pa;unitat;1
+202;Panets;pa;unitat;1
+203;Aigua 0.50L;begudes;unitat;1
+204;Aigua 1.50L;begudes;unitat;1
+205;Aigua 5L;begudes;unitat;1
+206;Aigua 8L;begudes;unitat;1
+207;Camamilla;begudes;unitat;1
+208;Cafè capsula;begudes;unitat;1
+209;Descafeinat cap.;begudes;unitat;1
+210;Cava;begudes;unitat;1
+211;Cervessa llauna;begudes;unitat;1
+212;Cervessa 1/5;begudes;unitat;1
+213;CocaCola ll.;begudes;unitat;1
+214;CocaCola ll 0%;begudes;unitat;1
+215;CocaCola Zero 1.5L;begudes;unitat;1
+216;Dormir bé;begudes;unitat;1
+217;Gazpacho;begudes;unitat;1
+218;Gel;begudes;unitat;1
+219;Llimonada ll.;begudes;unitat;1
+220;Llimonada 1.5L;begudes;unitat;1
+221;Nescafé;begudes;unitat;1
+222;Ratafia;begudes;unitat;1
+223;Refresc;begudes;unitat;1
+224;Suc;begudes;unitat;1
+225;Taronjada;begudes;unitat;1
+226;Té gingebre;begudes;unitat;1
+227;Vi;begudes;unitat;1
+228;Whisky;begudes;unitat;1
+229;Beguda Civada;begudes;unitat;1
+230;Nestea;begudes;unitat;1
+231;Licor;begudes;unitat;1
+232;Abrillantador;neteja;unitat;1
+233;Altres neteja;neteja;unitat;1
+234;Ambientador;neteja;unitat;1
+235;Amoníac;neteja;unitat;1
+236;Bayetes microfibra;neteja;unitat;1
+237;Bicarbonat;neteja;unitat;1
+238;Blanquejador;neteja;unitat;1
+239;Bossa Escomb.;neteja;unitat;1
+240;Carbó barbacoa;neteja;unitat;1
+241;Condicionador;neteja;unitat;1
+242;Cosi plàstic;neteja;unitat;1
+243;Crema facial;neteja;unitat;1
+244;Depilatori;neteja;unitat;1
+245;Desodorant;neteja;unitat;1
+246;Detergent;neteja;unitat;1
+247;Draps cuina;neteja;unitat;1
+248;Esponja bany;neteja;unitat;1
+249;Film cuina;neteja;unitat;1
+250;Fregall Alumini;neteja;unitat;1
+251;Fregall plats;neteja;unitat;1
+252;Fregaterra;neteja;unitat;1
+253;Gel bany;neteja;unitat;1
+254;Guants;neteja;unitat;1
+255;Insecticida;neteja;unitat;1
+256;Leixiu;neteja;unitat;1
+257;Llevataques;neteja;unitat;1
+258;Mascareta;neteja;unitat;1
+259;Mocadors paper;neteja;unitat;1
+260;Neteja rentadora;neteja;unitat;1
+261;Neteja Ximeneies;neteja;unitat;1
+262;Oral B;neteja;unitat;1
+263;Pal escombra;neteja;unitat;1
+264;Paper alumini;neteja;unitat;1
+265;Paper cuina;neteja;unitat;1
+266;Paper forn;neteja;unitat;1
+267;Paper regal;neteja;unitat;1
+268;Paper water;neteja;unitat;1
+269;Pastilles foc;neteja;unitat;1
+270;Percabonat;neteja;unitat;1
+271;Perfumador;neteja;unitat;1
+272;Neteja water;neteja;unitat;1
+273;Raspall de dents;neteja;unitat;1
+274;Reductor nit;neteja;unitat;1
+275;Renta roba a mà;neteja;unitat;1
+276;Rentaplats;neteja;unitat;1
+277;Sal rentavaixelles;neteja;unitat;1
+278;Sobres perfumats;neteja;unitat;1
+279;Somat;neteja;unitat;1
+280;Spray vidres;neteja;unitat;1
+281;Suavitzant;neteja;unitat;1
+282;Tint roba;neteja;unitat;1
+283;Tovallons;neteja;unitat;1
+284;Vinagre net.;neteja;unitat;1
+285;Xampú;neteja;unitat;1
+286;Fulls afaitar;neteja;unitat;1
+287;Vanish;neteja;unitat;1
+288;Acondicionador;neteja;unitat;1
+289;Disc desmaquillà;neteja;unitat;1
+290;Escombra;neteja;unitat;1
+291;Fregona;neteja;unitat;1
+292;Amoníac;neteja;unitat;1
+293;Mascarilla cabell;neteja;unitat;1
+294;Activador color;neteja;unitat;1
+295;Oli aromàtic;neteja;unitat;1
+296;Nivea;neteja;unitat;1
+297;Colònia;neteja;unitat;1
+298;Tirites;neteja;unitat;1
+299;Desgreixador;neteja;unitat;1
+300;Cua Gamba;congelats;unitat;1
+301;Pizza;congelats;unitat;1
+302;Croquetes;congelats;unitat;1
+303;Muslitos de mar;congelats;unitat;1
+304;Tonyina;congelats;unitat;1
+305;Pèssols;congelats;unitat;1
+306;Altres extres;extres;unitat;1
+307;Bolleria;extres;unitat;1
+308;Bossa compra;extres;unitat;1
+309;Coulant Xoco;extres;unitat;1
+310;Crispetes;extres;unitat;1
+311;Donut;extres;unitat;1
+312;Gelat;extres;unitat;1
+313;Gelatina;extres;unitat;1
+314;Llaminadures;extres;unitat;1
+315;Pastissos;extres;unitat;1
+316;Patates bossa;extres;unitat;1
+317;Pipes Tijuana;extres;unitat;1
+318;Torró;extres;unitat;1
+319;Twix;extres;unitat;1
+320;varis;extres;unitat;1
+321;Crema de festuc;extres;unitat;1
+322;All Molinet;bàsics;unitat;1
+323;Allioli;bàsics;unitat;1
+324;Arròs;bàsics;unitat;1
+325;Bovril;bàsics;unitat;1
+326;Brou;bàsics;unitat;1
+327;Canyella;bàsics;unitat;1
+328;Cúrcuma;bàsics;unitat;1
+329;Farina blat;bàsics;unitat;1
+330;Farina d'arròs;bàsics;unitat;1
+331;Farina de cigró;bàsics;unitat;1
+332;Ketchup;bàsics;unitat;1
+333;Llevadura;bàsics;unitat;1
+334;Lli;bàsics;unitat;1
+335;Maionesa;bàsics;unitat;1
+336;Mel;bàsics;unitat;1
+337;Mostassa;bàsics;unitat;1
+338;Nyora;bàsics;unitat;1
+339;Ous cassolans;bàsics;unitat;1
+340;Pasta Fideu Cabellin;bàsics;unitat;1
+341;Pebre molinet;bàsics;unitat;1
+342;Pebre vermell dolç;bàsics;unitat;1
+343;Puré de patata;bàsics;unitat;1
+344;Sal;bàsics;unitat;1
+345;Salsa;bàsics;unitat;1
+346;Salsa soja;bàsics;unitat;1
+347;Sèsam;bàsics;unitat;1
+348;Sopa sobre;bàsics;unitat;1
+349;Sucre;bàsics;unitat;1
+350;Vinagre de vi;bàsics;unitat;1
+351;Vinagre mòdena;bàsics;unitat;1
+352;Xia;bàsics;unitat;1
+353;Yatecomo;bàsics;unitat;1
+354;Arròs amb xia;bàsics;unitat;1
+355;Tabulé;bàsics;unitat;1
+356;Safrà;bàsics;unitat;1
+357;Ous super;bàsics;unitat;1
+358;Oli de coco;bàsics;unitat;1
+359;Herbes;bàsics;unitat;1
+360;Ceba fregida;bàsics;unitat;1
+361;Orenga;bàsics;unitat;1
+362;Girasol 1L;oli;unitat;1
+363;Girasol 5L;oli;unitat;1
+364;Oliva 1L;oli;unitat;1
+365;Oliva 5L;oli;unitat;1
+366;Olives verdes;oli;unitat;1
+367;Olives negres;oli;unitat;1
+368;Xocolata Llet;xocolata;unitat;1
+369;Xocolata Negra;xocolata;unitat;1
+370;Blat de moro;llaunes;unitat;1
+371;Bolets;llaunes;unitat;1
+372;Cigrons;llaunes;unitat;1
+373;Cirera;llaunes;unitat;1
+374;Cloïses;llaunes;unitat;1
+375;Cogombres;llaunes;unitat;1
+376;Confit de ceba;llaunes;unitat;1
+377;Espàrrecs;llaunes;unitat;1
+378;Favada;llaunes;unitat;1
+379;Frankfurt;llaunes;unitat;1
+380;Llenties;llaunes;unitat;1
+381;Mongetes;llaunes;unitat;1
+382;Pebrot piquillo;llaunes;unitat;1
+383;Pinya;llaunes;unitat;1
+384;Sardines;llaunes;unitat;1
+385;Sopa;llaunes;unitat;1
+386;Tomàquet fregit;llaunes;unitat;1
+387;Tonyina;llaunes;unitat;1
+388;Tomàquet concentart;llaunes;unitat;1
+389;Alls;llaunes;unitat;1
+390;Mouse de peix;llaunes;unitat;1
+391;Remolatxa;llaunes;unitat;1
+392;carxofes;llaunes;unitat;1
+393;Crackers;esmorzar;unitat;1
+394;Galetes;esmorzar;unitat;1
+395;Melmelada;esmorzar;unitat;1
+396;Muesli 500gr.;esmorzar;unitat;1
+397;Nesquik;esmorzar;unitat;1
+398;Nocilla;esmorzar;unitat;1
+399;Civada;esmorzar;unitat;1
+400;Pollastre a l'ast;preparacions;unitat;1
+401;Fideuà;preparacions;unitat;1
+402;Cargols llauna;preparacions;unitat;1
+403;Empanadilla;preparacions;unitat;1
+404;Bombons;xocolata;unitat;1
+405;Pasta Macarrons;bàsics;unitat;1
+406;Pasta Espagetti;bàsics;unitat;1
+407;Pasta Galets;bàsics;unitat;1
+408;Formatge tall Cheddar;lactics;unitat;1
+409;Formatge tall Tendre;lactics;unitat;1
+410;Formatge tall Semi;lactics;unitat;1
+411;Formatge tall Curat;lactics;unitat;1
+412;Formatge tall Brie;lactics;unitat;1
+413;Formatge tall Edam;lactics;unitat;1
+414;Formatge tall varis;lactics;unitat;1
+415;Finissim Pernil;carn;unitat;1
+416;Pasta;bàsics;unitat;1
+417;Pasta Raviolis;bàsics;unitat;1
+418;Pasta Lasagna;bàsics;unitat;1
+419;Safata Brou;verdura;unitat;1
+420;Musclos;llaunes;unitat;1
+421;Secallona;carn;unitat;1
+422;Formatge tall Mozzarella;lactics;unitat;1
+423;Mescla de llavors;bàsics;unitat;1
+424;Polvoron Granel;extres;unitat;1
+425;Sandal;neteja;unitat;1
+426;Pernil d'ànec;carn;unitat;1
+427;Pasta Fideu 0;bàsics;unitat;1
+428;Ceba Tendra;verdura;unitat;1
+429;Leche Desn. Asturi 1l;lactics;unitat;1
+430;Llonza gall d'indi;carn;unitat;1
+431;Nescafe Pack Estalvi 2x200g;begudes;unitat;1
+432;Pasta Lasanya;bàsics;unitat;1
+433;Recollidor;neteja;unitat;1
+434;Formatge tall Burrata;lactics;unitat;1
+435;Llonganissa pollastre;carn;unitat;1
+436;Per A Borrar 2;lactics;unitat;1
+437;Pure de Patata;verdura;unitat;1
+438;Barra Gallega;pa;unitat;1
+439;Coliflor;verdura;unitat;1
+440;Salsa Calçots;bàsics;unitat;1
+441;Formatge tall Cabra;lactics;unitat;1
+442;Guanciale;carn;unitat;1
+443;Brocha Iluminador;neteja;unitat;1
+444;Pa Torrijas;pa;unitat;1
+445;Preparat Fideua;peix;unitat;1
+446;Vinagre de poma;bàsics;unitat;1
+447;Morcilla;carn;unitat;1
+448;Carloteña Pollastre;carn;unitat;1
+449;Crema Peus;neteja;unitat;1
+450;Pit Gall d'indi;carn;unitat;1
+451;Verat;llaunes;unitat;1
+452;Formatge tall Blau;lactics;unitat;1
+453;Listerine;neteja;unitat;1
+454;Gyozas;bàsics;unitat;1
+455;Formatge tall Fresc Cabra;lactics;unitat;1
+456;Pasta Canelons;bàsics;unitat;1
+457;Iogurt Cabra;lactics;unitat;1
+458;Finissim De Gall d'Indi;carn;unitat;1
+459;Cereals;esmorzar;unitat;1
+460;Arros Amb Verdura;preparacions;unitat;1
+461;Cocido Madrileño;llaunes;unitat;1
+462;Llet Cabra 1l;lactics;unitat;1
+463;Escarola;verdura;unitat;1
+464;Crema D Esparrecs;bàsics;unitat;1
+465;Arros de Peix;preparacions;unitat;1
+466;Migas;preparacions;unitat;1
+467;Pastis Tonyina;preparacions;unitat;1
+468;Plantilla Antillisca;neteja;unitat;1
+469;Fogassa;pa;unitat;1
+470;Alcohol;neteja;unitat;1
+471;Neceser;neteja;unitat;1
+472;Anticel.lulitic;neteja;unitat;1
+473;Mascara Peus;neteja;unitat;1
+474;Llet Netejadora;neteja;unitat;1
+475;Macarrons Formatge;preparacions;unitat;1
