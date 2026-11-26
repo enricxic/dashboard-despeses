@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "26/11/2026 15:41:46",
+  "updated_at": "26/11/2026 21:28:16",
   "modules": {
     "compres": {
       "name": "Compres Super",
@@ -18,10 +18,10 @@
         "Pujada de fitxer i càmera posterior al mòbil"
       ],
       "verified_hashes": {
-        "modules/compres.py": "ef188795cae296d805ad52945b0329031349fa6f213e7b334986b37cb876c01c"
+        "modules/compres.py": "adee606e4cc3d6900cc940182fba55f99703532b9b4be732ffbddc340deca1dd"
       },
-      "verified_at": "26/11/2026 15:41:01",
-      "verified_commit": "a5aea20",
+      "verified_at": "26/11/2026 21:28:16",
+      "verified_commit": "8947800",
       "verified_by": "admin",
       "unlocked_until": null,
       "unlock_reason": ""
@@ -374,6 +374,22 @@
     }
   },
   "audit_log": [
+    {
+      "timestamp": "26/11/2026 21:28:16",
+      "action": "SEAL",
+      "module": "compres",
+      "detail": "Versió verificada i segellada (Nova columna minim_compra i calcul de llista de compra)",
+      "user": "admin",
+      "git_head": "8947800"
+    },
+    {
+      "timestamp": "26/11/2026 20:53:03",
+      "action": "UNLOCK",
+      "module": "compres",
+      "detail": "Autoritzat fins 27/11/2026 20:53:03. Motiu: Afegir columna minim_compra i calcul a llista de la compra",
+      "user": "admin",
+      "git_head": "d5b6c81"
+    },
     {
       "timestamp": "26/11/2026 15:41:46",
       "action": "SEAL",
@@ -1157,22 +1173,6 @@
       "detail": "Autoritzat fins 15/11/2026 17:09:28. Motiu: Treure conceptes de l alerta de valor superat, deixar nomes categoria i import",
       "user": "admin",
       "git_head": "a445f27"
-    },
-    {
-      "timestamp": "14/11/2026 17:04:45",
-      "action": "SEAL",
-      "module": "core_compartit",
-      "detail": "Versió verificada i segellada (Mostrar conceptes a l alerta de valor superat)",
-      "user": "admin",
-      "git_head": "f15fd28"
-    },
-    {
-      "timestamp": "14/11/2026 16:58:48",
-      "action": "UNLOCK",
-      "module": "core_compartit",
-      "detail": "Autoritzat fins 15/11/2026 16:58:48. Motiu: Mostrar conceptes a l alerta de valor superat",
-      "user": "admin",
-      "git_head": "f15fd28"
     }
   ]
 }
