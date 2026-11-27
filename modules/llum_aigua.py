@@ -621,6 +621,75 @@ def extract_water_data_from_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> d
 
 
 # =========================================================================
+# DIÀLEG EDITAR HORES D'ACUMULADORS
+# =========================================================================
+
+@st.dialog("✏️ Editar Hores d'Acumuladors")
+def dialog_editar_hores_acumuladors(acumuladors_llista: list, cfg_acum: dict):
+    st.markdown("""
+    <div style='font-size:0.88rem; color:#cbd5e1; margin-bottom:14px; line-height:1.5;'>
+        Ajusta quantes <b>hores de càrrega</b> vols programar per a cada acumulador.
+        Aquestes hores quedaran <b>fixades</b> per calcular automàticament les finestres òptimes tant d'avui com de demà.
+    </div>
+    """, unsafe_allow_html=True)
+
+    noves_hores = {}
+    for idx_ac, acum in enumerate(acumuladors_llista):
+        ac_id = acum.get("id", f"acum_{idx_ac+1}")
+        ac_nom = acum.get("nom", f"Acumulador {idx_ac+1}")
+        ac_watts = int(acum.get("watts", 2000))
+        ac_franja = acum.get("franja", "nit")
+        ac_icona = acum.get("icona", "🔥")
+        ac_color = acum.get("color", "#fbbf24" if idx_ac == 0 else "#38bdf8")
+        ac_def_h = int(acum.get("hores_defecte", 3))
+
+        key_cfg = f"hores_{ac_id}"
+        if key_cfg not in cfg_acum and f"hores_{ac_watts}w" in cfg_acum:
+            key_cfg = f"hores_{ac_watts}w"
+
+        val_actual = int(cfg_acum.get(key_cfg, ac_def_h))
+        val_actual = min(max(val_actual, 1), 8)
+
+        franja_desc = "Franja nocturna (00:00 - 08:00h)" if ac_franja == "nit" else "Franja solar (11:00 - 19:00h)"
+
+        st.markdown(f"""
+        <div style='background:rgba(255,255,255,0.03); border:1px solid {ac_color}55; border-radius:8px; padding:8px 12px; margin-top:8px; margin-bottom:4px;'>
+            <div style='display:flex; justify-content:space-between; align-items:center;'>
+                <b style='color:{ac_color}; font-size:0.95rem;'>{ac_icona} {ac_nom} ({ac_watts:,} W)</b>
+                <span style='font-size:0.75rem; color:#94a3b8;'>{franja_desc}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        val = st.slider(
+            f"Hores de càrrega ({ac_nom}):",
+            min_value=1,
+            max_value=8,
+            value=val_actual,
+            step=1,
+            key=f"dialog_slider_{ac_id}",
+            help=f"Tria quantes hores necessita carregar l'aparell {ac_nom} ({ac_watts} W)."
+        )
+        noves_hores[key_cfg] = val
+        noves_hores[f"hores_{ac_id}"] = val
+        noves_hores[f"hores_{ac_watts}w"] = val
+
+    st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+    c_save, c_cancel = st.columns([1.2, 1])
+    with c_save:
+        if st.button("💾 Desar i Fixar Hores", type="primary", use_container_width=True, key="btn_save_acum_hours"):
+            for k, v in noves_hores.items():
+                cfg_acum[k] = v
+            save_acumuladors_config(cfg_acum)
+            st.session_state["cache_cfg_acum"] = cfg_acum
+            st.toast("Hores dels acumuladors desades i fixades!", icon="🔒")
+            st.rerun()
+    with c_cancel:
+        if st.button("Cancel·lar", use_container_width=True, key="btn_cancel_acum_hours"):
+            st.rerun()
+
+
+# =========================================================================
 # PESTANYA 1: CONSUM LLUM I OPTIMITZADOR D'ACUMULADORS
 # =========================================================================
 
@@ -635,7 +704,7 @@ def render_dia_kpis_i_grafica(p_data: dict, energia_cfg: dict, cfg_acum: dict, k
     acumuladors_llista = energia_cfg.get("acumuladors", [])
     if not acumuladors_llista:
         acumuladors_llista = [
-            {"id": "acum_1", "nom": "Menjador", "zona": "Menjador / Planta Baixa", "watts": 4000, "franja": "nit", "hores_defecte": 5, "color": "#fbbf24", "icona": "🛋️"},
+            {"id": "acum_1", "nom": "Menjador", "zona": "Menjador / Planta Baixa", "watts": 4000, "franja": "nit", "hores_defecte": 3, "color": "#fbbf24", "icona": "🛋️"},
             {"id": "acum_2", "nom": "Passadís 2a Planta", "zona": "Passadís 2a Planta", "watts": 2000, "franja": "migdia", "hores_defecte": 3, "color": "#38bdf8", "icona": "🪜"}
         ]
 
@@ -732,15 +801,18 @@ def render_dia_kpis_i_grafica(p_data: dict, energia_cfg: dict, cfg_acum: dict, k
     st.markdown("<div style='margin-top:28px; margin-bottom:8px;'></div>", unsafe_allow_html=True)
     titol_opt = f"Optimitzador de Càrrega d'Acumuladors ({dia_txt})"
     with st.container(border=True):
-        st.markdown(f"""
-        <div style='display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px; gap:8px;'>
+        c_hdr_tit, c_hdr_btn = st.columns([3, 1], vertical_alignment="center")
+        with c_hdr_tit:
+            st.markdown(f"""
             <div style='display:flex; align-items:center; gap:8px;'>
                 <span style='font-size:1.25rem;'>🔥</span>
                 <span style='font-size:1.05rem; font-weight:700; color:#f39c12;'>{titol_opt}</span>
             </div>
             <div style='font-size:0.8rem; color:#94a3b8;'>Finestres òptimes calculades per a la data <b>{p_data.get('data', '')}</b></div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        with c_hdr_btn:
+            if st.button("✏️ Editar Hores", key=f"btn_edit_acum_hdr_{key_suffix}", use_container_width=True, help="Modificar les hores de càrrega dels acumuladors"):
+                dialog_editar_hores_acumuladors(acumuladors_llista, cfg_acum)
 
         cols_ac = st.columns(len(acumuladors_llista), gap="large")
         opt_finestres_acum = {}
@@ -753,7 +825,7 @@ def render_dia_kpis_i_grafica(p_data: dict, energia_cfg: dict, cfg_acum: dict, k
                 ac_franja = acum.get("franja", "nit")
                 ac_color = acum.get("color", "#fbbf24" if idx_ac == 0 else "#38bdf8")
                 ac_icona = acum.get("icona", "🔥")
-                ac_def_h = int(acum.get("hores_defecte", 4))
+                ac_def_h = int(acum.get("hores_defecte", 3))
 
                 if ac_franja == "nit":
                     p_contractada = pot_vall
@@ -785,32 +857,36 @@ def render_dia_kpis_i_grafica(p_data: dict, energia_cfg: dict, cfg_acum: dict, k
                     key_cfg = f"hores_{ac_watts}w"
 
                 cur_h = int(cfg_acum.get(key_cfg, ac_def_h))
-                new_h = st.slider(
-                    f"Hores de càrrega ({ac_nom}):",
-                    min_value=1,
-                    max_value=8,
-                    value=min(max(cur_h, 1), 8),
-                    step=1,
-                    key=f"slider_h_{ac_id}_{key_suffix}_{idx_ac}",
-                    help=f"Tria quantes hores necessita carregar l'aparell {ac_nom} ({ac_watts} W)."
-                )
-                if new_h != cur_h and not es_dema:
-                    cfg_acum[key_cfg] = new_h
-                    save_acumuladors_config(cfg_acum)
+                cur_h = min(max(cur_h, 1), 8)
 
-                opt_res = calcular_finestra_acumuladors(hores, durada_hores=new_h, franja=ac_franja)
+                c_h_info, c_h_btn = st.columns([2.5, 1], vertical_alignment="center")
+                with c_h_info:
+                    st.markdown(f"""
+                    <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;'>
+                        <span style='font-size:0.95rem;'>⏱️</span>
+                        <div style='font-size:0.83rem; color:#cbd5e1;'>
+                            Hores de càrrega: <b style='color:{ac_color}; font-size:0.95rem;'>{cur_h} h</b>
+                            <span style='background:#1e293b; color:#94a3b8; font-size:0.7rem; padding:1px 6px; border-radius:10px; margin-left:6px; border:1px solid #475569;'>🔒 Fixada</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with c_h_btn:
+                    if st.button("✏️ Editar", key=f"btn_edit_ac_{ac_id}_{key_suffix}_{idx_ac}", use_container_width=True, help=f"Editar les hores de càrrega ({ac_nom})"):
+                        dialog_editar_hores_acumuladors(acumuladors_llista, cfg_acum)
+
+                opt_res = calcular_finestra_acumuladors(hores, durada_hores=cur_h, franja=ac_franja)
                 if opt_res.get("millor_finestra"):
                     w = opt_res["millor_finestra"]
-                    cost_cicle = w['preu_mitja'] * (ac_watts / 1000.0) * new_h
+                    cost_cicle = w['preu_mitja'] * (ac_watts / 1000.0) * cur_h
                     icona_franja = "✨" if ac_franja == "nit" else "☀️"
                     st.markdown(f"""
                     <div style='background:rgba(255,255,255,0.04); border:1px solid {ac_color}66; border-radius:8px; padding:12px 14px; margin-top:8px;'>
-                        <div style='font-size:0.75rem; color:{ac_color}; font-weight:700; text-transform:uppercase;'>{icona_franja} Finestra Òptima ({new_h}h):</div>
+                        <div style='font-size:0.75rem; color:{ac_color}; font-weight:700; text-transform:uppercase;'>{icona_franja} Finestra Òptima ({cur_h}h):</div>
                         <div style='font-size:1.3rem; font-weight:700; color:{ac_color}; margin:4px 0;'>⏰ {w['rang_text']}</div>
                         <div style='font-size:0.83rem; color:#e2e8f0; line-height:1.4;'>
                             Preu mitjà finestra: <b style='color:#10b981;'>{w['preu_mitja']:.4f} €/kWh</b><br>
                             Estalvi vs mitjana: <b style='color:#38bdf8;'>-{opt_res.get('estalvi_percent', 0.0)}%</b> • Potència: <b style='color:{ac_color};'>{p_contractada:,.1f} kW</b><br>
-                            Cost estimat cicle ({new_h}h a {ac_watts/1000.0:,.1f}kW): <b style='color:{ac_color};'>{cost_cicle:.2f} €</b>
+                            Cost estimat cicle ({cur_h}h a {ac_watts/1000.0:,.1f}kW): <b style='color:{ac_color};'>{cost_cicle:.2f} €</b>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)

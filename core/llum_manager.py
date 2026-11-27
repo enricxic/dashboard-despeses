@@ -480,7 +480,9 @@ CONFIG_ACUM_FILE = os.path.join(PROJECT_ROOT, "data", "acumuladors_config.json")
 def load_acumuladors_config() -> dict:
     """Carrega la configuració d'hores i franges dels acumuladors."""
     defaults = {
-        "hores_4000w": 5,
+        "hores_4000w": 3,
+        "hores_acum_1": 3,
+        "hores_acum_2": 3,
         "hores_2000w": 3,
         "franja_2000w": "migdia"
     }
