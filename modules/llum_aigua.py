@@ -842,16 +842,6 @@ def render_dia_kpis_i_grafica(p_data: dict, energia_cfg: dict, cfg_acum: dict, k
 
                 marge_lliure = max(0.0, p_contractada - (ac_watts / 1000.0))
 
-                st.markdown(f"""
-                <div style='background:rgba(255,255,255,0.03); border:1px solid {ac_color}55; border-radius:8px; padding:10px 12px; margin-bottom:10px;'>
-                    <div style='display:flex; justify-content:space-between; align-items:center;'>
-                        <b style='color:{ac_color}; font-size:0.95rem;'>{ac_icona} {ac_nom} ({ac_watts:,} W)</b>
-                        <span style='background:{badge_bg}; color:{badge_fg}; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>{franja_tag}</span>
-                    </div>
-                    <div style='font-size:0.75rem; color:#94a3b8; margin-top:4px;'>{desc_franja} • Resten {marge_lliure:,.1f} kW lliures per a la casa.</div>
-                </div>
-                """, unsafe_allow_html=True)
-
                 key_cfg = f"hores_{ac_id}"
                 if key_cfg not in cfg_acum and f"hores_{ac_watts}w" in cfg_acum:
                     key_cfg = f"hores_{ac_watts}w"
@@ -859,20 +849,19 @@ def render_dia_kpis_i_grafica(p_data: dict, energia_cfg: dict, cfg_acum: dict, k
                 cur_h = int(cfg_acum.get(key_cfg, ac_def_h))
                 cur_h = min(max(cur_h, 1), 8)
 
-                c_h_info, c_h_btn = st.columns([2.5, 1], vertical_alignment="center")
-                with c_h_info:
-                    st.markdown(f"""
-                    <div style='background:rgba(255,255,255,0.02); border:1px solid #334155; border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:0.95rem;'>⏱️</span>
-                        <div style='font-size:0.83rem; color:#cbd5e1;'>
-                            Hores de càrrega: <b style='color:{ac_color}; font-size:0.95rem;'>{cur_h} h</b>
-                            <span style='background:#1e293b; color:#94a3b8; font-size:0.7rem; padding:1px 6px; border-radius:10px; margin-left:6px; border:1px solid #475569;'>🔒 Fixada</span>
-                        </div>
+                st.markdown(f"""
+                <div style='background:rgba(255,255,255,0.03); border:1px solid {ac_color}55; border-radius:8px; padding:10px 12px; margin-bottom:10px;'>
+                    <div style='display:flex; justify-content:space-between; align-items:center;'>
+                        <b style='color:{ac_color}; font-size:0.95rem;'>{ac_icona} {ac_nom} ({ac_watts:,} W)</b>
+                        <span style='background:{badge_bg}; color:{badge_fg}; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:600;'>{franja_tag}</span>
                     </div>
-                    """, unsafe_allow_html=True)
-                with c_h_btn:
-                    if st.button("✏️ Editar", key=f"btn_edit_ac_{ac_id}_{key_suffix}_{idx_ac}", use_container_width=True, help=f"Editar les hores de càrrega ({ac_nom})"):
-                        dialog_editar_hores_acumuladors(acumuladors_llista, cfg_acum)
+                    <div style='font-size:0.75rem; color:#94a3b8; margin-top:4px;'>{desc_franja} • Resten {marge_lliure:,.1f} kW lliures per a la casa.</div>
+                    <div style='margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center;'>
+                        <span style='font-size:0.78rem; color:#cbd5e1;'>⏱️ Temps de càrrega:</span>
+                        <span style='font-size:0.83rem; font-weight:700; color:{ac_color};'>{cur_h} h <span style='font-size:0.7rem; color:#94a3b8; font-weight:normal;'>(fixat)</span></span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
                 opt_res = calcular_finestra_acumuladors(hores, durada_hores=cur_h, franja=ac_franja)
                 if opt_res.get("millor_finestra"):
